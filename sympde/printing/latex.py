@@ -4,10 +4,10 @@
 from sympy.core import Symbol
 from sympy.printing.latex import LatexPrinter as LatexPrinterSympy
 
-from symfe.core.expr import BilinearForm, LinearForm, FunctionForm
-from symfe.core.generic import Dot, Inner, Cross
-from symfe.core.generic import Grad, Rot, Curl, Div
-from symfe.core.geometry import Line, Square, Cube
+from sympde.core.expr import BilinearForm, LinearForm, FunctionForm
+from sympde.core.generic import Dot, Inner, Cross
+from sympde.core.generic import Grad, Rot, Curl, Div
+from sympde.core.geometry import Line, Square, Cube
 
 def print_integral(domain, expr, measure=None):
     measure_str = ''

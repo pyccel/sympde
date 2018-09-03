@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from symfe.core import Line, Square, Cube
+from sympde.core import Line, Square, Cube
 
 # ...
 def test_1d():

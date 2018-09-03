@@ -7,11 +7,11 @@ from sympy import Tuple
 from sympy import Matrix
 from sympy import srepr
 
-from symfe.core import (dx, dy, dz)
-from symfe.core import grad, dot, inner
-from symfe.core import Field
-from symfe.core import get_index_derivatives_atom
-from symfe.core import H1Space
+from sympde.core import (dx, dy, dz)
+from sympde.core import grad, dot, inner
+from sympde.core import Field
+from sympde.core import get_index_derivatives_atom
+from sympde.core import H1Space
 
 
 # ...

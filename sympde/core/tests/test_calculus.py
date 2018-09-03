@@ -7,11 +7,11 @@ from sympy import symbols
 from sympy import Symbol
 from sympy import Lambda
 
-from symfe.core import (dx, dy, dz)
-from symfe.core import LinearOperator
-from symfe.core import Field
-from symfe.core import grad, dot, inner
-from symfe.core import get_index_derivatives
+from sympde.core import (dx, dy, dz)
+from sympde.core import LinearOperator
+from sympde.core import Field
+from sympde.core import grad, dot, inner
+from sympde.core import get_index_derivatives
 
 
 # ...

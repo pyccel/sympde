@@ -245,8 +245,8 @@ class TestFunction(Symbol):
 
     Examples
 
-    >>> from symfe.codegen.core import SplineFemSpace
-    >>> from symfe.codegen.core import TestFunction
+    >>> from sympde.codegen.core import SplineFemSpace
+    >>> from sympde.codegen.core import TestFunction
     >>> V = SplineFemSpace('V')
     >>> phi = TestFunction(V, 'phi')
     """

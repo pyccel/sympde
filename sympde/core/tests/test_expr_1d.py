@@ -11,20 +11,20 @@ from sympy import Matrix
 from sympy import pi, cos, sin
 from sympy import srepr
 
-from symfe.core import dx, dy, dz
-from symfe.core import Constant
-from symfe.core import Field
-from symfe.core import grad, dot, cross, rot, curl, div
-from symfe.core import H1Space
-from symfe.core import ProductSpace
-from symfe.core import TestFunction
-from symfe.core import VectorTestFunction
-from symfe.core import BilinearForm, LinearForm, FunctionForm
-from symfe.core import atomize, normalize
-from symfe.core import gelatize
-from symfe.core import tensorize
-from symfe.core import Mass, Stiffness, Advection, AdvectionT
-from symfe.core import Unknown
+from sympde.core import dx, dy, dz
+from sympde.core import Constant
+from sympde.core import Field
+from sympde.core import grad, dot, cross, rot, curl, div
+from sympde.core import H1Space
+from sympde.core import ProductSpace
+from sympde.core import TestFunction
+from sympde.core import VectorTestFunction
+from sympde.core import BilinearForm, LinearForm, FunctionForm
+from sympde.core import atomize, normalize
+from sympde.core import gelatize
+from sympde.core import tensorize
+from sympde.core import Mass, Stiffness, Advection, AdvectionT
+from sympde.core import Unknown
 from sympy.physics.quantum import TensorProduct
 
 

@@ -5,9 +5,9 @@ from sympy import Matrix
 from sympy.tensor import IndexedBase
 from sympy import symbols
 
-from symfe.core import Mapping
-from symfe.core import Jacobian, DetJacobian, Covariant, Contravariant
-from symfe.core import dx, dy, dz
+from sympde.core import Mapping
+from sympde.core import Jacobian, DetJacobian, Covariant, Contravariant
+from sympde.core import dx, dy, dz
 
 # ...
 def test_1d():

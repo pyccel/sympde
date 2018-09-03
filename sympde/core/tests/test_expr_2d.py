@@ -13,21 +13,21 @@ from sympy import Function
 from sympy import pi, cos, sin
 from sympy import srepr
 
-from symfe.core import dx, dy, dz
-from symfe.core import Constant
-from symfe.core import Field
-from symfe.core import grad, dot, inner, cross, rot, curl, div
-from symfe.core import H1Space
-from symfe.core import ProductSpace
-from symfe.core import TestFunction
-from symfe.core import VectorTestFunction
-from symfe.core import BilinearForm, LinearForm, FunctionForm
-from symfe.core import atomize, normalize, matricize
-from symfe.core import gelatize
-from symfe.core import tensorize
-from symfe.core import inv_normalize
-from symfe.core import Mass, Stiffness, Advection, AdvectionT
-from symfe.core import Unknown
+from sympde.core import dx, dy, dz
+from sympde.core import Constant
+from sympde.core import Field
+from sympde.core import grad, dot, inner, cross, rot, curl, div
+from sympde.core import H1Space
+from sympde.core import ProductSpace
+from sympde.core import TestFunction
+from sympde.core import VectorTestFunction
+from sympde.core import BilinearForm, LinearForm, FunctionForm
+from sympde.core import atomize, normalize, matricize
+from sympde.core import gelatize
+from sympde.core import tensorize
+from sympde.core import inv_normalize
+from sympde.core import Mass, Stiffness, Advection, AdvectionT
+from sympde.core import Unknown
 from sympy.physics.quantum import TensorProduct
 
 # ...

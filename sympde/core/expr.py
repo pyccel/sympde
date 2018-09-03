@@ -601,7 +601,7 @@ class Kron(BilinearAtomicForm):
         args2 = ['B%s'%i for i in range(ln)]
         try:
             import importlib
-            package = importlib.import_module("symfe.codegen.templates.kron")
+            package = importlib.import_module("sympde.codegen.templates.kron")
         except:
             raise ImportError('could not import kron_dot')
         name = 'kron_dot_2d'
@@ -1159,7 +1159,7 @@ def tensorize(a):
         v = tests[0]
         u = trials[0]
 
-        from symfe.core import H1Space
+        from sympde.core import H1Space
         V = H1Space(V.name, ldim=V.ldim, coordinates=[i.name for i in V.coordinates])
         U = H1Space(U.name, ldim=U.ldim, coordinates=[i.name for i in U.coordinates])
 

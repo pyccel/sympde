@@ -1,7 +1,7 @@
 # coding: utf-8
 
-from symfe.core import BasicSobolevSpace
-from symfe.core import ProductSpace
+from sympde.core import BasicSobolevSpace
+from sympde.core import ProductSpace
 
 # ...
 def test_space():
