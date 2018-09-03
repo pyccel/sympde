@@ -55,7 +55,6 @@ from .space import BasicSobolevSpace
 from .space import ProductSpace
 from .space import TestFunction
 from .space import VectorTestFunction
-from spl.linalg.stencil import StencilVector
 
 class BasicForm(Expr):
 
@@ -590,13 +589,13 @@ class Kron(BilinearAtomicForm):
     """."""
 
     def __new__(cls, ls):
-        
+
         ln = len(ls)
         dim = len(ls[0])
         obj = Basic.__new__(cls, ls)
         if dim >= 3:
             raise NotImplementedError('TODO')
-         
+
         args1 = ['A%s'%i for i in range(ln)]
         args2 = ['B%s'%i for i in range(ln)]
         try:
@@ -622,7 +621,7 @@ class Kron(BilinearAtomicForm):
     @property
     def args(self):
         return self._args[0]
- 
+
     def dot(self, x):
         space = x.space
         args = list(zip(*self.args))
@@ -635,16 +634,18 @@ class Kron(BilinearAtomicForm):
         starts = space.starts
         ends   = space.ends
         pads   = space.pads
+
+        from spl.linalg.stencil import StencilVector
         Y      = StencilVector(space)
         X_tmp  = StencilVector(space)
         #self._dot(starts,ends,pads,x._data.T,Y._data.T,X_tmp._data.T,*args1,*args2)
         self._dot(starts,ends,pads,x._data,Y._data,X_tmp._data,*args1,*args2)
         return Y
-        
-  
+
+
     def __str__(self):
         return 'Kron'
-  
+
     def _sympystr(self, printer):
         return 'Kron'
 
@@ -992,8 +993,8 @@ def gelatize(a, basis=None, verbose=False):
 #      - check coefficinets/functions
 def _tensorize_core(expr, dim, tests, trials):
 
-    
-    
+
+
 
     if isinstance(expr, Add):
         args = [_tensorize_core(i, dim, tests, trials) for i in expr.args]
@@ -1035,7 +1036,7 @@ def _tensorize_core(expr, dim, tests, trials):
         u = trials[0]
 
         ops = {'x': dx, 'y': dy, 'z': dz}
-        
+
         for ui,vi in zip(d_atoms[u], d_atoms[v]):
             coord = ui.space.coordinates.name
             d = ops[coord]
@@ -1067,11 +1068,11 @@ def _tensorize_core(expr, dim, tests, trials):
 
             expr = expr.subs({old: new})
             # ...
-        
-        
+
+
         expr = subs_mul(expr)
         # ...
-    
+
 
     return expr
 
@@ -1206,5 +1207,5 @@ def subs_mul(expr):
     else:
 
         return expr
- 
+
 

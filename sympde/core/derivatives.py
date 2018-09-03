@@ -938,7 +938,7 @@ class Covariant(MappingApplication):
             det = J[0,0]* J[1,1] - J[0,1]* J[1,0]
             J_inv = Matrix([[J[1,1], -J[0,1]], [-J[1,0], J[0,0]]])
             M = J_inv.transpose() / det
-            v = M.dot(v)
+            v = M*v
             return Tuple(*v)
 
         elif dim == 3:
@@ -954,12 +954,12 @@ class Covariant(MappingApplication):
 [                                                                                                                                                                                                                                                                                                                  (-(J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*J[2, 0] + (J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0])*J[1, 0])/((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*(J[0, 0]*J[2, 2] - J[0, 2]*J[2, 0]) - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0])),                                                                                                                                                                                                                                                                                                                   -(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0])*J[0, 0]/((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*(J[0, 0]*J[2, 2] - J[0, 2]*J[2, 0]) - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0])),                                                  (J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*J[0, 0]/((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*(J[0, 0]*J[2, 2] - J[0, 2]*J[2, 0]) - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0]))]])
 
             M = J_inv.transpose() / det
-            v = M.dot(v)
+            v = M*v
             return Tuple(*v)
 
         else:
             M = J.inv().transpose()
-            v = M.dot(v)
+            v = M*v
             return Tuple(*v)
 
 class Contravariant(MappingApplication):
@@ -981,7 +981,7 @@ class Contravariant(MappingApplication):
         v = Matrix(v)
         J = Matrix(Jacobian(F))
         j = J.det()
-        v = [i/j for i in J.dot(v)]
+        v = [i/j for i in J*v]
         return Tuple(*v)
 
 # ...

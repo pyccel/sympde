@@ -32,7 +32,7 @@ packages = find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"])
 
 def setup_package():
     if 'setuptools' in sys.modules:
-        setup_args['install_requires'] = ['numpy']
+        setup_args['install_requires'] = ['numpy', 'sympy']
 
     setup(packages = packages, \
           include_package_data = True, \

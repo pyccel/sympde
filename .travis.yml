@@ -34,8 +34,4 @@ install:
 # unfortunately, we cannot invoke pytest on the whole project,
 # since sympy must be reinitialized (because of the global namespace?)
 script:
-  - python -m pytest sympde/core/tests/test_derivatives.py
-  - python -m pytest sympde/core/tests/test_space.py
-  - python -m pytest sympde/core/tests/test_expr_1d.py
-  - python -m pytest sympde/core/tests/test_expr_2d.py
-  - python -m pytest sympde/core/tests/test_expr_3d.py
+  - chmod +rx bin/run_tests.sh ; bin/run_tests.sh
