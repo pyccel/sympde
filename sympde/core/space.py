@@ -253,7 +253,8 @@ class TestFunction(Symbol):
     _space = None
     is_commutative = True
     def __new__(cls, space, name=None):
-        obj =  Basic.__new__(cls, name)
+#        obj =  Basic.__new__(cls, name)
+        obj = Symbol.__new__(cls, name)
         obj._space = space
         return obj
 
@@ -261,9 +262,9 @@ class TestFunction(Symbol):
     def space(self):
         return self._space
 
-    @property
-    def name(self):
-        return self._args[0]
+#    @property
+#    def name(self):
+#        return self._args[0]
 
     def duplicate(self, name):
         return TestFunction(self.space, name)
