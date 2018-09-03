@@ -1,7 +1,7 @@
 sympde
 ======
 
-|build-status|
+|build-devel| |docs|
 
 **sympde** is a Symbolic calculus library for partial differential equations and variational forms. It can be used to have similar capabilities as the fenics_ project, by extending and writing your own *printing* functions.
 
@@ -27,3 +27,9 @@ Installation
     :alt: build status
     :scale: 100%
     :target:  https://travis-ci.org/pyccel/sympde
+
+.. |docs| image:: https://readthedocs.org/projects/sympde/badge/?version=latest
+    :alt: Documentation Status
+    :scale: 100%
+    :target: http://sympde.readthedocs.io/en/latest/?badge=latest
+
