@@ -10,6 +10,8 @@ Welcome to sympde's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   quick
+
 
 
 Indices and tables
