@@ -1,0 +1,41 @@
+sudo: required
+language: python
+
+# which python versions to test
+python:
+  - "3.4"
+#  - "3.5"
+#  - "3.6"
+
+matrix:
+  allow_failures:
+    - python: "3.4"
+#    - python: "3.5"
+#    - python: "3.6"
+
+virtualenv:
+    system_site_packages: true
+
+# Cache directory $HOME/.cache/pip
+cache: pip
+
+# for the moment, we git clone spl until we can install it using pip
+before_install:
+  - python -m pip install --upgrade pip
+  - python -m pip install -r requirements.txt
+  - python -m pip uninstall -y sympde
+
+# command to install dependencies
+install:
+  - pip install -r requirements.txt
+  - python -m pip install .
+
+# command to run tests
+# unfortunately, we cannot invoke pytest on the whole project,
+# since sympy must be reinitialized (because of the global namespace?)
+script:
+  - python -m pytest sympde/core/tests/test_derivatives.py
+  - python -m pytest sympde/core/tests/test_space.py
+  - python -m pytest sympde/core/tests/test_expr_1d.py
+  - python -m pytest sympde/core/tests/test_expr_2d.py
+  - python -m pytest sympde/core/tests/test_expr_3d.py
