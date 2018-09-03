@@ -639,7 +639,8 @@ class Kron(BilinearAtomicForm):
         Y      = StencilVector(space)
         X_tmp  = StencilVector(space)
         #self._dot(starts,ends,pads,x._data.T,Y._data.T,X_tmp._data.T,*args1,*args2)
-        self._dot(starts,ends,pads,x._data,Y._data,X_tmp._data,*args1,*args2)
+        args = list(args1) + list(args2)
+        self._dot(starts,ends,pads,x._data,Y._data,X_tmp._data,*args)
         return Y
 
 
