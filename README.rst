@@ -3,7 +3,13 @@ sympde
 
 |build-status|
 
-Symbolic calculus for partial differential equations (and variational forms)
+**sympde** is a Symbolic calculus library for partial differential equations and variational forms. It can be used to have similar capabilities as the fenics_ project, by extending and writing your own *printing* functions.
+
+An example of use can be found in spl_ or symgp_. 
+
+.. _spl: https://github.com/pyccel/spl
+.. _symgp: https://github.com/pyccel/symgp
+.. _fenics: https://fenicsproject.org/
 
 Installation
 ************
