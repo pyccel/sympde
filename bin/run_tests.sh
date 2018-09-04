@@ -10,3 +10,4 @@ python3 -m pytest sympde/core/tests/test_space.py
 
 python3 -m pytest sympde/printing/tests/test_kernel_1d.py
 python3 -m pytest sympde/printing/tests/test_kernel_2d.py
+python3 -m pytest sympde/printing/tests/test_kernel_3d.py
