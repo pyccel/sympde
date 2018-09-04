@@ -1,3 +1,9 @@
 sympy==1.2
 numpy
 scipy
+
+# needed for pyccel
+textx==1.6.1
+redbaron==0.6.3
+#tabulate==0.8.2
+termcolor
