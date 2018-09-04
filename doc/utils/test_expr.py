@@ -183,18 +183,28 @@ def dotexport(expr, fname):
 # ...
 
 # ...
-from sympde import grad, dot
-from sympde import FunctionSpace
-from sympde import TestFunction
-from sympde import BilinearForm
-from sympde import atomize
+#from sympde import grad, dot
+#from sympde import FunctionSpace
+#from sympde import TestFunction
+#from sympde import BilinearForm
+#from sympde import atomize
+#
+#V = FunctionSpace('V', ldim=2)
+#U = FunctionSpace('U', ldim=2)
+#
+#v = TestFunction(V, name='v')
+#u = TestFunction(U, name='u')
+#
+#a = BilinearForm((v,u), dot(grad(v), grad(u)) + v*u)
+#print(atomize(a.expr))
+# ...
 
-V = FunctionSpace('V', ldim=2)
-U = FunctionSpace('U', ldim=2)
+# ...
+from sympde import grad, div
+from sympde import Unknown
+from sympde.printing import latex
 
-v = TestFunction(V, name='v')
-u = TestFunction(U, name='u')
+u = Unknown('u', ldim=2)
 
-a = BilinearForm((v,u), dot(grad(v), grad(u)) + v*u)
-print(atomize(a.expr))
+print(latex(- div(grad(u)) + u))
 # ...

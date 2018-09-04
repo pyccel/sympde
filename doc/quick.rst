@@ -290,7 +290,7 @@ A FunctionForm allows you to write expressions that can be integrated over the c
   b = FunctionForm(div(grad(F-cos(2*pi*x))))
 
 Evaluation
-**********
+^^^^^^^^^^
 
 The purpose of **sympde** is to declare objects that are needed to write an abstract mathematical model for problems involving partial differential equations. It does not provide any discretization. However, it provides you also with algorithms to manipulate the symbolic expressions. 
 For example, when using *generic* operators such as **grad** or **div**, the expression is not evaluated. For this reason, **sympde** provides the function **evaluate** that allows you to transform your expression into atomic operators such as **dx**, **dy**, **dz**. In the following example, we *evaluate* the Laplace operator:
@@ -351,4 +351,20 @@ The result is then:
 
 Notice that **atomize** is a low level function and is called inside **evaluate**. For this reason, **atomize** only operates on the expression of **sympde** forms.
 
+Printing
+^^^^^^^^
 
+Latex
+_____
+
+A symbolic expression can be printed in latex. This is done by calling the function **latex** on your expression or **sympde** forms.
+
+.. code-block:: python
+
+  from sympde import grad, div
+  from sympde import Unknown
+  from sympde.printing import latex
+
+  u = Unknown('u', ldim=2)
+
+  print(latex(- div(grad(u)) + u))
