@@ -15,13 +15,13 @@ from sympde.core import dx, dy, dz
 from sympde.core import Constant
 from sympde.core import Field
 from sympde.core import grad, dot, cross, rot, curl, div
-from sympde.core import H1Space
+from sympde.core import FunctionSpace
 from sympde.core import ProductSpace
 from sympde.core import TestFunction
 from sympde.core import VectorTestFunction
 from sympde.core import BilinearForm, LinearForm, FunctionForm
 from sympde.core import atomize, normalize
-from sympde.core import gelatize
+from sympde.core import evaluate
 from sympde.core import tensorize
 from sympde.core import Mass, Stiffness, Advection, AdvectionT
 from sympde.core import Unknown
@@ -32,7 +32,7 @@ from sympy.physics.quantum import TensorProduct
 def test_atomize_1d_1():
     print('============ test_atomize_1d_1 =============')
 
-    V = H1Space('V', ldim=1)
+    V = FunctionSpace('V', ldim=1)
 
     v = TestFunction(V, name='v')
     w = TestFunction(V, name='w')
@@ -65,8 +65,8 @@ def test_atomize_1d_1():
 def test_normalize_1d_1():
     print('============ test_normalize_1d_1 =============')
 
-    V = H1Space('V', ldim=1)
-    U = H1Space('U', ldim=1)
+    V = FunctionSpace('V', ldim=1)
+    U = FunctionSpace('U', ldim=1)
 
     v = TestFunction(V, name='v')
     u = TestFunction(U, name='u')
@@ -95,11 +95,11 @@ def test_normalize_1d_1():
 # ...
 
 # ...
-def test_gelatize_1d_1():
-    print('============ test_gelatize_1d_1 =============')
+def test_evaluate_1d_1():
+    print('============ test_evaluate_1d_1 =============')
 
-    V = H1Space('V', ldim=1)
-    U = H1Space('U', ldim=1)
+    V = FunctionSpace('V', ldim=1)
+    U = FunctionSpace('U', ldim=1)
 
     v = TestFunction(V, name='v')
     u = TestFunction(U, name='u')
@@ -111,22 +111,22 @@ def test_gelatize_1d_1():
 
     # ...
     a = BilinearForm((v,u), dot(grad(v), grad(u)))
-    assert(gelatize(a, basis={v: 'Ni', u: 'Nj'}) == Ni_x*Nj_x)
+    assert(evaluate(a, basis={v: 'Ni', u: 'Nj'}) == Ni_x*Nj_x)
     # ...
 
     # ...
     a = BilinearForm((v,u), dot(grad(v), grad(u)) + c*v*u)
-    assert(gelatize(a, basis={v: 'Ni', u: 'Nj'}) == Ni_x*Nj_x + c*Ni*Nj)
+    assert(evaluate(a, basis={v: 'Ni', u: 'Nj'}) == Ni_x*Nj_x + c*Ni*Nj)
     # ...
 
     # ...
     a = BilinearForm((v,u), dot(grad(v), grad(u)) + F*v*u)
-    assert(gelatize(a, basis={v: 'Ni', u: 'Nj'}) == Ni_x*Nj_x + F*Ni*Nj)
+    assert(evaluate(a, basis={v: 'Ni', u: 'Nj'}) == Ni_x*Nj_x + F*Ni*Nj)
     # ...
 
     # ...
     a = BilinearForm((v,u), dot(grad(F*v), grad(u)))
-    assert(gelatize(a, basis={v: 'Ni', u: 'Nj'}) == F*Ni_x*Nj_x + Ni*Nj_x*dx(F))
+    assert(evaluate(a, basis={v: 'Ni', u: 'Nj'}) == F*Ni_x*Nj_x + Ni*Nj_x*dx(F))
     # ...
 # ...
 
@@ -134,10 +134,10 @@ def test_gelatize_1d_1():
 def test_calls_1d_3():
     print('============ test_calls_1d_3 =============')
 
-    V1 = H1Space('V1', ldim=1)
-    V2 = H1Space('V2', ldim=1)
-    U1 = H1Space('U1', ldim=1)
-    U2 = H1Space('U2', ldim=1)
+    V1 = FunctionSpace('V1', ldim=1)
+    V2 = FunctionSpace('V2', ldim=1)
+    U1 = FunctionSpace('U1', ldim=1)
+    U2 = FunctionSpace('U2', ldim=1)
 
     v1 = TestFunction(V1, name='v1')
     v2 = TestFunction(V2, name='v2')
@@ -183,13 +183,13 @@ def test_calls_1d_3():
 # ...
 
 # ...
-def test_gelatize_1d_3():
-    print('============ test_gelatize_1d_3 =============')
+def test_evaluate_1d_3():
+    print('============ test_evaluate_1d_3 =============')
 
-    V1 = H1Space('V1', ldim=1)
-    U1 = H1Space('U1', ldim=1)
-    V2 = H1Space('V2', ldim=1)
-    U2 = H1Space('U2', ldim=1)
+    V1 = FunctionSpace('V1', ldim=1)
+    U1 = FunctionSpace('U1', ldim=1)
+    V2 = FunctionSpace('V2', ldim=1)
+    U2 = FunctionSpace('U2', ldim=1)
 
     v1 = TestFunction(V1, name='v1')
     u1 = TestFunction(U1, name='u1')
@@ -214,7 +214,7 @@ def test_gelatize_1d_3():
     a = BilinearForm(((v1, v2), (u1, u2)), expr)
 
     expected = Matrix([[Ni*Nj, 0], [0, Ni_x*Nj_x]])
-    assert(gelatize(a, basis=basis) == expected)
+    assert(evaluate(a, basis=basis) == expected)
     # ...
 
     # ...
@@ -222,13 +222,13 @@ def test_gelatize_1d_3():
     a = BilinearForm(((v1, v2), (u1, u2)), expr)
 
     expected = Matrix([[Ni*Nj, Ni_x*Nj], [Ni*Nj_x, Ni_x*Nj_x]])
-    assert(gelatize(a, basis=basis) == expected)
+    assert(evaluate(a, basis=basis) == expected)
     # ...
 
 #    expr = v1*u1 + dx(v2)*dx(u2) + dx(v2)*u1 + v1*dx(u2)
 #    expr = BilinearForm(((v1, v2), (u1, u2)), expr)
 #    print('> input         >>> {0}'.format(expr))
-#    print('> normal form   >>> {0}'.format(gelatize(expr, basis=basis)))
+#    print('> normal form   >>> {0}'.format(evaluate(expr, basis=basis)))
 
 # ...
 
@@ -236,8 +236,8 @@ def test_gelatize_1d_3():
 def test_bilinear_form_1d_10():
     print('============ test_bilinear_form_1d_10 =============')
 
-    U = H1Space('U', ldim=1)
-    V = H1Space('V', ldim=1)
+    U = FunctionSpace('U', ldim=1)
+    V = FunctionSpace('V', ldim=1)
 
     u = TestFunction(U, name='u')
     v = TestFunction(V, name='v')
@@ -257,32 +257,32 @@ def test_bilinear_form_1d_10():
 
     # ...
     expected = Ni*Nj + Ni_x*Nj_x
-    assert(gelatize(a + b, basis={v: 'Nj', u: 'Ni'}) == expected)
+    assert(evaluate(a + b, basis={v: 'Nj', u: 'Ni'}) == expected)
     # ...
 
     # ...
     expected = 2*Ni_x*Nj_x
-    assert(gelatize(2 * a, basis={v: 'Nj', u: 'Ni'}) == expected)
+    assert(evaluate(2 * a, basis={v: 'Nj', u: 'Ni'}) == expected)
     # ...
 
     # ...
     expected = c1*Ni_x*Nj_x
-    assert(gelatize(c1*a, basis={v: 'Nj', u: 'Ni'}) == expected)
+    assert(evaluate(c1*a, basis={v: 'Nj', u: 'Ni'}) == expected)
     # ...
 
     # ...
     expected = c2*Ni*Nj + c1*Ni_x*Nj_x
-    assert(gelatize(c1*a + c2*b, basis={v: 'Nj', u: 'Ni'}) == expected)
+    assert(evaluate(c1*a + c2*b, basis={v: 'Nj', u: 'Ni'}) == expected)
     # ...
 
     # ...
     expected = Ni_x*Nj_x*c1 + c2*(Ni*Nj + Ni_x*Nj)
-    assert(gelatize(c1*a  + c2*(b + adv), basis={v: 'Nj', u: 'Ni'}) == expected)
+    assert(evaluate(c1*a  + c2*(b + adv), basis={v: 'Nj', u: 'Ni'}) == expected)
     # ...
 
 #    expr = adv(v1, u1)
 #    print('> input      >>> {0}'.format(expr))
-#    print('> gelatized  >>> {0}'.format(gelatize(expr, basis={V: 'Nj', U: 'Ni'}) ))
+#    print('> evaluated  >>> {0}'.format(evaluate(expr, basis={V: 'Nj', U: 'Ni'}) ))
 #    print('')
 # ...
 
@@ -290,7 +290,7 @@ def test_bilinear_form_1d_10():
 def test_linear_form_1d_10():
     print('============ test_linear_form_1d_10 =============')
 
-    V = H1Space('V', ldim=1)
+    V = FunctionSpace('V', ldim=1)
 
     v = TestFunction(V, name='v')
 
@@ -304,31 +304,31 @@ def test_linear_form_1d_10():
 
     # ...
     expected = cos(2*pi*x)*Ni
-    assert(gelatize(LinearForm(v, cos(2*pi*x)*v),
+    assert(evaluate(LinearForm(v, cos(2*pi*x)*v),
                     basis={v: 'Ni'}) == expected)
     # ...
 
     # ...
     expected = f(x)*Ni
-    assert(gelatize(LinearForm(v, f(x)*v),
+    assert(evaluate(LinearForm(v, f(x)*v),
                     basis={v: 'Ni'}) == expected)
     # ...
 
     # ...
     expected = cos(2*pi*x)*Ni_x
-    assert(gelatize(LinearForm(v, cos(2*pi*x)*dx(v)),
+    assert(evaluate(LinearForm(v, cos(2*pi*x)*dx(v)),
                     basis={v: 'Ni'}) == expected)
     # ...
 
     # ...
     expected = f(x)*Ni_xx
-    assert(gelatize(LinearForm(v, f(x)*dx(dx(v))),
+    assert(evaluate(LinearForm(v, f(x)*dx(dx(v))),
                     basis={v: 'Ni'}) == expected)
     # ...
 
 #    expr = LinearForm(v, cos(2*pi*x)*dx(v))
 #    print('> input      >>> {0}'.format(expr))
-#    print('> gelatized  >>> {0}'.format(gelatize(expr, basis={V: 'Ni'}) ))
+#    print('> evaluated  >>> {0}'.format(evaluate(expr, basis={V: 'Ni'}) ))
 #    print('')
 # ...
 
@@ -336,7 +336,7 @@ def test_linear_form_1d_10():
 def test_function_form_1d_10():
     print('============ test_function_form_1d_10 =============')
 
-    V = H1Space('V', ldim=1)
+    V = FunctionSpace('V', ldim=1)
 
     F = Field('F', space=V)
 
@@ -350,32 +350,32 @@ def test_function_form_1d_10():
 
     # ...
     expected = -2*pi*sin(2*pi*x)
-    assert(gelatize(FunctionForm(grad(cos(2*pi*x)), coordinates=[x])) == expected)
+    assert(evaluate(FunctionForm(grad(cos(2*pi*x)), coordinates=[x])) == expected)
     # ...
 
     # ...
     expected = F-cos(2*pi*x)
-    assert(gelatize(FunctionForm(F-cos(2*pi*x))) == expected)
+    assert(evaluate(FunctionForm(F-cos(2*pi*x))) == expected)
     # ...
 
     # ...
     expected = (F-cos(2*pi*x))**2
-    assert(gelatize(FunctionForm((F-cos(2*pi*x))**2)) == expected)
+    assert(evaluate(FunctionForm((F-cos(2*pi*x))**2)) == expected)
     # ...
 
     # ...
     expected = dx(F) + 2*pi*sin(2*pi*x)
-    assert(gelatize(FunctionForm(grad(F-cos(2*pi*x)))) == expected)
+    assert(evaluate(FunctionForm(grad(F-cos(2*pi*x)))) == expected)
     # ...
 
     # ...
     expected = (dx(F) + 2*pi*sin(2*pi*x))**2
-    assert(gelatize(FunctionForm((grad(F-cos(2*pi*x)))**2)) == expected)
+    assert(evaluate(FunctionForm((grad(F-cos(2*pi*x)))**2)) == expected)
     # ...
 
 #    expr = FunctionForm()
 #    print('> input      >>> {0}'.format(expr))
-#    print('> gelatized  >>> {0}'.format(gelatize(expr) ))
+#    print('> evaluated  >>> {0}'.format(evaluate(expr) ))
 #    print('')
 # ...
 
@@ -383,8 +383,8 @@ def test_function_form_1d_10():
 def test_tensorize_1d_1():
     print('============ test_tensorize_1d_1 =============')
 
-    V = H1Space('V', ldim=1)
-    V_0 = H1Space('V_0', ldim=1, coordinates=['x'])
+    V = FunctionSpace('V', ldim=1)
+    V_0 = FunctionSpace('V_0', ldim=1, coordinates=['x'])
 
     v = TestFunction(V, name='v')
     u = TestFunction(V, name='u')
@@ -438,9 +438,9 @@ def test_unknown_1d_1():
 if __name__ == '__main__':
     test_atomize_1d_1()
     test_normalize_1d_1()
-    test_gelatize_1d_1()
+    test_evaluate_1d_1()
 
-    test_gelatize_1d_3()
+    test_evaluate_1d_3()
 
     test_bilinear_form_1d_10()
     test_linear_form_1d_10()

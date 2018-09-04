@@ -16,13 +16,13 @@ from sympde.core import dx, dy, dz
 from sympde.core import Constant
 from sympde.core import Field
 from sympde.core import grad, dot, inner, cross, rot, curl, div
-from sympde.core import H1Space
+from sympde.core import FunctionSpace
 from sympde.core import ProductSpace
 from sympde.core import TestFunction
 from sympde.core import VectorTestFunction
 from sympde.core import BilinearForm, LinearForm, FunctionForm
 from sympde.core import atomize, normalize, matricize
-from sympde.core import gelatize
+from sympde.core import evaluate
 from sympde.core import tensorize
 from sympde.core import Mass, Stiffness, Advection, AdvectionT
 from sympde.core import Unknown
@@ -33,7 +33,7 @@ from sympy.physics.quantum import TensorProduct
 def test_atomize_3d_1():
     print('============ test_atomize_3d_1 =============')
 
-    V = H1Space('V', ldim=3)
+    V = FunctionSpace('V', ldim=3)
 
     v = TestFunction(V, name='v')
     w = TestFunction(V, name='w')
@@ -63,8 +63,8 @@ def test_atomize_3d_1():
 def test_normalize_3d_1():
     print('============ test_normalize_3d_1 =============')
 
-    V = H1Space('V', ldim=3)
-    U = H1Space('U', ldim=3)
+    V = FunctionSpace('V', ldim=3)
+    U = FunctionSpace('U', ldim=3)
 
     v = TestFunction(V, name='v')
     u = TestFunction(U, name='u')
@@ -121,11 +121,11 @@ def test_normalize_3d_1():
 # ...
 
 # ...
-def test_gelatize_3d_1():
-    print('============ test_gelatize_3d_1 =============')
+def test_evaluate_3d_1():
+    print('============ test_evaluate_3d_1 =============')
 
-    V = H1Space('V', ldim=3)
-    U = H1Space('U', ldim=3)
+    V = FunctionSpace('V', ldim=3)
+    U = FunctionSpace('U', ldim=3)
 
     v = TestFunction(V, name='v')
     u = TestFunction(U, name='u')
@@ -159,22 +159,22 @@ def test_gelatize_3d_1():
 
     # ...
     a = BilinearForm((v,u), dot(grad(v), grad(u)))
-    assert(gelatize(a, basis={v: 'Ni', u: 'Nj'}) == Ni_x*Nj_x + Ni_y*Nj_y + Ni_z*Nj_z)
+    assert(evaluate(a, basis={v: 'Ni', u: 'Nj'}) == Ni_x*Nj_x + Ni_y*Nj_y + Ni_z*Nj_z)
     # ...
 
     # ...
     a = BilinearForm((v,u), dot(grad(v), grad(u)) + c*v*u)
-    assert(gelatize(a, basis={v: 'Ni', u: 'Nj'}) == Ni_x*Nj_x + Ni_y*Nj_y + Ni_z*Nj_z + c*Ni*Nj)
+    assert(evaluate(a, basis={v: 'Ni', u: 'Nj'}) == Ni_x*Nj_x + Ni_y*Nj_y + Ni_z*Nj_z + c*Ni*Nj)
     # ...
 
     # ...
     a = BilinearForm((v,u), dot(grad(v), grad(u)) + F*v*u)
-    assert(gelatize(a, basis={v: 'Ni', u: 'Nj'}) == Ni_x*Nj_x + Ni_y*Nj_y + Ni_z*Nj_z + F*Ni*Nj)
+    assert(evaluate(a, basis={v: 'Ni', u: 'Nj'}) == Ni_x*Nj_x + Ni_y*Nj_y + Ni_z*Nj_z + F*Ni*Nj)
     # ...
 
     # ...
     a = BilinearForm((v,u), dot(grad(F*v), grad(u)))
-    assert(gelatize(a, basis={v: 'Ni', u: 'Nj'}) == F*Ni_x*Nj_x + F*Ni_y*Nj_y + F*Ni_z*Nj_z + Ni*Nj_x*dx(F) + Ni*Nj_y*dy(F) + Ni*Nj_z*dz(F))
+    assert(evaluate(a, basis={v: 'Ni', u: 'Nj'}) == F*Ni_x*Nj_x + F*Ni_y*Nj_y + F*Ni_z*Nj_z + Ni*Nj_x*dx(F) + Ni*Nj_y*dy(F) + Ni*Nj_z*dz(F))
     # ...
 
 # ...
@@ -183,7 +183,7 @@ def test_gelatize_3d_1():
 def test_atomize_3d_2():
     print('============ test_atomize_3d_2 =============')
 
-    V = H1Space('V', ldim=3, is_vector=True, shape=3)
+    V = FunctionSpace('V', ldim=3, is_vector=True, shape=3)
 
     v = VectorTestFunction(V, name='v')
 
@@ -201,8 +201,8 @@ def test_atomize_3d_2():
 def test_normalize_3d_2():
     print('============ test_normalize_3d_2 =============')
 
-    V = H1Space('V', ldim=3, is_block=True, shape=3)
-    U = H1Space('U', ldim=3, is_block=True, shape=3)
+    V = FunctionSpace('V', ldim=3, is_block=True, shape=3)
+    U = FunctionSpace('U', ldim=3, is_block=True, shape=3)
 
     v = VectorTestFunction(V, name='v')
     u = VectorTestFunction(U, name='u')
@@ -259,8 +259,8 @@ def test_normalize_3d_2():
 def test_matricize_3d_2():
     print('============ test_matricize_3d_2 =============')
 
-    V = H1Space('V', ldim=3, is_block=True, shape=3)
-    U = H1Space('U', ldim=3, is_block=True, shape=3)
+    V = FunctionSpace('V', ldim=3, is_block=True, shape=3)
+    U = FunctionSpace('U', ldim=3, is_block=True, shape=3)
 
     v = VectorTestFunction(V, name='v')
     u = VectorTestFunction(U, name='u')
@@ -366,8 +366,8 @@ def test_matricize_3d_2():
 #def test_bilinear_form_3d_10():
 #    print('============ test_bilinear_form_3d_10 =============')
 #
-#    U = H1Space('U', ldim=3)
-#    V = H1Space('V', ldim=3)
+#    U = FunctionSpace('U', ldim=3)
+#    V = FunctionSpace('V', ldim=3)
 #
 #    u = TestFunction(U, name='u')
 #    v = TestFunction(V, name='v')
@@ -387,49 +387,49 @@ def test_matricize_3d_2():
 #
 #    # ...
 #    expected = Ni*Nj + Ni_x*Nj_x + Ni_y*Nj_y + Ni_z*Nj_z
-#    assert(gelatize(a + b, basis={v: 'Nj', u: 'Ni'}) == expected)
+#    assert(evaluate(a + b, basis={v: 'Nj', u: 'Ni'}) == expected)
 #    # ...
 #
 #    # ...
 #    expected = Ni*Nj + Ni_x*Nj_x + Ni_y*Nj_y + Ni_z*Nj_z
-#    assert(gelatize(a + b, basis={v: 'Nj', u: 'Ni'}) == expected)
+#    assert(evaluate(a + b, basis={v: 'Nj', u: 'Ni'}) == expected)
 #    # ...
 #
 #    # ...
 #    expected = 2*Ni_x*Nj_x + 2*Ni_y*Nj_y + 2*Ni_z*Nj_z
-#    assert(gelatize(2 * a, basis={v: 'Nj', u: 'Ni'}) == expected)
+#    assert(evaluate(2 * a, basis={v: 'Nj', u: 'Ni'}) == expected)
 #    # ...
 #
 #    # ...
 #    expected = c1*(Ni_x*Nj_x + Ni_y*Nj_y + Ni_z*Nj_z)
-#    assert(gelatize(c1*a, basis={v: 'Nj', u: 'Ni'}) == expected)
+#    assert(evaluate(c1*a, basis={v: 'Nj', u: 'Ni'}) == expected)
 #    # ...
 #
 #    # ...
 #    expected = Ni*Nj*c2 + c1*(Ni_x*Nj_x + Ni_y*Nj_y + Ni_z*Nj_z)
-#    assert(gelatize(c1*a + c2*b, basis={v: 'Nj', u: 'Ni'}) == expected)
+#    assert(evaluate(c1*a + c2*b, basis={v: 'Nj', u: 'Ni'}) == expected)
 #    # ...
 #
 #    # ...
 #    expected = c1*(Ni_x*Nj_x + Ni_y*Nj_y + Ni_z*Nj_z) + c2*(Ni*Nj + Ni_x*Nj)
-#    assert(gelatize(c1*a  + c2*(b + adv), basis={v: 'Nj', u: 'Ni'}) == expected)
+#    assert(evaluate(c1*a  + c2*(b + adv), basis={v: 'Nj', u: 'Ni'}) == expected)
 #    # ...
 #
 #    # ...
-#    assert(gelatize(a(u1, v1), basis={v: 'Nj', u: 'Ni'}) == gelatize(a(v1, u1), basis={v: 'Nj', u: 'Ni'}))
+#    assert(evaluate(a(u1, v1), basis={v: 'Nj', u: 'Ni'}) == evaluate(a(v1, u1), basis={v: 'Nj', u: 'Ni'}))
 #    # ...
 #
 ##    # ... TODO debug
 ##    expected = Ni_x*Nj
-##    assert(gelatize(adv(v1, u1), basis={v: 'Nj', u: 'Ni'}) == expected)
+##    assert(evaluate(adv(v1, u1), basis={v: 'Nj', u: 'Ni'}) == expected)
 ##
 ##    expected = Nj_x*Ni
-##    assert(gelatize(adv(u1, v1), basis={v: 'Nj', u: 'Ni'}) == expected)
+##    assert(evaluate(adv(u1, v1), basis={v: 'Nj', u: 'Ni'}) == expected)
 ##    # ...
 #
 ##    expr = c1*a  + c2*(b + adv)
 ##    print('> input      >>> {0}'.format(expr))
-##    print('> gelatized  >>> {0}'.format(gelatize(expr, basis={v: 'Nj', u: 'Ni'}) ))
+##    print('> evaluated  >>> {0}'.format(evaluate(expr, basis={v: 'Nj', u: 'Ni'}) ))
 ##    print('')
 # ...
 
@@ -437,7 +437,7 @@ def test_matricize_3d_2():
 def test_linear_form_3d_10():
     print('============ test_linear_form_3d_10 =============')
 
-    V = H1Space('V', ldim=3)
+    V = FunctionSpace('V', ldim=3)
 
     v = TestFunction(V, name='v')
     x,y,z = V.coordinates
@@ -460,31 +460,31 @@ def test_linear_form_3d_10():
 
     # ...
     expected = cos(2*pi*x)*cos(4*pi*y)*cos(5*pi*z)*Ni
-    assert(gelatize(LinearForm(v, cos(2*pi*x)*cos(4*pi*y)*cos(5*pi*z)*v),
+    assert(evaluate(LinearForm(v, cos(2*pi*x)*cos(4*pi*y)*cos(5*pi*z)*v),
                     basis={v: 'Ni'}) == expected)
     # ...
 
     # ...
     expected = f(x,y,z)*Ni
-    assert(gelatize(LinearForm(v, f(x,y,z)*v),
+    assert(evaluate(LinearForm(v, f(x,y,z)*v),
                     basis={v: 'Ni'}) == expected)
     # ...
 
     # ...
     expected = bx*Ni_x + by*Ni_y + bz*Ni_z + f(x,y,z)*Ni
-    assert(gelatize(LinearForm(v, dot(b, grad(v)) + f(x,y,z)*v),
+    assert(evaluate(LinearForm(v, dot(b, grad(v)) + f(x,y,z)*v),
                     basis={v: 'Ni'}) == expected)
     # ...
 
     # ...
     expected = f(x,y,z)*Ni_x + g(x,y,z)*Ni_y + r(x,y,z)*Ni_z
-    assert(gelatize(LinearForm(v, dot(fgr, grad(v))),
+    assert(evaluate(LinearForm(v, dot(fgr, grad(v))),
                     basis={v: 'Ni'}) == expected)
     # ...
 
 #    expr = c1*a  + c2*(b + adv)
 #    print('> input      >>> {0}'.format(expr))
-#    print('> gelatized  >>> {0}'.format(gelatize(expr, basis={v: 'Ni'}) ))
+#    print('> evaluated  >>> {0}'.format(evaluate(expr, basis={v: 'Ni'}) ))
 #    print('')
 # ...
 
@@ -492,7 +492,7 @@ def test_linear_form_3d_10():
 def test_function_form_3d_10():
     print('============ test_function_form_3d_10 =============')
 
-    V = H1Space('V', ldim=3)
+    V = FunctionSpace('V', ldim=3)
 
     F = Field('F', space=V)
 
@@ -514,34 +514,34 @@ def test_function_form_3d_10():
 
     # ...
     expected = cos(2*pi*x)*cos(3*pi*y)*cos(5*pi*z)
-    assert(gelatize(FunctionForm(cos(2*pi*x)*cos(3*pi*y)*cos(5*pi*z), coordinates=[x,y,z])) == expected)
+    assert(evaluate(FunctionForm(cos(2*pi*x)*cos(3*pi*y)*cos(5*pi*z), coordinates=[x,y,z])) == expected)
     # ...
 
     # ...
     expected = x**2 + y**2 + 1
     e = x*y + z
-    assert(gelatize(FunctionForm(dot(grad(e), grad(e)), coordinates=[x,y,z])) == expected)
+    assert(evaluate(FunctionForm(dot(grad(e), grad(e)), coordinates=[x,y,z])) == expected)
     # ...
 
     # ...
     expected = F - cos(2*pi*x)*cos(3*pi*y)*cos(5*pi*z)
-    assert(gelatize(FunctionForm(F-cos(2*pi*x)*cos(3*pi*y)*cos(5*pi*z))) == expected)
+    assert(evaluate(FunctionForm(F-cos(2*pi*x)*cos(3*pi*y)*cos(5*pi*z))) == expected)
     # ...
 
     # ...
     expected = (F - x*y - z)**2
-    assert(gelatize(FunctionForm((F - x*y - z)**2)) == expected)
+    assert(evaluate(FunctionForm((F - x*y - z)**2)) == expected)
     # ...
 
     # ...
     expected = dx(F)**2 + dy(F)**2 + dz(F)**2
-    assert(gelatize(FunctionForm(dot(grad(F), grad(F)))) == expected)
+    assert(evaluate(FunctionForm(dot(grad(F), grad(F)))) == expected)
     # ...
 
     # ...
     expected = (-x + dy(F))**2 + (-y + dx(F))**2 + (dz(F) - 1)**2
     e = F - (x*y + z)
-    assert(gelatize(FunctionForm(dot(grad(e), grad(e)), coordinates=[x,y,z])) == expected)
+    assert(evaluate(FunctionForm(dot(grad(e), grad(e)), coordinates=[x,y,z])) == expected)
     # ...
 
     # ... TODO debug. => infinite recursion!!! why?
@@ -554,7 +554,7 @@ def test_function_form_3d_10():
 #    e = F - (x*y + z)
 #    expr = FunctionForm(dot(grad(e), grad(e)), coordinates=[x,y,z])
 #    print('> input      >>> {0}'.format(expr))
-#    print('> gelatized  >>> {0}'.format(gelatize(expr) ))
+#    print('> evaluated  >>> {0}'.format(evaluate(expr) ))
 #    print('')
 # ...
 
@@ -562,8 +562,8 @@ def test_function_form_3d_10():
 def test_matricize_3d_3():
     print('============ test_matricize_3d_3 =============')
 
-    V = H1Space('V', ldim=3, is_block=True, shape=3)
-    U = H1Space('U', ldim=3)
+    V = FunctionSpace('V', ldim=3, is_block=True, shape=3)
+    U = FunctionSpace('U', ldim=3)
 
     v = VectorTestFunction(V, name='v')
     u = TestFunction(U, name='u')
@@ -594,14 +594,14 @@ def test_matricize_3d_3():
 def test_calls_3d_3():
     print('============ test_calls_3d_3 =============')
 
-    V1 = H1Space('V1', ldim=3)
-    V2 = H1Space('V2', ldim=3)
-    U1 = H1Space('U1', ldim=3)
-    U2 = H1Space('U2', ldim=3)
-    W1 = H1Space('W1', ldim=3, is_block=True, shape=3)
-    W2 = H1Space('W2', ldim=3, is_block=True, shape=3)
-    T1 = H1Space('T1', ldim=3, is_block=True, shape=3)
-    T2 = H1Space('T2', ldim=3, is_block=True, shape=3)
+    V1 = FunctionSpace('V1', ldim=3)
+    V2 = FunctionSpace('V2', ldim=3)
+    U1 = FunctionSpace('U1', ldim=3)
+    U2 = FunctionSpace('U2', ldim=3)
+    W1 = FunctionSpace('W1', ldim=3, is_block=True, shape=3)
+    W2 = FunctionSpace('W2', ldim=3, is_block=True, shape=3)
+    T1 = FunctionSpace('T1', ldim=3, is_block=True, shape=3)
+    T2 = FunctionSpace('T2', ldim=3, is_block=True, shape=3)
 
     v1 = TestFunction(V1, name='v1')
     v2 = TestFunction(V2, name='v2')
@@ -663,13 +663,13 @@ def test_calls_3d_3():
 # ...
 
 # ...
-def test_gelatize_3d_3():
-    print('============ test_gelatize_3d_3 =============')
+def test_evaluate_3d_3():
+    print('============ test_evaluate_3d_3 =============')
 
-    V1 = H1Space('V1', ldim=3)
-    U1 = H1Space('U1', ldim=3)
-    V2 = H1Space('V2', ldim=3)
-    U2 = H1Space('U2', ldim=3)
+    V1 = FunctionSpace('V1', ldim=3)
+    U1 = FunctionSpace('U1', ldim=3)
+    V2 = FunctionSpace('V2', ldim=3)
+    U2 = FunctionSpace('U2', ldim=3)
 
     v1 = TestFunction(V1, name='v1')
     u1 = TestFunction(U1, name='u1')
@@ -694,7 +694,7 @@ def test_gelatize_3d_3():
     a = BilinearForm(((v1, v2), (u1, u2)), expr)
 
     expected = Matrix([[Ni*Nj, 0], [0, Ni_z*Nj_z]])
-    assert(gelatize(a, basis=basis) == expected)
+    assert(evaluate(a, basis=basis) == expected)
     # ...
 
     # ...
@@ -702,23 +702,23 @@ def test_gelatize_3d_3():
     a = BilinearForm(((v1, v2), (u1, u2)), expr)
 
     expected = Matrix([[Ni*Nj, Ni_x*Nj_x], [Ni_y*Nj_y, Ni_z*Nj_z]])
-    assert(gelatize(a, basis=basis) == expected)
+    assert(evaluate(a, basis=basis) == expected)
     # ...
 
 #    expr = v1*u1 + dx(v2)*dx(u1) + dy(v1)*dy(u2) + dz(v2)*dz(u2)
 #    expr = BilinearForm(((v1, v2), (u1, u2)), expr)
 #    print('> input         >>> {0}'.format(expr))
-#    print('> normal form   >>> {0}'.format(gelatize(expr, basis=basis)))
+#    print('> normal form   >>> {0}'.format(evaluate(expr, basis=basis)))
 # ...
 
 # ...
 def test_tensorize_3d_1():
     print('============ test_tensorize_3d_1 =============')
 
-    V = H1Space('V', ldim=3)
-    V_0 = H1Space('V_0', ldim=1, coordinates=['x'])
-    V_1 = H1Space('V_1', ldim=1, coordinates=['y'])
-    V_2 = H1Space('V_2', ldim=1, coordinates=['z'])
+    V = FunctionSpace('V', ldim=3)
+    V_0 = FunctionSpace('V_0', ldim=1, coordinates=['x'])
+    V_1 = FunctionSpace('V_1', ldim=1, coordinates=['y'])
+    V_2 = FunctionSpace('V_2', ldim=1, coordinates=['z'])
 
     v = TestFunction(V, name='v')
     u = TestFunction(V, name='u')
@@ -825,7 +825,7 @@ def test_unknown_3d_1():
 if __name__ == '__main__':
     test_atomize_3d_1()
     test_normalize_3d_1()
-    test_gelatize_3d_1()
+    test_evaluate_3d_1()
 
     test_atomize_3d_2()
     test_normalize_3d_2()
@@ -836,7 +836,7 @@ if __name__ == '__main__':
     test_function_form_3d_10()
 
     test_matricize_3d_3()
-    test_gelatize_3d_3()
+    test_evaluate_3d_3()
 
     test_tensorize_3d_1()
     test_calls_3d_3()

@@ -13,9 +13,9 @@ from sympy.core.containers import Tuple
 from .basic import DottedName
 
 # ...
-class BasicSobolevSpace(Basic):
+class FunctionSpace(Basic):
     """
-    Represents a basic continuous Sobolev space.
+    Represents a basic continuous Function space.
 
     Examples
 
@@ -95,7 +95,7 @@ class BasicSobolevSpace(Basic):
 # ...
 
 # ... TODO shall we keep the definition of is_block/is_vector as it is now?
-class ProductSpace(BasicSobolevSpace):
+class ProductSpace(FunctionSpace):
     """
     Represents a product of continuous Sobolev spaces.
 
@@ -196,48 +196,6 @@ class ProductSpace(BasicSobolevSpace):
         sstr = printer.doprint
         return sstr(self.name)
 # ...
-
-
-# TODO make it as a singleton
-class H1Space(BasicSobolevSpace):
-    """
-    Represents the H1 continuous Sobolev space.
-
-    Examples
-
-    """
-    pass
-
-# TODO make it as a singleton
-class HcurlSpace(BasicSobolevSpace):
-    """
-    Represents the Hcurl continuous Sobolev space.
-
-    Examples
-
-    """
-    pass
-
-# TODO make it as a singleton
-class HdivSpace(BasicSobolevSpace):
-    """
-    Represents the Hdiv continuous Sobolev space.
-
-    Examples
-
-    """
-    pass
-
-# TODO make it as a singleton
-class L2Space(BasicSobolevSpace):
-    """
-    Represents the L2 continuous Sobolev space.
-
-    Examples
-
-    """
-    pass
-
 
 class TestFunction(Symbol):
     """
@@ -365,7 +323,7 @@ class Unknown(TestFunction):
 
     """
     def __new__(cls, name, ldim):
-        V = BasicSobolevSpace('V', ldim=ldim)
+        V = FunctionSpace('V', ldim=ldim)
         return TestFunction.__new__(cls, V, name)
 
     @property

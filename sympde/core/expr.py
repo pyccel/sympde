@@ -2,7 +2,7 @@
 
 # TODO - transpose of BilinearForm
 #      - add unknown status if only one space is given to the BilinearForm
-#        => can not be gelatized except if it is called on a couple test/trial
+#        => can not be evaluated except if it is called on a couple test/trial
 #      - check that a BilinearForm is bilinear (using Constant)
 #      - check that a LinearForm is linear
 #      - add is_symmetric property for BilinearForm
@@ -51,7 +51,7 @@ from .algebra import (Dot_1d,
                       Dot_2d, Inner_2d, Cross_2d,
                       Dot_3d, Inner_3d, Cross_3d)
 
-from .space import BasicSobolevSpace
+from .space import FunctionSpace
 from .space import ProductSpace
 from .space import TestFunction
 from .space import VectorTestFunction
@@ -942,13 +942,13 @@ def matricize(expr):
 # ...
 
 # ... TODO compute basis if not given
-def gelatize(a, basis=None, verbose=False):
+def evaluate(a, basis=None, verbose=False):
 
     if not isinstance(a, (BasicForm, Add, Mul)):
         raise TypeError('Expecting a BasicForm, Add or Mul')
 
     if isinstance(a, Add):
-        args = [gelatize(i, basis=basis, verbose=verbose) for i in a.args]
+        args = [evaluate(i, basis=basis, verbose=verbose) for i in a.args]
         return Add(*args)
 
     elif isinstance(a, Mul):
@@ -963,7 +963,7 @@ def gelatize(a, basis=None, verbose=False):
 
         j = S.One
         if vectors:
-            args = [gelatize(i, basis=basis, verbose=verbose) for i in vectors]
+            args = [evaluate(i, basis=basis, verbose=verbose) for i in vectors]
             j = Mul(*args)
 
         return Mul(i, j)
@@ -1014,7 +1014,7 @@ def _tensorize_core(expr, dim, tests, trials):
             new = S.One
             for i in range(0, dim):
                 coord = _coordinates[i]
-                Vi = BasicSobolevSpace('V_{}'.format(i),
+                Vi = FunctionSpace('V_{}'.format(i),
                                        ldim=1,
                                        coordinates=[coord])
 
@@ -1146,7 +1146,7 @@ def tensorize(a):
 
     # ... TODO this is not the best thing to do
     #          we should modify matricize and call it here
-    e = gelatize(a)
+    e = evaluate(a)
     if isinstance(e, (Matrix, ImmutableDenseMatrix)):
 
         assert(len(a.test_spaces) == 1)
@@ -1161,9 +1161,9 @@ def tensorize(a):
         v = tests[0]
         u = trials[0]
 
-        from sympde.core import H1Space
-        V = H1Space(V.name, ldim=V.ldim, coordinates=[i.name for i in V.coordinates])
-        U = H1Space(U.name, ldim=U.ldim, coordinates=[i.name for i in U.coordinates])
+        from sympde.core import FunctionSpace
+        V = FunctionSpace(V.name, ldim=V.ldim, coordinates=[i.name for i in V.coordinates])
+        U = FunctionSpace(U.name, ldim=U.ldim, coordinates=[i.name for i in U.coordinates])
 
         vv = TestFunction(V, name=v.name*2)
         uu = TestFunction(U, name=u.name*2)

@@ -1,19 +1,19 @@
 # coding: utf-8
 
-from sympde.core import BasicSobolevSpace
+from sympde.core import FunctionSpace
 from sympde.core import ProductSpace
 
 # ...
 def test_space():
     print('============ test_space ==============')
 
-    V1 = BasicSobolevSpace('V1', ldim=2)
-    V2 = BasicSobolevSpace('V2', ldim=2)
-    V3 = BasicSobolevSpace('V3', ldim=2)
+    V1 = FunctionSpace('V1', ldim=2)
+    V2 = FunctionSpace('V2', ldim=2)
+    V3 = FunctionSpace('V3', ldim=2)
 
-    U1 = BasicSobolevSpace('U1', ldim=2)
-    U2 = BasicSobolevSpace('U2', ldim=2)
-    U3 = BasicSobolevSpace('U3', ldim=2, shape=2)
+    U1 = FunctionSpace('U1', ldim=2)
+    U2 = FunctionSpace('U2', ldim=2)
+    U3 = FunctionSpace('U3', ldim=2, shape=2)
 
     V = ProductSpace(V1, V2, V3)
     assert(V.ldim == 2)

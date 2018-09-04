@@ -25,7 +25,7 @@ def test_0():
     print('> expr := {0}'.format(expr))
 
     expr = LinearOperator(expr)
-    print('> gelatized := {0}'.format(expr))
+    print('> evaluated := {0}'.format(expr))
     print('')
     # ...
 
@@ -34,7 +34,7 @@ def test_0():
     print('> expr := {0}'.format(expr))
 
     expr = LinearOperator(expr)
-    print('> gelatized := {0}'.format(expr))
+    print('> evaluated := {0}'.format(expr))
     print('')
     # ...
 
@@ -43,7 +43,7 @@ def test_0():
     print('> expr := {0}'.format(expr))
 
     expr = LinearOperator(expr)
-    print('> gelatized := {0}'.format(expr))
+    print('> evaluated := {0}'.format(expr))
     # ...
 
     # ...
@@ -51,7 +51,7 @@ def test_0():
     print('> expr := {0}'.format(expr))
 
     expr = LinearOperator(expr)
-    print('> gelatized := {0}'.format(expr))
+    print('> evaluated := {0}'.format(expr))
     # ...
 # ...
 
@@ -66,7 +66,7 @@ def test_1():
     print('> expr := {0}'.format(expr))
 
     expr = dx(expr)
-    print('> gelatized := {0}'.format(expr))
+    print('> evaluated := {0}'.format(expr))
     print('')
     # ...
 
@@ -75,7 +75,7 @@ def test_1():
     print('> expr := {0}'.format(expr))
 
     expr = dx(expr)
-    print('> gelatized := {0}'.format(expr))
+    print('> evaluated := {0}'.format(expr))
     print('')
     # ...
 
@@ -85,7 +85,7 @@ def test_1():
     print('> expr := {0}'.format(expr))
 
     expr = dx(expr)
-    print('> gelatized := {0}'.format(expr))
+    print('> evaluated := {0}'.format(expr))
     print('')
     # ...
 # ...
@@ -102,7 +102,7 @@ def test_2():
     print('> expr := {0}'.format(expr))
 
     expr = dx(expr)
-    print('> gelatized := {0}'.format(expr))
+    print('> evaluated := {0}'.format(expr))
     print('')
     # ...
 # ...

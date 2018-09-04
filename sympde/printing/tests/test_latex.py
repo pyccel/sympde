@@ -4,7 +4,7 @@ from sympy import sin, cos, pi
 
 from sympde.core import dx, dy, dz
 from sympde.core import grad, dot, inner, cross, rot, curl, div
-from sympde.core import H1Space
+from sympde.core import FunctionSpace
 from sympde.core import TestFunction
 from sympde.core import VectorTestFunction
 from sympde.core import BilinearForm, LinearForm, FunctionForm
@@ -13,7 +13,7 @@ from sympde.printing.latex import latex
 
 
 def test_1d():
-    V = H1Space('V', ldim=1)
+    V = FunctionSpace('V', ldim=1)
 
     x = V.coordinates
 
@@ -38,7 +38,7 @@ def test_1d():
     assert(latex(f) == r'\int_{0}^{1} - x + \partial_{x}F dx')
 
 def test_2d_1():
-    V = H1Space('V', ldim=2)
+    V = FunctionSpace('V', ldim=2)
 
     x,y = V.coordinates
 
@@ -63,7 +63,7 @@ def test_2d_1():
     assert(latex(f) == r'\int_{0}^{1}\int_{0}^{1} - x y + \partial_{x}F - \partial_{y}F dxdy')
 
 def test_2d_2():
-    V = H1Space('V', ldim=2, is_block=True, shape=2)
+    V = FunctionSpace('V', ldim=2, is_block=True, shape=2)
 
     x,y = V.coordinates
 
@@ -85,7 +85,7 @@ def test_2d_2():
 
 
 def test_3d_1():
-    V = H1Space('V', ldim=3)
+    V = FunctionSpace('V', ldim=3)
 
     x,y,z = V.coordinates
 
@@ -110,7 +110,7 @@ def test_3d_1():
     assert(latex(f) == r'\int_{0}^{1}\int_{0}^{1} - x y z + \partial_{x}F - \partial_{y}F + \partial_{z}F dxdy')
 
 def test_3d_2():
-    V = H1Space('V', ldim=3, is_block=True, shape=3)
+    V = FunctionSpace('V', ldim=3, is_block=True, shape=3)
 
     x,y,z = V.coordinates
 
