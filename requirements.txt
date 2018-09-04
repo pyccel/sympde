@@ -1,2 +1,1 @@
 sympy==1.2
-https://github.com/pyccel/pyccel/archive/devel.zip

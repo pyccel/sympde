@@ -23,7 +23,8 @@ cache: pip
 before_install:
   - python -m pip install --upgrade pip
   - python -m pip uninstall -y sympde
-  - pip install -r requirements.txt
+  - python -m pip install -r requirements.txt
+  - python -m pip install https://github.com/pyccel/pyccel/archive/devel.zip
 
 # command to install dependencies
 install:
