@@ -1,2 +1,15 @@
+# ... needed for pyccel. TODO: remove it later or find a better way
+numpy
+scipy
+textx==1.6.1
+sympy==1.2
+pylint==1.8.2
+parse==1.8.2
+redbaron==0.6.3
+pytest==3.4.2
+tabulate==0.8.2
+termcolor
+# ...
+
 sympy==1.2
 -e git://github.com/pyccel/pyccel.git#egg=pyccel
