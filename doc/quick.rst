@@ -368,3 +368,43 @@ A symbolic expression can be printed in latex. This is done by calling the funct
   u = Unknown('u', ldim=2)
 
   print(latex(- div(grad(u)) + u))
+
+which gives the following result:
+
+.. code-block:: python
+
+  >>> u - \nabla \cdot \nabla{u}
+
+.. math::
+
+  u - \nabla \cdot \nabla{u}
+
+A **BilinearForm** can also be printed:
+
+.. code-block:: python
+
+  from sympde import grad, dot
+  from sympde import FunctionSpace
+  from sympde import TestFunction
+  from sympde import BilinearForm
+  from sympde import atomize
+  from sympde.printing import latex
+
+  V = FunctionSpace('V', ldim=2)
+  U = FunctionSpace('U', ldim=2)
+
+  v = TestFunction(V, name='v')
+  u = TestFunction(U, name='u')
+
+  a = BilinearForm((v,u), dot(grad(v), grad(u)) + v*u)
+  print(latex(a))
+
+which returns 
+
+.. code-block:: python
+
+  >>> \int_{0}^{1}\int_{0}^{1} u v + \nabla{v} \cdot \nabla{u} dxdy
+
+.. math::
+
+  \int_{0}^{1}\int_{0}^{1} u v + \nabla{v} \cdot \nabla{u} dxdy
