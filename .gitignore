@@ -105,3 +105,5 @@ venv.bak/
 
 # sphinx
 doc/_build
+doc/utils/*.dot
+doc/utils/*.png
