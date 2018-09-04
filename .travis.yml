@@ -27,7 +27,7 @@ before_install:
 # command to install dependencies
 install:
   - python -m pip install -r requirements.txt
-  - python -m pip install https://github.com/pyccel/pyccel/archive/devel.zip
+  - python -m pip install git+https://github.com/pyccel/pyccel/#devel
   - python -m pip install .
 
 # command to run tests
