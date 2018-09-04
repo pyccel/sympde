@@ -22,8 +22,8 @@ cache: pip
 # for the moment, we git clone spl until we can install it using pip
 before_install:
   - python -m pip install --upgrade pip
-  - python -m pip install -r requirements.txt
   - python -m pip uninstall -y sympde
+  - pip install -r requirements.txt
 
 # command to install dependencies
 install:
