@@ -23,7 +23,7 @@ Assume we have the following bilinear form for Laplace
   u = TestFunction(U, name='u')
 
   a = BilinearForm((v,u), dot(grad(v), grad(u)) + v*u)
-  print('> tensorize(a) = ', tensorize(a))
+  print(tensorize(a))
 
 the result is then
 
