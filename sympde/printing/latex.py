@@ -2,12 +2,16 @@
 #
 
 from sympy.core import Symbol
+from sympy import Mul
 from sympy.printing.latex import LatexPrinter as LatexPrinterSympy
 
 from sympde.core.expr import BilinearForm, LinearForm, FunctionForm
 from sympde.core.generic import Dot, Inner, Cross
 from sympde.core.generic import Grad, Rot, Curl, Div
 from sympde.core.geometry import Line, Square, Cube
+from sympde.core.derivatives import sort_partial_derivatives
+from sympde.core.derivatives import get_index_derivatives
+from sympde.core.derivatives import get_atom_derivatives
 
 def print_integral(domain, expr, measure=None):
     measure_str = ''
@@ -106,6 +110,34 @@ class LatexPrinter(LatexPrinterSympy):
 
     def _print_FunctionForm(self, expr):
         txt = print_integral(expr.domain, expr.expr,
+                             measure=expr.measure)
+        return txt
+
+    def _print_Kron(self, expr):
+        raise NotImplementedError('TODO')
+
+    # TODO this implementation works only for the 1D case
+    def _print_BilinearAtomicForm(self, expr):
+        # TODO move this to __new__ of BilinearAtomicForm
+        if not isinstance(expr.expr, Mul):
+            raise TypeError('> BilinearAtomicForm must always be of instance Mul')
+
+        coord = expr.coordinates
+        args = expr.expr.args
+        code = ''
+        for i in args:
+            atom = get_atom_derivatives(i)
+            d = get_index_derivatives(i)
+            n_deriv = d[coord.name]
+            deriv = '\prime'*n_deriv
+
+            if deriv:
+                code = '{code} {atom}^{deriv}'.format(code=code, atom=self._print(atom),
+                                                      deriv=deriv)
+            else:
+                code = '{code} {atom}'.format(code=code, atom=self._print(atom))
+
+        txt = print_integral(expr.domain, code,
                              measure=expr.measure)
         return txt
     # ...

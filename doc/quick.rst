@@ -213,6 +213,18 @@ Let's take a look at the expression tree:
 
 We notice that the BilinearForm arguments are presented as a *Tuple*. The reason is that you can also define a bilinear form that is associated to a system of expressions. 
 
+As any sympde expression, a BilinearForm can be printed, calling 
+
+.. code-block:: python
+
+  print(a)
+
+would give
+
+.. code-block:: python
+
+  >>> u*v + Dot(Grad(v), Grad(u))
+
 The following example implements a 1D wave model:
 
 .. code-block:: python

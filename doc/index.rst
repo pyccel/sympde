@@ -11,6 +11,7 @@ Welcome to sympde's documentation!
    :caption: Contents:
 
    quick
+   advanced
 
 
 
