@@ -46,6 +46,9 @@ class PythonCodePrinter(SympyPythonCodePrinter):
         args = ','.join(self._print(i) for i in expr.arguments)
         return'{func}({args})'.format(func=func, args=args)
 
+    def _print_Len(self, expr):
+        return 'len({})'.format(self._print(expr.arg))
+
     def _print_Import(self, expr):
         target = ', '.join([self._print(i) for i in expr.target])
         if expr.source is None:
