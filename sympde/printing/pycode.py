@@ -41,6 +41,19 @@ class PythonCodePrinter(SympyPythonCodePrinter):
     def _print_DottedName(self, expr):
         return '.'.join(self._print(n) for n in expr.name)
 
+    def _print_FunctionCall(self, expr):
+        func = self._print(expr.func)
+        args = ','.join(self._print(i) for i in expr.arguments)
+        return'{func}({args})'.format(func=func, args=args)
+
+    def _print_Import(self, expr):
+        target = ', '.join([self._print(i) for i in expr.target])
+        if expr.source is None:
+            return 'import {target}'.format(target=target)
+        else:
+            source = self._print(expr.source)
+            return 'from {source} import {target}'.format(source=source, target=target)
+
     def _print_For(self, expr):
         iter   = self._print(expr.iterable)
         target = self._print(expr.target)
