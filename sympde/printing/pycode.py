@@ -11,6 +11,9 @@ from sympde.core.derivatives import _partial_derivatives
 
 class PythonCodePrinter(SympyPythonCodePrinter):
 
+    # ...........................
+    # TODO move this to pyccel
+    # ...........................
     def _print_FunctionDef(self, expr):
         name = self._print(expr.name)
         body = '\n'.join(self._print(i) for i in expr.body)
@@ -21,6 +24,22 @@ class PythonCodePrinter(SympyPythonCodePrinter):
         code = ('def {0}({1}):\n'
                 '{2}\n').format(name, args, body)
         return code
+
+    def _print_Return(self, expr):
+        return 'return {}'.format(self._print(expr.expr))
+
+    def _print_Comment(self, expr):
+        txt = self._print(expr.text)
+        return '# {0} '.format(txt)
+
+    def _print_EmptyLine(self, expr):
+        return ''
+
+    def _print_NewLine(self, expr):
+        return '\n'
+
+    def _print_DottedName(self, expr):
+        return '.'.join(self._print(n) for n in expr.name)
 
     def _print_For(self, expr):
         iter   = self._print(expr.iterable)
@@ -68,6 +87,41 @@ class PythonCodePrinter(SympyPythonCodePrinter):
 
     def _print_Slice(self, expr):
         return str(expr)
+
+    def _print_Nil(self, expr):
+        return 'None'
+
+    def _print_Pass(self, expr):
+        return 'pass'
+
+    def _print_Is(self, expr):
+        lhs = self._print(expr.lhs)
+        rhs = self._print(expr.rhs)
+        return'{0} is {1}'.format(lhs,rhs)
+
+    def _print_If(self, expr):
+        lines = []
+        for i, (c, e) in enumerate(expr.args):
+            if i == 0:
+                lines.append("if (%s):" % self._print(c))
+
+            elif i == len(expr.args) - 1 and c == True:
+                lines.append("else:")
+
+            else:
+                lines.append("elif (%s):" % self._print(c))
+
+            if isinstance(e, (list, tuple, Tuple)):
+                for ee in e:
+                    body = self._indent_codestring(self._print(ee))
+                    lines.append(body)
+            else:
+                lines.append(self._print(e))
+        return "\n".join(lines)
+    # ...........................
+
+
+
 
     def _print_dx(self, expr):
         arg = self._print(expr.args[0])
