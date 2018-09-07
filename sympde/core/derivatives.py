@@ -321,6 +321,27 @@ def get_atom_derivatives(expr):
         return expr
 # ...
 
+# ...
+def print_expression(expr):
+
+    atom = get_atom_derivatives(expr)
+    indices = get_index_derivatives_atom(expr, atom)
+
+    # ... change code to a string like '_x'
+    if indices:
+        index = indices[0]
+        code = ''
+        for k,n in list(index.items()):
+            code += k*n
+
+        name = '{name}_{code}'.format(name=atom.name, code=code)
+
+    else:
+        name = str(atom)
+    # ...
+
+    return name
+# ...
 
 # ...
 class DotBasic(CalculusFunction):
