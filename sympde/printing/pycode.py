@@ -134,6 +134,27 @@ class PythonCodePrinter(SympyPythonCodePrinter):
             else:
                 lines.append(self._print(e))
         return "\n".join(lines)
+
+    def _print_String(self, expr):
+        return '"{}"'.format(expr.arg)
+
+    def _print_Shape(self, expr):
+        return '{}.shape'.format(expr.arg)
+
+    def _print_Print(self, expr):
+        args = []
+        for f in expr.expr:
+            if isinstance(f, str):
+                args.append("'{}'".format(f))
+            elif isinstance(f, Tuple):
+                for i in f:
+                    args.append("{}".format(self._print(i)))
+            else:
+                args.append("{}".format(self._print(f)))
+
+        fs = ', '.join(i for i in args)
+
+        return 'print({0})'.format(fs)
     # ...........................
 
 
