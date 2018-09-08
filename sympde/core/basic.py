@@ -92,57 +92,11 @@ class DottedName(Basic):
 
 
 # ...
-class Mapping(IndexedBase):
+class BasicMapping(IndexedBase):
     """
-    Represents a Mapping object.
-
-    Examples
-
+    Represents a basic class for mapping.
     """
-    def __new__(cls, name, rdim, coordinates=None):
-        if isinstance(rdim, (tuple, list, Tuple)):
-            if not len(rdim) == 1:
-                raise ValueError('> Expecting a tuple, list, Tuple of length 1')
-
-            rdim = rdim[0]
-
-        obj = IndexedBase.__new__(cls, name, shape=(rdim))
-
-        if coordinates is None:
-            _coordinates = [Symbol(name) for name in ['x', 'y', 'z'][:rdim]]
-        else:
-            if not isinstance(coordinates, (list, tuple, Tuple)):
-                raise TypeError('> Expecting list, tuple, Tuple')
-
-            for a in coordinates:
-                if not isinstance(a, (str, Symbol)):
-                    raise TypeError('> Expecting str or Symbol')
-
-            _coordinates = [Symbol(name) for name in coordinates]
-
-        obj._name = name
-        obj._rdim = rdim
-        obj._coordinates = _coordinates
-        return obj
-
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def rdim(self):
-        return self._rdim
-
-    @property
-    def coordinates(self):
-        if self.rdim == 1:
-            return self._coordinates[0]
-        else:
-            return self._coordinates
-
-    def _sympystr(self, printer):
-        sstr = printer.doprint
-        return sstr(self.name)
+    pass
 # ...
 
 _coeffs_registery = (Integer, Float, Constant)

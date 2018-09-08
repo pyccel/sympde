@@ -48,7 +48,7 @@ from sympy import Indexed, IndexedBase
 from .basic import CalculusFunction
 from .basic import _coeffs_registery
 from .basic import Field, Constant
-from .basic import Mapping
+from .basic import BasicMapping
 from .algebra import LinearOperator
 from .space import TestFunction, VectorTestFunction, IndexedTestTrial
 from .space import Unknown
@@ -95,7 +95,7 @@ class DifferentialOperator(LinearOperator):
             args = Tuple(*args)
             return Matrix([args])
 
-        elif isinstance(expr, Indexed) and isinstance(expr.base, Mapping):
+        elif isinstance(expr, Indexed) and isinstance(expr.base, BasicMapping):
 
             coord = cls.coordinate
             coordinates = expr.base.coordinates
@@ -331,7 +331,7 @@ def print_expression(expr, logical=False):
                 'z': 'x3'}
 
     # ...
-    mapping = tuple(expr.atoms(Mapping))
+    mapping = tuple(expr.atoms(BasicMapping))
     if mapping:
         mapping = mapping[0]
         dim = mapping.rdim
@@ -886,172 +886,6 @@ class Div_3d(DivBasic):
 
         return dx(u[0]) + dy(u[1]) + dz(u[2])
 # ...
-
-
-class MappingApplication(Function):
-    nargs = None
-
-    def __new__(cls, *args, **options):
-
-        if options.pop('evaluate', True):
-            r = cls.eval(*args)
-        else:
-            r = None
-
-        if r is None:
-            return Basic.__new__(cls, *args, **options)
-        else:
-            return r
-
-class Jacobian(MappingApplication):
-    """
-
-    Examples
-
-    """
-
-    @classmethod
-    def eval(cls, F):
-
-        if not isinstance(F, Mapping):
-            raise TypeError('> Expecting a Mapping object')
-
-        rdim = F.rdim
-
-        F = [F[i] for i in range(0, F.rdim)]
-        F = Tuple(*F)
-
-        if rdim == 1:
-            return Grad_1d(F)
-
-        elif rdim == 2:
-            return Grad_2d(F)
-
-        elif rdim == 3:
-            return Grad_3d(F)
-
-class DetJacobian(MappingApplication):
-    """
-
-    Examples
-
-    """
-
-    @classmethod
-    def eval(cls, F):
-
-        if not isinstance(F, Mapping):
-            raise TypeError('> Expecting a Mapping object')
-
-        J = Matrix(Jacobian(F))
-        dim = F.rdim
-
-        if dim == 2:
-            det = J[0,0]* J[1,1] - J[0,1]* J[1,0]
-            return det
-
-        elif dim == 3:
-            det = (J[0, 0]*J[1, 1]*J[2, 2] -
-                   J[0, 0]*J[1, 2]*J[2, 1] -
-                   J[0, 1]*J[1, 0]*J[2, 2] +
-                   J[0, 1]*J[1, 2]*J[2, 0] +
-                   J[0, 2]*J[1, 0]*J[2, 1] -
-                   J[0, 2]*J[1, 1]*J[2, 0])
-            return det
-
-        else:
-            return J.det()
-
-class InvDetJacobian(MappingApplication):
-    """
-
-    Examples
-
-    """
-
-    @classmethod
-    def eval(cls, F):
-
-        if not isinstance(F, Mapping):
-            raise TypeError('> Expecting a Mapping object')
-
-        det = DetJacobian(F)
-        return 1/det
-
-class Covariant(MappingApplication):
-    """
-
-    Examples
-
-    """
-
-    @classmethod
-    def eval(cls, F, v):
-
-        if not isinstance(F, Mapping):
-            raise TypeError('> Expecting a Mapping')
-
-        if not isinstance(v, (tuple, list, Tuple, Matrix)):
-            raise TypeError('> Expecting a tuple, list, Tuple, Matrix')
-
-        v = Matrix(v)
-        J = Matrix(Jacobian(F))
-        dim = F.rdim
-        if dim == 1:
-            j_inv = 1/J[0,0]
-            v = v[0,0]
-            v = [j_inv * v]
-            return Tuple(*v)
-
-        elif dim == 2:
-            det = J[0,0]* J[1,1] - J[0,1]* J[1,0]
-            J_inv = Matrix([[J[1,1], -J[0,1]], [-J[1,0], J[0,0]]])
-            M = J_inv.transpose() / det
-            v = M*v
-            return Tuple(*v)
-
-        elif dim == 3:
-            det = (J[0, 0]*J[1, 1]*J[2, 2] -
-                   J[0, 0]*J[1, 2]*J[2, 1] -
-                   J[0, 1]*J[1, 0]*J[2, 2] +
-                   J[0, 1]*J[1, 2]*J[2, 0] +
-                   J[0, 2]*J[1, 0]*J[2, 1] -
-                   J[0, 2]*J[1, 1]*J[2, 0])
-
-            J_inv = Matrix([[(((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*(J[0, 0]*J[2, 2] - J[0, 2]*J[2, 0]) - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0]))*J[0, 0]*J[1, 1] - ((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*J[0, 2] - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*J[0, 1])*(-(J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*J[2, 0] + (J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0])*J[1, 0]))/(((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*(J[0, 0]*J[2, 2] - J[0, 2]*J[2, 0]) - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0]))*(J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*J[0, 0]), (-((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*(J[0, 0]*J[2, 2] - J[0, 2]*J[2, 0]) - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0]))*J[0, 0]*J[0, 1] + ((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*J[0, 2] - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*J[0, 1])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0])*J[0, 0])/(((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*(J[0, 0]*J[2, 2] - J[0, 2]*J[2, 0]) - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0]))*(J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*J[0, 0]), -((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*J[0, 2] - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*J[0, 1])/((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*(J[0, 0]*J[2, 2] - J[0, 2]*J[2, 0]) - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0]))],
-[                                                                       (-((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*(J[0, 0]*J[2, 2] - J[0, 2]*J[2, 0]) - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0]))*J[1, 0] - (-(J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*J[2, 0] + (J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0])*J[1, 0])*(J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0]))/(((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*(J[0, 0]*J[2, 2] - J[0, 2]*J[2, 0]) - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0]))*(J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])),                                                                          (((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*(J[0, 0]*J[2, 2] - J[0, 2]*J[2, 0]) - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0]))*J[0, 0] + (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0])*J[0, 0])/(((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*(J[0, 0]*J[2, 2] - J[0, 2]*J[2, 0]) - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0]))*(J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])),                                                 -(J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*J[0, 0]/((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*(J[0, 0]*J[2, 2] - J[0, 2]*J[2, 0]) - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0]))],
-[                                                                                                                                                                                                                                                                                                                  (-(J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*J[2, 0] + (J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0])*J[1, 0])/((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*(J[0, 0]*J[2, 2] - J[0, 2]*J[2, 0]) - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0])),                                                                                                                                                                                                                                                                                                                   -(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0])*J[0, 0]/((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*(J[0, 0]*J[2, 2] - J[0, 2]*J[2, 0]) - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0])),                                                  (J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*J[0, 0]/((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*(J[0, 0]*J[2, 2] - J[0, 2]*J[2, 0]) - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0]))]])
-
-            M = J_inv.transpose() / det
-            v = M*v
-            return Tuple(*v)
-
-        else:
-            M = J.inv().transpose()
-            v = M*v
-            return Tuple(*v)
-
-class Contravariant(MappingApplication):
-    """
-
-    Examples
-
-    """
-
-    @classmethod
-    def eval(cls, F, v):
-
-        if not isinstance(F, Mapping):
-            raise TypeError('> Expecting a Mapping')
-
-        if not isinstance(v, (tuple, list, Tuple, Matrix)):
-            raise TypeError('> Expecting a tuple, list, Tuple, Matrix')
-
-        v = Matrix(v)
-        J = Matrix(Jacobian(F))
-        j = J.det()
-        v = [i/j for i in J*v]
-        return Tuple(*v)
 
 # ...
 def partial_derivative_as_symbol(expr, name=None, dim=None):

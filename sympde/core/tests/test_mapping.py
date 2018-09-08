@@ -20,6 +20,12 @@ def test_1d():
 
     assert(F.name == 'F')
 
+#    # ...
+#    print(print_expression(F))
+#    print(print_expression(F[0]))
+#    print(print_expression(dx(F[0])))
+#    # ...
+
     # ...
     assert(print_expression(F) == 'F')
     assert(print_expression(F[0]) == 'Fx')

@@ -6,4 +6,5 @@ from .geometry     import *
 from .measure      import *
 from .space        import *
 from .expr         import *
+from .mapping      import *
 from .model        import *
