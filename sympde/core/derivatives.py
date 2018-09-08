@@ -323,7 +323,12 @@ def get_atom_derivatives(expr):
 # ...
 
 # ...
-def print_expression(expr):
+def print_expression(expr, logical=False):
+    # dict to map physical to logical coordinates
+    # TODO improve using a Coordinates object, as a singleton
+    d_coords = {'x': 'x1',
+                'y': 'x2',
+                'z': 'x3'}
 
     # ...
     mapping = tuple(expr.atoms(Mapping))
@@ -363,7 +368,11 @@ def print_expression(expr):
         index = indices[0]
         code = ''
         for k,n in list(index.items()):
-            code += k*n
+            if not logical:
+                code += k*n
+
+            else:
+                code += d_coords[k]*n
 
         name = '{name}_{code}'.format(name=atom.name, code=code)
 
