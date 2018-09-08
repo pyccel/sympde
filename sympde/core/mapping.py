@@ -1,5 +1,7 @@
 # coding: utf-8
 
+# TODO  inv jacobian in 3d must be hard coded
+
 from numpy import unique
 
 from sympy.core import Basic
@@ -57,6 +59,13 @@ class Mapping(BasicMapping):
         obj._name = name
         obj._rdim = rdim
         obj._coordinates = _coordinates
+
+        obj._jacobian = None
+        obj._det_jacobian = None
+        obj._covariant = None
+        obj._contravariant = None
+        obj._hessian = None
+
         return obj
 
     @property
@@ -74,9 +83,103 @@ class Mapping(BasicMapping):
         else:
             return self._coordinates
 
+    @property
+    def jacobian(self):
+        if self._jacobian is None:
+            self._compute_jacobian()
+
+        return self._jacobian
+
+    @property
+    def det_jacobian(self):
+        if self._det_jacobian is None:
+            self._compute_det_jacobian()
+
+        return self._det_jacobian
+
+    @property
+    def covariant(self):
+        if self._covariant is None:
+            self._compute_covariant()
+
+        return self._covariant
+
+    @property
+    def contravariant(self):
+        if self._contravariant is None:
+            self._compute_contravariant()
+
+        return self._contravariant
+
+    @property
+    def hessian(self):
+        if self._hessian is None:
+            self._compute_hessian()
+
+        return self._hessian
+
     def _sympystr(self, printer):
         sstr = printer.doprint
         return sstr(self.name)
+
+    def _compute_jacobian(self):
+        M = Matrix(Jacobian(self))
+        self._jacobian = M
+
+    def _compute_det_jacobian(self):
+        J = self.jacobian
+
+        dim = self.rdim
+        if dim == 2:
+            det = J[0,0]* J[1,1] - J[0,1]* J[1,0]
+
+        elif dim == 3:
+            det = (J[0, 0]*J[1, 1]*J[2, 2] -
+                   J[0, 0]*J[1, 2]*J[2, 1] -
+                   J[0, 1]*J[1, 0]*J[2, 2] +
+                   J[0, 1]*J[1, 2]*J[2, 0] +
+                   J[0, 2]*J[1, 0]*J[2, 1] -
+                   J[0, 2]*J[1, 1]*J[2, 0])
+
+        else:
+            det = J.det()
+
+        self._det_jacobian = det
+
+    def _compute_covariant(self):
+
+        J = self.jacobian
+        dim = self.rdim
+        if dim == 1:
+            M = 1/J[0,0]
+
+        elif dim == 2:
+            det = J[0,0]* J[1,1] - J[0,1]* J[1,0]
+            J_inv = Matrix([[J[1,1], -J[0,1]], [-J[1,0], J[0,0]]])
+            M = J_inv.transpose() / det
+
+        else:
+            M = J.inv().transpose()
+
+        # TODO remove this warning once done
+        if dim == 3:
+            print(' TODO inv of jacobian must be hard coded in 3d')
+
+        self._covariant = M
+
+    def _compute_contravariant(self):
+        J = self.jacobian
+        j = self.det_jacobian
+        inv_j = 1/j
+        n_rows, n_cols = J.shape
+        for i_row in range(0, n_rows):
+            for i_col in range(0, n_cols):
+                J[i_row, i_col] *= inv_j
+
+        self._contravariant = J
+
+    def _compute_hessian(self):
+        raise NotImplementedError('TODO')
 # ...
 
 
@@ -135,40 +238,7 @@ class DetJacobian(MappingApplication):
         if not isinstance(F, Mapping):
             raise TypeError('> Expecting a Mapping object')
 
-        J = Matrix(Jacobian(F))
-        dim = F.rdim
-
-        if dim == 2:
-            det = J[0,0]* J[1,1] - J[0,1]* J[1,0]
-            return det
-
-        elif dim == 3:
-            det = (J[0, 0]*J[1, 1]*J[2, 2] -
-                   J[0, 0]*J[1, 2]*J[2, 1] -
-                   J[0, 1]*J[1, 0]*J[2, 2] +
-                   J[0, 1]*J[1, 2]*J[2, 0] +
-                   J[0, 2]*J[1, 0]*J[2, 1] -
-                   J[0, 2]*J[1, 1]*J[2, 0])
-            return det
-
-        else:
-            return J.det()
-
-class InvDetJacobian(MappingApplication):
-    """
-
-    Examples
-
-    """
-
-    @classmethod
-    def eval(cls, F):
-
-        if not isinstance(F, Mapping):
-            raise TypeError('> Expecting a Mapping object')
-
-        det = DetJacobian(F)
-        return 1/det
+        return F.det_jacobian
 
 class Covariant(MappingApplication):
     """
@@ -180,46 +250,18 @@ class Covariant(MappingApplication):
     @classmethod
     def eval(cls, F, v):
 
-        if not isinstance(F, Mapping):
-            raise TypeError('> Expecting a Mapping')
-
         if not isinstance(v, (tuple, list, Tuple, Matrix)):
             raise TypeError('> Expecting a tuple, list, Tuple, Matrix')
 
+        M = F.covariant
         v = Matrix(v)
-        J = Matrix(Jacobian(F))
         dim = F.rdim
         if dim == 1:
-            j_inv = 1/J[0,0]
             v = v[0,0]
-            v = [j_inv * v]
-            return Tuple(*v)
-
-        elif dim == 2:
-            det = J[0,0]* J[1,1] - J[0,1]* J[1,0]
-            J_inv = Matrix([[J[1,1], -J[0,1]], [-J[1,0], J[0,0]]])
-            M = J_inv.transpose() / det
-            v = M*v
-            return Tuple(*v)
-
-        elif dim == 3:
-            det = (J[0, 0]*J[1, 1]*J[2, 2] -
-                   J[0, 0]*J[1, 2]*J[2, 1] -
-                   J[0, 1]*J[1, 0]*J[2, 2] +
-                   J[0, 1]*J[1, 2]*J[2, 0] +
-                   J[0, 2]*J[1, 0]*J[2, 1] -
-                   J[0, 2]*J[1, 1]*J[2, 0])
-
-            J_inv = Matrix([[(((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*(J[0, 0]*J[2, 2] - J[0, 2]*J[2, 0]) - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0]))*J[0, 0]*J[1, 1] - ((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*J[0, 2] - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*J[0, 1])*(-(J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*J[2, 0] + (J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0])*J[1, 0]))/(((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*(J[0, 0]*J[2, 2] - J[0, 2]*J[2, 0]) - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0]))*(J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*J[0, 0]), (-((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*(J[0, 0]*J[2, 2] - J[0, 2]*J[2, 0]) - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0]))*J[0, 0]*J[0, 1] + ((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*J[0, 2] - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*J[0, 1])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0])*J[0, 0])/(((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*(J[0, 0]*J[2, 2] - J[0, 2]*J[2, 0]) - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0]))*(J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*J[0, 0]), -((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*J[0, 2] - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*J[0, 1])/((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*(J[0, 0]*J[2, 2] - J[0, 2]*J[2, 0]) - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0]))],
-[                                                                       (-((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*(J[0, 0]*J[2, 2] - J[0, 2]*J[2, 0]) - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0]))*J[1, 0] - (-(J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*J[2, 0] + (J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0])*J[1, 0])*(J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0]))/(((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*(J[0, 0]*J[2, 2] - J[0, 2]*J[2, 0]) - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0]))*(J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])),                                                                          (((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*(J[0, 0]*J[2, 2] - J[0, 2]*J[2, 0]) - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0]))*J[0, 0] + (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0])*J[0, 0])/(((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*(J[0, 0]*J[2, 2] - J[0, 2]*J[2, 0]) - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0]))*(J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])),                                                 -(J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*J[0, 0]/((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*(J[0, 0]*J[2, 2] - J[0, 2]*J[2, 0]) - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0]))],
-[                                                                                                                                                                                                                                                                                                                  (-(J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*J[2, 0] + (J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0])*J[1, 0])/((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*(J[0, 0]*J[2, 2] - J[0, 2]*J[2, 0]) - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0])),                                                                                                                                                                                                                                                                                                                   -(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0])*J[0, 0]/((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*(J[0, 0]*J[2, 2] - J[0, 2]*J[2, 0]) - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0])),                                                  (J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*J[0, 0]/((J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0])*(J[0, 0]*J[2, 2] - J[0, 2]*J[2, 0]) - (J[0, 0]*J[1, 2] - J[0, 2]*J[1, 0])*(J[0, 0]*J[2, 1] - J[0, 1]*J[2, 0]))]])
-
-            M = J_inv.transpose() / det
-            v = M*v
+            v = [M * v]
             return Tuple(*v)
 
         else:
-            M = J.inv().transpose()
             v = M*v
             return Tuple(*v)
 
@@ -239,9 +281,7 @@ class Contravariant(MappingApplication):
         if not isinstance(v, (tuple, list, Tuple, Matrix)):
             raise TypeError('> Expecting a tuple, list, Tuple, Matrix')
 
+        M = F.contravariant
         v = Matrix(v)
-        J = Matrix(Jacobian(F))
-        j = J.det()
-        v = [i/j for i in J*v]
+        v = M*v
         return Tuple(*v)
-
