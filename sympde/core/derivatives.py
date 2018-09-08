@@ -51,6 +51,7 @@ from .basic import Field, Constant
 from .basic import Mapping
 from .algebra import LinearOperator
 from .space import TestFunction, VectorTestFunction, IndexedTestTrial
+from .space import Unknown
 
 # ...
 class DifferentialOperator(LinearOperator):
@@ -324,8 +325,38 @@ def get_atom_derivatives(expr):
 # ...
 def print_expression(expr):
 
+    # ...
+    mapping = tuple(expr.atoms(Mapping))
+    if mapping:
+        mapping = mapping[0]
+        dim = mapping.rdim
+
+        # ...
+        coords = mapping.coordinates
+        if not isinstance(coords, (tuple, list, Tuple)):
+            coords = [coords]
+
+        else:
+            coords = [i for i in coords]
+
+        coords = [str(x.name) for x in coords]
+        # ...
+
+        # ...
+        lcoords = ['x1', 'x2', 'x3'][:dim]
+        # ...
+
+        for i in range(0, dim):
+            old = mapping[i]
+            new = '{M}{i}'.format(M=str(mapping.name), i=i)
+            new = Unknown(new, ldim=dim)
+            expr = expr.subs(old, new)
+    # ...
+
+    # ...
     atom = get_atom_derivatives(expr)
     indices = get_index_derivatives_atom(expr, atom)
+    # ...
 
     # ... change code to a string like '_x'
     if indices:
@@ -338,6 +369,14 @@ def print_expression(expr):
 
     else:
         name = str(atom)
+    # ...
+
+    # ...
+    if mapping:
+        M = str(mapping.name)
+        for i in range(0, dim):
+            name = name.replace(coords[i], lcoords[i])
+            name = name.replace(M+str(i), M+coords[i])
     # ...
 
     return name

@@ -8,6 +8,7 @@ from sympy import symbols
 from sympde.core import Mapping
 from sympde.core import Jacobian, DetJacobian, Covariant, Contravariant
 from sympde.core import dx, dy, dz
+from sympde.core import print_expression
 
 # ...
 def test_1d():
@@ -18,6 +19,12 @@ def test_1d():
     F = Mapping('F', rdim=rdim)
 
     assert(F.name == 'F')
+
+    # ...
+    assert(print_expression(F) == 'F')
+    assert(print_expression(F[0]) == 'Fx')
+    assert(print_expression(dx(F[0])) == 'Fx_x1')
+    # ...
 
     # ...
     expected = Matrix([[dx(F[0])]])
