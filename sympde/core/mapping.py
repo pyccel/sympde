@@ -254,7 +254,7 @@ class Covariant(MappingApplication):
             raise TypeError('> Expecting a tuple, list, Tuple, Matrix')
 
         M = F.covariant
-        v = Matrix(v)
+#        v = Matrix(v)
         dim = F.rdim
         if dim == 1:
             v = v[0,0]
@@ -262,8 +262,19 @@ class Covariant(MappingApplication):
             return Tuple(*v)
 
         else:
-            v = M*v
-            return Tuple(*v)
+#            v = M*v
+#            return Tuple(*v)
+
+            n,m = M.shape
+            w = []
+            for i in range(0, n):
+                w.append(0)
+
+            for i in range(0, n):
+                for j in range(0, m):
+                    w[i] += M[i,j] * v[j]
+
+            return Tuple(*w)
 
 class Contravariant(MappingApplication):
     """
