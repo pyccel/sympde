@@ -323,7 +323,7 @@ def get_atom_derivatives(expr):
 # ...
 
 # ...
-def print_expression(expr, logical=False):
+def print_expression(expr, logical=False, mapping_name=True):
     # dict to map physical to logical coordinates
     # TODO improve using a Coordinates object, as a singleton
     d_coords = {'x': 'x1',
@@ -351,9 +351,10 @@ def print_expression(expr, logical=False):
         lcoords = ['x1', 'x2', 'x3'][:dim]
         # ...
 
+        name = str(mapping.name)
         for i in range(0, dim):
             old = mapping[i]
-            new = '{M}{i}'.format(M=str(mapping.name), i=i)
+            new = '{M}{i}'.format(M=name, i=i)
             new = Unknown(new, ldim=dim)
             expr = expr.subs(old, new)
     # ...
@@ -385,7 +386,11 @@ def print_expression(expr, logical=False):
         M = str(mapping.name)
         for i in range(0, dim):
             name = name.replace(coords[i], lcoords[i])
-            name = name.replace(M+str(i), M+coords[i])
+            if mapping_name:
+                name = name.replace(M+str(i), M+coords[i])
+
+            else:
+                name = name.replace(M+str(i), coords[i])
     # ...
 
     return name
