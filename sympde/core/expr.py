@@ -119,7 +119,8 @@ class FunctionForm(BasicForm):
     """
     _ldim = None
     _coordinates = None
-    def __new__(cls, expr, coordinates=None, domain=None, measure=None, mapping=None):
+    def __new__(cls, expr, coordinates=None, domain=None, measure=None,
+                mapping=None, space=None):
 
         # ... check that there are no test functions in the expression
         ls = [a for a in expr.free_symbols if isinstance(a, (TestFunction, VectorTestFunction))]
@@ -127,30 +128,33 @@ class FunctionForm(BasicForm):
             raise TypeError('Cannot use test functions in FunctionForm')
         # ...
 
-        # ... compute dim from fields if available
-        space = None
-        ls = [a for a in expr.free_symbols if isinstance(a, Field)]
-        if ls:
-            F = ls[0]
-            space = F.space
-            ldim = F.space.ldim
+        if not space:
+            # compute dim from fields if available
+            ls = [a for a in expr.free_symbols if isinstance(a, Field)]
+            if ls:
+                F = ls[0]
+                space = F.space
+                ldim = F.space.ldim
 
-            if coordinates is None:
-                coordinates = F.space.coordinates
+                if coordinates is None:
+                    coordinates = F.space.coordinates
+
+            else:
+                if coordinates is None:
+                    raise ValueError('> Coordinates must be provided if the expression has no fields')
+
+                ldim = len(coordinates)
+
+                ID = abs(hash(expr))
+                space = FunctionSpace('space_{}'.format(ID), ldim=ldim,
+                                      coordinates=coordinates)
+
+                if ldim == 1:
+                    coordinates = coordinates[0]
 
         else:
-            if coordinates is None:
-                raise ValueError('> Coordinates must be provided if the expression has no fields')
-
-            ldim = len(coordinates)
-
-            ID = abs(hash(expr))
-            space = FunctionSpace('space_{}'.format(ID), ldim=ldim,
-                                  coordinates=coordinates)
-
-            if ldim == 1:
-                coordinates = coordinates[0]
-        # ...
+            ldim = space.ldim
+            coordinates = space.coordinates
 
         domain = BasicForm._init_domain(domain, ldim)
         measure = BasicForm._init_measure(measure, coordinates)
