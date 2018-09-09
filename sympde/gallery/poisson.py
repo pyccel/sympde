@@ -25,6 +25,7 @@ class Poisson(Model):
     """
     def __new__(cls, dim, *args, **kwargs):
 
+        # ... abstract model
         V = FunctionSpace('V', ldim=dim)
 
         v = TestFunction(V, name='v')
@@ -33,6 +34,7 @@ class Poisson(Model):
         expr = dot(grad(v), grad(u))
 
         a = BilinearForm((v,u), expr)
+        # ...
 
         obj = Model.__new__(cls, a, *args, **kwargs)
 
