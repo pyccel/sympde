@@ -12,9 +12,10 @@ from sympy import Integer, Float
 
 from sympde.core.expr import BilinearForm, LinearForm, FunctionForm
 from sympde.core.model import Model
-from sympde.core import grad, dot
+from sympde.core import grad, dot, inner, cross, rot, curl, div
 from sympde.core import FunctionSpace
 from sympde.core import TestFunction
+from sympde.core import VectorTestFunction
 
 class Stokes(Model):
     """
@@ -42,7 +43,8 @@ class Stokes(Model):
         a  = BilinearForm(((v,q), (u,p)), a1(v,u) - a2(v,p) + a2(u,q))
         # ...
 
-        obj = Model.__new__(cls, a, a1, a2, *args, **kwargs)
+#        obj = Model.__new__(cls, a, a1, a2, *args, **kwargs)
+        obj = Model.__new__(cls, a1, a2, *args, **kwargs)
 
         obj._spaces = [V, W]
 

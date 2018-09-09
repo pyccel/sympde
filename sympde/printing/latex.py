@@ -5,6 +5,8 @@ from sympy.core import Symbol
 from sympy import Mul
 from sympy.printing.latex import LatexPrinter as LatexPrinterSympy
 
+from pyccel.ast.core import Nil
+
 from sympde.core.expr import BilinearForm, LinearForm, FunctionForm
 from sympde.core.generic import Dot, Inner, Cross
 from sympde.core.generic import Grad, Rot, Curl, Div
@@ -141,6 +143,37 @@ class LatexPrinter(LatexPrinterSympy):
                              measure=expr.measure)
         return txt
     # ...
+
+    def _print_Model(self, expr):
+        empty = '\ldots'
+        codes = []
+        for stmt in expr.equations:
+            lhs = stmt.lhs
+            rhs = stmt.rhs
+
+            # ...
+            if not isinstance(rhs, Nil):
+                rhs = self._print(rhs)
+
+            else:
+                rhs = empty
+            # ...
+
+            # ...
+            if not isinstance(lhs, Nil):
+                lhs = self._print(lhs)
+
+            else:
+                lhs = empty
+            # ...
+
+            code = '{lhs} &= {rhs}'.format(lhs=lhs, rhs=rhs)
+            codes.append(code)
+
+        code = '\n\\\\'.join(codes)
+        code = '\n' + r'\begin{align}' + code + '\n' + r'\end{align}'
+
+        return code
 
     def _print_Measure(self, expr):
         txt = ''.join(j for j in ['d{}'.format(self._print(i)) for i in expr.args])
