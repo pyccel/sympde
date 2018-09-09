@@ -24,10 +24,15 @@ class Stokes(Model):
     Examples
 
     """
-    def __new__(cls, dim, *args, **kwargs):
+    def __new__(cls, **kwargs):
+        # ...
+        dim = kwargs.pop('dim', None)
+        if dim is None:
+            raise ValueError('> Expecting a dim entry')
 
         if not(dim in [2, 3]):
             raise ValueError('> only 2d and 3d models are possible')
+        # ...
 
         # ... abstract model
         V = FunctionSpace('V', ldim=dim, is_block=True, shape=dim)
@@ -43,8 +48,8 @@ class Stokes(Model):
         a  = BilinearForm(((v,q), (u,p)), a1(v,u) - a2(v,p) + a2(u,q))
         # ...
 
-#        obj = Model.__new__(cls, a, a1, a2, *args, **kwargs)
-        obj = Model.__new__(cls, a1, a2, *args, **kwargs)
+#        obj = Model.__new__(cls, a, a1, a2, **kwargs)
+        obj = Model.__new__(cls, a1=a1, a2=a2, **kwargs)
 
         obj._spaces = [V, W]
 

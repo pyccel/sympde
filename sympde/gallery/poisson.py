@@ -23,7 +23,15 @@ class Poisson(Model):
     Examples
 
     """
-    def __new__(cls, dim, *args, **kwargs):
+    def __new__(cls, **kwargs):
+        # ...
+        dim = kwargs.pop('dim', None)
+        if dim is None:
+            raise ValueError('> Expecting a dim entry')
+
+        if not(dim in [2, 3]):
+            raise ValueError('> only 2d and 3d models are possible')
+        # ...
 
         # ... abstract model
         V = FunctionSpace('V', ldim=dim)
@@ -36,7 +44,7 @@ class Poisson(Model):
         a = BilinearForm((v,u), expr)
         # ...
 
-        obj = Model.__new__(cls, a, *args, **kwargs)
+        obj = Model.__new__(cls, a=a, **kwargs)
 
         obj._space = V
 

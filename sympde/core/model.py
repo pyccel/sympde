@@ -24,17 +24,50 @@ class Model(Basic):
     Examples
 
     """
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, **kwargs):
         # ...
         nil = Nil()
         equations = []
-        for i in args:
-            msg_form = '> LinearForm and FunctionForm are not allowed'
-            if isinstance(i, (LinearForm, FunctionForm)):
-                raise TypeError(msg_form)
+        for name, i in list(kwargs.items()):
+            if isinstance(i, BasicForm):
+                # ...
+                signature = None
+                if isinstance(i, BilinearForm):
+                    test = i.test_functions
+                    if len(test) == 1:
+                        test = test[0]
 
-            if isinstance(i, BilinearForm):
-                stmt = Assign(i, nil)
+                    else:
+                        test = Tuple(*test)
+
+                    trial = i.trial_functions
+                    if len(trial) == 1:
+                        trial = trial[0]
+
+                    else:
+                        trial = Tuple(*trial)
+
+                    signature = Tuple(test, trial)
+
+                elif isinstance(i, LinearForm):
+                    test = i.test_functions
+                    if len(test) == 1:
+                        test = test[0]
+
+                    else:
+                        test = Tuple(*test)
+
+                    signature = test
+                # ...
+
+                # ...
+                if signature:
+                    lhs = Function(name)(*signature)
+                else:
+                    lhs = Symbol(name)
+                # ...
+
+                stmt = Assign(lhs, i)
                 equations.append(stmt)
 
             elif isinstance(i, (tuple, list, Tuple)):
@@ -42,8 +75,11 @@ class Model(Basic):
                     raise ValueError('> Expecting two elements in tuple/list/Tuple')
 
                 lhs = i[0] ; rhs = i[1]
-                if isinstance(lhs, (LinearForm, FunctionForm)):
-                    raise TypeError(msg_form)
+                if not isinstance(lhs, BilinearForm):
+                    raise TypeError('> Expecting a BilinearForm as a lhs')
+
+                if not isinstance(rhs, LinearForm):
+                    raise TypeError('> Expecting a LinearForm as a rhs')
 
                 stmt = Assign(lhs, rhs)
                 equations.append(stmt)
