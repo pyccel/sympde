@@ -128,9 +128,11 @@ class FunctionForm(BasicForm):
         # ...
 
         # ... compute dim from fields if available
+        space = None
         ls = [a for a in expr.free_symbols if isinstance(a, Field)]
         if ls:
             F = ls[0]
+            space = F.space
             ldim = F.space.ldim
 
             if coordinates is None:
@@ -141,6 +143,11 @@ class FunctionForm(BasicForm):
                 raise ValueError('> Coordinates must be provided if the expression has no fields')
 
             ldim = len(coordinates)
+
+            ID = abs(hash(expr))
+            space = FunctionSpace('space_{}'.format(ID), ldim=ldim,
+                                  coordinates=coordinates)
+
             if ldim == 1:
                 coordinates = coordinates[0]
         # ...
@@ -154,6 +161,7 @@ class FunctionForm(BasicForm):
         obj._domain = domain
         obj._measure = measure
         obj._mapping = mapping
+        obj._space = space
 
         return obj
 
@@ -164,6 +172,10 @@ class FunctionForm(BasicForm):
     @property
     def ldim(self):
         return self._ldim
+
+    @property
+    def space(self):
+        return self._space
 
     @property
     def coordinates(self):
