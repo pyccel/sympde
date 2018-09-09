@@ -257,8 +257,7 @@ class Covariant(MappingApplication):
 #        v = Matrix(v)
         dim = F.rdim
         if dim == 1:
-            v = v[0,0]
-            v = [M * v]
+            v = [M * v[0]]
             return Tuple(*v)
 
         else:
