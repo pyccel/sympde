@@ -1,6 +1,13 @@
+# coding: utf-8
+
+from itertools import chain
+
 from sympy.core import Symbol
 from sympy import Tuple
 from sympy.printing.pycode import PythonCodePrinter as SympyPythonCodePrinter
+from sympy.printing.pycode import _known_functions
+from sympy.printing.pycode import _known_functions_math
+from sympy.printing.pycode import _known_constants_math
 
 from sympde.core.expr import BilinearForm, LinearForm, FunctionForm
 from sympde.core.generic import Dot, Inner, Cross
@@ -10,6 +17,11 @@ from sympde.core.derivatives import _partial_derivatives
 
 
 class PythonCodePrinter(SympyPythonCodePrinter):
+    _kf = dict(chain(
+        _known_functions.items(),
+        [(k, '' + v) for k, v in _known_functions_math.items()]
+    ))
+    _kc = {k: ''+v for k, v in _known_constants_math.items()}
 
     # ...........................
     # TODO move this to pyccel

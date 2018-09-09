@@ -8,3 +8,4 @@ from .space        import *
 from .expr         import *
 from .mapping      import *
 from .model        import *
+from .math         import *
