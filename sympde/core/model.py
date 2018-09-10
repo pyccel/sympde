@@ -110,7 +110,9 @@ class Model(Basic):
         # TODO this does not work if a form is multiplied by a coefficient
         ls = []
         for stmt in self.equations:
-            ls += [i for i in stmt.rhs + stmt.lhs if isinstance(i, BasicForm)]
+            for i in [stmt.lhs, stmt.rhs]:
+                if isinstance(i, BasicForm):
+                    ls += [i]
         return ls
 
     @property
