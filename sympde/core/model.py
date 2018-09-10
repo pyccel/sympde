@@ -1,5 +1,9 @@
 # coding: utf-8
 
+# TODO problem if a form is multiplied by a coefficient
+#      must change _print_form_call once FormCall is created
+
+
 from numpy import unique
 from collections import OrderedDict
 
@@ -17,6 +21,9 @@ from pyccel.ast.core import Nil
 
 from .expr import BasicForm, BilinearForm, LinearForm, FunctionForm
 
+class Equation(Assign):
+    pass
+
 
 class Model(Basic):
     """
@@ -25,101 +32,66 @@ class Model(Basic):
     Examples
 
     """
+    _name = None
+    _forms = None
+    _equations = None
+
     def __new__(cls, **kwargs):
-        # TODO this does not work if a form is multiplied by a coefficient
+
+        obj = Basic.__new__(cls)
 
         # ...
-        nil = Nil()
-        equations = []
-        d_forms = {}
-        for name, i in list(kwargs.items()):
-            if isinstance(i, BasicForm):
-                # ...
-                signature = None
-                if isinstance(i, BilinearForm):
-                    test = i.test_functions
-                    if len(test) == 1:
-                        test = test[0]
-
-                    else:
-                        test = Tuple(*test)
-
-                    trial = i.trial_functions
-                    if len(trial) == 1:
-                        trial = trial[0]
-
-                    else:
-                        trial = Tuple(*trial)
-
-                    signature = Tuple(test, trial)
-
-                elif isinstance(i, LinearForm):
-                    test = i.test_functions
-                    if len(test) == 1:
-                        test = test[0]
-
-                    else:
-                        test = Tuple(*test)
-
-                    signature = test
-                # ...
-
-                # ...
-                if signature:
-                    lhs = Function(name)(*signature)
-                else:
-                    lhs = Symbol(name)
-                # ...
-
-                stmt = Assign(lhs, i)
-                equations.append(stmt)
-                d_forms[name] = i
-
-            elif isinstance(i, (tuple, list, Tuple)):
-                if not(len(i) == 2):
-                    raise ValueError('> Expecting two elements in tuple/list/Tuple')
-
-                lhs = i[0] ; rhs = i[1]
-                if not isinstance(lhs, BilinearForm):
-                    raise TypeError('> Expecting a BilinearForm as a lhs')
-
-                if not isinstance(rhs, LinearForm):
-                    raise TypeError('> Expecting a LinearForm as a rhs')
-
-                stmt = Assign(lhs, rhs)
-                equations.append(stmt)
-                # TODO add Equation class, that is like a dictionary
-                d_forms[name] = lhs
-                raise NotImplementedError('TODO')
+        forms = kwargs.pop('forms', None)
+        equations = kwargs.pop('equations', [])
         # ...
 
-        name = kwargs.pop('name', None)
+        # ...
+        if forms is None:
+            raise ValueError('> forms must be provided')
+        # ...
 
-        obj = Basic.__new__(cls, equations)
+        # ... set form name
+        d_forms = OrderedDict(sorted(forms.items()))
+        for name, form in list(d_forms.items()):
+            form.set_name(name)
+        # ...
 
         # ...
+        name = kwargs.pop('name', None)
         if not name:
             name = obj.__class__.__name__
-        obj._name = name
         # ...
 
         # ...
-        obj._forms = OrderedDict(sorted(d_forms.items()))
+        obj._name = name
+        obj._forms = d_forms
+        obj._equations = equations
         # ...
 
         return obj
 
     @property
-    def name(self):
-        return self._name
+    def forms(self):
+        return self._forms
 
     @property
     def equations(self):
-        return self._args[0]
+        return self._equations
 
     @property
-    def forms(self):
-        return self._forms
+    def name(self):
+        return self._name
+
+    def add_equations(self, equations):
+        # TODO do we need to check that lhs/rhs are Bilinear/Linear forms?
+
+        if isinstance(equations, Equation):
+            equations = [equations]
+
+        elif not isinstance(i, (tuple, list, Tuple)):
+            raise TypeError('> Expecting an iterable')
+
+        self._equations += list(equations)
 
     def preview(self, euler=False, packages=None,
                 output='dvi', outputTexFile=None):

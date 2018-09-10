@@ -145,27 +145,65 @@ class LatexPrinter(LatexPrinterSympy):
     # ...
 
     def _print_Model(self, expr):
+        # ...
+        def _print_form_call(form):
+            name = form.name
+            if name is None:
+                raise ValueError('> undefined name for a form')
+
+            args = []
+            arguments = None
+            if isinstance(form, BilinearForm):
+                arguments = [form.test_functions,
+                             form.trial_functions]
+
+            elif isinstance(form, LinearForm):
+                arguments = [form.test_functions]
+
+            for a in arguments:
+                if len(a) == 1:
+                    args += [a[0]]
+
+                else:
+                    args += [a]
+
+            args = ', '.join([self._print(a) for a in args])
+            name = self._print(name)
+
+            if not args:
+                return '{name}'.format(name=name)
+
+            else:
+                return '{name}({args})'.format(name=name,
+                                               args=args)
+        # ...
+
         empty = '\ldots'
         codes = []
+        for name, form in list(expr.forms.items()):
+            call = _print_form_call(form)
+            code = '{call} &:= {form}'.format(call=call,
+                                              form=self._print(form))
+            codes.append(code)
+
         for stmt in expr.equations:
             lhs = stmt.lhs
             rhs = stmt.rhs
 
             # ...
-            if not isinstance(rhs, Nil):
-                rhs = self._print(rhs)
+            elements = []
+            for e in [lhs, rhs]:
+                if not isinstance(e, Nil):
+                    i = _print_form_call(e)
 
-            else:
-                rhs = empty
+                else:
+                    i = empty
+
+                elements += [i]
             # ...
 
-            # ...
-            if not isinstance(lhs, Nil):
-                lhs = self._print(lhs)
-
-            else:
-                lhs = empty
-            # ...
+            lhs = elements[0]
+            rhs = elements[1]
 
             code = '{lhs} &= {rhs}'.format(lhs=lhs, rhs=rhs)
             codes.append(code)

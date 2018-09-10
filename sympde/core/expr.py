@@ -57,6 +57,7 @@ from .space import TestFunction
 from .space import VectorTestFunction
 
 class BasicForm(Expr):
+    _name = None
 
     def _init_domain(domain, ldim):
         if not( domain is None ):
@@ -108,6 +109,14 @@ class BasicForm(Expr):
     @property
     def mapping(self):
         return self._mapping
+
+    @property
+    def name(self):
+        return self._name
+
+    def set_name(self, name):
+        # needed to give a form a name, when writing models
+        self._name = name
 
 
 # TODO we should check that the only free symbols are fields, constants or coordinates
