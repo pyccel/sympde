@@ -114,10 +114,6 @@ class BasicForm(Expr):
     def name(self):
         return self._name
 
-    def set_name(self, name):
-        # needed to give a form a name, when writing models
-        self._name = name
-
 
 # TODO we should check that the only free symbols are fields, constants or coordinates
 class Integral(BasicForm):
@@ -592,7 +588,9 @@ class Kron(BilinearAtomicForm):
 
 class FormCall(AtomicExpr):
 
-    def __new__(cls, expr, args):
+    _default_name = 'FormCall'
+
+    def __new__(cls, expr, args, name=None):
 
         if not isinstance(expr, (BilinearForm, LinearForm)):
             raise TypeError('> Expecting BilinearForm, LinearForm')
@@ -607,6 +605,18 @@ class FormCall(AtomicExpr):
             expr = subs_linear_form(expr, args)
 
         obj = Basic.__new__(cls, expr, args)
+
+        # ...
+        if not name:
+            if expr.name:
+                name = expr.name
+
+            else:
+                name = cls._default_name
+
+        obj._name = name
+        # ...
+
         return obj
 
     @property
@@ -617,24 +627,43 @@ class FormCall(AtomicExpr):
     def arguments(self):
         return self._args[1]
 
+    @property
+    def name(self):
+        return self._name
+
     def _sympystr(self, printer):
         sstr = printer.doprint
 
         expr = self.expr
 
+        name = sstr(self.name)
+
         expr_str = ''
-        if expr.name:
-            name = sstr(expr.name)
-        else:
-            name = 'FormCall'
+        if self.name == self._default_name:
             expr_str = ': {}'.format(sstr(expr))
 
-        if isinstance(expr, BilinearForm):
-            test = [sstr(i) for i in expr.test_functions]
-            test = ','.join(i for i in test)
+        # ...
+        test = [sstr(i) for i in expr.test_functions]
+        test_str = ','.join(i for i in test)
 
+        if len(test) == 1:
+            test = test_str
+
+        else:
+            test = '({})'.format(test_str)
+        # ...
+
+        if isinstance(expr, BilinearForm):
+            # ...
             trial = [sstr(i) for i in expr.trial_functions]
-            trial = ','.join(i for i in trial)
+            trial_str = ','.join(i for i in trial)
+
+            if len(trial) == 1:
+                trial = trial_str
+
+            else:
+                trial = '({})'.format(trial_str)
+            # ...
 
             return '{name}({test},{trial}{expr})'.format(name=name,
                                                           trial=trial,
@@ -642,9 +671,6 @@ class FormCall(AtomicExpr):
                                                           expr=expr_str)
 
         if isinstance(expr, LinearForm):
-            test = [sstr(i) for i in expr.test_functions]
-            test = ','.join(i for i in test)
-
             return '{name}({test}{expr})'.format(name=name, test=test,
                                                  expr=expr_str)
 
@@ -1230,7 +1256,7 @@ def subs_bilinear_form(form, newargs):
         test_functions = [test_functions]
 
     elif isinstance(test_functions, (tuple, list, Tuple)):
-        test_functions = list(*test_functions)
+        test_functions = Tuple(*test_functions)
     # ...
 
     # ...
@@ -1239,7 +1265,7 @@ def subs_bilinear_form(form, newargs):
         trial_functions = [trial_functions]
 
     elif isinstance(trial_functions, (tuple, list, Tuple)):
-        trial_functions = list(*trial_functions)
+        trial_functions = Tuple(*trial_functions)
     # ...
 
     # in order to avoid problems when swapping indices, we need to create

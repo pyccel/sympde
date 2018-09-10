@@ -9,6 +9,8 @@ def test_poisson_1d():
     model = Poisson(dim=1)
 
     assert(str(model.space) == 'V')
+
+    model.preview(outputTexFile='test_poisson_1d.tex')
 # ...
 
 # ...
@@ -18,6 +20,8 @@ def test_poisson_2d():
     model = Poisson(dim=2)
 
     assert(str(model.space) == 'V')
+
+    model.preview(outputTexFile='test_poisson_2d.tex')
 # ...
 
 # ...
@@ -27,6 +31,8 @@ def test_poisson_3d():
     model = Poisson(dim=3)
 
     assert(str(model.space) == 'V')
+
+    model.preview(outputTexFile='test_poisson_3d.tex')
 # ...
 
 

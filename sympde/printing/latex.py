@@ -2,12 +2,12 @@
 #
 
 from sympy.core import Symbol
-from sympy import Mul
+from sympy import Mul, Tuple
 from sympy.printing.latex import LatexPrinter as LatexPrinterSympy
 
 from pyccel.ast.core import Nil
 
-from sympde.core.expr import BilinearForm, LinearForm, Integral
+from sympde.core.expr import BilinearForm, LinearForm, Integral, FormCall
 from sympde.core.generic import Dot, Inner, Cross
 from sympde.core.generic import Grad, Rot, Curl, Div
 from sympde.core.geometry import Line, Square, Cube
@@ -144,72 +144,89 @@ class LatexPrinter(LatexPrinterSympy):
         return txt
     # ...
 
-    def _print_Model(self, expr):
-        # ...
-        def _print_form_call(form):
-            name = form.name
-            if name is None:
-                raise ValueError('> undefined name for a form')
+    def _print_Nil(self, expr):
+        return '\ldots'
 
-            args = []
-            arguments = None
-            if isinstance(form, BilinearForm):
-                arguments = [form.test_functions,
-                             form.trial_functions]
+    def _print_FormCall(self, expr):
+        form = expr.expr
+        name = expr.name
+        if name is None:
+            raise ValueError('> undefined name for a form')
 
-            elif isinstance(form, LinearForm):
-                arguments = [form.test_functions]
+        args = []
 
-            for a in arguments:
-                if len(a) == 1:
-                    args += [a[0]]
+        # ...
+        test = [self._print(i) for i in form.test_functions]
+        test_str = ','.join(i for i in test)
 
-                else:
-                    args += [a]
+        if len(test) == 1:
+            test = test_str
 
-            args = ', '.join([self._print(a) for a in args])
-            name = self._print(name)
+        else:
+            test = '({})'.format(test_str)
 
-            if not args:
-                return '{name}'.format(name=name)
+        args += [test]
+        # ...
+
+        # ...
+        if isinstance(form, BilinearForm):
+            # ...
+            trial = [self._print(i) for i in form.trial_functions]
+            trial_str = ','.join(i for i in trial)
+
+            if len(trial) == 1:
+                trial = trial_str
 
             else:
-                return '{name}({args})'.format(name=name,
-                                               args=args)
-        # ...
+                trial = '({})'.format(trial_str)
 
-        empty = '\ldots'
+            args += [trial]
+            # ...
+        # ...
+
+        args = ', '.join(args)
+        name = self._print(name)
+        return '{name}({args})'.format(name=name, args=args)
+
+    def _print_Equation(self, expr):
+        lhs = self._print(expr.lhs)
+        rhs = self._print(expr.rhs)
+
+        return '{lhs} &= {rhs}'.format(lhs=lhs, rhs=rhs)
+
+    def _print_Model(self, expr):
+
         codes = []
         for name, form in list(expr.forms.items()):
-            call = _print_form_call(form)
-            code = '{call} &:= {form}'.format(call=call,
+            if isinstance(form, BilinearForm):
+                tests = form.test_functions
+                if not isinstance(tests, (list, tuple, Tuple)):
+                    tests = [tests]
+
+                trials = form.trial_functions
+                if not isinstance(trials, (list, tuple, Tuple)):
+                    trials = [trials]
+
+                args = (tests, trials)
+
+            elif isinstance(form, LinearForm):
+                tests = form.test_functions
+                if not isinstance(tests, (list, tuple, Tuple)):
+                    tests = [tests]
+
+                args = tests
+
+            call = FormCall(form, args, name=name)
+            code = '{call} &:= {form}'.format(call=self._print(call),
                                               form=self._print(form))
             codes.append(code)
 
-        for stmt in expr.equations:
-            lhs = stmt.lhs
-            rhs = stmt.rhs
-
-            # ...
-            elements = []
-            for e in [lhs, rhs]:
-                if not isinstance(e, Nil):
-                    i = _print_form_call(e)
-
-                else:
-                    i = empty
-
-                elements += [i]
-            # ...
-
-            lhs = elements[0]
-            rhs = elements[1]
-
-            code = '{lhs} &= {rhs}'.format(lhs=lhs, rhs=rhs)
+        if expr.equation:
+            code = self._print(expr.equation)
             codes.append(code)
 
         code = '\n\\\\'.join(codes)
-        code = '\n' + r'\begin{align}' + code + '\n' + r'\end{align}'
+        code = '\n' + r'\begin{align*}' + code + '\n' + r'\end{align*}'
 
         return code
 

@@ -1,9 +1,5 @@
 # coding: utf-8
 
-# TODO problem if a form is multiplied by a coefficient
-#      must change _print_form_call once FormCall is created
-
-
 from numpy import unique
 from collections import OrderedDict
 
@@ -19,10 +15,40 @@ from sympy.printing.preview import preview as sympy_preview
 from pyccel.ast.core import Assign
 from pyccel.ast.core import Nil
 
-from .expr import BasicForm, BilinearForm, LinearForm, Integral
+from .expr import BasicForm, BilinearForm, LinearForm, Integral, FormCall
 
-class Equation(Assign):
-    pass
+class Equation(Basic):
+    def __new__(cls, lhs, rhs):
+        if lhs is None: lhs = Nil()
+        if rhs is None: rhs = Nil()
+
+        # ... check lhs
+        if lhs.atoms(LinearForm):
+            raise TypeError('> lhs should not contain a LinearForm')
+
+        if not(isinstance(lhs, Nil)) and not(lhs.atoms(BilinearForm)):
+            msg = '> lhs must be None or contain at least one BilinearForm'
+            raise TypeError(msg)
+        # ...
+
+        # ... check rhs
+        if rhs.atoms(BilinearForm):
+            raise TypeError('> lhs should not contain a BilinearForm')
+
+        if not(isinstance(rhs, Nil)) and not(rhs.atoms(LinearForm)):
+            msg = '> rhs must be None or contain at least one LinearForm'
+            raise TypeError(msg)
+        # ...
+
+        return Basic.__new__(cls, lhs, rhs)
+
+    @property
+    def lhs(self):
+        return self._args[0]
+
+    @property
+    def rhs(self):
+        return self._args[1]
 
 
 class Model(Basic):
@@ -34,7 +60,7 @@ class Model(Basic):
     """
     _name = None
     _forms = None
-    _equations = None
+    _equation = None
 
     def __new__(cls, **kwargs):
 
@@ -42,18 +68,27 @@ class Model(Basic):
 
         # ...
         forms = kwargs.pop('forms', None)
-        equations = kwargs.pop('equations', [])
+        equation = kwargs.pop('equation', None)
         # ...
 
         # ...
         if forms is None:
             raise ValueError('> forms must be provided')
+
+        elif not isinstance(forms, (tuple, list, Tuple)):
+            raise TypeError('> Expecting an iterable')
         # ...
 
         # ... set form name
-        d_forms = OrderedDict(sorted(forms.items()))
-        for name, form in list(d_forms.items()):
-            form.set_name(name)
+        d_forms = {}
+        for form in forms:
+            name = form.name
+            if name is None:
+                raise ValueError('> Bilinear and Linear forms must be assigned a name')
+
+            d_forms[name] = form
+
+        d_forms = OrderedDict(sorted(d_forms.items()))
         # ...
 
         # ...
@@ -65,7 +100,7 @@ class Model(Basic):
         # ...
         obj._name = name
         obj._forms = d_forms
-        obj._equations = equations
+        obj._equation = equation
         # ...
 
         return obj
@@ -75,23 +110,12 @@ class Model(Basic):
         return self._forms
 
     @property
-    def equations(self):
-        return self._equations
+    def equation(self):
+        return self._equation
 
     @property
     def name(self):
         return self._name
-
-    def add_equations(self, equations):
-        # TODO do we need to check that lhs/rhs are Bilinear/Linear forms?
-
-        if isinstance(equations, Equation):
-            equations = [equations]
-
-        elif not isinstance(i, (tuple, list, Tuple)):
-            raise TypeError('> Expecting an iterable')
-
-        self._equations += list(equations)
 
     def preview(self, euler=False, packages=None,
                 output='dvi', outputTexFile=None):

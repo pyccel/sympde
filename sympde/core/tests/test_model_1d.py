@@ -21,15 +21,13 @@ def test_model_1d_1():
 
     expr = dot(grad(v), grad(u))
 
-    a = BilinearForm((v,u), expr)
-    b = LinearForm(v, x*(1.-x)*v)
+    a = BilinearForm((v,u), expr, name='a')
+    b = LinearForm(v, x*(1.-x)*v, name='b')
 
-    forms = {'a': a,
-             'b': b}
-    equations = (Equation(a, b),
-                )
+    forms = [a, b]
+    equation = Equation(a(v,u), b(v))
 
-    model = Model(forms=forms, equations=equations)
+    model = Model(forms=forms, equation=equation)
     model.preview(outputTexFile='test_model_1d_1.tex')
 # ...
 

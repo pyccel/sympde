@@ -2,6 +2,8 @@
 
 from numpy import unique
 
+from pyccel.ast import Nil
+
 from sympy.core import Basic
 from sympy.tensor import Indexed, IndexedBase
 from sympy.core import Symbol
@@ -11,7 +13,7 @@ from sympy import Function
 from sympy import Integer, Float
 
 from sympde.core.expr import BilinearForm, LinearForm, Integral
-from sympde.core.model import Model
+from sympde.core.model import Model, Equation
 from sympde.core import grad, dot
 from sympde.core import FunctionSpace
 from sympde.core import TestFunction
@@ -41,13 +43,13 @@ class Poisson(Model):
 
         expr = dot(grad(v), grad(u))
 
-        a = BilinearForm((v,u), expr)
+        a = BilinearForm((v,u), expr, name='a')
         # ...
 
-        forms = {'a': a}
-        equations = ()
+        forms = [a]
+        equation = Equation(a(v,u), Nil())
 
-        obj = Model.__new__(cls, forms=forms, equations=equations, **kwargs)
+        obj = Model.__new__(cls, forms=forms, equation=equation, **kwargs)
 
         obj._space = V
 

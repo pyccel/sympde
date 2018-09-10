@@ -2,6 +2,8 @@
 
 from numpy import unique
 
+from pyccel.ast import Nil
+
 from sympy.core import Basic
 from sympy.tensor import Indexed, IndexedBase
 from sympy.core import Symbol
@@ -11,7 +13,7 @@ from sympy import Function
 from sympy import Integer, Float
 
 from sympde.core.expr import BilinearForm, LinearForm, Integral
-from sympde.core.model import Model
+from sympde.core.model import Model, Equation
 from sympde.core import grad, dot, inner, cross, rot, curl, div
 from sympde.core import FunctionSpace
 from sympde.core import TestFunction
@@ -43,15 +45,15 @@ class Stokes(Model):
         p = TestFunction(W, name='p')
         q = TestFunction(W, name='q')
 
-        a1 = BilinearForm((v,u), inner(grad(v), grad(u)))
-        a2 = BilinearForm((v,p), div(v)*p)
-        a  = BilinearForm(((v,q), (u,p)), a1(v,u) - a2(v,p) + a2(u,q))
+        a1 = BilinearForm((v,u), inner(grad(v), grad(u)), name='a1')
+        a2 = BilinearForm((v,p), div(v)*p, name='a2')
+        a  = BilinearForm(((v,q), (u,p)), a1(v,u) - a2(v,p) + a2(u,q), name='a')
         # ...
 
-        forms = {'a1': a1, 'a2': a2, 'a': a}
-        equations = ()
+        forms = [a1, a2, a]
+        equation = Equation(a((v,q), (u,p)), Nil())
 
-        obj = Model.__new__(cls, forms=forms, equations=equations, **kwargs)
+        obj = Model.__new__(cls, forms=forms, equation=equation, **kwargs)
 
         obj._spaces = [V, W]
 
