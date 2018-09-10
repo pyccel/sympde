@@ -152,6 +152,7 @@ class Integral(BasicForm):
                 if coordinates is None:
                     raise ValueError('> Coordinates must be provided if the expression has no fields')
 
+                coordinates = [str(i) for i in coordinates]
                 ldim = len(coordinates)
 
                 ID = abs(hash(expr))
