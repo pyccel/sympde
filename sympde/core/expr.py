@@ -129,7 +129,7 @@ class Integral(BasicForm):
     _ldim = None
     _coordinates = None
     def __new__(cls, expr, coordinates=None, domain=None, measure=None,
-                mapping=None, space=None):
+                mapping=None, space=None, name=None):
 
         # ... check that there are no test functions in the expression
         ls = [a for a in expr.free_symbols if isinstance(a, (TestFunction, VectorTestFunction))]
@@ -176,6 +176,7 @@ class Integral(BasicForm):
         obj._measure = measure
         obj._mapping = mapping
         obj._space = space
+        obj._name = name
 
         return obj
 
@@ -211,7 +212,9 @@ class LinearForm(BasicForm):
     Examples
 
     """
-    def __new__(cls, test_functions, expr, domain=None, measure=None, mapping=None):
+    def __new__(cls, test_functions, expr, domain=None, measure=None,
+                mapping=None, name=None):
+
         # ...
         if isinstance(test_functions, (TestFunction, VectorTestFunction)):
             test_functions = [test_functions]
@@ -250,6 +253,8 @@ class LinearForm(BasicForm):
         obj._domain = domain
         obj._measure = measure
         obj._mapping = mapping
+        obj._name = name
+
         return obj
 
     @property
@@ -319,7 +324,9 @@ class BilinearForm(BasicForm):
     Examples
 
     """
-    def __new__(cls, test_trial, expr, domain=None, measure=None, mapping=None):
+    def __new__(cls, test_trial, expr, domain=None, measure=None,
+                mapping=None, name=None):
+
         # ...
         if not isinstance(test_trial, (tuple, list, Tuple)):
             raise TypeError('(test, trial) must be a tuple, list or Tuple')
@@ -395,6 +402,8 @@ class BilinearForm(BasicForm):
         obj._domain = domain
         obj._measure = measure
         obj._mapping = mapping
+        obj._name = name
+
         return obj
 
     @property
@@ -675,6 +684,60 @@ class Kron(BilinearAtomicForm):
 
     def _sympystr(self, printer):
         return 'Kron'
+
+
+class FormCall(Expr):
+
+    def __new__(cls, expr, args):
+
+        if not isinstance(expr, (BilinearForm, LinearForm)):
+            raise TypeError('> Expecting BilinearForm, LinearForm')
+
+        if not isinstance(args, (list, tuple, Tuple)):
+            args = [args]
+
+        if isinstance(expr, BilinearForm):
+            expr = subs_bilinear_form(expr, args)
+
+        if isinstance(expr, LinearForm):
+            expr = subs_linear_form(expr, args)
+
+        obj = Basic.__new__(cls, expr, args)
+        return obj
+
+    @property
+    def expr(self):
+        return self._args[0]
+
+    @property
+    def arguments(self):
+        return self._args[1]
+
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+
+        expr = self.expr
+
+        if expr.name:
+            name = sstr(expr.name)
+        else:
+            name = 'FormCall'
+
+        if isinstance(expr, BilinearForm):
+            test = [sstr(i) for i in expr.test_functions]
+            test = ','.join(i for i in test)
+
+            trial = [sstr(i) for i in expr.trial_functions]
+            trial = ','.join(i for i in trial)
+
+            return '{name}({test},{trial})'.format(name=name, trial=trial, test=test)
+
+        if isinstance(expr, LinearForm):
+            test = [sstr(i) for i in expr.test_functions]
+            test = ','.join(i for i in test)
+
+            return '{name}({test})'.format(name=name, test=test)
+
 
 # ...
 def atomize(expr, dim=None):
@@ -1236,3 +1299,98 @@ def subs_mul(expr):
         return expr
 
 
+def subs_bilinear_form(form, newargs):
+    # ...
+    test_trial = newargs
+    if not isinstance(test_trial, (tuple, list, Tuple)):
+        raise TypeError('(test, trial) must be a tuple, list or Tuple')
+
+    if not(len(test_trial) == 2):
+        raise ValueError('Expecting a couple (test, trial)')
+    # ...
+
+    # ...
+    test_functions = test_trial[0]
+    if isinstance(test_functions, (TestFunction, VectorTestFunction)):
+        test_functions = [test_functions]
+
+    elif isinstance(test_functions, (tuple, list, Tuple)):
+        test_functions = list(*test_functions)
+    # ...
+
+    # ...
+    trial_functions = test_trial[1]
+    if isinstance(trial_functions, (TestFunction, VectorTestFunction)):
+        trial_functions = [trial_functions]
+
+    elif isinstance(trial_functions, (tuple, list, Tuple)):
+        trial_functions = list(*trial_functions)
+    # ...
+
+    # in order to avoid problems when swapping indices, we need to create
+    # temp symbols
+
+    # ...
+    d_tmp = {}
+    for x in trial_functions:
+        name = '{name}_{hash}'.format(name=x.name, hash=abs(hash(x)))
+        X = x.duplicate(name)
+
+        d_tmp[X] = x
+    # ...
+
+    expr = form.expr
+
+    # ... replacing trial functions by tmp symbols
+    d = {}
+    for k,v in zip(form.trial_functions, d_tmp):
+        d[k] = v
+    expr = expr.subs(d)
+    # ...
+
+    # ... replacing test functions
+    d = {}
+    for k,v in zip(form.test_functions, test_functions):
+        d[k] = v
+    expr = expr.subs(d)
+    # ...
+
+    # ... replacing trial functions from tmp symbols
+    expr = expr.subs(d_tmp)
+    # ...
+
+    return BilinearForm(test_trial, expr,
+                        domain=form.domain, measure=form.measure,
+                        mapping=form.mapping, name=form.name)
+
+
+def subs_linear_form(form, newargs):
+    # ...
+    if not(len(newargs) == 1):
+        raise ValueError('Expecting one argument')
+    # ...
+
+    # ...
+    test_functions = newargs[0]
+    if isinstance(test_functions, (TestFunction, VectorTestFunction)):
+        test_functions = [test_functions]
+
+    elif isinstance(test_functions, (tuple, list, Tuple)):
+        test_functions = list(*test_functions)
+    # ...
+
+    expr = form.expr
+    print('> ', expr)
+
+    # ... replacing test functions
+    d = {}
+    for k,v in zip(form.test_functions, test_functions):
+        d[k] = v
+        print(k,v)
+    expr = expr.subs(d)
+    print('> ', expr)
+    # ...
+
+    return LinearForm(test_functions, expr,
+                      domain=form.domain, measure=form.measure,
+                      mapping=form.mapping, name=form.name)

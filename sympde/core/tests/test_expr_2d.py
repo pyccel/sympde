@@ -28,6 +28,7 @@ from sympde.core import tensorize
 from sympde.core import inv_normalize
 from sympde.core import Mass, Stiffness, Advection, AdvectionT
 from sympde.core import Unknown
+from sympde.core import FormCall
 from sympy.physics.quantum import TensorProduct
 
 # ...
@@ -381,7 +382,24 @@ def test_calls_2d_3():
     u1u2 = VectorTestFunction(U, name='u1u2')
 
     # ...
-    a1 = BilinearForm((v1, u1), u1*v1)
+    a1 = BilinearForm((v1, u1), u1*v1, name='a1')
+    l1 = LinearForm(v1, x*y*v1)
+
+    call_a1 = FormCall(a1, (v2, u2))
+#    print(call_a1)
+#    print(call_a1.expr)
+
+    call_l1 = FormCall(l1, v2)
+    print(call_l1)
+    print(call_l1.expr)
+
+    import sys ; sys.exit(0)
+
+    assert(u2*v2 == a1(v2, u2))
+    # ...
+
+    # ...
+    a1 = BilinearForm((v1, u1), u1*v1, name='a1')
 
     assert(u2*v2 == a1(v2, u2))
     # ...
@@ -781,26 +799,26 @@ def test_unknown_2d_1():
 
 # .....................................................
 if __name__ == '__main__':
-    test_atomize_2d_1()
-    test_normalize_2d_1()
-    test_evaluate_2d_1()
-
-    test_atomize_2d_2()
-    test_normalize_2d_2()
-    test_matricize_2d_2()
-
-#    test_bilinear_form_2d_10() # TODO not working, since args are the same
-    test_linear_form_2d_10()
-    test_function_form_2d_10()
-
-    test_matricize_2d_3()
-    test_evaluate_2d_3()
-
-    test_tensorize_2d_1()
-
-    test_inv_normalize_2d_1()
-    test_tensorize_2d_2()
+#    test_atomize_2d_1()
+#    test_normalize_2d_1()
+#    test_evaluate_2d_1()
+#
+#    test_atomize_2d_2()
+#    test_normalize_2d_2()
+#    test_matricize_2d_2()
+#
+##    test_bilinear_form_2d_10() # TODO not working, since args are the same
+#    test_linear_form_2d_10()
+#    test_function_form_2d_10()
+#
+#    test_matricize_2d_3()
+#    test_evaluate_2d_3()
+#
+#    test_tensorize_2d_1()
+#
+#    test_inv_normalize_2d_1()
+#    test_tensorize_2d_2()
 
     test_calls_2d_3()
 
-    test_unknown_2d_1()
+#    test_unknown_2d_1()

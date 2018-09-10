@@ -6,6 +6,33 @@ from sympy.core.containers import Tuple
 class BasicGeometry(Basic):
     pass
 
+class Domain(BasicGeometry):
+    """
+    Represents an undefined domain.
+
+    Examples
+
+    """
+    _name = None
+    _dim = None
+    def __new__(cls, name, dim):
+        obj = Basic.__new__(cls)
+        obj._name = name
+        obj._dim = dim
+        return obj
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def dim(self):
+        return self._dim
+
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        return '{}'.format(sstr(name))
+
 class Line(BasicGeometry):
     """
     Represents a 1D line.
