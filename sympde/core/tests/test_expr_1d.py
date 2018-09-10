@@ -19,7 +19,7 @@ from sympde.core import FunctionSpace
 from sympde.core import ProductSpace
 from sympde.core import TestFunction
 from sympde.core import VectorTestFunction
-from sympde.core import BilinearForm, LinearForm, FunctionForm
+from sympde.core import BilinearForm, LinearForm, Integral
 from sympde.core import atomize, normalize
 from sympde.core import evaluate
 from sympde.core import tensorize
@@ -350,30 +350,30 @@ def test_function_form_1d_10():
 
     # ...
     expected = -2*pi*sin(2*pi*x)
-    assert(evaluate(FunctionForm(grad(cos(2*pi*x)), coordinates=[x])) == expected)
+    assert(evaluate(Integral(grad(cos(2*pi*x)), coordinates=[x])) == expected)
     # ...
 
     # ...
     expected = F-cos(2*pi*x)
-    assert(evaluate(FunctionForm(F-cos(2*pi*x))) == expected)
+    assert(evaluate(Integral(F-cos(2*pi*x))) == expected)
     # ...
 
     # ...
     expected = (F-cos(2*pi*x))**2
-    assert(evaluate(FunctionForm((F-cos(2*pi*x))**2)) == expected)
+    assert(evaluate(Integral((F-cos(2*pi*x))**2)) == expected)
     # ...
 
     # ...
     expected = dx(F) + 2*pi*sin(2*pi*x)
-    assert(evaluate(FunctionForm(grad(F-cos(2*pi*x)))) == expected)
+    assert(evaluate(Integral(grad(F-cos(2*pi*x)))) == expected)
     # ...
 
     # ...
     expected = (dx(F) + 2*pi*sin(2*pi*x))**2
-    assert(evaluate(FunctionForm((grad(F-cos(2*pi*x)))**2)) == expected)
+    assert(evaluate(Integral((grad(F-cos(2*pi*x)))**2)) == expected)
     # ...
 
-#    expr = FunctionForm()
+#    expr = Integral()
 #    print('> input      >>> {0}'.format(expr))
 #    print('> evaluated  >>> {0}'.format(evaluate(expr) ))
 #    print('')

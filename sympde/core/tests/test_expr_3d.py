@@ -20,7 +20,7 @@ from sympde.core import FunctionSpace
 from sympde.core import ProductSpace
 from sympde.core import TestFunction
 from sympde.core import VectorTestFunction
-from sympde.core import BilinearForm, LinearForm, FunctionForm
+from sympde.core import BilinearForm, LinearForm, Integral
 from sympde.core import atomize, normalize, matricize
 from sympde.core import evaluate
 from sympde.core import tensorize
@@ -514,34 +514,34 @@ def test_function_form_3d_10():
 
     # ...
     expected = cos(2*pi*x)*cos(3*pi*y)*cos(5*pi*z)
-    assert(evaluate(FunctionForm(cos(2*pi*x)*cos(3*pi*y)*cos(5*pi*z), coordinates=[x,y,z])) == expected)
+    assert(evaluate(Integral(cos(2*pi*x)*cos(3*pi*y)*cos(5*pi*z), coordinates=[x,y,z])) == expected)
     # ...
 
     # ...
     expected = x**2 + y**2 + 1
     e = x*y + z
-    assert(evaluate(FunctionForm(dot(grad(e), grad(e)), coordinates=[x,y,z])) == expected)
+    assert(evaluate(Integral(dot(grad(e), grad(e)), coordinates=[x,y,z])) == expected)
     # ...
 
     # ...
     expected = F - cos(2*pi*x)*cos(3*pi*y)*cos(5*pi*z)
-    assert(evaluate(FunctionForm(F-cos(2*pi*x)*cos(3*pi*y)*cos(5*pi*z))) == expected)
+    assert(evaluate(Integral(F-cos(2*pi*x)*cos(3*pi*y)*cos(5*pi*z))) == expected)
     # ...
 
     # ...
     expected = (F - x*y - z)**2
-    assert(evaluate(FunctionForm((F - x*y - z)**2)) == expected)
+    assert(evaluate(Integral((F - x*y - z)**2)) == expected)
     # ...
 
     # ...
     expected = dx(F)**2 + dy(F)**2 + dz(F)**2
-    assert(evaluate(FunctionForm(dot(grad(F), grad(F)))) == expected)
+    assert(evaluate(Integral(dot(grad(F), grad(F)))) == expected)
     # ...
 
     # ...
     expected = (-x + dy(F))**2 + (-y + dx(F))**2 + (dz(F) - 1)**2
     e = F - (x*y + z)
-    assert(evaluate(FunctionForm(dot(grad(e), grad(e)), coordinates=[x,y,z])) == expected)
+    assert(evaluate(Integral(dot(grad(e), grad(e)), coordinates=[x,y,z])) == expected)
     # ...
 
     # ... TODO debug. => infinite recursion!!! why?
@@ -552,7 +552,7 @@ def test_function_form_3d_10():
     # ...
 
 #    e = F - (x*y + z)
-#    expr = FunctionForm(dot(grad(e), grad(e)), coordinates=[x,y,z])
+#    expr = Integral(dot(grad(e), grad(e)), coordinates=[x,y,z])
 #    print('> input      >>> {0}'.format(expr))
 #    print('> evaluated  >>> {0}'.format(evaluate(expr) ))
 #    print('')

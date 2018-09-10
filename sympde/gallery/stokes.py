@@ -10,7 +10,7 @@ from sympy.core.containers import Tuple
 from sympy import Function
 from sympy import Integer, Float
 
-from sympde.core.expr import BilinearForm, LinearForm, FunctionForm
+from sympde.core.expr import BilinearForm, LinearForm, Integral
 from sympde.core.model import Model
 from sympde.core import grad, dot, inner, cross, rot, curl, div
 from sympde.core import FunctionSpace

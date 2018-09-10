@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from sympde.core.expr import BilinearForm, LinearForm, FunctionForm
+from sympde.core.expr import BilinearForm, LinearForm, Integral
 from sympde.core.model import Model, Equation
 from sympde.core import grad, dot, inner, cross, rot, curl, div
 from sympde.core import FunctionSpace

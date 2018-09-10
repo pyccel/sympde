@@ -7,7 +7,7 @@ from sympy.printing.latex import LatexPrinter as LatexPrinterSympy
 
 from pyccel.ast.core import Nil
 
-from sympde.core.expr import BilinearForm, LinearForm, FunctionForm
+from sympde.core.expr import BilinearForm, LinearForm, Integral
 from sympde.core.generic import Dot, Inner, Cross
 from sympde.core.generic import Grad, Rot, Curl, Div
 from sympde.core.geometry import Line, Square, Cube
@@ -110,7 +110,7 @@ class LatexPrinter(LatexPrinterSympy):
                              measure=expr.measure)
         return txt
 
-    def _print_FunctionForm(self, expr):
+    def _print_Integral(self, expr):
         txt = print_integral(expr.domain, expr.expr,
                              measure=expr.measure)
         return txt

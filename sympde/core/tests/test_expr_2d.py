@@ -21,7 +21,7 @@ from sympde.core import FunctionSpace
 from sympde.core import ProductSpace
 from sympde.core import TestFunction
 from sympde.core import VectorTestFunction
-from sympde.core import BilinearForm, LinearForm, FunctionForm
+from sympde.core import BilinearForm, LinearForm, Integral
 from sympde.core import atomize, normalize, matricize
 from sympde.core import evaluate
 from sympde.core import tensorize
@@ -625,27 +625,27 @@ def test_function_form_2d_10():
     # ...
     expected = 4*pi**2*sin(2*pi*x)**2*cos(3*pi*y)**2 + 9*pi**2*sin(3*pi*y)**2*cos(2*pi*x)**2
     e = cos(2*pi*x)*cos(3*pi*y)
-    assert(evaluate(FunctionForm(dot(grad(e), grad(e)), coordinates=[x,y])) == expected)
+    assert(evaluate(Integral(dot(grad(e), grad(e)), coordinates=[x,y])) == expected)
     # ...
 
     # ...
     expected = F - cos(2*pi*x)*cos(3*pi*y)
-    assert(evaluate(FunctionForm(F-cos(2*pi*x)*cos(3*pi*y))) == expected)
+    assert(evaluate(Integral(F-cos(2*pi*x)*cos(3*pi*y))) == expected)
     # ...
 
     # ...
     expected = (F - cos(2*pi*x)*cos(3*pi*y))**2
-    assert(evaluate(FunctionForm((F - cos(2*pi*x)*cos(3*pi*y))**2)) == expected)
+    assert(evaluate(Integral((F - cos(2*pi*x)*cos(3*pi*y))**2)) == expected)
     # ...
 
     # ...
     expected = (dx(F) + 2*pi*sin(2*pi*x)*cos(3*pi*y))**2 + (dy(F) + 3*pi*sin(3*pi*y)*cos(2*pi*x))**2
     e = F -cos(2*pi*x)*cos(3*pi*y)
-    assert(evaluate(FunctionForm(dot(grad(e), grad(e)))) == expected)
+    assert(evaluate(Integral(dot(grad(e), grad(e)))) == expected)
     # ...
 
 #    e = F -cos(2*pi*x)*cos(3*pi*y)
-#    expr = FunctionForm(dot(grad(e), grad(e)))
+#    expr = Integral(dot(grad(e), grad(e)))
 #    print('> input      >>> {0}'.format(expr))
 #    print('> evaluated  >>> {0}'.format(evaluate(expr) ))
 #    print('')

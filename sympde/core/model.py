@@ -19,7 +19,7 @@ from sympy.printing.preview import preview as sympy_preview
 from pyccel.ast.core import Assign
 from pyccel.ast.core import Nil
 
-from .expr import BasicForm, BilinearForm, LinearForm, FunctionForm
+from .expr import BasicForm, BilinearForm, LinearForm, Integral
 
 class Equation(Assign):
     pass

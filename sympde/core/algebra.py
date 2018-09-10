@@ -17,7 +17,6 @@ from sympy import Rational
 from sympy import diff
 from sympy import Matrix, ImmutableDenseMatrix
 from sympy import latex
-from sympy import Integral
 from sympy import I as sympy_I
 from sympy.core import Basic
 from sympy.core.singleton import S

@@ -9,7 +9,7 @@ from sympy.printing.pycode import _known_functions
 from sympy.printing.pycode import _known_functions_math
 from sympy.printing.pycode import _known_constants_math
 
-from sympde.core.expr import BilinearForm, LinearForm, FunctionForm
+from sympde.core.expr import BilinearForm, LinearForm, Integral
 from sympde.core.generic import Dot, Inner, Cross
 from sympde.core.generic import Grad, Rot, Curl, Div
 from sympde.core.geometry import Line, Square, Cube

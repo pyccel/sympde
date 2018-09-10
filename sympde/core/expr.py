@@ -8,7 +8,7 @@
 #      - add is_symmetric property for BilinearForm
 #      - treat Function atom in atomize, normalize, matricize
 #      - treat Field atom in atomize, normalize, matricize
-#      - shall we matricize a FunctionForm or not?
+#      - shall we matricize a Integral or not?
 
 from numpy import zeros
 
@@ -120,7 +120,7 @@ class BasicForm(Expr):
 
 
 # TODO we should check that the only free symbols are fields, constants or coordinates
-class FunctionForm(BasicForm):
+class Integral(BasicForm):
     """
 
     Examples
@@ -134,7 +134,7 @@ class FunctionForm(BasicForm):
         # ... check that there are no test functions in the expression
         ls = [a for a in expr.free_symbols if isinstance(a, (TestFunction, VectorTestFunction))]
         if not(len(ls) == 0):
-            raise TypeError('Cannot use test functions in FunctionForm')
+            raise TypeError('Cannot use test functions in Integral')
         # ...
 
         if not space:
@@ -1005,7 +1005,7 @@ def evaluate(a, basis=None, verbose=False):
         print('> normalized >>> {0}'.format(expr))
 
     # TODO is it ok to keep this?
-    if isinstance(a, FunctionForm):
+    if isinstance(a, Integral):
         return expr
 
     expr = matricize(expr)

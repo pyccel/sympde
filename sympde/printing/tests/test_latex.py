@@ -7,7 +7,7 @@ from sympde.core import grad, dot, inner, cross, rot, curl, div
 from sympde.core import FunctionSpace
 from sympde.core import TestFunction
 from sympde.core import VectorTestFunction
-from sympde.core import BilinearForm, LinearForm, FunctionForm
+from sympde.core import BilinearForm, LinearForm, Integral
 from sympde.core import Field
 from sympde.printing.latex import latex
 
@@ -33,7 +33,7 @@ def test_latex_1d():
     print(latex(b))
 #    assert(latex(b) == r'\int_{0}^{1} v \sin{\left (\pi x \right )} dx')
 
-    f = FunctionForm(dx(F)-x)
+    f = Integral(dx(F)-x)
     print(latex(f))
 #    assert(latex(f) == r'\int_{0}^{1} - x + \partial_{x}F dx')
 
@@ -58,7 +58,7 @@ def test_latex_2d_1():
     print(latex(b))
 #    assert(latex(b) == r'\int_{0}^{1}\int_{0}^{1} v \sin{\left (\pi x \right )} \cos{\left (\pi y \right )} dxdy')
 
-    f = FunctionForm(dx(F)-dy(F)-x*y)
+    f = Integral(dx(F)-dy(F)-x*y)
     print(latex(f))
 #    assert(latex(f) == r'\int_{0}^{1}\int_{0}^{1} - x y + \partial_{x}F - \partial_{y}F dxdy')
 
@@ -105,7 +105,7 @@ def test_latex_3d_1():
     print(latex(b))
 #    assert(latex(b) == r'\int_{0}^{1}\int_{0}^{1}\int_{0}^{1} v \sin{\left (\pi x \right )} \cos{\left (\pi y \right )} \cos{\left (2 \pi z \right )} dxdydz')
 
-    f = FunctionForm(dx(F)-dy(F)+dz(F)-x*y*z)
+    f = Integral(dx(F)-dy(F)+dz(F)-x*y*z)
     print(latex(f))
 #    assert(latex(f) == r'\int_{0}^{1}\int_{0}^{1} - x y z + \partial_{x}F - \partial_{y}F + \partial_{z}F dxdy')
 
