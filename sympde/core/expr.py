@@ -305,6 +305,7 @@ class BilinearForm(BasicForm):
             test_functions = [test_functions]
 
         elif isinstance(test_functions, (tuple, list, Tuple)):
+            print('> PAR ICI')
             spaces = [i.space for i in test_functions]
             V = ProductSpace(*spaces)
             name = ''.join(i.name for i in test_functions)
@@ -1298,6 +1299,13 @@ def subs_bilinear_form(form, newargs):
 
     # ... replacing trial functions from tmp symbols
     expr = expr.subs(d_tmp)
+    # ...
+
+    # ...
+    if len(test_functions) == 1: test_functions = test_functions[0]
+    if len(trial_functions) == 1: trial_functions = trial_functions[0]
+
+    test_trial = (test_functions, trial_functions)
     # ...
 
     return BilinearForm(test_trial, expr,

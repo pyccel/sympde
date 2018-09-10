@@ -200,19 +200,12 @@ class LatexPrinter(LatexPrinterSympy):
         for name, form in list(expr.forms.items()):
             if isinstance(form, BilinearForm):
                 tests = form.test_functions
-                if not isinstance(tests, (list, tuple, Tuple)):
-                    tests = [tests]
-
                 trials = form.trial_functions
-                if not isinstance(trials, (list, tuple, Tuple)):
-                    trials = [trials]
 
                 args = (tests, trials)
 
             elif isinstance(form, LinearForm):
                 tests = form.test_functions
-                if not isinstance(tests, (list, tuple, Tuple)):
-                    tests = [tests]
 
                 args = tests
 
