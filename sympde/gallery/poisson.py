@@ -29,8 +29,8 @@ class Poisson(Model):
         if dim is None:
             raise ValueError('> Expecting a dim entry')
 
-        if not(dim in [2, 3]):
-            raise ValueError('> only 2d and 3d models are possible')
+        if not(dim in [1, 2, 3]):
+            raise ValueError('> only 1d, 2d and 3d models are possible')
         # ...
 
         # ... abstract model

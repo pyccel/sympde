@@ -1,6 +1,7 @@
 # coding: utf-8
 
 from numpy import unique
+from collections import OrderedDict
 
 from sympy.core import Basic
 from sympy.tensor import Indexed, IndexedBase
@@ -25,9 +26,12 @@ class Model(Basic):
 
     """
     def __new__(cls, **kwargs):
+        # TODO this does not work if a form is multiplied by a coefficient
+
         # ...
         nil = Nil()
         equations = []
+        d_forms = {}
         for name, i in list(kwargs.items()):
             if isinstance(i, BasicForm):
                 # ...
@@ -69,6 +73,7 @@ class Model(Basic):
 
                 stmt = Assign(lhs, i)
                 equations.append(stmt)
+                d_forms[name] = i
 
             elif isinstance(i, (tuple, list, Tuple)):
                 if not(len(i) == 2):
@@ -83,6 +88,9 @@ class Model(Basic):
 
                 stmt = Assign(lhs, rhs)
                 equations.append(stmt)
+                # TODO add Equation class, that is like a dictionary
+                d_forms[name] = lhs
+                raise NotImplementedError('TODO')
         # ...
 
         name = kwargs.pop('name', None)
@@ -93,6 +101,10 @@ class Model(Basic):
         if not name:
             name = obj.__class__.__name__
         obj._name = name
+        # ...
+
+        # ...
+        obj._forms = OrderedDict(sorted(d_forms.items()))
         # ...
 
         return obj
@@ -107,25 +119,7 @@ class Model(Basic):
 
     @property
     def forms(self):
-        # TODO this does not work if a form is multiplied by a coefficient
-        ls = []
-        for stmt in self.equations:
-            for i in [stmt.lhs, stmt.rhs]:
-                if isinstance(i, BasicForm):
-                    ls += [i]
-        return ls
-
-    @property
-    def bilinear_forms(self):
-        return [i for i in self.forms if isinstance(i, BilinearForm)]
-
-    @property
-    def linear_forms(self):
-        return [i for i in self.forms if isinstance(i, LinearForm)]
-
-    @property
-    def function_forms(self):
-        return [i for i in self.forms if isinstance(i, FunctionForm)]
+        return self._forms
 
     def preview(self, euler=False, packages=None,
                 output='dvi', outputTexFile=None):
