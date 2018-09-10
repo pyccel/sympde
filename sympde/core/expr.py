@@ -282,40 +282,9 @@ class LinearForm(BasicForm):
         expr = self.expr
         return sstr(expr)
 
-    # TODO: when subs args there is a possible bug when a new var exists in the
-    #       old args in a different order
     def __call__(self, *args):
-        # ...
-        if not(len(args) == 1):
-            raise ValueError('Expecting one argument')
-        # ...
-
-        # ...
-        test_functions = args[0]
-        if isinstance(test_functions, (TestFunction, VectorTestFunction)):
-            test_functions = [test_functions]
-
-        elif isinstance(test_functions, (tuple, list, Tuple)):
-            test_functions = list(*test_functions)
-        # ...
-
-        # ... we need to atomize the expression here, since Grad, Div etc are
-        #     not defined yet.
-        #     TODO: this may be improved, if we fuse 1d, 2d, 3d definitions of Generic
-        #     operators into one single Function expression
-        #     in this case, operators like Cross, Curl must be able to act on
-        #     slices
-        expr = atomize(self.expr)
-        # ...
-
-        # ... replacing test functions
-        d = {}
-        for k,v in zip(self.test_functions, test_functions):
-            d[k] = v
-        expr = expr.subs(d)
-        # ...
-
-        return expr
+        args = Tuple(*args)
+        return FormCall(self, args)
 
 
 class BilinearForm(BasicForm):
@@ -439,76 +408,11 @@ class BilinearForm(BasicForm):
         expr = self.expr
         return sstr(expr)
 
-    # TODO: when subs args there is a possible bug when a new var exists in the
-    #       old args in a different order
     def __call__(self, *args):
-        # ...
-        test_trial = args
-        if not isinstance(test_trial, (tuple, list, Tuple)):
-            raise TypeError('(test, trial) must be a tuple, list or Tuple')
-
-        if not(len(test_trial) == 2):
+        if not(len(args) == 2):
             raise ValueError('Expecting a couple (test, trial)')
-        # ...
 
-        # ...
-        test_functions = test_trial[0]
-        if isinstance(test_functions, (TestFunction, VectorTestFunction)):
-            test_functions = [test_functions]
-
-        elif isinstance(test_functions, (tuple, list, Tuple)):
-            test_functions = list(*test_functions)
-        # ...
-
-        # ...
-        trial_functions = test_trial[1]
-        if isinstance(trial_functions, (TestFunction, VectorTestFunction)):
-            trial_functions = [trial_functions]
-
-        elif isinstance(trial_functions, (tuple, list, Tuple)):
-            trial_functions = list(*trial_functions)
-        # ...
-
-        # ... we need to atomize the expression here, since Grad, Div etc are
-        #     not defined yet.
-        #     TODO: this may be improved, if we fuse 1d, 2d, 3d definitions of Generic
-        #     operators into one single Function expression
-        #     in this case, operators like Cross, Curl must be able to act on
-        #     slices
-        expr = atomize(self.expr)
-        # ...
-
-        # in order to avoid problems when swapping indices, we need to create
-        # temp symbols
-
-        # ...
-        d_tmp = {}
-        for x in trial_functions:
-            name = '{name}_{hash}'.format(name=x.name, hash=abs(hash(x)))
-            X = x.duplicate(name)
-
-            d_tmp[X] = x
-        # ...
-
-        # ... replacing trial functions by tmp symbols
-        d = {}
-        for k,v in zip(self.trial_functions, d_tmp):
-            d[k] = v
-        expr = expr.subs(d)
-        # ...
-
-        # ... replacing test functions
-        d = {}
-        for k,v in zip(self.test_functions, test_functions):
-            d[k] = v
-        expr = expr.subs(d)
-        # ...
-
-        # ... replacing trial functions from tmp symbols
-        expr = expr.subs(d_tmp)
-        # ...
-
-        return expr
+        return FormCall(self, args)
 
 
 class BilinearAtomicForm(BilinearForm, AtomicExpr):
@@ -686,7 +590,7 @@ class Kron(BilinearAtomicForm):
         return 'Kron'
 
 
-class FormCall(Expr):
+class FormCall(AtomicExpr):
 
     def __new__(cls, expr, args):
 
@@ -718,10 +622,12 @@ class FormCall(Expr):
 
         expr = self.expr
 
+        expr_str = ''
         if expr.name:
             name = sstr(expr.name)
         else:
             name = 'FormCall'
+            expr_str = ': {}'.format(sstr(expr))
 
         if isinstance(expr, BilinearForm):
             test = [sstr(i) for i in expr.test_functions]
@@ -730,29 +636,23 @@ class FormCall(Expr):
             trial = [sstr(i) for i in expr.trial_functions]
             trial = ','.join(i for i in trial)
 
-            return '{name}({test},{trial})'.format(name=name, trial=trial, test=test)
+            return '{name}({test},{trial}{expr})'.format(name=name,
+                                                          trial=trial,
+                                                          test=test,
+                                                          expr=expr_str)
 
         if isinstance(expr, LinearForm):
             test = [sstr(i) for i in expr.test_functions]
             test = ','.join(i for i in test)
 
-            return '{name}({test})'.format(name=name, test=test)
+            return '{name}({test}{expr})'.format(name=name, test=test,
+                                                 expr=expr_str)
 
 
 # ...
 def atomize(expr, dim=None):
     """
     """
-#    if not isinstance(expr, (Add, Mul,
-#                             _partial_derivatives, _generic_ops,
-#                             TestFunction, VectorTestFunction, Indexed,
-#                             Field, Constant, Symbol, Function,
-#                             Integer, Float, Matrix, ImmutableDenseMatrix,
-#                             list, tuple, Tuple)):
-#        msg = ('> Wrong input type.')
-#
-#        raise TypeError(msg, ', given ', expr, type(expr))
-
     if not isinstance(expr, (Expr,
                              _partial_derivatives, _generic_ops,
                              TestFunction, VectorTestFunction, Indexed,
@@ -762,6 +662,15 @@ def atomize(expr, dim=None):
         msg = ('> Wrong input type.')
 
         raise TypeError(msg, ', given ', expr, type(expr))
+
+    # ... replace a FormCall by its expression
+    calls = expr.atoms(FormCall)
+    for call in calls:
+        expr = expr.subs(call, call.expr)
+    # ...
+
+    if isinstance(expr, FormCall):
+        expr = expr.expr
 
 #    print('> expr [atomize] = ', expr, type(expr))
 
@@ -1032,6 +941,12 @@ def matricize(expr):
 
 # ... TODO compute basis if not given
 def evaluate(a, basis=None, verbose=False):
+
+    # ... replace a FormCall by its expression
+    calls = a.atoms(FormCall)
+    for call in calls:
+        a = a.subs(call, call.expr)
+    # ...
 
     if not isinstance(a, (BasicForm, Add, Mul)):
         raise TypeError('Expecting a BasicForm, Add or Mul')
@@ -1380,16 +1295,15 @@ def subs_linear_form(form, newargs):
     # ...
 
     expr = form.expr
-    print('> ', expr)
 
     # ... replacing test functions
     d = {}
     for k,v in zip(form.test_functions, test_functions):
         d[k] = v
-        print(k,v)
     expr = expr.subs(d)
-    print('> ', expr)
     # ...
+
+    if len(test_functions) == 1: test_functions = test_functions[0]
 
     return LinearForm(test_functions, expr,
                       domain=form.domain, measure=form.measure,

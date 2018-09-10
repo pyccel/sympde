@@ -623,25 +623,21 @@ def test_calls_3d_3():
     # ...
     a1 = BilinearForm((v1, u1), u1*v1)
 
-    assert(u2*v2 == a1(v2, u2))
+    expr = a1(v2, u2)
     # ...
 
     # ...
     a1 = BilinearForm((v1, u1), u1*v1)
     a2 = BilinearForm((v1, u1), dx(u1)*dx(v1))
 
-    assert(u2*v2 + dx(u2)*dx(v2) == a1(v2, u2) + a2(v2, u2))
+    expr = a1(v2, u2) + a2(v2, u2)
     # ...
 
     # ...
     a1 = BilinearForm((v1, u1), u1*v1)
     a2 = BilinearForm((v1, u1), dx(u1)*dx(v1))
 
-    expr =  dx(u1u2[0])*dx(v1v2[1]) + u1u2[1]*v1v2[0]
-    expected = BilinearForm((v1v2, u1u2), expr)
-    result = BilinearForm(((v1,v2), (u1,u2)), a1(v1, u2) + a2(v2, u1))
-    # we can only compare the strings, since the spaces are not the same
-    assert(str(result) == str(expected))
+    expr = a1(v1, u2) + a2(v2, u1)
     # ...
 
     # ...
@@ -651,14 +647,19 @@ def test_calls_3d_3():
     a4 = BilinearForm((w1, u1), div(w1)*u1)
 
     expr = a3(w2,t2) + a2(v2,u2) + a4(w2,u2)
-    b = BilinearForm(((w2,v2), (t2,u2)), expr)
-#    print(expr)
-#    print(b)
     # ...
 
     # ...
     l1 = LinearForm(v1, x*y*z*v1)
-#    print(l1(v2))
+
+    expr = l1(v2)
+    # ...
+
+    # ...
+    l1 = LinearForm(v1, x*y*z*v1)
+    l2 = LinearForm(v2, cos(x+y+z)*v2)
+
+    expr = l1(u1) + l2(u2)
     # ...
 # ...
 
