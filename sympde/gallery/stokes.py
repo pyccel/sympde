@@ -48,8 +48,10 @@ class Stokes(Model):
         a  = BilinearForm(((v,q), (u,p)), a1(v,u) - a2(v,p) + a2(u,q))
         # ...
 
-#        obj = Model.__new__(cls, a, a1, a2, **kwargs)
-        obj = Model.__new__(cls, a1=a1, a2=a2, **kwargs)
+        forms = {'a1': a1, 'a2': a2, 'a': a}
+        equations = ()
+
+        obj = Model.__new__(cls, forms=forms, equations=equations, **kwargs)
 
         obj._spaces = [V, W]
 

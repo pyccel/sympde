@@ -44,7 +44,10 @@ class Poisson(Model):
         a = BilinearForm((v,u), expr)
         # ...
 
-        obj = Model.__new__(cls, a=a, **kwargs)
+        forms = {'a': a}
+        equations = ()
+
+        obj = Model.__new__(cls, forms=forms, equations=equations, **kwargs)
 
         obj._space = V
 
