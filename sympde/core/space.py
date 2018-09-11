@@ -1,6 +1,6 @@
 # coding: utf-8
 
-# TODO: - add VectorUnknown
+# TODO: - do we need is_block/is_vector in FunctionSpace
 
 from numpy import unique
 
@@ -342,15 +342,24 @@ class VectorTestFunction(Symbol, IndexedBase):
         return VectorTestFunction(self.space, name)
 
 
+# TODO improve
 class Unknown(TestFunction):
     """
     Represents an unknown function
 
     """
     def __new__(cls, name, ldim):
-        V = FunctionSpace('V', ldim=ldim)
+        space_name = 'space_{}'.format(abs(hash(name)))
+        V = FunctionSpace(space_name, ldim=ldim)
         return TestFunction.__new__(cls, V, name)
 
-    @property
-    def ldim(self):
-        return self.space.ldim
+# TODO improve
+class VectorUnknown(VectorTestFunction):
+    """
+    Represents an unknown function
+
+    """
+    def __new__(cls, name, ldim, shape):
+        space_name = 'space_{}'.format(abs(hash(name)))
+        V = FunctionSpace(space_name, ldim=ldim, shape=shape, is_block=True)
+        return VectorTestFunction.__new__(cls, V, name)

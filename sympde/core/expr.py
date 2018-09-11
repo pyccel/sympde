@@ -55,7 +55,7 @@ from .space import FunctionSpace
 from .space import ProductSpace
 from .space import TestFunction
 from .space import VectorTestFunction
-from .space import Unknown
+from .space import Unknown, VectorUnknown
 
 class BasicForm(Expr):
     _name = None
@@ -535,21 +535,22 @@ class FormCall(AtomicExpr):
             else:
                 raise ValueError('Bilinear/Linear form must have a name')
 
-        obj = Basic.__new__(cls, name, expr, args)
+        args = Tuple(*args)
+        obj = Basic.__new__(cls, expr, args, name)
         # ...
 
         return obj
 
     @property
-    def name(self):
+    def expr(self):
         return self._args[0]
 
     @property
-    def expr(self):
+    def arguments(self):
         return self._args[1]
 
     @property
-    def arguments(self):
+    def name(self):
         return self._args[2]
 
     @property
@@ -637,17 +638,16 @@ def _sanitize_form_arguments(arguments, expr, is_bilinear=False, is_linear=False
         if isinstance(test_functions, (TestFunction, VectorTestFunction)):
             test_functions = [test_functions]
 
-    #    elif (isinstance(test_functions, (tuple, list, Tuple)) and
-    #          (len(test_functions) > 1)):
-
         elif isinstance(test_functions, (tuple, list, Tuple)):
 
-            spaces = [i.space for i in test_functions]
-            V = ProductSpace(*spaces)
-            name = ''.join(i.name for i in test_functions)
-            v = VectorTestFunction(V, name=name)
+            if (len(test_functions) > 1):
 
-            test_functions = [v]
+                spaces = [i.space for i in test_functions]
+                V = ProductSpace(*spaces)
+                name = ''.join(i.name for i in test_functions)
+                v = VectorTestFunction(V, name=name)
+
+                test_functions = [v]
 
         else:
             raise TypeError('Wrong type for test function(s)')
@@ -662,17 +662,16 @@ def _sanitize_form_arguments(arguments, expr, is_bilinear=False, is_linear=False
         if isinstance(trial_functions, (TestFunction, VectorTestFunction)):
             trial_functions = [trial_functions]
 
-#        elif (isinstance(trial_functions, (tuple, list, Tuple)) and
-#              (len(trial_functions) > 1)):
-
         elif isinstance(trial_functions, (tuple, list, Tuple)):
 
-            spaces = [i.space for i in trial_functions]
-            V = ProductSpace(*spaces)
-            name = ''.join(i.name for i in trial_functions)
-            v = VectorTestFunction(V, name=name)
+            if (len(trial_functions) > 1):
 
-            trial_functions = [v]
+                spaces = [i.space for i in trial_functions]
+                V = ProductSpace(*spaces)
+                name = ''.join(i.name for i in trial_functions)
+                v = VectorTestFunction(V, name=name)
+
+                trial_functions = [v]
 
         else:
             raise TypeError('Wrong type for trial function(s)')
@@ -706,19 +705,26 @@ def _sanitize_form_expr(arguments, expr, newargs, is_bilinear=False, is_linear=F
             test_functions = arguments
             v = newargs[0]
 
-        if is_sum_of_form_calls(expr):
-            print(arguments)
-            print(expr)
-            print(v)
-#            import sys; sys.exit(0)
+#        if is_sum_of_form_calls(expr):
+#            print(arguments)
+#            print(expr)
+#            print(v)
+##            import sys; sys.exit(0)
 
         if isinstance(test_functions, (tuple, list, Tuple)):
             i = 0
             for w in test_functions:
                 if isinstance(w, TestFunction):
-                    expr = expr.subs(w, v[i])
+                    if isinstance(v, TestFunction):
+                        expr = expr.subs(w, v)
+
+                    else:
+                        expr = expr.subs(w, v[i])
 
                 elif isinstance(w, VectorTestFunction):
+                    if not isinstance(v, VectorTestFunction):
+                        raise TypeError('> Expecting a VectorTestFunction')
+
                     for j in range(0, w.shape[0]):
                         expr = expr.subs(w[j], v[i+j])
 
@@ -735,11 +741,18 @@ def _sanitize_form_expr(arguments, expr, newargs, is_bilinear=False, is_linear=F
             i = 0
             for w in trial_functions:
                 if isinstance(w, TestFunction):
-                    expr = expr.subs({w: v[i]})
+                    if isinstance(v, TestFunction):
+                        expr = expr.subs(w, v)
+
+                    else:
+                        expr = expr.subs(w, v[i])
 
                 elif isinstance(w, VectorTestFunction):
+                    if not isinstance(v, VectorTestFunction):
+                        raise TypeError('> Expecting a VectorTestFunction')
+
                     for j in range(0, w.shape[0]):
-                        expr = expr.subs({w[j]: v[i+j]})
+                        expr = expr.subs(w[j], v[i+j])
 
                 i += w.space.shape
     # ...
@@ -1350,8 +1363,11 @@ def subs_bilinear_form(form, newargs):
     d_tmp = {}
     for x in trial_functions:
         name = 'trial_{}'.format(abs(hash(x)))
-#        X = x.duplicate(name)
-        X = Unknown(name, ldim=x.ldim)
+        if isinstance(x, VectorTestFunction):
+            X = VectorUnknown(name, ldim=x.ldim, shape=x.shape)
+
+        else:
+            X = Unknown(name, ldim=x.ldim)
 
         d_tmp[X] = x
     # ...
