@@ -149,7 +149,7 @@ class LatexPrinter(LatexPrinterSympy):
 
     def _print_FormCall(self, expr):
         form = expr.expr
-        name = expr.name
+        name = expr.form_name
         if name is None:
             raise ValueError('> undefined name for a form')
 

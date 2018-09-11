@@ -388,37 +388,42 @@ def test_calls_2d_3():
     # ...
 
     # ...
-    a1 = BilinearForm((v1, u1), u1*v1)
-    a2 = BilinearForm((v1, u1), dx(u1)*dx(v1))
+    a1 = BilinearForm((v1, u1), u1*v1, name='a1')
+    a2 = BilinearForm((v1, u1), dx(u1)*dx(v1), name='a2')
 
     expr = a1(v2, u2) + a2(v2, u2)
     # ...
 
     # ...
-    a1 = BilinearForm((v1, u1), u1*v1)
-    a2 = BilinearForm((v1, u1), dx(u1)*dx(v1))
+    a1 = BilinearForm((v1, u1), u1*v1, name='a1')
+    a2 = BilinearForm((v1, u1), dx(u1)*dx(v1), name='a2')
 
     expr =  a1(v1, u2) + a2(v2, u1)
+    print(atomize(expr))
+
+    # TODO debug
+#    expr = BilinearForm(((v1,v2),(u1,u2)), expr)
+#    print(evaluate(expr))
     # ...
 
     # ...
-    a1 = BilinearForm((v1, u1), u1*v1)
-    a2 = BilinearForm((v1, u1), dx(u1)*dx(v1))
-    a3 = BilinearForm((w1, t1), rot(w1)*rot(t1) + div(w1)*div(t1))
-    a4 = BilinearForm((w1, u1), div(w1)*u1)
+    a1 = BilinearForm((v1, u1), u1*v1, name='a1')
+    a2 = BilinearForm((v1, u1), dx(u1)*dx(v1), name='a2')
+    a3 = BilinearForm((w1, t1), rot(w1)*rot(t1) + div(w1)*div(t1), name='a3')
+    a4 = BilinearForm((w1, u1), div(w1)*u1, name='a4')
 
     expr = a3(w2,t2) + a2(v2,u2) + a4(w2,u2)
     # ...
 
     # ...
-    l1 = LinearForm(v1, x*y*v1)
+    l1 = LinearForm(v1, x*y*v1, name='11')
 
     expr = l1(v2)
     # ...
 
     # ...
-    l1 = LinearForm(v1, x*y*v1)
-    l2 = LinearForm(v2, cos(x+y)*v2)
+    l1 = LinearForm(v1, x*y*v1, name='l1')
+    l2 = LinearForm(v2, cos(x+y)*v2, name='l2')
 
     expr = l1(u1) + l2(u2)
     # ...
@@ -783,26 +788,26 @@ def test_unknown_2d_1():
 
 # .....................................................
 if __name__ == '__main__':
-    test_atomize_2d_1()
-    test_normalize_2d_1()
-    test_evaluate_2d_1()
-
-    test_atomize_2d_2()
-    test_normalize_2d_2()
-    test_matricize_2d_2()
-
-#    test_bilinear_form_2d_10() # TODO not working, since args are the same
-    test_linear_form_2d_10()
-    test_function_form_2d_10()
-
-    test_matricize_2d_3()
-    test_evaluate_2d_3()
-
-    test_tensorize_2d_1()
-
-    test_inv_normalize_2d_1()
-    test_tensorize_2d_2()
-
+#    test_atomize_2d_1()
+#    test_normalize_2d_1()
+#    test_evaluate_2d_1()
+#
+#    test_atomize_2d_2()
+#    test_normalize_2d_2()
+#    test_matricize_2d_2()
+#
+##    test_bilinear_form_2d_10() # TODO not working, since args are the same
+#    test_linear_form_2d_10()
+#    test_function_form_2d_10()
+#
+#    test_matricize_2d_3()
+#    test_evaluate_2d_3()
+#
+#    test_tensorize_2d_1()
+#
+#    test_inv_normalize_2d_1()
+#    test_tensorize_2d_2()
+#
     test_calls_2d_3()
-
-    test_unknown_2d_1()
+#
+#    test_unknown_2d_1()

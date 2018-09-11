@@ -8,8 +8,6 @@ def test_stokes_2d():
 
     model = Stokes(dim=2)
 
-    assert(str(model.space) == 'V')
-
     model.preview(outputTexFile='test_stokes_2d.tex')
 # ...
 
@@ -19,8 +17,6 @@ def test_stokes_3d():
 
     model = Stokes(dim=3)
 
-    assert(str(model.space) == 'V')
-
     model.preview(outputTexFile='test_stokes_3d.tex')
 # ...
 
@@ -29,4 +25,4 @@ def test_stokes_3d():
 if __name__ == '__main__':
 
     test_stokes_2d()
-    test_stokes_3d()
+#    test_stokes_3d()

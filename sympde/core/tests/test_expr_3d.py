@@ -621,43 +621,43 @@ def test_calls_3d_3():
     u1u2 = VectorTestFunction(U, name='u1u2')
 
     # ...
-    a1 = BilinearForm((v1, u1), u1*v1)
+    a1 = BilinearForm((v1, u1), u1*v1, name='a1')
 
     expr = a1(v2, u2)
     # ...
 
     # ...
-    a1 = BilinearForm((v1, u1), u1*v1)
-    a2 = BilinearForm((v1, u1), dx(u1)*dx(v1))
+    a1 = BilinearForm((v1, u1), u1*v1, name='a1')
+    a2 = BilinearForm((v1, u1), dx(u1)*dx(v1), name='a2')
 
     expr = a1(v2, u2) + a2(v2, u2)
     # ...
 
     # ...
-    a1 = BilinearForm((v1, u1), u1*v1)
-    a2 = BilinearForm((v1, u1), dx(u1)*dx(v1))
+    a1 = BilinearForm((v1, u1), u1*v1, name='a1')
+    a2 = BilinearForm((v1, u1), dx(u1)*dx(v1), name='a2')
 
     expr = a1(v1, u2) + a2(v2, u1)
     # ...
 
     # ...
-    a1 = BilinearForm((v1, u1), u1*v1)
-    a2 = BilinearForm((v1, u1), dx(u1)*dx(v1))
-    a3 = BilinearForm((w1, t1), dot(curl(w1), curl(t1)) + div(w1)*div(t1))
-    a4 = BilinearForm((w1, u1), div(w1)*u1)
+    a1 = BilinearForm((v1, u1), u1*v1, name='a1')
+    a2 = BilinearForm((v1, u1), dx(u1)*dx(v1), name='a2')
+    a3 = BilinearForm((w1, t1), dot(curl(w1), curl(t1)) + div(w1)*div(t1), name='a3')
+    a4 = BilinearForm((w1, u1), div(w1)*u1, name='a4')
 
     expr = a3(w2,t2) + a2(v2,u2) + a4(w2,u2)
     # ...
 
     # ...
-    l1 = LinearForm(v1, x*y*z*v1)
+    l1 = LinearForm(v1, x*y*z*v1, name='l1')
 
     expr = l1(v2)
     # ...
 
     # ...
-    l1 = LinearForm(v1, x*y*z*v1)
-    l2 = LinearForm(v2, cos(x+y+z)*v2)
+    l1 = LinearForm(v1, x*y*z*v1, name='l1')
+    l2 = LinearForm(v2, cos(x+y+z)*v2, name='l2')
 
     expr = l1(u1) + l2(u2)
     # ...

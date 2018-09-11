@@ -45,13 +45,12 @@ class Stokes(Model):
         p = TestFunction(W, name='p')
         q = TestFunction(W, name='q')
 
-        a1 = BilinearForm((v,u), inner(grad(v), grad(u)), name='a1')
-        a2 = BilinearForm((v,p), div(v)*p, name='a2')
-        a  = BilinearForm(((v,q), (u,p)), a1(v,u) - a2(v,p) + a2(u,q), name='a')
+        a = BilinearForm((v,u), inner(grad(v), grad(u)), name='a')
+        b = BilinearForm((v,p), div(v)*p, name='b')
         # ...
 
-        forms = [a1, a2, a]
-        equation = Equation(a((v,q), (u,p)), Nil())
+        forms = [a, b]
+        equation = Equation(a(v,u) - b(v,p) + b(u,q), Nil())
 
         obj = Model.__new__(cls, forms=forms, equation=equation, **kwargs)
 

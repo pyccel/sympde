@@ -241,7 +241,7 @@ class LinearForm(BasicForm):
         test_functions = Tuple(*test_functions)
         # ...
 
-        obj = Basic.__new__(cls, expr, test_functions)
+        obj = Basic.__new__(cls, test_functions, expr)
 
         domain = BasicForm._init_domain(domain, obj.ldim)
         measure = BasicForm._init_measure(measure, obj.coordinates)
@@ -254,12 +254,16 @@ class LinearForm(BasicForm):
         return obj
 
     @property
-    def expr(self):
+    def variables(self):
         return self._args[0]
 
     @property
-    def test_functions(self):
+    def expr(self):
         return self._args[1]
+
+    @property
+    def test_functions(self):
+        return self.variables
 
     @property
     def ldim(self):
@@ -305,7 +309,6 @@ class BilinearForm(BasicForm):
             test_functions = [test_functions]
 
         elif isinstance(test_functions, (tuple, list, Tuple)):
-            print('> PAR ICI')
             spaces = [i.space for i in test_functions]
             V = ProductSpace(*spaces)
             name = ''.join(i.name for i in test_functions)
@@ -314,11 +317,11 @@ class BilinearForm(BasicForm):
             i = 0
             for w in test_functions:
                 if isinstance(w, TestFunction):
-                    expr = expr.subs({w: v[i]})
+                    expr = expr.subs(w, v[i])
 
                 elif isinstance(w, VectorTestFunction):
                     for j in range(0, w.shape[0]):
-                        expr = expr.subs({w[j]: v[i+j]})
+                        expr = expr.subs(w[j], v[i+j])
 
                 i += w.space.shape
 
@@ -360,7 +363,9 @@ class BilinearForm(BasicForm):
         trial_functions = Tuple(*trial_functions)
         # ...
 
-        obj = Basic.__new__(cls, expr, test_functions, trial_functions)
+        test_trial = [test_functions, trial_functions]
+        test_trial = Tuple(*test_trial)
+        obj = Basic.__new__(cls, test_trial, expr)
 
         domain = BasicForm._init_domain(domain, obj.ldim)
         measure = BasicForm._init_measure(measure, obj.coordinates)
@@ -373,16 +378,20 @@ class BilinearForm(BasicForm):
         return obj
 
     @property
-    def expr(self):
+    def variables(self):
         return self._args[0]
 
     @property
-    def test_functions(self):
+    def expr(self):
         return self._args[1]
 
     @property
+    def test_functions(self):
+        return self.variables[0]
+
+    @property
     def trial_functions(self):
-        return self._args[2]
+        return self.variables[1]
 
     @property
     def ldim(self):
@@ -589,7 +598,7 @@ class Kron(BilinearAtomicForm):
 
 class FormCall(AtomicExpr):
 
-    _default_name = 'FormCall'
+    is_commutative = False
 
     def __new__(cls, expr, args, name=None):
 
@@ -605,32 +614,34 @@ class FormCall(AtomicExpr):
         if isinstance(expr, LinearForm):
             expr = subs_linear_form(expr, args)
 
-        obj = Basic.__new__(cls, expr, args)
-
         # ...
         if not name:
             if expr.name:
                 name = expr.name
 
             else:
-                name = cls._default_name
+                raise ValueError('Bilinear/Linear form must have a name')
 
-        obj._name = name
+        obj = Basic.__new__(cls, name, expr, args)
         # ...
 
         return obj
 
     @property
-    def expr(self):
+    def name(self):
         return self._args[0]
 
     @property
-    def arguments(self):
+    def expr(self):
         return self._args[1]
 
     @property
-    def name(self):
-        return self._name
+    def arguments(self):
+        return self._args[2]
+
+    @property
+    def form_name(self):
+        return self.name
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -638,10 +649,6 @@ class FormCall(AtomicExpr):
         expr = self.expr
 
         name = sstr(self.name)
-
-        expr_str = ''
-        if self.name == self._default_name:
-            expr_str = ': {}'.format(sstr(expr))
 
         # ...
         test = [sstr(i) for i in expr.test_functions]
@@ -666,15 +673,12 @@ class FormCall(AtomicExpr):
                 trial = '({})'.format(trial_str)
             # ...
 
-            return '{name}({test},{trial}{expr})'.format(name=name,
-                                                          trial=trial,
-                                                          test=test,
-                                                          expr=expr_str)
+            return '{name}({test},{trial})'.format(name=name,
+                                                    trial=trial,
+                                                    test=test)
 
         if isinstance(expr, LinearForm):
-            return '{name}({test}{expr})'.format(name=name, test=test,
-                                                 expr=expr_str)
-
+            return '{name}({test})'.format(name=name, test=test)
 
 # ...
 def atomize(expr, dim=None):
@@ -707,6 +711,8 @@ def atomize(expr, dim=None):
                                                              VectorTestFunction,
                                                              Field))]
 
+#        ls = expr.atoms((TestFunction, VectorTestFunction, Field))
+#        ls = list(ls)
         if ls:
             atom = ls[0]
             if atom.space is None:

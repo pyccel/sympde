@@ -22,23 +22,24 @@ class Equation(Basic):
         if lhs is None: lhs = Nil()
         if rhs is None: rhs = Nil()
 
-        # ... check lhs
-        if lhs.atoms(LinearForm):
-            raise TypeError('> lhs should not contain a LinearForm')
-
-        if not(isinstance(lhs, Nil)) and not(lhs.atoms(BilinearForm)):
-            msg = '> lhs must be None or contain at least one BilinearForm'
-            raise TypeError(msg)
-        # ...
-
-        # ... check rhs
-        if rhs.atoms(BilinearForm):
-            raise TypeError('> lhs should not contain a BilinearForm')
-
-        if not(isinstance(rhs, Nil)) and not(rhs.atoms(LinearForm)):
-            msg = '> rhs must be None or contain at least one LinearForm'
-            raise TypeError(msg)
-        # ...
+        # TODO not working, since FormCall extends Function now
+#        # ... check lhs
+#        if lhs.atoms(LinearForm):
+#            raise TypeError('> lhs should not contain a LinearForm')
+#
+#        if not(isinstance(lhs, Nil)) and not(lhs.atoms(BilinearForm)):
+#            msg = '> lhs must be None or contain at least one BilinearForm'
+#            raise TypeError(msg)
+#        # ...
+#
+#        # ... check rhs
+#        if rhs.atoms(BilinearForm):
+#            raise TypeError('> lhs should not contain a BilinearForm')
+#
+#        if not(isinstance(rhs, Nil)) and not(rhs.atoms(LinearForm)):
+#            msg = '> rhs must be None or contain at least one LinearForm'
+#            raise TypeError(msg)
+#        # ...
 
         return Basic.__new__(cls, lhs, rhs)
 
