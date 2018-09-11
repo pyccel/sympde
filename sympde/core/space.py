@@ -261,35 +261,9 @@ class IndexedTestTrial(Indexed):
 
         return base_free_symbols
 
-
     @property
     def ldim(self):
         return self.base.space.ldim
-
-    @property
-    def name(self):
-        return '{base}{index}'.format(base=self.base.name,
-                                      index=self.indices[0])
-
-    @property
-    def space(self):
-        b_space = self.base.space
-        if isinstance(b_space, ProductSpace):
-            i = self.indices[0]
-
-        if not isinstance(b_space, FunctionSpace) and not b_space.is_block:
-            raise TypeError('> base space must be ProductSpace or block FunctionSpace')
-
-        # FunctionSpace case
-        return FunctionSpace('V_{}'.format(abs(hash(self))), ldim=b_space.ldim)
-
-        # TODO uncomment if needed
-#        indices_free_symbols = {
-#            fs for i in symbolic_indices for fs in i.free_symbols}
-#        if base_free_symbols:
-#            return {self} | base_free_symbols | indices_free_symbols
-#        else:
-#            return indices_free_symbols
 
 
 class VectorTestFunction(Symbol, IndexedBase):

@@ -381,64 +381,45 @@ def test_calls_2d_3():
     v1v2 = VectorTestFunction(V, name='v1v2')
     u1u2 = VectorTestFunction(U, name='u1u2')
 
-#    # ...
-#    a1 = BilinearForm((v1, u1), u1*v1, name='a1')
-#
-#    print(a1((v1v2[0],), (u1u2[0],)))
-#    print(a1(v1v2[0], u1u2[0]))
-#
-#    expr = a1(v1v2[0], u1u2[0])
-#    expr = BilinearForm(((v1v2[0],), (u1u2[0],)), expr, name='a')
-#    print(evaluate(expr))
-#    import sys; sys.exit(0)
-#    # ...
+    # ...
+    a1 = BilinearForm((v1, u1), u1*v1, name='a1')
 
-#    # ... TODO debug
-#    a1 = BilinearForm((v1, u1), dx(u1)*v1, name='a1')
-#
-#    expr = a1(v1v2[0], u1u2[0])
-##    expr = BilinearForm(((v1v2[0],), (u1u2[0],)), expr, name='a')
-##    print(evaluate(expr))
-#    import sys; sys.exit(0)
-#    # ...
-
-#    # ...
-#    a1 = BilinearForm((v1, u1), u1*v1, name='a1')
-#
-#    expr = a1(v2, u2)
-#    # ...
-#
-#    # ...
-#    a1 = BilinearForm((v1, u1), u1*v1, name='a1')
-#    a2 = BilinearForm((v1, u1), dx(u1)*dx(v1), name='a2')
-#
-#    expr = a1(v2, u2) + a2(v2, u2)
-#    # ...
+    expr = a1(v2, u2)
+    a = BilinearForm((v2, u2), expr, name='a')
+    print(a)
+    # ...
 
     # ...
     a1 = BilinearForm((v1, u1), u1*v1, name='a1')
     a2 = BilinearForm((v1, u1), dx(u1)*dx(v1), name='a2')
 
-#    expr =  a1(v1, u2)
-#    print('> before = ', expr)
-#    expr = expr.subs(u2, u1)
-#    print('> after  = ', expr)
-#    print('')
-#
-#    expr =  a1(v1, u2) + a1(v2, u2)
-#    print('> before = ', expr)
-#    expr = expr.subs(u2, u1)
-#    print('> after  = ', expr)
+    expr = a1(v2, u2) + a2(v2, u2)
+    a = BilinearForm((v2, u2), expr, name='a')
+    print(a)
+    # ...
+
+    # ...
+    a1 = BilinearForm((v1, u1), u1*v1, name='a1')
+    a2 = BilinearForm((v1, u1), dx(u1)*dx(v1), name='a2')
+
+    expr =  a1(v1, u2)
+    print('> before = ', expr)
+    expr = expr.subs(u2, u1)
+    print('> after  = ', expr)
+    print('')
+
+    expr =  a1(v1, u2) + a1(v2, u2)
+    print('> before = ', expr)
+    expr = expr.subs(u2, u1)
+    print('> after  = ', expr)
 
     expr =  a1(v1, u2) + a2(v2, u1)
-    print('*** ', atomize(expr))
-
-#    # TODO debug
-#    expr =  a1(v1, u2) + a2(v2, u1)
-#    expr = BilinearForm(((v1,v2),(u1,u2)), expr, name='a')
-##    print(evaluate(expr))
-#    import sys; sys.exit(0)
+    a = BilinearForm(((v1,v2),(u1,u2)), expr, name='a')
+    print(a)
+#    print(evaluate(expr))
     # ...
+
+    import sys; sys.exit(0)
 
     # ...
     a1 = BilinearForm((v1, u1), u1*v1, name='a1')

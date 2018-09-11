@@ -214,7 +214,7 @@ class LinearForm(BasicForm):
                 mapping=None, name=None):
 
         args = _sanitize_form_arguments(arguments, expr, is_linear=True)
-        expr = _sanitize_form_expr(arguments, expr, args, is_linear=True)
+        expr = _sanitize_linear_form_expr(arguments, expr, args)
         obj = Basic.__new__(cls, args, expr)
 
         domain = BasicForm._init_domain(domain, obj.ldim)
@@ -278,7 +278,7 @@ class BilinearForm(BasicForm):
             raise ValueError('Expecting a couple (test, trial)')
 
         args = _sanitize_form_arguments(arguments, expr, is_bilinear=True)
-        expr = _sanitize_form_expr(arguments, expr, args, is_bilinear=True)
+        expr = _sanitize_bilinearform_expr(arguments, expr, args)
         obj = Basic.__new__(cls, args, expr)
 
         domain = BasicForm._init_domain(domain, obj.ldim)
@@ -639,29 +639,14 @@ def _sanitize_form_arguments(arguments, expr, is_bilinear=False, is_linear=False
         if isinstance(test_functions, (TestFunction, VectorTestFunction)):
             test_functions = [test_functions]
 
-        elif isinstance(test_functions, IndexedTestTrial):
-            test_functions = [test_functions]
-
-            spaces = [i.space for i in test_functions]
-            V = ProductSpace(*spaces)
-            name = ''.join(i.name for i in test_functions)
-            v = VectorTestFunction(V, name=name)
-
-            test_functions = [v]
-
         elif isinstance(test_functions, (tuple, list, Tuple)):
-
-            if (len(test_functions) > 1):
-
-                spaces = [i.space for i in test_functions]
-                V = ProductSpace(*spaces)
-                name = ''.join(i.name for i in test_functions)
-                v = VectorTestFunction(V, name=name)
-
-                test_functions = [v]
+            are_valid = [isinstance(i, (TestFunction, VectorTestFunction)) for i in test_functions]
+            if not all(are_valid):
+                raise TypeError('> Wrong arguments for test functions')
 
         else:
-            raise TypeError('Wrong type for test function(s)')
+            msg = 'Wrong type for test function(s). given {}'.format(type(test_functions))
+            raise TypeError(msg)
 
         test_functions = Tuple(*test_functions)
     # ...
@@ -673,29 +658,14 @@ def _sanitize_form_arguments(arguments, expr, is_bilinear=False, is_linear=False
         if isinstance(trial_functions, (TestFunction, VectorTestFunction)):
             trial_functions = [trial_functions]
 
-        elif isinstance(trial_functions, IndexedTestTrial):
-            trial_functions = [trial_functions]
-
-            spaces = [i.space for i in trial_functions]
-            V = ProductSpace(*spaces)
-            name = ''.join(i.name for i in trial_functions)
-            v = VectorTestFunction(V, name=name)
-
-            trial_functions = [v]
-
         elif isinstance(trial_functions, (tuple, list, Tuple)):
-
-            if (len(trial_functions) > 1):
-
-                spaces = [i.space for i in trial_functions]
-                V = ProductSpace(*spaces)
-                name = ''.join(i.name for i in trial_functions)
-                v = VectorTestFunction(V, name=name)
-
-                trial_functions = [v]
+            are_valid = [isinstance(i, (TestFunction, VectorTestFunction)) for i in trial_functions]
+            if not all(are_valid):
+                raise TypeError('> Wrong arguments for trial functions')
 
         else:
-            raise TypeError('Wrong type for trial function(s)')
+            msg = 'Wrong type for trial function(s). given {}'.format(type(trial_functions))
+            raise TypeError(msg)
 
         trial_functions = Tuple(*trial_functions)
     # ...
@@ -709,75 +679,10 @@ def _sanitize_form_arguments(arguments, expr, is_bilinear=False, is_linear=False
 
     return args
 
-def _sanitize_form_expr(arguments, expr, newargs, is_bilinear=False, is_linear=False):
+def _sanitize_bilinearform_expr(arguments, expr, newargs):
+    return expr
 
-    is_linear = is_linear or (len(expr.atoms(LinearForm)) > 0)
-    is_bilinear = is_bilinear or (len(expr.atoms(BilinearForm)) > 0)
-#    print(is_linear, is_bilinear)
-
-    # ...
-    if is_bilinear or is_linear:
-
-        if is_bilinear:
-            test_functions = arguments[0]
-            v = newargs[0][0]
-
-        elif is_linear:
-            test_functions = arguments
-            v = newargs[0]
-
-#        if is_sum_of_form_calls(expr):
-#            print(arguments)
-#            print(expr)
-#            print(v)
-##            import sys; sys.exit(0)
-
-        if isinstance(test_functions, (tuple, list, Tuple)):
-            i = 0
-            for w in test_functions:
-                if isinstance(w, TestFunction):
-                    if isinstance(v, TestFunction):
-                        expr = expr.subs(w, v)
-
-                    else:
-                        expr = expr.subs(w, v[i])
-
-                elif isinstance(w, VectorTestFunction):
-                    if not isinstance(v, VectorTestFunction):
-                        raise TypeError('> Expecting a VectorTestFunction')
-
-                    for j in range(0, w.shape[0]):
-                        expr = expr.subs(w[j], v[i+j])
-
-                i += w.space.shape
-    # ...
-
-    # ...
-    if is_bilinear:
-
-        v = newargs[1][0]
-        trial_functions = arguments[1]
-
-        if isinstance(trial_functions, (tuple, list, Tuple)):
-            i = 0
-            for w in trial_functions:
-                if isinstance(w, TestFunction):
-                    if isinstance(v, TestFunction):
-                        expr = expr.subs(w, v)
-
-                    else:
-                        expr = expr.subs(w, v[i])
-
-                elif isinstance(w, VectorTestFunction):
-                    if not isinstance(v, VectorTestFunction):
-                        raise TypeError('> Expecting a VectorTestFunction')
-
-                    for j in range(0, w.shape[0]):
-                        expr = expr.subs(w[j], v[i+j])
-
-                i += w.space.shape
-    # ...
-
+def _sanitize_linearform_expr(arguments, expr, newargs):
     return expr
 
 
