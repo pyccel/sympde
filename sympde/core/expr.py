@@ -208,40 +208,11 @@ class LinearForm(BasicForm):
     Examples
 
     """
-    def __new__(cls, test_functions, expr, domain=None, measure=None,
+    def __new__(cls, arguments, expr, domain=None, measure=None,
                 mapping=None, name=None):
 
-        # ...
-        if isinstance(test_functions, (TestFunction, VectorTestFunction)):
-            test_functions = [test_functions]
-            test_functions = Tuple(*test_functions)
-
-        elif isinstance(test_functions, (tuple, list, Tuple)):
-            spaces = [i.space for i in test_functions]
-            V = ProductSpace(*spaces)
-            name = ''.join(i.name for i in test_functions)
-            v = VectorTestFunction(V, name=name)
-
-            i = 0
-            for w in test_functions:
-                if isinstance(w, TestFunction):
-                    expr = expr.subs({w: v[i]})
-
-                elif isinstance(w, VectorTestFunction):
-                    for j in range(0, w.shape[0]):
-                        expr = expr.subs({w[j]: v[i+j]})
-
-                i += w.space.shape
-
-            test_functions = [v]
-
-        else:
-            raise TypeError('Wrong type for test function(s)')
-
-        test_functions = Tuple(*test_functions)
-        # ...
-
-        obj = Basic.__new__(cls, test_functions, expr)
+        args = _sanitize_form_arguments(arguments, expr, is_linear=True)
+        obj = Basic.__new__(cls, args, expr)
 
         domain = BasicForm._init_domain(domain, obj.ldim)
         measure = BasicForm._init_measure(measure, obj.coordinates)
@@ -293,79 +264,18 @@ class BilinearForm(BasicForm):
     Examples
 
     """
-    def __new__(cls, test_trial, expr, domain=None, measure=None,
+    def __new__(cls, arguments, expr, domain=None, measure=None,
                 mapping=None, name=None):
 
         # ...
-        if not isinstance(test_trial, (tuple, list, Tuple)):
+        if not isinstance(arguments, (tuple, list, Tuple)):
             raise TypeError('(test, trial) must be a tuple, list or Tuple')
 
-        if not(len(test_trial) == 2):
+        if not(len(arguments) == 2):
             raise ValueError('Expecting a couple (test, trial)')
 
-        # ...
-        test_functions = test_trial[0]
-        if isinstance(test_functions, (TestFunction, VectorTestFunction)):
-            test_functions = [test_functions]
-
-        elif isinstance(test_functions, (tuple, list, Tuple)):
-            spaces = [i.space for i in test_functions]
-            V = ProductSpace(*spaces)
-            name = ''.join(i.name for i in test_functions)
-            v = VectorTestFunction(V, name=name)
-
-            i = 0
-            for w in test_functions:
-                if isinstance(w, TestFunction):
-                    expr = expr.subs(w, v[i])
-
-                elif isinstance(w, VectorTestFunction):
-                    for j in range(0, w.shape[0]):
-                        expr = expr.subs(w[j], v[i+j])
-
-                i += w.space.shape
-
-            test_functions = [v]
-
-        else:
-            raise TypeError('Wrong type for test function(s)')
-
-        test_functions = Tuple(*test_functions)
-        # ...
-
-        # ...
-        trial_functions = test_trial[1]
-        if isinstance(trial_functions, (TestFunction, VectorTestFunction)):
-            trial_functions = [trial_functions]
-
-        elif isinstance(trial_functions, (tuple, list, Tuple)):
-            spaces = [i.space for i in trial_functions]
-            V = ProductSpace(*spaces)
-            name = ''.join(i.name for i in trial_functions)
-            v = VectorTestFunction(V, name=name)
-
-            i = 0
-            for w in trial_functions:
-                if isinstance(w, TestFunction):
-                    expr = expr.subs({w: v[i]})
-
-                elif isinstance(w, VectorTestFunction):
-                    for j in range(0, w.shape[0]):
-                        expr = expr.subs({w[j]: v[i+j]})
-
-                i += w.space.shape
-
-            trial_functions = [v]
-
-        else:
-            raise TypeError('Wrong type for trial function(s)')
-
-        trial_functions = Tuple(*trial_functions)
-        # ...
-
-        test_trial = [test_functions, trial_functions]
-        test_trial = Tuple(*test_trial)
-        obj = Basic.__new__(cls, test_trial, expr)
+        args = _sanitize_form_arguments(arguments, expr, is_bilinear=True)
+        obj = Basic.__new__(cls, args, expr)
 
         domain = BasicForm._init_domain(domain, obj.ldim)
         measure = BasicForm._init_measure(measure, obj.coordinates)
@@ -679,6 +589,125 @@ class FormCall(AtomicExpr):
 
         if isinstance(expr, LinearForm):
             return '{name}({test})'.format(name=name, test=test)
+
+def is_mul_of_form_call(expr):
+    if not isinstance(expr, Mul):
+        return False
+
+    are_calls = [isinstance(i, FormCall) for i in expr.args]
+    any_are_calls = any(are_calls)
+    if not any_are_calls:
+        return False
+
+    if len(any_are_calls) > 1:
+        raise TypeError('> Cannot multiply calls of Bilinear/Linear forms')
+
+    return True
+
+def is_sum_of_form_calls(expr):
+    if not isinstance(expr, Add):
+        return False
+
+    are_valid = [isinstance(i, FormCall) or is_mul_of_form_call(i) for i in expr.args]
+
+    all_are_valid = all(are_valid)
+    if any(are_valid) and not(all_are_valid):
+        raise TypeError('> Invalid expression')
+
+    return all_are_valid
+
+
+def _sanitize_form_arguments(arguments, expr, is_bilinear=False, is_linear=False):
+
+    is_linear = is_linear or (len(expr.atoms(LinearForm)) > 0)
+    is_bilinear = is_bilinear or (len(expr.atoms(BilinearForm)) > 0)
+
+    # ...
+    if is_bilinear or is_linear:
+
+        if is_bilinear:
+            test_functions = arguments[0]
+
+        elif is_linear:
+            test_functions = arguments
+
+        if isinstance(test_functions, (TestFunction, VectorTestFunction)):
+            test_functions = [test_functions]
+
+    #    elif (isinstance(test_functions, (tuple, list, Tuple)) and
+    #          (len(test_functions) > 1)):
+
+        elif isinstance(test_functions, (tuple, list, Tuple)):
+
+            spaces = [i.space for i in test_functions]
+            V = ProductSpace(*spaces)
+            name = ''.join(i.name for i in test_functions)
+            v = VectorTestFunction(V, name=name)
+
+            i = 0
+            for w in test_functions:
+                if isinstance(w, TestFunction):
+                    expr = expr.subs(w, v[i])
+
+                elif isinstance(w, VectorTestFunction):
+                    for j in range(0, w.shape[0]):
+                        expr = expr.subs(w[j], v[i+j])
+
+                i += w.space.shape
+
+            test_functions = [v]
+
+        else:
+            raise TypeError('Wrong type for test function(s)')
+
+        test_functions = Tuple(*test_functions)
+    # ...
+
+    # ...
+    if is_bilinear or (len(expr.atoms(BilinearForm)) > 0):
+
+        trial_functions = arguments[1]
+        if isinstance(trial_functions, (TestFunction, VectorTestFunction)):
+            trial_functions = [trial_functions]
+
+#        elif (isinstance(trial_functions, (tuple, list, Tuple)) and
+#              (len(trial_functions) > 1)):
+
+        elif isinstance(trial_functions, (tuple, list, Tuple)):
+
+            spaces = [i.space for i in trial_functions]
+            V = ProductSpace(*spaces)
+            name = ''.join(i.name for i in trial_functions)
+            v = VectorTestFunction(V, name=name)
+
+            i = 0
+            for w in trial_functions:
+                if isinstance(w, TestFunction):
+                    expr = expr.subs({w: v[i]})
+
+                elif isinstance(w, VectorTestFunction):
+                    for j in range(0, w.shape[0]):
+                        expr = expr.subs({w[j]: v[i+j]})
+
+                i += w.space.shape
+
+            trial_functions = [v]
+
+        else:
+            raise TypeError('Wrong type for trial function(s)')
+
+        trial_functions = Tuple(*trial_functions)
+    # ...
+
+    if is_bilinear:
+        args = [test_functions, trial_functions]
+        args = Tuple(*args)
+
+    else:
+        args = Tuple(*test_functions)
+
+    return args
+
 
 # ...
 def atomize(expr, dim=None):
