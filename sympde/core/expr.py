@@ -55,6 +55,7 @@ from .space import FunctionSpace
 from .space import ProductSpace
 from .space import TestFunction
 from .space import VectorTestFunction
+from .space import Unknown
 
 class BasicForm(Expr):
     _name = None
@@ -705,6 +706,12 @@ def _sanitize_form_expr(arguments, expr, newargs, is_bilinear=False, is_linear=F
             test_functions = arguments
             v = newargs[0]
 
+        if is_sum_of_form_calls(expr):
+            print(arguments)
+            print(expr)
+            print(v)
+#            import sys; sys.exit(0)
+
         if isinstance(test_functions, (tuple, list, Tuple)):
             i = 0
             for w in test_functions:
@@ -1309,7 +1316,8 @@ def subs_mul(expr):
 
 def subs_bilinear_form(form, newargs):
     # ...
-    test_trial = newargs
+    test_trial = _sanitize_form_arguments(newargs, form, is_bilinear=True)
+
     if not isinstance(test_trial, (tuple, list, Tuple)):
         raise TypeError('(test, trial) must be a tuple, list or Tuple')
 
@@ -1341,8 +1349,9 @@ def subs_bilinear_form(form, newargs):
     # ...
     d_tmp = {}
     for x in trial_functions:
-        name = '{name}_{hash}'.format(name=x.name, hash=abs(hash(x)))
-        X = x.duplicate(name)
+        name = 'trial_{}'.format(abs(hash(x)))
+#        X = x.duplicate(name)
+        X = Unknown(name, ldim=x.ldim)
 
         d_tmp[X] = x
     # ...
@@ -1381,12 +1390,9 @@ def subs_bilinear_form(form, newargs):
 
 def subs_linear_form(form, newargs):
     # ...
-    if not(len(newargs) == 1):
-        raise ValueError('Expecting one argument')
-    # ...
+    test_functions = _sanitize_form_arguments(newargs, form, is_linear=True)
+    test_functions = test_functions[0]
 
-    # ...
-    test_functions = newargs[0]
     if isinstance(test_functions, (TestFunction, VectorTestFunction)):
         test_functions = [test_functions]
 
