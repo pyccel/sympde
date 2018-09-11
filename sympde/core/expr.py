@@ -1007,10 +1007,32 @@ def evaluate(a, basis=None, verbose=False, variables=None, M=None):
     # ...
 
     # ...
+    def _get_size_and_starts(ls):
+        n = 0
+        d_indices = {}
+        for x in ls:
+            d_indices[x] = n
+            if isinstance(x, TestFunction):
+                n += 1
+
+            elif isinstance(x, VectorTestFunction):
+                for j in range(0, x.shape[0]):
+                    d_indices[x[j]] = n + j
+
+                n += x.shape[0]
+
+        return n, d_indices
+    # ...
+
+    # ...
+    tests = []
+    trials = []
     if isinstance(a, BilinearForm):
         tests = list(a.test_functions)
+        n_rows, test_indices = _get_size_and_starts(a.test_functions)
+
         trials = list(a.trial_functions)
-        n_rows = len(tests) ; n_cols = len(trials)
+        n_cols, trial_indices = _get_size_and_starts(a.trial_functions)
 
         lines = []
         for i in range(0, n_rows):
@@ -1018,6 +1040,7 @@ def evaluate(a, basis=None, verbose=False, variables=None, M=None):
             for j in range(0, n_cols):
                 line.append(0)
             lines.append(line)
+
         M = Matrix(lines)
     # ...
 
@@ -1051,65 +1074,63 @@ def evaluate(a, basis=None, verbose=False, variables=None, M=None):
     dim = a.ldim
     expr = a.expr
 
+    # convert generic operators to atomic ones
     expr = atomize(expr, dim=dim)
+
+    # we need to expand the expression so that we have a sum of product
+    expr = expand(expr)
+
     if verbose:
         print('> atomized   >>> {0}'.format(expr))
 
-    def _treat_Mul(arg):
-        atoms = arg.atoms(TestFunction)
-        i_row = None ; i_col = None
-        for atom in atoms:
-            if atom in tests:
-                i_row = tests.index(atom)
+    print('> expr = ', expr)
 
-            elif atom in trials:
-                i_col = trials.index(atom)
+    # ...
+    def _treat_BilinearForm(arg, M):
+        atoms  = list(arg.atoms(TestFunction))
+        atoms += list(arg.atoms(VectorTestFunction))
+        atoms += list(arg.atoms(IndexedTestTrial))
+
+        for atom in atoms:
+            if atom in test_indices:
+                i_row = test_indices[atom]
+
+            elif atom in trial_indices:
+                i_col = trial_indices[atom]
 
             else:
                 raise ValueError('> Could not find {}'.format(atom))
 
         M[i_row, i_col] += arg
         return M
+    # ...
 
     # ...
-    if isinstance(expr, Add):
-        args = expr.args
-        for arg in args:
-            if isinstance(arg, Mul):
-                M = _treat_Mul(arg)
+    def _evaluate_form(expr, M, treat_form):
+        # ...
+        if isinstance(expr, Add):
+            args = expr.args
+            for arg in args:
+                if isinstance(arg, Mul):
+                    M = treat_form(arg, M)
 
-    elif isinstance(expr, Mul):
-        M = _treat_Mul(expr)
+        elif isinstance(expr, Mul):
+            M = treat_form(arg, M)
 
-    else:
-        raise TypeError('> wrong type, given {}'.format(type(expr)))
+        else:
+            raise TypeError('> wrong type, given {}'.format(type(expr)))
+        # ...
+
+        return M
     # ...
-    print(M)
 
-
-#    # ...
-#    expr = normalize(expr, basis=basis)
-#    if verbose:
-#        print('> normalized >>> {0}'.format(expr))
-#    # ...
-#
-#    # TODO is it ok to keep this?
-#    if isinstance(a, Integral):
-#        return expr
-#
-#    expr = matricize(expr)
-#    if verbose:
-#        print('> matricized >>> {0}'.format(expr))
-
-    return expr
+    M = _evaluate_form(expr, M, _treat_BilinearForm)
+    return M
 # ...
 
 # TODO - get dim from atoms
 #      - check coefficinets/functions
 def _tensorize_core(expr, dim, tests, trials):
-
-
-
 
     if isinstance(expr, Add):
         args = [_tensorize_core(i, dim, tests, trials) for i in expr.args]
