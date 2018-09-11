@@ -55,6 +55,7 @@ from .space import FunctionSpace
 from .space import ProductSpace
 from .space import TestFunction
 from .space import VectorTestFunction
+from .space import IndexedTestTrial
 from .space import Unknown, VectorUnknown
 
 class BasicForm(Expr):
@@ -638,6 +639,16 @@ def _sanitize_form_arguments(arguments, expr, is_bilinear=False, is_linear=False
         if isinstance(test_functions, (TestFunction, VectorTestFunction)):
             test_functions = [test_functions]
 
+        elif isinstance(test_functions, IndexedTestTrial):
+            test_functions = [test_functions]
+
+            spaces = [i.space for i in test_functions]
+            V = ProductSpace(*spaces)
+            name = ''.join(i.name for i in test_functions)
+            v = VectorTestFunction(V, name=name)
+
+            test_functions = [v]
+
         elif isinstance(test_functions, (tuple, list, Tuple)):
 
             if (len(test_functions) > 1):
@@ -661,6 +672,16 @@ def _sanitize_form_arguments(arguments, expr, is_bilinear=False, is_linear=False
         trial_functions = arguments[1]
         if isinstance(trial_functions, (TestFunction, VectorTestFunction)):
             trial_functions = [trial_functions]
+
+        elif isinstance(trial_functions, IndexedTestTrial):
+            trial_functions = [trial_functions]
+
+            spaces = [i.space for i in trial_functions]
+            V = ProductSpace(*spaces)
+            name = ''.join(i.name for i in trial_functions)
+            v = VectorTestFunction(V, name=name)
+
+            trial_functions = [v]
 
         elif isinstance(trial_functions, (tuple, list, Tuple)):
 
