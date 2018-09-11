@@ -22,10 +22,9 @@ from sympde.core import ProductSpace
 from sympde.core import TestFunction
 from sympde.core import VectorTestFunction
 from sympde.core import BilinearForm, LinearForm, Integral
-from sympde.core import atomize, normalize, matricize
+from sympde.core import atomize
 from sympde.core import evaluate
 from sympde.core import tensorize
-from sympde.core import inv_normalize
 from sympde.core import Mass, Stiffness, Advection, AdvectionT
 from sympde.core import Unknown
 from sympde.core import FormCall
@@ -42,7 +41,7 @@ def test_atomize_2d_1():
     c = Constant('c')
     F = Field('F', space=V)
 
-    # ... expressions that can be normalized (valid for a weak formulation)
+    # ...
     assert(atomize(grad(v)) == Tuple(dx(v),
                                       dy(v)))
     assert(atomize(grad(c*v)) == Tuple(c*dx(v),
@@ -57,63 +56,6 @@ def test_atomize_2d_1():
 #    print('> input         >>> {0}'.format(expr))
 #    print('> atomized     >>> {0}'.format(atomize(expr)))
 # ...
-
-# ...
-def test_normalize_2d_1():
-    print('============ test_normalize_2d_1 =============')
-
-    V = FunctionSpace('V', ldim=2)
-    U = FunctionSpace('U', ldim=2)
-
-    v = TestFunction(V, name='v')
-    u = TestFunction(U, name='u')
-
-    x,y = V.coordinates
-
-    c = Constant('c')
-    F = Field('F', space=V)
-    f1 = Function('f1')
-    f2 = Function('f2')
-
-    Ni, Ni_x, Ni_y = symbols('Ni Ni_x Ni_y')
-    Nj, Nj_x, Nj_y = symbols('Nj Nj_x Nj_y')
-
-    bx, by = symbols('bx by')
-    b = Tuple(bx, by)
-
-    f = Tuple(f1(x,y), f2(x,y))
-
-    a00 = Constant('a00')
-    a10 = Constant('a10')
-    a01 = Constant('a01')
-    a11 = Constant('a11')
-    A = Matrix([[a00, a01], [a10, a11]])
-
-    # ...
-    assert(normalize(grad(v), basis={v: 'Ni'}) == Tuple(Ni_x, Ni_y))
-    assert(normalize(grad(c*v), basis={v: 'Ni'}) == Tuple(c*Ni_x, c*Ni_y))
-    assert(normalize(dot(b, grad(v)), basis={v: 'Ni'}) == Ni_x*bx + Ni_y*by)
-    assert(normalize(dot(b, grad(v)) + c*v, basis={v: 'Ni'}) == Ni_x*bx + Ni_y*by + c*Ni)
-    assert(normalize(dot(f, grad(v)), basis={v: 'Ni'}) == Ni_x*f1(x,y) + Ni_y*f2(x,y))
-    assert(normalize(dot(Tuple(2, 3), grad(v)), basis={v: 'Ni'}) == 2*Ni_x + 3*Ni_y)
-    assert(normalize(grad(F*v), basis={v: 'Ni'}) == Tuple(F*Ni_x + Ni*dx(F),
-                                                          F*Ni_y + Ni*dy(F)))
-    # TODO debug
-#    assert(normalize(A*grad(v), basis={v: 'Ni'}) == 2*Ni_x + 3*Ni_y)
-
-    assert(normalize(dot(grad(v), grad(u)), basis={v: 'Ni', u: 'Nj'}) == Ni_x*Nj_x + Ni_y*Nj_y)
-    assert(normalize(dot(grad(v), grad(u)) + c*v*u, basis={v: 'Ni', u: 'Nj'}) == Ni_x*Nj_x + Ni_y*Nj_y + c*Ni*Nj)
-    assert(normalize(dot(grad(F*v), grad(u)), basis={v: 'Ni', u: 'Nj'}) == Nj_x*(F*Ni_x + Ni*dx(F)) + Nj_y*(F*Ni_y + Ni*dy(F)))
-    # ...
-
-#    expr = dot(A, grad(v))
-#    expr = div(dot(A, grad(v)))
-#    print('> input         >>> {0}'.format(expr))
-
-#    print('> normal form   >>> {0}'.format(normalize(expr, basis={v: 'Ni'})))
-#    print('> normal form   >>> {0}'.format(normalize(expr, basis={v: 'Ni', u: 'Nj'})))
-# ...
-
 
 # ...
 def test_evaluate_2d_1():
@@ -183,173 +125,6 @@ def test_atomize_2d_2():
 #    print('> input         >>> {0}'.format(expr))
 #    print('> atomized     >>> {0}'.format(atomize(expr)))
 # ...
-
-# ...
-def test_normalize_2d_2():
-    print('============ test_normalize_2d_2 =============')
-
-    V = FunctionSpace('V', ldim=2, is_block=True, shape=2)
-    U = FunctionSpace('U', ldim=2, is_block=True, shape=2)
-
-    v = VectorTestFunction(V, name='v')
-    u = VectorTestFunction(U, name='u')
-
-    Ni = IndexedBase('Ni', shape=2)
-    Ni_x = IndexedBase('Ni_x', shape=2)
-    Ni_y = IndexedBase('Ni_y', shape=2)
-
-    Nj = IndexedBase('Nj', shape=2)
-    Nj_x = IndexedBase('Nj_x', shape=2)
-    Nj_y = IndexedBase('Nj_y', shape=2)
-
-    assert(normalize(v[0], basis={v: 'Ni'}) == Ni[0])
-    assert(normalize(dx(v[0]), basis={v: 'Ni'}) == Ni_x[0])
-    assert(normalize(div(v), basis={v: 'Ni'}) == Ni_x[0] + Ni_y[1])
-    assert(normalize(rot(v), basis={v: 'Ni'}) == -Ni_x[1] + Ni_y[0])
-
-    expected = Tuple(Matrix([[dx(v[0]), dx(v[1])]]), Matrix([[dy(v[0]), dy(v[1])]]))
-    assert(normalize(grad(v), basis={v: 'Ni'}) == expected)
-
-    assert(normalize(v[0]*u[0], basis={v: 'Ni', u: 'Nj'}) == Ni[0]*Nj[0])
-    assert(normalize(v[1]*dx(u[0]), basis={v: 'Ni', u: 'Nj'}) == Ni[1]*Nj_x[0])
-    assert(normalize(dy(v[0])*u[1], basis={v: 'Ni', u: 'Nj'}) == Ni_y[0]*Nj[1])
-    assert(normalize(dx(v[1])*dy(u[1]), basis={v: 'Ni', u: 'Nj'}) == Ni_x[1]*Nj_y[1])
-
-    expected = (Ni_x[0] + Ni_y[1]) * (Nj_x[0] + Nj_y[1])
-    assert(normalize(div(v) * div(u), basis={v: 'Ni', u: 'Nj'}) == expected)
-
-    expected = (-Ni_x[1] + Ni_y[0]) * (-Nj_x[1] + Nj_y[0])
-    assert(normalize(rot(v) * rot(u), basis={v: 'Ni', u: 'Nj'}) == expected)
-
-    expected = Ni_x[0]*Nj_x[0] + Ni_x[1]*Nj_x[1] + Ni_y[0]*Nj_y[0] + Ni_y[1]*Nj_y[1]
-    assert(normalize(inner(grad(v), grad(u)), basis={v: 'Ni', u: 'Nj'}) == expected)
-
-#    expr = inner(grad(v), grad(u))
-#    print('> input         >>> {0}'.format(expr))
-#
-#    print('> normal form   >>> {0}'.format(normalize(expr, basis={v: 'Ni'})))
-#    print('> normal form   >>> {0}'.format(normalize(expr, basis={v: 'Ni', u: 'Nj'})))
-# ...
-
-# ...
-def test_matricize_2d_2():
-    print('============ test_matricize_2d_2 =============')
-
-    V = FunctionSpace('V', ldim=2, is_block=True, shape=2)
-    U = FunctionSpace('U', ldim=2, is_block=True, shape=2)
-
-    v = VectorTestFunction(V, name='v')
-    u = VectorTestFunction(U, name='u')
-
-    Ni, Ni_x, Ni_y = symbols('Ni Ni_x Ni_y')
-    Nj, Nj_x, Nj_y = symbols('Nj Nj_x Nj_y')
-
-    c1 = Symbol('c1')
-    c2 = Symbol('c2')
-
-    # ...
-    expr = v[0]*u[0]
-    expr = normalize(expr, basis={v: 'Ni', u: 'Nj'})
-    expected = Matrix([[Ni*Nj, 0], [0, 0]])
-    assert(matricize(expr) == expected)
-    # ...
-
-    # ...
-    expr = v[1]*dx(u[0])
-    expr = normalize(expr, basis={v: 'Ni', u: 'Nj'})
-    expected = Matrix([[0, Ni*Nj_x], [0, 0]])
-    assert(matricize(expr) == expected)
-    # ...
-
-    # ...
-    expr = dy(v[0])*u[1]
-    expr = normalize(expr, basis={v: 'Ni', u: 'Nj'})
-    expected = Matrix([[0, 0], [Ni_y*Nj, 0]])
-    assert(matricize(expr) == expected)
-    # ...
-
-    # ...
-    expr = dx(v[1])*dy(u[1])
-    expr = normalize(expr, basis={v: 'Ni', u: 'Nj'})
-    expected = Matrix([[0, 0], [0, Ni_x*Nj_y]])
-    assert(matricize(expr) == expected)
-    # ...
-
-    # ...
-    expr = div(v) * div(u)
-    expr = normalize(expr, basis={v: 'Ni', u: 'Nj'})
-    expected = Matrix([[Ni_x*Nj_x, Ni_y*Nj_x], [Ni_x*Nj_y, Ni_y*Nj_y]])
-    assert(matricize(expr) == expected)
-    # ...
-
-    # ...
-    expr = rot(v) * rot(u)
-    expr = normalize(expr, basis={v: 'Ni', u: 'Nj'})
-    expected = Matrix([[Ni_y*Nj_y, -Ni_x*Nj_y], [-Ni_y*Nj_x, Ni_x*Nj_x]])
-    assert(matricize(expr) == expected)
-    # ...
-
-    # ...
-    expr = div(v) * div(u) + rot(v) * rot(u)
-    expr = normalize(expr, basis={v: 'Ni', u: 'Nj'})
-    expected = Matrix([[Ni_x*Nj_x + Ni_y*Nj_y, -Ni_x*Nj_y + Ni_y*Nj_x],
-                       [Ni_x*Nj_y - Ni_y*Nj_x, Ni_x*Nj_x + Ni_y*Nj_y]])
-    assert(matricize(expr) == expected)
-    # ...
-
-    # ...
-    expr = c1 * div(v) * div(u) + rot(v) * rot(u)
-    expr = normalize(expr, basis={v: 'Ni', u: 'Nj'})
-    expected = Matrix([[Ni_x*Nj_x*c1 + Ni_y*Nj_y, -Ni_x*Nj_y + Ni_y*Nj_x*c1],
-                       [Ni_x*Nj_y*c1 - Ni_y*Nj_x, Ni_x*Nj_x + Ni_y*Nj_y*c1]])
-    assert(matricize(expr) == expected)
-    # ...
-
-    # ...
-    expr = c1 * div(v) * div(u) + c2 * rot(v) * rot(u)
-    expr = normalize(expr, basis={v: 'Ni', u: 'Nj'})
-    expected = Matrix([[Ni_x*Nj_x*c1 + Ni_y*Nj_y*c2, -Ni_x*Nj_y*c2 + Ni_y*Nj_x*c1],
-                       [Ni_x*Nj_y*c1 - Ni_y*Nj_x*c2, Ni_x*Nj_x*c2 + Ni_y*Nj_y*c1]])
-    assert(matricize(expr) == expected)
-    # ...
-
-#    expr = c1 * div(v) * div(u) + rot(v) * rot(u)
-#    print('> input         >>> {0}'.format(expr))
-#    expr = normalize(expr, basis={v: 'Ni', u: 'Nj'})
-#    print('> matricize     >>> {0}'.format(matricize(expr)))
-# ...
-
-# ...
-def test_matricize_2d_3():
-    print('============ test_matricize_2d_3 =============')
-
-    V = FunctionSpace('V', ldim=2, is_block=True, shape=2)
-    U = FunctionSpace('U', ldim=2)
-
-    v = VectorTestFunction(V, name='v')
-    u = TestFunction(U, name='u')
-
-    Ni, Ni_x, Ni_y = symbols('Ni Ni_x Ni_y')
-    Nj, Nj_x, Nj_y = symbols('Nj Nj_x Nj_y')
-
-    # ...
-    expr = v[0]*u
-    expr = normalize(expr, basis={v: 'Ni', u: 'Nj'})
-    expected = Matrix([[Ni*Nj], [0]])
-    assert(matricize(expr) == expected)
-    # ...
-
-    # ...
-    expr = dot(v, grad(u))
-    expr = normalize(expr, basis={v: 'Ni', u: 'Nj'})
-    expected = Matrix([[Ni*Nj_x], [Ni*Nj_y]])
-    assert(matricize(expr) == expected)
-    # ...
-
-#    expr = v[0]*u
-#    print('> input         >>> {0}'.format(expr))
-#    expr = normalize(expr, basis={v: 'Ni', u: 'Nj'})
-#    print('> matricize     >>> {0}'.format(matricize(expr)))
 
 # ...
 def test_calls_2d_3():
@@ -528,26 +303,6 @@ def test_evaluate_2d_3():
 #    print('> input         >>> {0}'.format(expr))
 #    print('> normal form   >>> {0}'.format(evaluate(expr, basis=basis)))
 # ...
-
-# ...
-def test_inv_normalize_2d_1():
-    print('============ test_inv_normalize_2d_1 =============')
-
-    U = FunctionSpace('U', ldim=2)
-    V = FunctionSpace('V', ldim=2)
-
-    u = TestFunction(U, name='u')
-    v = TestFunction(V, name='v')
-
-    Ni, Ni_x, Ni_y, Ni_xx, Ni_xy, Ni_yy = symbols('Ni Ni_x Ni_y Ni_xx Ni_xy Ni_yy')
-    Nj, Nj_x, Nj_y, Nj_xx, Nj_xy, Nj_yy = symbols('Nj Nj_x Nj_y Nj_xx Nj_xy Nj_yy')
-
-#    expr = Nj*Ni_x + Nj_x*Ni + Nj*Ni
-#    expr = Nj*Ni_xx + Nj_x*Ni + Nj*Ni
-#
-#    expr = inv_normalize(expr, {Ni: v, Nj: u})
-#    print(expr)
-
 
 # ...
 #def test_bilinear_form_2d_10():
@@ -829,7 +584,7 @@ def test_unknown_2d_1():
     v = Unknown('v', ldim=2)
     c = Constant('c')
 
-    # ... expressions that can be normalized (valid for a weak formulation)
+    # ...
     assert(atomize(grad(v)) == Tuple(dx(v),
                                       dy(v)))
     assert(atomize(grad(c*v)) == Tuple(c*dx(v),
@@ -840,23 +595,18 @@ def test_unknown_2d_1():
 # .....................................................
 if __name__ == '__main__':
 #    test_atomize_2d_1()
-#    test_normalize_2d_1()
 #    test_evaluate_2d_1()
 #
 #    test_atomize_2d_2()
-#    test_normalize_2d_2()
-#    test_matricize_2d_2()
 #
 ##    test_bilinear_form_2d_10() # TODO not working, since args are the same
 #    test_linear_form_2d_10()
 #    test_function_form_2d_10()
 #
-#    test_matricize_2d_3()
 #    test_evaluate_2d_3()
 #
 #    test_tensorize_2d_1()
 #
-#    test_inv_normalize_2d_1()
 #    test_tensorize_2d_2()
 #
     test_calls_2d_3()

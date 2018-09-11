@@ -20,7 +20,7 @@ from sympde.core import ProductSpace
 from sympde.core import TestFunction
 from sympde.core import VectorTestFunction
 from sympde.core import BilinearForm, LinearForm, Integral
-from sympde.core import atomize, normalize
+from sympde.core import atomize
 from sympde.core import evaluate
 from sympde.core import tensorize
 from sympde.core import Mass, Stiffness, Advection, AdvectionT
@@ -59,39 +59,6 @@ def test_atomize_1d_1():
 #    print('> input         >>> {0}'.format(expr))
 #    print('> atomized     >>> {0}'.format(atomize(expr)))
 #    print(expr.is_commutative)
-# ...
-
-# ...
-def test_normalize_1d_1():
-    print('============ test_normalize_1d_1 =============')
-
-    V = FunctionSpace('V', ldim=1)
-    U = FunctionSpace('U', ldim=1)
-
-    v = TestFunction(V, name='v')
-    u = TestFunction(U, name='u')
-    c = Constant('c')
-    F = Field('F', space=V)
-
-    Ni, Ni_x = symbols('Ni Ni_x')
-    Nj, Nj_x = symbols('Nj Nj_x')
-
-    # ...
-    assert(normalize(grad(v), basis={v: 'Ni'}) == Ni_x)
-    assert(normalize(grad(c*v), basis={v: 'Ni'}) == c*Ni_x)
-    assert(normalize(grad(v) + c*v, basis={v: 'Ni'}) == Ni_x + c*Ni)
-    assert(normalize(grad(F*v), basis={v: 'Ni'}) == F*Ni_x + Ni*dx(F))
-
-    assert(normalize(dot(grad(v), grad(u)), basis={v: 'Ni', u: 'Nj'}) == Ni_x*Nj_x)
-    assert(normalize(dot(grad(v), grad(u)) + c*v*u, basis={v: 'Ni', u: 'Nj'}) == Ni_x*Nj_x + c*Ni*Nj)
-    assert(normalize(dot(grad(F*v), grad(u)), basis={v: 'Ni', u: 'Nj'}) == Nj_x*(F*Ni_x + Ni*dx(F)))
-    # ...
-
-#    expr = dot(grad(F*v), grad(u))
-#    print('> input         >>> {0}'.format(expr))
-
-#    print('> normal form   >>> {0}'.format(normalize(expr, basis={V: 'Ni'})))
-#    print('> normal form   >>> {0}'.format(normalize(expr, basis={V: 'Ni', U: 'Nj'})))
 # ...
 
 # ...
@@ -441,7 +408,6 @@ def test_unknown_1d_1():
 # .....................................................
 if __name__ == '__main__':
     test_atomize_1d_1()
-    test_normalize_1d_1()
     test_evaluate_1d_1()
 
     test_evaluate_1d_3()
