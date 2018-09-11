@@ -387,6 +387,20 @@ def test_calls_2d_3():
     expr = a1(v2, u2)
     a = BilinearForm((v2, u2), expr, name='a')
     print(a)
+    print(atomize(a))
+#    print(evaluate(a))
+    print('')
+    # ...
+
+    # ...
+    a1 = BilinearForm((v1, u1), dot(grad(v1), grad(u1)), name='a1')
+
+    expr = a1(v2, u2)
+    a = BilinearForm((v2, u2), expr, name='a')
+    print(a)
+    print(atomize(a))
+#    print(evaluate(a))
+    print('')
     # ...
 
     # ...
@@ -396,6 +410,9 @@ def test_calls_2d_3():
     expr = a1(v2, u2) + a2(v2, u2)
     a = BilinearForm((v2, u2), expr, name='a')
     print(a)
+    print(atomize(a))
+#    print(evaluate(a))
+    print('')
     # ...
 
     # ...
@@ -412,14 +429,20 @@ def test_calls_2d_3():
     print('> before = ', expr)
     expr = expr.subs(u2, u1)
     print('> after  = ', expr)
+    print('')
+    # ...
+
+    # ...
+    a1 = BilinearForm((v1, u1), u1*v1, name='a1')
+    a2 = BilinearForm((v1, u1), dx(u1)*dx(v1), name='a2')
 
     expr =  a1(v1, u2) + a2(v2, u1)
     a = BilinearForm(((v1,v2),(u1,u2)), expr, name='a')
     print(a)
-#    print(evaluate(expr))
+    print(atomize(a))
+#    print(evaluate(a))
+    print('')
     # ...
-
-    import sys; sys.exit(0)
 
     # ...
     a1 = BilinearForm((v1, u1), u1*v1, name='a1')
@@ -428,7 +451,13 @@ def test_calls_2d_3():
     a4 = BilinearForm((w1, u1), div(w1)*u1, name='a4')
 
     expr = a3(w2,t2) + a2(v2,u2) + a4(w2,u2)
+    a = BilinearForm(((w2,v2),(t2,u2)), expr, name='a')
+    print(a)
+    print(atomize(a))
+#    print(matricize(a3))
     # ...
+
+    import sys; sys.exit(0)
 
     # ...
     l1 = LinearForm(v1, x*y*v1, name='11')

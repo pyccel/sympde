@@ -706,9 +706,6 @@ def atomize(expr, dim=None):
         expr = expr.subs(call, call.expr)
     # ...
 
-    if isinstance(expr, FormCall):
-        expr = expr.expr
-
 #    print('> expr [atomize] = ', expr, type(expr))
 
     # ... compute dim if None
@@ -738,9 +735,6 @@ def atomize(expr, dim=None):
     elif isinstance(expr, Mul):
         coeffs  = [i for i in expr.args if isinstance(i, _coeffs_registery)]
         vectors = [i for i in expr.args if not(i in coeffs)]
-#        print('expr    = ', expr)
-#        print('vectors = ', vectors)
-#        print('coeffs  = ', coeffs )
 
         i = S.One
         if coeffs:
@@ -759,6 +753,10 @@ def atomize(expr, dim=None):
         e = expr.exp
 
         return Pow(b, e)
+
+    elif isinstance(expr, BasicForm):
+
+        return atomize(expr.expr)
 
     elif isinstance(expr, (Dot, Inner, Cross, Grad, Rot, Curl, Div)):
         # if i = Dot(...) then type(i) is Grad
