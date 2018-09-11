@@ -20,6 +20,7 @@ from sympy import S
 from sympy.core.containers import Tuple
 from sympy import preorder_traversal
 from sympy import Indexed, IndexedBase, Matrix, ImmutableDenseMatrix
+from sympy.matrices.dense import MutableDenseMatrix
 from sympy.physics.quantum import TensorProduct
 from sympy import expand
 from sympy import Integer, Float
@@ -912,6 +913,12 @@ def matricize(expr):
         # since it gives the error:
         # TypeError: cannot add <class 'sympy.matrices.immutable.ImmutableDenseMatrix'> and <class 'sympy.core.numbers.Zero'>
         # when args are of type Matrix
+#        mat_args = [i for i in args if isinstance(i, MutableDenseMatrix)]
+#        mat_sum  = Add(*mat_args)
+#        print('------------')
+#        for i in args:
+#            print(type(i), i)
+##        import sys ; sys.exit(0)
         r = args[0]
         for a in args[1:]:
             r += a
@@ -972,12 +979,17 @@ def matricize(expr):
         M[index] = Symbol(name)
 
         return M
+#
+#    elif isinstance(expr, BasicForm):
+#        expr = atomize(expr.expr)
+#        expr = normalize(expr)
+#        return matricize(expr)
 
     return expr
 # ...
 
 # ... TODO compute basis if not given
-def evaluate(a, basis=None, verbose=False):
+def evaluate(a, basis=None, verbose=False, variables=None, M=None):
 
     # ... replace a FormCall by its expression
     calls = a.atoms(FormCall)
@@ -985,11 +997,37 @@ def evaluate(a, basis=None, verbose=False):
         a = a.subs(call, call.expr)
     # ...
 
+    # ...
+    variables = []
+    if isinstance(a, (BilinearForm, LinearForm)):
+        variables = a.variables
+
+    elif isinstance(a, FormCall):
+        variables = a.variables
+    # ...
+
+    # ...
+    if isinstance(a, BilinearForm):
+        tests = list(a.test_functions)
+        trials = list(a.trial_functions)
+        n_rows = len(tests) ; n_cols = len(trials)
+
+        lines = []
+        for i in range(0, n_rows):
+            line = []
+            for j in range(0, n_cols):
+                line.append(0)
+            lines.append(line)
+        M = Matrix(lines)
+    # ...
+
     if not isinstance(a, (BasicForm, Add, Mul)):
         raise TypeError('Expecting a BasicForm, Add or Mul')
 
     if isinstance(a, Add):
-        args = [evaluate(i, basis=basis, verbose=verbose) for i in a.args]
+        args = [evaluate(i, basis=basis, verbose=verbose, variables=variables,
+                         M=M) for i in a.args]
+
         return Add(*args)
 
     elif isinstance(a, Mul):
@@ -1004,7 +1042,8 @@ def evaluate(a, basis=None, verbose=False):
 
         j = S.One
         if vectors:
-            args = [evaluate(i, basis=basis, verbose=verbose) for i in vectors]
+            args = [evaluate(i, basis=basis, verbose=verbose,
+                             variables=variables, M=M) for i in vectors]
             j = Mul(*args)
 
         return Mul(i, j)
@@ -1016,17 +1055,51 @@ def evaluate(a, basis=None, verbose=False):
     if verbose:
         print('> atomized   >>> {0}'.format(expr))
 
-    expr = normalize(expr, basis=basis)
-    if verbose:
-        print('> normalized >>> {0}'.format(expr))
+    def _treat_Mul(arg):
+        atoms = arg.atoms(TestFunction)
+        i_row = None ; i_col = None
+        for atom in atoms:
+            if atom in tests:
+                i_row = tests.index(atom)
 
-    # TODO is it ok to keep this?
-    if isinstance(a, Integral):
-        return expr
+            elif atom in trials:
+                i_col = trials.index(atom)
 
-    expr = matricize(expr)
-    if verbose:
-        print('> matricized >>> {0}'.format(expr))
+            else:
+                raise ValueError('> Could not find {}'.format(atom))
+
+        M[i_row, i_col] += arg
+        return M
+
+    # ...
+    if isinstance(expr, Add):
+        args = expr.args
+        for arg in args:
+            if isinstance(arg, Mul):
+                M = _treat_Mul(arg)
+
+    elif isinstance(expr, Mul):
+        M = _treat_Mul(expr)
+
+    else:
+        raise TypeError('> wrong type, given {}'.format(type(expr)))
+    # ...
+    print(M)
+
+
+#    # ...
+#    expr = normalize(expr, basis=basis)
+#    if verbose:
+#        print('> normalized >>> {0}'.format(expr))
+#    # ...
+#
+#    # TODO is it ok to keep this?
+#    if isinstance(a, Integral):
+#        return expr
+#
+#    expr = matricize(expr)
+#    if verbose:
+#        print('> matricized >>> {0}'.format(expr))
 
     return expr
 # ...
@@ -1163,6 +1236,11 @@ def inv_normalize(expr, ns):
         return atom
 
     free_symbols = expr.free_symbols
+    atoms = []
+    atoms += list(expr.atoms(Symbol))
+    atoms += list(expr.atoms(IndexedBase))
+    atoms += list(set([i.base for i in expr.atoms(Indexed)]))
+
     for n,u in zip(names, tests):
         suffixes = [i.name.split('_')[-1] for i in free_symbols if i.name.startswith('{}_'.format(n))]
         for i in suffixes:
