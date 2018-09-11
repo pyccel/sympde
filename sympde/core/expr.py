@@ -212,6 +212,7 @@ class LinearForm(BasicForm):
                 mapping=None, name=None):
 
         args = _sanitize_form_arguments(arguments, expr, is_linear=True)
+        expr = _sanitize_form_expr(arguments, expr, args, is_linear=True)
         obj = Basic.__new__(cls, args, expr)
 
         domain = BasicForm._init_domain(domain, obj.ldim)
@@ -275,6 +276,7 @@ class BilinearForm(BasicForm):
             raise ValueError('Expecting a couple (test, trial)')
 
         args = _sanitize_form_arguments(arguments, expr, is_bilinear=True)
+        expr = _sanitize_form_expr(arguments, expr, args, is_bilinear=True)
         obj = Basic.__new__(cls, args, expr)
 
         domain = BasicForm._init_domain(domain, obj.ldim)
@@ -644,17 +646,6 @@ def _sanitize_form_arguments(arguments, expr, is_bilinear=False, is_linear=False
             name = ''.join(i.name for i in test_functions)
             v = VectorTestFunction(V, name=name)
 
-            i = 0
-            for w in test_functions:
-                if isinstance(w, TestFunction):
-                    expr = expr.subs(w, v[i])
-
-                elif isinstance(w, VectorTestFunction):
-                    for j in range(0, w.shape[0]):
-                        expr = expr.subs(w[j], v[i+j])
-
-                i += w.space.shape
-
             test_functions = [v]
 
         else:
@@ -664,7 +655,7 @@ def _sanitize_form_arguments(arguments, expr, is_bilinear=False, is_linear=False
     # ...
 
     # ...
-    if is_bilinear or (len(expr.atoms(BilinearForm)) > 0):
+    if is_bilinear:
 
         trial_functions = arguments[1]
         if isinstance(trial_functions, (TestFunction, VectorTestFunction)):
@@ -679,17 +670,6 @@ def _sanitize_form_arguments(arguments, expr, is_bilinear=False, is_linear=False
             V = ProductSpace(*spaces)
             name = ''.join(i.name for i in trial_functions)
             v = VectorTestFunction(V, name=name)
-
-            i = 0
-            for w in trial_functions:
-                if isinstance(w, TestFunction):
-                    expr = expr.subs({w: v[i]})
-
-                elif isinstance(w, VectorTestFunction):
-                    for j in range(0, w.shape[0]):
-                        expr = expr.subs({w[j]: v[i+j]})
-
-                i += w.space.shape
 
             trial_functions = [v]
 
@@ -707,6 +687,57 @@ def _sanitize_form_arguments(arguments, expr, is_bilinear=False, is_linear=False
         args = Tuple(*test_functions)
 
     return args
+
+def _sanitize_form_expr(arguments, expr, newargs, is_bilinear=False, is_linear=False):
+
+    is_linear = is_linear or (len(expr.atoms(LinearForm)) > 0)
+    is_bilinear = is_bilinear or (len(expr.atoms(BilinearForm)) > 0)
+#    print(is_linear, is_bilinear)
+
+    # ...
+    if is_bilinear or is_linear:
+
+        if is_bilinear:
+            test_functions = arguments[0]
+            v = newargs[0][0]
+
+        elif is_linear:
+            test_functions = arguments
+            v = newargs[0]
+
+        if isinstance(test_functions, (tuple, list, Tuple)):
+            i = 0
+            for w in test_functions:
+                if isinstance(w, TestFunction):
+                    expr = expr.subs(w, v[i])
+
+                elif isinstance(w, VectorTestFunction):
+                    for j in range(0, w.shape[0]):
+                        expr = expr.subs(w[j], v[i+j])
+
+                i += w.space.shape
+    # ...
+
+    # ...
+    if is_bilinear:
+
+        v = newargs[1][0]
+        trial_functions = arguments[1]
+
+        if isinstance(trial_functions, (tuple, list, Tuple)):
+            i = 0
+            for w in trial_functions:
+                if isinstance(w, TestFunction):
+                    expr = expr.subs({w: v[i]})
+
+                elif isinstance(w, VectorTestFunction):
+                    for j in range(0, w.shape[0]):
+                        expr = expr.subs({w[j]: v[i+j]})
+
+                i += w.space.shape
+    # ...
+
+    return expr
 
 
 # ...
