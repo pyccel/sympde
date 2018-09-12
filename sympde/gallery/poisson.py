@@ -2,8 +2,6 @@
 
 from numpy import unique
 
-from pyccel.ast import Nil
-
 from sympy.core import Basic
 from sympy.tensor import Indexed, IndexedBase
 from sympy.core import Symbol
@@ -47,7 +45,7 @@ class Poisson(Model):
         # ...
 
         forms = [a]
-        equation = Equation(a(v,u), Nil())
+        equation = Equation(a(v,u), None)
 
         obj = Model.__new__(cls, forms=forms, equation=equation, **kwargs)
 

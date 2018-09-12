@@ -19,27 +19,22 @@ from .expr import BasicForm, BilinearForm, LinearForm, Integral, FormCall
 
 class Equation(Basic):
     def __new__(cls, lhs, rhs):
-        if lhs is None: lhs = Nil()
-        if rhs is None: rhs = Nil()
+        # ...
+        if lhs is None or isinstance(lhs, Nil):
+            lhs = Nil()
 
-        # TODO not working, since FormCall extends Function now
-#        # ... check lhs
-#        if lhs.atoms(LinearForm):
-#            raise TypeError('> lhs should not contain a LinearForm')
-#
-#        if not(isinstance(lhs, Nil)) and not(lhs.atoms(BilinearForm)):
-#            msg = '> lhs must be None or contain at least one BilinearForm'
-#            raise TypeError(msg)
-#        # ...
-#
-#        # ... check rhs
-#        if rhs.atoms(BilinearForm):
-#            raise TypeError('> lhs should not contain a BilinearForm')
-#
-#        if not(isinstance(rhs, Nil)) and not(rhs.atoms(LinearForm)):
-#            msg = '> rhs must be None or contain at least one LinearForm'
-#            raise TypeError(msg)
-#        # ...
+        elif not(isinstance(lhs, FormCall) and isinstance(lhs.expr, BilinearForm)):
+            raise TypeError('> wrong type for lhs')
+        # ...
+
+        # ...
+        if rhs is None or isinstance(rhs, Nil):
+            rhs = Nil()
+
+        elif not(isinstance(rhs, FormCall) and isinstance(rhs.expr, LinearForm)):
+            raise TypeError('> wrong type for rhs')
+        # ...
+
 
         return Basic.__new__(cls, lhs, rhs)
 

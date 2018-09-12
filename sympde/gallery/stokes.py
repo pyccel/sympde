@@ -2,8 +2,6 @@
 
 from numpy import unique
 
-from pyccel.ast import Nil
-
 from sympy.core import Basic
 from sympy.tensor import Indexed, IndexedBase
 from sympy.core import Symbol
@@ -47,10 +45,11 @@ class Stokes(Model):
 
         a = BilinearForm((v,u), inner(grad(v), grad(u)), name='a')
         b = BilinearForm((v,p), div(v)*p, name='b')
+        A = BilinearForm(((v,q),(u,p)), a(v,u) - b(v,p) + b(u,q), name='A')
         # ...
 
-        forms = [a, b]
-        equation = Equation(a(v,u) - b(v,p) + b(u,q), Nil())
+        forms = [a, b, A]
+        equation = Equation(A((v,u),(q,p)), None)
 
         obj = Model.__new__(cls, forms=forms, equation=equation, **kwargs)
 

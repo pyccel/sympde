@@ -30,6 +30,8 @@ from sympde.core import Unknown
 from sympde.core import FormCall
 from sympy.physics.quantum import TensorProduct
 
+DIM = 2
+
 # ...
 def test_atomize_2d_1():
     print('============ test_atomize_2d_1 =============')
@@ -279,6 +281,24 @@ def test_calls_2d_3():
     print(l)
     print(atomize(l))
     print(evaluate(l))
+    # ...
+
+    # ... stokes
+    V = FunctionSpace('V', ldim=DIM, is_block=True, shape=DIM)
+    W = FunctionSpace('W', ldim=DIM)
+
+    v = VectorTestFunction(V, name='v')
+    u = VectorTestFunction(V, name='u')
+    p = TestFunction(W, name='p')
+    q = TestFunction(W, name='q')
+
+    a = BilinearForm((v,u), inner(grad(v), grad(u)), name='a')
+    b = BilinearForm((v,p), div(v)*p, name='b')
+    A = BilinearForm(((v,q),(u,p)), a(v,u) - b(v,p) + b(u,q), name='A')
+
+    print(A)
+    print(atomize(A))
+    print(evaluate(A))
     # ...
 # ...
 
