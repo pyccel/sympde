@@ -30,6 +30,7 @@ from sympde.core import Mass, Stiffness, Advection, AdvectionT
 from sympde.core import Unknown
 from sympde.core import FormCall
 from sympde.core import Domain, Boundary, NormalVector, TangentVector
+from sympde.core import Trace
 
 DIM = 2
 domain = Domain('Omega', dim=DIM)
@@ -161,6 +162,7 @@ def test_boundary_2d_3():
 
     nn = NormalVector(B1)
     tt = TangentVector(B2)
+    trace = lambda x: Trace(x, V1)
 
     # ...
     expr = dot(grad(u1), grad(v1)) + v1*dot(grad(u1), nn)
@@ -175,6 +177,11 @@ def test_boundary_2d_3():
     print(a)
     print(atomize(a))
     print(evaluate(a))
+    print('')
+    # ...
+
+    # ...
+    expr = dot(grad(u1), grad(v1)) + v1*trace(u1)
     print('')
     # ...
 
@@ -743,4 +750,4 @@ if __name__ == '__main__':
 
 
     test_calls_2d_3()
-#    test_boundary_2d_3()
+    test_boundary_2d_3()
