@@ -25,16 +25,17 @@ class Poisson(Model):
     """
     def __new__(cls, **kwargs):
         # ...
-        dim = kwargs.pop('dim', None)
-        if dim is None:
-            raise ValueError('> Expecting a dim entry')
+        domain = kwargs.pop('domain', None)
+        if domain is None:
+            raise ValueError('> Expecting a domain entry')
 
+        dim = domain.dim
         if not(dim in [1, 2, 3]):
             raise ValueError('> only 1d, 2d and 3d models are possible')
         # ...
 
         # ... abstract model
-        V = FunctionSpace('V', ldim=dim)
+        V = FunctionSpace('V', domain)
 
         v = TestFunction(V, name='v')
         u = TestFunction(V, name='u')
@@ -50,6 +51,7 @@ class Poisson(Model):
         obj = Model.__new__(cls, forms=forms, equation=equation, **kwargs)
 
         obj._space = V
+        obj._domain = domain
 
         return obj
 

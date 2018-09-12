@@ -10,6 +10,7 @@ from sympy import Function
 from sympy import Matrix
 from sympy import pi, cos, sin
 from sympy import srepr
+from sympy.physics.quantum import TensorProduct
 
 from sympde.core import dx, dy, dz
 from sympde.core import Constant
@@ -25,14 +26,17 @@ from sympde.core import evaluate
 from sympde.core import tensorize
 from sympde.core import Mass, Stiffness, Advection, AdvectionT
 from sympde.core import Unknown
-from sympy.physics.quantum import TensorProduct
+from sympde.core import Domain
+
+DIM = 1
+domain = Domain('Omega', dim=DIM)
 
 
 # ...
 def test_atomize_1d_1():
     print('============ test_atomize_1d_1 =============')
 
-    V = FunctionSpace('V', ldim=1)
+    V = FunctionSpace('V', domain)
 
     v = TestFunction(V, name='v')
     w = TestFunction(V, name='w')
@@ -65,8 +69,8 @@ def test_atomize_1d_1():
 def test_evaluate_1d_1():
     print('============ test_evaluate_1d_1 =============')
 
-    V = FunctionSpace('V', ldim=1)
-    U = FunctionSpace('U', ldim=1)
+    V = FunctionSpace('V', domain)
+    U = FunctionSpace('U', domain)
 
     v = TestFunction(V, name='v')
     u = TestFunction(U, name='u')
@@ -101,10 +105,10 @@ def test_evaluate_1d_1():
 def test_calls_1d_3():
     print('============ test_calls_1d_3 =============')
 
-    V1 = FunctionSpace('V1', ldim=1)
-    V2 = FunctionSpace('V2', ldim=1)
-    U1 = FunctionSpace('U1', ldim=1)
-    U2 = FunctionSpace('U2', ldim=1)
+    V1 = FunctionSpace('V1', domain)
+    V2 = FunctionSpace('V2', domain)
+    U1 = FunctionSpace('U1', domain)
+    U2 = FunctionSpace('U2', domain)
 
     v1 = TestFunction(V1, name='v1')
     v2 = TestFunction(V2, name='v2')
@@ -157,10 +161,10 @@ def test_calls_1d_3():
 def test_evaluate_1d_3():
     print('============ test_evaluate_1d_3 =============')
 
-    V1 = FunctionSpace('V1', ldim=1)
-    U1 = FunctionSpace('U1', ldim=1)
-    V2 = FunctionSpace('V2', ldim=1)
-    U2 = FunctionSpace('U2', ldim=1)
+    V1 = FunctionSpace('V1', domain)
+    U1 = FunctionSpace('U1', domain)
+    V2 = FunctionSpace('V2', domain)
+    U2 = FunctionSpace('U2', domain)
 
     v1 = TestFunction(V1, name='v1')
     u1 = TestFunction(U1, name='u1')
@@ -207,8 +211,8 @@ def test_evaluate_1d_3():
 def test_bilinear_form_1d_10():
     print('============ test_bilinear_form_1d_10 =============')
 
-    U = FunctionSpace('U', ldim=1)
-    V = FunctionSpace('V', ldim=1)
+    U = FunctionSpace('U', domain)
+    V = FunctionSpace('V', domain)
 
     u = TestFunction(U, name='u')
     v = TestFunction(V, name='v')
@@ -261,7 +265,7 @@ def test_bilinear_form_1d_10():
 def test_linear_form_1d_10():
     print('============ test_linear_form_1d_10 =============')
 
-    V = FunctionSpace('V', ldim=1)
+    V = FunctionSpace('V', domain)
 
     v = TestFunction(V, name='v')
 
@@ -307,7 +311,7 @@ def test_linear_form_1d_10():
 def test_function_form_1d_10():
     print('============ test_function_form_1d_10 =============')
 
-    V = FunctionSpace('V', ldim=1)
+    V = FunctionSpace('V', domain)
 
     F = Field('F', space=V)
 
@@ -354,8 +358,8 @@ def test_function_form_1d_10():
 def test_tensorize_1d_1():
     print('============ test_tensorize_1d_1 =============')
 
-    V = FunctionSpace('V', ldim=1)
-    V_0 = FunctionSpace('V_0', ldim=1, coordinates=['x'])
+    V = FunctionSpace('V', domain)
+    V_0 = FunctionSpace('V_0', domain, coordinates=['x'])
 
     v = TestFunction(V, name='v')
     u = TestFunction(V, name='u')
@@ -396,7 +400,9 @@ def test_tensorize_1d_1():
 def test_unknown_1d_1():
     print('============ test_unknown_1d_1 =============')
 
-    v = Unknown('v', ldim=1)
+    domain = Domain('Omega', dim=DIM)
+
+    v = Unknown('v', domain)
     c = Constant('c')
 
     # ...

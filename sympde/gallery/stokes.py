@@ -26,17 +26,18 @@ class Stokes(Model):
     """
     def __new__(cls, **kwargs):
         # ...
-        dim = kwargs.pop('dim', None)
-        if dim is None:
-            raise ValueError('> Expecting a dim entry')
+        domain = kwargs.pop('domain', None)
+        if domain is None:
+            raise ValueError('> Expecting a domain entry')
 
+        dim = domain.dim
         if not(dim in [2, 3]):
             raise ValueError('> only 2d and 3d models are possible')
         # ...
 
         # ... abstract model
-        V = FunctionSpace('V', ldim=dim, is_block=True, shape=dim)
-        W = FunctionSpace('W', ldim=dim)
+        V = FunctionSpace('V', domain, is_block=True, shape=dim)
+        W = FunctionSpace('W', domain)
 
         v = VectorTestFunction(V, name='v')
         u = VectorTestFunction(V, name='u')
@@ -54,6 +55,7 @@ class Stokes(Model):
         obj = Model.__new__(cls, forms=forms, equation=equation, **kwargs)
 
         obj._spaces = [V, W]
+        obj._domain = domain
 
         return obj
 

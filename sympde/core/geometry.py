@@ -4,7 +4,16 @@ from sympy.core import Basic
 from sympy.core.containers import Tuple
 
 class BasicGeometry(Basic):
-    pass
+    _name = None
+    _dim = None
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def dim(self):
+        return self._dim
 
 class Domain(BasicGeometry):
     """
@@ -21,14 +30,6 @@ class Domain(BasicGeometry):
         obj._dim = dim
         return obj
 
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def dim(self):
-        return self._dim
-
     def _sympystr(self, printer):
         sstr = printer.doprint
         return '{}'.format(sstr(name))
@@ -40,6 +41,8 @@ class Line(BasicGeometry):
     Examples
 
     """
+    _dim = 1
+    _name = 'Line'
     def __new__(cls, xmin=0, xmax=1):
         return Basic.__new__(cls, Tuple(xmin, xmax))
 
@@ -60,6 +63,9 @@ class Square(BasicGeometry):
     Examples
 
     """
+    _dim = 2
+    _name = 'Square'
+
     def __new__(cls, xmin=[0,0], xmax=[1,1]):
         if not isinstance(xmin, (list, tuple, Tuple)):
             raise TypeError('> Expecting a list, tuple or Tuple')
@@ -98,6 +104,8 @@ class Cube(BasicGeometry):
     Examples
 
     """
+    _dim = 3
+    _name = 'Cube'
     def __new__(cls, xmin=[0,0,0], xmax=[1,1,1]):
         if not isinstance(xmin, (list, tuple, Tuple)):
             raise TypeError('> Expecting a list, tuple or Tuple')

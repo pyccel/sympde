@@ -9,11 +9,16 @@ from sympde.core import TestFunction
 from sympde.core import VectorTestFunction
 from sympde.core import BilinearForm, LinearForm, Integral
 from sympde.core import Field
+from sympde.core import Domain
 from sympde.printing.latex import latex
 
 
 def test_latex_1d():
-    V = FunctionSpace('V', ldim=1)
+
+    DIM = 1
+    domain = Domain('Omega', dim=DIM)
+
+    V = FunctionSpace('V', domain)
 
     x = V.coordinates
 
@@ -38,7 +43,11 @@ def test_latex_1d():
 #    assert(latex(f) == r'\int_{0}^{1} - x + \partial_{x}F dx')
 
 def test_latex_2d_1():
-    V = FunctionSpace('V', ldim=2)
+
+    DIM = 2
+    domain = Domain('Omega', dim=DIM)
+
+    V = FunctionSpace('V', domain)
 
     x,y = V.coordinates
 
@@ -63,7 +72,11 @@ def test_latex_2d_1():
 #    assert(latex(f) == r'\int_{0}^{1}\int_{0}^{1} - x y + \partial_{x}F - \partial_{y}F dxdy')
 
 def test_latex_2d_2():
-    V = FunctionSpace('V', ldim=2, is_block=True, shape=2)
+
+    DIM = 2
+    domain = Domain('Omega', dim=DIM)
+
+    V = FunctionSpace('V', domain, is_block=True, shape=2)
 
     x,y = V.coordinates
 
@@ -85,7 +98,11 @@ def test_latex_2d_2():
 
 
 def test_latex_3d_1():
-    V = FunctionSpace('V', ldim=3)
+
+    DIM = 3
+    domain = Domain('Omega', dim=DIM)
+
+    V = FunctionSpace('V', domain)
 
     x,y,z = V.coordinates
 
@@ -110,7 +127,11 @@ def test_latex_3d_1():
 #    assert(latex(f) == r'\int_{0}^{1}\int_{0}^{1} - x y z + \partial_{x}F - \partial_{y}F + \partial_{z}F dxdy')
 
 def test_latex_3d_2():
-    V = FunctionSpace('V', ldim=3, is_block=True, shape=3)
+
+    DIM = 3
+    domain = Domain('Omega', dim=DIM)
+
+    V = FunctionSpace('V', domain, is_block=True, shape=3)
 
     x,y,z = V.coordinates
 
@@ -137,7 +158,8 @@ def test_latex_model_2d_1():
 #    model.preview(outputTexFile='poisson_2d.tex')
 
     from sympde.gallery import Stokes
-    model = Stokes(dim=2)
+    domain = Domain('Omega', dim=2)
+    model = Stokes(domain=domain)
     model.preview(outputTexFile='stokes_2d.tex')
 
 ####################

@@ -59,6 +59,7 @@ class Model(Basic):
 
     """
     _name = None
+    _domain = None
     _forms = None
     _equation = None
 
@@ -116,6 +117,10 @@ class Model(Basic):
     @property
     def name(self):
         return self._name
+
+    @property
+    def domain(self):
+        return self._domain
 
     def preview(self, euler=False, packages=None,
                 output='dvi', outputTexFile=None):

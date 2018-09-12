@@ -334,6 +334,7 @@ def print_expression(expr, logical=False, mapping_name=True):
     if mapping:
         mapping = mapping[0]
         dim = mapping.rdim
+        domain = mapping.domain
 
         # ...
         coords = mapping.coordinates
@@ -354,7 +355,7 @@ def print_expression(expr, logical=False, mapping_name=True):
         for i in range(0, dim):
             old = mapping[i]
             new = '{M}{i}'.format(M=name, i=i)
-            new = Unknown(new, ldim=dim)
+            new = Unknown(new, domain)
             expr = expr.subs(old, new)
     # ...
 

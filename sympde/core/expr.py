@@ -152,7 +152,7 @@ class Integral(BasicForm):
                 ldim = len(coordinates)
 
                 ID = abs(hash(expr))
-                space = FunctionSpace('space_{}'.format(ID), ldim=ldim,
+                space = FunctionSpace('space_{}'.format(ID), domain,
                                       coordinates=coordinates)
 
                 if ldim == 1:
@@ -1003,7 +1003,7 @@ def _tensorize_core(expr, dim, tests, trials):
             for i in range(0, dim):
                 coord = _coordinates[i]
                 Vi = FunctionSpace('V_{}'.format(i),
-                                       ldim=1,
+                                       domain=Line(),
                                        coordinates=[coord])
 
                 ai = TestFunction(Vi, '{test}{i}'.format(test=a.name, i=i))
@@ -1094,8 +1094,8 @@ def tensorize(a):
         u = trials[0]
 
         from sympde.core import FunctionSpace
-        V = FunctionSpace(V.name, ldim=V.ldim, coordinates=[i.name for i in V.coordinates])
-        U = FunctionSpace(U.name, ldim=U.ldim, coordinates=[i.name for i in U.coordinates])
+        V = FunctionSpace(V.name, V.domain, coordinates=[i.name for i in V.coordinates])
+        U = FunctionSpace(U.name, U.domain, coordinates=[i.name for i in U.coordinates])
 
         vv = TestFunction(V, name=v.name*2)
         uu = TestFunction(U, name=u.name*2)
@@ -1175,15 +1175,17 @@ def subs_bilinear_form(form, newargs):
     # in order to avoid problems when swapping indices, we need to create
     # temp symbols
 
+    domain = form.domain
+
     # ...
     d_tmp = {}
     for x in trial_functions:
         name = 'trial_{}'.format(abs(hash(x)))
         if isinstance(x, VectorTestFunction):
-            X = VectorUnknown(name, ldim=x.ldim, shape=x.shape)
+            X = VectorUnknown(name, domain, shape=x.shape)
 
         else:
-            X = Unknown(name, ldim=x.ldim)
+            X = Unknown(name, domain)
 
         d_tmp[X] = x
     # ...

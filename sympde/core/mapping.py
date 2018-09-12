@@ -21,6 +21,7 @@ from .derivatives import (Grad_1d, Div_1d,
 from .generic import Dot, Inner, Cross
 from .generic import Grad, Rot, Curl, Div
 from .generic import _generic_ops
+from .geometry import Domain
 
 from .algebra import (Dot_1d,
                       Dot_2d, Inner_2d, Cross_2d,
@@ -35,12 +36,16 @@ class Mapping(BasicMapping):
     Examples
 
     """
-    def __new__(cls, name, rdim, coordinates=None):
+    # TODO shall we keep rdim ?
+    def __new__(cls, name, rdim, domain=None, coordinates=None):
         if isinstance(rdim, (tuple, list, Tuple)):
             if not len(rdim) == 1:
                 raise ValueError('> Expecting a tuple, list, Tuple of length 1')
 
             rdim = rdim[0]
+
+        if not isinstance(domain, Domain):
+            raise TypeError('> Expecting a Domain object')
 
         obj = IndexedBase.__new__(cls, name, shape=(rdim))
 
@@ -57,6 +62,7 @@ class Mapping(BasicMapping):
             _coordinates = [Symbol(name) for name in coordinates]
 
         obj._name = name
+        obj._domain = domain
         obj._rdim = rdim
         obj._coordinates = _coordinates
 
@@ -75,6 +81,10 @@ class Mapping(BasicMapping):
     @property
     def rdim(self):
         return self._rdim
+
+    @property
+    def domain(self):
+        return self._domain
 
     @property
     def coordinates(self):

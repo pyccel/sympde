@@ -1,12 +1,14 @@
 # coding: utf-8
 
+from sympde.core import Domain
 from sympde.gallery import Poisson
 
 # ...
 def test_poisson_1d():
     print('============ test_poisson_1d ==============')
 
-    model = Poisson(dim=1)
+    domain = Domain('Omega', dim=1)
+    model = Poisson(domain=domain)
 
     assert(str(model.space) == 'V')
 
@@ -17,7 +19,8 @@ def test_poisson_1d():
 def test_poisson_2d():
     print('============ test_poisson_2d ==============')
 
-    model = Poisson(dim=2)
+    domain = Domain('Omega', dim=2)
+    model = Poisson(domain=domain)
 
     assert(str(model.space) == 'V')
 
@@ -28,7 +31,8 @@ def test_poisson_2d():
 def test_poisson_3d():
     print('============ test_poisson_3d ==============')
 
-    model = Poisson(dim=3)
+    domain = Domain('Omega', dim=3)
+    model = Poisson(domain=domain)
 
     assert(str(model.space) == 'V')
 

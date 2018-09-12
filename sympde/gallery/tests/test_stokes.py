@@ -1,12 +1,14 @@
 # coding: utf-8
 
+from sympde.core import Domain
 from sympde.gallery import Stokes
 
 # ...
 def test_stokes_2d():
     print('============ test_stokes_2d ==============')
 
-    model = Stokes(dim=2)
+    domain = Domain('Omega', dim=2)
+    model = Stokes(domain=domain)
 
     model.preview(outputTexFile='test_stokes_2d.tex')
 # ...
@@ -15,7 +17,8 @@ def test_stokes_2d():
 def test_stokes_3d():
     print('============ test_stokes_3d ==============')
 
-    model = Stokes(dim=3)
+    domain = Domain('Omega', dim=3)
+    model = Stokes(domain=domain)
 
     model.preview(outputTexFile='test_stokes_3d.tex')
 # ...

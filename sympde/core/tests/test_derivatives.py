@@ -12,6 +12,7 @@ from sympde.core import grad, dot, inner
 from sympde.core import Field
 from sympde.core import get_index_derivatives_atom
 from sympde.core import FunctionSpace
+from sympde.core import Domain
 
 
 # ...
@@ -21,7 +22,9 @@ def test_partial_derivatives_1():
     x, y, z = symbols('x y z')
     alpha, beta = symbols('alpha beta')
 
-    V = FunctionSpace('V', ldim=2)
+    domain = Domain('Omega', dim=2)
+
+    V = FunctionSpace('V', domain)
     F = Field('F', space=V)
 
     u = Field('u', space=V)
@@ -60,7 +63,9 @@ def test_partial_derivatives_2():
     x, y, z = symbols('x y z')
     alpha, beta = symbols('alpha beta')
 
-    V = FunctionSpace('V', ldim=2)
+    domain = Domain('Omega', dim=2)
+
+    V = FunctionSpace('V', domain)
     F = Field('F', space=V)
 
     expr = alpha * dx(F) + beta * dy(F) + dx(dy(F))

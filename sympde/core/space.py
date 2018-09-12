@@ -20,18 +20,17 @@ class FunctionSpace(Basic):
     Examples
 
     """
-    _ldim = None
+    _domain = None
     _shape = None
     _is_vector = False
     _is_block = False
-    def __new__(cls, name, ldim=None, shape=None, is_vector=False,
+    def __new__(cls, name, domain, shape=None, is_vector=False,
                 is_block=False, coordinates=None):
         if is_vector or is_block:
             if shape is None:
                 raise ValueError('shape must be provided for a vector/block space')
 
-        obj = Basic.__new__(cls, name)
-        obj._ldim = ldim
+        obj = Basic.__new__(cls, name, domain)
         if shape is None:
             obj._shape = 1
         else:
@@ -40,6 +39,7 @@ class FunctionSpace(Basic):
         obj._is_vector = is_vector
         obj._is_block = is_block
 
+        ldim = domain.dim
         if coordinates is None:
             _coordinates = []
             if ldim:
@@ -63,8 +63,12 @@ class FunctionSpace(Basic):
         return self._args[0]
 
     @property
+    def domain(self):
+        return self._args[1]
+
+    @property
     def ldim(self):
-        return self._ldim
+        return self.domain.dim
 
     @property
     def shape(self):
@@ -77,10 +81,6 @@ class FunctionSpace(Basic):
     @property
     def is_block(self):
         return self._is_block
-
-    @property
-    def ldim(self):
-        return self._ldim
 
     @property
     def coordinates(self):
@@ -111,12 +111,13 @@ class ProductSpace(FunctionSpace):
         spaces = Tuple(*spaces)
         # ...
 
-        # ...
-        ldim = unique([i.ldim for i in spaces])
-        if not( len(ldim) == 1 ):
-            raise ValueError('> All spaces must have the same logical dimension ldim')
+        # ... all spaces must have the same domain
+        domain = spaces[0].domain
+        for space in spaces:
+            if not(space.domain is domain):
+                raise ValueError('> all spaces must have the same domain')
 
-        ldim = ldim[0]
+        ldim = domain.dim
         # ...
 
         # ...
@@ -147,7 +148,6 @@ class ProductSpace(FunctionSpace):
         # ...
         obj = Basic.__new__(cls, spaces)
 
-        obj._ldim = ldim
         obj._shape = shape
         obj._is_vector = False
         obj._is_block = True
@@ -166,8 +166,12 @@ class ProductSpace(FunctionSpace):
         return self._name
 
     @property
+    def domain(self):
+        return self.spaces[0].domain
+
+    @property
     def ldim(self):
-        return self._ldim
+        return self.spaces[0].ldim
 
     @property
     def shape(self):
@@ -180,10 +184,6 @@ class ProductSpace(FunctionSpace):
     @property
     def is_block(self):
         return self._is_block
-
-    @property
-    def ldim(self):
-        return self._ldim
 
     @property
     def coordinates(self):
@@ -322,9 +322,9 @@ class Unknown(TestFunction):
     Represents an unknown function
 
     """
-    def __new__(cls, name, ldim):
+    def __new__(cls, name, domain):
         space_name = 'space_{}'.format(abs(hash(name)))
-        V = FunctionSpace(space_name, ldim=ldim)
+        V = FunctionSpace(space_name, domain)
         return TestFunction.__new__(cls, V, name)
 
 # TODO improve
@@ -333,7 +333,7 @@ class VectorUnknown(VectorTestFunction):
     Represents an unknown function
 
     """
-    def __new__(cls, name, ldim, shape):
+    def __new__(cls, name, domain, shape):
         space_name = 'space_{}'.format(abs(hash(name)))
-        V = FunctionSpace(space_name, ldim=ldim, shape=shape, is_block=True)
+        V = FunctionSpace(space_name, domain, shape=shape, is_block=True)
         return VectorTestFunction.__new__(cls, V, name)
