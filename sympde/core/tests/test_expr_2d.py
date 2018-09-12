@@ -29,7 +29,7 @@ from sympde.core import tensorize
 from sympde.core import Mass, Stiffness, Advection, AdvectionT
 from sympde.core import Unknown
 from sympde.core import FormCall
-from sympde.core import Domain
+from sympde.core import Domain, Boundary, NormalVector, TangentVector
 
 DIM = 2
 domain = Domain('Omega', dim=DIM)
@@ -129,6 +129,54 @@ def test_atomize_2d_2():
 #    print('> input         >>> {0}'.format(expr))
 #    print('> atomized     >>> {0}'.format(atomize(expr)))
 # ...
+
+# ...
+def test_boundary_2d_3():
+    print('============ test_boundary_2d_3 =============')
+
+    V1 = FunctionSpace('V1', domain)
+    V2 = FunctionSpace('V2', domain)
+    U1 = FunctionSpace('U1', domain)
+    U2 = FunctionSpace('U2', domain)
+    W1 = FunctionSpace('W1', domain, is_block=True, shape=2)
+    W2 = FunctionSpace('W2', domain, is_block=True, shape=2)
+    T1 = FunctionSpace('T1', domain, is_block=True, shape=2)
+    T2 = FunctionSpace('T2', domain, is_block=True, shape=2)
+
+    v1 = TestFunction(V1, name='v1')
+    v2 = TestFunction(V2, name='v2')
+    u1 = TestFunction(U1, name='u1')
+    u2 = TestFunction(U2, name='u2')
+    w1 = VectorTestFunction(W1, name='w1')
+    w2 = VectorTestFunction(W2, name='w2')
+    t1 = VectorTestFunction(T1, name='t1')
+    t2 = VectorTestFunction(T2, name='t2')
+
+    x,y = V1.coordinates
+
+    alpha = Constant('alpha')
+
+    B1 = Boundary(r'\Gamma_1', domain)
+    B2 = Boundary(r'\Gamma_2', domain)
+
+    nn = NormalVector(B1)
+    tt = TangentVector(B2)
+
+    # ...
+    expr = dot(grad(u1), grad(v1)) + v1*dot(grad(u1), nn)
+    a1 = BilinearForm((v1, u1), expr, name='a1')
+    print(a1)
+    print(atomize(a1))
+    print(evaluate(a1))
+    print('')
+
+    expr = a1(v2, u2)
+    a = BilinearForm((v2, u2), expr, name='a')
+    print(a)
+    print(atomize(a))
+    print(evaluate(a))
+    print('')
+    # ...
 
 # ...
 def test_calls_2d_3():
@@ -660,6 +708,9 @@ if __name__ == '__main__':
 #
 #    test_tensorize_2d_2()
 #
-    test_calls_2d_3()
-#
 #    test_unknown_2d_1()
+
+
+
+#    test_calls_2d_3()
+    test_boundary_2d_3()

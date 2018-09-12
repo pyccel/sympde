@@ -2,6 +2,7 @@
 
 from sympy.core import Basic
 from sympy.core.containers import Tuple
+from sympy.tensor import IndexedBase
 
 class BasicDomain(Basic):
     _name = None
@@ -15,6 +16,10 @@ class BasicDomain(Basic):
     def dim(self):
         return self._dim
 
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        return '{}'.format(sstr(self.name))
+
 class Domain(BasicDomain):
     """
     Represents an undefined domain.
@@ -22,17 +27,59 @@ class Domain(BasicDomain):
     Examples
 
     """
-    _name = None
-    _dim = None
     def __new__(cls, name, dim):
         obj = Basic.__new__(cls)
         obj._name = name
         obj._dim = dim
         return obj
 
-    def _sympystr(self, printer):
-        sstr = printer.doprint
-        return '{}'.format(sstr(name))
+class Boundary(BasicDomain):
+    """
+    Represents an undefined boundary over a domain.
+
+    Examples
+
+    """
+    def __new__(cls, name, domain):
+        obj = Basic.__new__(cls)
+        obj._name = name
+        obj._domain = domain
+        return obj
+
+    @property
+    def domain(self):
+        return self._domain
+
+    @property
+    def dim(self):
+        return self.domain.dim
+
+class BoundaryVector(IndexedBase):
+
+    def __new__(cls, boundary):
+        if not isinstance(boundary, Boundary):
+            raise TypeError('> Expecting a Boundary')
+
+        return Basic.__new__(cls, boundary)
+
+    @property
+    def boundary(self):
+        return self._args[0]
+
+    @property
+    def domain(self):
+        return self.boundary.domain
+
+    @property
+    def shape(self):
+        return [self.boundary.dim]
+
+class NormalVector(BoundaryVector):
+    pass
+
+class TangentVector(BoundaryVector):
+    pass
+
 
 class Line(BasicDomain):
     """

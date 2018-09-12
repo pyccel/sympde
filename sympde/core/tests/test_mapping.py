@@ -12,8 +12,8 @@ from sympde.core import print_expression
 from sympde.core import Domain
 
 # ...
-def test_1d():
-    print('============ test_1d ==============')
+def test_mapping_1d():
+    print('============ test_mapping_1d ==============')
 
     rdim = 1
 
@@ -40,8 +40,8 @@ def test_1d():
 # ...
 
 # ...
-def test_2d():
-    print('============ test_2d ==============')
+def test_mapping_2d():
+    print('============ test_mapping_2d ==============')
 
     rdim = 2
 
@@ -78,8 +78,8 @@ def test_2d():
     # ...
 
 # ...
-def test_3d():
-    print('============ test_3d ==============')
+def test_mapping_3d():
+    print('============ test_mapping_3d ==============')
 
     rdim = 3
 
@@ -122,6 +122,6 @@ def test_3d():
 # .....................................................
 if __name__ == '__main__':
 
-    test_1d()
-    test_2d()
-    test_3d()
+    test_mapping_1d()
+    test_mapping_2d()
+    test_mapping_3d()
