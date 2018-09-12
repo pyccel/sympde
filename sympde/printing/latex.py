@@ -201,10 +201,19 @@ class LatexPrinter(LatexPrinterSympy):
         lhs = self._print(expr.lhs)
         rhs = self._print(expr.rhs)
 
-        return '{lhs} &= {rhs}'.format(lhs=lhs, rhs=rhs)
+        if expr.is_undefined:
+            return ''
+        else:
+            return '{lhs} &= {rhs}'.format(lhs=lhs, rhs=rhs)
 
     def _print_Model(self, expr):
 
+        eq_names = []
+        if expr.equation:
+            for x in [expr.equation.lhs, expr.equation.rhs]:
+                if not isinstance(x, Nil): eq_names.append(x.name)
+
+        epilogues = []
         codes = []
         for name, form in list(expr.forms.items()):
             if isinstance(form, BilinearForm):
@@ -221,11 +230,17 @@ class LatexPrinter(LatexPrinterSympy):
             call = FormCall(form, args, name=name)
             code = '{call} &:= {form}'.format(call=self._print(call),
                                               form=self._print(form))
-            codes.append(code)
+
+            if name in eq_names:
+                epilogues.append(code)
+
+            else:
+                codes.append(code)
 
         if expr.equation:
-            code = self._print(expr.equation)
-            codes.append(code)
+            epilogues.append(self._print(expr.equation))
+
+        codes += epilogues
 
         code = '\n\\\\'.join(codes)
         code = '\n' + r'\begin{align*}' + code + '\n' + r'\end{align*}'

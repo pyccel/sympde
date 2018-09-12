@@ -46,6 +46,10 @@ class Equation(Basic):
     def rhs(self):
         return self._args[1]
 
+    @property
+    def is_undefined(self):
+        return isinstance(self.lhs, Nil) or isinstance(self.rhs, Nil)
+
 
 class Model(Basic):
     """
