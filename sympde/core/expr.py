@@ -165,6 +165,9 @@ class Integral(BasicForm):
         domain = BasicForm._init_domain(domain, ldim)
         measure = BasicForm._init_measure(measure, coordinates)
 
+        # so that we may pass mapping as False
+        if not mapping: mapping=None
+
         obj = Basic.__new__(cls, expr)
         obj._ldim = ldim
         obj._coordinates = coordinates
@@ -216,6 +219,9 @@ class LinearForm(BasicForm):
 
         domain = BasicForm._init_domain(domain, obj.ldim)
         measure = BasicForm._init_measure(measure, obj.coordinates)
+
+        # so that we may pass mapping as False
+        if not mapping: mapping=None
 
         obj._domain = domain
         obj._measure = measure
@@ -279,6 +285,9 @@ class BilinearForm(BasicForm):
 
         domain = BasicForm._init_domain(domain, obj.ldim)
         measure = BasicForm._init_measure(measure, obj.coordinates)
+
+        # so that we may pass mapping as False
+        if not mapping: mapping=None
 
         obj._domain = domain
         obj._measure = measure

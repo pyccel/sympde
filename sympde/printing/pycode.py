@@ -191,6 +191,11 @@ class PythonCodePrinter(SympyPythonCodePrinter):
         arg = self._print(expr.args[0])
         return arg + '_z'
 
+    def _print_IndexedTestTrial(self, expr):
+        base = self._print(expr.base)
+        index = self._print(expr.indices[0])
+        return  '{base}_{i}'.format(base=base, i=index)
+
 
 def pycode(expr, **settings):
     """ Converts an expr to a string of Python code

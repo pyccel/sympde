@@ -374,10 +374,18 @@ def print_expression(expr, logical=False, mapping_name=True):
             else:
                 code += d_coords[k]*n
 
-        name = '{name}_{code}'.format(name=atom.name, code=code)
+        if isinstance(atom, IndexedTestTrial):
+            name =  '{base}_{i}'.format(base=atom.base.name, i=atom.indices[0])
+        else:
+            name = atom.name
+
+        name = '{name}_{code}'.format(name=name, code=code)
 
     else:
-        name = str(atom)
+        if isinstance(atom, IndexedTestTrial):
+            name =  '{base}_{i}'.format(base=atom.base.name, i=atom.indices[0])
+        else:
+            name = str(atom)
     # ...
 
     # ...
@@ -940,7 +948,7 @@ def get_index_derivatives_atom(expr, atom, verbose=False):
     indices = []
     for i in ops:
         a = get_atom_derivatives(i)
-        if a.name == atom.name:
+        if a == atom:
             index = get_index_derivatives(i)
             indices.append(index)
 
