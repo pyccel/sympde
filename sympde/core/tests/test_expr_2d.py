@@ -153,8 +153,7 @@ def test_calls_2d_3():
 
     x,y = V1.coordinates
 
-    v1v2 = VectorTestFunction(V, name='v1v2')
-    u1u2 = VectorTestFunction(U, name='u1u2')
+    alpha = Constant('alpha')
 
     # ...
     a1 = BilinearForm((v1, u1), u1*v1, name='a1')
@@ -163,7 +162,7 @@ def test_calls_2d_3():
     a = BilinearForm((v2, u2), expr, name='a')
     print(a)
     print(atomize(a))
-#    print(evaluate(a))
+    print(evaluate(a))
     print('')
     # ...
 
@@ -174,7 +173,7 @@ def test_calls_2d_3():
     a = BilinearForm((v2, u2), expr, name='a')
     print(a)
     print(atomize(a))
-#    print(evaluate(a))
+    print(evaluate(a))
     print('')
     # ...
 
@@ -186,7 +185,7 @@ def test_calls_2d_3():
     a = BilinearForm((v2, u2), expr, name='a')
     print(a)
     print(atomize(a))
-#    print(evaluate(a))
+    print(evaluate(a))
     print('')
     # ...
 
@@ -207,7 +206,7 @@ def test_calls_2d_3():
     print('')
     # ...
 
-    # ... DONE
+    # ...
     a1 = BilinearForm((v1, u1), u1*v1, name='a1')
     a2 = BilinearForm((v1, u1), dx(u1)*dx(v1), name='a2')
 
@@ -234,25 +233,53 @@ def test_calls_2d_3():
 
     expr = a3(w2,t2) + a2(v2,u2) + a4(w2,u2)
     a = BilinearForm(((w2,v2),(t2,u2)), expr, name='a')
-#    print(a)
-#    print(atomize(a))
+    print(a)
+    print(atomize(a))
     print(evaluate(a))
     # ...
 
-#    import sys; sys.exit(0)
+    # ...
+    l1 = LinearForm(v1, x*y*v1, name='11')
 
-#    # ...
-#    l1 = LinearForm(v1, x*y*v1, name='11')
-#
-#    expr = l1(v2)
-#    # ...
-#
-#    # ...
-#    l1 = LinearForm(v1, x*y*v1, name='l1')
-#    l2 = LinearForm(v2, cos(x+y)*v2, name='l2')
-#
-#    expr = l1(u1) + l2(u2)
-#    # ...
+    expr = l1(v2)
+    l = LinearForm(v2, expr, name='1')
+    print(l)
+    print(atomize(l))
+    print(evaluate(l))
+    # ...
+
+    # ...
+    l1 = LinearForm(v1, x*y*v1, name='l1')
+    l2 = LinearForm(v2, cos(x+y)*v2, name='l2')
+
+    expr = l1(u1) + l2(u2)
+    l = LinearForm((u1,u2), expr, name='1')
+    print(l)
+    print(atomize(l))
+    print(evaluate(l))
+    # ...
+
+    # ...
+    l1 = LinearForm(v1, x*y*v1, name='l1')
+    l2 = LinearForm(v2, cos(x+y)*v2, name='l2')
+
+    expr = l1(u1) + alpha * l2(u2)
+    l = LinearForm((u1,u2), expr, name='1')
+    print(l)
+    print(atomize(l))
+    print(evaluate(l))
+    # ...
+
+    # ...
+    l1 = LinearForm(v1, x*y*v1, name='l1')
+    l2 = LinearForm(w1, div(w1), name='l2')
+
+    expr = l1(v2) + l2(w2)
+    l = LinearForm((v2,w2), expr, name='1')
+    print(l)
+    print(atomize(l))
+    print(evaluate(l))
+    # ...
 # ...
 
 # ...

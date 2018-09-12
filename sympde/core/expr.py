@@ -212,7 +212,6 @@ class LinearForm(BasicForm):
                 mapping=None, name=None):
 
         args = _sanitize_form_arguments(arguments, expr, is_linear=True)
-        expr = _sanitize_linear_form_expr(arguments, expr, args)
         obj = Basic.__new__(cls, args, expr)
 
         domain = BasicForm._init_domain(domain, obj.ldim)
@@ -276,7 +275,6 @@ class BilinearForm(BasicForm):
             raise ValueError('Expecting a couple (test, trial)')
 
         args = _sanitize_form_arguments(arguments, expr, is_bilinear=True)
-        expr = _sanitize_bilinearform_expr(arguments, expr, args)
         obj = Basic.__new__(cls, args, expr)
 
         domain = BasicForm._init_domain(domain, obj.ldim)
@@ -677,12 +675,6 @@ def _sanitize_form_arguments(arguments, expr, is_bilinear=False, is_linear=False
 
     return args
 
-def _sanitize_bilinearform_expr(arguments, expr, newargs):
-    return expr
-
-def _sanitize_linearform_expr(arguments, expr, newargs):
-    return expr
-
 
 # ...
 def atomize(expr, dim=None):
@@ -787,6 +779,11 @@ def evaluate(a, basis=None, verbose=False, variables=None, M=None):
     # ...
 
     # ...
+    if not isinstance(a, (BasicForm, Add, Mul)):
+        raise TypeError('Expecting a BasicForm, Add or Mul')
+    # ...
+
+    # ...
     variables = []
     if isinstance(a, (BilinearForm, LinearForm)):
         variables = a.variables
@@ -816,6 +813,9 @@ def evaluate(a, basis=None, verbose=False, variables=None, M=None):
     # ...
     tests = []
     trials = []
+    # ...
+
+    # ...
     if isinstance(a, BilinearForm):
         tests = list(a.test_functions)
         n_rows, test_indices = _get_size_and_starts(a.test_functions)
@@ -831,11 +831,16 @@ def evaluate(a, basis=None, verbose=False, variables=None, M=None):
             lines.append(line)
 
         M = Matrix(lines)
+
+    elif isinstance(a, LinearForm):
+        tests = list(a.test_functions)
+        n_rows, test_indices = _get_size_and_starts(a.test_functions)
+
+        lines = [0 for i in range(0, n_rows)]
+        M = Matrix(lines)
     # ...
 
-    if not isinstance(a, (BasicForm, Add, Mul)):
-        raise TypeError('Expecting a BasicForm, Add or Mul')
-
+    # ...
     if isinstance(a, Add):
         args = [evaluate(i, basis=basis, verbose=verbose, variables=variables,
                          M=M) for i in a.args]
@@ -859,6 +864,7 @@ def evaluate(a, basis=None, verbose=False, variables=None, M=None):
             j = Mul(*args)
 
         return Mul(i, j)
+    # ...
 
     dim = a.ldim
     expr = a.expr
@@ -872,39 +878,33 @@ def evaluate(a, basis=None, verbose=False, variables=None, M=None):
     if verbose:
         print('> atomized   >>> {0}'.format(expr))
 
-    print('> expr = ', expr)
-
     # ...
-    def _treat_BilinearForm(arg, M):
-        atoms  = list(arg.atoms(TestFunction))
-        atoms += list(arg.atoms(VectorTestFunction))
-        atoms += list(arg.atoms(IndexedTestTrial))
+    def _evaluate_LinearForm(expr, M):
+        # ...
+        def treat_form(arg, M):
+            atoms  = list(arg.atoms(TestFunction))
+            atoms += list(arg.atoms(VectorTestFunction))
+            atoms += list(arg.atoms(IndexedTestTrial))
 
-        for atom in atoms:
-            if atom in test_indices:
-                i_row = test_indices[atom]
+            for atom in atoms:
+                if atom in test_indices:
+                    i_row = test_indices[atom]
 
-            elif atom in trial_indices:
-                i_col = trial_indices[atom]
+                else:
+                    raise ValueError('> Could not find {}'.format(atom))
 
-            else:
-                raise ValueError('> Could not find {}'.format(atom))
+            M[i_row] += arg
+            return M
+        # ...
 
-        M[i_row, i_col] += arg
-        return M
-    # ...
-
-    # ...
-    def _evaluate_form(expr, M, treat_form):
         # ...
         if isinstance(expr, Add):
             args = expr.args
             for arg in args:
-                if isinstance(arg, Mul):
-                    M = treat_form(arg, M)
+                M = treat_form(arg, M)
 
         elif isinstance(expr, Mul):
-            M = treat_form(arg, M)
+            M = treat_form(expr, M)
 
         else:
             raise TypeError('> wrong type, given {}'.format(type(expr)))
@@ -913,7 +913,62 @@ def evaluate(a, basis=None, verbose=False, variables=None, M=None):
         return M
     # ...
 
-    M = _evaluate_form(expr, M, _treat_BilinearForm)
+    # ...
+    def _evaluate_BilinearForm(expr, M):
+
+        # ...
+        def treat_form(arg, M):
+            atoms  = list(arg.atoms(TestFunction))
+            atoms += list(arg.atoms(VectorTestFunction))
+            atoms += list(arg.atoms(IndexedTestTrial))
+
+            for atom in atoms:
+                if atom in test_indices:
+                    i_row = test_indices[atom]
+
+                elif atom in trial_indices:
+                    i_col = trial_indices[atom]
+
+                else:
+                    raise ValueError('> Could not find {}'.format(atom))
+
+            M[i_row, i_col] += arg
+            return M
+        # ...
+
+        # ...
+        if isinstance(expr, Add):
+            args = expr.args
+            for arg in args:
+                if isinstance(arg, Mul):
+                    M = treat_form(arg, M)
+
+        elif isinstance(expr, Mul):
+            M = treat_form(expr, M)
+
+        else:
+            raise TypeError('> wrong type, given {}'.format(type(expr)))
+        # ...
+
+        return M
+    # ...
+
+    # ...
+    if isinstance(a, BilinearForm):
+        M = _evaluate_BilinearForm(expr, M)
+
+        # returning scalars when possibl
+        if (n_rows == 1) and (n_cols == 1):
+            return M[0, 0]
+
+    elif isinstance(a, LinearForm):
+        M = _evaluate_LinearForm(expr, M)
+
+        # returning scalars when possibl
+        if (n_rows == 1):
+            return M[0]
+    # ...
+
     return M
 # ...
 
