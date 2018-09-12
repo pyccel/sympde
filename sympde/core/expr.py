@@ -522,7 +522,7 @@ class FormCall(AtomicExpr):
                 name = expr.name
 
             else:
-                raise ValueError('Bilinear/Linear form must have a name')
+                raise ValueError('Callable Bilinear/Linear form must have a name')
 
         args = Tuple(*args)
         obj = Basic.__new__(cls, expr, args, name)

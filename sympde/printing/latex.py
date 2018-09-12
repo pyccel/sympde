@@ -237,6 +237,18 @@ class LatexPrinter(LatexPrinterSympy):
         txt = ''.join(j for j in ['d{}'.format(self._print(i)) for i in expr.args])
         return txt
 
+    def _print_dx(self, expr):
+        arg = self._print(expr.args[0])
+        return r'\partial_x {}'.format(arg)
+
+    def _print_dy(self, expr):
+        arg = self._print(expr.args[0])
+        return r'\partial_y {}'.format(arg)
+
+    def _print_dz(self, expr):
+        arg = self._print(expr.args[0])
+        return r'\partial_z {}'.format(arg)
+
     def _write_integral_expr(self, domain, expr, measure=None):
         measure_str = ''
         if not(measure is None):
