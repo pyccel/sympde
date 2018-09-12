@@ -207,6 +207,8 @@ def test_calls_2d_3():
 
     alpha = Constant('alpha')
 
+    F = Field('F', space=V1)
+
     # ...
     a1 = BilinearForm((v1, u1), u1*v1, name='a1')
 
@@ -331,6 +333,34 @@ def test_calls_2d_3():
     print(l)
     print(atomize(l))
     print(evaluate(l))
+    # ...
+
+    # ...
+    I1 = Integral(x*y, domain, coordinates=[x,y], name='I1')
+
+    print(I1)
+    print(atomize(I1))
+    print(evaluate(I1))
+    # ...
+
+    # ...
+    expr = F - cos(2*pi*x)*cos(3*pi*y)
+    expr = dot(grad(expr), grad(expr))
+    I2 = Integral(expr, domain, coordinates=[x,y], name='I2')
+
+    print(I2)
+    print(atomize(I2))
+    print(evaluate(I2))
+    # ...
+
+    # ...
+    expr = F - cos(2*pi*x)*cos(3*pi*y)
+    expr = dot(grad(expr), grad(expr))
+    I2 = Integral(expr, domain, coordinates=[x,y], name='I2')
+
+    print(I2)
+    print(atomize(I2))
+    print(evaluate(I2))
     # ...
 
     # ... stokes
@@ -712,5 +742,5 @@ if __name__ == '__main__':
 
 
 
-#    test_calls_2d_3()
-    test_boundary_2d_3()
+    test_calls_2d_3()
+#    test_boundary_2d_3()

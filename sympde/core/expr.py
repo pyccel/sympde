@@ -27,7 +27,7 @@ from sympy.physics.quantum import TensorProduct
 from .measure import CanonicalMeasure
 from .measure import CartesianMeasure
 from .measure import Measure
-from .geometry import Line, Square, Cube
+from .geometry import BasicDomain, Domain, Line
 from .derivatives import _partial_derivatives
 from .derivatives import partial_derivative_as_symbol
 from .derivatives import sort_partial_derivatives
@@ -145,7 +145,6 @@ class Integral(BasicForm):
             if ldim == 1:
                 coordinates = coordinates[0]
 
-        domain = BasicForm._init_domain(domain, ldim)
         measure = BasicForm._init_measure(measure, coordinates)
 
         # so that we may pass mapping as False
@@ -959,6 +958,9 @@ def evaluate(a, basis=None, verbose=False, variables=None, M=None):
         # returning scalars when possibl
         if (n_rows == 1):
             return M[0]
+
+    elif isinstance(a, Integral):
+        return expr
     # ...
 
     return M
