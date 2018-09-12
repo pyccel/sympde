@@ -101,19 +101,28 @@ class LatexPrinter(LatexPrinterSympy):
 
     # ... forms
     def _print_BilinearForm(self, expr):
-        txt = print_integral(expr.domain, expr.expr,
-                             measure=expr.measure)
-        return txt
+        calls = expr.atoms(FormCall)
+        if not calls:
+            return print_integral(expr.domain, expr.expr,
+                                  measure=expr.measure)
+        else:
+            return self._print(expr.expr)
 
     def _print_LinearForm(self, expr):
-        txt = print_integral(expr.domain, expr.expr,
-                             measure=expr.measure)
-        return txt
+        calls = expr.atoms(FormCall)
+        if not calls:
+            return print_integral(expr.domain, expr.expr,
+                                  measure=expr.measure)
+        else:
+            return self._print(expr.expr)
 
     def _print_Integral(self, expr):
-        txt = print_integral(expr.domain, expr.expr,
-                             measure=expr.measure)
-        return txt
+        calls = expr.atoms(FormCall)
+        if not calls:
+            return print_integral(expr.domain, expr.expr,
+                                  measure=expr.measure)
+        else:
+            return self._print(expr.expr)
 
     def _print_Kron(self, expr):
         raise NotImplementedError('TODO')
