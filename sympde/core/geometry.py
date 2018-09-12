@@ -3,7 +3,7 @@
 from sympy.core import Basic
 from sympy.core.containers import Tuple
 
-class BasicGeometry(Basic):
+class BasicDomain(Basic):
     _name = None
     _dim = None
 
@@ -15,7 +15,7 @@ class BasicGeometry(Basic):
     def dim(self):
         return self._dim
 
-class Domain(BasicGeometry):
+class Domain(BasicDomain):
     """
     Represents an undefined domain.
 
@@ -34,7 +34,7 @@ class Domain(BasicGeometry):
         sstr = printer.doprint
         return '{}'.format(sstr(name))
 
-class Line(BasicGeometry):
+class Line(BasicDomain):
     """
     Represents a 1D line.
 
@@ -56,7 +56,7 @@ class Line(BasicGeometry):
         return '[{xmin}, {xmax}]'.format(xmin=sstr(xmin),
                                          xmax=sstr(xmax))
 
-class Square(BasicGeometry):
+class Square(BasicDomain):
     """
     Represents a 2D square.
 
@@ -97,7 +97,7 @@ class Square(BasicGeometry):
         intervals = ['[{a}, {b}]'.format(a=xmin,b=xmax) for xmin, xmax in zip(xmins, xmaxs)]
         return ' * '.join(i for i in intervals)
 
-class Cube(BasicGeometry):
+class Cube(BasicDomain):
     """
     Represents a 3D cube.
 

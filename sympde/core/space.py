@@ -11,6 +11,7 @@ from sympy.core import Expr
 from sympy.core.containers import Tuple
 
 from .basic import DottedName
+from .geometry import BasicDomain
 
 # ...
 class FunctionSpace(Basic):
@@ -29,6 +30,9 @@ class FunctionSpace(Basic):
         if is_vector or is_block:
             if shape is None:
                 raise ValueError('shape must be provided for a vector/block space')
+
+        if not isinstance(domain, BasicDomain):
+            raise TypeError('> Expecting a BasicDomain object for domain')
 
         obj = Basic.__new__(cls, name, domain)
         if shape is None:

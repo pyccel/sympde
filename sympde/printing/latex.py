@@ -14,35 +14,7 @@ from sympde.core.geometry import Line, Square, Cube
 from sympde.core.derivatives import sort_partial_derivatives
 from sympde.core.derivatives import get_index_derivatives
 from sympde.core.derivatives import get_atom_derivatives
-
-def print_integral(domain, expr, measure=None):
-    measure_str = ''
-    if not(measure is None):
-        measure_str = latex(measure)
-
-    expr_str = latex(expr)
-
-    if isinstance(domain, Line):
-        xmin, xmax = domain.bounds
-
-        xmin = latex(xmin)
-        xmax = latex(xmax)
-
-        int_str = r'\int_{' + xmin + '}^{' + xmax + '}'
-
-    elif isinstance(domain, (Square, Cube)):
-        xmins, xmaxs = domain.bounds
-
-        int_str = ''
-        for xmin, xmax in zip(xmins, xmaxs):
-            xmin = latex(xmin)
-            xmax = latex(xmax)
-
-            int_str += r'\int_{' + xmin + '}^{' + xmax + '}'
-
-    return '{integral} {expr} {measure}'.format(integral=int_str,
-                                                expr=expr_str,
-                                                measure=measure_str)
+from sympde.core.geometry import Domain
 
 class LatexPrinter(LatexPrinterSympy):
 
@@ -103,24 +75,24 @@ class LatexPrinter(LatexPrinterSympy):
     def _print_BilinearForm(self, expr):
         calls = expr.atoms(FormCall)
         if not calls:
-            return print_integral(expr.domain, expr.expr,
-                                  measure=expr.measure)
+            return self._write_integral_expr(expr.domain, expr.expr,
+                                             measure=expr.measure)
         else:
             return self._print(expr.expr)
 
     def _print_LinearForm(self, expr):
         calls = expr.atoms(FormCall)
         if not calls:
-            return print_integral(expr.domain, expr.expr,
-                                  measure=expr.measure)
+            return self._write_integral_expr(expr.domain, expr.expr,
+                                             measure=expr.measure)
         else:
             return self._print(expr.expr)
 
     def _print_Integral(self, expr):
         calls = expr.atoms(FormCall)
         if not calls:
-            return print_integral(expr.domain, expr.expr,
-                                  measure=expr.measure)
+            return self._write_integral_expr(expr.domain, expr.expr,
+                                             measure=expr.measure)
         else:
             return self._print(expr.expr)
 
@@ -148,8 +120,7 @@ class LatexPrinter(LatexPrinterSympy):
             else:
                 code = '{code} {atom}'.format(code=code, atom=self._print(atom))
 
-        txt = print_integral(expr.domain, code,
-                             measure=expr.measure)
+        txt = self._write_integral_expr(expr.domain, code, measure=expr.measure)
         return txt
     # ...
 
@@ -265,6 +236,40 @@ class LatexPrinter(LatexPrinterSympy):
     def _print_Measure(self, expr):
         txt = ''.join(j for j in ['d{}'.format(self._print(i)) for i in expr.args])
         return txt
+
+    def _write_integral_expr(self, domain, expr, measure=None):
+        measure_str = ''
+        if not(measure is None):
+            measure_str = latex(measure)
+
+        expr_str = latex(expr)
+
+        if isinstance(domain, Line):
+            xmin, xmax = domain.bounds
+
+            xmin = latex(xmin)
+            xmax = latex(xmax)
+
+            int_str = r'\int_{' + xmin + '}^{' + xmax + '}'
+
+        elif isinstance(domain, (Square, Cube)):
+            xmins, xmaxs = domain.bounds
+
+            int_str = ''
+            for xmin, xmax in zip(xmins, xmaxs):
+                xmin = latex(xmin)
+                xmax = latex(xmax)
+
+                int_str += r'\int_{' + xmin + '}^{' + xmax + '}'
+
+        elif isinstance(domain, Domain):
+
+            int_str = r'\int_{' + self._print(domain) + '}'
+            measure_str = ''
+
+        return '{integral} {expr} {measure}'.format(integral=int_str,
+                                                    expr=expr_str,
+                                                    measure=measure_str)
 
 def latex(expr, **settings):
 

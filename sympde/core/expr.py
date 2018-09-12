@@ -59,22 +59,6 @@ from .space import Unknown, VectorUnknown
 class BasicForm(Expr):
     _name = None
 
-    def _init_domain(domain, ldim):
-        if not( domain is None ):
-            return domain
-
-        if ldim == 1:
-            return Line()
-
-        elif ldim == 2:
-            return Square()
-
-        elif ldim == 3:
-            return Cube()
-
-        else:
-            raise NotImplementedError('')
-
     def _init_measure(measure, coordinates):
         if not( measure is None ):
             return measure
@@ -124,8 +108,12 @@ class Integral(BasicForm):
     """
     _ldim = None
     _coordinates = None
-    def __new__(cls, expr, coordinates=None, domain=None, measure=None,
-                mapping=None, space=None, name=None):
+    # TODO we must remove space from here
+    def __new__(cls, expr, domain, coordinates=None, measure=None,
+                mapping=None, name=None):
+
+        if not isinstance(domain, BasicDomain):
+            raise TypeError('> Expecting a BasicDomain object for domain')
 
         # ... check that there are no test functions in the expression
         ls = [a for a in expr.free_symbols if isinstance(a, (TestFunction, VectorTestFunction))]
@@ -133,34 +121,29 @@ class Integral(BasicForm):
             raise TypeError('Cannot use test functions in Integral')
         # ...
 
-        if not space:
-            # compute dim from fields if available
-            ls = [a for a in expr.free_symbols if isinstance(a, Field)]
-            if ls:
-                F = ls[0]
-                space = F.space
-                ldim = F.space.ldim
+        # compute dim from fields if available
+        ls = [a for a in expr.free_symbols if isinstance(a, Field)]
+        if ls:
+            F = ls[0]
+            space = F.space
+            ldim = F.space.ldim
 
-                if coordinates is None:
-                    coordinates = F.space.coordinates
-
-            else:
-                if coordinates is None:
-                    raise ValueError('> Coordinates must be provided if the expression has no fields')
-
-                coordinates = [str(i) for i in coordinates]
-                ldim = len(coordinates)
-
-                ID = abs(hash(expr))
-                space = FunctionSpace('space_{}'.format(ID), domain,
-                                      coordinates=coordinates)
-
-                if ldim == 1:
-                    coordinates = coordinates[0]
+            if coordinates is None:
+                coordinates = F.space.coordinates
 
         else:
-            ldim = space.ldim
-            coordinates = space.coordinates
+            if coordinates is None:
+                raise ValueError('> Coordinates must be provided if the expression has no fields')
+
+            coordinates = [str(i) for i in coordinates]
+            ldim = len(coordinates)
+
+            ID = abs(hash(expr))
+            space = FunctionSpace('space_{}'.format(ID), domain,
+                                  coordinates=coordinates)
+
+            if ldim == 1:
+                coordinates = coordinates[0]
 
         domain = BasicForm._init_domain(domain, ldim)
         measure = BasicForm._init_measure(measure, coordinates)
@@ -211,13 +194,13 @@ class LinearForm(BasicForm):
     Examples
 
     """
-    def __new__(cls, arguments, expr, domain=None, measure=None,
-                mapping=None, name=None):
+    def __new__(cls, arguments, expr, measure=None, mapping=None, name=None):
 
         args = _sanitize_form_arguments(arguments, expr, is_linear=True)
         obj = Basic.__new__(cls, args, expr)
 
-        domain = BasicForm._init_domain(domain, obj.ldim)
+        # TODO must check that all domains are the same
+        domain = obj.test_spaces[0].domain
         measure = BasicForm._init_measure(measure, obj.coordinates)
 
         # so that we may pass mapping as False
@@ -270,8 +253,7 @@ class BilinearForm(BasicForm):
     Examples
 
     """
-    def __new__(cls, arguments, expr, domain=None, measure=None,
-                mapping=None, name=None):
+    def __new__(cls, arguments, expr, measure=None, mapping=None, name=None):
 
         # ...
         if not isinstance(arguments, (tuple, list, Tuple)):
@@ -283,7 +265,8 @@ class BilinearForm(BasicForm):
         args = _sanitize_form_arguments(arguments, expr, is_bilinear=True)
         obj = Basic.__new__(cls, args, expr)
 
-        domain = BasicForm._init_domain(domain, obj.ldim)
+        # TODO must check that all domains are the same
+        domain = obj.test_spaces[0].domain
         measure = BasicForm._init_measure(measure, obj.coordinates)
 
         # so that we may pass mapping as False
@@ -1217,8 +1200,7 @@ def subs_bilinear_form(form, newargs):
     test_trial = (test_functions, trial_functions)
     # ...
 
-    return BilinearForm(test_trial, expr,
-                        domain=form.domain, measure=form.measure,
+    return BilinearForm(test_trial, expr, measure=form.measure,
                         mapping=form.mapping, name=form.name)
 
 
@@ -1245,6 +1227,5 @@ def subs_linear_form(form, newargs):
 
     if len(test_functions) == 1: test_functions = test_functions[0]
 
-    return LinearForm(test_functions, expr,
-                      domain=form.domain, measure=form.measure,
+    return LinearForm(test_functions, expr, measure=form.measure,
                       mapping=form.mapping, name=form.name)
