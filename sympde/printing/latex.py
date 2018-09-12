@@ -156,6 +156,9 @@ class LatexPrinter(LatexPrinterSympy):
     def _print_Nil(self, expr):
         return '\ldots'
 
+    def _print_Domain(self, expr):
+        return '{}'.format(self._print(expr.name))
+
     def _print_FormCall(self, expr):
         form = expr.expr
         name = expr.form_name
@@ -213,8 +216,14 @@ class LatexPrinter(LatexPrinterSympy):
             for x in [expr.equation.lhs, expr.equation.rhs]:
                 if not isinstance(x, Nil): eq_names.append(x.name)
 
+        preludes = []
         epilogues = []
-        codes = []
+        body = []
+
+        domain = self._print(expr.domain)
+        dim = self._print(expr.domain.dim)
+        preludes += [domain + ' \subset \mathbb{R}^{' + dim + '}']
+
         for name, form in list(expr.forms.items()):
             if isinstance(form, BilinearForm):
                 tests = form.test_functions
@@ -235,14 +244,20 @@ class LatexPrinter(LatexPrinterSympy):
                 epilogues.append(code)
 
             else:
-                codes.append(code)
+                body.append(code)
 
+        # ...
+        body = preludes + body
+        # ...
+
+        # ...
         if expr.equation:
             epilogues.append(self._print(expr.equation))
 
-        codes += epilogues
+        body += epilogues
+        # ...
 
-        code = '\n\\\\'.join(codes)
+        code = '\n\\\\'.join(body)
         code = '\n' + r'\begin{align*}' + code + '\n' + r'\end{align*}'
 
         return code

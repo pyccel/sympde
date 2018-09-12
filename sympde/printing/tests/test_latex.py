@@ -158,7 +158,7 @@ def test_latex_model_2d_1():
 #    model.preview(outputTexFile='poisson_2d.tex')
 
     from sympde.gallery import Stokes
-    domain = Domain('Omega', dim=2)
+    domain = Domain(r'\Omega', dim=2)
     model = Stokes(domain=domain)
     model.preview(outputTexFile='stokes_2d.tex')
 
