@@ -344,16 +344,20 @@ class VectorUnknown(VectorTestFunction):
 
 class Trace(Basic):
     """
-    Represents the trace over a space function
+    Represents the trace over a boundary and a space function
 
     """
-    def __new__(cls, expr, space):
-        return Basic.__new__(cls, expr, space)
+    def __new__(cls, expr, boundary, space):
+        return Basic.__new__(cls, expr, boundary, space)
 
     @property
     def expr(self):
         return self._args[0]
 
     @property
-    def space(self):
+    def boundary(self):
         return self._args[1]
+
+    @property
+    def space(self):
+        return self._args[2]

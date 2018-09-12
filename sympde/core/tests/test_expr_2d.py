@@ -159,10 +159,11 @@ def test_boundary_2d_3():
 
     B1 = Boundary(r'\Gamma_1', domain)
     B2 = Boundary(r'\Gamma_2', domain)
+    B3 = Boundary(r'\Gamma_3', domain)
 
     nn = NormalVector(B1)
     tt = TangentVector(B2)
-    trace = lambda x: Trace(x, V1)
+    trace = lambda x: Trace(x, B3, V1)
 
     # ...
     expr = dot(grad(u1), grad(v1)) + v1*dot(grad(u1), nn)
@@ -182,6 +183,8 @@ def test_boundary_2d_3():
 
     # ...
     expr = dot(grad(u1), grad(v1)) + v1*trace(u1)
+    a1 = BilinearForm((v1, u1), expr, name='a1')
+    print(a1)
     print('')
     # ...
 
