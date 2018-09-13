@@ -804,10 +804,13 @@ def atomize(expr, dim=None):
             normal_vector_name = 'n'
             n = NormalVector(normal_vector_name)
             M = atomize(expr.expr)
-            e = 0
-            for i in range(0, dim):
-                e += M[i] * n[i]
-            return e
+            if dim == 1:
+                return M
+            else:
+                e = 0
+                for i in range(0, dim):
+                    e += M[i] * n[i]
+                return e
 
         else:
             raise ValueError('> Only traces of order 0 and 1 are available')
