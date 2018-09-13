@@ -163,7 +163,7 @@ def test_boundary_2d_3():
 
     nn = NormalVector(B1)
     tt = TangentVector(B2)
-    trace = lambda x: Trace(x, B3, V1)
+    trace = lambda x: Trace(x, B3)
 
     # ...
     expr = dot(grad(u1), grad(v1)) + v1*dot(grad(u1), nn)

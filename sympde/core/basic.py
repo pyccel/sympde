@@ -64,33 +64,6 @@ class CalculusFunction(Function):
     functions when manipulating our expressions"""
     pass
 
-class DottedName(Basic):
-    """
-    Represents a dotted variable.
-
-    Examples
-
-    >>> from pyccel.ast.core import DottedName
-    >>> DottedName('matrix', 'n_rows')
-    matrix.n_rows
-    >>> DottedName('pyccel', 'stdlib', 'parallel')
-    pyccel.stdlib.parallel
-    """
-    def __new__(cls, *args):
-        return Basic.__new__(cls, *args)
-
-    @property
-    def name(self):
-        return self._args
-
-    def __str__(self):
-        return '.'.join(str(n) for n in self.name)
-
-    def _sympystr(self, printer):
-        sstr = printer.doprint
-        return '.'.join(sstr(n) for n in self.name)
-
-
 # ...
 class BasicMapping(IndexedBase):
     """

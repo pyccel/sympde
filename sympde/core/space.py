@@ -10,7 +10,7 @@ from sympy.core import Symbol
 from sympy.core import Expr
 from sympy.core.containers import Tuple
 
-from .basic import DottedName
+from .basic import Field
 from .geometry import BasicDomain
 
 # ...
@@ -347,8 +347,14 @@ class Trace(Basic):
     Represents the trace over a boundary and a space function
 
     """
-    def __new__(cls, expr, boundary, space):
-        return Basic.__new__(cls, expr, boundary, space)
+    def __new__(cls, expr, boundary):
+        if not isinstance(expr, (TestFunction, VectorTestFunction, Field)):
+            raise TypeError('> Wrong type for expr')
+
+        if not(expr.space.domain is boundary.domain):
+            raise ValueError('> Space and boundary domains must be the same')
+
+        return Basic.__new__(cls, expr, boundary)
 
     @property
     def expr(self):
@@ -357,7 +363,3 @@ class Trace(Basic):
     @property
     def boundary(self):
         return self._args[1]
-
-    @property
-    def space(self):
-        return self._args[2]
