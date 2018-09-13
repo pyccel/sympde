@@ -8,6 +8,7 @@
 #      - add is_symmetric property for BilinearForm
 
 from numpy import zeros
+from itertools import groupby
 
 from sympy.core import Basic
 from sympy.core import Symbol
@@ -1044,10 +1045,22 @@ def evaluate(a, verbose=False):
             print('> calls = ', calls)
 
     if bnd_calls:
-        a_bnd = _extract_linear_combination(a, bnd_calls)
         if verbose:
             print('> bnd calls = ', bnd_calls)
-            print('a_bnd = ', a_bnd)
+
+        groups = []
+        keyfunc = lambda call: call.expr.boundary.name
+        bnd_calls = sorted(bnd_calls, key=keyfunc)
+        for k, g in groupby(bnd_calls, keyfunc):
+            a_bnd = _extract_linear_combination(a, list(g))
+            if verbose:
+                print('> bnd calls = ', bnd_calls)
+                print('a_bnd = ', a_bnd)
+
+            groups.append(a_bnd)
+
+        print('> groups = ', groups)
+
 
     a = _extract_linear_combination(a, calls)
     if verbose:

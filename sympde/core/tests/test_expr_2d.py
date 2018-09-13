@@ -194,9 +194,12 @@ def test_boundary_2d_3():
 
     # ...
     expr = v1*trace_0(u1, B1)
-    a1 = BilinearForm((v1, u1), expr, name='a1')
+    a0 = BilinearForm((v1, u1), expr, name='a0')
 
     expr = v1*trace_1(grad(u1), B1)
+    a1 = BilinearForm((v1, u1), expr, name='a1')
+
+    expr = v1*trace_1(grad(u1), B2)
     a2 = BilinearForm((v1, u1), expr, name='a2')
 
     expr = dot(grad(u1), grad(v1))
@@ -205,7 +208,7 @@ def test_boundary_2d_3():
     expr = u1*v1
     a4 = BilinearForm((v1, u1), expr, name='a4')
 
-    expr = a1(v2, u2) + alpha * a2(v2, u2) + a3(v2, u2) + alpha*a4(v2, u2)
+    expr = a0(v2, u2) + a1(v2, u2) + alpha * a2(v2, u2) + a3(v2, u2) + alpha*a4(v2, u2)
 #    a = BilinearForm((v2, u2), expr, name='a')
     print(expr)
     print(evaluate(expr, verbose=True))
