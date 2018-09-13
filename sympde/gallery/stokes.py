@@ -24,12 +24,8 @@ class Stokes(Model):
     Examples
 
     """
-    def __new__(cls, **kwargs):
+    def __new__(cls, domain, **kwargs):
         # ...
-        domain = kwargs.pop('domain', None)
-        if domain is None:
-            raise ValueError('> Expecting a domain entry')
-
         dim = domain.dim
         if not(dim in [2, 3]):
             raise ValueError('> only 2d and 3d models are possible')
@@ -52,7 +48,7 @@ class Stokes(Model):
         forms = [a, b, A]
         equation = Equation(A((v,u),(q,p)), None)
 
-        obj = Model.__new__(cls, forms=forms, equation=equation, **kwargs)
+        obj = Model.__new__(cls, domain, forms=forms, equation=equation, **kwargs)
 
         obj._spaces = [V, W]
         obj._domain = domain

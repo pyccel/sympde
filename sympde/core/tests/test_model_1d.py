@@ -6,6 +6,7 @@ from sympde.core import grad, dot, inner, cross, rot, curl, div
 from sympde.core import FunctionSpace
 from sympde.core import TestFunction
 from sympde.core import VectorTestFunction
+from sympde.core import Domain
 
 DIM = 1
 
@@ -13,7 +14,9 @@ DIM = 1
 def test_model_1d_1():
     print('============ test_model_1d_1 ==============')
 
-    V = FunctionSpace('V', ldim=DIM)
+    domain = Domain('\Omega', dim=DIM)
+
+    V = FunctionSpace('V', domain)
     x = V.coordinates
 
     v = TestFunction(V, name='v')
@@ -27,7 +30,7 @@ def test_model_1d_1():
     forms = [a, b]
     equation = Equation(a(v,u), b(v))
 
-    model = Model(forms=forms, equation=equation)
+    model = Model(domain, forms=forms, equation=equation)
     model.preview(outputTexFile='test_model_1d_1.tex')
 # ...
 

@@ -23,12 +23,8 @@ class Poisson(Model):
     Examples
 
     """
-    def __new__(cls, **kwargs):
+    def __new__(cls, domain, **kwargs):
         # ...
-        domain = kwargs.pop('domain', None)
-        if domain is None:
-            raise ValueError('> Expecting a domain entry')
-
         dim = domain.dim
         if not(dim in [1, 2, 3]):
             raise ValueError('> only 1d, 2d and 3d models are possible')
@@ -48,7 +44,7 @@ class Poisson(Model):
         forms = [a]
         equation = Equation(a(v,u), None)
 
-        obj = Model.__new__(cls, forms=forms, equation=equation, **kwargs)
+        obj = Model.__new__(cls, domain, forms=forms, equation=equation, **kwargs)
 
         obj._space = V
         obj._domain = domain

@@ -8,7 +8,7 @@ def test_poisson_1d():
     print('============ test_poisson_1d ==============')
 
     domain = Domain(r'\Omega', dim=1)
-    model = Poisson(domain=domain)
+    model = Poisson(domain)
 
     assert(str(model.space) == 'V')
 
@@ -20,7 +20,7 @@ def test_poisson_2d():
     print('============ test_poisson_2d ==============')
 
     domain = Domain(r'\Omega', dim=2)
-    model = Poisson(domain=domain)
+    model = Poisson(domain)
 
     assert(str(model.space) == 'V')
 
@@ -32,7 +32,7 @@ def test_poisson_3d():
     print('============ test_poisson_3d ==============')
 
     domain = Domain(r'\Omega', dim=3)
-    model = Poisson(domain=domain)
+    model = Poisson(domain)
 
     assert(str(model.space) == 'V')
 

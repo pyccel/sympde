@@ -25,12 +25,8 @@ class Wave_1d(Model):
     Examples
 
     """
-    def __new__(cls, **kwargs):
+    def __new__(cls, domain, **kwargs):
         # ...
-        domain = kwargs.pop('domain', None)
-        if domain is None:
-            raise ValueError('> Expecting a domain entry')
-
         dim = domain.dim
         if not(dim in [1]):
             raise ValueError('> only 1d is possible')
@@ -63,7 +59,7 @@ class Wave_1d(Model):
         forms = [a, b, A]
         equation = Equation(A((v,w), (u,f)), None)
 
-        obj = Model.__new__(cls, forms=forms, equation=equation, **kwargs)
+        obj = Model.__new__(cls, domain, forms=forms, equation=equation, **kwargs)
 
         obj._space = V
         obj._domain = domain
@@ -81,12 +77,7 @@ class Wave(Model):
     Examples
 
     """
-    def __new__(cls, **kwargs):
-        try:
-            domain = kwargs['domain']
-        except:
-            raise ValueError('> domain must be provided')
-
+    def __new__(cls, domain, **kwargs):
         dim = domain.dim
         construct = eval('Wave_{}d'.format(dim))
-        return construct(**kwargs)
+        return construct(domain, **kwargs)

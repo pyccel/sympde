@@ -63,7 +63,7 @@ class Model(Basic):
     _forms = None
     _equation = None
 
-    def __new__(cls, **kwargs):
+    def __new__(cls, domain, **kwargs):
 
         obj = Basic.__new__(cls)
 
@@ -100,6 +100,7 @@ class Model(Basic):
 
         # ...
         obj._name = name
+        obj._domain = domain
         obj._forms = d_forms
         obj._equation = equation
         # ...
