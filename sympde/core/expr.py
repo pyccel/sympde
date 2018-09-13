@@ -29,7 +29,7 @@ from .measure import CanonicalMeasure
 from .measure import CartesianMeasure
 from .measure import Measure
 from .geometry import BasicDomain, Domain, Line
-from .geometry import BoundaryVector, NormalVector, TangentVector
+from .geometry import BoundaryVector, NormalVector, TangentVector, Boundary
 from .derivatives import _partial_derivatives
 from .derivatives import partial_derivative_as_symbol
 from .derivatives import sort_partial_derivatives
@@ -70,21 +70,26 @@ def _initialize_measure(measure, coordinates):
         raise NotImplementedError('')
 
 def _initialize_boundary(expr):
+
     traces = expr.atoms(Trace)
     boundaries = [trace.boundary for trace in traces]
     boundaries = list(set(boundaries)) # remove redanduncy
 
+    boundary = None
     if len(boundaries) == 0:
         boundary = None
 
     elif len(boundaries) == 1:
         boundary = boundaries[0]
 
-    elif len(boundaries) > 1:
-        raise ValueError('> BilinearForm can not be defined on different boundaries')
+    elif (len(boundaries) > 1):
+        if not is_sum_of_form_calls(expr):
+            raise ValueError('> BilinearForm can not be defined on different boundaries')
+
+        boundary = True
 
     # ...
-    if boundary:
+    if isinstance(boundary, Boundary):
         # ...
         if isinstance(expr, Add):
             args = expr.args
@@ -639,7 +644,8 @@ def is_mul_of_form_call(expr):
     if not any_are_calls:
         return False
 
-    if len(any_are_calls) > 1:
+    if (isinstance(any_are_calls, (list, tuple, Tuple)) and
+        (len(any_are_calls) > 1)):
         raise TypeError('> Cannot multiply calls of Bilinear/Linear forms')
 
     return True
@@ -1033,15 +1039,20 @@ def _evaluate_bnd(a, bnd_calls, verbose=False):
     if verbose:
         print('> bnd calls = ', bnd_calls)
 
+    a_expr = a
+    if isinstance(a, BasicForm) and is_sum_of_form_calls(a.expr):
+        a_expr = a.expr
+
     # ...
     boundaries = []
     groups = []
     keyfunc = lambda call: call.expr.boundary.name
     bnd_calls = sorted(bnd_calls, key=keyfunc)
     for k, g in groupby(bnd_calls, keyfunc):
-        a_bnd = _extract_linear_combination(a, list(g))
+        list_g = list(g)
+        a_bnd = _extract_linear_combination(a_expr, list_g)
         groups.append(a_bnd)
-        bnd = bnd_calls[0].expr.boundary
+        bnd = list_g[0].expr.boundary
         boundaries.append(bnd)
 
     if verbose:
@@ -1107,9 +1118,14 @@ def evaluate(a, verbose=False):
         #      - shall we need to add a groupby here too?
         domain = calls[0].expr.domain
 
-        a = _extract_linear_combination(a, calls)
+        a_expr = a
+        if (isinstance(a, BasicForm) and is_sum_of_form_calls(a.expr) and
+            bnd_calls):
+            a_expr = a.expr
+
+        a = _extract_linear_combination(a_expr, calls)
         if verbose:
-            print('a = ', a)
+            print('> a = ', a)
 
         # ... replace a FormCall by its expression
         for call in calls:

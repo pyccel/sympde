@@ -209,21 +209,30 @@ def test_boundary_2d_3():
     a4 = BilinearForm((v1, u1), expr, name='a4')
 
     expr = a0(v2, u2) + a1(v2, u2) + alpha * a2(v2, u2) + a3(v2, u2) + alpha*a4(v2, u2)
-#    a = BilinearForm((v2, u2), expr, name='a')
-    print(expr)
+    a = BilinearForm((v2, u2), expr, name='a')
+#    print(expr)
     print(evaluate(expr, verbose=True))
     print('')
+
+    print(evaluate(a, verbose=True))
+    print('')
+
+
+#    expr = a(v2, u2) + a1(v2, u2)
+#    b = BilinearForm((v2, u2), expr, name='b')
+#    print(b)
+#    print(evaluate(b, verbose=True))
     # ...
 
-#    # ...
-#    g = Tuple(x**2, y**2)
-#    expr = v1*trace_1(g, B1)
-#    l1 = LinearForm(v1, expr, name='l1')
-#    print(l1)
-##    print(atomize(l1))
-##    print(evaluate(l1))
-#    print('')
-#    # ...
+    # ...
+    g = Tuple(x**2, y**2)
+    expr = v1*trace_1(g, B1)
+    l1 = LinearForm(v1, expr, name='l1')
+    print(l1)
+#    print(atomize(l1))
+#    print(evaluate(l1))
+    print('')
+    # ...
 
 # ...
 def test_calls_2d_3():
@@ -789,5 +798,5 @@ if __name__ == '__main__':
 
 
 
-#    test_calls_2d_3()
+    test_calls_2d_3()
     test_boundary_2d_3()
