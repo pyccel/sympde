@@ -1135,41 +1135,31 @@ def evaluate(a, verbose=False):
         expr_domain = _evaluate_core(a, verbose=verbose)
         expr_domain = [DomainExpression(domain, expr_domain)]
 
+    elif isinstance(a, BasicForm):
+        domain = a.domain
+        expr_domain = _evaluate_core(a, verbose=verbose)
+        expr_domain = [DomainExpression(domain, expr_domain)]
+
     return expr_bnd + expr_domain
 
 
 class KernelExpression(Basic):
-    pass
+    def __new__(cls, target, expr):
+        return Basic.__new__(cls, target, expr)
+
+    @property
+    def target(self):
+        return self._args[0]
+
+    @property
+    def expr(self):
+        return self._args[1]
 
 class DomainExpression(KernelExpression):
-
-    def __new__(cls, domain, expr):
-        return Basic.__new__(cls, domain, expr)
-
-    @property
-    def domain(self):
-        return self._args[0]
-
-    @property
-    def expr(self):
-        return self._args[1]
+    pass
 
 class BoundaryExpression(KernelExpression):
-
-    def __new__(cls, boundary, expr):
-        return Basic.__new__(cls, boundary, expr)
-
-    @property
-    def boundary(self):
-        return self._args[0]
-
-    @property
-    def expr(self):
-        return self._args[1]
-
-    @property
-    def domain(self):
-        return self.boundary.domain
+    pass
 
 
 # TODO - get dim from atoms

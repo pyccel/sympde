@@ -267,6 +267,11 @@ def test_calls_2d_3():
 
     # ...
     a1 = BilinearForm((v1, u1), u1*v1, name='a1')
+    print(a1)
+    print(atomize(a1))
+    print(evaluate(a1))
+    print('')
+    import sys; sys.exit(0)
 
     expr = a1(v2, u2)
     a = BilinearForm((v2, u2), expr, name='a')
@@ -799,4 +804,4 @@ if __name__ == '__main__':
 
 
     test_calls_2d_3()
-    test_boundary_2d_3()
+#    test_boundary_2d_3()
