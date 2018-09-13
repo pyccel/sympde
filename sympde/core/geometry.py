@@ -5,12 +5,7 @@ from sympy.core.containers import Tuple
 from sympy.tensor import IndexedBase
 
 class BasicDomain(Basic):
-    _name = None
     _dim = None
-
-    @property
-    def name(self):
-        return self._name
 
     @property
     def dim(self):
@@ -28,10 +23,13 @@ class Domain(BasicDomain):
 
     """
     def __new__(cls, name, dim):
-        obj = Basic.__new__(cls)
-        obj._name = name
+        obj = Basic.__new__(cls, name)
         obj._dim = dim
         return obj
+
+    @property
+    def name(self):
+        return self._args[0]
 
 class Boundary(BasicDomain):
     """
@@ -41,10 +39,13 @@ class Boundary(BasicDomain):
 
     """
     def __new__(cls, name, domain):
-        obj = Basic.__new__(cls)
-        obj._name = name
+        obj = Basic.__new__(cls, name)
         obj._domain = domain
         return obj
+
+    @property
+    def name(self):
+        return self._args[0]
 
     @property
     def domain(self):
@@ -89,13 +90,16 @@ class Line(BasicDomain):
 
     """
     _dim = 1
-    _name = 'Line'
     def __new__(cls, xmin=0, xmax=1):
         return Basic.__new__(cls, Tuple(xmin, xmax))
 
     @property
     def bounds(self):
         return self._args[0]
+
+    @property
+    def name(self):
+        return 'Line'
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -111,8 +115,6 @@ class Square(BasicDomain):
 
     """
     _dim = 2
-    _name = 'Square'
-
     def __new__(cls, xmin=[0,0], xmax=[1,1]):
         if not isinstance(xmin, (list, tuple, Tuple)):
             raise TypeError('> Expecting a list, tuple or Tuple')
@@ -135,6 +137,10 @@ class Square(BasicDomain):
     def bounds(self):
         return self._args[0]
 
+    @property
+    def name(self):
+        return 'Square'
+
     def _sympystr(self, printer):
         sstr = printer.doprint
         xmin, xmax = self.bounds
@@ -152,7 +158,6 @@ class Cube(BasicDomain):
 
     """
     _dim = 3
-    _name = 'Cube'
     def __new__(cls, xmin=[0,0,0], xmax=[1,1,1]):
         if not isinstance(xmin, (list, tuple, Tuple)):
             raise TypeError('> Expecting a list, tuple or Tuple')
@@ -174,6 +179,10 @@ class Cube(BasicDomain):
     @property
     def bounds(self):
         return self._args[0]
+
+    @property
+    def name(self):
+        return 'Cube'
 
     def _sympystr(self, printer):
         sstr = printer.doprint

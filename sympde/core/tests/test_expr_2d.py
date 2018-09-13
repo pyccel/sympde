@@ -30,7 +30,7 @@ from sympde.core import Mass, Stiffness, Advection, AdvectionT
 from sympde.core import Unknown
 from sympde.core import FormCall
 from sympde.core import Domain, Boundary, NormalVector, TangentVector
-from sympde.core import Trace
+from sympde.core import Trace, trace_0, trace_1
 
 DIM = 2
 domain = Domain('Omega', dim=DIM)
@@ -161,30 +161,43 @@ def test_boundary_2d_3():
     B2 = Boundary(r'\Gamma_2', domain)
     B3 = Boundary(r'\Gamma_3', domain)
 
-    nn = NormalVector(B1)
-    tt = TangentVector(B2)
-    trace = lambda x: Trace(x, B3)
+#    # ...
+#    # these two expressions are returning, as expected, an error.
+#    # TODO add assert on exception type
+##    expr = v1*trace_0(u1, B3) + v1*trace_1(grad(u1), B3) + u1*trace_0(v1, B2)
+##    expr = dot(grad(u1), grad(v1)) + v1*trace_1(grad(u1), B3)
+#
+#    expr = v1*trace_0(u1, B1) + v1*trace_1(grad(u1), B1)
+#
+#    a1 = BilinearForm((v1, u1), expr, name='a1')
+#    print(a1)
+#    print('')
+#    # ...
+
+#    # ...
+#    expr = v1*trace_0(u1, B1) + v1*trace_1(grad(u1), B1)
+#    a1 = BilinearForm((v1, u1), expr, name='a1')
+#
+#    expr = u1*trace_1(grad(v1), B2)
+#    a2 = BilinearForm((v1, u1), expr, name='a2')
+#
+#    expr = a1(v2, u2) + a2(v2, u2)
+#    # as expected, we can define the form call, but we cannot create a Bilinear
+#    # form out of it.
+#    # TODO add assert on exception type
+##    a = BilinearForm((v2, u2), expr, name='a')
+#
+#    print(expr)
+#    print('')
+#    # ...
 
     # ...
-    expr = dot(grad(u1), grad(v1)) + v1*dot(grad(u1), nn)
-    a1 = BilinearForm((v1, u1), expr, name='a1')
-    print(a1)
-    print(atomize(a1))
-    print(evaluate(a1))
-    print('')
-
-    expr = a1(v2, u2)
-    a = BilinearForm((v2, u2), expr, name='a')
-    print(a)
-    print(atomize(a))
-    print(evaluate(a))
-    print('')
-    # ...
-
-    # ...
-    expr = dot(grad(u1), grad(v1)) + v1*trace(u1)
-    a1 = BilinearForm((v1, u1), expr, name='a1')
-    print(a1)
+    g = Tuple(x**2, y**2)
+    expr = v1*trace_1(g, B1)
+    l1 = LinearForm(v1, expr, name='l1')
+    print(l1)
+#    print(atomize(l1))
+#    print(evaluate(l1))
     print('')
     # ...
 
@@ -752,5 +765,5 @@ if __name__ == '__main__':
 
 
 
-    test_calls_2d_3()
+#    test_calls_2d_3()
     test_boundary_2d_3()

@@ -55,20 +55,47 @@ from .space import TestFunction
 from .space import VectorTestFunction
 from .space import IndexedTestTrial
 from .space import Unknown, VectorUnknown
+from .space import Trace
+
+def _initialize_measure(measure, coordinates):
+    if not( measure is None ):
+        return measure
+
+    if not( coordinates is None ):
+        return Measure(coordinates)
+
+    else:
+        raise NotImplementedError('')
+
+def _initialize_boundary(expr):
+    traces = expr.atoms(Trace)
+    boundaries = [trace.boundary for trace in traces]
+    boundaries = list(set(boundaries)) # remove redanduncy
+
+    if len(boundaries) == 0:
+        boundary = None
+
+    elif len(boundaries) == 1:
+        boundary = boundaries[0]
+
+    elif len(boundaries) > 1:
+        raise ValueError('> BilinearForm can not be defined on different boundaries')
+
+    # ...
+    if isinstance(expr, Add):
+        args = expr.args
+        args = [a for a in args if not a.atoms(Trace)]
+        if args:
+            msg = '> Only boundary terms, using traces, are allowed'
+            raise TypeError(msg)
+    # ...
+
+    return boundary
+
 
 class BasicForm(Expr):
     _name = None
-
-    def _init_measure(measure, coordinates):
-        if not( measure is None ):
-            return measure
-
-        if not( coordinates is None ):
-            return Measure(coordinates)
-
-        else:
-            raise NotImplementedError('')
-
+    _boundary = None
 
     @property
     def fields(self):
@@ -85,6 +112,10 @@ class BasicForm(Expr):
     @property
     def domain(self):
         return self._domain
+
+    @property
+    def boundary(self):
+        return self._boundary
 
     @property
     def measure(self):
@@ -145,7 +176,10 @@ class Integral(BasicForm):
             if ldim == 1:
                 coordinates = coordinates[0]
 
-        measure = BasicForm._init_measure(measure, coordinates)
+        measure = _initialize_measure(measure, coordinates)
+
+        # get boundary terms
+        boundary = _initialize_boundary(expr)
 
         # so that we may pass mapping as False
         if not mapping: mapping=None
@@ -153,6 +187,7 @@ class Integral(BasicForm):
         obj = Basic.__new__(cls, expr)
         obj._ldim = ldim
         obj._coordinates = coordinates
+        obj._boundary = boundary
         obj._domain = domain
         obj._measure = measure
         obj._mapping = mapping
@@ -200,12 +235,16 @@ class LinearForm(BasicForm):
 
         # TODO must check that all domains are the same
         domain = obj.test_spaces[0].domain
-        measure = BasicForm._init_measure(measure, obj.coordinates)
+        measure = _initialize_measure(measure, obj.coordinates)
+
+        # get boundary terms
+        boundary = _initialize_boundary(expr)
 
         # so that we may pass mapping as False
         if not mapping: mapping=None
 
         obj._domain = domain
+        obj._boundary = boundary
         obj._measure = measure
         obj._mapping = mapping
         obj._name = name
@@ -266,12 +305,16 @@ class BilinearForm(BasicForm):
 
         # TODO must check that all domains are the same
         domain = obj.test_spaces[0].domain
-        measure = BasicForm._init_measure(measure, obj.coordinates)
+        measure = _initialize_measure(measure, obj.coordinates)
+
+        # get boundary terms
+        boundary = _initialize_boundary(expr)
 
         # so that we may pass mapping as False
         if not mapping: mapping=None
 
         obj._domain = domain
+        obj._boundary = boundary
         obj._measure = measure
         obj._mapping = mapping
         obj._name = name

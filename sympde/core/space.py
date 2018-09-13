@@ -347,14 +347,15 @@ class Trace(Basic):
     Represents the trace over a boundary and a space function
 
     """
-    def __new__(cls, expr, boundary):
-        if not isinstance(expr, (TestFunction, VectorTestFunction, Field)):
-            raise TypeError('> Wrong type for expr')
+    def __new__(cls, expr, boundary, order=0):
+#        # TODO these tests are not working for the moment for Grad(u)
+#        if not expr.atoms((TestFunction, VectorTestFunction, Field)):
+#            raise TypeError('> Wrong type for expr')
+#
+#        if not(expr.space.domain is boundary.domain):
+#            raise ValueError('> Space and boundary domains must be the same')
 
-        if not(expr.space.domain is boundary.domain):
-            raise ValueError('> Space and boundary domains must be the same')
-
-        return Basic.__new__(cls, expr, boundary)
+        return Basic.__new__(cls, expr, boundary, order)
 
     @property
     def expr(self):
@@ -363,3 +364,12 @@ class Trace(Basic):
     @property
     def boundary(self):
         return self._args[1]
+
+    @property
+    def order(self):
+        return self._args[2]
+
+# ... user friendly functions
+trace_0 = lambda x, B: Trace(x, B, order=0)
+trace_1 = lambda x, B: Trace(x, B, order=1)
+
