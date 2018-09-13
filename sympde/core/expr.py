@@ -91,7 +91,7 @@ def _initialize_boundary(expr):
     # ...
     if isinstance(boundary, Boundary):
         # ...
-        if isinstance(expr, Add):
+        if isinstance(expr, Add) and not is_sum_of_form_calls(expr):
             args = expr.args
             args = [a for a in args if not a.atoms(Trace)]
             if args:

@@ -162,6 +162,21 @@ def test_boundary_2d_3():
     B3 = Boundary(r'\Gamma_3', domain)
 
     # ...
+    expr = dot(grad(v1), grad(u1))
+    a_0 = BilinearForm((v1,u1), expr, name='a_0')
+
+    expr = v1*trace_0(u1, B1)
+    a_bnd = BilinearForm((v1, u1), expr, name='a_bnd')
+
+    expr = a_0(v1,u1) + a_bnd(v1,u1)
+    a = BilinearForm((v1,u1), expr, name='a')
+    print(a)
+    print(evaluate(a, verbose=True))
+    print('')
+#    import sys; sys.exit(0)
+    # ...
+
+    # ...
     # these two expressions are returning, as expected, an error.
     # TODO add assert on exception type
 #    expr = v1*trace_0(u1, B3) + v1*trace_1(grad(u1), B3) + u1*trace_0(v1, B2)
@@ -271,7 +286,6 @@ def test_calls_2d_3():
     print(atomize(a1))
     print(evaluate(a1))
     print('')
-    import sys; sys.exit(0)
 
     expr = a1(v2, u2)
     a = BilinearForm((v2, u2), expr, name='a')
@@ -804,4 +818,4 @@ if __name__ == '__main__':
 
 
     test_calls_2d_3()
-#    test_boundary_2d_3()
+    test_boundary_2d_3()
