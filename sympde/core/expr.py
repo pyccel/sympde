@@ -803,14 +803,8 @@ def atomize(expr, dim=None):
     return expr
 # ...
 
-# ... TODO compute basis if not given
-def evaluate(a, basis=None, verbose=False, variables=None, M=None):
-
-    # ... replace a FormCall by its expression
-    calls = a.atoms(FormCall)
-    for call in calls:
-        a = a.subs(call, call.expr)
-    # ...
+# ...
+def _evaluate_core(a, verbose=False, variables=None, M=None):
 
     # ...
     if not isinstance(a, (BasicForm, Add, Mul)):
@@ -876,8 +870,8 @@ def evaluate(a, basis=None, verbose=False, variables=None, M=None):
 
     # ...
     if isinstance(a, Add):
-        args = [evaluate(i, basis=basis, verbose=verbose, variables=variables,
-                         M=M) for i in a.args]
+        args = [_evaluate_core(i, verbose=verbose, variables=variables, M=M)
+                for i in a.args]
 
         return Add(*args)
 
@@ -893,8 +887,8 @@ def evaluate(a, basis=None, verbose=False, variables=None, M=None):
 
         j = S.One
         if vectors:
-            args = [evaluate(i, basis=basis, verbose=verbose,
-                             variables=variables, M=M) for i in vectors]
+            args = [_evaluate_core(i, verbose=verbose, variables=variables, M=M)
+                    for i in vectors]
             j = Mul(*args)
 
         return Mul(i, j)
@@ -913,7 +907,7 @@ def evaluate(a, basis=None, verbose=False, variables=None, M=None):
         print('> atomized   >>> {0}'.format(expr))
 
     # ...
-    def _evaluate_LinearForm(expr, M):
+    def __evaluate_core_LinearForm(expr, M):
         # ...
         def treat_form(arg, M):
             atoms  = list(arg.atoms(TestFunction))
@@ -948,7 +942,7 @@ def evaluate(a, basis=None, verbose=False, variables=None, M=None):
     # ...
 
     # ...
-    def _evaluate_BilinearForm(expr, M):
+    def __evaluate_core_BilinearForm(expr, M):
 
         # ...
         def treat_form(arg, M):
@@ -989,14 +983,14 @@ def evaluate(a, basis=None, verbose=False, variables=None, M=None):
 
     # ...
     if isinstance(a, BilinearForm):
-        M = _evaluate_BilinearForm(expr, M)
+        M = __evaluate_core_BilinearForm(expr, M)
 
         # returning scalars when possibl
         if (n_rows == 1) and (n_cols == 1):
             return M[0, 0]
 
     elif isinstance(a, LinearForm):
-        M = _evaluate_LinearForm(expr, M)
+        M = __evaluate_core_LinearForm(expr, M)
 
         # returning scalars when possibl
         if (n_rows == 1):
@@ -1008,6 +1002,57 @@ def evaluate(a, basis=None, verbose=False, variables=None, M=None):
 
     return M
 # ...
+
+def _extract_linear_combination(expr, ls):
+    """returns a new expression for terms that are in ls only."""
+    # something like a1 + a2 or a1 + alpha * a2
+    if isinstance(expr, Add):
+        args = []
+        for arg in expr.args:
+            # somthing like alpha*a4
+            if isinstance(arg, Mul):
+                m_args = [i for i in arg.args if i in ls]
+                if m_args:
+                    args += [arg]
+
+            elif arg in ls:
+                args += [arg]
+
+        expr = Add(*args)
+    return expr
+
+def evaluate(a, verbose=False):
+    calls = a.atoms(FormCall)
+
+    bnd_calls = []
+    if calls:
+        bnd_calls = [a for a in calls if a.expr.boundary]
+        calls = [a for a in calls if not(a in bnd_calls)]
+
+        if verbose:
+            print('> calls = ', calls)
+
+    if bnd_calls:
+        a_bnd = _extract_linear_combination(a, bnd_calls)
+        if verbose:
+            print('> bnd calls = ', bnd_calls)
+            print('a_bnd = ', a_bnd)
+
+    a = _extract_linear_combination(a, calls)
+    if verbose:
+        print('a = ', a)
+
+    # ... replace a FormCall by its expression
+    for call in calls:
+        a = a.subs(call, call.expr)
+    # ...
+
+#    import sys; sys.exit(0)
+
+    M = _evaluate_core(a, verbose=verbose)
+
+    return M
+
 
 # TODO - get dim from atoms
 #      - check coefficinets/functions
