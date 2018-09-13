@@ -57,6 +57,8 @@ from .space import IndexedTestTrial
 from .space import Unknown, VectorUnknown
 from .space import Trace
 
+from .geometry import BoundaryVector
+
 def _initialize_measure(measure, coordinates):
     if not( measure is None ):
         return measure
@@ -82,12 +84,21 @@ def _initialize_boundary(expr):
         raise ValueError('> BilinearForm can not be defined on different boundaries')
 
     # ...
-    if boundary and isinstance(expr, Add):
-        args = expr.args
-        args = [a for a in args if not a.atoms(Trace)]
-        if args:
-            msg = '> Only boundary terms, using traces, are allowed'
-            raise TypeError(msg)
+    if boundary:
+        # ...
+        if isinstance(expr, Add):
+            args = expr.args
+            args = [a for a in args if not a.atoms(Trace)]
+            if args:
+                msg = '> Only boundary terms, using traces, are allowed'
+                raise TypeError(msg)
+        # ...
+
+        # ...
+        if expr.atoms(BoundaryVector):
+            raise TypeError('> BoundaryVector are not allowed. Use Trace instead')
+
+        # ...
     # ...
 
     return boundary
