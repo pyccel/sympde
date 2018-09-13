@@ -82,7 +82,7 @@ def _initialize_boundary(expr):
         raise ValueError('> BilinearForm can not be defined on different boundaries')
 
     # ...
-    if isinstance(expr, Add):
+    if boundary and isinstance(expr, Add):
         args = expr.args
         args = [a for a in args if not a.atoms(Trace)]
         if args:
