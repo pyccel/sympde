@@ -29,6 +29,7 @@ from .measure import CanonicalMeasure
 from .measure import CartesianMeasure
 from .measure import Measure
 from .geometry import BasicDomain, Domain, Line
+from .geometry import BoundaryVector, NormalVector, TangentVector
 from .derivatives import _partial_derivatives
 from .derivatives import partial_derivative_as_symbol
 from .derivatives import sort_partial_derivatives
@@ -57,8 +58,6 @@ from .space import VectorTestFunction
 from .space import IndexedTestTrial
 from .space import Unknown, VectorUnknown
 from .space import Trace
-
-from .geometry import BoundaryVector
 
 def _initialize_measure(measure, coordinates):
     if not( measure is None ):
@@ -93,12 +92,6 @@ def _initialize_boundary(expr):
             if args:
                 msg = '> Only boundary terms, using traces, are allowed'
                 raise TypeError(msg)
-        # ...
-
-        # ...
-        if expr.atoms(BoundaryVector):
-            raise TypeError('> BoundaryVector are not allowed. Use Trace instead')
-
         # ...
     # ...
 
@@ -730,6 +723,7 @@ def atomize(expr, dim=None):
                              _partial_derivatives, _generic_ops,
                              TestFunction, VectorTestFunction, Indexed,
                              Field, Constant, Symbol, Function,
+                             BoundaryVector, Trace,
                              Integer, Float, Matrix, ImmutableDenseMatrix,
                              list, tuple, Tuple)):
         msg = ('> Wrong input type.')
@@ -794,6 +788,24 @@ def atomize(expr, dim=None):
 
         return atomize(expr.expr)
 
+    elif isinstance(expr, Trace):
+        # TODO treate different spaces
+        if expr.order == 0:
+            return atomize(expr.expr)
+
+        elif expr.order == 1:
+            # TODO must be passed as key word to atomize
+            normal_vector_name = 'n'
+            n = NormalVector(normal_vector_name)
+            M = atomize(expr.expr)
+            e = 0
+            for i in range(0, dim):
+                e += M[i] * n[i]
+            return e
+
+        else:
+            raise ValueError('> Only traces of order 0 and 1 are available')
+
     elif isinstance(expr, (Dot, Inner, Cross, Grad, Rot, Curl, Div)):
         # if i = Dot(...) then type(i) is Grad
         op = type(expr)
@@ -820,7 +832,8 @@ def _evaluate_core(a, verbose=False, variables=None, M=None):
 
     # ...
     if not isinstance(a, (BasicForm, Add, Mul)):
-        raise TypeError('Expecting a BasicForm, Add or Mul')
+        msg = 'Expecting a BasicForm, Add or Mul. Given {}'.format(type(a))
+        raise TypeError(msg)
     # ...
 
     # ...
@@ -1015,6 +1028,45 @@ def _evaluate_core(a, verbose=False, variables=None, M=None):
     return M
 # ...
 
+# ...
+def _evaluate_bnd(a, bnd_calls, verbose=False):
+    if verbose:
+        print('> bnd calls = ', bnd_calls)
+
+    # ...
+    boundaries = []
+    groups = []
+    keyfunc = lambda call: call.expr.boundary.name
+    bnd_calls = sorted(bnd_calls, key=keyfunc)
+    for k, g in groupby(bnd_calls, keyfunc):
+        a_bnd = _extract_linear_combination(a, list(g))
+        groups.append(a_bnd)
+        bnd = bnd_calls[0].expr.boundary
+        boundaries.append(bnd)
+
+    if verbose:
+        print('> groups     = ', groups)
+        print('> boundaries = ', boundaries)
+    # ...
+
+    # ...
+    groups_M = []
+    for bnd, ai in zip(boundaries, groups):
+        a_bnd = ai
+        for call in ai.atoms(FormCall):
+            a_bnd = a_bnd.subs(call, call.expr)
+
+        M_bnd = _evaluate_core(a_bnd, verbose=verbose)
+
+        groups_M.append(BoundaryExpression(bnd, M_bnd))
+
+    if verbose:
+        print('> groups_M = ', groups_M)
+    # ...
+
+    return groups_M
+# ...
+
 def _extract_linear_combination(expr, ls):
     """returns a new expression for terms that are in ls only."""
     # something like a1 + a2 or a1 + alpha * a2
@@ -1033,6 +1085,7 @@ def _extract_linear_combination(expr, ls):
         expr = Add(*args)
     return expr
 
+# TODO check that a is a Form, FormCall or linear combination of them
 def evaluate(a, verbose=False):
     calls = a.atoms(FormCall)
 
@@ -1044,38 +1097,63 @@ def evaluate(a, verbose=False):
         if verbose:
             print('> calls = ', calls)
 
+    expr_bnd = []
     if bnd_calls:
+        expr_bnd = _evaluate_bnd(a, bnd_calls, verbose=verbose)
+
+    expr_domain = []
+    if calls:
+        # TODO - must check that calls have the same domein
+        #      - shall we need to add a groupby here too?
+        domain = calls[0].expr.domain
+
+        a = _extract_linear_combination(a, calls)
         if verbose:
-            print('> bnd calls = ', bnd_calls)
+            print('a = ', a)
 
-        groups = []
-        keyfunc = lambda call: call.expr.boundary.name
-        bnd_calls = sorted(bnd_calls, key=keyfunc)
-        for k, g in groupby(bnd_calls, keyfunc):
-            a_bnd = _extract_linear_combination(a, list(g))
-            if verbose:
-                print('> bnd calls = ', bnd_calls)
-                print('a_bnd = ', a_bnd)
+        # ... replace a FormCall by its expression
+        for call in calls:
+            a = a.subs(call, call.expr)
+        # ...
 
-            groups.append(a_bnd)
+        expr_domain = _evaluate_core(a, verbose=verbose)
+        expr_domain = [DomainExpression(domain, expr_domain)]
 
-        print('> groups = ', groups)
+    return expr_bnd + expr_domain
 
 
-    a = _extract_linear_combination(a, calls)
-    if verbose:
-        print('a = ', a)
+class KernelExpression(Basic):
+    pass
 
-    # ... replace a FormCall by its expression
-    for call in calls:
-        a = a.subs(call, call.expr)
-    # ...
+class DomainExpression(KernelExpression):
 
-#    import sys; sys.exit(0)
+    def __new__(cls, domain, expr):
+        return Basic.__new__(cls, domain, expr)
 
-    M = _evaluate_core(a, verbose=verbose)
+    @property
+    def domain(self):
+        return self._args[0]
 
-    return M
+    @property
+    def expr(self):
+        return self._args[1]
+
+class BoundaryExpression(KernelExpression):
+
+    def __new__(cls, boundary, expr):
+        return Basic.__new__(cls, boundary, expr)
+
+    @property
+    def boundary(self):
+        return self._args[0]
+
+    @property
+    def expr(self):
+        return self._args[1]
+
+    @property
+    def domain(self):
+        return self.boundary.domain
 
 
 # TODO - get dim from atoms

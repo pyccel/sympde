@@ -24,8 +24,8 @@ def test_geometry_2d():
     B1 = Boundary('\Gamma_1', D)
     B2 = Boundary('\Gamma_2', D)
 
-    nn = NormalVector(B1)
-    tt = TangentVector(B2)
+    nn = NormalVector('n')
+    tt = TangentVector('t')
 
     assert(isinstance(nn[0], Indexed))
 

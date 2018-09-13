@@ -249,11 +249,9 @@ class LatexPrinter(LatexPrinterSympy):
         arg = self._print(expr.args[0])
         return r'\partial_z {}'.format(arg)
 
-    def _print_NormalVector(self, expr):
-        return r'\mathbf{n}'
-
-    def _print_TangentVector(self, expr):
-        return r'\mathbf{t}'
+    def _print_BoundaryVector(self, expr):
+        name = self._print(expr.name)
+        return r'\mathbf{' + name + '}'
 
     def _write_integral_expr(self, domain, expr, measure=None):
         measure_str = ''

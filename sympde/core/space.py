@@ -372,4 +372,3 @@ class Trace(Basic):
 # ... user friendly functions
 trace_0 = lambda x, B: Trace(x, B, order=0)
 trace_1 = lambda x, B: Trace(x, B, order=1)
-

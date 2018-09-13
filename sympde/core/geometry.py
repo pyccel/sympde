@@ -56,24 +56,7 @@ class Boundary(BasicDomain):
         return self.domain.dim
 
 class BoundaryVector(IndexedBase):
-
-    def __new__(cls, boundary):
-        if not isinstance(boundary, Boundary):
-            raise TypeError('> Expecting a Boundary')
-
-        return Basic.__new__(cls, boundary)
-
-    @property
-    def boundary(self):
-        return self._args[0]
-
-    @property
-    def domain(self):
-        return self.boundary.domain
-
-    @property
-    def shape(self):
-        return [self.boundary.dim]
+    pass
 
 class NormalVector(BoundaryVector):
     pass

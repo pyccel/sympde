@@ -161,36 +161,36 @@ def test_boundary_2d_3():
     B2 = Boundary(r'\Gamma_2', domain)
     B3 = Boundary(r'\Gamma_3', domain)
 
-#    # ...
-#    # these two expressions are returning, as expected, an error.
-#    # TODO add assert on exception type
-##    expr = v1*trace_0(u1, B3) + v1*trace_1(grad(u1), B3) + u1*trace_0(v1, B2)
-##    expr = dot(grad(u1), grad(v1)) + v1*trace_1(grad(u1), B3)
-#
-#    expr = v1*trace_0(u1, B1) + v1*trace_1(grad(u1), B1)
-#
-#    a1 = BilinearForm((v1, u1), expr, name='a1')
-#    print(a1)
-#    print(evaluate(a1))
-#    print('')
-#    # ...
+    # ...
+    # these two expressions are returning, as expected, an error.
+    # TODO add assert on exception type
+#    expr = v1*trace_0(u1, B3) + v1*trace_1(grad(u1), B3) + u1*trace_0(v1, B2)
+#    expr = dot(grad(u1), grad(v1)) + v1*trace_1(grad(u1), B3)
 
-#    # ...
-#    expr = v1*trace_0(u1, B1) + v1*trace_1(grad(u1), B1)
-#    a1 = BilinearForm((v1, u1), expr, name='a1')
-#
-#    expr = u1*trace_1(grad(v1), B2)
-#    a2 = BilinearForm((v1, u1), expr, name='a2')
-#
-#    expr = a1(v2, u2) + a2(v2, u2)
-#    # as expected, we can define the form call, but we cannot create a Bilinear
-#    # form out of it.
-#    # TODO add assert on exception type
-##    a = BilinearForm((v2, u2), expr, name='a')
-#
-#    print(expr)
-#    print('')
-#    # ...
+    expr = v1*trace_0(u1, B1) + v1*trace_1(grad(u1), B1)
+
+    a1 = BilinearForm((v1, u1), expr, name='a1')
+    print(a1)
+    print(evaluate(a1))
+    print('')
+    # ...
+
+    # ...
+    expr = v1*trace_0(u1, B1) + v1*trace_1(grad(u1), B1)
+    a1 = BilinearForm((v1, u1), expr, name='a1')
+
+    expr = u1*trace_1(grad(v1), B2)
+    a2 = BilinearForm((v1, u1), expr, name='a2')
+
+    expr = a1(v2, u2) + a2(v2, u2)
+    # as expected, we can define the form call, but we cannot create a Bilinear
+    # form out of it.
+    # TODO add assert on exception type
+#    a = BilinearForm((v2, u2), expr, name='a')
+
+    print(expr)
+    print('')
+    # ...
 
     # ...
     expr = v1*trace_0(u1, B1)
