@@ -59,6 +59,9 @@ from .space import IndexedTestTrial
 from .space import Unknown, VectorUnknown
 from .space import Trace
 
+from .errors import UnconsistentError
+
+
 def _initialize_measure(measure, coordinates):
     if not( measure is None ):
         return measure
@@ -84,7 +87,8 @@ def _initialize_boundary(expr):
 
     elif (len(boundaries) > 1):
         if not is_sum_of_form_calls(expr):
-            raise ValueError('> BilinearForm can not be defined on different boundaries')
+            msg = '> BilinearForm can not be defined on different boundaries'
+            raise UnconsistentError(msg)
 
         boundary = True
 
@@ -96,7 +100,7 @@ def _initialize_boundary(expr):
             args = [a for a in args if not a.atoms(Trace)]
             if args:
                 msg = '> Only boundary terms, using traces, are allowed'
-                raise TypeError(msg)
+                raise UnconsistentError(msg)
         # ...
     # ...
 
@@ -203,6 +207,7 @@ class Integral(BasicForm):
         obj._mapping = mapping
         obj._space = space
         obj._name = name
+        obj._is_sum_of_form_calls = is_sum_of_form_calls(expr)
 
         return obj
 
@@ -221,6 +226,10 @@ class Integral(BasicForm):
     @property
     def coordinates(self):
         return self._coordinates
+
+    @property
+    def is_sum_of_form_calls(self):
+        return self._is_sum_of_form_calls
 
     def _sympystr(self, printer):
         sstr = printer.doprint

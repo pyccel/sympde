@@ -9,7 +9,8 @@ from sympde.core import TestFunction
 from sympde.core import VectorTestFunction
 from sympde.core import BilinearForm, LinearForm, Integral
 from sympde.core import Field
-from sympde.core import Domain
+from sympde.core import Domain, Boundary, NormalVector, TangentVector
+from sympde.core import Trace, trace_0, trace_1
 from sympde.printing.latex import latex
 
 
@@ -162,6 +163,39 @@ def test_latex_model_2d_1():
     model = Stokes(domain=domain)
     model.preview(outputTexFile='stokes_2d.tex')
 
+def test_latex_2d_3():
+    DIM = 2
+
+    domain = Domain('Omega', dim=DIM)
+
+    B1 = Boundary(r'\Gamma_1', domain)
+    B2 = Boundary(r'\Gamma_2', domain)
+    B3 = Boundary(r'\Gamma_3', domain)
+
+    V = FunctionSpace('V', domain)
+
+    x = V.coordinates
+
+    v = TestFunction(V, name='v')
+    u = TestFunction(V, name='u')
+
+    # ...
+    expr = dot(grad(v), grad(u))
+    a_0 = BilinearForm((v,u), expr, name='a_0')
+
+    expr = v*trace_0(u, B1)
+    a_bnd = BilinearForm((v, u), expr, name='a_bnd')
+
+    expr = a_0(v,u) + a_bnd(v,u)
+    a = BilinearForm((v,u), expr, name='a')
+    print(latex(a_0))
+    print(latex(a_bnd))
+    print(latex(a))
+#    print(a)
+    print('')
+    # ...
+
+
 ####################
 if __name__ == '__main__':
 #    test_latex_1d()
@@ -171,5 +205,7 @@ if __name__ == '__main__':
 #    test_latex_2d_2()
 #    test_latex_3d_2()
 
-    test_latex_model_2d_1()
+#    test_latex_model_2d_1()
+
+    test_latex_2d_3()
 

@@ -75,7 +75,10 @@ class LatexPrinter(LatexPrinterSympy):
     def _print_BilinearForm(self, expr):
         calls = expr.atoms(FormCall)
         if not calls:
-            return self._write_integral_expr(expr.domain, expr.expr,
+            domain = expr.domain
+            if expr.boundary:
+                domain = expr.boundary
+            return self._write_integral_expr(domain, expr.expr,
                                              measure=expr.measure)
         else:
             return self._print(expr.expr)
@@ -83,7 +86,10 @@ class LatexPrinter(LatexPrinterSympy):
     def _print_LinearForm(self, expr):
         calls = expr.atoms(FormCall)
         if not calls:
-            return self._write_integral_expr(expr.domain, expr.expr,
+            domain = expr.domain
+            if expr.boundary:
+                domain = expr.boundary
+            return self._write_integral_expr(domain, expr.expr,
                                              measure=expr.measure)
         else:
             return self._print(expr.expr)
@@ -91,7 +97,10 @@ class LatexPrinter(LatexPrinterSympy):
     def _print_Integral(self, expr):
         calls = expr.atoms(FormCall)
         if not calls:
-            return self._write_integral_expr(expr.domain, expr.expr,
+            domain = expr.domain
+            if expr.boundary:
+                domain = expr.boundary
+            return self._write_integral_expr(domain, expr.expr,
                                              measure=expr.measure)
         else:
             return self._print(expr.expr)
@@ -249,6 +258,9 @@ class LatexPrinter(LatexPrinterSympy):
         arg = self._print(expr.args[0])
         return r'\partial_z {}'.format(arg)
 
+    def _print_Boundary(self, expr):
+        return self._print(expr.name)
+
     def _print_BoundaryVector(self, expr):
         name = self._print(expr.name)
         return r'\mathbf{' + name + '}'
@@ -278,7 +290,7 @@ class LatexPrinter(LatexPrinterSympy):
 
                 int_str += r'\int_{' + xmin + '}^{' + xmax + '}'
 
-        elif isinstance(domain, Domain):
+        else:
 
             int_str = r'\int_{' + self._print(domain) + '}'
             measure_str = ''

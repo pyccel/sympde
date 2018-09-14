@@ -161,6 +161,21 @@ def test_boundary_2d_3():
     B2 = Boundary(r'\Gamma_2', domain)
     B3 = Boundary(r'\Gamma_3', domain)
 
+    import pytest
+    from sympde.core.errors import UnconsistentError
+
+    # ...
+    with pytest.raises(UnconsistentError):
+        expr = dot(grad(v1), grad(u1)) + v1*trace_0(u1, B1)
+        a = BilinearForm((v1,u1), expr, name='a')
+    # ...
+
+    # ...
+    with pytest.raises(UnconsistentError):
+        expr = v1*trace_0(u1, B3) + v1*trace_1(grad(u1), B3) + u1*trace_0(v1, B2)
+        a1 = BilinearForm((v1, u1), expr, name='a1')
+    # ...
+
     # ...
     expr = dot(grad(v1), grad(u1))
     a_0 = BilinearForm((v1,u1), expr, name='a_0')
@@ -176,19 +191,6 @@ def test_boundary_2d_3():
 #    import sys; sys.exit(0)
     # ...
 
-    # ...
-    # these two expressions are returning, as expected, an error.
-    # TODO add assert on exception type
-#    expr = v1*trace_0(u1, B3) + v1*trace_1(grad(u1), B3) + u1*trace_0(v1, B2)
-#    expr = dot(grad(u1), grad(v1)) + v1*trace_1(grad(u1), B3)
-
-    expr = v1*trace_0(u1, B1) + v1*trace_1(grad(u1), B1)
-
-    a1 = BilinearForm((v1, u1), expr, name='a1')
-    print(a1)
-    print(evaluate(a1))
-    print('')
-    # ...
 
     # ...
     expr = v1*trace_0(u1, B1) + v1*trace_1(grad(u1), B1)
