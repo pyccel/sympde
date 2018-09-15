@@ -32,6 +32,10 @@ class BasicBoundaryCondition(Basic):
     def boundary(self):
         return self._args[0]
 
+    @property
+    def value(self):
+        return self._args[1]
+
 class DirichletBC(BasicBoundaryCondition):
     pass
 

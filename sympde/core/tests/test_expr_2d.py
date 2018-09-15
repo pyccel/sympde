@@ -474,6 +474,6 @@ def test_equation_2d_3():
 # .....................................................
 if __name__ == '__main__':
 
-#    test_calls_2d_3()
-#    test_boundary_2d_3()
+    test_calls_2d_3()
+    test_boundary_2d_3()
     test_equation_2d_3()
