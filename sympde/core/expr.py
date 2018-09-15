@@ -207,7 +207,6 @@ class Integral(BasicForm):
         obj._mapping = mapping
         obj._space = space
         obj._name = name
-        obj._is_sum_of_form_calls = is_sum_of_form_calls(expr)
 
         return obj
 
@@ -226,10 +225,6 @@ class Integral(BasicForm):
     @property
     def coordinates(self):
         return self._coordinates
-
-    @property
-    def is_sum_of_form_calls(self):
-        return self._is_sum_of_form_calls
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -1144,13 +1139,27 @@ def evaluate(a, verbose=False):
             a = a.subs(call, call.expr)
         # ...
 
-        expr_domain = _evaluate_core(a, verbose=verbose)
-        expr_domain = [DomainExpression(domain, expr_domain)]
+        expr = _evaluate_core(a, verbose=verbose)
+        boundary = list(a.atoms(Boundary))
+        if not boundary:
+            expr_domain = [DomainExpression(domain, expr)]
+
+        else:
+            boundary = boundary[0]
+            expr_domain = [BoundaryExpression(boundary, expr)]
 
     elif isinstance(a, BasicForm):
         domain = a.domain
-        expr_domain = _evaluate_core(a, verbose=verbose)
-        expr_domain = [DomainExpression(domain, expr_domain)]
+        expr = _evaluate_core(a, verbose=verbose)
+        boundary = list(a.atoms(Boundary))
+
+        expr = _evaluate_core(a, verbose=verbose)
+        boundary = list(a.atoms(Boundary))
+        if not boundary:
+            expr_domain = [DomainExpression(domain, expr)]
+        else:
+            boundary = boundary[0]
+            expr_domain = [BoundaryExpression(boundary, expr)]
 
     return expr_bnd + expr_domain
 
