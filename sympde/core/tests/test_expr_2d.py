@@ -32,6 +32,7 @@ from sympde.core import Mass, Stiffness, Advection, AdvectionT
 from sympde.core import Unknown
 from sympde.core import FormCall
 from sympde.core import Domain, Boundary, NormalVector, TangentVector
+from sympde.core import UnionBoundary, ComplementBoundary
 from sympde.core import Trace, trace_0, trace_1
 from sympde.core import Equation, DirichletBC
 
@@ -73,6 +74,10 @@ def test_boundary_2d_3():
     B1 = Boundary(r'\Gamma_1', domain)
     B2 = Boundary(r'\Gamma_2', domain)
     B3 = Boundary(r'\Gamma_3', domain)
+
+    assert(isinstance(B1 + B2, UnionBoundary))
+    assert(isinstance(B1 + B2 + B3, UnionBoundary))
+    assert(isinstance(-(B1 + B2), ComplementBoundary))
 
     # ...
     with pytest.raises(UnconsistentError):
@@ -457,6 +462,10 @@ def test_equation_2d_3():
 
     # ... using bc
     equation = Equation(a1(v,u), l1(v), bc=DirichletBC(B1))
+    # ...
+
+    # ... using bc
+    equation = Equation(a1(v,u), l1(v), bc=DirichletBC(ComplementBoundary(B1)))
     # ...
 
     # ...

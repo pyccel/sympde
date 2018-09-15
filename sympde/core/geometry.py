@@ -55,6 +55,61 @@ class Boundary(BasicDomain):
     def dim(self):
         return self.domain.dim
 
+    # TODO how to improve? use TotalBoundary?
+    def __neg__(self):
+        return ComplementBoundary(self)
+
+    def __add__(self, other):
+        if isinstance(other, ComplementBoundary):
+            raise TypeError('> Cannot add complement of boundary')
+
+        return UnionBoundary(self, other)
+
+class OpBoundary(Boundary):
+
+    def __new__(cls, *boundaries):
+        # ...
+        if isinstance(boundaries, Boundary):
+            boundaries = [boundaries]
+
+        elif not isinstance(boundaries, (list, tuple, Tuple)):
+            raise TypeError('> Wrong type for boundaries')
+
+        # boundaries cannot not be passed to __new__ otherwise they will appear
+        # when calling discretize and testing consistency between bc
+        boundaries = Tuple(*boundaries)
+        # ...
+
+        # ...
+        new = []
+        for bnd in boundaries:
+            if isinstance(bnd, UnionBoundary):
+                new += bnd.boundaries
+        if new:
+            boundaries = new
+        # ...
+
+        obj = Basic.__new__(cls)
+        obj._boundaries = boundaries
+        obj._domain = boundaries[0].domain
+
+        return obj
+
+    @property
+    def boundaries(self):
+        return self._boundaries
+
+    @property
+    def name(self):
+        return None
+
+class UnionBoundary(OpBoundary):
+    pass
+
+class ComplementBoundary(OpBoundary):
+    pass
+
+
 class BoundaryVector(IndexedBase):
     pass
 
