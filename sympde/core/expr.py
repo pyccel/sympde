@@ -797,18 +797,18 @@ def atomize(expr, dim=None):
 
     elif isinstance(expr, BasicForm):
 
-        return atomize(expr.expr)
+        return atomize(expr.expr, dim=dim)
 
     elif isinstance(expr, Trace):
         # TODO treate different spaces
         if expr.order == 0:
-            return atomize(expr.expr)
+            return atomize(expr.expr, dim=dim)
 
         elif expr.order == 1:
             # TODO must be passed as key word to atomize
             normal_vector_name = 'n'
             n = NormalVector(normal_vector_name)
-            M = atomize(expr.expr)
+            M = atomize(expr.expr, dim=dim)
             if dim == 1:
                 return M
             else:
