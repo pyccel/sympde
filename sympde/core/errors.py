@@ -12,3 +12,6 @@ class UnconsistentRhsError(UnconsistentError):
 
 class UnconsistentBCError(UnconsistentError):
     pass
+
+class UnconsistentArgumentsError(UnconsistentError):
+    pass

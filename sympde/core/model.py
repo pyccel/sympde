@@ -15,11 +15,13 @@ from sympy.printing.preview import preview as sympy_preview
 from pyccel.ast.core import Assign
 from pyccel.ast.core import Nil
 
+from .space import TestFunction, VectorTestFunction
 from .expr import BasicForm, BilinearForm, LinearForm, Integral, FormCall
 from .expr import is_sum_of_form_calls
 from .geometry import Boundary
 from .errors import UnconsistentLhsError, UnconsistentRhsError
 from .errors import UnconsistentBCError
+from .errors import UnconsistentArgumentsError
 
 class BasicBoundaryCondition(Basic):
 
@@ -37,19 +39,71 @@ class DirichletBC(BasicBoundaryCondition):
 class Equation(Basic):
     def __new__(cls, lhs, rhs, bc=None):
         # ...
-        if lhs is None or isinstance(lhs, Nil):
-            lhs = Nil()
-
-        elif not isinstance(lhs, FormCall) and not is_sum_of_form_calls (lhs):
-            raise UnconsistentLhsError('> lhs must be a call or sum of calls')
+        if not isinstance(lhs, FormCall):
+            raise UnconsistentLhsError('> lhs must be a call')
         # ...
 
         # ...
-        if rhs is None or isinstance(rhs, Nil):
-            rhs = Nil()
+        if not isinstance(rhs, FormCall):
+            raise UnconsistentRhsError('> rhs must be a call')
+        # ...
 
-        elif not isinstance(rhs, FormCall) and not is_sum_of_form_calls (rhs):
-            raise UnconsistentRhsError('> rhs must be a call or sum of calls')
+        # find unknowns of the equation
+        # ...
+        if isinstance(lhs.expr, BilinearForm):
+            tests_lhs, trials_lhs = lhs.arguments
+
+            # ...
+            if isinstance(tests_lhs, (TestFunction, VectorTestFunction)):
+                tests_lhs = [tests_lhs]
+
+            elif not isinstance(tests_lhs, (list, tuple, Tuple)):
+                msg =  '> Expecting iterable or TestFunction/VectorTestFunction'
+                raise UnconsistentArgumentsError(msg)
+
+            tests_lhs = Tuple(*tests_lhs)
+            # ...
+
+            # ...
+            if isinstance(trials_lhs, (TestFunction, VectorTestFunction)):
+                trials_lhs = [trials_lhs]
+
+            elif not isinstance(trials_lhs, (list, tuple, Tuple)):
+                msg =  '> Expecting iterable or TestFunction/VectorTestFunction'
+                raise UnconsistentArgumentsError(msg)
+
+            trials_lhs = Tuple(*trials_lhs)
+            # ...
+
+        else:
+            raise UnconsistentLhsError('> lhs must be a bilinear')
+
+        if isinstance(rhs.expr, LinearForm):
+            tests_rhs = rhs.arguments
+
+            # ...
+            if isinstance(tests_rhs, (TestFunction, VectorTestFunction)):
+                tests_rhs = [tests_rhs]
+
+            elif not isinstance(tests_rhs, (list, tuple, Tuple)):
+                msg =  '> Expecting iterable or TestFunction/VectorTestFunction'
+                raise UnconsistentArgumentsError(msg)
+
+            tests_rhs = Tuple(*tests_rhs)
+            # ...
+
+        else:
+            raise UnconsistentRhsError('> rhs must be a linear')
+        # ...
+
+        # ...
+        for u_lhs, u_rhs in zip(tests_lhs, tests_rhs):
+            if not( u_lhs is u_rhs ):
+                msg = '> lhs and rhs must have the same test function. '
+                msg += 'given {lhs} & {rhs}'.format(lhs=u_lhs, rhs=u_rhs)
+                raise UnconsistentArgumentsError(msg)
+
+        unknowns = trials_lhs
         # ...
 
         # ...
@@ -84,7 +138,7 @@ class Equation(Basic):
             # ...
         # ...
 
-        return Basic.__new__(cls, lhs, rhs, bc)
+        return Basic.__new__(cls, lhs, rhs, unknowns, bc)
 
     @property
     def lhs(self):
@@ -95,8 +149,12 @@ class Equation(Basic):
         return self._args[1]
 
     @property
-    def bc(self):
+    def unknowns(self):
         return self._args[2]
+
+    @property
+    def bc(self):
+        return self._args[3]
 
     @property
     def is_undefined(self):

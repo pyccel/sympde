@@ -410,19 +410,49 @@ def test_equation_2d_3():
     # ...
     with pytest.raises(UnconsistentLhsError):
         equation = Equation(a1, l1(v))
+
+    with pytest.raises(UnconsistentLhsError):
+        equation = Equation(l1(v), l1(v))
+
+    with pytest.raises(UnconsistentLhsError):
+        equation = Equation(a1(v,u) + alpha*a2(v,u), l1(v))
     # ...
 
     # ...
     with pytest.raises(UnconsistentRhsError):
         equation = Equation(a1(v,u), l1)
+
+    with pytest.raises(UnconsistentRhsError):
+        equation = Equation(a1(v,u), a1(v,u))
+
+    with pytest.raises(UnconsistentRhsError):
+        equation = Equation(a1(v,u), l1(v) + l2(v))
     # ...
 
     # ...
     equation = Equation(a1(v,u), l1(v))
-    equation = Equation(a1(v,u) + alpha*a2(v,u), l1(v))
-    equation = Equation(a1(v,u) + a_B1(v,u), l1(v))
-    equation = Equation(a1(v,u) + a_B1(v,u), l1(v) + l2(v))
-    equation = Equation(a1(v,u) + a_B1(v,u), l1(v) + alpha*l_B2(v))
+    # ...
+
+    # ...
+    a = BilinearForm((v,u), a1(v,u) + alpha*a2(v,u))
+    equation = Equation(a(v,u), l1(v))
+    # ...
+
+    # ...
+    a = BilinearForm((v,u), a1(v,u) + a_B1(v,u))
+    equation = Equation(a(v,u), l1(v))
+    # ...
+
+    # ...
+    a = BilinearForm((v,u), a1(v,u) + a_B1(v,u))
+    l = LinearForm(v, l1(v) + l2(v))
+    equation = Equation(a(v,u), l(v))
+    # ...
+
+    # ...
+    a = BilinearForm((v,u), a1(v,u) + a_B1(v,u))
+    l = LinearForm(v, l1(v) + alpha*l_B2(v))
+    equation = Equation(a(v,u), l(v))
     # ...
 
     # ... using bc
@@ -431,12 +461,14 @@ def test_equation_2d_3():
 
     # ...
     with pytest.raises(UnconsistentBCError):
-        equation = Equation(a1(v,u) + a_B1(v,u), l1(v), bc=DirichletBC(B1))
+        a = BilinearForm((v,u), a1(v,u) + a_B1(v,u))
+        equation = Equation(a(v,u), l1(v), bc=DirichletBC(B1))
     # ...
 
     # ...
     with pytest.raises(UnconsistentBCError):
-        equation = Equation(a1(v,u), l1(v) + alpha*l_B2(v), bc=DirichletBC(B2))
+        l = LinearForm(v, l1(v) + alpha*l_B2(v))
+        equation = Equation(a1(v,u), l(v), bc=DirichletBC(B2))
     # ...
 
 # .....................................................
