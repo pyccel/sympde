@@ -4,6 +4,8 @@
 #      - add assert for grad in vector case
 # TODO: - __call__ examples are not working anymore
 
+import pytest
+
 from sympy import Symbol
 from sympy.core.containers import Tuple
 from sympy import symbols
@@ -31,6 +33,13 @@ from sympde.core import Unknown
 from sympde.core import FormCall
 from sympde.core import Domain, Boundary, NormalVector, TangentVector
 from sympde.core import Trace, trace_0, trace_1
+from sympde.core import Equation, DirichletBC
+
+from sympde.core.errors import UnconsistentError
+from sympde.core.errors import UnconsistentLhsError
+from sympde.core.errors import UnconsistentRhsError
+from sympde.core.errors import UnconsistentBCError
+
 
 DIM = 2
 domain = Domain('Omega', dim=DIM)
@@ -64,9 +73,6 @@ def test_boundary_2d_3():
     B1 = Boundary(r'\Gamma_1', domain)
     B2 = Boundary(r'\Gamma_2', domain)
     B3 = Boundary(r'\Gamma_3', domain)
-
-    import pytest
-    from sympde.core.errors import UnconsistentError
 
     # ...
     with pytest.raises(UnconsistentError):
@@ -367,25 +373,13 @@ def test_calls_2d_3():
 def test_equation_2d_3():
     print('============ test_equation_2d_3 =============')
 
-    V1 = FunctionSpace('V1', domain)
-    V2 = FunctionSpace('V2', domain)
-    U1 = FunctionSpace('U1', domain)
-    U2 = FunctionSpace('U2', domain)
-    W1 = FunctionSpace('W1', domain, is_block=True, shape=2)
-    W2 = FunctionSpace('W2', domain, is_block=True, shape=2)
-    T1 = FunctionSpace('T1', domain, is_block=True, shape=2)
-    T2 = FunctionSpace('T2', domain, is_block=True, shape=2)
+    V = FunctionSpace('V', domain)
+    U = FunctionSpace('U', domain)
 
-    v1 = TestFunction(V1, name='v1')
-    v2 = TestFunction(V2, name='v2')
-    u1 = TestFunction(U1, name='u1')
-    u2 = TestFunction(U2, name='u2')
-    w1 = VectorTestFunction(W1, name='w1')
-    w2 = VectorTestFunction(W2, name='w2')
-    t1 = VectorTestFunction(T1, name='t1')
-    t2 = VectorTestFunction(T2, name='t2')
+    v = TestFunction(V, name='v')
+    u = TestFunction(U, name='u')
 
-    x,y = V1.coordinates
+    x,y = V.coordinates
 
     alpha = Constant('alpha')
 
@@ -393,38 +387,61 @@ def test_equation_2d_3():
     B2 = Boundary(r'\Gamma_2', domain)
     B3 = Boundary(r'\Gamma_3', domain)
 
-    # ...
-    expr = dot(grad(v1), grad(u1))
-    a_0 = BilinearForm((v1,u1), expr, name='a_0')
+    # ... bilinear/linear forms
+    expr = dot(grad(v), grad(u))
+    a1 = BilinearForm((v,u), expr, name='a1')
 
-    expr = v1*trace_0(u1, B1)
-    a_bnd = BilinearForm((v1, u1), expr, name='a_bnd')
+    expr = v*u
+    a2 = BilinearForm((v,u), expr, name='a2')
 
-    expr = a_0(v1,u1) + a_bnd(v1,u1)
-    a = BilinearForm((v1,u1), expr, name='a')
-    print(a)
-    print(evaluate(a, verbose=True))
-    print('')
-#    import sys; sys.exit(0)
-    # ...
+    expr = v*trace_0(u, B1)
+    a_B1 = BilinearForm((v, u), expr, name='a_B1')
 
-    # ...
-    l1 = LinearForm(v1, x*y*v1, name='l1')
-    l2 = LinearForm(v2, cos(x+y)*v2, name='l2')
+    expr = x*y*v
+    l1 = LinearForm(v, expr, name='l1')
 
-    expr = l1(u1) + alpha * l2(u2)
-    l = LinearForm((u1,u2), expr, name='1')
-    print(l)
-    print(atomize(l))
-    print(evaluate(l))
+    expr = cos(x+y)*v
+    l2 = LinearForm(v, expr, name='l2')
+
+    expr = x*y*trace_0(v, B2)
+    l_B2 = LinearForm(v, expr, name='l_B2')
     # ...
 
+    # ...
+    with pytest.raises(UnconsistentLhsError):
+        equation = Equation(a1, l1(v))
+    # ...
 
+    # ...
+    with pytest.raises(UnconsistentRhsError):
+        equation = Equation(a1(v,u), l1)
+    # ...
 
+    # ...
+    equation = Equation(a1(v,u), l1(v))
+    equation = Equation(a1(v,u) + alpha*a2(v,u), l1(v))
+    equation = Equation(a1(v,u) + a_B1(v,u), l1(v))
+    equation = Equation(a1(v,u) + a_B1(v,u), l1(v) + l2(v))
+    equation = Equation(a1(v,u) + a_B1(v,u), l1(v) + alpha*l_B2(v))
+    # ...
+
+    # ... using bc
+    equation = Equation(a1(v,u), l1(v), bc=DirichletBC(B1))
+    # ...
+
+    # ...
+    with pytest.raises(UnconsistentBCError):
+        equation = Equation(a1(v,u) + a_B1(v,u), l1(v), bc=DirichletBC(B1))
+    # ...
+
+    # ...
+    with pytest.raises(UnconsistentBCError):
+        equation = Equation(a1(v,u), l1(v) + alpha*l_B2(v), bc=DirichletBC(B2))
+    # ...
 
 # .....................................................
 if __name__ == '__main__':
 
-    test_calls_2d_3()
-    test_boundary_2d_3()
+#    test_calls_2d_3()
+#    test_boundary_2d_3()
     test_equation_2d_3()
