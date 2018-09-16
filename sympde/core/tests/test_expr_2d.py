@@ -35,6 +35,8 @@ from sympde.core import Domain, Boundary, NormalVector, TangentVector
 from sympde.core import UnionBoundary, ComplementBoundary
 from sympde.core import Trace, trace_0, trace_1
 from sympde.core import Equation, DirichletBC
+from sympde.core import Projection
+from sympde.core import Norm
 
 from sympde.core.errors import UnconsistentError
 from sympde.core.errors import UnconsistentLhsError
@@ -46,8 +48,8 @@ DIM = 2
 domain = Domain('Omega', dim=DIM)
 
 # ...
-def test_boundary_2d_3():
-    print('============ test_boundary_2d_3 =============')
+def test_boundary_2d():
+    print('============ test_boundary_2d =============')
 
     V1 = FunctionSpace('V1', domain)
     V2 = FunctionSpace('V2', domain)
@@ -167,8 +169,8 @@ def test_boundary_2d_3():
     # ...
 
 # ...
-def test_calls_2d_3():
-    print('============ test_calls_2d_3 =============')
+def test_calls_2d():
+    print('============ test_calls_2d =============')
 
     V1 = FunctionSpace('V1', domain)
     V2 = FunctionSpace('V2', domain)
@@ -375,8 +377,8 @@ def test_calls_2d_3():
 # ...
 
 # ...
-def test_equation_2d_3():
-    print('============ test_equation_2d_3 =============')
+def test_equation_2d():
+    print('============ test_equation_2d =============')
 
     V = FunctionSpace('V', domain)
     U = FunctionSpace('U', domain)
@@ -480,9 +482,35 @@ def test_equation_2d_3():
         equation = Equation(a1(v,u), l(v), bc=DirichletBC(B2))
     # ...
 
+
+def test_projection_2d():
+    print('============ test_projection_2d =============')
+
+    V = FunctionSpace('V', domain)
+    x,y = V.coordinates
+
+    alpha = Constant('alpha')
+
+    u = Projection(x**2+alpha*y, V, name='u')
+
+
+def test_norm_2d():
+    print('============ test_norm_2d =============')
+
+    x,y = domain.coordinates
+
+    expr = x*y
+    l2_norm_u = Norm(expr, domain, kind='l2', name='u')
+    h1_norm_u = Norm(expr, domain, kind='h1', name='u')
+
+    print('> l2 norm = ', evaluate(l2_norm_u))
+    print('> l2 norm = ', evaluate(h1_norm_u))
+
 # .....................................................
 if __name__ == '__main__':
 
-    test_calls_2d_3()
-    test_boundary_2d_3()
-    test_equation_2d_3()
+    test_calls_2d()
+    test_boundary_2d()
+    test_equation_2d()
+    test_projection_2d()
+    test_norm_2d()

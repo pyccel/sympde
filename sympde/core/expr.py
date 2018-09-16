@@ -25,6 +25,7 @@ from sympy import Integer, Float
 from sympy.core.expr import AtomicExpr
 from sympy.physics.quantum import TensorProduct
 
+from .utils import random_string
 from .measure import CanonicalMeasure
 from .measure import CartesianMeasure
 from .measure import Measure
@@ -377,6 +378,68 @@ class BilinearForm(BasicForm):
             raise ValueError('Expecting a couple (test, trial)')
 
         return FormCall(self, args)
+
+
+class Norm(Integral):
+    def __new__(cls, expr, domain, kind='l2', mapping=None, measure=None,
+                name=None):
+        # ...
+        tests = expr.atoms((TestFunction, VectorTestFunction))
+        if tests or not isinstance(expr, Expr):
+            msg = '> Expecting an Expression without test functions'
+            raise UnconsistentArgumentsError(msg)
+        # ...
+
+        # ...
+        if not(kind in ['l2', 'h1']):
+            raise ValueError('> Only L2, H1 norms are available')
+        # ...
+
+        # ...
+        if name is None:
+            name = random_string( 3 )
+
+        name = '{kind}norm_{name}'.format(kind=kind, name=name)
+        # ...
+
+        # ...
+        is_vector = isinstance(expr, (Matrix, Tuple, list, tuple))
+        if is_vector:
+            expr = Matrix(expr)
+        # ...
+
+        # ...
+        exponent = None
+        if kind == 'l2':
+            exponent = 2
+
+            if not is_vector:
+                expr = expr*expr
+
+            else:
+                raise NotImplementedError('TODO')
+
+        elif kind == 'h1':
+            exponent = 2
+
+            if not is_vector:
+                expr = Dot(Grad(expr), Grad(expr))
+
+            else:
+                raise NotImplementedError('TODO')
+        # ...
+
+        obj = Integral.__new__(cls, expr, domain,
+                               coordinates=domain.coordinates,
+                               measure=name, mapping=mapping, name=name)
+
+        obj._exponent = exponent
+
+        return obj
+
+    @property
+    def exponent(self):
+        return self._exponent
 
 
 class BilinearAtomicForm(BilinearForm, AtomicExpr):

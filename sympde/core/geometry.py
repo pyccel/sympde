@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from sympy.core import Basic
+from sympy.core import Basic, Symbol
 from sympy.core.containers import Tuple
 from sympy.tensor import IndexedBase
 
@@ -10,6 +10,12 @@ class BasicDomain(Basic):
     @property
     def dim(self):
         return self._dim
+
+    # TODO improve
+    @property
+    def coordinates(self):
+        dim = self.dim
+        return [Symbol(i) for i in ['x', 'y', 'z'][:dim]]
 
     def _sympystr(self, printer):
         sstr = printer.doprint
