@@ -330,7 +330,7 @@ def test_calls_2d():
     # ...
 
     # ...
-    I1 = Integral(x*y, domain, coordinates=[x,y], name='I1')
+    I1 = Integral(x*y, domain, name='I1')
 
     print(I1)
     print(atomize(I1))
@@ -340,7 +340,7 @@ def test_calls_2d():
     # ...
     expr = F - cos(2*pi*x)*cos(3*pi*y)
     expr = dot(grad(expr), grad(expr))
-    I2 = Integral(expr, domain, coordinates=[x,y], name='I2')
+    I2 = Integral(expr, domain, name='I2')
 
     print(I2)
     print(atomize(I2))
@@ -350,7 +350,7 @@ def test_calls_2d():
     # ...
     expr = F - cos(2*pi*x)*cos(3*pi*y)
     expr = dot(grad(expr), grad(expr))
-    I2 = Integral(expr, domain, coordinates=[x,y], name='I2')
+    I2 = Integral(expr, domain, name='I2')
 
     print(I2)
     print(atomize(I2))
@@ -386,7 +386,7 @@ def test_equation_2d():
     v = TestFunction(V, name='v')
     u = TestFunction(U, name='u')
 
-    x,y = V.coordinates
+    x,y = domain.coordinates
 
     alpha = Constant('alpha')
 
@@ -487,7 +487,7 @@ def test_projection_2d():
     print('============ test_projection_2d =============')
 
     V = FunctionSpace('V', domain)
-    x,y = V.coordinates
+    x,y = domain.coordinates
 
     alpha = Constant('alpha')
 

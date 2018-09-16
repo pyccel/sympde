@@ -154,9 +154,7 @@ class Integral(BasicForm):
     """
     _ldim = None
     _coordinates = None
-    # TODO we must remove space from here
-    def __new__(cls, expr, domain, coordinates=None, measure=None,
-                mapping=None, name=None):
+    def __new__(cls, expr, domain, measure=None, mapping=None, name=None):
 
         if not isinstance(domain, BasicDomain):
             raise TypeError('> Expecting a BasicDomain object for domain')
@@ -167,29 +165,23 @@ class Integral(BasicForm):
             raise TypeError('Cannot use test functions in Integral')
         # ...
 
+        # ...
+        coordinates = domain.coordinates
+        ldim = domain.dim
+        if ldim == 1:
+            coordinates = coordinates[0]
+        # ...
+
         # compute dim from fields if available
-        ls = [a for a in expr.free_symbols if isinstance(a, Field)]
+        ls = list(expr.atoms(Field))
         if ls:
             F = ls[0]
             space = F.space
-            ldim = F.space.ldim
-
-            if coordinates is None:
-                coordinates = F.space.coordinates
 
         else:
-            if coordinates is None:
-                raise ValueError('> Coordinates must be provided if the expression has no fields')
-
-            coordinates = [str(i) for i in coordinates]
-            ldim = len(coordinates)
-
-            ID = abs(hash(expr))
-            space = FunctionSpace('space_{}'.format(ID), domain,
-                                  coordinates=coordinates)
-
-            if ldim == 1:
-                coordinates = coordinates[0]
+            tag = random_string( 3 )
+            space_name = 'space_{}'.format(tag)
+            space = FunctionSpace(space_name, domain)
 
         measure = _initialize_measure(measure, coordinates)
 
@@ -429,9 +421,7 @@ class Norm(Integral):
                 raise NotImplementedError('TODO')
         # ...
 
-        obj = Integral.__new__(cls, expr, domain,
-                               coordinates=domain.coordinates,
-                               measure=name, mapping=mapping, name=name)
+        obj = Integral.__new__(cls, expr, domain, measure=name, mapping=mapping, name=name)
 
         obj._exponent = exponent
 
