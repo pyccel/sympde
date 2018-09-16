@@ -1,7 +1,5 @@
 # coding: utf-8
 
-# TODO: - do we need is_block/is_vector in FunctionSpace
-
 from numpy import unique
 
 from sympy.core import Basic
@@ -14,7 +12,7 @@ from .basic import Field
 from .geometry import BasicDomain
 
 # ...
-class FunctionSpace(Basic):
+class BasicFunctionSpace(Basic):
     """
     Represents a basic continuous Function space.
 
@@ -23,24 +21,13 @@ class FunctionSpace(Basic):
     """
     _domain = None
     _shape = None
-    _is_vector = False
-    _is_block = False
-    def __new__(cls, name, domain, shape=None, is_vector=False, is_block=False):
-        if is_vector or is_block:
-            if shape is None:
-                raise ValueError('shape must be provided for a vector/block space')
+    def __new__(cls, name, domain, shape):
 
         if not isinstance(domain, BasicDomain):
             raise TypeError('> Expecting a BasicDomain object for domain')
 
         obj = Basic.__new__(cls, name, domain)
-        if shape is None:
-            obj._shape = 1
-        else:
-            obj._shape = shape
-
-        obj._is_vector = is_vector
-        obj._is_block = is_block
+        obj._shape = shape
 
         return obj
 
@@ -61,14 +48,6 @@ class FunctionSpace(Basic):
         return self._shape
 
     @property
-    def is_vector(self):
-        return self._is_vector
-
-    @property
-    def is_block(self):
-        return self._is_block
-
-    @property
     def coordinates(self):
         coordinates = self.domain.coordinates
 
@@ -82,7 +61,27 @@ class FunctionSpace(Basic):
         return sstr(self.name)
 # ...
 
-# ... TODO shall we keep the definition of is_block/is_vector as it is now?
+# ...
+class FunctionSpace(BasicFunctionSpace):
+    """
+    Represents a basic continuous scalar Function space.
+    """
+    def __new__(cls, name, domain):
+        shape = 1
+        return BasicFunctionSpace.__new__(cls, name, domain, shape)
+
+class VectorFunctionSpace(BasicFunctionSpace):
+    """
+    Represents a basic continuous vector Function space.
+    """
+    def __new__(cls, name, domain):
+        shape = domain.dim
+        return BasicFunctionSpace.__new__(cls, name, domain, shape)
+# ...
+
+# ...
+# TODO must check that all spaces have the same domain
+#     for the moment this class is not used
 class ProductSpace(FunctionSpace):
     """
     Represents a product of continuous Sobolev spaces.
@@ -137,8 +136,6 @@ class ProductSpace(FunctionSpace):
         obj = Basic.__new__(cls, spaces)
 
         obj._shape = shape
-        obj._is_vector = False
-        obj._is_block = True
         obj._coordinates = coordinates
         obj._name = name
         # ...
@@ -164,14 +161,6 @@ class ProductSpace(FunctionSpace):
     @property
     def shape(self):
         return self._shape
-
-    @property
-    def is_vector(self):
-        return self._is_vector
-
-    @property
-    def is_block(self):
-        return self._is_block
 
     @property
     def coordinates(self):
@@ -264,8 +253,8 @@ class VectorTestFunction(Symbol, IndexedBase):
     is_commutative = True
     _space = None
     def __new__(cls, space, name=None):
-        if not(space.is_vector) and not(space.is_block):
-            raise ValueError('Expecting a vector/block space')
+        if not isinstance(space, VectorFunctionSpace):
+            raise ValueError('Expecting a VectorFunctionSpace')
 
         obj = Basic.__new__(cls, name)
         obj._space = space
@@ -322,7 +311,7 @@ class VectorUnknown(VectorTestFunction):
     """
     def __new__(cls, name, domain, shape):
         space_name = 'space_{}'.format(abs(hash(name)))
-        V = FunctionSpace(space_name, domain, shape=shape, is_block=True)
+        V = VectorFunctionSpace(space_name, domain)
         return VectorTestFunction.__new__(cls, V, name)
 
 

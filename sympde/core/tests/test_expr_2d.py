@@ -20,7 +20,7 @@ from sympde.core import dx, dy, dz
 from sympde.core import Constant
 from sympde.core import Field
 from sympde.core import grad, dot, inner, cross, rot, curl, div
-from sympde.core import FunctionSpace
+from sympde.core import FunctionSpace, VectorFunctionSpace
 from sympde.core import ProductSpace
 from sympde.core import TestFunction
 from sympde.core import VectorTestFunction
@@ -55,10 +55,10 @@ def test_boundary_2d():
     V2 = FunctionSpace('V2', domain)
     U1 = FunctionSpace('U1', domain)
     U2 = FunctionSpace('U2', domain)
-    W1 = FunctionSpace('W1', domain, is_block=True, shape=2)
-    W2 = FunctionSpace('W2', domain, is_block=True, shape=2)
-    T1 = FunctionSpace('T1', domain, is_block=True, shape=2)
-    T2 = FunctionSpace('T2', domain, is_block=True, shape=2)
+    W1 = VectorFunctionSpace('W1', domain)
+    W2 = VectorFunctionSpace('W2', domain)
+    T1 = VectorFunctionSpace('T1', domain)
+    T2 = VectorFunctionSpace('T2', domain)
 
     v1 = TestFunction(V1, name='v1')
     v2 = TestFunction(V2, name='v2')
@@ -176,10 +176,10 @@ def test_calls_2d():
     V2 = FunctionSpace('V2', domain)
     U1 = FunctionSpace('U1', domain)
     U2 = FunctionSpace('U2', domain)
-    W1 = FunctionSpace('W1', domain, is_block=True, shape=2)
-    W2 = FunctionSpace('W2', domain, is_block=True, shape=2)
-    T1 = FunctionSpace('T1', domain, is_block=True, shape=2)
-    T2 = FunctionSpace('T2', domain, is_block=True, shape=2)
+    W1 = VectorFunctionSpace('W1', domain)
+    W2 = VectorFunctionSpace('W2', domain)
+    T1 = VectorFunctionSpace('T1', domain)
+    T2 = VectorFunctionSpace('T2', domain)
 
     v1 = TestFunction(V1, name='v1')
     v2 = TestFunction(V2, name='v2')
@@ -358,7 +358,7 @@ def test_calls_2d():
     # ...
 
     # ... stokes
-    V = FunctionSpace('V', domain, is_block=True, shape=DIM)
+    V = VectorFunctionSpace('V', domain)
     W = FunctionSpace('W', domain)
 
     v = VectorTestFunction(V, name='v')

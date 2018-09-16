@@ -182,6 +182,7 @@ class Integral(BasicForm):
             tag = random_string( 3 )
             space_name = 'space_{}'.format(tag)
             space = FunctionSpace(space_name, domain)
+            # TODO vector case
 
         measure = _initialize_measure(measure, coordinates)
 
