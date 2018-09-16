@@ -39,6 +39,7 @@ from .derivatives import dx, dy, dz
 from .derivatives import (Grad_1d, Div_1d,
                           Grad_2d, Curl_2d, Rot_2d, Div_2d,
                           Grad_3d, Curl_3d, Div_3d)
+from .derivatives import Bracket_2d
 
 from .basic import _coeffs_registery
 from .basic import CalculusFunction
@@ -46,6 +47,7 @@ from .basic import Field, Constant
 
 from .generic import Dot, Inner, Cross
 from .generic import Grad, Rot, Curl, Div
+from .generic import Bracket
 from .generic import _generic_ops
 
 from .algebra import (Dot_1d,

@@ -36,11 +36,15 @@ class Div(GenericFunction):
 class Inner(GenericFunction):
     pass
 
+class Bracket(GenericFunction):
+    pass
+
 Outer = Dot # TODO add the Outer class Function
 
 # ...
 _generic_ops  = (Dot, Cross, Inner, Outer,
-                 Grad, Curl, Rot, Div)
+                 Grad, Curl, Rot, Div,
+                 Bracket)
 # ...
 
 # ... alias for ufl compatibility
@@ -53,4 +57,6 @@ grad = Grad
 curl = Curl
 rot = Rot
 div = Div
+
+bracket = Bracket
 # ...

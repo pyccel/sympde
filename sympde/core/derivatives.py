@@ -901,6 +901,47 @@ class Div_3d(DivBasic):
 # ...
 
 # ...
+class BracketBasic(CalculusFunction):
+    pass
+
+class Bracket_2d(BracketBasic):
+    """
+
+    Examples
+    ========
+
+    """
+
+    nargs = None
+    name = 'Bracket'
+
+    def __new__(cls, *args, **options):
+        # (Try to) sympify args first
+
+        if options.pop('evaluate', True):
+            r = cls.eval(*args)
+        else:
+            r = None
+
+        if r is None:
+            return Basic.__new__(cls, *args, **options)
+        else:
+            return r
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        u = _args[0]
+        v = _args[1]
+
+        return dx(u)*dy(v) - dy(u)*dx(v)
+# ...
+
+# ...
 def partial_derivative_as_symbol(expr, name=None, dim=None):
     """Returns a Symbol from a partial derivative expression."""
     if not isinstance(expr, _partial_derivatives):

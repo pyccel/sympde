@@ -31,6 +31,10 @@ class LatexPrinter(LatexPrinterSympy):
     def _print_Rot(self, expr):
         return r'\mathrm{rot} ' + self._print(expr.args[0])
 
+    def _print_Bracket(self, expr):
+        u,v = [self._print(i) for i in expr.args]
+        return r'[' + u + ',' + v + ']'
+
     def _print_DifferentialOperator(self, expr):
         coord = self._print(expr.coordinate)
         arg = self._print(expr.args[0])
@@ -184,10 +188,46 @@ class LatexPrinter(LatexPrinterSympy):
         lhs = self._print(expr.lhs)
         rhs = self._print(expr.rhs)
 
-        if expr.is_undefined:
-            return ''
+        prelude  = ''
+        epilogue = ''
+
+        tests, trials = expr.lhs.arguments
+
+        if isinstance(tests, (list, tuple, Tuple)) and len(tests) == 1:
+            tests = tests[0]
+            test_spaces = [u.space for u in tests]
         else:
-            return '{lhs} &= {rhs}'.format(lhs=lhs, rhs=rhs)
+            test_spaces = tests.space
+
+        if isinstance(trials, (list, tuple, Tuple)) and len(trials) == 1:
+            trials = trials[0]
+            trial_spaces = [u.space for u in trials]
+        else:
+            trial_spaces = trials.space
+
+        tests = self._print(tests)
+        trials = self._print(trials)
+        test_spaces = self._print(test_spaces)
+        trial_spaces = self._print(trial_spaces)
+
+#        prelude = 'find {tests} in {spaces} such that'.format(tests=tests,
+#                                                               spaces=spaces)
+
+        prelude = 'find $' + trials + ' \in ' + trial_spaces + '$' + ' such that'
+#        epilogue = r'$\forall ' + tests + ' \in ' + test_spaces + '$'
+        epilogue = r',\quad \forall ' + tests + ' \in ' + test_spaces
+
+        if expr.is_undefined:
+            body = ''
+        else:
+            body = '{lhs} &= {rhs}'.format(lhs=lhs, rhs=rhs)
+
+        code = (prelude + '\n' +
+                r'\begin{align*}' +
+                body +
+                epilogue +
+                r'\end{align*}')
+        return code
 
     def _print_Model(self, expr):
 
@@ -232,13 +272,14 @@ class LatexPrinter(LatexPrinterSympy):
 
         # ...
         if expr.equation:
-            epilogues.append(self._print(expr.equation))
+            equation = self._print(expr.equation)
 
         body += epilogues
         # ...
 
         code = '\n\\\\'.join(body)
         code = '\n' + r'\begin{align*}' + code + '\n' + r'\end{align*}'
+        code += '\n' + equation + '\n'
 
         return code
 
