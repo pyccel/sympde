@@ -226,6 +226,35 @@ class Projection(LambdaEquation):
     def name(self):
         return self._name
 
+class Interpolation(LambdaEquation):
+    def __new__(cls, expr, space, kind='nodal', mapping=None, name=None):
+        raise NotImplementedError('TODO')
+
+        # ...
+        tests = expr.atoms((TestFunction, VectorTestFunction))
+        if tests or not isinstance(expr, Expr):
+            msg = '> Expecting an Expression without test functions'
+            raise UnconsistentArgumentsError(msg)
+        # ...
+
+        # ...
+        if not isinstance(space, FunctionSpace):
+            raise UnconsistentArgumentsError('> Expecting a FunctionSpace')
+        # ...
+
+        # ...
+        if not(kind in ['nodal']):
+            raise ValueError('> Only nodal interpolation is available')
+        # ...
+
+        # ... defining the lhs and rhs
+        V = space
+        # ...
+
+    @property
+    def name(self):
+        return self._name
+
 class Model(Basic):
     """
     Represents a mathematical model.
