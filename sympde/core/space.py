@@ -49,12 +49,7 @@ class BasicFunctionSpace(Basic):
 
     @property
     def coordinates(self):
-        coordinates = self.domain.coordinates
-
-        if self.ldim == 1:
-            return coordinates[0]
-        else:
-            return coordinates
+        return self.domain.coordinates
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -161,13 +156,6 @@ class ProductSpace(FunctionSpace):
     @property
     def shape(self):
         return self._shape
-
-    @property
-    def coordinates(self):
-        if self.ldim == 1:
-            return self._coordinates[0]
-        else:
-            return self._coordinates
 
     def _sympystr(self, printer):
         sstr = printer.doprint

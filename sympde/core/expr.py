@@ -168,8 +168,6 @@ class Integral(BasicForm):
         # ...
         coordinates = domain.coordinates
         ldim = domain.dim
-        if ldim == 1:
-            coordinates = coordinates[0]
         # ...
 
         # compute dim from fields if available

@@ -15,7 +15,14 @@ class BasicDomain(Basic):
     @property
     def coordinates(self):
         dim = self.dim
-        return [Symbol(i) for i in ['x', 'y', 'z'][:dim]]
+        xyz = ['x', 'y', 'z'][:dim]
+        xyz = [Symbol(i) for i in xyz]
+        if dim == 1:
+            return xyz[0]
+        else:
+            return xyz
+
+#        return [Symbol(i) for i in ['x', 'y', 'z'][:dim]]
 
     def _sympystr(self, printer):
         sstr = printer.doprint
