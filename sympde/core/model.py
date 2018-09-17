@@ -110,8 +110,6 @@ class Equation(Basic):
                 msg = '> lhs and rhs must have the same test function. '
                 msg += 'given {lhs} & {rhs}'.format(lhs=u_lhs, rhs=u_rhs)
                 raise UnconsistentArgumentsError(msg)
-
-        unknowns = trials_lhs
         # ...
 
         # ...
@@ -146,7 +144,7 @@ class Equation(Basic):
             # ...
         # ...
 
-        return Basic.__new__(cls, lhs, rhs, unknowns, bc)
+        return Basic.__new__(cls, lhs, rhs, trials_lhs, bc)
 
     @property
     def lhs(self):
@@ -157,12 +155,16 @@ class Equation(Basic):
         return self._args[1]
 
     @property
-    def unknowns(self):
+    def trial_functions(self):
         return self._args[2]
 
     @property
     def bc(self):
         return self._args[3]
+
+    @property
+    def test_functions(self):
+        return self.rhs.arguments
 
     @property
     def is_undefined(self):
@@ -172,7 +174,7 @@ class LambdaEquation(Equation):
 
     @property
     def variables(self):
-        return self.unknowns
+        return self.trial_functions
 
 class Projection(LambdaEquation):
     def __new__(cls, expr, space, kind='l2', mapping=None, bc=None, name=None):
@@ -326,6 +328,9 @@ class Model(Basic):
     @property
     def domain(self):
         return self._domain
+
+    def set_equation(self, *args, **kwargs):
+        self._equation = Equation(*args, **kwargs)
 
     def preview(self, euler=False, packages=None,
                 output='dvi', outputTexFile=None):

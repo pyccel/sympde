@@ -13,7 +13,7 @@ from sympy import Integer, Float
 from sympde.core.expr import BilinearForm, LinearForm, Integral
 from sympde.core.model import Model, Equation
 from sympde.core import grad, dot, inner, cross, rot, curl, div
-from sympde.core import FunctionSpace
+from sympde.core import FunctionSpace, VectorFunctionSpace
 from sympde.core import TestFunction
 from sympde.core import VectorTestFunction
 
@@ -32,7 +32,7 @@ class Stokes(Model):
         # ...
 
         # ... abstract model
-        V = FunctionSpace('V', domain, is_block=True, shape=dim)
+        V = VectorFunctionSpace('V', domain)
         W = FunctionSpace('W', domain)
 
         v = VectorTestFunction(V, name='v')
@@ -45,8 +45,14 @@ class Stokes(Model):
         A = BilinearForm(((v,q),(u,p)), a(v,u) - b(v,p) + b(u,q), name='A')
         # ...
 
-        forms = [a, b, A]
-        equation = Equation(A((v,u),(q,p)), None)
+        # ... rhs as undefined function
+        xyz = domain.coordinates
+        f = Function('f')
+        l = LinearForm((v,q), f(*xyz)*v, name='l')
+        # ...
+
+        forms = [a, b, A, l]
+        equation = Equation(A((v,q),(u,p)), l(v,q))
 
         obj = Model.__new__(cls, domain, forms=forms, equation=equation, **kwargs)
 

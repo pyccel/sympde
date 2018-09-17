@@ -15,6 +15,7 @@ from sympde.core.derivatives import sort_partial_derivatives
 from sympde.core.derivatives import get_index_derivatives
 from sympde.core.derivatives import get_atom_derivatives
 from sympde.core.geometry import Domain
+from sympde.core.space import ProductSpace
 
 class LatexPrinter(LatexPrinterSympy):
 
@@ -143,6 +144,10 @@ class LatexPrinter(LatexPrinterSympy):
     def _print_Domain(self, expr):
         return '{}'.format(self._print(expr.name))
 
+    def _print_ProductSpace(self, expr):
+        spaces = [self._print(i) for i in expr.spaces]
+        return r' \times '.join(spaces)
+
     def _print_FormCall(self, expr):
         form = expr.expr
         name = expr.form_name
@@ -193,28 +198,51 @@ class LatexPrinter(LatexPrinterSympy):
 
         tests, trials = expr.lhs.arguments
 
-        if isinstance(tests, (list, tuple, Tuple)) and len(tests) == 1:
-            tests = tests[0]
-            test_spaces = [u.space for u in tests]
+        # ... we print tests function here, since sympy printing does not look
+        #     nice for a tuple (quad)
+        if isinstance(tests, (list, tuple, Tuple)):
+            if len(tests) == 1:
+                tests = tests[0]
+                test_spaces = tests.space
+
+                tests = self._print(tests)
+
+            else:
+                test_spaces = [u.space for u in tests]
+                test_spaces = ProductSpace(*test_spaces)
+
+                tests = ','.join([self._print(i) for i in tests])
+                tests = '({})'.format(tests)
+
         else:
             test_spaces = tests.space
+            tests = self._print(tests)
+        # ...
 
-        if isinstance(trials, (list, tuple, Tuple)) and len(trials) == 1:
-            trials = trials[0]
-            trial_spaces = [u.space for u in trials]
+        # ...
+        if isinstance(trials, (list, tuple, Tuple)):
+            if len(trials) == 1:
+                trials = trials[0]
+                trial_spaces = trials.space
+
+                trials = self._print(trials)
+
+            else:
+                trial_spaces = [u.space for u in trials]
+                trial_spaces = ProductSpace(*trial_spaces)
+
+                trials = ','.join([self._print(i) for i in trials])
+                trials = '({})'.format(trials)
+
         else:
             trial_spaces = trials.space
+            trials = self._print(trials)
+        # ...
 
-        tests = self._print(tests)
-        trials = self._print(trials)
         test_spaces = self._print(test_spaces)
         trial_spaces = self._print(trial_spaces)
 
-#        prelude = 'find {tests} in {spaces} such that'.format(tests=tests,
-#                                                               spaces=spaces)
-
         prelude = 'find $' + trials + ' \in ' + trial_spaces + '$' + ' such that'
-#        epilogue = r'$\forall ' + tests + ' \in ' + test_spaces + '$'
         epilogue = r',\quad \forall ' + tests + ' \in ' + test_spaces
 
         if expr.is_undefined:

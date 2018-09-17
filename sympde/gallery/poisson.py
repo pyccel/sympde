@@ -36,13 +36,18 @@ class Poisson(Model):
         v = TestFunction(V, name='v')
         u = TestFunction(V, name='u')
 
-        expr = dot(grad(v), grad(u))
-
-        a = BilinearForm((v,u), expr, name='a')
+        a = BilinearForm((v,u), dot(grad(v), grad(u)), name='a')
         # ...
 
-        forms = [a]
-        equation = Equation(a(v,u), None)
+        # ... rhs as undefined function
+        xyz = domain.coordinates
+        f = Function('f')
+        if domain.dim == 1: xyz = [xyz]
+        l = LinearForm(v, f(*xyz)*v, name='l')
+        # ...
+
+        forms = [a, l]
+        equation = Equation(a(v,u), l(v))
 
         obj = Model.__new__(cls, domain, forms=forms, equation=equation, **kwargs)
 
