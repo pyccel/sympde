@@ -1,6 +1,6 @@
 # coding: utf-8
 
-# TODO: - add more tests and asserts
+from collections import OrderedDict
 
 from sympy import symbols
 from sympy import Tuple
@@ -9,28 +9,41 @@ from sympy import srepr
 
 from sympde.core import (dx, dy, dz)
 from sympde.core import grad, dot, inner
-from sympde.core import Field
+from sympde.core import Field, Constant
 from sympde.core import get_index_derivatives_atom
+from sympde.core import partial_derivative_as_str
+from sympde.core import get_max_partial_derivatives
 from sympde.core import FunctionSpace
 from sympde.core import Domain
+
+
+def indices_as_str(a):
+    code = ''
+    for k,n in list(a.items()):
+        code += k*n
+    return code
+
 
 
 # ...
 def test_partial_derivatives_1():
     print('============ test_partial_derivatives_1 ==============')
 
-    x, y, z = symbols('x y z')
-    alpha, beta = symbols('alpha beta')
-
+    # ...
     domain = Domain('Omega', dim=2)
+    x,y = domain.coordinates
 
     V = FunctionSpace('V', domain)
-    F = Field('F', space=V)
 
+    F = Field('F', space=V)
     u = Field('u', space=V)
     v = Field('v', space=V)
     w = Field('w', space=V)
     uvw = Tuple(u,v,w)
+
+    alpha = Constant('alpha')
+    beta = Constant('beta')
+    # ...
 
     # ...
     assert(dx(x**2) == 2*x)
@@ -60,19 +73,52 @@ def test_partial_derivatives_1():
 def test_partial_derivatives_2():
     print('============ test_partial_derivatives_2 ==============')
 
-    x, y, z = symbols('x y z')
-    alpha, beta = symbols('alpha beta')
-
+    # ...
     domain = Domain('Omega', dim=2)
+    x,y = domain.coordinates
 
     V = FunctionSpace('V', domain)
     F = Field('F', space=V)
 
-    expr = alpha * dx(F) + beta * dy(F) + dx(dy(F))
-#    expr = alpha * dx(F)
-    print('> expr = ', expr)
+    alpha = Constant('alpha')
+    beta = Constant('beta')
+    # ...
+
+    # ...
+    expr = alpha * dx(F)
+
+    indices = get_index_derivatives_atom(expr, F)[0]
+    assert(indices_as_str(indices) == 'x')
+    # ...
+
+    # ...
+    expr = dy(dx(F))
+
+    indices = get_index_derivatives_atom(expr, F)[0]
+    assert(indices_as_str(indices) == 'xy')
+    # ...
+
+    # ...
+    expr = alpha * dx(dy(dx(F)))
+
+    indices = get_index_derivatives_atom(expr, F)[0]
+    assert(indices_as_str(indices) == 'xxy')
+    # ...
+
+    # ...
+    expr = alpha * dx(dx(F)) + beta * dy(F) + dx(dy(F))
+
     indices = get_index_derivatives_atom(expr, F)
-    print('> indices = ', indices)
+    indices = [indices_as_str(i) for i in indices]
+    assert(sorted(indices) == ['xx', 'xy', 'y'])
+    # ...
+
+    # ...
+    expr = alpha * dx(dx(F)) + beta * dy(F) + dx(dy(F))
+
+    d = get_max_partial_derivatives(expr, F)
+    assert(indices_as_str(d) == 'xxy')
+    # ...
 
 #    print('> ', srepr(expr))
 #    print('')

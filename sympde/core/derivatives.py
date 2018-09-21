@@ -941,7 +941,7 @@ class Bracket_2d(BracketBasic):
         return dx(u)*dy(v) - dy(u)*dx(v)
 # ...
 
-# ...
+# ... TODO to be removed, not used anymore
 def partial_derivative_as_symbol(expr, name=None, dim=None):
     """Returns a Symbol from a partial derivative expression."""
     if not isinstance(expr, _partial_derivatives):
@@ -978,6 +978,26 @@ def partial_derivative_as_symbol(expr, name=None, dim=None):
 # ...
 
 # ...
+def partial_derivative_as_str(expr):
+    """Returns a string from a partial derivative expression."""
+    if not isinstance(expr, _partial_derivatives):
+        raise TypeError('Expecting a partial derivative expression')
+
+    index = get_index_derivatives(expr)
+    var = get_atom_derivatives(expr)
+
+    if not isinstance(var, (Symbol, Indexed)):
+        print(type(var))
+        raise TypeError('Expecting a Symbol, Indexed')
+
+    code = ''
+    for k,n in list(index.items()):
+        code += k*n
+
+    return code
+# ...
+
+# ...
 def get_index_derivatives_atom(expr, atom, verbose=False):
     """This function return a dictionary of partial derivative indices for
     a given atom.
@@ -996,3 +1016,11 @@ def get_index_derivatives_atom(expr, atom, verbose=False):
 
     return indices
 # ...
+
+def get_max_partial_derivatives(expr, F):
+    indices = get_index_derivatives_atom(expr, F)
+    d = indices[0]
+    for dd in indices[1:]:
+        for k,v in dd.items():
+            if v > d[k]: d[k] = v
+    return d
