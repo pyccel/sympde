@@ -20,6 +20,8 @@ from sympde.core import dx, dy, dz
 from sympde.core import Constant
 from sympde.core import Field
 from sympde.core import grad, dot, inner, cross, rot, curl, div
+from sympde.core import laplace
+from sympde.core import hessian
 from sympde.core import FunctionSpace, VectorFunctionSpace
 from sympde.core import ProductSpace
 from sympde.core import TestFunction
@@ -287,6 +289,23 @@ def test_calls_2d():
     # ...
 
     # ...
+    a1 = BilinearForm((v1, u1), laplace(u1)*laplace(v1), name='a1')
+    print(a1)
+    print(atomize(a1))
+    print(evaluate(a1))
+    print('')
+    # ...
+
+    # ...
+    a1 = BilinearForm((v1, u1), inner(hessian(u1),hessian(v1)), name='a1')
+    print('================================')
+    print(a1)
+    print(atomize(a1))
+    print(evaluate(a1))
+    print('')
+    # ...
+
+    # ...
     l1 = LinearForm(v1, x*y*v1, name='11')
 
     expr = l1(v2)
@@ -510,7 +529,7 @@ def test_norm_2d():
 if __name__ == '__main__':
 
     test_calls_2d()
-    test_boundary_2d()
-    test_equation_2d()
-    test_projection_2d()
-    test_norm_2d()
+#    test_boundary_2d()
+#    test_equation_2d()
+#    test_projection_2d()
+#    test_norm_2d()

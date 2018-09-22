@@ -118,6 +118,9 @@ def test_partial_derivatives_2():
 
     d = get_max_partial_derivatives(expr, F)
     assert(indices_as_str(d) == 'xxy')
+
+    d = get_max_partial_derivatives(expr)
+    assert(indices_as_str(d) == 'xxy')
     # ...
 
 #    print('> ', srepr(expr))

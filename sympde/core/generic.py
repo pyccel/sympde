@@ -39,12 +39,18 @@ class Inner(GenericFunction):
 class Bracket(GenericFunction):
     pass
 
+class Laplace(GenericFunction):
+    pass
+
+class Hessian(GenericFunction):
+    pass
+
 Outer = Dot # TODO add the Outer class Function
 
 # ...
 _generic_ops  = (Dot, Cross, Inner, Outer,
                  Grad, Curl, Rot, Div,
-                 Bracket)
+                 Bracket, Laplace, Hessian)
 # ...
 
 # ... alias for ufl compatibility
@@ -59,4 +65,6 @@ rot = Rot
 div = Div
 
 bracket = Bracket
+laplace = Laplace
+hessian = Hessian
 # ...

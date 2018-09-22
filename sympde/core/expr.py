@@ -40,6 +40,8 @@ from .derivatives import (Grad_1d, Div_1d,
                           Grad_2d, Curl_2d, Rot_2d, Div_2d,
                           Grad_3d, Curl_3d, Div_3d)
 from .derivatives import Bracket_2d
+from .derivatives import Laplace_1d, Laplace_2d, Laplace_3d
+from .derivatives import Hessian_1d, Hessian_2d, Hessian_3d
 
 from .basic import _coeffs_registery
 from .basic import CalculusFunction
@@ -48,6 +50,7 @@ from .basic import Field, Constant
 from .generic import Dot, Inner, Cross
 from .generic import Grad, Rot, Curl, Div
 from .generic import Bracket
+from .generic import Laplace
 from .generic import _generic_ops
 
 from .algebra import (Dot_1d,
@@ -874,7 +877,7 @@ def atomize(expr, dim=None):
         else:
             raise ValueError('> Only traces of order 0 and 1 are available')
 
-    elif isinstance(expr, (Dot, Inner, Cross, Grad, Rot, Curl, Div)):
+    elif isinstance(expr, _generic_ops):
         # if i = Dot(...) then type(i) is Grad
         op = type(expr)
         new  = eval('{0}_{1}d'.format(op, dim))

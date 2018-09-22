@@ -901,6 +901,201 @@ class Div_3d(DivBasic):
 # ...
 
 # ...
+class LaplaceBasic(CalculusFunction):
+    """
+
+    Examples
+    ========
+
+    """
+
+    nargs = None
+    name = 'Laplace'
+
+    def __new__(cls, *args, **options):
+        # (Try to) sympify args first
+
+        if options.pop('evaluate', True):
+            r = cls.eval(*args)
+        else:
+            r = None
+
+        if r is None:
+            return Basic.__new__(cls, *args, **options)
+        else:
+            return r
+
+    def __getitem__(self, indices, **kw_args):
+        if is_sequence(indices):
+            # Special case needed because M[*my_tuple] is a syntax error.
+            return Indexed(self, *indices, **kw_args)
+        else:
+            return Indexed(self, indices, **kw_args)
+
+class Laplace_1d(LaplaceBasic):
+    """
+
+    Examples
+    ========
+
+    """
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        u = _args[0]
+        if isinstance(u, VectorTestFunction):
+            raise NotImplementedError('TODO')
+
+        return dx(dx(u))
+
+class Laplace_2d(LaplaceBasic):
+    """
+
+    Examples
+    ========
+
+    """
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        u = _args[0]
+        if isinstance(u, VectorTestFunction):
+            raise NotImplementedError('TODO')
+
+        return dx(dx(u)) + dy(dy(u))
+
+class Laplace_3d(LaplaceBasic):
+    """
+
+    Examples
+    ========
+
+    """
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        u = _args[0]
+        if isinstance(u, VectorTestFunction):
+            raise NotImplementedError('TODO')
+
+        return dx(dx(u)) + dy(dy(u)) + dz(dz(u))
+# ...
+
+# ...
+class HessianBasic(CalculusFunction):
+    """
+
+    Examples
+    ========
+
+    """
+
+    nargs = None
+    name = 'Hessian'
+
+    def __new__(cls, *args, **options):
+        # (Try to) sympify args first
+
+        if options.pop('evaluate', True):
+            r = cls.eval(*args)
+        else:
+            r = None
+
+        if r is None:
+            return Basic.__new__(cls, *args, **options)
+        else:
+            return r
+
+    def __getitem__(self, indices, **kw_args):
+        if is_sequence(indices):
+            # Special case needed because M[*my_tuple] is a syntax error.
+            return Indexed(self, *indices, **kw_args)
+        else:
+            return Indexed(self, indices, **kw_args)
+
+class Hessian_1d(HessianBasic):
+    """
+
+    Examples
+    ========
+
+    """
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        u = _args[0]
+        if isinstance(u, VectorTestFunction):
+            raise NotImplementedError('TODO')
+
+        return dx(dx(u))
+
+class Hessian_2d(HessianBasic):
+    """
+
+    Examples
+    ========
+
+    """
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        u = _args[0]
+        if isinstance(u, VectorTestFunction):
+            raise NotImplementedError('TODO')
+
+        return Matrix([[dx(dx(u)), dx(dy(u))],
+                       [dx(dy(u)), dy(dy(u))]])
+
+class Hessian_3d(HessianBasic):
+    """
+
+    Examples
+    ========
+
+    """
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        u = _args[0]
+        if isinstance(u, VectorTestFunction):
+            raise NotImplementedError('TODO')
+
+        return Matrix([[dx(dx(u)), dx(dy(u)), dx(dz(u))],
+                       [dx(dy(u)), dy(dy(u)), dy(dz(u))],
+                       [dx(dz(u)), dy(dz(u)), dz(dz(u))]])
+# ...
+
+# ...
 class BracketBasic(CalculusFunction):
     pass
 
@@ -1017,8 +1212,19 @@ def get_index_derivatives_atom(expr, atom, verbose=False):
     return indices
 # ...
 
-def get_max_partial_derivatives(expr, F):
-    indices = get_index_derivatives_atom(expr, F)
+def get_max_partial_derivatives(expr, F=None):
+    if F is None:
+        Fs = (list(expr.atoms(TestFunction)) +
+              list(expr.atoms(VectorTestFunction)) +
+              list(expr.atoms(IndexedTestTrial)) +
+              list(expr.atoms(Field)))
+
+        indices = []
+        for F in Fs:
+            indices += get_index_derivatives_atom(expr, F)
+    else:
+        indices = get_index_derivatives_atom(expr, F)
+
     d = indices[0]
     for dd in indices[1:]:
         for k,v in dd.items():
