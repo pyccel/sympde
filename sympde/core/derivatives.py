@@ -1225,8 +1225,8 @@ def get_max_partial_derivatives(expr, F=None):
     else:
         indices = get_index_derivatives_atom(expr, F)
 
-    d = indices[0]
-    for dd in indices[1:]:
+    d = {'x':0, 'y':0, 'z':0}
+    for dd in indices:
         for k,v in dd.items():
             if v > d[k]: d[k] = v
     return d
