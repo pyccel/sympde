@@ -6,23 +6,24 @@ from sympy.tensor import IndexedBase
 
 class BasicDomain(Basic):
     _dim = None
+    _coordinates = None
 
     @property
     def dim(self):
         return self._dim
 
-    # TODO improve
     @property
     def coordinates(self):
         dim = self.dim
-        xyz = ['x', 'y', 'z'][:dim]
-        xyz = [Symbol(i) for i in xyz]
-        if dim == 1:
-            return xyz[0]
-        else:
-            return xyz
+        if self._coordinates is None:
+            xyz = ['x', 'y', 'z'][:dim]
+            xyz = [Symbol(i) for i in xyz]
+            self._coordinates = xyz
 
-#        return [Symbol(i) for i in ['x', 'y', 'z'][:dim]]
+        if dim == 1:
+            return self._coordinates[0]
+        else:
+            return self._coordinates
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -141,8 +142,11 @@ class Line(BasicDomain):
 
     """
     _dim = 1
-    def __new__(cls, xmin=0, xmax=1):
-        return Basic.__new__(cls, Tuple(xmin, xmax))
+    def __new__(cls, xmin=0, xmax=1, coordinate=None):
+        obj = Basic.__new__(cls, Tuple(xmin, xmax))
+        if coordinate:
+            obj._coordinates = [coordinate]
+        return obj
 
     @property
     def bounds(self):

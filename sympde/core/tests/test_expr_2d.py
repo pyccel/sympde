@@ -525,11 +525,36 @@ def test_norm_2d():
     print('> l2 norm = ', evaluate(l2_norm_u))
     print('> l2 norm = ', evaluate(h1_norm_u))
 
+# ...
+def test_tensorize_2d():
+    print('============ test_tensorize_2d =============')
+
+    V = FunctionSpace('V', domain)
+    U = FunctionSpace('U', domain)
+
+    v = TestFunction(V, name='v')
+    u = TestFunction(U, name='u')
+
+    x,y = domain.coordinates
+
+    alpha = Constant('alpha')
+
+    # ...
+    expr = dot(grad(v), grad(u))
+    a = BilinearForm((v,u), expr, name='a')
+    print(a)
+    print(tensorize(a))
+    print('')
+#    import sys; sys.exit(0)
+    # ...
+
 # .....................................................
 if __name__ == '__main__':
 
-    test_calls_2d()
+#    test_calls_2d()
 #    test_boundary_2d()
 #    test_equation_2d()
 #    test_projection_2d()
 #    test_norm_2d()
+    test_tensorize_2d()
+

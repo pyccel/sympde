@@ -442,11 +442,6 @@ class BilinearAtomicForm(BilinearForm, AtomicExpr):
     Examples
 
     """
-    _name = None
-
-    @property
-    def name(self):
-        return self._name
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -466,13 +461,12 @@ class Mass(BilinearAtomicForm):
     Examples
 
     """
-    _name = 'Mass'
     def __new__(cls, test, trial):
 
         test_trial = [test, trial]
         expr = test * trial
 
-        return BilinearForm.__new__(cls, test_trial, expr)
+        return BilinearForm.__new__(cls, test_trial, expr, name='Mass')
 
 class Stiffness(BilinearAtomicForm):
     """
@@ -480,7 +474,6 @@ class Stiffness(BilinearAtomicForm):
     Examples
 
     """
-    _name = 'Stiffness'
     def __new__(cls, test, trial):
 
         test_trial = [test, trial]
@@ -495,7 +488,7 @@ class Stiffness(BilinearAtomicForm):
 
         expr = d(test) * d(trial)
 
-        return BilinearForm.__new__(cls, test_trial, expr)
+        return BilinearForm.__new__(cls, test_trial, expr, name='Stiffness')
 
 class Advection(BilinearAtomicForm):
     """
@@ -503,7 +496,6 @@ class Advection(BilinearAtomicForm):
     Examples
 
     """
-    _name = 'Advection'
     def __new__(cls, test, trial):
 
         test_trial = [test, trial]
@@ -518,7 +510,7 @@ class Advection(BilinearAtomicForm):
 
         expr = test * d(trial)
 
-        return BilinearForm.__new__(cls, test_trial, expr)
+        return BilinearForm.__new__(cls, test_trial, expr, name='Advection')
 
 class AdvectionT(BilinearAtomicForm):
     """
@@ -526,7 +518,6 @@ class AdvectionT(BilinearAtomicForm):
     Examples
 
     """
-    _name = 'AdvectionT'
     def __new__(cls, test, trial):
 
         test_trial = [test, trial]
@@ -541,7 +532,7 @@ class AdvectionT(BilinearAtomicForm):
 
         expr = d(test) * trial
 
-        return BilinearForm.__new__(cls, test_trial, expr)
+        return BilinearForm.__new__(cls, test_trial, expr, name='AdvectionT')
 
 
 class Kron(BilinearAtomicForm):
@@ -1255,6 +1246,7 @@ def _tensorize_core(expr, dim, tests, trials):
 
         d_atoms = {}
         _coordinates = ['x', 'y', 'z']
+        _coordinates = [Symbol(i) for i in _coordinates]
         test_trial = list(tests) + list(trials)
         for a in test_trial:
             d_atoms[a] = []
@@ -1262,9 +1254,9 @@ def _tensorize_core(expr, dim, tests, trials):
             new = S.One
             for i in range(0, dim):
                 coord = _coordinates[i]
+                Di = Line(coordinate=coord)
                 Vi = FunctionSpace('V_{}'.format(i),
-                                       domain=Line(),
-                                       coordinates=[coord])
+                                       domain=Di)
 
                 ai = TestFunction(Vi, '{test}{i}'.format(test=a.name, i=i))
                 d_atoms[a].append(ai)
@@ -1318,10 +1310,8 @@ def _tensorize_core(expr, dim, tests, trials):
             expr = expr.subs({old: new})
             # ...
 
-
         expr = subs_mul(expr)
         # ...
-
 
     return expr
 
@@ -1353,9 +1343,8 @@ def tensorize(a):
         v = tests[0]
         u = trials[0]
 
-        from sympde.core import FunctionSpace
-        V = FunctionSpace(V.name, V.domain, coordinates=[i.name for i in V.coordinates])
-        U = FunctionSpace(U.name, U.domain, coordinates=[i.name for i in U.coordinates])
+        V = FunctionSpace(V.name, V.domain)
+        U = FunctionSpace(U.name, U.domain)
 
         vv = TestFunction(V, name=v.name*2)
         uu = TestFunction(U, name=u.name*2)
