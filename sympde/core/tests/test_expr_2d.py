@@ -539,13 +539,21 @@ def test_tensorize_2d():
 
     alpha = Constant('alpha')
 
+#    # ...
+#    expr = dot(grad(v), grad(u))
+#    a = BilinearForm((v,u), expr, name='a')
+#    print(a)
+#    print(tensorize(a))
+#    print('')
+#    # ...
+
     # ...
-    expr = dot(grad(v), grad(u))
+#    expr = x*dx(v)*dx(u) + y*dy(v)*dy(u)
+    expr = sin(x)*dx(v)*dx(u)
     a = BilinearForm((v,u), expr, name='a')
     print(a)
     print(tensorize(a))
     print('')
-#    import sys; sys.exit(0)
     # ...
 
 # .....................................................

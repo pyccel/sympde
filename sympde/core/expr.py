@@ -1315,6 +1315,63 @@ def _tensorize_core(expr, dim, tests, trials):
 
     return expr
 
+def _tensorize_weights(expr):
+
+    if isinstance(expr, Add):
+        args = []
+        for term in expr.args:
+            print('> ', term, type(term))
+            arg = _tensorize_weights(term)
+            args.append(arg)
+        expr = Add(*args)
+
+    elif isinstance(expr, Mul):
+        args = []
+        for term in expr.args:
+#            print('>> ', term, type(term))
+            arg = _tensorize_weights(term)
+            args.append(arg)
+
+        tensor = [a for a in args if isinstance(a, TensorProduct)]
+        weights = [a for a in args if not( a in tensor )]
+
+        tensor = tensor[0]
+        forms = tensor.args
+
+        coords = [a.coordinates for a in forms]
+
+        print(forms)
+        print(coords)
+        print(weights)
+
+        # ...
+        d_args = {}
+        for x in coords:
+            d_args[x] = []
+
+        for x in coords:
+            for a in weights:
+                # TODO improve for functions => separability
+                ls = a.atoms(Symbol)
+                if x in ls:
+                    print('found ', x, ' in ', a)
+        # ...
+
+        expr = Mul(*args)
+
+    elif isinstance(expr, TensorProduct):
+        args = []
+        for term in expr.args:
+#            print('>>> ', term, type(term))
+            arg = _tensorize_weights(term)
+            if not( arg is S.One ):
+                args.append(arg)
+            if isinstance(term, BilinearAtomicForm):
+                coords = term.domain.coordinates
+                print(coords)
+        expr = TensorProduct(*args)
+
+    return expr
 
 def tensorize(a):
 
@@ -1371,6 +1428,9 @@ def tensorize(a):
         expr = atomize(expr)
         expr = _tensorize_core(expr, dim, tests, trials)
     # ...
+
+#    # looking for weighted atomic forms
+#    expr = _tensorize_weights(expr)
 
     return expr
 
