@@ -544,71 +544,28 @@ class AdvectionT(BilinearAtomicForm):
         return BilinearForm.__new__(cls, test_trial, expr)
 
 
-class Kron(BilinearAtomicForm):
+class TensorProduct(BilinearAtomicForm):
 
     """."""
 
-    def __new__(cls, ls):
+    is_commutative = False
+    _name = 'kron'
 
-        ln = len(ls)
-        dim = len(ls[0])
-        obj = Basic.__new__(cls, ls)
-        if dim >= 3:
+    def __new__(cls, *args):
+
+        for arg in args:
+            if not isinstance(arg, BilinearAtomicForm):
+                raise TypeError('args must be of type BilinearAtomicForm')
+
+        if len(args)>2:
             raise NotImplementedError('TODO')
+        
+        return Basic.__new__(*args)
 
-        args1 = ['A%s'%i for i in range(ln)]
-        args2 = ['B%s'%i for i in range(ln)]
-        try:
-            import importlib
-            package = importlib.import_module("sympde.codegen.templates.kron")
-        except:
-            raise ImportError('could not import kron_dot')
-        name = 'kron_dot_2d'
-        template = getattr(package,name)
-        body = [template['body'].format(MAT1=args1[i],MAT2=args2[i]) for i in range(ln)]
-        body = '\n'.join(i for i in body)
-        args = ','.join(arg for arg in args1+args2)
-        function = template['function'].format(___MAT_ARGS___=args,__BODY__=body)
-        args_types = ','.join('double[:,:]' for i in range(2*ln))
-        header = template['header'].format(__ARGS_TYPES__=args_types)
-        dot = compile(function,'','single')
-        dic = {}
-        eval(dot,dic)
-        _dot = dic[name]
-        setattr(obj, '_dot',_dot)
-        return obj
-
+    
     @property
-    def args(self):
-        return self._args[0]
-
-    def dot(self, x):
-        space = x.space
-        args = list(zip(*self.args))
-        args1 = args[0]
-        args2 = args[1]
-        args1 = [arg._data for arg in args1]
-        args2 = [arg._data for arg in args2]
-        #args1 = [arg._data.T for arg in args1]
-        #args2 = [arg._data.T for arg in args2]
-        starts = space.starts
-        ends   = space.ends
-        pads   = space.pads
-
-        from spl.linalg.stencil import StencilVector
-        Y      = StencilVector(space)
-        X_tmp  = StencilVector(space)
-        #self._dot(starts,ends,pads,x._data.T,Y._data.T,X_tmp._data.T,*args1,*args2)
-        args = list(args1) + list(args2)
-        self._dot(starts,ends,pads,x._data,Y._data,X_tmp._data,*args)
-        return Y
-
-
-    def __str__(self):
-        return 'Kron'
-
-    def _sympystr(self, printer):
-        return 'Kron'
+    def dim(self):
+        return len(self.args)
 
 
 class FormCall(AtomicExpr):
