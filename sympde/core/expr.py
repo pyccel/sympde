@@ -19,11 +19,9 @@ from sympy.core.containers import Tuple
 from sympy import preorder_traversal
 from sympy import Indexed, IndexedBase, Matrix, ImmutableDenseMatrix
 from sympy.matrices.dense import MutableDenseMatrix
-from sympy.physics.quantum import TensorProduct
 from sympy import expand
 from sympy import Integer, Float
 from sympy.core.expr import AtomicExpr
-from sympy.physics.quantum import TensorProduct
 
 from .utils import random_string
 from .measure import CanonicalMeasure
@@ -549,18 +547,15 @@ class TensorProduct(BilinearAtomicForm):
     """."""
 
     is_commutative = False
-    _name = 'kron'
+    _name = 'tensorproduct'
 
     def __new__(cls, *args):
 
         for arg in args:
             if not isinstance(arg, BilinearAtomicForm):
                 raise TypeError('args must be of type BilinearAtomicForm')
-
-        if len(args)>2:
-            raise NotImplementedError('TODO')
         
-        return Basic.__new__(*args)
+        return BilinearForm.__new__(*args)
 
     
     @property
@@ -1208,7 +1203,7 @@ def _tensorize_core(expr, dim, tests, trials):
 
     elif isinstance(expr, Mul):
         coeffs  = [i for i in expr.args if isinstance(i, _coeffs_registery)]
-        args = [i for i in expr.args if not(i in coeffs)]
+        args    = [i for i in expr.args if not(i in coeffs)]
 
         d_atoms = {}
         _coordinates = ['x', 'y', 'z']
