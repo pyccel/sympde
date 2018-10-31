@@ -1320,7 +1320,7 @@ def _tensorize_weights(expr):
     if isinstance(expr, Add):
         args = []
         for term in expr.args:
-            print('> ', term, type(term))
+            #print('> ', term, type(term))
             arg = _tensorize_weights(term)
             args.append(arg)
         expr = Add(*args)
@@ -1335,27 +1335,29 @@ def _tensorize_weights(expr):
         tensor = [a for a in args if isinstance(a, TensorProduct)]
         weights = [a for a in args if not( a in tensor )]
 
-        tensor = tensor[0]
-        forms = tensor.args
+        if tensor:
 
-        coords = [a.coordinates for a in forms]
+            tensor = tensor[0]
+            forms = tensor.args
 
-        print(forms)
-        print(coords)
-        print(weights)
+            coords = [a.coordinates for a in forms]
 
-        # ...
-        d_args = {}
-        for x in coords:
-            d_args[x] = []
+    #        print(forms)
+    #        print(coords)
+    #        print(weights)
 
-        for x in coords:
-            for a in weights:
-                # TODO improve for functions => separability
-                ls = a.atoms(Symbol)
-                if x in ls:
-                    print('found ', x, ' in ', a)
-        # ...
+    #        # ...
+    #        d_args = {}
+    #        for x in coords:
+    #            d_args[x] = []
+    #
+    #        for x in coords:
+    #            for a in weights:
+    #                # TODO improve for functions => separability
+    #                ls = a.atoms(Symbol)
+    #                if x in ls:
+    #                    print('found ', x, ' in ', a)
+    #        # ...
 
         expr = Mul(*args)
 
@@ -1368,7 +1370,7 @@ def _tensorize_weights(expr):
                 args.append(arg)
             if isinstance(term, BilinearAtomicForm):
                 coords = term.domain.coordinates
-                print(coords)
+                #print(coords)
         expr = TensorProduct(*args)
 
     return expr
@@ -1429,8 +1431,8 @@ def tensorize(a):
         expr = _tensorize_core(expr, dim, tests, trials)
     # ...
 
-#    # looking for weighted atomic forms
-#    expr = _tensorize_weights(expr)
+    # looking for weighted atomic forms
+    expr = _tensorize_weights(expr)
 
     return expr
 
