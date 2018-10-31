@@ -531,26 +531,46 @@ def test_tensorize_2d():
 
     V = FunctionSpace('V', domain)
     U = FunctionSpace('U', domain)
+    W1 = VectorFunctionSpace('W1', domain)
+    T1 = VectorFunctionSpace('T1', domain)
 
     v = TestFunction(V, name='v')
     u = TestFunction(U, name='u')
+    w1 = VectorTestFunction(W1, name='w1')
+    t1 = VectorTestFunction(T1, name='t1')
 
     x,y = domain.coordinates
 
     alpha = Constant('alpha')
 
-#    # ...
-#    expr = dot(grad(v), grad(u))
-#    a = BilinearForm((v,u), expr, name='a')
-#    print(a)
-#    print(tensorize(a))
-#    print('')
-#    # ...
+    # ...
+    expr = dot(grad(v), grad(u))
+    a = BilinearForm((v,u), expr, name='a')
+    print(a)
+    print(tensorize(a))
+    print('')
+    # ...
 
     # ...
-#    expr = x*dx(v)*dx(u) + y*dy(v)*dy(u)
+    expr = x*dx(v)*dx(u) + y*dy(v)*dy(u)
+    a = BilinearForm((v,u), expr, name='a')
+    print(a)
+    print(tensorize(a))
+    print('')
+    # ...
+
+    # ...
     expr = sin(x)*dx(v)*dx(u)
     a = BilinearForm((v,u), expr, name='a')
+    print(a)
+    print(tensorize(a))
+    print('')
+    # ...
+
+    # ...
+#    expr = rot(w1)*rot(t1) + div(w1)*div(t1)
+    expr = rot(w1)*rot(t1) #+ div(w1)*div(t1)
+    a = BilinearForm((w1, t1), expr, name='a')
     print(a)
     print(tensorize(a))
     print('')

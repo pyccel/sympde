@@ -1255,8 +1255,7 @@ def _tensorize_core(expr, dim, tests, trials):
             for i in range(0, dim):
                 coord = _coordinates[i]
                 Di = Line(coordinate=coord)
-                Vi = FunctionSpace('V_{}'.format(i),
-                                       domain=Di)
+                Vi = FunctionSpace('V_{}'.format(i), domain=Di)
 
                 ai = TestFunction(Vi, '{test}{i}'.format(test=a.name, i=i))
                 d_atoms[a].append(ai)
@@ -1366,8 +1365,8 @@ def _tensorize_weights(expr):
         for term in expr.args:
 #            print('>>> ', term, type(term))
             arg = _tensorize_weights(term)
-            if not( arg is S.One ):
-                args.append(arg)
+#            if not( arg is S.One ):
+#                args.append(arg)
             if isinstance(term, BilinearAtomicForm):
                 coords = term.domain.coordinates
                 #print(coords)
@@ -1381,58 +1380,86 @@ def tensorize(a):
         raise TypeError('Expecting a BilinearForm')
 
     dim = a.ldim
-    expr = a.expr
+    domain = a.domain
     tests = a.test_functions
     trials = a.trial_functions
 
-    # ... TODO this is not the best thing to do
-    #          we should modify matricize and call it here
-    e = evaluate(a)
-    if isinstance(e, (Matrix, ImmutableDenseMatrix)):
+    assert(len(a.test_spaces) == 1)
+    assert(len(a.trial_spaces) == 1)
+    assert(len(tests) == 1)
+    assert(len(trials) == 1)
 
-        assert(len(a.test_spaces) == 1)
-        assert(len(a.trial_spaces) == 1)
+    V = a.test_spaces[0]
+    U = a.trial_spaces[0]
 
-        assert(len(tests) == 1)
-        assert(len(trials) == 1)
+    # the result of evaluate is a list of KernelExpression
+    kernels = evaluate(a)
+    kernels = [i.expr for i in kernels]
 
-        V = a.test_spaces[0]
-        U = a.trial_spaces[0]
+    expressions = []
+    for kernel in kernels:
+        if isinstance(kernel, (Matrix, ImmutableDenseMatrix)):
 
-        v = tests[0]
-        u = trials[0]
+            n_rows, n_cols = kernel.shape
 
-        V = FunctionSpace(V.name, V.domain)
-        U = FunctionSpace(U.name, U.domain)
+            # ... subs indexed test/trial functions by a new symbol
+            tmp_tests = []
+            tmp_trials = []
+            for i_row in range(0, n_rows):
+                for i_col in range(0, n_cols):
+                    e = kernel[i_row,i_col]
+                    indexed = e.atoms(IndexedTestTrial)
+                    for ui in indexed:
+                        i = ui.indices
+                        if len(i) > 1:
+                            raise ValueError('Expecting one index')
+                        i = i[0]
 
-        vv = TestFunction(V, name=v.name*2)
-        uu = TestFunction(U, name=u.name*2)
+                        space_name = 'VTmp{}'.format(i)
+                        Vi = FunctionSpace(space_name, V.domain)
+                        vi = TestFunction(Vi, '{test}{i}'.format(test=ui.base.name, i=i))
+                        e = e.subs({ui: vi})
 
-        tests = [TestFunction(V, name=i.name*2) for i in tests]
-        trials = [TestFunction(U, name=i.name*2) for i in trials]
+                        if ui.base in tests:
+                            tmp_tests.append(vi)
 
-        print(e)
-        raise NotImplementedError('inv_normalize has been removed')
-#        expr = inv_normalize(e, {v: vv, u: uu})
-        print(expr)
-        n_rows, n_cols = expr.shape
-        lines = []
-        for i in range(0, n_rows):
-            line = []
-            for j in range(0, n_cols):
-                eij = _tensorize_core(expr[i,j], dim, tests, trials)
-                line.append(eij)
-            lines.append(line)
-        expr = Matrix(lines)
+                        elif ui.base in trials:
+                            tmp_trials.append(vi)
 
-    else:
+                    kernel[i_row,i_col] = e
+            # ...
 
-        expr = atomize(expr)
-        expr = _tensorize_core(expr, dim, tests, trials)
+            # ...
+            lines = []
+            for i_row in range(0, n_rows):
+                line = []
+                for i_col in range(0, n_cols):
+                    e = kernel[i_row,i_col]
+
+                    atoms = e.atoms(TestFunction)
+                    _tests = [i for i in atoms if i in tmp_tests]
+                    _trials = [i for i in atoms if i in tmp_trials]
+
+                    eij = _tensorize_core(e, dim, _tests, _trials)
+
+                    line.append(eij)
+
+                lines.append(line)
+
+            expr = Matrix(lines)
+            # ...
+
+        else:
+            expr = _tensorize_core(kernel, dim, tests, trials)
+
+        expressions.append(expr)
     # ...
 
+    # TODO
     # looking for weighted atomic forms
-    expr = _tensorize_weights(expr)
+    # this should be done if a flag is True
+    # and used for LinearOperator Kron
+#    expr = _tensorize_weights(expr)
 
     return expr
 
@@ -1444,8 +1471,14 @@ def subs_mul(expr):
         args = [subs_mul(arg) for arg in args]
 
         if isinstance(expr, Mul):
+            args = expr.args
+            forms = [i for i in args if isinstance(i, BilinearAtomicForm)]
+            others = [i for i in args if not( i in forms )]
 
-            return TensorProduct(*args)
+            t = TensorProduct(*forms)
+            m = Mul(*others)
+            return m*t
+
         elif isinstance(expr, Add):
 
             return Add(*args)
