@@ -81,8 +81,8 @@ class PythonCodePrinter(SympyPythonCodePrinter):
     def _print_FunctionalSum(self, expr):
         result     = expr.expr
         targets    = expr.loops
-        indexes    = expr.indexes
-        generators = ['{} in {}'.format(self._print(indexes[i]),
+        indices    = expr.indices
+        generators = ['{} in {}'.format(self._print(indices[i]),
                        self._print(targets[i])) for i in range(len(targets))]
         generators = ' ',join(i for i in generators)
         return 'sum({} {})'.format(self._print(result), generators)
