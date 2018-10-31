@@ -1379,6 +1379,83 @@ def tensorize(a):
     if not isinstance(a, BilinearForm):
         raise TypeError('Expecting a BilinearForm')
 
+    # ...
+    def _get_size_and_starts(ls):
+        n = 0
+        d_indices = {}
+        for x in ls:
+            d_indices[x] = n
+            if isinstance(x, TestFunction):
+                n += 1
+
+            elif isinstance(x, VectorTestFunction):
+                for j in range(0, x.shape[0]):
+                    d_indices[x[j]] = n + j
+
+                n += x.shape[0]
+
+        return n, d_indices
+    # ...
+
+    if is_sum_of_form_calls(a.expr):
+        # ...
+        n_rows, test_indices = _get_size_and_starts(a.test_functions)
+        n_cols, trial_indices = _get_size_and_starts(a.trial_functions)
+
+        lines = []
+        for i in range(0, n_rows):
+            line = []
+            for j in range(0, n_cols):
+                line.append(0)
+            lines.append(line)
+
+        M = Matrix(lines)
+        # ...
+
+        calls = a.atoms(FormCall)
+        for call in calls:
+            t = tensorize(call.expr)
+
+            atoms = call.arguments
+            i_row = None
+            i_col = None
+            l_row = 1
+            l_col = 1
+            for atom in atoms:
+                if atom in test_indices:
+                    i_row = test_indices[atom]
+
+                    if isinstance(atom, VectorTestFunction):
+                        l_row = atom.shape[0]
+
+                elif atom in trial_indices:
+                    i_col = trial_indices[atom]
+
+                    if isinstance(atom, VectorTestFunction):
+                        l_col = atom.shape[0]
+
+                else:
+                    raise ValueError('> Could not find {}'.format(atom))
+
+            if isinstance(t, (Matrix, ImmutableDenseMatrix)):
+                M_loc = M[i_row:i_row+l_row, i_col:i_col+l_col]
+                if M_loc.shape == t.shape:
+                    M_loc += t
+
+                # TODO must check if a trial/test is used as test/trial
+                elif M_loc.shape == t.shape[::-1]:
+                    M_loc += t.transpose()
+
+                else:
+                    raise ValueError('Wrong sizes')
+
+                M[i_row:i_row+l_row, i_col:i_col+l_col] += M_loc
+
+            else:
+                raise NotImplementedError('TODO')
+
+        return M
+
     dim = a.ldim
     domain = a.domain
     tests = a.test_functions
@@ -1428,6 +1505,9 @@ def tensorize(a):
 
                     kernel[i_row,i_col] = e
             # ...
+
+            tmp_tests += [i for i in tests if not(i in tmp_tests)]
+            tmp_trials += [i for i in trials if not(i in tmp_trials)]
 
             # ...
             lines = []

@@ -576,13 +576,34 @@ def test_tensorize_2d():
     print('')
     # ...
 
+# ...
+def test_tensorize_2d_stokes():
+    # ... abstract model
+    V = VectorFunctionSpace('V', domain)
+    W = FunctionSpace('W', domain)
+
+    v = VectorTestFunction(V, name='v')
+    u = VectorTestFunction(V, name='u')
+    p = TestFunction(W, name='p')
+    q = TestFunction(W, name='q')
+
+    a = BilinearForm((v,u), inner(grad(v), grad(u)), name='a')
+    b = BilinearForm((v,p), div(v)*p, name='b')
+    A = BilinearForm(((v,q),(u,p)), a(v,u) - b(v,p) + b(u,q), name='A')
+    # ...
+
+    print(A)
+    print(tensorize(A))
+    print('')
+
 # .....................................................
 if __name__ == '__main__':
 
-#    test_calls_2d()
-#    test_boundary_2d()
-#    test_equation_2d()
-#    test_projection_2d()
-#    test_norm_2d()
+    test_calls_2d()
+    test_boundary_2d()
+    test_equation_2d()
+    test_projection_2d()
+    test_norm_2d()
     test_tensorize_2d()
+    test_tensorize_2d_stokes()
 

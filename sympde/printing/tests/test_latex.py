@@ -4,13 +4,14 @@ from sympy import sin, cos, pi
 
 from sympde.core import dx, dy, dz
 from sympde.core import grad, dot, inner, cross, rot, curl, div
-from sympde.core import FunctionSpace
+from sympde.core import FunctionSpace, VectorFunctionSpace
 from sympde.core import TestFunction
 from sympde.core import VectorTestFunction
 from sympde.core import BilinearForm, LinearForm, Integral
 from sympde.core import Field
 from sympde.core import Domain, Boundary, NormalVector, TangentVector
 from sympde.core import Trace, trace_0, trace_1
+from sympde.core import tensorize
 from sympde.printing.latex import latex
 
 
@@ -195,6 +196,30 @@ def test_latex_2d_3():
     print('')
     # ...
 
+def test_latex_2d_4():
+    DIM = 2
+
+    domain = Domain('Omega', dim=DIM)
+
+    # ... abstract model
+    V = VectorFunctionSpace('V', domain)
+    W = FunctionSpace('W', domain)
+
+    v = VectorTestFunction(V, name='v')
+    u = VectorTestFunction(V, name='u')
+    p = TestFunction(W, name='p')
+    q = TestFunction(W, name='q')
+
+    a = BilinearForm((v,u), inner(grad(v), grad(u)), name='a')
+    b = BilinearForm((v,p), div(v)*p, name='b')
+    A = BilinearForm(((v,q),(u,p)), a(v,u) - b(v,p) + b(u,q), name='A')
+    # ...
+
+    print(latex(A))
+    print(latex(tensorize(A)))
+    print('')
+    # ...
+
 
 ####################
 if __name__ == '__main__':
@@ -207,5 +232,6 @@ if __name__ == '__main__':
 
 #    test_latex_model_2d_1()
 
-    test_latex_2d_3()
+#    test_latex_2d_3()
+    test_latex_2d_4()
 
