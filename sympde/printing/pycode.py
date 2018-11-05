@@ -13,6 +13,7 @@ from sympde.core.generic import Dot, Inner, Cross
 from sympde.core.generic import Grad, Rot, Curl, Div
 from sympde.core.geometry import Line, Square, Cube
 from sympde.core.derivatives import _partial_derivatives
+from sympde.core.derivatives import print_expression
 
 
 class PythonCodePrinter(SympyPythonCodePrinter):
@@ -177,19 +178,37 @@ class PythonCodePrinter(SympyPythonCodePrinter):
     # ...........................
 
 
-
-
+    # ... TODO improve
     def _print_dx(self, expr):
-        arg = self._print(expr.args[0])
-        return arg + '_x'
+        arg = expr.args[0]
+        if isinstance(arg, _partial_derivatives):
+            arg = print_expression(arg, mapping_name=False)
+
+        else:
+            arg = self._print(arg) + '_'
+
+        return arg + 'x'
 
     def _print_dy(self, expr):
-        arg = self._print(expr.args[0])
-        return arg + '_y'
+        arg = expr.args[0]
+        if isinstance(arg, _partial_derivatives):
+            arg = print_expression(arg, mapping_name=False)
+
+        else:
+            arg = self._print(arg) + '_'
+
+        return arg + 'y'
 
     def _print_dz(self, expr):
-        arg = self._print(expr.args[0])
-        return arg + '_z'
+        arg = expr.args[0]
+        if isinstance(arg, _partial_derivatives):
+            arg = print_expression(arg, mapping_name=False)
+
+        else:
+            arg = self._print(arg) + '_'
+
+        return arg + 'z'
+    # ...
 
     def _print_IndexedTestTrial(self, expr):
         base = self._print(expr.base)

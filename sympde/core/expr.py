@@ -534,6 +534,28 @@ class AdvectionT(BilinearAtomicForm):
 
         return BilinearForm.__new__(cls, test_trial, expr, name='AdvectionT')
 
+class Bilaplacian(BilinearAtomicForm):
+    """
+
+    Examples
+
+    """
+    def __new__(cls, test, trial):
+
+        test_trial = [test, trial]
+
+        coordl = test.space.coordinates.name
+        coordr = trial.space.coordinates.name
+        if not(coordl == coordr):
+            raise ValueError('> Incompatible coordinates')
+
+        ops = {'x': dx, 'y': dy, 'z': dz}
+        d = ops[coordl]
+
+        expr = d(d(test)) * d(d(trial))
+
+        return BilinearForm.__new__(cls, test_trial, expr, name='Bilaplacian')
+
 
 class Kron(BilinearAtomicForm):
 
@@ -1305,6 +1327,13 @@ def _tensorize_core(expr, dim, tests, trials):
             # ... Transpose of Advection
             old = d(vi)*ui
             new = AdvectionT(vi,ui)
+
+            expr = expr.subs({old: new})
+            # ...
+
+            # ... Bilaplacian
+            old = d(d(vi))*d(d(ui))
+            new = Bilaplacian(vi,ui)
 
             expr = expr.subs({old: new})
             # ...
