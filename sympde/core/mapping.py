@@ -14,19 +14,19 @@ from sympy import Integer, Float
 from sympy import Indexed, IndexedBase, Matrix, ImmutableDenseMatrix
 from sympy import simplify
 
-from .basic import BasicMapping
-from .derivatives import dx, dy, dz
-from .derivatives import (Grad_1d, Div_1d,
-                          Grad_2d, Curl_2d, Rot_2d, Div_2d,
-                          Grad_3d, Curl_3d, Div_3d)
-from .generic import Dot, Inner, Cross
-from .generic import Grad, Rot, Curl, Div
-from .generic import _generic_ops
-from .geometry import Domain
+from sympde.core.basic import BasicMapping
+from sympde.core.derivatives import dx, dy, dz
+from sympde.core.derivatives import (Grad_1d, Div_1d,
+                                     Grad_2d, Curl_2d, Rot_2d, Div_2d,
+                                     Grad_3d, Curl_3d, Div_3d)
+from sympde.core.generic import Dot, Inner, Cross
+from sympde.core.generic import Grad, Rot, Curl, Div
+from sympde.core.generic import _generic_ops
+from sympde.core.geometry import Domain
 
-from .algebra import (Dot_1d,
-                      Dot_2d, Inner_2d, Cross_2d,
-                      Dot_3d, Inner_3d, Cross_3d)
+from sympde.core.algebra import (Dot_1d,
+                                 Dot_2d, Inner_2d, Cross_2d,
+                                 Dot_3d, Inner_3d, Cross_3d)
 
 
 # ...

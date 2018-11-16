@@ -12,10 +12,10 @@ from sympy import Integer, Float
 
 from sympde.core.expr import BilinearForm, LinearForm, Integral
 from sympde.core.model import Model, Equation
-from sympde.core import grad, dot, inner, cross, rot, curl, div
-from sympde.core import FunctionSpace, VectorFunctionSpace
-from sympde.core import TestFunction
-from sympde.core import VectorTestFunction
+from sympde.core.generic import grad, dot, inner, cross, rot, curl, div
+from sympde.core.space import FunctionSpace, VectorFunctionSpace
+from sympde.core.space import TestFunction
+from sympde.core.space import VectorTestFunction
 
 class Stokes(Model):
     """

@@ -12,9 +12,9 @@ from sympy import Integer, Float
 
 from sympde.core.expr import BilinearForm, LinearForm, Integral
 from sympde.core.model import Model, Equation
-from sympde.core import grad, dot
-from sympde.core import FunctionSpace
-from sympde.core import TestFunction
+from sympde.core.generic import grad, dot
+from sympde.core.space import FunctionSpace
+from sympde.core.space import TestFunction
 
 class Poisson(Model):
     """

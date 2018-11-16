@@ -3,7 +3,7 @@
 from sympy.core.compatibility import is_sequence
 from sympy import Indexed, IndexedBase
 
-from .basic import CalculusFunction
+from sympde.core.basic import CalculusFunction
 
 # ... generic operators
 class GenericFunction(CalculusFunction):

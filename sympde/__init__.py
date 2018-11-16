@@ -1,3 +1,5 @@
-from .core     import *
-from .gallery  import *
-from .printing import *
+__all__ = ['core', 'gallery', 'printing']
+
+from sympde import core
+from sympde import gallery
+from sympde import printing

@@ -25,47 +25,47 @@ from sympy import Integer, Float
 from sympy.core.expr import AtomicExpr
 from sympy.physics.quantum import TensorProduct
 
-from .utils import random_string
-from .measure import CanonicalMeasure
-from .measure import CartesianMeasure
-from .measure import Measure
-from .geometry import BasicDomain, Domain, Line
-from .geometry import BoundaryVector, NormalVector, TangentVector, Boundary
-from .derivatives import _partial_derivatives
-from .derivatives import partial_derivative_as_symbol
-from .derivatives import sort_partial_derivatives
-from .derivatives import get_atom_derivatives
-from .derivatives import dx, dy, dz
-from .derivatives import (Grad_1d, Div_1d,
-                          Grad_2d, Curl_2d, Rot_2d, Div_2d,
-                          Grad_3d, Curl_3d, Div_3d)
-from .derivatives import Bracket_2d
-from .derivatives import Laplace_1d, Laplace_2d, Laplace_3d
-from .derivatives import Hessian_1d, Hessian_2d, Hessian_3d
+from sympde.core.utils import random_string
+from sympde.core.measure import CanonicalMeasure
+from sympde.core.measure import CartesianMeasure
+from sympde.core.measure import Measure
+from sympde.core.geometry import BasicDomain, Domain, Line
+from sympde.core.geometry import BoundaryVector, NormalVector, TangentVector, Boundary
+from sympde.core.derivatives import _partial_derivatives
+from sympde.core.derivatives import partial_derivative_as_symbol
+from sympde.core.derivatives import sort_partial_derivatives
+from sympde.core.derivatives import get_atom_derivatives
+from sympde.core.derivatives import dx, dy, dz
+from sympde.core.derivatives import (Grad_1d, Div_1d,
+                                     Grad_2d, Curl_2d, Rot_2d, Div_2d,
+                                     Grad_3d, Curl_3d, Div_3d)
+from sympde.core.derivatives import Bracket_2d
+from sympde.core.derivatives import Laplace_1d, Laplace_2d, Laplace_3d
+from sympde.core.derivatives import Hessian_1d, Hessian_2d, Hessian_3d
 
-from .basic import _coeffs_registery
-from .basic import CalculusFunction
-from .basic import Field, Constant
+from sympde.core.basic import _coeffs_registery
+from sympde.core.basic import CalculusFunction
+from sympde.core.basic import Field, Constant
 
-from .generic import Dot, Inner, Cross
-from .generic import Grad, Rot, Curl, Div
-from .generic import Bracket
-from .generic import Laplace
-from .generic import _generic_ops
+from sympde.core.generic import Dot, Inner, Cross
+from sympde.core.generic import Grad, Rot, Curl, Div
+from sympde.core.generic import Bracket
+from sympde.core.generic import Laplace
+from sympde.core.generic import _generic_ops
 
-from .algebra import (Dot_1d,
-                      Dot_2d, Inner_2d, Cross_2d,
-                      Dot_3d, Inner_3d, Cross_3d)
+from sympde.core.algebra import (Dot_1d,
+                 Dot_2d, Inner_2d, Cross_2d,
+                 Dot_3d, Inner_3d, Cross_3d)
 
-from .space import FunctionSpace
-from .space import ProductSpace
-from .space import TestFunction
-from .space import VectorTestFunction
-from .space import IndexedTestTrial
-from .space import Unknown, VectorUnknown
-from .space import Trace
+from sympde.core.space import FunctionSpace
+from sympde.core.space import ProductSpace
+from sympde.core.space import TestFunction
+from sympde.core.space import VectorTestFunction
+from sympde.core.space import IndexedTestTrial
+from sympde.core.space import Unknown, VectorUnknown
+from sympde.core.space import Trace
 
-from .errors import UnconsistentError
+from sympde.core.errors import UnconsistentError
 
 
 def _initialize_measure(measure, coordinates):

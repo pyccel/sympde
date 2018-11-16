@@ -15,17 +15,17 @@ from sympy.printing.preview import preview as sympy_preview
 from pyccel.ast.core import Assign
 from pyccel.ast.core import Nil
 
-from .utils import random_string
-from .generic import Dot, Inner, Cross
-from .generic import Grad, Rot, Curl, Div
-from .space import TestFunction, VectorTestFunction
-from .space import FunctionSpace
-from .expr import BasicForm, BilinearForm, LinearForm, Integral, FormCall
-from .expr import is_sum_of_form_calls
-from .geometry import Boundary
-from .errors import UnconsistentLhsError, UnconsistentRhsError
-from .errors import UnconsistentBCError
-from .errors import UnconsistentArgumentsError
+from sympde.core.utils import random_string
+from sympde.core.generic import Dot, Inner, Cross
+from sympde.core.generic import Grad, Rot, Curl, Div
+from sympde.core.space import TestFunction, VectorTestFunction
+from sympde.core.space import FunctionSpace
+from sympde.core.expr import BasicForm, BilinearForm, LinearForm, Integral, FormCall
+from sympde.core.expr import is_sum_of_form_calls
+from sympde.core.geometry import Boundary
+from sympde.core.errors import UnconsistentLhsError, UnconsistentRhsError
+from sympde.core.errors import UnconsistentBCError
+from sympde.core.errors import UnconsistentArgumentsError
 
 class BasicBoundaryCondition(Basic):
 
