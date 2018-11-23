@@ -376,7 +376,7 @@ def print_expression(expr, logical=False, mapping_name=True):
             else:
                 code += d_coords[k]*n
 
-        if isinstance(atom, IndexedTestTrial):
+        if isinstance(atom, (IndexedTestTrial, IndexedVectorField)):
             name =  '{base}_{i}'.format(base=atom.base.name, i=atom.indices[0])
         else:
             name = atom.name
@@ -384,7 +384,7 @@ def print_expression(expr, logical=False, mapping_name=True):
         name = '{name}_{code}'.format(name=name, code=code)
 
     else:
-        if isinstance(atom, IndexedTestTrial):
+        if isinstance(atom, (IndexedTestTrial, IndexedVectorField)):
             name =  '{base}_{i}'.format(base=atom.base.name, i=atom.indices[0])
         else:
             name = str(atom)
