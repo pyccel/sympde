@@ -50,6 +50,7 @@ from .basic import Field, Constant
 from .basic import BasicMapping
 from .algebra import LinearOperator
 from .space import TestFunction, VectorTestFunction, IndexedTestTrial
+from .space import VectorField, IndexedVectorField
 from .space import Unknown
 
 # ...
@@ -70,7 +71,7 @@ class DifferentialOperator(LinearOperator):
         expr = _args[0]
 
         # TODO use coordinates for IndexedTestTrial?
-        if isinstance(expr, (IndexedTestTrial, DifferentialOperator)):
+        if isinstance(expr, (IndexedTestTrial, IndexedVectorField, DifferentialOperator)):
             return cls(expr, evaluate=False)
 
         elif isinstance(expr, (Field, TestFunction)):
@@ -88,7 +89,7 @@ class DifferentialOperator(LinearOperator):
             else:
                 return S.Zero
 
-        elif isinstance(expr, VectorTestFunction):
+        elif isinstance(expr, (VectorTestFunction, VectorField)):
             n = expr.shape[0]
             args = [cls(expr[i], evaluate=False) for i in range(0, n)]
             args = Tuple(*args)
@@ -948,7 +949,7 @@ class Laplace_1d(LaplaceBasic):
             return
 
         u = _args[0]
-        if isinstance(u, VectorTestFunction):
+        if isinstance(u, (VectorTestFunction, VectorField)):
             raise NotImplementedError('TODO')
 
         return dx(dx(u))
@@ -969,7 +970,7 @@ class Laplace_2d(LaplaceBasic):
             return
 
         u = _args[0]
-        if isinstance(u, VectorTestFunction):
+        if isinstance(u, (VectorTestFunction, VectorField)):
             raise NotImplementedError('TODO')
 
         return dx(dx(u)) + dy(dy(u))
@@ -990,7 +991,7 @@ class Laplace_3d(LaplaceBasic):
             return
 
         u = _args[0]
-        if isinstance(u, VectorTestFunction):
+        if isinstance(u, (VectorTestFunction, VectorField)):
             raise NotImplementedError('TODO')
 
         return dx(dx(u)) + dy(dy(u)) + dz(dz(u))
@@ -1044,7 +1045,7 @@ class Hessian_1d(HessianBasic):
             return
 
         u = _args[0]
-        if isinstance(u, VectorTestFunction):
+        if isinstance(u, (VectorTestFunction, VectorField)):
             raise NotImplementedError('TODO')
 
         return dx(dx(u))
@@ -1065,7 +1066,7 @@ class Hessian_2d(HessianBasic):
             return
 
         u = _args[0]
-        if isinstance(u, VectorTestFunction):
+        if isinstance(u, (VectorTestFunction, VectorField)):
             raise NotImplementedError('TODO')
 
         return Matrix([[dx(dx(u)), dx(dy(u))],
@@ -1087,7 +1088,7 @@ class Hessian_3d(HessianBasic):
             return
 
         u = _args[0]
-        if isinstance(u, VectorTestFunction):
+        if isinstance(u, (VectorTestFunction, VectorField)):
             raise NotImplementedError('TODO')
 
         return Matrix([[dx(dx(u)), dx(dy(u)), dx(dz(u))],
@@ -1217,6 +1218,8 @@ def get_max_partial_derivatives(expr, F=None):
         Fs = (list(expr.atoms(TestFunction)) +
               list(expr.atoms(VectorTestFunction)) +
               list(expr.atoms(IndexedTestTrial)) +
+              list(expr.atoms(VectorField)) +
+              list(expr.atoms(IndexedVectorField)) +
               list(expr.atoms(Field)))
 
         indices = []

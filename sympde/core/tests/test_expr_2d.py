@@ -23,6 +23,7 @@ from sympde.core import grad, dot, inner, cross, rot, curl, div
 from sympde.core import laplace
 from sympde.core import hessian
 from sympde.core import FunctionSpace, VectorFunctionSpace
+from sympde.core import VectorField
 from sympde.core import ProductSpace
 from sympde.core import TestFunction
 from sympde.core import VectorTestFunction
@@ -596,14 +597,40 @@ def test_tensorize_2d_stokes():
     print(tensorize(A))
     print('')
 
+# ...
+def test_vector_2d_1():
+    W1 = VectorFunctionSpace('W1', domain)
+    T1 = VectorFunctionSpace('T1', domain)
+
+    w1 = VectorTestFunction(W1, name='w1')
+    t1 = VectorTestFunction(T1, name='t1')
+
+    F = VectorField(W1, 'F')
+
+    # ...
+    l1 = LinearForm(w1, dot(w1, F), name='l1')
+    print(l1)
+    print(atomize(l1))
+    print(evaluate(l1))
+    # ...
+
+    # ...
+    l2 = LinearForm(w1, rot(w1)*rot(F) + div(w1)*div(F), name='l2')
+    print(l2)
+    print(atomize(l2))
+    print(evaluate(l2))
+    # ...
+
+
 # .....................................................
 if __name__ == '__main__':
 
-    test_calls_2d()
-    test_boundary_2d()
-    test_equation_2d()
-    test_projection_2d()
-    test_norm_2d()
-    test_tensorize_2d()
-    test_tensorize_2d_stokes()
+#    test_calls_2d()
+#    test_boundary_2d()
+#    test_equation_2d()
+#    test_projection_2d()
+#    test_norm_2d()
+#    test_tensorize_2d()
+#    test_tensorize_2d_stokes()
 
+    test_vector_2d_1()

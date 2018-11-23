@@ -303,6 +303,93 @@ class VectorUnknown(VectorTestFunction):
         return VectorTestFunction.__new__(cls, V, name)
 
 
+class VectorField(Symbol, IndexedBase):
+    """
+    Represents a vector field as an element of a fem space.
+
+    Examples
+
+    """
+    is_commutative = True
+    _space = None
+    def __new__(cls, space, name=None):
+        if not isinstance(space, VectorFunctionSpace):
+            raise ValueError('Expecting a VectorFunctionSpace')
+
+        obj = Basic.__new__(cls, name)
+        obj._space = space
+        return obj
+
+    @property
+    def space(self):
+        return self._space
+
+    @property
+    def name(self):
+        return self._args[0]
+
+    @property
+    def shape(self):
+        # we return a list to make it compatible with IndexedBase sympy object
+        return [self.space.shape]
+
+    @property
+    def ldim(self):
+        return self.space.ldim
+
+    def __getitem__(self, *args):
+
+        if self.shape and len(self.shape) != len(args):
+            raise IndexException("Rank mismatch.")
+
+        if not(len(args) == 1):
+            raise ValueError('expecting exactly one argument')
+
+        assumptions ={}
+        obj = IndexedVectorField(self, *args)
+        return obj
+
+    def duplicate(self, name):
+        return VectorField(self.space, name)
+
+# this class is needed, otherwise sympy will convert VectorTestFunction to
+# IndexedBase
+class IndexedVectorField(Indexed):
+    """Represents a mathematical object with indices.
+
+    """
+    is_commutative = True
+    is_Indexed = True
+    is_symbol = True
+    is_Atom = True
+
+    def __new__(cls, base, *args, **kw_args):
+        assert(isinstance(base, VectorField))
+
+        if not args:
+            raise IndexException("Indexed needs at least one index.")
+
+        return Expr.__new__(cls, base, *args, **kw_args)
+
+    # free_symbols is redefined otherwise an expression u[0].free_symbols will
+    # give the error:  AttributeError: 'int' object has no attribute 'free_symbols'
+    @property
+    def free_symbols(self):
+        base_free_symbols = self.base.free_symbols
+        symbolic_indices = [i for i in self.indices if isinstance(i, Basic)]
+        if len(symbolic_indices) > 0:
+            raise ValueError('symbolic indices not yet available')
+
+        return base_free_symbols
+
+    @property
+    def ldim(self):
+        return self.base.space.ldim
+
+
+
+
+
 class Trace(Basic):
     """
     Represents the trace over a boundary and a space function

@@ -47,6 +47,11 @@ class LatexPrinter(LatexPrinterSympy):
         return r'\mathbf{' + self._print(expr.name) + '}'
     # ...
 
+    # ...
+    def _print_VectorField(self, expr):
+        return r'\mathbf{' + self._print(expr.name) + '}'
+    # ...
+
     # ... algebraic operators
     def _print_Dot(self, expr):
         left = expr.args[0]

@@ -64,6 +64,7 @@ from .space import VectorTestFunction
 from .space import IndexedTestTrial
 from .space import Unknown, VectorUnknown
 from .space import Trace
+from .space import VectorField, IndexedVectorField
 
 from .errors import UnconsistentError
 
@@ -119,7 +120,7 @@ class BasicForm(Expr):
 
     @property
     def fields(self):
-        ls = [a for a in self.expr.free_symbols if isinstance(a, Field)]
+        ls = [a for a in self.expr.free_symbols if isinstance(a, (Field, VectorField))]
         # no redanduncy
         return sorted(list(set(ls)))
 
@@ -176,7 +177,7 @@ class Integral(BasicForm):
         # ...
 
         # compute dim from fields if available
-        ls = list(expr.atoms(Field))
+        ls = list(expr.atoms((Field, VectorField)))
         if ls:
             F = ls[0]
             space = F.space
@@ -804,6 +805,7 @@ def atomize(expr, dim=None):
                              _partial_derivatives, _generic_ops,
                              TestFunction, VectorTestFunction, Indexed,
                              Field, Constant, Symbol, Function,
+                             VectorField,
                              BoundaryVector, Trace,
                              Integer, Float, Matrix, ImmutableDenseMatrix,
                              list, tuple, Tuple)):
@@ -823,7 +825,8 @@ def atomize(expr, dim=None):
     if dim is None:
         ls = [i for i in expr.free_symbols if isinstance(i, (TestFunction,
                                                              VectorTestFunction,
-                                                             Field))]
+                                                             Field,
+                                                             VectorField))]
 
 #        ls = expr.atoms((TestFunction, VectorTestFunction, Field))
 #        ls = list(ls)

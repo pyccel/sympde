@@ -12,6 +12,7 @@ from sympde.core import Field
 from sympde.core import Domain, Boundary, NormalVector, TangentVector
 from sympde.core import Trace, trace_0, trace_1
 from sympde.core import tensorize
+from sympde.core import VectorField
 from sympde.printing.latex import latex
 
 
@@ -220,6 +221,32 @@ def test_latex_2d_4():
     print('')
     # ...
 
+def test_latex_2d_5():
+    DIM = 2
+
+    domain = Domain('Omega', dim=DIM)
+
+    # ... abstract model
+    W1 = VectorFunctionSpace('W1', domain)
+
+    w1 = VectorTestFunction(W1, name='w1')
+
+    F = VectorField(W1, 'F')
+
+    # ...
+    l1 = LinearForm(w1, dot(w1, F), name='l1')
+
+    print(latex(l1))
+    print('')
+    # ...
+
+    # ...
+    l2 = LinearForm(w1, rot(w1)*rot(F) + div(w1)*div(F), name='l2')
+
+    print(latex(l2))
+    print('')
+    # ...
+
 
 ####################
 if __name__ == '__main__':
@@ -233,5 +260,6 @@ if __name__ == '__main__':
 #    test_latex_model_2d_1()
 
 #    test_latex_2d_3()
-    test_latex_2d_4()
+#    test_latex_2d_4()
+    test_latex_2d_5()
 
