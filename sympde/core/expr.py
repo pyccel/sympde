@@ -382,9 +382,14 @@ class Norm(Integral):
                 name=None):
         # ...
         tests = expr.atoms((TestFunction, VectorTestFunction))
-        if tests or not isinstance(expr, Expr):
+        if tests:
             msg = '> Expecting an Expression without test functions'
             raise UnconsistentArgumentsError(msg)
+
+        if not isinstance(expr, (Expr, Matrix, ImmutableDenseMatrix)):
+            msg = '> Expecting Expr, Matrix, ImmutableDenseMatrix'
+            raise UnconsistentArgumentsError(msg)
+
         # ...
 
         # ...
@@ -414,7 +419,11 @@ class Norm(Integral):
                 expr = expr*expr
 
             else:
-                raise NotImplementedError('TODO')
+                if not( expr.shape[1] == 1 ):
+                    raise ValueError('Wrong expression for Matrix. must be a row')
+
+                v = Tuple(*expr[:,0])
+                expr = Dot(v, v)
 
         elif kind == 'h1':
             exponent = 2
@@ -423,7 +432,11 @@ class Norm(Integral):
                 expr = Dot(Grad(expr), Grad(expr))
 
             else:
-                raise NotImplementedError('TODO')
+                if not( expr.shape[1] == 1 ):
+                    raise ValueError('Wrong expression for Matrix. must be a row')
+
+                v = Tuple(*expr[:,0])
+                expr = Inner(Grad(v), Grad(v))
         # ...
 
         obj = Integral.__new__(cls, expr, domain, measure=name, mapping=mapping, name=name)

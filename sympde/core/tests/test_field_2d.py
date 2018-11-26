@@ -64,6 +64,10 @@ def test_field_2d_1():
     # TODO not working yet => check it for VectorTestFunction also
 #    print(dx(x*F))
 
+    expr = inner(grad(F), grad(F))
+    print(expr)
+    print(evaluate(expr))
+
 
 # .....................................................
 if __name__ == '__main__':

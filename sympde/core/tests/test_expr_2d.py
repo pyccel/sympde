@@ -605,20 +605,44 @@ def test_vector_2d_1():
     w1 = VectorTestFunction(W1, name='w1')
     t1 = VectorTestFunction(T1, name='t1')
 
+    x,y = W1.coordinates
+
     F = VectorField(W1, 'F')
 
+#    # ...
+#    l1 = LinearForm(w1, dot(w1, F), name='l1')
+#    print(l1)
+#    print(atomize(l1))
+#    print(evaluate(l1))
+#    print('')
+#    # ...
+#
+#    # ...
+#    l2 = LinearForm(w1, rot(w1)*rot(F) + div(w1)*div(F), name='l2')
+#    print(l2)
+#    print(atomize(l2))
+#    print(evaluate(l2))
+#    print('')
+#    # ...
+
     # ...
-    l1 = LinearForm(w1, dot(w1, F), name='l1')
-    print(l1)
-    print(atomize(l1))
-    print(evaluate(l1))
+    f = Tuple(sin(pi*x)*sin(pi*y), sin(pi*x)*sin(pi*y))
+    error = Matrix([F[0]-f[0], F[1]-f[1]])
+    l2_norm = Norm(error, domain, kind='l2')
+    print(l2_norm)
+    print(atomize(l2_norm))
+    print(evaluate(l2_norm))
+    print('')
     # ...
 
     # ...
-    l2 = LinearForm(w1, rot(w1)*rot(F) + div(w1)*div(F), name='l2')
-    print(l2)
-    print(atomize(l2))
-    print(evaluate(l2))
+    f = Tuple(sin(pi*x)*sin(pi*y), sin(pi*x)*sin(pi*y))
+    error = Matrix([F[0]-f[0], F[1]-f[1]])
+    h1_norm = Norm(error, domain, kind='h1')
+    print(h1_norm)
+    print(atomize(h1_norm))
+    print(evaluate(h1_norm))
+    print('')
     # ...
 
 
