@@ -25,8 +25,8 @@ from .generic import _generic_ops
 from .geometry import Domain
 
 from .algebra import (Dot_1d,
-                      Dot_2d, Inner_2d, Cross_2d,
-                      Dot_3d, Inner_3d, Cross_3d)
+                                 Dot_2d, Inner_2d, Cross_2d,
+                                 Dot_3d, Inner_3d, Cross_3d)
 
 
 # ...

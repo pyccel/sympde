@@ -50,8 +50,8 @@ from .basic import Field, Constant
 from .basic import BasicMapping
 from .algebra import LinearOperator
 from .space import TestFunction, VectorTestFunction, IndexedTestTrial
-from .space import VectorField, IndexedVectorField
 from .space import Unknown
+from .space import VectorField, IndexedVectorField
 
 # ...
 class DifferentialOperator(LinearOperator):

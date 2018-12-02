@@ -12,10 +12,10 @@ from sympy import Integer, Float
 
 from sympde.core.expr import BilinearForm, LinearForm, Integral
 from sympde.core.model import Model, Equation
-from sympde.core import grad, dot
-from sympde.core import FunctionSpace
-from sympde.core import TestFunction
-from sympde.core import Constant
+from sympde.core.generic import grad, dot
+from sympde.core.space import FunctionSpace
+from sympde.core.space import TestFunction
+from sympde.core.basic import Constant
 from sympde.core.derivatives import dx, dy, dz
 
 class Wave_1d(Model):

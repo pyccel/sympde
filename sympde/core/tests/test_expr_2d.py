@@ -649,12 +649,12 @@ def test_vector_2d_1():
 # .....................................................
 if __name__ == '__main__':
 
-#    test_calls_2d()
-#    test_boundary_2d()
-#    test_equation_2d()
-#    test_projection_2d()
-#    test_norm_2d()
-#    test_tensorize_2d()
-#    test_tensorize_2d_stokes()
+    test_calls_2d()
+    test_boundary_2d()
+    test_equation_2d()
+    test_projection_2d()
+    test_norm_2d()
+    test_tensorize_2d()
+    test_tensorize_2d_stokes()
 
     test_vector_2d_1()

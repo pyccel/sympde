@@ -54,8 +54,8 @@ from .generic import Laplace
 from .generic import _generic_ops
 
 from .algebra import (Dot_1d,
-                      Dot_2d, Inner_2d, Cross_2d,
-                      Dot_3d, Inner_3d, Cross_3d)
+                 Dot_2d, Inner_2d, Cross_2d,
+                 Dot_3d, Inner_3d, Cross_3d)
 
 from .space import FunctionSpace
 from .space import ProductSpace
@@ -65,7 +65,6 @@ from .space import IndexedTestTrial
 from .space import Unknown, VectorUnknown
 from .space import Trace
 from .space import VectorField, IndexedVectorField
-
 from .errors import UnconsistentError
 
 
