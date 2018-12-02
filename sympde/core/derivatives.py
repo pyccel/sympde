@@ -670,7 +670,19 @@ class Grad_2d(GradBasic):
 
         u = _args[0]
 
-        return Tuple(dx(u), dy(u))
+        if isinstance(u, Tuple):
+            n = len(u)
+            lines = []
+            for i in range(0, n):
+                line = [dx(u)[0,i], dy(u)[0,i]]
+                lines.append(line)
+
+            v = Matrix(lines)
+
+        else:
+            v = Tuple(dx(u), dy(u))
+
+        return v
 
 class Grad_3d(GradBasic):
     """
@@ -689,7 +701,19 @@ class Grad_3d(GradBasic):
 
         u = _args[0]
 
-        return Tuple(dx(u), dy(u), dz(u))
+        if isinstance(u, Tuple):
+            n = len(u)
+            lines = []
+            for i in range(0, n):
+                line = [dx(u)[0,i], dy(u)[0,i], dz(u)[0,i]]
+                lines.append(line)
+
+            v = Matrix(lines)
+
+        else:
+            v = Tuple(dx(u), dy(u), dz(u))
+
+        return v
 # ...
 
 
