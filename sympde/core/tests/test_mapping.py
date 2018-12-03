@@ -54,7 +54,8 @@ def test_mapping_2d():
     assert(F.name == 'F')
 
     # ...
-    expected = Matrix([[dx(F[0]), dy(F[0])], [dx(F[1]), dy(F[1])]])
+    expected = Matrix([[dx(F[0]), dy(F[0])],
+                       [dx(F[1]), dy(F[1])]])
     assert(F.jacobian == expected)
     # ...
 
@@ -94,9 +95,9 @@ def test_mapping_3d():
     assert(F.name == 'F')
 
     # ...
-    expected = Matrix([[dx(F[0]), dx(F[1]), dx(F[2])],
-                       [dy(F[0]), dy(F[1]), dy(F[2])],
-                       [dz(F[0]), dz(F[1]), dz(F[2])]])
+    expected = Matrix([[dx(F[0]), dy(F[0]), dz(F[0])],
+                       [dx(F[1]), dy(F[1]), dz(F[1])],
+                       [dx(F[2]), dy(F[2]), dz(F[2])]])
     assert(F.jacobian == expected)
     # ...
 
@@ -108,15 +109,15 @@ def test_mapping_3d():
     # ...
 
     # ...
-    expected = Tuple((a*dy(F[1])*dz(F[2]) - a*dy(F[2])*dz(F[1]) - b*dy(F[0])*dz(F[2]) + b*dy(F[2])*dz(F[0]) + c*dy(F[0])*dz(F[1]) - c*dy(F[1])*dz(F[0]))/(dx(F[0])*dy(F[1])*dz(F[2]) - dx(F[0])*dy(F[2])*dz(F[1]) - dx(F[1])*dy(F[0])*dz(F[2]) + dx(F[1])*dy(F[2])*dz(F[0]) + dx(F[2])*dy(F[0])*dz(F[1]) - dx(F[2])*dy(F[1])*dz(F[0])), (-a*dx(F[1])*dz(F[2]) + a*dx(F[2])*dz(F[1]) + b*dx(F[0])*dz(F[2]) - b*dx(F[2])*dz(F[0]) - c*dx(F[0])*dz(F[1]) + c*dx(F[1])*dz(F[0]))/(dx(F[0])*dy(F[1])*dz(F[2]) - dx(F[0])*dy(F[2])*dz(F[1]) - dx(F[1])*dy(F[0])*dz(F[2]) + dx(F[1])*dy(F[2])*dz(F[0]) + dx(F[2])*dy(F[0])*dz(F[1]) - dx(F[2])*dy(F[1])*dz(F[0])), (a*dx(F[1])*dy(F[2]) - a*dx(F[2])*dy(F[1]) - b*dx(F[0])*dy(F[2]) + b*dx(F[2])*dy(F[0]) + c*dx(F[0])*dy(F[1]) - c*dx(F[1])*dy(F[0]))/(dx(F[0])*dy(F[1])*dz(F[2]) - dx(F[0])*dy(F[2])*dz(F[1]) - dx(F[1])*dy(F[0])*dz(F[2]) + dx(F[1])*dy(F[2])*dz(F[0]) + dx(F[2])*dy(F[0])*dz(F[1]) - dx(F[2])*dy(F[1])*dz(F[0])))
+    expected = Tuple(a*(dy(F[1])*dz(F[2]) - dy(F[2])*dz(F[1]))/(dx(F[0])*dy(F[1])*dz(F[2]) - dx(F[0])*dy(F[2])*dz(F[1]) - dx(F[1])*dy(F[0])*dz(F[2]) + dx(F[1])*dy(F[2])*dz(F[0]) + dx(F[2])*dy(F[0])*dz(F[1]) - dx(F[2])*dy(F[1])*dz(F[0]))**2 + b*(-dx(F[1])*dz(F[2]) + dx(F[2])*dz(F[1]))/(dx(F[0])*dy(F[1])*dz(F[2]) - dx(F[0])*dy(F[2])*dz(F[1]) - dx(F[1])*dy(F[0])*dz(F[2]) + dx(F[1])*dy(F[2])*dz(F[0]) + dx(F[2])*dy(F[0])*dz(F[1]) - dx(F[2])*dy(F[1])*dz(F[0]))**2 + c*(dx(F[1])*dy(F[2]) - dx(F[2])*dy(F[1]))/(dx(F[0])*dy(F[1])*dz(F[2]) - dx(F[0])*dy(F[2])*dz(F[1]) - dx(F[1])*dy(F[0])*dz(F[2]) + dx(F[1])*dy(F[2])*dz(F[0]) + dx(F[2])*dy(F[0])*dz(F[1]) - dx(F[2])*dy(F[1])*dz(F[0]))**2, a*(-dy(F[0])*dz(F[2]) + dy(F[2])*dz(F[0]))/(dx(F[0])*dy(F[1])*dz(F[2]) - dx(F[0])*dy(F[2])*dz(F[1]) - dx(F[1])*dy(F[0])*dz(F[2]) + dx(F[1])*dy(F[2])*dz(F[0]) + dx(F[2])*dy(F[0])*dz(F[1]) - dx(F[2])*dy(F[1])*dz(F[0]))**2 + b*(dx(F[0])*dz(F[2]) - dx(F[2])*dz(F[0]))*dx(F[0])/(((dx(F[0])*dy(F[1]) - dx(F[1])*dy(F[0]))*(dx(F[0])*dz(F[2]) - dx(F[2])*dz(F[0])) - (dx(F[0])*dy(F[2]) - dx(F[2])*dy(F[0]))*(dx(F[0])*dz(F[1]) - dx(F[1])*dz(F[0])))*(dx(F[0])*dy(F[1])*dz(F[2]) - dx(F[0])*dy(F[2])*dz(F[1]) - dx(F[1])*dy(F[0])*dz(F[2]) + dx(F[1])*dy(F[2])*dz(F[0]) + dx(F[2])*dy(F[0])*dz(F[1]) - dx(F[2])*dy(F[1])*dz(F[0]))) + c*(-dx(F[0])*dy(F[2]) + dx(F[2])*dy(F[0]))*dx(F[0])/(((dx(F[0])*dy(F[1]) - dx(F[1])*dy(F[0]))*(dx(F[0])*dz(F[2]) - dx(F[2])*dz(F[0])) - (dx(F[0])*dy(F[2]) - dx(F[2])*dy(F[0]))*(dx(F[0])*dz(F[1]) - dx(F[1])*dz(F[0])))*(dx(F[0])*dy(F[1])*dz(F[2]) - dx(F[0])*dy(F[2])*dz(F[1]) - dx(F[1])*dy(F[0])*dz(F[2]) + dx(F[1])*dy(F[2])*dz(F[0]) + dx(F[2])*dy(F[0])*dz(F[1]) - dx(F[2])*dy(F[1])*dz(F[0]))), a*(dy(F[0])*dz(F[1]) - dy(F[1])*dz(F[0]))/(dx(F[0])*dy(F[1])*dz(F[2]) - dx(F[0])*dy(F[2])*dz(F[1]) - dx(F[1])*dy(F[0])*dz(F[2]) + dx(F[1])*dy(F[2])*dz(F[0]) + dx(F[2])*dy(F[0])*dz(F[1]) - dx(F[2])*dy(F[1])*dz(F[0]))**2 + b*(-dx(F[0])*dz(F[1]) + dx(F[1])*dz(F[0]))*dx(F[0])/(((dx(F[0])*dy(F[1]) - dx(F[1])*dy(F[0]))*(dx(F[0])*dz(F[2]) - dx(F[2])*dz(F[0])) - (dx(F[0])*dy(F[2]) - dx(F[2])*dy(F[0]))*(dx(F[0])*dz(F[1]) - dx(F[1])*dz(F[0])))*(dx(F[0])*dy(F[1])*dz(F[2]) - dx(F[0])*dy(F[2])*dz(F[1]) - dx(F[1])*dy(F[0])*dz(F[2]) + dx(F[1])*dy(F[2])*dz(F[0]) + dx(F[2])*dy(F[0])*dz(F[1]) - dx(F[2])*dy(F[1])*dz(F[0]))) + c*(dx(F[0])*dy(F[1]) - dx(F[1])*dy(F[0]))*dx(F[0])/(((dx(F[0])*dy(F[1]) - dx(F[1])*dy(F[0]))*(dx(F[0])*dz(F[2]) - dx(F[2])*dz(F[0])) - (dx(F[0])*dy(F[2]) - dx(F[2])*dy(F[0]))*(dx(F[0])*dz(F[1]) - dx(F[1])*dz(F[0])))*(dx(F[0])*dy(F[1])*dz(F[2]) - dx(F[0])*dy(F[2])*dz(F[1]) - dx(F[1])*dy(F[0])*dz(F[2]) + dx(F[1])*dy(F[2])*dz(F[0]) + dx(F[2])*dy(F[0])*dz(F[1]) - dx(F[2])*dy(F[1])*dz(F[0]))))
     cov = Covariant(F, abc)
-#    assert(simplify(Covariant(F, abc)) == simplify(expected))
+    assert(simplify(cov) == simplify(expected))
     # ...
 
     # ...
-    expected = Tuple((a*dx(F[0]) + b*dx(F[1]) + c*dx(F[2]))/(dx(F[0])*dy(F[1])*dz(F[2]) - dx(F[0])*dy(F[2])*dz(F[1]) - dx(F[1])*dy(F[0])*dz(F[2]) + dx(F[1])*dy(F[2])*dz(F[0]) + dx(F[2])*dy(F[0])*dz(F[1]) - dx(F[2])*dy(F[1])*dz(F[0])), (a*dy(F[0]) + b*dy(F[1]) + c*dy(F[2]))/(dx(F[0])*dy(F[1])*dz(F[2]) - dx(F[0])*dy(F[2])*dz(F[1]) - dx(F[1])*dy(F[0])*dz(F[2]) + dx(F[1])*dy(F[2])*dz(F[0]) + dx(F[2])*dy(F[0])*dz(F[1]) - dx(F[2])*dy(F[1])*dz(F[0])), (a*dz(F[0]) + b*dz(F[1]) + c*dz(F[2]))/(dx(F[0])*dy(F[1])*dz(F[2]) - dx(F[0])*dy(F[2])*dz(F[1]) - dx(F[1])*dy(F[0])*dz(F[2]) + dx(F[1])*dy(F[2])*dz(F[0]) + dx(F[2])*dy(F[0])*dz(F[1]) - dx(F[2])*dy(F[1])*dz(F[0])))
+    expected = Tuple(a*dx(F[0])/(dx(F[0])*dy(F[1])*dz(F[2]) - dx(F[0])*dy(F[2])*dz(F[1]) - dx(F[1])*dy(F[0])*dz(F[2]) + dx(F[1])*dy(F[2])*dz(F[0]) + dx(F[2])*dy(F[0])*dz(F[1]) - dx(F[2])*dy(F[1])*dz(F[0])) + b*dy(F[0])/(dx(F[0])*dy(F[1])*dz(F[2]) - dx(F[0])*dy(F[2])*dz(F[1]) - dx(F[1])*dy(F[0])*dz(F[2]) + dx(F[1])*dy(F[2])*dz(F[0]) + dx(F[2])*dy(F[0])*dz(F[1]) - dx(F[2])*dy(F[1])*dz(F[0])) + c*dz(F[0])/(dx(F[0])*dy(F[1])*dz(F[2]) - dx(F[0])*dy(F[2])*dz(F[1]) - dx(F[1])*dy(F[0])*dz(F[2]) + dx(F[1])*dy(F[2])*dz(F[0]) + dx(F[2])*dy(F[0])*dz(F[1]) - dx(F[2])*dy(F[1])*dz(F[0])), a*dx(F[1])/(dx(F[0])*dy(F[1])*dz(F[2]) - dx(F[0])*dy(F[2])*dz(F[1]) - dx(F[1])*dy(F[0])*dz(F[2]) + dx(F[1])*dy(F[2])*dz(F[0]) + dx(F[2])*dy(F[0])*dz(F[1]) - dx(F[2])*dy(F[1])*dz(F[0])) + b*dy(F[1])/(dx(F[0])*dy(F[1])*dz(F[2]) - dx(F[0])*dy(F[2])*dz(F[1]) - dx(F[1])*dy(F[0])*dz(F[2]) + dx(F[1])*dy(F[2])*dz(F[0]) + dx(F[2])*dy(F[0])*dz(F[1]) - dx(F[2])*dy(F[1])*dz(F[0])) + c*dz(F[1])/(dx(F[0])*dy(F[1])*dz(F[2]) - dx(F[0])*dy(F[2])*dz(F[1]) - dx(F[1])*dy(F[0])*dz(F[2]) + dx(F[1])*dy(F[2])*dz(F[0]) + dx(F[2])*dy(F[0])*dz(F[1]) - dx(F[2])*dy(F[1])*dz(F[0])), a*dx(F[2])/(dx(F[0])*dy(F[1])*dz(F[2]) - dx(F[0])*dy(F[2])*dz(F[1]) - dx(F[1])*dy(F[0])*dz(F[2]) + dx(F[1])*dy(F[2])*dz(F[0]) + dx(F[2])*dy(F[0])*dz(F[1]) - dx(F[2])*dy(F[1])*dz(F[0])) + b*dy(F[2])/(dx(F[0])*dy(F[1])*dz(F[2]) - dx(F[0])*dy(F[2])*dz(F[1]) - dx(F[1])*dy(F[0])*dz(F[2]) + dx(F[1])*dy(F[2])*dz(F[0]) + dx(F[2])*dy(F[0])*dz(F[1]) - dx(F[2])*dy(F[1])*dz(F[0])) + c*dz(F[2])/(dx(F[0])*dy(F[1])*dz(F[2]) - dx(F[0])*dy(F[2])*dz(F[1]) - dx(F[1])*dy(F[0])*dz(F[2]) + dx(F[1])*dy(F[2])*dz(F[0]) + dx(F[2])*dy(F[0])*dz(F[1]) - dx(F[2])*dy(F[1])*dz(F[0])))
     cov = Contravariant(F, abc)
-#    assert(simplify(Contravariant(F, abc)) == simplify(expected))
+    assert(simplify(cov) == simplify(expected))
     # ...
 
 # ...
@@ -124,6 +125,6 @@ def test_mapping_3d():
 # .....................................................
 if __name__ == '__main__':
 
-#    test_mapping_1d()
+    test_mapping_1d()
     test_mapping_2d()
-#    test_mapping_3d()
+    test_mapping_3d()
