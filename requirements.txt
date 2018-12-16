@@ -1,1 +1,6 @@
 sympy==1.2
+mpi4py
+h5py
+pytest
+pyyaml
+yamlloader
