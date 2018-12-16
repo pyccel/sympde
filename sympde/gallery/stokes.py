@@ -10,14 +10,13 @@ from sympy.core.containers import Tuple
 from sympy import Function
 from sympy import Integer, Float
 
-from sympde.core.generic import grad, dot, inner, cross, rot, curl, div
-from sympde.expr.expr import BilinearForm, LinearForm, Integral
+from sympde.core.generic   import grad, dot, inner, cross, rot, curl, div
+from sympde.expr.expr      import BilinearForm, LinearForm, Integral
 from sympde.topology.space import FunctionSpace, VectorFunctionSpace
 from sympde.topology.space import TestFunction
 from sympde.topology.space import VectorTestFunction
-from sympde.expr.expr import Equation
-
-from .model import Model
+from sympde.expr.equation  import Equation
+from sympde.expr.model     import Model
 
 class Stokes(Model):
     """

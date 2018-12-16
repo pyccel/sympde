@@ -2,21 +2,20 @@
 
 from sympy import Function
 
-from sympde.core.expr import BilinearForm, LinearForm, Integral
-from sympde.core.model import Model, Equation
-from sympde.core import grad, dot, inner, cross, rot, curl, div
-from sympde.core import FunctionSpace
-from sympde.core import TestFunction
-from sympde.core import VectorTestFunction
-from sympde.core import Domain
+from sympde.expr import BilinearForm, LinearForm, Integral
+from sympde.expr import Equation, DirichletBC
+from sympde.expr import Model
+from sympde.core import grad, dot
+from sympde.topology import FunctionSpace, VectorFunctionSpace
+from sympde.topology import TestFunction
+from sympde.topology import Domain
 
 DIM = 1
+domain = Domain('\Omega', dim=DIM)
 
 # ...
 def test_model_1d_1():
     print('============ test_model_1d_1 ==============')
-
-    domain = Domain('\Omega', dim=DIM)
 
     V = FunctionSpace('V', domain)
     x = V.coordinates

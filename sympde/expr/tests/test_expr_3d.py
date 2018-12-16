@@ -16,34 +16,33 @@ from sympy import pi, cos, sin
 from sympy import srepr
 from sympy.physics.quantum import TensorProduct
 
-from sympde.core import dx, dy, dz
 from sympde.core import Constant
 from sympde.core import Field
 from sympde.core import grad, dot, inner, cross, rot, curl, div
-from sympde.core import laplace
-from sympde.core import hessian
-from sympde.core import FunctionSpace, VectorFunctionSpace
-from sympde.core import ProductSpace
-from sympde.core import TestFunction
-from sympde.core import VectorTestFunction
-from sympde.core import BilinearForm, LinearForm, Integral
-from sympde.core import atomize
-from sympde.core import evaluate
-from sympde.core import tensorize
-from sympde.core import Mass, Stiffness, Advection, AdvectionT
-from sympde.core import Unknown
-from sympde.core import FormCall
-from sympde.core import Domain, Boundary, NormalVector, TangentVector
-from sympde.core import UnionBoundary, ComplementBoundary
-from sympde.core import Trace, trace_0, trace_1
-from sympde.core import Equation, DirichletBC
-from sympde.core import Projection
-from sympde.core import Norm
+from sympde.core import laplace, hessian
+from sympde.topology import (dx, dy, dz)
+from sympde.topology import FunctionSpace, VectorFunctionSpace
+from sympde.topology import VectorField
+from sympde.topology import ProductSpace
+from sympde.topology import TestFunction
+from sympde.topology import VectorTestFunction
+from sympde.topology import Unknown
+from sympde.topology import Domain, Boundary, NormalVector, TangentVector
+from sympde.topology import Trace, trace_0, trace_1
 
-from sympde.core.errors import UnconsistentError
-from sympde.core.errors import UnconsistentLhsError
-from sympde.core.errors import UnconsistentRhsError
-from sympde.core.errors import UnconsistentBCError
+from sympde.expr import BilinearForm, LinearForm, Integral
+from sympde.expr import atomize
+from sympde.expr import evaluate
+from sympde.expr import tensorize
+from sympde.expr import Mass, Stiffness, Advection, AdvectionT
+from sympde.expr import Projection
+from sympde.expr import Norm
+from sympde.expr import FormCall
+
+from sympde.expr.errors import UnconsistentError
+from sympde.expr.errors import UnconsistentLhsError
+from sympde.expr.errors import UnconsistentRhsError
+from sympde.expr.errors import UnconsistentBCError
 
 
 DIM = 3

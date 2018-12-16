@@ -21,24 +21,10 @@ from sympde.expr.errors import UnconsistentArgumentsError
 from sympde.expr.expr import BasicForm, BilinearForm, LinearForm, Integral, FormCall
 from sympde.expr.expr import is_sum_of_form_calls
 from sympde.expr.utils import random_string
-
-class BasicBoundaryCondition(Basic):
-
-    def __new__(cls, boundary, value=None):
-        return Basic.__new__(cls, boundary, value)
-
-    @property
-    def boundary(self):
-        return self._args[0]
-
-    @property
-    def value(self):
-        return self._args[1]
-
-class DirichletBC(BasicBoundaryCondition):
-    pass
+from sympde.expr.equation import Equation, BasicBoundaryCondition, DirichletBC
 
 
+#==============================================================================
 class Model(Basic):
     """
     Represents a mathematical model.

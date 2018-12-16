@@ -1,26 +1,54 @@
 # coding: utf-8
 
-from sympy import Function
+import pytest
 
-from sympde.core.expr import BilinearForm, LinearForm, Integral
-from sympde.core.model import Model, Equation
-from sympde.core import grad, dot, inner, cross, rot, curl, div, bracket
-from sympde.core import FunctionSpace
-from sympde.core import TestFunction
-from sympde.core import VectorTestFunction
-from sympde.core import Field
-from sympde.core import Domain
+from sympy import Symbol
+from sympy.core.containers import Tuple
+from sympy import symbols
+from sympy import IndexedBase
+from sympy import Matrix
+from sympy import Function
+from sympy import pi, cos, sin
+from sympy import srepr
+from sympy.physics.quantum import TensorProduct
+
 from sympde.core import Constant
+from sympde.core import Field
+from sympde.core import grad, dot, inner, cross, rot, curl, div
+from sympde.core import laplace, hessian, bracket
+from sympde.topology import (dx, dy, dz)
+from sympde.topology import FunctionSpace, VectorFunctionSpace
+from sympde.topology import VectorField
+from sympde.topology import ProductSpace
+from sympde.topology import TestFunction
+from sympde.topology import VectorTestFunction
+from sympde.topology import Unknown
+from sympde.topology import Domain, Boundary, NormalVector, TangentVector
+from sympde.topology import Trace, trace_0, trace_1
+
+from sympde.expr import BilinearForm, LinearForm, Integral
+from sympde.expr import atomize
+from sympde.expr import evaluate
+from sympde.expr import tensorize
+from sympde.expr import Mass, Stiffness, Advection, AdvectionT
+from sympde.expr import Projection
+from sympde.expr import Norm
+from sympde.expr import FormCall
+
+from sympde.expr.errors import UnconsistentError
+from sympde.expr.errors import UnconsistentLhsError
+from sympde.expr.errors import UnconsistentRhsError
+from sympde.expr.errors import UnconsistentBCError
 
 from sympde.expr import Equation, DirichletBC
+from sympde.expr import Model
 
 DIM = 2
+domain = Domain('Omega', dim=DIM)
 
 # ...
 def test_model_2d_1():
     print('============ test_model_2d_1 ==============')
-
-    domain = Domain('\Omega', dim=DIM)
 
     V = FunctionSpace('V', domain)
     x,y = V.coordinates
@@ -46,8 +74,6 @@ def test_model_2d_1():
 # ...
 def test_model_2d_2():
     print('============ test_model_2d_2 ==============')
-
-    domain = Domain('\Omega', dim=DIM)
 
     V = FunctionSpace('V', domain)
     x,y = V.coordinates

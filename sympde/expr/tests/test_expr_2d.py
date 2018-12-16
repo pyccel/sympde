@@ -39,12 +39,10 @@ from sympde.expr import Projection
 from sympde.expr import Norm
 from sympde.expr import FormCall
 
-
 from sympde.expr.errors import UnconsistentError
 from sympde.expr.errors import UnconsistentLhsError
 from sympde.expr.errors import UnconsistentRhsError
 from sympde.expr.errors import UnconsistentBCError
-
 
 DIM = 2
 domain = Domain('Omega', dim=DIM)
