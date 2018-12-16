@@ -26,14 +26,6 @@ install:
   - python -m pip install -r requirements.txt
   - python -m pip install .
 
-before_script:
-  - mkdir pytest
-
 # command to run tests
 script:
-  - cd pytest
   - python -m pytest --pyargs sympde 
-  - cd -
-
-after_script:
-  - rm -rf pytest

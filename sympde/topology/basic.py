@@ -80,6 +80,22 @@ class Union(BasicDomain):
     def __len__(self):
         return len(self._args)
 
+    def complement(self, arg):
+        if isinstance(arg, Union):
+            arg = arg._args
+
+        elif isinstance(arg, BasicDomain):
+            arg = [arg]
+
+        ls = [i for i in self._args if not(i in arg)]
+        if len(ls) > 1:
+            return Union(*ls)
+        else:
+            return ls[0]
+
+    def __sub__(self, other):
+        return self.complement(other)
+
 
 #==============================================================================
 class Boundary(BasicDomain):
