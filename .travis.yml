@@ -4,8 +4,10 @@ language: python
 # which python versions to test
 python:
   - "3.4"
-  - "3.5"
-  - "3.6"
+
+matrix:
+  allow_failures:
+    - python: "3.4"
 
 # Cache directory $HOME/.cache/pip
 cache: pip
@@ -15,14 +17,15 @@ before_install:
   - sudo apt-get install gfortran
   - sudo apt-get install openmpi-bin libopenmpi-dev
   - python -m pip install --upgrade pip
-  - python -m pip install -r requirements.txt
   - python -m pip uninstall -y sympde
-  - wget https://raw.githubusercontent.com/pyccel/pyccel/devel/requirements.txt -O requirements_pyccel.txt
-  - python -m pip install -r requirements_pyccel.txt
-  - python -m pip install git+https://github.com/pyccel/pyccel@devel
 
 # command to install dependencies
 install:
+  # installing pyccel. for a given reason, pip is not installing req of pyccel!!
+  - wget https://raw.githubusercontent.com/pyccel/pyccel/devel/requirements.txt -O requirements_pyccel.txt
+  - python -m pip install -r requirements_pyccel.txt
+  - python -m pip install git+https://github.com/pyccel/pyccel@devel
+  - python -m pip install -r requirements.txt
   - python -m pip install .
 
 before_script:
