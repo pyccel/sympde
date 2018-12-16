@@ -1,5 +1,4 @@
 # coding: utf-8
-# TODO do we really need hdf5? and MPI?
 
 
 from collections import OrderedDict
@@ -10,7 +9,6 @@ import yamlloader
 import os
 import string
 import random
-from mpi4py import MPI
 
 from sympy.core import Basic, Symbol
 from sympy.core.containers import Tuple
@@ -172,17 +170,14 @@ class Topology(abc.Mapping):
     def patches(self):
         return self._patches
 
-    def read( self, filename, comm=MPI.COMM_WORLD ):
+    def read( self, filename ):
         # ... check extension of the file
         basename, ext = os.path.splitext(filename)
         if not(ext == '.h5'):
             raise ValueError('> Only h5 files are supported')
         # ...
 
-        if comm.size > 1:
-            kwargs = dict( driver='mpio', comm=comm )
-        else:
-            kwargs = {}
+        kwargs = {}
 
         h5  = h5py.File( filename, mode='r', **kwargs )
         yml = yaml.load( h5['geometry.yml'].value )
