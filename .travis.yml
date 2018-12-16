@@ -32,7 +32,7 @@ before_script:
 # command to run tests
 script:
   - cd pytest
-  - python -m pytest sympde 
+  - python -m pytest --pyargs sympde 
   - cd -
 
 after_script:
