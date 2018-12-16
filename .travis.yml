@@ -33,8 +33,14 @@ install:
   - python -m pip install -r requirements.txt
   - python -m pip install .
 
+before_script:
+  - mkdir pytest
+
 # command to run tests
-# unfortunately, we cannot invoke pytest on the whole project,
-# since sympy must be reinitialized (because of the global namespace?)
 script:
-  - chmod +rx bin/run_tests.sh ; bin/run_tests.sh
+  - cd pytest
+  - python -m pytest sympde 
+  - cd -
+
+after_script:
+  - rm -rf pytest
