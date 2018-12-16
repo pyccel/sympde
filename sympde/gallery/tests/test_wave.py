@@ -1,5 +1,7 @@
 # coding: utf-8
 
+# TODO not working yet
+
 from sympde.core import Domain
 from sympde.gallery import Wave
 

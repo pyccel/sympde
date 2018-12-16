@@ -9,9 +9,9 @@ from pyccel.codegen.printing.pycode import PythonCodePrinter as PyccelPythonCode
 
 from sympde.core.generic import Dot, Inner, Cross
 from sympde.core.generic import Grad, Rot, Curl, Div
-from sympde.core.geometry import Line, Square, Cube
-from sympde.core.derivatives import _partial_derivatives
-from sympde.core.derivatives import print_expression
+from sympde.topology import Line, Square, Cube
+from sympde.topology.derivatives import _partial_derivatives
+from sympde.topology.derivatives import print_expression
 
 
 class PythonCodePrinter(PyccelPythonCodePrinter):

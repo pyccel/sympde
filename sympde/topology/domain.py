@@ -8,7 +8,7 @@ from sympy.core import Basic, Symbol
 from sympy.core.containers import Tuple
 from sympy.tensor import IndexedBase
 
-from .base import BasicDomain, InteriorDomain, Boundary, Union, Topology
+from .basic import BasicDomain, InteriorDomain, Boundary, Union, Topology
 
 #==============================================================================
 class Domain(BasicDomain):
@@ -22,14 +22,15 @@ class Domain(BasicDomain):
     Examples
 
     """
-    def __new__(cls, name, interiors=None, boundaries=None, topology=None):
+    def __new__(cls, name, interiors=None, boundaries=None, topology=None,
+                dim=None):
         # ...
         if not isinstance(name, str):
             raise TypeError('> name must be a string')
         # ...
 
         # ...
-        if ( interiors is None ) and ( topology is None ):
+        if ( interiors is None ) and ( topology is None ) and (dim is None):
             raise ValueError('> either interiors or topology must be given')
         # ...
 
@@ -74,10 +75,20 @@ class Domain(BasicDomain):
         # ...
 
         # ...
+        if not dim is None:
+            assert(isinstance( dim, int ))
+
+            interiors = [InteriorDomain(name, dim=dim)]
+        # ...
+
+        # ...
         if len(interiors) == 0:
             raise TypeError('No interior domain found')
 
-        if len(interiors) > 1:
+        elif len(interiors) == 1:
+            interiors = interiors[0]
+
+        elif len(interiors) > 1:
             interiors = Union(*interiors)
         # ...
 

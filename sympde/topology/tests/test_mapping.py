@@ -5,11 +5,11 @@ from sympy import Matrix
 from sympy.tensor import IndexedBase
 from sympy import symbols, simplify
 
-from sympde.core import Mapping
-from sympde.core import Jacobian, DetJacobian, Covariant, Contravariant
-from sympde.core import dx, dy, dz
-from sympde.core import print_expression
-from sympde.core import Domain
+from sympde.topology import Mapping
+from sympde.topology import Jacobian, DetJacobian, Covariant, Contravariant
+from sympde.topology import dx, dy, dz
+from sympde.topology import print_expression
+from sympde.topology import Domain
 
 # ...
 def test_mapping_1d():
@@ -122,9 +122,14 @@ def test_mapping_3d():
 
 # ...
 
-# .....................................................
-if __name__ == '__main__':
+#==============================================================================
+# CLEAN UP SYMPY NAMESPACE
+#==============================================================================
 
-    test_mapping_1d()
-    test_mapping_2d()
-    test_mapping_3d()
+def teardown_module():
+    from sympy import cache
+    cache.clear_cache()
+
+def teardown_function():
+    from sympy import cache
+    cache.clear_cache()

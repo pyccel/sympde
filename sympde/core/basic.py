@@ -72,4 +72,9 @@ class BasicMapping(IndexedBase):
     pass
 # ...
 
+# ...
+class BasicDerivable(Basic):
+    pass
+# ...
+
 _coeffs_registery = (Integer, Float, Constant)

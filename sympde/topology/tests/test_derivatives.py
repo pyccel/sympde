@@ -7,14 +7,14 @@ from sympy import Tuple
 from sympy import Matrix
 from sympy import srepr
 
-from sympde.core import (dx, dy, dz)
 from sympde.core import grad, dot, inner
 from sympde.core import Field, Constant
-from sympde.core import get_index_derivatives_atom
-from sympde.core import partial_derivative_as_str
-from sympde.core import get_max_partial_derivatives
-from sympde.core import FunctionSpace
-from sympde.core import Domain
+from sympde.topology import Domain
+from sympde.topology import get_index_derivatives_atom
+from sympde.topology import partial_derivative_as_str
+from sympde.topology import get_max_partial_derivatives
+from sympde.topology import FunctionSpace
+from sympde.topology import (dx, dy, dz)
 
 
 def indices_as_str(a):
@@ -122,12 +122,17 @@ def test_partial_derivatives_2():
     d = get_max_partial_derivatives(expr)
     assert(indices_as_str(d) == 'xxy')
     # ...
-
-#    print('> ', srepr(expr))
-#    print('')
 # ...
 
-# .....................................................
-if __name__ == '__main__':
-    test_partial_derivatives_1()
-    test_partial_derivatives_2()
+
+#==============================================================================
+# CLEAN UP SYMPY NAMESPACE
+#==============================================================================
+
+def teardown_module():
+    from sympy import cache
+    cache.clear_cache()
+
+def teardown_function():
+    from sympy import cache
+    cache.clear_cache()

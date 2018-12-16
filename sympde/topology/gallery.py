@@ -8,7 +8,7 @@ from sympy.core import Basic, Symbol
 from sympy.core.containers import Tuple
 from sympy.tensor import IndexedBase
 
-from sympde.topology.base import BasicDomain
+from .basic import BasicDomain
 
 
 #==============================================================================

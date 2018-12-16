@@ -44,11 +44,11 @@ from sympy.core.compatibility import is_sequence
 from sympy import Basic
 from sympy import Indexed, IndexedBase
 
-from .basic import CalculusFunction
-from .basic import _coeffs_registery
-from .basic import Field, Constant
-from .basic import BasicMapping
-from .algebra import LinearOperator
+from sympde.core.basic import CalculusFunction
+from sympde.core.basic import _coeffs_registery
+from sympde.core.basic import Field, Constant
+from sympde.core.basic import BasicMapping
+from sympde.core.algebra import LinearOperator
 from .space import TestFunction, VectorTestFunction, IndexedTestTrial
 from .space import Unknown
 from .space import VectorField, IndexedVectorField

@@ -7,15 +7,14 @@ from sympy.printing.latex import LatexPrinter as LatexPrinterSympy
 
 from pyccel.ast.core import Nil
 
-from sympde.core.expr import BilinearForm, LinearForm, Integral, FormCall
+from sympde.expr.expr import BilinearForm, LinearForm, Integral, FormCall
 from sympde.core.generic import Dot, Inner, Cross
 from sympde.core.generic import Grad, Rot, Curl, Div
-from sympde.core.geometry import Line, Square, Cube
-from sympde.core.derivatives import sort_partial_derivatives
-from sympde.core.derivatives import get_index_derivatives
-from sympde.core.derivatives import get_atom_derivatives
-from sympde.core.geometry import Domain
-from sympde.core.space import ProductSpace
+from sympde.topology import Line, Square, Cube, Domain
+from sympde.topology.derivatives import sort_partial_derivatives
+from sympde.topology.derivatives import get_index_derivatives
+from sympde.topology.derivatives import get_atom_derivatives
+from sympde.topology.space import ProductSpace
 
 class LatexPrinter(LatexPrinterSympy):
 

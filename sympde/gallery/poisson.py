@@ -10,11 +10,12 @@ from sympy.core.containers import Tuple
 from sympy import Function
 from sympy import Integer, Float
 
-from sympde.core.expr import BilinearForm, LinearForm, Integral
-from sympde.core.model import Model, Equation
 from sympde.core.generic import grad, dot
-from sympde.core.space import FunctionSpace
-from sympde.core.space import TestFunction
+from sympde.expr.expr import BilinearForm, LinearForm, Integral
+from sympde.topology.space import FunctionSpace
+from sympde.topology.space import TestFunction
+
+from .model import Model, Equation
 
 class Poisson(Model):
     """

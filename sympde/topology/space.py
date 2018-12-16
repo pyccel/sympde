@@ -8,8 +8,8 @@ from sympy.core import Symbol
 from sympy.core import Expr
 from sympy.core.containers import Tuple
 
-from .basic import Field
-from .geometry import BasicDomain
+from sympde.core.basic import Field
+from .basic import BasicDomain
 
 # ...
 class BasicFunctionSpace(Basic):

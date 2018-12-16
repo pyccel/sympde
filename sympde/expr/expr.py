@@ -7,7 +7,6 @@
 #      - check that a LinearForm is linear
 #      - add is_symmetric property for BilinearForm
 
-from numpy import zeros
 from itertools import groupby
 
 from sympy.core import Basic
@@ -16,55 +15,50 @@ from sympy.core import Function
 from sympy.core import Expr, Add, Mul, Pow
 from sympy import S
 from sympy.core.containers import Tuple
-from sympy import preorder_traversal
 from sympy import Indexed, IndexedBase, Matrix, ImmutableDenseMatrix
-from sympy.matrices.dense import MutableDenseMatrix
-from sympy.physics.quantum import TensorProduct
 from sympy import expand
 from sympy import Integer, Float
 from sympy.core.expr import AtomicExpr
 from sympy.physics.quantum import TensorProduct
 
-from .utils import random_string
-from .measure import CanonicalMeasure
-from .measure import CartesianMeasure
-from .measure import Measure
-from .geometry import BasicDomain, Domain, Line
-from .geometry import BoundaryVector, NormalVector, TangentVector, Boundary
-from .derivatives import _partial_derivatives
-from .derivatives import partial_derivative_as_symbol
-from .derivatives import sort_partial_derivatives
-from .derivatives import get_atom_derivatives
-from .derivatives import dx, dy, dz
-from .derivatives import (Grad_1d, Div_1d,
-                          Grad_2d, Curl_2d, Rot_2d, Div_2d,
-                          Grad_3d, Curl_3d, Div_3d)
-from .derivatives import Bracket_2d
-from .derivatives import Laplace_1d, Laplace_2d, Laplace_3d
-from .derivatives import Hessian_1d, Hessian_2d, Hessian_3d
-
-from .basic import _coeffs_registery
-from .basic import CalculusFunction
-from .basic import Field, Constant
-
-from .generic import Dot, Inner, Cross
-from .generic import Grad, Rot, Curl, Div
-from .generic import Bracket
-from .generic import Laplace
-from .generic import _generic_ops
-
-from .algebra import (Dot_1d,
+from sympde.core.basic import _coeffs_registery
+from sympde.core.basic import CalculusFunction
+from sympde.core.basic import Field, Constant
+from sympde.core.generic import Dot, Inner, Cross
+from sympde.core.generic import Grad, Rot, Curl, Div
+from sympde.core.generic import Bracket
+from sympde.core.generic import Laplace
+from sympde.core.generic import _generic_ops
+from sympde.core.algebra import (Dot_1d,
                  Dot_2d, Inner_2d, Cross_2d,
                  Dot_3d, Inner_3d, Cross_3d)
 
-from .space import FunctionSpace
-from .space import ProductSpace
-from .space import TestFunction
-from .space import VectorTestFunction
-from .space import IndexedTestTrial
-from .space import Unknown, VectorUnknown
-from .space import Trace
-from .space import VectorField, IndexedVectorField
+from sympde.topology import BasicDomain, Domain, Line
+from sympde.topology import BoundaryVector, NormalVector, TangentVector, Boundary
+from sympde.topology.derivatives import _partial_derivatives
+from sympde.topology.derivatives import partial_derivative_as_symbol
+from sympde.topology.derivatives import sort_partial_derivatives
+from sympde.topology.derivatives import get_atom_derivatives
+from sympde.topology.derivatives import dx, dy, dz
+from sympde.topology.derivatives import (Grad_1d, Div_1d,
+                                         Grad_2d, Curl_2d, Rot_2d, Div_2d,
+                                         Grad_3d, Curl_3d, Div_3d)
+from sympde.topology.derivatives import Bracket_2d
+from sympde.topology.derivatives import Laplace_1d, Laplace_2d, Laplace_3d
+from sympde.topology.derivatives import Hessian_1d, Hessian_2d, Hessian_3d
+from sympde.topology.space import FunctionSpace
+from sympde.topology.space import ProductSpace
+from sympde.topology.space import TestFunction
+from sympde.topology.space import VectorTestFunction
+from sympde.topology.space import IndexedTestTrial
+from sympde.topology.space import Unknown, VectorUnknown
+from sympde.topology.space import Trace
+from sympde.topology.space import VectorField, IndexedVectorField
+from sympde.topology.measure import CanonicalMeasure
+from sympde.topology.measure import CartesianMeasure
+from sympde.topology.measure import Measure
+
+from .utils import random_string
 from .errors import UnconsistentError
 
 

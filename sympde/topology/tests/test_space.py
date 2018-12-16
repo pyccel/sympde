@@ -1,8 +1,8 @@
 # coding: utf-8
 
-from sympde.core import Domain
-from sympde.core import FunctionSpace, VectorFunctionSpace
-from sympde.core import ProductSpace
+from sympde.topology import Domain
+from sympde.topology import FunctionSpace, VectorFunctionSpace
+from sympde.topology import ProductSpace
 
 # ...
 def test_space_1d():
@@ -82,9 +82,14 @@ def test_space_3d():
 #    assert(U.name == 'U1U2U3')
 # ...
 
-# .....................................................
-if __name__ == '__main__':
+#==============================================================================
+# CLEAN UP SYMPY NAMESPACE
+#==============================================================================
 
-    test_space_1d()
-    test_space_2d()
-    test_space_3d()
+def teardown_module():
+    from sympy import cache
+    cache.clear_cache()
+
+def teardown_function():
+    from sympy import cache
+    cache.clear_cache()

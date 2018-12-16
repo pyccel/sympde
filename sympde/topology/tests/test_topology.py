@@ -47,7 +47,9 @@ def test_domain_1():
     Gamma_2 = Boundary('Gamma_2', Omega_2)
     Gamma_3 = Boundary('Gamma_3', Omega_2)
 
-    Omega = Domain('Omega', [Omega_1, Omega_2], [Gamma_1, Gamma_2, Gamma_3])
+    Omega = Domain('Omega',
+                   interiors=[Omega_1, Omega_2],
+                   boundaries=[Gamma_1, Gamma_2, Gamma_3])
 
     assert( Omega.dim == 2 )
     assert( len(Omega.interior) == 2 )
@@ -64,11 +66,14 @@ def test_domain_2():
     assert( len(Omega.boundary) == 8 )
 # ...
 
-# .....................................................
-if __name__ == '__main__':
+#==============================================================================
+# CLEAN UP SYMPY NAMESPACE
+#==============================================================================
 
-    test_interior_domain()
-    test_topology_1()
-    test_topology_2()
-    test_domain_1()
-    test_domain_2()
+def teardown_module():
+    from sympy import cache
+    cache.clear_cache()
+
+def teardown_function():
+    from sympy import cache
+    cache.clear_cache()

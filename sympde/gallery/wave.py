@@ -10,13 +10,14 @@ from sympy.core.containers import Tuple
 from sympy import Function
 from sympy import Integer, Float
 
-from sympde.core.expr import BilinearForm, LinearForm, Integral
-from sympde.core.model import Model, Equation
-from sympde.core.generic import grad, dot
-from sympde.core.space import FunctionSpace
-from sympde.core.space import TestFunction
+from sympde.expr.expr import BilinearForm, LinearForm, Integral
 from sympde.core.basic import Constant
-from sympde.core.derivatives import dx, dy, dz
+from sympde.core.generic import grad, dot
+from sympde.topology.space import FunctionSpace
+from sympde.topology.space import TestFunction
+from sympde.topology.derivatives import dx, dy, dz
+
+from .model import Model, Equation
 
 class Wave_1d(Model):
     """
