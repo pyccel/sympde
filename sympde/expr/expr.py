@@ -33,7 +33,7 @@ from sympde.core.algebra import (Dot_1d,
                  Dot_2d, Inner_2d, Cross_2d,
                  Dot_3d, Inner_3d, Cross_3d)
 
-from sympde.topology import BasicDomain, Domain, Line
+from sympde.topology import BasicDomain, Domain, Union, Line
 from sympde.topology import BoundaryVector, NormalVector, TangentVector, Boundary
 from sympde.topology.derivatives import _partial_derivatives
 from sympde.topology.derivatives import partial_derivative_as_symbol
@@ -154,6 +154,30 @@ class Integral(BasicForm):
     _ldim = None
     _coordinates = None
     def __new__(cls, expr, domain, measure=None, mapping=None, name=None):
+        # ... treat union of domains
+        #     TODO improve
+        unions = expr.atoms(Union)
+        if unions:
+            if not( len(unions) == 1 ):
+                raise NotImplementedError('only one union is available for the moment')
+
+            domains = []
+            for i in list(unions):
+                domains += list(i._args)
+            domains = set(domains)
+            if len(domains) > 1:
+                forms = []
+                for domain in domains:
+                    i = list(unions)[0]
+                    _expr = expr.replace(i, domain)
+                    form  = Integral(_expr, domain, measure=measure,
+                                      mapping=mapping, name=None)
+
+                    forms.append(form)
+
+                return Add(*forms)
+        # ...
+
 
         if not isinstance(domain, BasicDomain):
             raise TypeError('> Expecting a BasicDomain object for domain')
@@ -234,6 +258,29 @@ class LinearForm(BasicForm):
 
     """
     def __new__(cls, arguments, expr, measure=None, mapping=None, name=None):
+        # ... treat union of domains
+        #     TODO improve
+        unions = expr.atoms(Union)
+        if unions:
+            if not( len(unions) == 1 ):
+                raise NotImplementedError('only one union is available for the moment')
+
+            domains = []
+            for i in list(unions):
+                domains += list(i._args)
+            domains = set(domains)
+            if len(domains) > 1:
+                forms = []
+                for domain in domains:
+                    i = list(unions)[0]
+                    _expr = expr.replace(i, domain)
+                    form  = LinearForm(arguments, _expr, measure=measure,
+                                       mapping=mapping, name=None)
+
+                    forms.append(form(arguments))
+
+                return Add(*forms)
+        # ...
 
         args = _sanitize_form_arguments(arguments, expr, is_linear=True)
         obj = Basic.__new__(cls, args, expr)
@@ -297,6 +344,29 @@ class BilinearForm(BasicForm):
 
     """
     def __new__(cls, arguments, expr, measure=None, mapping=None, name=None):
+        # ... treat union of domains
+        #     TODO improve
+        unions = expr.atoms(Union)
+        if unions:
+            if not( len(unions) == 1 ):
+                raise NotImplementedError('only one union is available for the moment')
+
+            domains = []
+            for i in list(unions):
+                domains += list(i._args)
+            domains = set(domains)
+            if len(domains) > 1:
+                forms = []
+                for domain in domains:
+                    i = list(unions)[0]
+                    _expr = expr.replace(i, domain)
+                    form  = BilinearForm(arguments, _expr, measure=measure,
+                                         mapping=mapping, name=None)
+
+                    forms.append(form(*arguments))
+
+                return Add(*forms)
+        # ...
 
         # ...
         if not isinstance(arguments, (tuple, list, Tuple)):

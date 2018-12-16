@@ -27,7 +27,10 @@ from sympde.topology import ProductSpace
 from sympde.topology import TestFunction
 from sympde.topology import VectorTestFunction
 from sympde.topology import Unknown
-from sympde.topology import Domain, Boundary, NormalVector, TangentVector
+from sympde.topology import InteriorDomain, Union
+from sympde.topology import Boundary, NormalVector, TangentVector
+from sympde.topology import Topology, Edge
+from sympde.topology import Domain
 from sympde.topology import Trace, trace_0, trace_1
 
 from sympde.expr import BilinearForm, LinearForm, Integral
@@ -45,10 +48,10 @@ from sympde.expr.errors import UnconsistentRhsError
 from sympde.expr.errors import UnconsistentBCError
 
 DIM = 2
-domain = Domain('Omega', dim=DIM)
 
 #==============================================================================
-def test_boundary_2d():
+def test_boundary_2d_1():
+    domain = Domain('Omega', dim=DIM)
 
     V1 = FunctionSpace('V1', domain)
     V2 = FunctionSpace('V2', domain)
@@ -164,7 +167,54 @@ def test_boundary_2d():
     # ...
 
 #==============================================================================
+def test_boundary_2d_2():
+    Omega_1 = InteriorDomain('Omega_1', dim=2)
+
+    B1 = Boundary('B1', Omega_1)
+    B2 = Boundary('B2', Omega_1)
+    B3 = Boundary('B3', Omega_1)
+
+    domain = Domain('Omega', interiors=[Omega_1],
+                    boundaries=[B1, B2, B3])
+
+    V = FunctionSpace('V', domain)
+    v = TestFunction(V, name='v')
+    u = TestFunction(V, name='u')
+
+    x,y = V.coordinates
+
+    alpha = Constant('alpha')
+
+#    # ...
+#    g = Tuple(x**2, y**2)
+#    l1 = LinearForm(v, v*trace_1(g, B1))
+#
+#    print(l1)
+#    print(evaluate(l1, verbose=True))
+#    print('')
+#    # ...
+
+    # ...
+    g = Tuple(x**2, y**2)
+    l = LinearForm(v, v*trace_1(g, domain.boundary))
+
+    print(l)
+    print(evaluate(l, verbose=True))
+    print('')
+    # ...
+
+    # ...
+    a = BilinearForm((v, u), v*trace_0(u, domain.boundary))
+
+    print(a)
+    print(evaluate(a, verbose=True))
+    print('')
+    # ...
+
+
+#==============================================================================
 def test_calls_2d():
+    domain = Domain('Omega', dim=DIM)
 
     V1 = FunctionSpace('V1', domain)
     V2 = FunctionSpace('V2', domain)
@@ -388,6 +438,7 @@ def test_calls_2d():
 
 #==============================================================================
 def test_projection_2d():
+    domain = Domain('Omega', dim=DIM)
 
     V = FunctionSpace('V', domain)
     x,y = domain.coordinates
@@ -399,6 +450,7 @@ def test_projection_2d():
 
 #==============================================================================
 def test_norm_2d():
+    domain = Domain('Omega', dim=DIM)
 
     x,y = domain.coordinates
 
@@ -411,6 +463,7 @@ def test_norm_2d():
 
 #==============================================================================
 def test_tensorize_2d():
+    domain = Domain('Omega', dim=DIM)
 
     V = FunctionSpace('V', domain)
     U = FunctionSpace('U', domain)
@@ -461,6 +514,8 @@ def test_tensorize_2d():
 
 #==============================================================================
 def test_tensorize_2d_stokes():
+    domain = Domain('Omega', dim=DIM)
+
     # ... abstract model
     V = VectorFunctionSpace('V', domain)
     W = FunctionSpace('W', domain)
@@ -481,6 +536,8 @@ def test_tensorize_2d_stokes():
 
 #==============================================================================
 def test_vector_2d_1():
+    domain = Domain('Omega', dim=DIM)
+
     W1 = VectorFunctionSpace('W1', domain)
     T1 = VectorFunctionSpace('T1', domain)
 
@@ -539,3 +596,5 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
+
+test_boundary_2d_2()
