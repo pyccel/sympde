@@ -16,8 +16,9 @@ from sympde.core.generic import grad, dot
 from sympde.topology.space import FunctionSpace
 from sympde.topology.space import TestFunction
 from sympde.topology.derivatives import dx, dy, dz
+from sympde.expr.expr import Equation
 
-from .model import Model, Equation
+from .model import Model
 
 class Wave_1d(Model):
     """

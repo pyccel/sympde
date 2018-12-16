@@ -12,6 +12,8 @@ from sympde.core import Field
 from sympde.core import Domain
 from sympde.core import Constant
 
+from sympde.expr import Equation, DirichletBC
+
 DIM = 2
 
 # ...
@@ -98,6 +100,113 @@ def test_model_2d_2():
     model = Model(domain, forms=forms, equation=equation)
     model.preview(outputTexFile='test_model_2d_2.tex')
 # ...
+
+# ...
+def test_equation_2d():
+    print('============ test_equation_2d =============')
+
+    V = FunctionSpace('V', domain)
+    U = FunctionSpace('U', domain)
+
+    v = TestFunction(V, name='v')
+    u = TestFunction(U, name='u')
+
+    x,y = domain.coordinates
+
+    alpha = Constant('alpha')
+
+    B1 = Boundary(r'\Gamma_1', domain)
+    B2 = Boundary(r'\Gamma_2', domain)
+    B3 = Boundary(r'\Gamma_3', domain)
+
+    # ... bilinear/linear forms
+    expr = dot(grad(v), grad(u))
+    a1 = BilinearForm((v,u), expr, name='a1')
+
+    expr = v*u
+    a2 = BilinearForm((v,u), expr, name='a2')
+
+    expr = v*trace_0(u, B1)
+    a_B1 = BilinearForm((v, u), expr, name='a_B1')
+
+    expr = x*y*v
+    l1 = LinearForm(v, expr, name='l1')
+
+    expr = cos(x+y)*v
+    l2 = LinearForm(v, expr, name='l2')
+
+    expr = x*y*trace_0(v, B2)
+    l_B2 = LinearForm(v, expr, name='l_B2')
+    # ...
+
+    # ...
+    with pytest.raises(UnconsistentLhsError):
+        equation = Equation(a1, l1(v))
+
+    with pytest.raises(UnconsistentLhsError):
+        equation = Equation(l1(v), l1(v))
+
+    with pytest.raises(UnconsistentLhsError):
+        equation = Equation(a1(v,u) + alpha*a2(v,u), l1(v))
+    # ...
+
+    # ...
+    with pytest.raises(UnconsistentRhsError):
+        equation = Equation(a1(v,u), l1)
+
+    with pytest.raises(UnconsistentRhsError):
+        equation = Equation(a1(v,u), a1(v,u))
+
+    with pytest.raises(UnconsistentRhsError):
+        equation = Equation(a1(v,u), l1(v) + l2(v))
+    # ...
+
+    # ...
+    equation = Equation(a1(v,u), l1(v))
+    # ...
+
+    # ...
+    a = BilinearForm((v,u), a1(v,u) + alpha*a2(v,u))
+    equation = Equation(a(v,u), l1(v))
+    # ...
+
+    # ...
+    a = BilinearForm((v,u), a1(v,u) + a_B1(v,u))
+    equation = Equation(a(v,u), l1(v))
+    # ...
+
+    # ...
+    a = BilinearForm((v,u), a1(v,u) + a_B1(v,u))
+    l = LinearForm(v, l1(v) + l2(v))
+    equation = Equation(a(v,u), l(v))
+    # ...
+
+    # ...
+    a = BilinearForm((v,u), a1(v,u) + a_B1(v,u))
+    l = LinearForm(v, l1(v) + alpha*l_B2(v))
+    equation = Equation(a(v,u), l(v))
+    # ...
+
+    # ... using bc
+    equation = Equation(a1(v,u), l1(v), bc=DirichletBC(B1))
+    # ...
+
+    # ... using bc
+    equation = Equation(a1(v,u), l1(v), bc=DirichletBC(ComplementBoundary(B1)))
+    # ...
+
+    # ...
+    with pytest.raises(UnconsistentBCError):
+        a = BilinearForm((v,u), a1(v,u) + a_B1(v,u))
+        equation = Equation(a(v,u), l1(v), bc=DirichletBC(B1))
+    # ...
+
+    # ...
+    with pytest.raises(UnconsistentBCError):
+        l = LinearForm(v, l1(v) + alpha*l_B2(v))
+        equation = Equation(a1(v,u), l(v), bc=DirichletBC(B2))
+    # ...
+
 
 # .....................................................
 if __name__ == '__main__':

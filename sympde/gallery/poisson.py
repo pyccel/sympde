@@ -14,8 +14,9 @@ from sympde.core.generic import grad, dot
 from sympde.expr.expr import BilinearForm, LinearForm, Integral
 from sympde.topology.space import FunctionSpace
 from sympde.topology.space import TestFunction
+from sympde.expr.expr import Equation
 
-from .model import Model, Equation
+from .model import Model
 
 class Poisson(Model):
     """

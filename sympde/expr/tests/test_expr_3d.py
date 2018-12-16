@@ -100,6 +100,18 @@ def test_tensorize_3d():
     print('')
     # ...
 
+#==============================================================================
+# CLEAN UP SYMPY NAMESPACE
+#==============================================================================
+
+def teardown_module():
+    from sympy import cache
+    cache.clear_cache()
+
+def teardown_function():
+    from sympy import cache
+    cache.clear_cache()
+
 # .....................................................
 if __name__ == '__main__':
 
