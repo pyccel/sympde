@@ -49,9 +49,8 @@ DIM = 3
 domain = Domain('Omega', dim=DIM)
 
 
-# ...
+#==============================================================================
 def test_tensorize_3d():
-    print('============ test_tensorize_3d =============')
 
     V = FunctionSpace('V', domain)
     U = FunctionSpace('U', domain)
@@ -110,9 +109,3 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
-
-# .....................................................
-if __name__ == '__main__':
-
-    test_tensorize_3d()
-

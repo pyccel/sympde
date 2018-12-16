@@ -6,6 +6,7 @@ from sympy.core import Expr
 
 from pyccel.ast.core import Nil
 
+from sympde.topology.basic import Boundary
 from sympde.topology.space import TestFunction
 from sympde.topology.space import VectorTestFunction
 from sympde.topology.space import FunctionSpace

@@ -47,9 +47,8 @@ from sympde.expr.errors import UnconsistentBCError
 DIM = 2
 domain = Domain('Omega', dim=DIM)
 
-# ...
+#==============================================================================
 def test_boundary_2d():
-    print('============ test_boundary_2d =============')
 
     V1 = FunctionSpace('V1', domain)
     V2 = FunctionSpace('V2', domain)
@@ -76,10 +75,6 @@ def test_boundary_2d():
     B1 = Boundary(r'\Gamma_1', domain)
     B2 = Boundary(r'\Gamma_2', domain)
     B3 = Boundary(r'\Gamma_3', domain)
-
-    assert(isinstance(B1 + B2, UnionBoundary))
-    assert(isinstance(B1 + B2 + B3, UnionBoundary))
-    assert(isinstance(-(B1 + B2), ComplementBoundary))
 
     # ...
     with pytest.raises(UnconsistentError):
@@ -168,9 +163,8 @@ def test_boundary_2d():
     print('')
     # ...
 
-# ...
+#==============================================================================
 def test_calls_2d():
-    print('============ test_calls_2d =============')
 
     V1 = FunctionSpace('V1', domain)
     V2 = FunctionSpace('V2', domain)
@@ -391,12 +385,9 @@ def test_calls_2d():
     print(atomize(A))
     print(evaluate(A))
     # ...
-# ...
 
-
-
+#==============================================================================
 def test_projection_2d():
-    print('============ test_projection_2d =============')
 
     V = FunctionSpace('V', domain)
     x,y = domain.coordinates
@@ -406,8 +397,8 @@ def test_projection_2d():
     u = Projection(x**2+alpha*y, V, name='u')
 
 
+#==============================================================================
 def test_norm_2d():
-    print('============ test_norm_2d =============')
 
     x,y = domain.coordinates
 
@@ -418,9 +409,8 @@ def test_norm_2d():
     print('> l2 norm = ', evaluate(l2_norm_u))
     print('> l2 norm = ', evaluate(h1_norm_u))
 
-# ...
+#==============================================================================
 def test_tensorize_2d():
-    print('============ test_tensorize_2d =============')
 
     V = FunctionSpace('V', domain)
     U = FunctionSpace('U', domain)
@@ -469,7 +459,7 @@ def test_tensorize_2d():
     print('')
     # ...
 
-# ...
+#==============================================================================
 def test_tensorize_2d_stokes():
     # ... abstract model
     V = VectorFunctionSpace('V', domain)
@@ -489,7 +479,7 @@ def test_tensorize_2d_stokes():
     print(tensorize(A))
     print('')
 
-# ...
+#==============================================================================
 def test_vector_2d_1():
     W1 = VectorFunctionSpace('W1', domain)
     T1 = VectorFunctionSpace('T1', domain)
@@ -549,15 +539,3 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
-
-# .....................................................
-if __name__ == '__main__':
-
-    test_calls_2d()
-#    test_boundary_2d()
-    test_projection_2d()
-    test_norm_2d()
-    test_tensorize_2d()
-    test_tensorize_2d_stokes()
-
-    test_vector_2d_1()

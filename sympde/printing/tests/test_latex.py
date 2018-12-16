@@ -2,20 +2,28 @@
 
 from sympy import sin, cos, pi
 
-from sympde.core import dx, dy, dz
-from sympde.core import grad, dot, inner, cross, rot, curl, div
-from sympde.core import FunctionSpace, VectorFunctionSpace
-from sympde.core import TestFunction
-from sympde.core import VectorTestFunction
-from sympde.core import BilinearForm, LinearForm, Integral
+from sympde.core import Constant
 from sympde.core import Field
-from sympde.core import Domain, Boundary, NormalVector, TangentVector
-from sympde.core import Trace, trace_0, trace_1
-from sympde.core import tensorize
-from sympde.core import VectorField
+from sympde.core import grad, dot, inner, cross, rot, curl, div
+
+from sympde.topology import (dx, dy, dz)
+from sympde.topology import FunctionSpace, VectorFunctionSpace
+from sympde.topology import VectorField
+from sympde.topology import ProductSpace
+from sympde.topology import TestFunction
+from sympde.topology import VectorTestFunction
+from sympde.topology import Unknown
+from sympde.topology import Domain, Boundary, NormalVector, TangentVector
+from sympde.topology import Trace, trace_0, trace_1
+from sympde.expr import atomize
+from sympde.expr import evaluate
+from sympde.expr import tensorize
+from sympde.expr import BilinearForm, LinearForm, Integral
+
 from sympde.printing.latex import latex
 
 
+#==============================================================================
 def test_latex_1d():
 
     DIM = 1
@@ -41,10 +49,11 @@ def test_latex_1d():
     print(latex(b))
 #    assert(latex(b) == r'\int_{0}^{1} v \sin{\left (\pi x \right )} dx')
 
-    f = Integral(dx(F)-x)
+    f = Integral(dx(F)-x, domain)
     print(latex(f))
 #    assert(latex(f) == r'\int_{0}^{1} - x + \partial_{x}F dx')
 
+#==============================================================================
 def test_latex_2d_1():
 
     DIM = 2
@@ -70,16 +79,17 @@ def test_latex_2d_1():
     print(latex(b))
 #    assert(latex(b) == r'\int_{0}^{1}\int_{0}^{1} v \sin{\left (\pi x \right )} \cos{\left (\pi y \right )} dxdy')
 
-    f = Integral(dx(F)-dy(F)-x*y)
+    f = Integral(dx(F)-dy(F)-x*y, domain)
     print(latex(f))
 #    assert(latex(f) == r'\int_{0}^{1}\int_{0}^{1} - x y + \partial_{x}F - \partial_{y}F dxdy')
 
+#==============================================================================
 def test_latex_2d_2():
 
     DIM = 2
     domain = Domain('Omega', dim=DIM)
 
-    V = FunctionSpace('V', domain, is_block=True, shape=2)
+    V = VectorFunctionSpace('V', domain)
 
     x,y = V.coordinates
 
@@ -100,6 +110,7 @@ def test_latex_2d_2():
 #    assert(latex(b) == r'\int_{0}^{1}\int_{0}^{1} \nabla \cdot \mathbf{v} \sin{\left (\pi x \right )} \cos{\left (\pi y \right )} dxdy')
 
 
+#==============================================================================
 def test_latex_3d_1():
 
     DIM = 3
@@ -125,16 +136,17 @@ def test_latex_3d_1():
     print(latex(b))
 #    assert(latex(b) == r'\int_{0}^{1}\int_{0}^{1}\int_{0}^{1} v \sin{\left (\pi x \right )} \cos{\left (\pi y \right )} \cos{\left (2 \pi z \right )} dxdydz')
 
-    f = Integral(dx(F)-dy(F)+dz(F)-x*y*z)
+    f = Integral(dx(F)-dy(F)+dz(F)-x*y*z, domain)
     print(latex(f))
 #    assert(latex(f) == r'\int_{0}^{1}\int_{0}^{1} - x y z + \partial_{x}F - \partial_{y}F + \partial_{z}F dxdy')
 
+#==============================================================================
 def test_latex_3d_2():
 
     DIM = 3
     domain = Domain('Omega', dim=DIM)
 
-    V = FunctionSpace('V', domain, is_block=True, shape=3)
+    V = VectorFunctionSpace('V', domain)
 
     x,y,z = V.coordinates
 
@@ -155,16 +167,8 @@ def test_latex_3d_2():
 #    assert(latex(b) == r'\int_{0}^{1}\int_{0}^{1}\int_{0}^{1} \nabla \cdot \mathbf{v} \sin{\left (\pi x \right )} \cos{\left (\pi y \right )} dxdydz')
 
 
-def test_latex_model_2d_1():
-#    from sympde.gallery import Poisson
-#    model = Poisson(dim=2)
-#    model.preview(outputTexFile='poisson_2d.tex')
 
-    from sympde.gallery import Stokes
-    domain = Domain(r'\Omega', dim=2)
-    model = Stokes(domain=domain)
-    model.preview(outputTexFile='stokes_2d.tex')
-
+#==============================================================================
 def test_latex_2d_3():
     DIM = 2
 
@@ -197,6 +201,7 @@ def test_latex_2d_3():
     print('')
     # ...
 
+#==============================================================================
 def test_latex_2d_4():
     DIM = 2
 
@@ -221,6 +226,7 @@ def test_latex_2d_4():
     print('')
     # ...
 
+#==============================================================================
 def test_latex_2d_5():
     DIM = 2
 
@@ -247,19 +253,14 @@ def test_latex_2d_5():
     print('')
     # ...
 
+#==============================================================================
+# CLEAN UP SYMPY NAMESPACE
+#==============================================================================
 
-####################
-if __name__ == '__main__':
-#    test_latex_1d()
-#    test_latex_2d_1()
-#    test_latex_3d_1()
-#
-#    test_latex_2d_2()
-#    test_latex_3d_2()
+def teardown_module():
+    from sympy import cache
+    cache.clear_cache()
 
-#    test_latex_model_2d_1()
-
-#    test_latex_2d_3()
-#    test_latex_2d_4()
-    test_latex_2d_5()
-
+def teardown_function():
+    from sympy import cache
+    cache.clear_cache()

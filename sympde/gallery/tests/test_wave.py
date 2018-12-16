@@ -2,23 +2,27 @@
 
 # TODO not working yet
 
-from sympde.core import Domain
+from sympde.topology import Domain
 from sympde.gallery import Wave
 
-# ...
+#==============================================================================
 def test_wave_1d():
-    print('============ test_wave_1d ==============')
 
     domain = Domain(r'\Omega', dim=1)
     model = Wave(domain=domain)
 
     assert(str(model.space) == 'V')
 
-    model.preview(outputTexFile='test_wave_1d.tex')
-# ...
+#    model.preview(outputTexFile='test_wave_1d.tex')
 
+#==============================================================================
+# CLEAN UP SYMPY NAMESPACE
+#==============================================================================
 
-# .....................................................
-if __name__ == '__main__':
+def teardown_module():
+    from sympy import cache
+    cache.clear_cache()
 
-    test_wave_1d()
+def teardown_function():
+    from sympy import cache
+    cache.clear_cache()

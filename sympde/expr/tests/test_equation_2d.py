@@ -45,9 +45,8 @@ from sympde.expr import Equation, DirichletBC
 DIM = 2
 domain = Domain('Omega', dim=DIM)
 
-# ...
+#==============================================================================
 def test_equation_2d():
-    print('============ test_equation_2d =============')
 
     V = FunctionSpace('V', domain)
     U = FunctionSpace('U', domain)
@@ -135,9 +134,9 @@ def test_equation_2d():
     equation = Equation(a1(v,u), l1(v), bc=DirichletBC(B1))
     # ...
 
-    # ... using bc
-    equation = Equation(a1(v,u), l1(v), bc=DirichletBC(ComplementBoundary(B1)))
-    # ...
+#    # ... using bc
+#    equation = Equation(a1(v,u), l1(v), bc=DirichletBC(ComplementBoundary(B1)))
+#    # ...
 
     # ...
     with pytest.raises(UnconsistentBCError):
@@ -152,8 +151,8 @@ def test_equation_2d():
     # ...
 
 
+#==============================================================================
 def test_projection_2d():
-    print('============ test_projection_2d =============')
 
     V = FunctionSpace('V', domain)
     x,y = domain.coordinates
@@ -161,4 +160,16 @@ def test_projection_2d():
     alpha = Constant('alpha')
 
     u = Projection(x**2+alpha*y, V, name='u')
+
+#==============================================================================
+# CLEAN UP SYMPY NAMESPACE
+#==============================================================================
+
+def teardown_module():
+    from sympy import cache
+    cache.clear_cache()
+
+def teardown_function():
+    from sympy import cache
+    cache.clear_cache()
 

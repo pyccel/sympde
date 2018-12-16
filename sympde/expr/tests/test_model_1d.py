@@ -13,9 +13,8 @@ from sympde.topology import Domain
 DIM = 1
 domain = Domain('\Omega', dim=DIM)
 
-# ...
+#==============================================================================
 def test_model_1d_1():
-    print('============ test_model_1d_1 ==============')
 
     V = FunctionSpace('V', domain)
     x = V.coordinates
@@ -34,10 +33,15 @@ def test_model_1d_1():
     equation = Equation(a(v,u), b(v))
 
     model = Model(domain, forms=forms, equation=equation)
-    model.preview(outputTexFile='test_model_1d_1.tex')
-# ...
 
-# .....................................................
-if __name__ == '__main__':
+#==============================================================================
+# CLEAN UP SYMPY NAMESPACE
+#==============================================================================
 
-    test_model_1d_1()
+def teardown_module():
+    from sympy import cache
+    cache.clear_cache()
+
+def teardown_function():
+    from sympy import cache
+    cache.clear_cache()

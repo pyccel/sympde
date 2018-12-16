@@ -57,8 +57,15 @@ class Wave_1d(Model):
         A = BilinearForm(((v,w), (u,f)), expr, mapping=mapping, name='A')
         # ...
 
+        # ... rhs as undefined function
+        xyz = domain.coordinates
+        F = Function('F')
+        if domain.dim == 1: xyz = [xyz]
+        l = LinearForm(v, F(*xyz)*v, name='l')
+        # ...
+
         forms = [a, b, A]
-        equation = Equation(A((v,w), (u,f)), None)
+        equation = Equation(A((v,w),(u,f)), l(v,w))
 
         obj = Model.__new__(cls, domain, forms=forms, equation=equation, **kwargs)
 
