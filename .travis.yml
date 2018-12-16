@@ -4,23 +4,16 @@ language: python
 # which python versions to test
 python:
   - "3.4"
-#  - "3.5"
-#  - "3.6"
-
-matrix:
-  allow_failures:
-    - python: "3.4"
-#    - python: "3.5"
-#    - python: "3.6"
-
-#virtualenv:
-#    system_site_packages: true
+  - "3.5"
+  - "3.6"
 
 # Cache directory $HOME/.cache/pip
 cache: pip
 
 # 
 before_install:
+  - sudo apt-get install gfortran
+  - sudo apt-get install openmpi-bin libopenmpi-dev
   - python -m pip install --upgrade pip
   - python -m pip uninstall -y sympde
 
