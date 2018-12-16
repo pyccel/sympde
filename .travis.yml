@@ -4,10 +4,8 @@ language: python
 # which python versions to test
 python:
   - "3.4"
-
-matrix:
-  allow_failures:
-    - python: "3.4"
+  - "3.5"
+  - "3.6"
 
 # Cache directory $HOME/.cache/pip
 cache: pip
