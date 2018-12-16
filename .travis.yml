@@ -15,15 +15,14 @@ before_install:
   - sudo apt-get install gfortran
   - sudo apt-get install openmpi-bin libopenmpi-dev
   - python -m pip install --upgrade pip
+  - python -m pip install -r requirements.txt
   - python -m pip uninstall -y sympde
-
-# command to install dependencies
-install:
-  # installing pyccel. for a given reason, pip is not installing req of pyccel!!
   - wget https://raw.githubusercontent.com/pyccel/pyccel/devel/requirements.txt -O requirements_pyccel.txt
   - python -m pip install -r requirements_pyccel.txt
   - python -m pip install git+https://github.com/pyccel/pyccel@devel
-  - python -m pip install -r requirements.txt
+
+# command to install dependencies
+install:
   - python -m pip install .
 
 before_script:
