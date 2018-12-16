@@ -7,6 +7,12 @@ from sympde.topology import Boundary, NormalVector, TangentVector
 from sympde.topology import Topology, Edge
 from sympde.topology import Domain
 
+import os
+
+base_dir = os.path.dirname(os.path.realpath(__file__))
+topo_dir = os.path.join(base_dir, 'data')
+
+
 # ...
 def test_interior_domain():
     D1 = InteriorDomain('D1', dim=2)
@@ -35,7 +41,7 @@ def test_topology_1():
 
 # ...
 def test_topology_2():
-    topo = Topology(filename='square_mp_0.h5')
+    topo = Topology(filename=os.path.join(topo_dir, 'square_mp_0.h5'))
 # ...
 
 # ...
@@ -58,7 +64,7 @@ def test_domain_1():
 
 # ...
 def test_domain_2():
-    topo = Topology(filename='square_mp_0.h5')
+    topo = Topology(filename=os.path.join(topo_dir, 'square_mp_0.h5'))
     Omega = Domain('Omega', topology=topo)
 
     assert( isinstance(Omega.interior, Union) )
