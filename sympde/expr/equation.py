@@ -6,7 +6,7 @@ from sympy.core import Expr
 
 from pyccel.ast.core import Nil
 
-from sympde.topology.basic import Boundary
+from sympde.topology.basic import Boundary, Union
 from sympde.topology.space import TestFunction
 from sympde.topology.space import VectorTestFunction
 from sympde.topology.space import FunctionSpace
@@ -119,7 +119,18 @@ class Equation(Basic):
             else:
                 raise TypeError('> Wrong type for bc')
 
-            bc = Tuple(*bc)
+            newbc = []
+            for i in bc:
+                if not isinstance(i, DirichletBC):
+                    raise NotImplementedError('')
+
+                if (i.boundary, Union):
+                    newbc += [DirichletBC(j) for j in i.boundary._args]
+
+                else:
+                    newbc += [i]
+
+            bc = Tuple(*newbc)
 
             # ... check that the same boundary is not used in the weak
             #     formulation and strong condition

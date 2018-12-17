@@ -42,8 +42,7 @@ class Square(BasicDomain):
         for axis in range(interior.dim):
             for ext in [-1, 1]:
                 name = 'Gamma_{}'.format(i)
-                I = interior.domains[axis]
-                Gamma = Boundary(name, I, axis=axis, ext=ext)
+                Gamma = Boundary(name, interior, axis=axis, ext=ext)
                 boundaries += [Gamma]
 
                 i += 1
