@@ -23,7 +23,7 @@ from sympy.physics.quantum import TensorProduct
 
 from sympde.core.basic import _coeffs_registery
 from sympde.core.basic import CalculusFunction
-from sympde.core.basic import Field, Constant
+from sympde.core.basic import Constant
 from sympde.core.generic import Dot, Inner, Cross
 from sympde.core.generic import Grad, Rot, Curl, Div
 from sympde.core.generic import Bracket
@@ -54,7 +54,7 @@ from sympde.topology.space import VectorTestFunction
 from sympde.topology.space import IndexedTestTrial
 from sympde.topology.space import Unknown, VectorUnknown
 from sympde.topology.space import Trace
-from sympde.topology.space import VectorField, IndexedVectorField
+from sympde.topology.space import Field, VectorField, IndexedVectorField
 from sympde.topology.measure import CanonicalMeasure
 from sympde.topology.measure import CartesianMeasure
 from sympde.topology.measure import Measure

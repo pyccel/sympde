@@ -8,8 +8,9 @@ from sympy import Matrix
 from sympy import srepr
 
 from sympde.core import grad, dot, inner
-from sympde.core import Field, Constant
+from sympde.core import Constant
 from sympde.topology import Domain
+from sympde.topology import Field
 from sympde.topology import get_index_derivatives_atom
 from sympde.topology import partial_derivative_as_str
 from sympde.topology import get_max_partial_derivatives

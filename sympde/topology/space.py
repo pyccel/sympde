@@ -8,10 +8,9 @@ from sympy.core import Symbol
 from sympy.core import Expr
 from sympy.core.containers import Tuple
 
-from sympde.core.basic import Field
 from .basic import BasicDomain
 
-# ...
+#==============================================================================
 class BasicFunctionSpace(Basic):
     """
     Represents a basic continuous Function space.
@@ -54,9 +53,8 @@ class BasicFunctionSpace(Basic):
     def _sympystr(self, printer):
         sstr = printer.doprint
         return sstr(self.name)
-# ...
 
-# ...
+#==============================================================================
 class FunctionSpace(BasicFunctionSpace):
     """
     Represents a basic continuous scalar Function space.
@@ -65,6 +63,7 @@ class FunctionSpace(BasicFunctionSpace):
         shape = 1
         return BasicFunctionSpace.__new__(cls, name, domain, shape)
 
+#==============================================================================
 class VectorFunctionSpace(BasicFunctionSpace):
     """
     Represents a basic continuous vector Function space.
@@ -72,9 +71,8 @@ class VectorFunctionSpace(BasicFunctionSpace):
     def __new__(cls, name, domain):
         shape = domain.dim
         return BasicFunctionSpace.__new__(cls, name, domain, shape)
-# ...
 
-# ...
+#==============================================================================
 # TODO must check that all spaces have the same domain
 #     for the moment this class is not used
 class ProductSpace(FunctionSpace):
@@ -160,8 +158,8 @@ class ProductSpace(FunctionSpace):
     def _sympystr(self, printer):
         sstr = printer.doprint
         return sstr(self.name)
-# ...
 
+#==============================================================================
 class TestFunction(Symbol):
     """
     Represents a test function as an element of a fem space.
@@ -196,6 +194,7 @@ class TestFunction(Symbol):
         return sstr(self.name)
 
 
+#==============================================================================
 # this class is needed, otherwise sympy will convert VectorTestFunction to
 # IndexedBase
 class IndexedTestTrial(Indexed):
@@ -231,6 +230,7 @@ class IndexedTestTrial(Indexed):
         return self.base.space.ldim
 
 
+#==============================================================================
 class VectorTestFunction(Symbol, IndexedBase):
     """
     Represents a vector test function as an element of a fem space.
@@ -281,6 +281,7 @@ class VectorTestFunction(Symbol, IndexedBase):
         return VectorTestFunction(self.space, name)
 
 
+#==============================================================================
 class Unknown(TestFunction):
     """
     Represents an unknown function
@@ -292,6 +293,7 @@ class Unknown(TestFunction):
         return TestFunction.__new__(cls, V, name)
 
 
+#==============================================================================
 class VectorUnknown(VectorTestFunction):
     """
     Represents an unknown function
@@ -302,7 +304,34 @@ class VectorUnknown(VectorTestFunction):
         V = VectorFunctionSpace(space_name, domain)
         return VectorTestFunction.__new__(cls, V, name)
 
+#==============================================================================
+class Field(Symbol):
+    """
+    Represents a Field variable.
 
+    Examples
+
+    """
+    _space = None
+    is_commutative = True
+    def __new__(cls, name, space=None):
+        obj =  Basic.__new__(cls, name)
+        obj._space = space
+        return obj
+
+    @property
+    def space(self):
+        return self._space
+
+    @property
+    def name(self):
+        return self._args[0]
+
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        return sstr(self.name)
+
+#==============================================================================
 class VectorField(Symbol, IndexedBase):
     """
     Represents a vector field as an element of a fem space.
@@ -352,6 +381,7 @@ class VectorField(Symbol, IndexedBase):
     def duplicate(self, name):
         return VectorField(self.space, name)
 
+#==============================================================================
 # this class is needed, otherwise sympy will convert VectorTestFunction to
 # IndexedBase
 class IndexedVectorField(Indexed):
@@ -386,10 +416,7 @@ class IndexedVectorField(Indexed):
     def ldim(self):
         return self.base.space.ldim
 
-
-
-
-
+#==============================================================================
 class Trace(Basic):
     """
     Represents the trace over a boundary and a space function
@@ -417,6 +444,7 @@ class Trace(Basic):
     def order(self):
         return self._args[2]
 
+#==============================================================================
 # ... user friendly functions
 trace_0 = lambda x, B: Trace(x, B, order=0)
 trace_1 = lambda x, B: Trace(x, B, order=1)

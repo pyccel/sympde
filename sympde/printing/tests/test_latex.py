@@ -3,12 +3,11 @@
 from sympy import sin, cos, pi
 
 from sympde.core import Constant
-from sympde.core import Field
 from sympde.core import grad, dot, inner, cross, rot, curl, div
 
 from sympde.topology import (dx, dy, dz)
 from sympde.topology import FunctionSpace, VectorFunctionSpace
-from sympde.topology import VectorField
+from sympde.topology import Field, VectorField
 from sympde.topology import ProductSpace
 from sympde.topology import TestFunction
 from sympde.topology import VectorTestFunction

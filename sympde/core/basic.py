@@ -10,7 +10,7 @@ from sympy.core.containers import Tuple
 from sympy import Function
 from sympy import Integer, Float
 
-# ...
+#==============================================================================
 class Constant(Symbol):
     """
     Represents a constant symbol.
@@ -29,52 +29,23 @@ class Constant(Symbol):
     @property
     def label(self):
         return self._label
-# ...
 
-# ...
-class Field(Symbol):
-    """
-    Represents a Field variable.
-
-    Examples
-
-    """
-    _space = None
-    is_commutative = True
-    def __new__(cls, name, space=None):
-        obj =  Basic.__new__(cls, name)
-        obj._space = space
-        return obj
-
-    @property
-    def space(self):
-        return self._space
-
-    @property
-    def name(self):
-        return self._args[0]
-
-    def _sympystr(self, printer):
-        sstr = printer.doprint
-        return sstr(self.name)
-# ...
-
+#==============================================================================
 class CalculusFunction(Function):
     """this class is needed to distinguish between functions and calculus
     functions when manipulating our expressions"""
     pass
 
-# ...
+#==============================================================================
 class BasicMapping(IndexedBase):
     """
     Represents a basic class for mapping.
     """
     pass
-# ...
 
-# ...
+#==============================================================================
 class BasicDerivable(Basic):
     pass
-# ...
 
+#==============================================================================
 _coeffs_registery = (Integer, Float, Constant)

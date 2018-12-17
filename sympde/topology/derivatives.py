@@ -46,13 +46,13 @@ from sympy import Indexed, IndexedBase
 
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import _coeffs_registery
-from sympde.core.basic import Field, Constant
+from sympde.core.basic import Constant
 from sympde.core.basic import BasicMapping
 from sympde.core.algebra import LinearOperator
 from sympde.core.utils import random_string
 from .space import TestFunction, VectorTestFunction, IndexedTestTrial
 from .space import Unknown
-from .space import VectorField, IndexedVectorField
+from .space import Field, VectorField, IndexedVectorField
 from .domain import Domain
 
 # ...

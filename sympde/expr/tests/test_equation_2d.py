@@ -13,12 +13,11 @@ from sympy import srepr
 from sympy.physics.quantum import TensorProduct
 
 from sympde.core import Constant
-from sympde.core import Field
 from sympde.core import grad, dot, inner, cross, rot, curl, div
 from sympde.core import laplace, hessian
 from sympde.topology import (dx, dy, dz)
 from sympde.topology import FunctionSpace, VectorFunctionSpace
-from sympde.topology import VectorField
+from sympde.topology import Field, VectorField
 from sympde.topology import ProductSpace
 from sympde.topology import TestFunction
 from sympde.topology import VectorTestFunction
