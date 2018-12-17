@@ -68,6 +68,14 @@ def test_domain_2():
     assert( len(Omega.boundary) == 8 )
 
 #==============================================================================
+def test_domain_3():
+    Omega = Domain('Omega', filename=os.path.join(topo_dir, 'square_mp_0.h5'))
+
+    assert( isinstance(Omega.interior, Union) )
+    assert( len(Omega.interior) == 2 )
+    assert( len(Omega.boundary) == 8 )
+
+#==============================================================================
 def test_boundary_1():
     Omega_1 = InteriorDomain('Omega_1', dim=2)
 

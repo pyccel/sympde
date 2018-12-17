@@ -22,15 +22,17 @@ class Domain(BasicDomain):
     Examples
 
     """
-    def __new__(cls, name, interiors=None, boundaries=None, topology=None,
-                dim=None):
+    def __new__(cls, name, interiors=None, boundaries=None, dim=None,
+                topology=None, filename=None):
         # ...
         if not isinstance(name, str):
             raise TypeError('> name must be a string')
         # ...
 
         # ...
-        if ( interiors is None ) and ( topology is None ) and (dim is None):
+        if ( ( interiors is None ) and ( topology is None ) and
+             (filename is None) and
+             ( dim is None) ):
             raise ValueError('> either interiors or topology must be given')
         # ...
 
@@ -63,6 +65,11 @@ class Domain(BasicDomain):
 
         else:
             boundaries = []
+        # ...
+
+        # ...
+        if not( filename is None ):
+            topology = Topology(filename=filename)
         # ...
 
         # ...
