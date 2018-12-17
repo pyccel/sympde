@@ -34,7 +34,7 @@ from sympde.core.algebra import (Dot_1d,
                  Dot_3d, Inner_3d, Cross_3d)
 from sympde.core.utils import random_string
 
-from sympde.topology import BasicDomain, Domain, Union, Line
+from sympde.topology import BasicDomain, Domain, MappedDomain, Union, Line
 from sympde.topology import BoundaryVector, NormalVector, TangentVector, Boundary
 from sympde.topology.derivatives import _partial_derivatives
 from sympde.topology.derivatives import partial_derivative_as_symbol
@@ -111,12 +111,14 @@ class BasicForm(Expr):
     _name = None
     _boundary = None
 
+    # TODO use .atoms
     @property
     def fields(self):
         ls = [a for a in self.expr.free_symbols if isinstance(a, (Field, VectorField))]
         # no redanduncy
         return sorted(list(set(ls)))
 
+    # TODO use .atoms
     @property
     def constants(self):
         ls = [a for a in self.expr.free_symbols if isinstance(a, Constant)]
@@ -153,7 +155,7 @@ class Integral(BasicForm):
     """
     _ldim = None
     _coordinates = None
-    def __new__(cls, expr, domain, measure=None, mapping=None, name=None):
+    def __new__(cls, expr, domain, measure=None, name=None):
         # ... treat union of domains
         #     TODO improve
         unions = expr.atoms(Union)
@@ -171,7 +173,7 @@ class Integral(BasicForm):
                     i = list(unions)[0]
                     _expr = expr.replace(i, domain)
                     form  = Integral(_expr, domain, measure=measure,
-                                      mapping=mapping, name=None)
+                                      name=None)
 
                     forms.append(form)
 
@@ -205,13 +207,15 @@ class Integral(BasicForm):
             space = FunctionSpace(space_name, domain)
             # TODO vector case
 
+        # check if we are using a mapping
+        mapping = None
+        if isinstance( domain, MappedDomain ):
+            mapping = domain.mapping
+
         measure = _initialize_measure(measure, coordinates)
 
         # get boundary terms
         boundary = _initialize_boundary(expr)
-
-        # so that we may pass mapping as False
-        if not mapping: mapping=None
 
         obj = Basic.__new__(cls, expr)
         obj._ldim = ldim
@@ -257,7 +261,7 @@ class LinearForm(BasicForm):
     Examples
 
     """
-    def __new__(cls, arguments, expr, measure=None, mapping=None, name=None):
+    def __new__(cls, arguments, expr, measure=None, name=None):
         # ... treat union of domains
         #     TODO improve
         unions = expr.atoms(Union)
@@ -275,7 +279,7 @@ class LinearForm(BasicForm):
                     i = list(unions)[0]
                     _expr = expr.replace(i, domain)
                     form  = LinearForm(arguments, _expr, measure=measure,
-                                       mapping=mapping, name=None)
+                                       name=None)
 
                     forms.append(form(arguments))
 
@@ -287,13 +291,16 @@ class LinearForm(BasicForm):
 
         # TODO must check that all domains are the same
         domain = obj.test_spaces[0].domain
+
+        # check if we are using a mapping
+        mapping = None
+        if isinstance( domain, MappedDomain ):
+            mapping = domain.mapping
+
         measure = _initialize_measure(measure, obj.coordinates)
 
         # get boundary terms
         boundary = _initialize_boundary(expr)
-
-        # so that we may pass mapping as False
-        if not mapping: mapping=None
 
         obj._domain = domain
         obj._boundary = boundary
@@ -343,7 +350,7 @@ class BilinearForm(BasicForm):
     Examples
 
     """
-    def __new__(cls, arguments, expr, measure=None, mapping=None, name=None):
+    def __new__(cls, arguments, expr, measure=None, name=None):
         # ... treat union of domains
         #     TODO improve
         unions = expr.atoms(Union)
@@ -361,7 +368,7 @@ class BilinearForm(BasicForm):
                     i = list(unions)[0]
                     _expr = expr.replace(i, domain)
                     form  = BilinearForm(arguments, _expr, measure=measure,
-                                         mapping=mapping, name=None)
+                                         name=None)
 
                     forms.append(form(*arguments))
 
@@ -380,13 +387,16 @@ class BilinearForm(BasicForm):
 
         # TODO must check that all domains are the same
         domain = obj.test_spaces[0].domain
+
+        # check if we are using a mapping
+        mapping = None
+        if isinstance( domain, MappedDomain ):
+            mapping = domain.mapping
+
         measure = _initialize_measure(measure, obj.coordinates)
 
         # get boundary terms
         boundary = _initialize_boundary(expr)
-
-        # so that we may pass mapping as False
-        if not mapping: mapping=None
 
         obj._domain = domain
         obj._boundary = boundary

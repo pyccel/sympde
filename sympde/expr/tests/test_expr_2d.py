@@ -32,6 +32,7 @@ from sympde.topology import Boundary, NormalVector, TangentVector
 from sympde.topology import Topology, Edge
 from sympde.topology import Domain
 from sympde.topology import Trace, trace_0, trace_1
+from sympde.topology import Mapping
 
 from sympde.expr import BilinearForm, LinearForm, Integral
 from sympde.expr import atomize
@@ -584,6 +585,24 @@ def test_vector_2d_1():
     print('')
     # ...
 
+#==============================================================================
+def test_expr_mapping_2d():
+
+    F = Mapping('F', DIM)
+    patch = Domain('Omega', dim=DIM)
+    domain = F(patch)
+
+    V = FunctionSpace('V', domain)
+    v = TestFunction(V, name='v')
+    u = TestFunction(V, name='u')
+
+    x,y = V.coordinates
+
+    a = BilinearForm((v,u), dot(grad(v), grad(u)))
+    assert(a.mapping is F)
+
+    l = LinearForm(v, x*y*v)
+    assert(l.mapping is F)
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
@@ -596,4 +615,3 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
-
