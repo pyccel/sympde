@@ -34,7 +34,7 @@ from sympde.core.algebra import (Dot_1d,
                  Dot_3d, Inner_3d, Cross_3d)
 from sympde.core.utils import random_string
 
-from sympde.topology import BasicDomain, Domain, MappedDomain, Union, Line
+from sympde.topology import BasicDomain, Domain, MappedDomain, Union, Interval
 from sympde.topology import BoundaryVector, NormalVector, TangentVector, Boundary
 from sympde.topology.derivatives import _partial_derivatives
 from sympde.topology.derivatives import partial_derivative_as_symbol
@@ -451,7 +451,7 @@ class BilinearForm(BasicForm):
 
 
 class Norm(Integral):
-    def __new__(cls, expr, domain, kind='l2', mapping=None, measure=None,
+    def __new__(cls, expr, domain, kind='l2', measure=None,
                 name=None):
         # ...
         tests = expr.atoms((TestFunction, VectorTestFunction))
@@ -512,7 +512,7 @@ class Norm(Integral):
                 expr = Inner(Grad(v), Grad(v))
         # ...
 
-        obj = Integral.__new__(cls, expr, domain, measure=name, mapping=mapping, name=name)
+        obj = Integral.__new__(cls, expr, domain, measure=name, name=name)
 
         obj._exponent = exponent
 
@@ -1365,7 +1365,7 @@ def _tensorize_core(expr, dim, tests, trials):
             new = S.One
             for i in range(0, dim):
                 coord = _coordinates[i]
-                Di = Line(coordinate=coord)
+                Di = Interval(coordinate=coord)
                 Vi = FunctionSpace('V_{}'.format(i), domain=Di)
 
                 ai = TestFunction(Vi, '{test}{i}'.format(test=a.name, i=i))
@@ -1760,7 +1760,7 @@ def subs_bilinear_form(form, newargs):
     # ...
 
     return BilinearForm(test_trial, expr, measure=form.measure,
-                        mapping=form.mapping, name=form.name)
+                        name=form.name)
 
 
 def subs_linear_form(form, newargs):
@@ -1787,4 +1787,4 @@ def subs_linear_form(form, newargs):
     if len(test_functions) == 1: test_functions = test_functions[0]
 
     return LinearForm(test_functions, expr, measure=form.measure,
-                      mapping=form.mapping, name=form.name)
+                      name=form.name)

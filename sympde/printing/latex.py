@@ -148,6 +148,9 @@ class LatexPrinter(LatexPrinterSympy):
     def _print_Domain(self, expr):
         return '{}'.format(self._print(expr.name))
 
+    def _print_Interval(self, expr):
+        return '{}'.format(self._print(expr.name))
+
     def _print_ProductSpace(self, expr):
         spaces = [self._print(i) for i in expr.spaces]
         return r' \times '.join(spaces)
@@ -345,28 +348,9 @@ class LatexPrinter(LatexPrinterSympy):
 
         expr_str = latex(expr)
 
-        if isinstance(domain, Line):
-            xmin, xmax = domain.bounds
-
-            xmin = latex(xmin)
-            xmax = latex(xmax)
-
-            int_str = r'\int_{' + xmin + '}^{' + xmax + '}'
-
-        elif isinstance(domain, (Square, Cube)):
-            xmins, xmaxs = domain.bounds
-
-            int_str = ''
-            for xmin, xmax in zip(xmins, xmaxs):
-                xmin = latex(xmin)
-                xmax = latex(xmax)
-
-                int_str += r'\int_{' + xmin + '}^{' + xmax + '}'
-
-        else:
-
-            int_str = r'\int_{' + self._print(domain) + '}'
-            measure_str = ''
+        # TODO improve this using latex for ProductDomain
+        int_str = r'\int_{' + self._print(domain) + '}'
+        measure_str = ''
 
         return '{integral} {expr} {measure}'.format(integral=int_str,
                                                     expr=expr_str,

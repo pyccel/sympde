@@ -31,8 +31,6 @@ class Wave_1d(Model):
         dim = domain.dim
         if not(dim in [1]):
             raise ValueError('> only 1d is possible')
-
-        mapping = kwargs.pop('mapping', None)
         # ...
 
         # ... abstract model
@@ -50,11 +48,11 @@ class Wave_1d(Model):
         rho = Constant('rho', real=True, label='mass density')
         dt = Constant('dt', real=True, label='time step')
 
-        a = BilinearForm((v,u), v*u, mapping=mapping, name='a')
-        b  = BilinearForm((v,u), dx(v)*u, mapping=mapping, name='b')
+        a = BilinearForm((v,u), v*u, name='a')
+        b  = BilinearForm((v,u), dx(v)*u, name='b')
 
         expr = rho*a(v,u) + dt*b(v, f) + dt*b(w,u) + a(w,f)
-        A = BilinearForm(((v,w), (u,f)), expr, mapping=mapping, name='A')
+        A = BilinearForm(((v,w), (u,f)), expr, name='A')
         # ...
 
         # ... rhs as undefined function

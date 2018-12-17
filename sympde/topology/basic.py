@@ -44,8 +44,11 @@ class InteriorDomain(BasicDomain):
     Examples
 
     """
-    def __new__(cls, name, dim):
+    def __new__(cls, name, dim=None):
         obj = Basic.__new__(cls, name)
+        if isinstance(name, ProductDomain):
+            dim = name.dim
+
         obj._dim = dim
         return obj
 
@@ -96,6 +99,45 @@ class Union(BasicDomain):
     def __sub__(self, other):
         return self.complement(other)
 
+#==============================================================================
+class ProductDomain(BasicDomain):
+    def __new__(cls, *args):
+        args = Tuple(*args)
+        if not all( [isinstance(i, BasicDomain) for i in args] ):
+            raise TypeError('arguments must be of BasicDomain type')
+
+        assert(len(args) > 1)
+
+        obj = Basic.__new__(cls, *args)
+        obj._dim = sum(i.dim for i in args)
+        return obj
+
+    @property
+    def domains(self):
+        return self._args
+
+#==============================================================================
+class Interval(InteriorDomain):
+    """
+    Represents a 1D interval.
+
+    Examples
+
+    """
+    _dim = 1
+    def __new__(cls, name=None, coordinate=None):
+        if name is None:
+            name = 'Interval'
+
+        obj = Basic.__new__(cls, name)
+        if coordinate:
+            obj._coordinates = [coordinate]
+
+        return obj
+
+    @property
+    def name(self):
+        return self._args[0]
 
 #==============================================================================
 class Boundary(BasicDomain):
@@ -105,9 +147,18 @@ class Boundary(BasicDomain):
     Examples
 
     """
-    def __new__(cls, name, domain):
+    def __new__(cls, name, domain, axis=None, ext=None):
+
+        if not( axis is None ):
+            assert(isinstance(axis, int))
+
+        if not( ext is None ):
+            assert(isinstance(ext, int))
+
         obj = Basic.__new__(cls, name)
         obj._domain = domain
+        obj._axis = axis
+        obj._ext = ext
         return obj
 
     @property
@@ -121,6 +172,14 @@ class Boundary(BasicDomain):
     @property
     def dim(self):
         return self.domain.dim
+
+    @property
+    def axis(self):
+        return self._axis
+
+    @property
+    def ext(self):
+        return self._ext
 
     def _sympystr(self, printer):
         sstr = printer.doprint

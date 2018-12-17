@@ -172,7 +172,7 @@ class LambdaEquation(Equation):
 
 #==============================================================================
 class Projection(LambdaEquation):
-    def __new__(cls, expr, space, kind='l2', mapping=None, bc=None, name=None):
+    def __new__(cls, expr, space, kind='l2', bc=None, name=None):
         # ...
         tests = expr.atoms((TestFunction, VectorTestFunction))
         if tests or not isinstance(expr, Expr):
@@ -212,8 +212,8 @@ class Projection(LambdaEquation):
                 expr_lhs = Dot(v,u)
                 expr_rhs = Dot(expr, v)
 
-            lhs = BilinearForm((v,u), expr_lhs, mapping=mapping, name=lhs_name)
-            rhs = LinearForm(v, expr_rhs, mapping=mapping, name=rhs_name)
+            lhs = BilinearForm((v,u), expr_lhs, name=lhs_name)
+            rhs = LinearForm(v, expr_rhs, name=rhs_name)
         # ...
 
         obj = Equation.__new__(cls, lhs(v,u), rhs(v), bc=bc)
@@ -225,7 +225,7 @@ class Projection(LambdaEquation):
 
 #==============================================================================
 class Interpolation(LambdaEquation):
-    def __new__(cls, expr, space, kind='nodal', mapping=None, name=None):
+    def __new__(cls, expr, space, kind='nodal', name=None):
         raise NotImplementedError('TODO')
 
         # ...
