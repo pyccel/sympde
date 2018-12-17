@@ -9,19 +9,19 @@ from sympy.printing.preview import preview as sympy_preview
 
 from pyccel.ast.core import Nil
 
+from sympde.core.utils import random_string
 from sympde.core.generic import Dot, Inner, Cross
 from sympde.core.generic import Grad, Rot, Curl, Div
 from sympde.topology.basic import Boundary
 from sympde.topology.space import TestFunction, VectorTestFunction
 from sympde.topology.space import FunctionSpace
 
-from sympde.expr.errors import UnconsistentLhsError, UnconsistentRhsError
-from sympde.expr.errors import UnconsistentBCError
-from sympde.expr.errors import UnconsistentArgumentsError
-from sympde.expr.expr import BasicForm, BilinearForm, LinearForm, Integral, FormCall
-from sympde.expr.expr import is_sum_of_form_calls
-from sympde.expr.utils import random_string
-from sympde.expr.equation import Equation, BasicBoundaryCondition, DirichletBC
+from .errors import UnconsistentLhsError, UnconsistentRhsError
+from .errors import UnconsistentBCError
+from .errors import UnconsistentArgumentsError
+from .expr import BasicForm, BilinearForm, LinearForm, Integral, FormCall
+from .expr import is_sum_of_form_calls
+from .equation import Equation, BasicBoundaryCondition, DirichletBC
 
 
 #==============================================================================

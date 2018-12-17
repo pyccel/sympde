@@ -18,6 +18,7 @@ from sympde.topology import (dx, dy, dz)
 
 
 def indices_as_str(a):
+    a = OrderedDict(sorted(a.items()))
     code = ''
     for k,n in list(a.items()):
         code += k*n

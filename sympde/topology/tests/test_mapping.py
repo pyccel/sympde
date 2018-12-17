@@ -5,7 +5,7 @@ from sympy import Matrix
 from sympy.tensor import IndexedBase
 from sympy import symbols, simplify
 
-from sympde.topology import Mapping
+from sympde.topology import Mapping, MappedDomain
 from sympde.topology import Jacobian, DetJacobian, Covariant, Contravariant
 from sympde.topology import dx, dy, dz
 from sympde.topology import print_expression
@@ -17,8 +17,7 @@ def test_mapping_1d():
 
     rdim = 1
 
-    domain = Domain('Omega', dim=rdim)
-    F = Mapping('F', rdim, domain)
+    F = Mapping('F', rdim)
 
     assert(F.name == 'F')
 
@@ -45,8 +44,7 @@ def test_mapping_2d():
 
     rdim = 2
 
-    domain = Domain('Omega', dim=rdim)
-    F = Mapping('F', rdim, domain)
+    F = Mapping('F', rdim)
 
     a,b = symbols('a b')
     ab = Tuple(a, b)
@@ -86,8 +84,7 @@ def test_mapping_3d():
 
     rdim = 3
 
-    domain = Domain('Omega', dim=rdim)
-    F = Mapping('F', rdim, domain)
+    F = Mapping('F', rdim)
 
     a,b,c = symbols('a b c')
     abc = Tuple(a, b, c)
@@ -122,6 +119,16 @@ def test_mapping_3d():
 
 # ...
 
+# ...
+def test_mapping_2d_2():
+    print('============ test_mapping_2d_2 ==============')
+
+    rdim = 2
+
+    F = Mapping('F', rdim)
+    domain = Domain('Omega', dim=rdim)
+    D = F(domain)
+
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
@@ -133,3 +140,4 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
+

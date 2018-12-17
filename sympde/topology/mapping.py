@@ -15,6 +15,7 @@ from sympde.core.algebra import (Dot_1d,
                                  Dot_2d, Inner_2d, Cross_2d,
                                  Dot_3d, Inner_3d, Cross_3d)
 
+from .basic import BasicDomain
 from .domain import Domain
 from .derivatives import dx, dy, dz
 from .derivatives import (Grad_1d, Div_1d,
@@ -31,15 +32,12 @@ class Mapping(BasicMapping):
 
     """
     # TODO shall we keep rdim ?
-    def __new__(cls, name, rdim, domain=None, coordinates=None):
+    def __new__(cls, name, rdim, coordinates=None):
         if isinstance(rdim, (tuple, list, Tuple)):
             if not len(rdim) == 1:
                 raise ValueError('> Expecting a tuple, list, Tuple of length 1')
 
             rdim = rdim[0]
-
-        if not isinstance(domain, Domain):
-            raise TypeError('> Expecting a Domain object')
 
         obj = IndexedBase.__new__(cls, name, shape=(rdim))
 
@@ -56,7 +54,6 @@ class Mapping(BasicMapping):
             _coordinates = [Symbol(name) for name in coordinates]
 
         obj._name = name
-        obj._domain = domain
         obj._rdim = rdim
         obj._coordinates = _coordinates
 
@@ -77,15 +74,16 @@ class Mapping(BasicMapping):
         return self._rdim
 
     @property
-    def domain(self):
-        return self._domain
-
-    @property
     def coordinates(self):
         if self.rdim == 1:
             return self._coordinates[0]
         else:
             return self._coordinates
+
+    def __call__(self, domain):
+        assert(isinstance(domain, BasicDomain))
+
+        return MappedDomain(self, domain)
 
     @property
     def jacobian(self):
@@ -195,6 +193,25 @@ class Mapping(BasicMapping):
     def _compute_hessian(self):
         raise NotImplementedError('TODO')
 # ...
+
+class MappedDomain(BasicDomain):
+    def __new__(cls, mapping, domain):
+        assert(isinstance(mapping, Mapping))
+        assert(isinstance(domain, BasicDomain))
+
+        return Basic.__new__(cls, mapping, domain)
+
+    @property
+    def mapping(self):
+        return self._args[0]
+
+    @property
+    def domain(self):
+        return self._args[1]
+
+    @property
+    def dim(self):
+        return self.domain.dim
 
 
 class MappingApplication(Function):

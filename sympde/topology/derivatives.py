@@ -49,9 +49,11 @@ from sympde.core.basic import _coeffs_registery
 from sympde.core.basic import Field, Constant
 from sympde.core.basic import BasicMapping
 from sympde.core.algebra import LinearOperator
+from sympde.core.utils import random_string
 from .space import TestFunction, VectorTestFunction, IndexedTestTrial
 from .space import Unknown
 from .space import VectorField, IndexedVectorField
+from .domain import Domain
 
 # ...
 class DifferentialOperator(LinearOperator):
@@ -335,7 +337,6 @@ def print_expression(expr, logical=False, mapping_name=True):
     if mapping:
         mapping = mapping[0]
         dim = mapping.rdim
-        domain = mapping.domain
 
         # ...
         coords = mapping.coordinates
@@ -353,6 +354,7 @@ def print_expression(expr, logical=False, mapping_name=True):
         # ...
 
         name = str(mapping.name)
+        domain = Domain(random_string(4), dim=dim)
         for i in range(0, dim):
             old = mapping[i]
             new = '{M}{i}'.format(M=name, i=i)

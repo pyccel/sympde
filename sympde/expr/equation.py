@@ -10,8 +10,8 @@ from sympde.topology.basic import Boundary
 from sympde.topology.space import TestFunction
 from sympde.topology.space import VectorTestFunction
 from sympde.topology.space import FunctionSpace
+from sympde.core.utils import random_string
 
-from .utils import random_string
 from .expr import FormCall, BilinearForm, LinearForm
 from .errors import ( UnconsistentLhsError, UnconsistentRhsError,
                       UnconsistentArgumentsError, UnconsistentBCError )

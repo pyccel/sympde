@@ -32,6 +32,7 @@ from sympde.core.generic import _generic_ops
 from sympde.core.algebra import (Dot_1d,
                  Dot_2d, Inner_2d, Cross_2d,
                  Dot_3d, Inner_3d, Cross_3d)
+from sympde.core.utils import random_string
 
 from sympde.topology import BasicDomain, Domain, Union, Line
 from sympde.topology import BoundaryVector, NormalVector, TangentVector, Boundary
@@ -58,7 +59,6 @@ from sympde.topology.measure import CanonicalMeasure
 from sympde.topology.measure import CartesianMeasure
 from sympde.topology.measure import Measure
 
-from .utils import random_string
 from .errors import UnconsistentError
 
 
