@@ -371,6 +371,8 @@ def print_expression(expr, logical=False, mapping_name=True):
     if indices:
         index = indices[0]
         code = ''
+        index = OrderedDict(sorted(index.items()))
+
         for k,n in list(index.items()):
             if not logical:
                 code += k*n
