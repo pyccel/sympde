@@ -177,7 +177,7 @@ class Integral(BasicForm):
 
                     forms.append(form)
 
-                return Add(*forms)
+                expr = Add(*forms)
         # ...
 
 
@@ -283,7 +283,7 @@ class LinearForm(BasicForm):
 
                     forms.append(form(arguments))
 
-                return Add(*forms)
+                expr = Add(*forms)
         # ...
 
         args = _sanitize_form_arguments(arguments, expr, is_linear=True)
@@ -372,7 +372,7 @@ class BilinearForm(BasicForm):
 
                     forms.append(form(*arguments))
 
-                return Add(*forms)
+                expr = Add(*forms)
         # ...
 
         # ...
@@ -790,12 +790,17 @@ class FormCall(AtomicExpr):
                 trial = '({})'.format(trial_str)
             # ...
 
-            return '{name}({test},{trial})'.format(name=name,
-                                                    trial=trial,
-                                                    test=test)
+            expr = sstr(expr)
+            return '{name}({test},{trial}) := {expr}'.format(name=name,
+                                                             trial=trial,
+                                                             test=test,
+                                                             expr=expr)
 
         if isinstance(expr, LinearForm):
-            return '{name}({test})'.format(name=name, test=test)
+            expr = sstr(expr)
+            return '{name}({test}) := {expr}'.format(name=name,
+                                                     test=test,
+                                                     expr=expr)
 
 def is_mul_of_form_call(expr):
     if not isinstance(expr, Mul):
@@ -1279,6 +1284,8 @@ def evaluate(a, verbose=False):
     if bnd_calls:
         expr_bnd = _evaluate_bnd(a, bnd_calls, verbose=verbose)
 
+    bnd_done = [i.target for i in expr_bnd]
+
     expr_domain = []
     if calls:
         # TODO - must check that calls have the same domein
@@ -1318,8 +1325,10 @@ def evaluate(a, verbose=False):
         if not boundary:
             expr_domain = [DomainExpression(domain, expr)]
         else:
-            boundary = boundary[0]
-            expr_domain = [BoundaryExpression(boundary, expr)]
+            expr_domain = []
+            boundary = [i for i in boundary if not(i in bnd_done)]
+            for bnd in boundary:
+                expr_domain += [BoundaryExpression(bnd, expr)]
 
     return expr_bnd + expr_domain
 

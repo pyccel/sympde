@@ -126,6 +126,19 @@ class Domain(BasicDomain):
         sstr = printer.doprint
         return '{}'.format(sstr(self.name))
 
+    def get_boundary(self, name):
+        """return boundary by name."""
+        bnd = None
+        if isinstance(self.boundary, Union):
+            bnd = [i for i in self.boundary._args if i.name == name]
+            if len(bnd) == 0:
+                raise ValueError('> could not find boundary {}'.format(name))
+
+            return bnd[0]
+
+        else:
+            raise NotImplementedError('TODO')
+
 
 #==============================================================================
 class BoundaryVector(IndexedBase):

@@ -185,29 +185,33 @@ def test_boundary_2d_2():
 
     alpha = Constant('alpha')
 
-#    # ...
-#    g = Tuple(x**2, y**2)
-#    l1 = LinearForm(v, v*trace_1(g, B1))
-#
-#    print(l1)
-#    print(evaluate(l1, verbose=True))
-#    print('')
-#    # ...
-
     # ...
+    print('==== l1 ====')
     g = Tuple(x**2, y**2)
-    l = LinearForm(v, v*trace_1(g, domain.boundary))
+    l1 = LinearForm(v, v*trace_1(g, domain.boundary))
 
-    print(l)
-    print(evaluate(l, verbose=True))
+    print(l1)
+    print(evaluate(l1, verbose=True))
     print('')
     # ...
 
     # ...
-    a = BilinearForm((v, u), v*trace_0(u, domain.boundary))
+    print('==== l2 ====')
+    B_neumann = Union(B1, B2)
+    g = Tuple(x**2, y**2)
+    l2 = LinearForm(v, v*trace_1(g, B_neumann))
 
-    print(a)
-    print(evaluate(a, verbose=True))
+    print(l2)
+    print(evaluate(l2, verbose=True))
+    print('')
+    # ...
+
+    # ...
+    print('==== a1 ====')
+    a1 = BilinearForm((v, u), v*trace_0(u, domain.boundary))
+
+    print(a1)
+    print(evaluate(a1, verbose=True))
     print('')
     # ...
 

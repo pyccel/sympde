@@ -38,7 +38,7 @@ class Square(BasicDomain):
         interior = ProductDomain(Ix, Iy)
 
         boundaries = []
-        i = 0
+        i = 1
         for axis in range(interior.dim):
             for ext in [-1, 1]:
                 name = 'Gamma_{}'.format(i)
@@ -68,7 +68,7 @@ class Cube(BasicDomain):
         interior = ProductDomain(Ix, Iy, Iz)
 
         boundaries = []
-        i = 0
+        i = 1
         for axis in range(interior.dim):
             for ext in [-1, 1]:
                 name = 'Gamma_{}'.format(i)
