@@ -90,7 +90,7 @@ def _initialize_boundary(expr):
             msg = '> BilinearForm can not be defined on different boundaries'
             raise UnconsistentError(msg)
 
-        boundary = boundaries
+        boundary = Union(*boundaries)
 
     # ...
     if isinstance(boundary, Boundary):
@@ -351,6 +351,7 @@ class LinearForm(BasicForm):
             return FormCall(call.expr, args)
 
         return FormCall(self, args)
+
 
 
 class BilinearForm(BasicForm):
@@ -1230,7 +1231,32 @@ def _evaluate_bnd(a, bnd_calls, verbose=False):
 
     a_expr = a
     if isinstance(a, BasicForm) and is_sum_of_form_calls(a.expr):
-        a_expr = a.expr
+        # TODO treat Mul node
+        if isinstance(a.boundary, Union):
+            if isinstance(a.expr, Add):
+                newargs = []
+                for i in a.expr.args:
+
+                    expr = i.expr
+                    if isinstance(expr, BasicForm):
+                        expr = expr.expr
+
+                    if is_sum_of_form_calls(expr):
+                        newargs += expr.args
+
+                    else:
+                        newargs.append(i)
+
+                a_expr = Add(*newargs)
+
+            elif isinstance(a.expr, Mul):
+                raise NotImplementedError('')
+
+            else:
+                a_expr = a.expr
+
+        else:
+            a_expr = a.expr
 
     if isinstance(a_expr, FormCall):
         a_expr = a_expr.expr.expr
@@ -1249,6 +1275,7 @@ def _evaluate_bnd(a, bnd_calls, verbose=False):
         print('> groups     = ', groups)
         print('> boundaries = ', boundaries)
     # ...
+
 
     # ...
     groups_M = []
@@ -1309,11 +1336,6 @@ def evaluate(a, verbose=False):
 
         if verbose:
             print('> calls = ', calls)
-
-#    print('> calls     = ', calls)
-#    print('> bnd_calls = ', bnd_calls)
-#
-#    import sys; sys.exit(0)
 
     expr_bnd = []
     if bnd_calls:

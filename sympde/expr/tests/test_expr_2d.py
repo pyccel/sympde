@@ -142,14 +142,15 @@ def test_boundary_2d_1():
     expr = u1*v1
     a4 = BilinearForm((v1, u1), expr, name='a4')
 
-    expr = a0(v2, u2) + a1(v2, u2) + alpha * a2(v2, u2) + a3(v2, u2) + alpha*a4(v2, u2)
-    a = BilinearForm((v2, u2), expr, name='a')
-#    print(expr)
-    print(evaluate(expr, verbose=True))
-    print('')
-
-    print(evaluate(a, verbose=True))
-    print('')
+    # TODO Mul not treated yet
+#    expr = a0(v2, u2) + a1(v2, u2) + alpha * a2(v2, u2) + a3(v2, u2) + alpha*a4(v2, u2)
+#    a = BilinearForm((v2, u2), expr, name='a')
+##    print(expr)
+#    print(evaluate(expr, verbose=True))
+#    print('')
+#
+#    print(evaluate(a, verbose=True))
+#    print('')
 
 
 #    expr = a(v2, u2) + a1(v2, u2)
@@ -188,21 +189,21 @@ def test_boundary_2d_2():
     alpha = Constant('alpha')
 
     # ...
-#    print('==== l0 ====')
+    print('==== l0 ====')
     l0 = LinearForm(v, x*y*v, name='l0')
 
-#    print(evaluate(l0, verbose=VERBOSE))
-#    print('')
+    print(evaluate(l0, verbose=VERBOSE))
+    print('')
     # ...
 
-#    # ...
-#    print('==== l1 ====')
-#    g = Tuple(x**2, y**2)
-#    l1 = LinearForm(v, v*trace_1(g, domain.boundary))
-#
-#    print(evaluate(l1, verbose=VERBOSE))
-#    print('')
-#    # ...
+    # ...
+    print('==== l1 ====')
+    g = Tuple(x**2, y**2)
+    l1 = LinearForm(v, v*trace_1(g, domain.boundary))
+
+    print(evaluate(l1, verbose=VERBOSE))
+    print('')
+    # ...
 
     # ...
     print('==== l2 ====')
@@ -210,8 +211,8 @@ def test_boundary_2d_2():
     g = Tuple(x**2, y**2)
     l2 = LinearForm(v, v*trace_1(g, B_neumann), name='l2')
 
-#    print(evaluate(l2, verbose=VERBOSE))
-#    print('')
+    print(evaluate(l2, verbose=VERBOSE))
+    print('')
     # ...
 
     # ...
@@ -224,12 +225,12 @@ def test_boundary_2d_2():
     print('')
     # ...
 
-#    # ...
-#    print('==== l4 ====')
-#    l4 = LinearForm(v, l0(v) + l2(v))
-#
-#    print(evaluate(l4, verbose=VERBOSE))
-#    print('')
+    # ...
+    print('==== l4 ====')
+    l4 = LinearForm(v, l0(v) + l2(v))
+
+    print(evaluate(l4, verbose=VERBOSE))
+    print('')
     # ...
 
 #    # ...
