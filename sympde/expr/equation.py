@@ -124,7 +124,7 @@ class Equation(Basic):
                 if not isinstance(i, DirichletBC):
                     raise NotImplementedError('')
 
-                if (i.boundary, Union):
+                if isinstance(i.boundary, Union):
                     newbc += [DirichletBC(j) for j in i.boundary._args]
 
                 else:
