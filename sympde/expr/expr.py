@@ -90,7 +90,7 @@ def _initialize_boundary(expr):
             msg = '> BilinearForm can not be defined on different boundaries'
             raise UnconsistentError(msg)
 
-        boundary = True
+        boundary = boundaries
 
     # ...
     if isinstance(boundary, Boundary):
@@ -455,6 +455,10 @@ class BilinearForm(BasicForm):
     def __call__(self, *args):
         if not(len(args) == 2):
             raise ValueError('Expecting a couple (test, trial)')
+
+        if isinstance(self.expr, FormCall):
+            call = self.expr
+            return FormCall(call.expr, args)
 
         return FormCall(self, args)
 
@@ -1228,16 +1232,17 @@ def _evaluate_bnd(a, bnd_calls, verbose=False):
     if isinstance(a, BasicForm) and is_sum_of_form_calls(a.expr):
         a_expr = a.expr
 
+    if isinstance(a_expr, FormCall):
+        a_expr = a_expr.expr.expr
+
     # ...
     boundaries = []
     groups = []
-    keyfunc = lambda call: call.expr.boundary.name
-    bnd_calls = sorted(bnd_calls, key=keyfunc)
-    for k, g in groupby(bnd_calls, keyfunc):
-        list_g = list(g)
-        a_bnd = _extract_linear_combination(a_expr, list_g)
+    keyfunc = lambda call: call.expr.boundary
+    for bnd, g in groupby(bnd_calls, keyfunc):
+        ls = list(g)
+        a_bnd = _extract_linear_combination(a_expr, ls)
         groups.append(a_bnd)
-        bnd = list_g[0].expr.boundary
         boundaries.append(bnd)
 
     if verbose:
@@ -1283,7 +1288,19 @@ def _extract_linear_combination(expr, ls):
 
 # TODO check that a is a Form, FormCall or linear combination of them
 def evaluate(a, verbose=False):
-    calls = a.atoms(FormCall)
+    # ...
+    _calls = a.atoms(FormCall)
+    calls = []
+    for call in _calls:
+        mycalls = call.expr.atoms(FormCall)
+        if mycalls:
+            calls += list(mycalls)
+        else:
+            calls += [call]
+
+    # remove redundancy
+    calls = list(set(calls))
+    # ...
 
     bnd_calls = []
     if calls:
@@ -1292,6 +1309,11 @@ def evaluate(a, verbose=False):
 
         if verbose:
             print('> calls = ', calls)
+
+#    print('> calls     = ', calls)
+#    print('> bnd_calls = ', bnd_calls)
+#
+#    import sys; sys.exit(0)
 
     expr_bnd = []
     if bnd_calls:
@@ -1329,19 +1351,19 @@ def evaluate(a, verbose=False):
             expr_domain = [BoundaryExpression(boundary, expr)]
 
     elif isinstance(a, BasicForm):
-        domain = a.domain
-        expr = _evaluate_core(a, verbose=verbose)
         boundary = list(a.atoms(Boundary))
 
-        expr = _evaluate_core(a, verbose=verbose)
-        boundary = list(a.atoms(Boundary))
         if not boundary:
+            domain = a.domain
+            expr = _evaluate_core(a, verbose=verbose)
             expr_domain = [DomainExpression(domain, expr)]
-        else:
-            expr_domain = []
-            boundary = [i for i in boundary if not(i in bnd_done)]
-            for bnd in boundary:
-                expr_domain += [BoundaryExpression(bnd, expr)]
+
+        # TODO nitsch case
+#        else:
+#            expr_domain = []
+#            boundary = [i for i in boundary if not(i in bnd_done)]
+#            for bnd in boundary:
+#                expr_domain += [BoundaryExpression(bnd, expr)]
 
     return expr_bnd + expr_domain
 

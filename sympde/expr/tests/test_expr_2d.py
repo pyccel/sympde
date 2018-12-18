@@ -48,7 +48,7 @@ from sympde.expr.errors import UnconsistentRhsError
 from sympde.expr.errors import UnconsistentBCError
 
 DIM = 2
-#VERBOSE = False
+VERBOSE = False
 VERBOSE = True
 
 #==============================================================================
