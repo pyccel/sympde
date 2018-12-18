@@ -278,8 +278,12 @@ class LinearForm(BasicForm):
                 for domain in domains:
                     i = list(unions)[0]
                     _expr = expr.replace(i, domain)
+                    _name = None
+                    if not( name is None ):
+                        _name = '{name}_{domain}'.format(name=name, domain=domain.name)
+
                     form  = LinearForm(arguments, _expr, measure=measure,
-                                       name=None)
+                                       name=_name)
 
                     forms.append(form(arguments))
 
@@ -341,6 +345,11 @@ class LinearForm(BasicForm):
 
     def __call__(self, *args):
         args = Tuple(*args)
+
+        if isinstance(self.expr, FormCall):
+            call = self.expr
+            return FormCall(call.expr, args)
+
         return FormCall(self, args)
 
 
@@ -766,6 +775,7 @@ class FormCall(AtomicExpr):
         expr = self.expr
 
         name = sstr(self.name)
+        expr_str = sstr(expr)
 
         # ...
         test = [sstr(i) for i in expr.test_functions]
@@ -778,8 +788,9 @@ class FormCall(AtomicExpr):
             test = '({})'.format(test_str)
         # ...
 
+        # ...
+        trial = None
         if isinstance(expr, BilinearForm):
-            # ...
             trial = [sstr(i) for i in expr.trial_functions]
             trial_str = ','.join(i for i in trial)
 
@@ -788,19 +799,21 @@ class FormCall(AtomicExpr):
 
             else:
                 trial = '({})'.format(trial_str)
-            # ...
+        # ...
 
-            expr = sstr(expr)
-            return '{name}({test},{trial}) := {expr}'.format(name=name,
-                                                             trial=trial,
-                                                             test=test,
-                                                             expr=expr)
+        if trial:
+            args = (test, trial)
+        else:
+            args = test
 
-        if isinstance(expr, LinearForm):
-            expr = sstr(expr)
-            return '{name}({test}) := {expr}'.format(name=name,
-                                                     test=test,
-                                                     expr=expr)
+        args = ','.join(i for i in args)
+
+        if not( expr.name is None ):
+            return '{name}({args})'.format(name=expr.name, args=args)
+
+        else:
+            return '"{expr}"'.format(expr=expr)
+
 
 def is_mul_of_form_call(expr):
     if not isinstance(expr, Mul):
@@ -818,8 +831,8 @@ def is_mul_of_form_call(expr):
     return True
 
 def is_sum_of_form_calls(expr):
-    if not isinstance(expr, Add):
-        return False
+    if isinstance(expr, FormCall):  return True
+    if not isinstance(expr, Add):   return False
 
     are_valid = [isinstance(i, FormCall) or is_mul_of_form_call(i) for i in expr.args]
 

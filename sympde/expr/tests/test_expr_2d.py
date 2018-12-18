@@ -48,6 +48,8 @@ from sympde.expr.errors import UnconsistentRhsError
 from sympde.expr.errors import UnconsistentBCError
 
 DIM = 2
+#VERBOSE = False
+VERBOSE = True
 
 #==============================================================================
 def test_boundary_2d_1():
@@ -186,34 +188,57 @@ def test_boundary_2d_2():
     alpha = Constant('alpha')
 
     # ...
-    print('==== l1 ====')
-    g = Tuple(x**2, y**2)
-    l1 = LinearForm(v, v*trace_1(g, domain.boundary))
+#    print('==== l0 ====')
+    l0 = LinearForm(v, x*y*v, name='l0')
 
-    print(l1)
-    print(evaluate(l1, verbose=True))
-    print('')
+#    print(evaluate(l0, verbose=VERBOSE))
+#    print('')
     # ...
+
+#    # ...
+#    print('==== l1 ====')
+#    g = Tuple(x**2, y**2)
+#    l1 = LinearForm(v, v*trace_1(g, domain.boundary))
+#
+#    print(evaluate(l1, verbose=VERBOSE))
+#    print('')
+#    # ...
 
     # ...
     print('==== l2 ====')
     B_neumann = Union(B1, B2)
     g = Tuple(x**2, y**2)
-    l2 = LinearForm(v, v*trace_1(g, B_neumann))
+    l2 = LinearForm(v, v*trace_1(g, B_neumann), name='l2')
 
-    print(l2)
-    print(evaluate(l2, verbose=True))
+#    print(evaluate(l2, verbose=VERBOSE))
+#    print('')
+    # ...
+
+    # ...
+    print('==== l3 ====')
+    l3 = LinearForm(v, l2(v))
+
+    assert(l3(v).__str__ == l2(v).__str__)
+
+    print(evaluate(l3, verbose=VERBOSE))
     print('')
     # ...
 
+#    # ...
+#    print('==== l4 ====')
+#    l4 = LinearForm(v, l0(v) + l2(v))
+#
+#    print(evaluate(l4, verbose=VERBOSE))
+#    print('')
     # ...
-    print('==== a1 ====')
-    a1 = BilinearForm((v, u), v*trace_0(u, domain.boundary))
 
-    print(a1)
-    print(evaluate(a1, verbose=True))
-    print('')
-    # ...
+#    # ...
+#    print('==== a1 ====')
+#    a1 = BilinearForm((v, u), v*trace_0(u, domain.boundary))
+#
+#    print(evaluate(a1, verbose=VERBOSE))
+#    print('')
+#    # ...
 
 
 #==============================================================================
@@ -618,3 +643,5 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
+
+test_boundary_2d_2()
