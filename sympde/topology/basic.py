@@ -3,12 +3,6 @@
 
 from collections import OrderedDict
 from collections import abc
-import h5py
-import yaml
-import yamlloader
-import os
-import string
-import random
 
 from sympy.core import Basic, Symbol
 from sympy.core.containers import Tuple
@@ -225,11 +219,15 @@ class Boundary(BasicDomain):
         return Union(self, other)
 
     def todict(self):
-        domain = self.domain
-        name   = self.name
+        domain = str(self.domain.name)
+        name   = str(self.name)
+        axis   = str(self.axis)
+        ext    = str(self.ext)
 
-        d = {'patch': domain.name,
-             'name': name}
+        d = {'patch': domain,
+             'name':  name,
+             'axis':  axis,
+             'ext':   ext}
 
         return OrderedDict(sorted(d.items()))
 

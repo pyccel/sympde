@@ -29,22 +29,15 @@ class Domain(BasicDomain):
 
     """
     def __new__(cls, name, interiors=None, boundaries=None, dim=None,
-                connectivity=None, filename=None):
+                connectivity=None):
         # ...
         if not isinstance(name, str):
             raise TypeError('> name must be a string')
         # ...
 
         # ...
-        if ( ( interiors is None ) and ( connectivity is None ) and
-             (filename is None) and
-             ( dim is None) ):
+        if ( ( interiors is None ) and ( connectivity is None ) and ( dim is None) ):
             raise ValueError('> either interiors or connectivity must be given')
-        # ...
-
-        # ...
-        if not( filename is None ):
-            self.read(filename)
         # ...
 
         # ...
@@ -188,15 +181,13 @@ class Domain(BasicDomain):
 
     def todict(self):
         name         = str(self.name)
-        ldim         = str(self.dim)
-        pdim         = str(self.dim)
+        dim          = str(self.dim)
         interior     = self.interior.todict()
         boundary     = self.boundary.todict()
         connectivity = self.connectivity.todict()
 
         d = {'name':         name,
-             'ldim':         ldim,
-             'pdim':         pdim,
+             'dim':          dim,
              'interior':     interior,
              'boundary':     boundary,
              'connectivity': connectivity}
@@ -221,13 +212,13 @@ class Domain(BasicDomain):
         h5 = h5py.File( filename, mode='w' )
 
         # Write geometry metadata as fixed-length array of ASCII characters
-        h5['geometry.yml'] = np.array( geo, dtype='S' )
+        h5['topology.yml'] = np.array( geo, dtype='S' )
 
         # Close HDF5 file
         h5.close()
 
-    def read( self, filename ):
-        raise NotImplementedError('TODO')
+    @classmethod
+    def from_file( cls, filename ):
 
         # ... check extension of the file
         basename, ext = os.path.splitext(filename)
@@ -235,75 +226,63 @@ class Domain(BasicDomain):
             raise ValueError('> Only h5 files are supported')
         # ...
 
-        kwargs = {}
+        h5  = h5py.File( filename, mode='r' )
+        yml = yaml.load( h5['topology.yml'].value )
 
-        h5  = h5py.File( filename, mode='r', **kwargs )
-        yml = yaml.load( h5['geometry.yml'].value )
+        domain_name    = yml['name']
+        dim            = yml['dim']
+        d_interior     = yml['interior']
+        d_boundary     = yml['boundary']
+        d_connectivity = yml['connectivity']
 
-        ldim = yml['ldim']
-        pdim = yml['pdim']
+        # ... create sympde InteriorDomain (s)
+        interior = [InteriorDomain(i['name'], dim=dim) for i in d_interior]
 
-        n_patches = len( yml['patches'] )
+        # create a dict of interiors accessed by name => needed for boundaries
+        d_interior = {}
+        for i in interior:
+            d_interior[i.name] = i
 
-        # ...
-        if n_patches == 0:
-
-            h5.close()
-            raise ValueError( "Input file contains no patches." )
-        # ...
-
-        # ... read patchs
-        patches = []
-        for i_patch in range( n_patches ):
-
-            item  = yml['patches'][i_patch]
-            dtype = item['type']
-            name  = item['name']
-
-            domain = InteriorDomain(name, dim=ldim)
-            patches.append(domain)
+        if len(interior) == 1:
+            interior = interior[0]
         # ...
 
-        # ... create a dict of patches, needed for the connectivity
-        d_patches = {}
-        for patch in patches:
-            d_patches[patch.name] = patch
+        # ... create sympde Boundary (s)
+        boundary = []
+        for desc in d_boundary:
+            name  = desc['name']
+            patch = d_interior[desc['patch']]
+            axis  = desc['axis']
+            ext   = desc['ext']
 
-        d_patches = OrderedDict(sorted(d_patches.items()))
+            if axis == 'None': axis = None
+            if ext  == 'None': ext  = None
+
+            bnd = Boundary(name, patch, axis=axis, ext=ext)
+            boundary.append(bnd)
+
+        if len(boundary) == 1:
+            boundary = boundary[0]
         # ...
 
-        # ... read the connectivity
-        # connectivity
-        for k,v in yml['connectivity'].items():
-            edge = Edge(k)
+        # ... create connectivity
+        connectivity = Connectivity()
+        for edge,pair in d_connectivity.items():
             bnds = []
-            for desc in v:
-                patch = d_patches[desc['patch']]
+            for desc in pair:
+                patch = d_interior[desc['patch']]
                 name  = desc['name']
                 bnd   = Boundary(name, patch)
                 bnds.append(bnd)
 
-            self[edge] = bnds
-
-        # boundaries
-        bnds = []
-        for desc in yml['boundaries']:
-            patch = d_patches[desc['patch']]
-            name  = desc['name']
-            bnd   = Boundary(name, patch)
-            bnds.append(bnd)
+            connectivity[edge] = bnds
         # ...
 
-        # ... close the h3 file
-        h5.close()
-        # ...
+        return Domain.__new__(cls, domain_name,
+                              interiors=interior,
+                              boundaries=boundary,
+                              connectivity=connectivity)
 
-        # ...
-        self._ldim       = ldim
-        self._pdim       = pdim
-        self._patches    = patches
-        self._boundaries = bnds
-        # ...
 
 #==============================================================================
 class BoundaryVector(IndexedBase):
