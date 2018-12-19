@@ -28,7 +28,6 @@ from sympde.topology import VectorTestFunction
 from sympde.topology import Unknown
 from sympde.topology import InteriorDomain, Union
 from sympde.topology import Boundary, NormalVector, TangentVector
-from sympde.topology import Topology, Edge
 from sympde.topology import Domain
 from sympde.topology import Trace, trace_0, trace_1
 from sympde.topology import Mapping

@@ -1,5 +1,10 @@
 # coding: utf-8
 
+import numpy as np
+import h5py
+import yaml
+import yamlloader
+import os
 
 from collections import OrderedDict
 from collections import abc
@@ -8,32 +13,38 @@ from sympy.core import Basic, Symbol
 from sympy.core.containers import Tuple
 from sympy.tensor import IndexedBase
 
-from .basic import BasicDomain, InteriorDomain, Boundary, Union, Topology
+from .basic import BasicDomain, InteriorDomain, Boundary, Union, Connectivity
 
+# TODO add pdim
 #==============================================================================
 class Domain(BasicDomain):
     """
     Represents an undefined domain.
     A domain is defined by at least one interior domain and possible boundaries.
     A domain without a boundary is either infinite or periodic.
-    A domain can also be constructed from a topology, in which case, only the
-    name and topology need to be passed.
+    A domain can also be constructed from a connectivity, in which case, only the
+    name and connectivity need to be passed.
 
     Examples
 
     """
     def __new__(cls, name, interiors=None, boundaries=None, dim=None,
-                topology=None, filename=None):
+                connectivity=None, filename=None):
         # ...
         if not isinstance(name, str):
             raise TypeError('> name must be a string')
         # ...
 
         # ...
-        if ( ( interiors is None ) and ( topology is None ) and
+        if ( ( interiors is None ) and ( connectivity is None ) and
              (filename is None) and
              ( dim is None) ):
-            raise ValueError('> either interiors or topology must be given')
+            raise ValueError('> either interiors or connectivity must be given')
+        # ...
+
+        # ...
+        if not( filename is None ):
+            self.read(filename)
         # ...
 
         # ...
@@ -68,19 +79,11 @@ class Domain(BasicDomain):
         # ...
 
         # ...
-        if not( filename is None ):
-            topology = Topology(filename=filename)
-        # ...
+        if not( connectivity is None ):
+            if not isinstance( connectivity, Connectivity ):
+                raise TypeError('> Expecting a Connectivity')
 
-        # ...
-        connectivity = Topology()
-        if not( topology is None ):
-            if not isinstance( topology, Topology ):
-                raise TypeError('> Expecting a Topology')
-
-            interiors  = topology.patches
-            boundaries = topology.boundaries
-            connectivity = topology
+            # TODO check that patches appearing in connectivity are in interiors
         # ...
 
         # ...
@@ -182,6 +185,125 @@ class Domain(BasicDomain):
 
             else:
                 return None
+
+    def todict(self):
+        name         = str(self.name)
+        ldim         = str(self.dim)
+        pdim         = str(self.dim)
+        interior     = self.interior.todict()
+        boundary     = self.boundary.todict()
+        connectivity = self.connectivity.todict()
+
+        d = {'name':         name,
+             'ldim':         ldim,
+             'pdim':         pdim,
+             'interior':     interior,
+             'boundary':     boundary,
+             'connectivity': connectivity}
+
+        return OrderedDict(sorted(d.items()))
+
+    def export( self, filename ):
+        """
+        Parameters
+        ----------
+        filename : str
+          Name of HDF5 output file.
+
+        """
+        yml = self.todict()
+
+        # Dump metadata to string in YAML file format
+        geo = yaml.dump( data   = yml,
+                         Dumper = yamlloader.ordereddict.Dumper )
+
+        # Create HDF5 file (in parallel mode if MPI communicator size > 1)
+        h5 = h5py.File( filename, mode='w' )
+
+        # Write geometry metadata as fixed-length array of ASCII characters
+        h5['geometry.yml'] = np.array( geo, dtype='S' )
+
+        # Close HDF5 file
+        h5.close()
+
+    def read( self, filename ):
+        raise NotImplementedError('TODO')
+
+        # ... check extension of the file
+        basename, ext = os.path.splitext(filename)
+        if not(ext == '.h5'):
+            raise ValueError('> Only h5 files are supported')
+        # ...
+
+        kwargs = {}
+
+        h5  = h5py.File( filename, mode='r', **kwargs )
+        yml = yaml.load( h5['geometry.yml'].value )
+
+        ldim = yml['ldim']
+        pdim = yml['pdim']
+
+        n_patches = len( yml['patches'] )
+
+        # ...
+        if n_patches == 0:
+
+            h5.close()
+            raise ValueError( "Input file contains no patches." )
+        # ...
+
+        # ... read patchs
+        patches = []
+        for i_patch in range( n_patches ):
+
+            item  = yml['patches'][i_patch]
+            dtype = item['type']
+            name  = item['name']
+
+            domain = InteriorDomain(name, dim=ldim)
+            patches.append(domain)
+        # ...
+
+        # ... create a dict of patches, needed for the connectivity
+        d_patches = {}
+        for patch in patches:
+            d_patches[patch.name] = patch
+
+        d_patches = OrderedDict(sorted(d_patches.items()))
+        # ...
+
+        # ... read the connectivity
+        # connectivity
+        for k,v in yml['connectivity'].items():
+            edge = Edge(k)
+            bnds = []
+            for desc in v:
+                patch = d_patches[desc['patch']]
+                name  = desc['name']
+                bnd   = Boundary(name, patch)
+                bnds.append(bnd)
+
+            self[edge] = bnds
+
+        # boundaries
+        bnds = []
+        for desc in yml['boundaries']:
+            patch = d_patches[desc['patch']]
+            name  = desc['name']
+            bnd   = Boundary(name, patch)
+            bnds.append(bnd)
+        # ...
+
+        # ... close the h3 file
+        h5.close()
+        # ...
+
+        # ...
+        self._ldim       = ldim
+        self._pdim       = pdim
+        self._patches    = patches
+        self._boundaries = bnds
+        # ...
 
 #==============================================================================
 class BoundaryVector(IndexedBase):

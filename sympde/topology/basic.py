@@ -78,7 +78,15 @@ class InteriorDomain(BasicDomain):
         sstr = printer.doprint
         return '{}'.format(sstr(self.name))
 
+    def todict(self):
+        name   = str(self.name)
+        d = {'name': name}
+
+        return OrderedDict(sorted(d.items()))
+
+
 #==============================================================================
+# TODO remove redundancy
 class Union(BasicDomain):
     def __new__(cls, *args):
         args = Tuple(*args)
@@ -91,6 +99,9 @@ class Union(BasicDomain):
         dims = [a.dim for a in args[1:]]
         if not all( [d == dim for d in dims]):
             raise ValueError('arguments must have the same dimension')
+
+        # sort domains by name
+        args = sorted(args, key=lambda x: x.name)
 
         return Basic.__new__(cls, *args)
 
@@ -116,6 +127,9 @@ class Union(BasicDomain):
 
     def __sub__(self, other):
         return self.complement(other)
+
+    def todict(self):
+        return [i.todict() for i in self._args]
 
 #==============================================================================
 class ProductDomain(BasicDomain):
@@ -213,8 +227,11 @@ class Boundary(BasicDomain):
     def todict(self):
         domain = self.domain
         name   = self.name
-        return OrderedDict( [('patch', domain.name ),
-                             ('name' , name        ) ] )
+
+        d = {'patch': domain.name,
+             'name': name}
+
+        return OrderedDict(sorted(d.items()))
 
 
 #==============================================================================
@@ -228,12 +245,10 @@ class Edge(object):
 
 
 #==============================================================================
-class Topology(abc.Mapping):
+class Connectivity(abc.Mapping):
     _patches  = []
-    _boundaries = None
 
-    def __init__(self, data=None, boundaries=None, filename=None):
-        # ...
+    def __init__(self, data=None):
         if data is None:
             data = {}
 
@@ -241,108 +256,10 @@ class Topology(abc.Mapping):
             assert( isinstance( data, (dict, OrderedDict)) )
 
         self._data = data
-        # ...
-
-        # ...
-        if boundaries is None:
-            boundaries = {}
-
-        else:
-            assert( isinstance( boundaries, (list, tuple) ) )
-
-        self._boundaries = boundaries
-        # ...
-
-        if not( filename is None ):
-            self.read(filename)
-
-    @property
-    def boundaries(self):
-        return self._boundaries
 
     @property
     def patches(self):
         return self._patches
-
-    def read( self, filename ):
-        # ... check extension of the file
-        basename, ext = os.path.splitext(filename)
-        if not(ext == '.h5'):
-            raise ValueError('> Only h5 files are supported')
-        # ...
-
-        kwargs = {}
-
-        h5  = h5py.File( filename, mode='r', **kwargs )
-        yml = yaml.load( h5['geometry.yml'].value )
-
-        ldim = yml['ldim']
-        pdim = yml['pdim']
-
-        n_patches = len( yml['patches'] )
-
-        # ...
-        if n_patches == 0:
-
-            h5.close()
-            raise ValueError( "Input file contains no patches." )
-        # ...
-
-        # ... read patchs
-        patches = []
-        for i_patch in range( n_patches ):
-
-            item  = yml['patches'][i_patch]
-            dtype = item['type']
-            name  = item['name']
-
-            domain = InteriorDomain(name, dim=ldim)
-            patches.append(domain)
-        # ...
-
-        # ... create a dict of patches, needed for the topology
-        d_patches = {}
-        for patch in patches:
-            d_patches[patch.name] = patch
-
-        d_patches = OrderedDict(sorted(d_patches.items()))
-        # ...
-
-        # ... read the topology
-        # connectivity
-        for k,v in yml['topology']['connectivity'].items():
-            edge = Edge(k)
-            bnds = []
-            for desc in v:
-                patch = d_patches[desc['patch']]
-                name  = desc['name']
-                bnd   = Boundary(name, patch)
-                bnds.append(bnd)
-
-            self[edge] = bnds
-
-        # boundaries
-        bnds = []
-        for desc in yml['topology']['boundaries']:
-            patch = d_patches[desc['patch']]
-            name  = desc['name']
-            bnd   = Boundary(name, patch)
-            bnds.append(bnd)
-        # ...
-
-        # ... close the h5 file
-        h5.close()
-        # ...
-
-        # ...
-        self._ldim       = ldim
-        self._pdim       = pdim
-        self._patches    = patches
-        self._boundaries = bnds
-        # ...
-
-    def export(self, filename):
-        raise NotImplementedError('TODO')
 
     def todict(self):
         # ... create the connectivity
@@ -354,15 +271,12 @@ class Topology(abc.Mapping):
         connectivity = OrderedDict(sorted(connectivity.items()))
         # ...
 
-        # ...
-        boundaries = [bnd.todict() for bnd in self.boundaries]
-        # ...
-
-        return {'connectivity': connectivity,
-                'boundaries': boundaries}
-
+        return connectivity
 
     def __setitem__(self, key, value):
+        if isinstance(key, str):
+            key = Edge(key)
+
         assert( isinstance( key, Edge ) )
         assert( isinstance( value, (tuple, list)  ) )
         assert( len(value) in [1, 2] )
