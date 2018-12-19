@@ -4,7 +4,7 @@ from sympy.abc import x,y,z
 from sympy import Tuple
 
 from sympde.topology import Interval, ProductDomain
-from sympde.topology import Line, Square, Cube
+from sympde.topology import Domain, Line, Square, Cube
 
 #==============================================================================
 def test_interval_1():
@@ -27,16 +27,25 @@ def test_gallery():
     # ...
 
     # ...
-    square = Square()
-    assert(square.dim == 2)
-    assert(len(square.boundary) == 4)
-    # ...
-
-    # ...
     cube = Cube()
     assert(cube.dim == 3)
     assert(len(cube.boundary) == 6)
     # ...
+
+#==============================================================================
+def test_square():
+    square = Square('square')
+
+    assert(square.dim == 2)
+    assert(len(square.boundary) == 4)
+
+    square.export('square.h5')
+
+    # read it again
+    D = Domain.from_file('square.h5')
+
+    assert( D == square )
+
 
 
 #==============================================================================

@@ -14,6 +14,8 @@ from sympy.core.containers import Tuple
 from sympy.tensor import IndexedBase
 
 from .basic import BasicDomain, InteriorDomain, Boundary, Union, Connectivity
+from .basic import Interval
+from .basic import ProductDomain
 
 # TODO add pdim
 #==============================================================================
@@ -29,7 +31,7 @@ class Domain(BasicDomain):
 
     """
     def __new__(cls, name, interiors=None, boundaries=None, dim=None,
-                connectivity=None):
+                connectivity=None, dtype=None):
         # ...
         if not isinstance(name, str):
             raise TypeError('> name must be a string')
@@ -77,6 +79,8 @@ class Domain(BasicDomain):
                 raise TypeError('> Expecting a Connectivity')
 
             # TODO check that patches appearing in connectivity are in interiors
+        else:
+            connectivity = Connectivity()
         # ...
 
         # ...
@@ -104,6 +108,7 @@ class Domain(BasicDomain):
 
         obj = Basic.__new__(cls, name, interiors, boundaries)
         obj._connectivity = connectivity
+        obj._dtype = dtype
 
         return obj
 
@@ -126,6 +131,10 @@ class Domain(BasicDomain):
     @property
     def dim(self):
         return self.interior.dim
+
+    @property
+    def dtype(self):
+        return self._dtype
 
     def __len__(self):
         if isinstance(self.interior, InteriorDomain):
@@ -186,8 +195,13 @@ class Domain(BasicDomain):
         boundary     = self.boundary.todict()
         connectivity = self.connectivity.todict()
 
+        dtype = self.dtype
+        if dtype is None:
+            dtype = 'None'
+
         d = {'name':         name,
              'dim':          dim,
+             'dtype':        dtype,
              'interior':     interior,
              'boundary':     boundary,
              'connectivity': connectivity}
@@ -231,9 +245,16 @@ class Domain(BasicDomain):
 
         domain_name    = yml['name']
         dim            = yml['dim']
+        dtype          = yml['dtype']
         d_interior     = yml['interior']
         d_boundary     = yml['boundary']
         d_connectivity = yml['connectivity']
+
+        if dtype == 'None': dtype = None
+
+        if not( dtype is None ):
+            constructor =  eval(dtype['type'])
+            return constructor(domain_name, **dtype['parameters'])
 
         # ... create sympde InteriorDomain (s)
         interior = [InteriorDomain(i['name'], dim=dim) for i in d_interior]
@@ -282,6 +303,94 @@ class Domain(BasicDomain):
                               interiors=interior,
                               boundaries=boundary,
                               connectivity=connectivity)
+
+
+#==============================================================================
+class Line(Domain):
+    def __new__(cls, name=None):
+        if name is None:
+            name = 'Line'
+
+        x  = Symbol('x')
+        Ix = Interval(name, coordinate=x)
+
+        Gamma_1 = Boundary('Gamma_1', Ix, axis=0, ext=-1)
+        Gamma_2 = Boundary('Gamma_2', Ix, axis=0, ext=1)
+
+        interior   = Ix
+        boundaries = [Gamma_1, Gamma_2]
+
+        dtype = {'type': 'Line', 'parameters': {}}
+
+        return Domain(name, interiors=[interior],
+                      boundaries=boundaries, dtype=dtype)
+
+
+#==============================================================================
+class Square(Domain):
+    def __new__(cls, name=None):
+        if name is None:
+            name = 'Square'
+
+        x  = Symbol('x')
+        Ix = Interval('Ix', coordinate=x)
+
+        y  = Symbol('y')
+        Iy = Interval('Iy', coordinate=y)
+
+        interior = ProductDomain(Ix, Iy, name=name)
+
+        boundaries = []
+        i = 1
+        for axis in range(interior.dim):
+            for ext in [-1, 1]:
+                bnd_name = 'Gamma_{}'.format(i)
+                Gamma = Boundary(bnd_name, interior, axis=axis, ext=ext)
+                boundaries += [Gamma]
+
+                i += 1
+
+        interior = InteriorDomain(interior)
+
+        dtype = {'type': 'Square', 'parameters': {}}
+
+        return Domain(name, interiors=[interior],
+                      boundaries=boundaries, dtype=dtype)
+
+#==============================================================================
+class Cube(Domain):
+    def __new__(cls, name=None):
+        if name is None:
+            name = 'Cube'
+
+        x  = Symbol('x')
+        Ix = Interval('Ix', coordinate=x)
+
+        y  = Symbol('y')
+        Iy = Interval('Iy', coordinate=y)
+
+        z  = Symbol('z')
+        Iz = Interval('Iz', coordinate=z)
+
+        interior = ProductDomain(Ix, Iy, Iz, name=name)
+
+        boundaries = []
+        i = 1
+        for axis in range(interior.dim):
+            for ext in [-1, 1]:
+                bnd_name = 'Gamma_{}'.format(i)
+                I = interior.domains[axis]
+                Gamma = Boundary(bnd_name, I, axis=axis, ext=ext)
+                boundaries += [Gamma]
+
+                i += 1
+
+        interior = InteriorDomain(interior)
+
+        dtype = {'type': 'Cube', 'parameters': {}}
+
+        return Domain(name, interiors=[interior],
+                      boundaries=boundaries, dtype=dtype)
 
 
 #==============================================================================
