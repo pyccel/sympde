@@ -15,10 +15,13 @@ from .domain import Domain
 
 
 #==============================================================================
-class Line(BasicDomain):
-    def __new__(cls):
+class Line(Domain):
+    def __new__(cls, name=None):
+        if name is None:
+            name = 'Ix'
+
         x  = Symbol('x')
-        Ix = Interval('Ix', coordinate=x)
+        Ix = Interval(name, coordinate=x)
 
         Gamma_1 = Boundary('Gamma_1', Ix, axis=0, ext=-1)
         Gamma_2 = Boundary('Gamma_2', Ix, axis=0, ext=1)
@@ -27,15 +30,18 @@ class Line(BasicDomain):
                       boundaries=[Gamma_1, Gamma_2])
 
 #==============================================================================
-class Square(BasicDomain):
-    def __new__(cls):
+class Square(Domain):
+    def __new__(cls, name=None):
+        if name is None:
+            name = 'Square'
+
         x  = Symbol('x')
         Ix = Interval('Ix', coordinate=x)
 
         y  = Symbol('y')
         Iy = Interval('Iy', coordinate=y)
 
-        interior = ProductDomain(Ix, Iy)
+        interior = ProductDomain(Ix, Iy, name=name)
 
         boundaries = []
         i = 1
@@ -49,13 +55,16 @@ class Square(BasicDomain):
 
         interior = InteriorDomain(interior)
 
-        return Domain('Square', interiors=[interior],
+        return Domain(name, interiors=[interior],
                       boundaries=boundaries)
 
 
 #==============================================================================
-class Cube(BasicDomain):
-    def __new__(cls):
+class Cube(Domain):
+    def __new__(cls, name=None):
+        if name is None:
+            name = 'Cube'
+
         x  = Symbol('x')
         Ix = Interval('Ix', coordinate=x)
 
@@ -65,7 +74,7 @@ class Cube(BasicDomain):
         z  = Symbol('z')
         Iz = Interval('Iz', coordinate=z)
 
-        interior = ProductDomain(Ix, Iy, Iz)
+        interior = ProductDomain(Ix, Iy, Iz, name=name)
 
         boundaries = []
         i = 1
@@ -80,6 +89,6 @@ class Cube(BasicDomain):
 
         interior = InteriorDomain(interior)
 
-        return Domain('Cube', interiors=[interior],
+        return Domain(name, interiors=[interior],
                       boundaries=boundaries)
 

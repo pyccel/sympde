@@ -73,12 +73,14 @@ class Domain(BasicDomain):
         # ...
 
         # ...
+        connectivity = Topology()
         if not( topology is None ):
             if not isinstance( topology, Topology ):
                 raise TypeError('> Expecting a Topology')
 
             interiors  = topology.patches
             boundaries = topology.boundaries
+            connectivity = topology
         # ...
 
         # ...
@@ -104,7 +106,10 @@ class Domain(BasicDomain):
             boundaries = Union(*boundaries)
         # ...
 
-        return Basic.__new__(cls, name, interiors, boundaries)
+        obj = Basic.__new__(cls, name, interiors, boundaries)
+        obj._connectivity = connectivity
+
+        return obj
 
     @property
     def name(self):
@@ -119,8 +124,28 @@ class Domain(BasicDomain):
         return self._args[2]
 
     @property
+    def connectivity(self):
+        return self._connectivity
+
+    @property
     def dim(self):
         return self.interior.dim
+
+    def __len__(self):
+        if isinstance(self.interior, InteriorDomain):
+            return 1
+
+        elif isinstance(self.interior, Union):
+            return len(self.interior)
+
+    @property
+    def interior_names(self):
+        if isinstance(self.interior, InteriorDomain):
+            return [self.interior.name]
+
+        elif isinstance(self.interior, Union):
+            return [i.name for i in self.interior._args]
+
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -128,17 +153,35 @@ class Domain(BasicDomain):
 
     def get_boundary(self, name):
         """return boundary by name."""
-        bnd = None
         if isinstance(self.boundary, Union):
-            bnd = [i for i in self.boundary._args if i.name == name]
-            if len(bnd) == 0:
+            x = [i for i in self.boundary._args if i.name == name]
+            if len(x) == 0:
                 raise ValueError('> could not find boundary {}'.format(name))
 
-            return bnd[0]
+            return x[0]
 
-        else:
-            raise NotImplementedError('TODO')
+        elif isinstance(self.boundary, Boundary):
+            if self.boundary.name == name:
+                return self.boundary
 
+            else:
+                return None
+
+    def get_interior(self, name):
+        """return interior by name."""
+        if isinstance(self.interior, Union):
+            x = [i for i in self.interior._args if i.name == name]
+            if len(x) == 0:
+                raise ValueError('> could not find interior {}'.format(name))
+
+            return x[0]
+
+        elif isinstance(self.interior, InteriorDomain):
+            if self.interior.name == name:
+                return self.interior
+
+            else:
+                return None
 
 #==============================================================================
 class BoundaryVector(IndexedBase):

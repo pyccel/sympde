@@ -16,8 +16,13 @@ from sympy.tensor import IndexedBase
 
 #==============================================================================
 class BasicDomain(Basic):
-    _dim = None
+    _dim         = None
+    _name        = None
     _coordinates = None
+
+    @property
+    def name(self):
+        return self._name
 
     @property
     def dim(self):
@@ -45,16 +50,29 @@ class InteriorDomain(BasicDomain):
 
     """
     def __new__(cls, name, dim=None):
-        obj = Basic.__new__(cls, name)
-        if isinstance(name, ProductDomain):
-            dim = name.dim
+        target = None
+        if not isinstance(name, str):
+            target = name
+            name   = name.name
 
-        obj._dim = dim
+        if not( target is None ):
+            if isinstance(target, ProductDomain):
+                dim = target.dim
+
+        obj = Basic.__new__(cls, name)
+
+        obj._dim    = dim
+        obj._target = target
+
         return obj
 
     @property
     def name(self):
         return self._args[0]
+
+    @property
+    def target(self):
+        return self._target
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -101,7 +119,7 @@ class Union(BasicDomain):
 
 #==============================================================================
 class ProductDomain(BasicDomain):
-    def __new__(cls, *args):
+    def __new__(cls, *args, name=None):
         args = Tuple(*args)
         if not all( [isinstance(i, BasicDomain) for i in args] ):
             raise TypeError('arguments must be of BasicDomain type')
@@ -110,6 +128,7 @@ class ProductDomain(BasicDomain):
 
         obj = Basic.__new__(cls, *args)
         obj._dim = sum(i.dim for i in args)
+        obj._name = name
         return obj
 
     @property
