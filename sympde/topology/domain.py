@@ -30,7 +30,6 @@ class Domain(BasicDomain):
     Examples
 
     """
-    _filename = None
 
     def __new__(cls, name, interiors=None, boundaries=None, dim=None,
                 connectivity=None, dtype=None):
@@ -137,10 +136,6 @@ class Domain(BasicDomain):
     @property
     def dtype(self):
         return self._dtype
-
-    @property
-    def filename(self):
-        return self._filename
 
     def __len__(self):
         if isinstance(self.interior, InteriorDomain):
@@ -305,13 +300,11 @@ class Domain(BasicDomain):
             connectivity[edge] = bnds
         # ...
 
-        obj = Domain.__new__(cls, domain_name,
-                             interiors=interior,
-                             boundaries=boundary,
-                             connectivity=connectivity)
+        return Domain.__new__(cls, domain_name,
+                              interiors=interior,
+                              boundaries=boundary,
+                              connectivity=connectivity)
 
-        obj._filename = filename
-        return obj
 
 
 #==============================================================================
