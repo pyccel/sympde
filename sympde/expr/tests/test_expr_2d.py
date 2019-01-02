@@ -31,6 +31,7 @@ from sympde.topology import Boundary, NormalVector, TangentVector
 from sympde.topology import Domain
 from sympde.topology import Trace, trace_0, trace_1
 from sympde.topology import Mapping
+from sympde.topology import Square
 
 from sympde.expr import BilinearForm, LinearForm, Integral
 from sympde.expr import atomize
@@ -633,6 +634,41 @@ def test_expr_mapping_2d():
     assert(l.mapping is F)
 
 #==============================================================================
+def test_system_2d():
+
+    domain = Square()
+
+    V = FunctionSpace('V', domain)
+    x,y = V.coordinates
+
+    u,v,p,q = [TestFunction(V, name=i) for i in ['u','v','p','q']]
+
+    a1,a2,b1,b2 = [Constant(i, real=True) for i in ['a1','a2','b1','b2']]
+
+    # ...
+    a = BilinearForm((v,u), dot(grad(u), grad(v)))
+    m = BilinearForm((v,u), u*v)
+
+    expr = a(p,u) + a1*m(p,u) + b1*m(p,v)  + a(q,v) + a2*m(q,u) +  b2*m(q,v)
+    b = BilinearForm(((p,q), (u,v)), expr)
+
+    print(evaluate(b, verbose=True))
+    # ...
+
+    # ...
+    f1 = x*y
+    f2 = x+y
+    l1 = LinearForm(p, f1*p)
+    l2 = LinearForm(q, f2*q)
+
+    expr = l1(p) + l2(q)
+    l = LinearForm((p,q), expr)
+
+    print(evaluate(l, verbose=True))
+    # ...
+
+
+#==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
 
@@ -643,3 +679,5 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
+
+test_system_2d()
