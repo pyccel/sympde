@@ -457,11 +457,67 @@ class BilinearForm(BasicForm):
         if not(len(args) == 2):
             raise ValueError('Expecting a couple (test, trial)')
 
+        # ...
+        expr = self
         if isinstance(self.expr, FormCall):
-            call = self.expr
-            return FormCall(call.expr, args)
+            expr = self.expr.expr
+        # ...
 
-        return FormCall(self, args)
+        are_dummy = lambda xs: [isinstance(i, (TestFunction, VectorTestFunction))
+                                for i in xs]
+
+        # ...
+        test_functions  = args[0]
+        if not isinstance(test_functions, (tuple, list, Tuple)):
+            test_functions = [test_functions]
+        test_functions = Tuple(*test_functions)
+        # ...
+
+        # ...
+        trial_functions = args[1]
+        if not isinstance(trial_functions, (tuple, list, Tuple)):
+            trial_functions = [trial_functions]
+        trial_functions = Tuple(*trial_functions)
+        # ...
+
+        # ...
+        if not all(are_dummy(test_functions)) and not all(are_dummy(trial_functions)):
+            # This should return an Integral
+            raise NotImplementedError('')
+
+        else:
+            free_variables = None
+            target = None
+            if not any(are_dummy(test_functions)):
+                assert(all(are_dummy(trial_functions)))
+
+                args           = trial_functions
+                free_variables = test_functions
+                target         = 'test'
+
+            elif not any(are_dummy(trial_functions)):
+                assert(all(are_dummy(test_functions)))
+
+                args           = test_functions
+                free_variables = trial_functions
+                target         = 'trial'
+
+            if not( free_variables is None ):
+                if target == 'test':
+                    target = expr.variables[0]
+
+                elif target == 'trial':
+                    target = expr.variables[1]
+
+                expr = expr.expr
+
+                for old, new in zip(target, free_variables):
+                    expr = expr.subs(old, new)
+
+                expr = LinearForm(args, expr)
+        # ...
+
+        return FormCall(expr, args)
 
 
 class Norm(Integral):
