@@ -742,6 +742,40 @@ def test_calls_2d_3():
     # ...
 
 #==============================================================================
+#def test_nonlinear_2d_1():
+#
+#    domain = Square()
+#
+#    V = FunctionSpace('V', domain)
+#    x,y = V.coordinates
+#
+#    u,v = [TestFunction(V, name=i) for i in ['u','v']]
+#    Un = Field('Un', V)
+#
+#    from sympy import diff as sympy_diff
+#
+#    def diff(L, u):
+#        ls = []
+#        expr = evaluate(L)
+#        for i in expr:
+#            e = sympy_diff(i.expr, u)
+#            ls.append(e)
+#
+#        if len(ls) == 1:
+#            return ls[0]
+#
+#        else:
+#            return ls
+#
+#    # ...
+#    expr = Un**2 * dot(grad(Un), grad(v))
+#    l = LinearForm(v, expr)
+#
+#    a = diff(l, Un)
+#    print(a)
+#    # ...
+
+#==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
 
@@ -752,3 +786,5 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
+
+test_nonlinear_2d_1()
