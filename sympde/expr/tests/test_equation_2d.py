@@ -14,7 +14,7 @@ from sympy.physics.quantum import TensorProduct
 
 from sympde.core import Constant
 from sympde.core import grad, dot, inner, cross, rot, curl, div
-from sympde.core import laplace, hessian
+from sympde.core import laplace, hessian, bracket
 from sympde.topology import (dx, dy, dz)
 from sympde.topology import FunctionSpace, VectorFunctionSpace
 from sympde.topology import Field, VectorField
@@ -24,6 +24,7 @@ from sympde.topology import VectorTestFunction
 from sympde.topology import Unknown
 from sympde.topology import Domain, Boundary, NormalVector, TangentVector
 from sympde.topology import Trace, trace_0, trace_1
+from sympde.topology import Square
 
 from sympde.expr import BilinearForm, LinearForm, Integral
 from sympde.expr import atomize
@@ -161,6 +162,47 @@ def test_projection_2d():
 
     u = Projection(x**2+alpha*y, V, name='u')
 
+
+#==============================================================================
+def test_equation_2d_2():
+
+    domain = Square()
+
+    V = FunctionSpace('V', domain)
+
+    x,y = domain.coordinates
+
+    pn = Field('pn', V)
+    wn = Field('wn', V)
+
+    dp    = TestFunction(V, name='dp')
+    dw    = TestFunction(V, name='dw')
+    tau   = TestFunction(V, name='tau')
+    sigma = TestFunction(V, name='sigma')
+
+    Re    = Constant('Re', real=True)
+    dt    = Constant('dt', real=True)
+    alpha = Constant('alpha', real=True)
+
+    s  = BilinearForm((tau,sigma), dot(grad(tau), grad(sigma)))
+    m  = BilinearForm((tau,sigma), tau*sigma)
+    b1 = BilinearForm((tau,dw), bracket(pn, dw) * tau)
+    b2 = BilinearForm((tau,dp), bracket(dp, wn) * tau)
+
+    l1 = LinearForm(tau, bracket(pn, wn)*tau - 1./Re * dot(grad(tau), grad(wn)))
+
+    expr =  m(tau,dw) - alpha*dt*b1(tau,dw) - dt*b2(tau,dp) - (alpha*dt/Re)*s(tau,dw)
+    a = BilinearForm(((tau, sigma),(dp,dw)), expr)
+
+    l = LinearForm((tau, sigma), dt*l1(tau))
+
+    equation = Equation(a((tau, sigma),(dp,dw)), l(tau, sigma), bc=DirichletBC(domain.boundary))
+
+    # TODO not working yet!! gives the wrong result => result must be a vector
+    # and not a scalar
+    print(evaluate(l, verbose=True))
+    print(evaluate(equation.rhs.expr, verbose=True))
+
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
@@ -172,4 +214,3 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
-

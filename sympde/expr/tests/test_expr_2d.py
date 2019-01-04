@@ -18,7 +18,7 @@ from sympy.physics.quantum import TensorProduct
 
 from sympde.core import Constant
 from sympde.core import grad, dot, inner, cross, rot, curl, div
-from sympde.core import laplace, hessian
+from sympde.core import laplace, hessian, bracket
 from sympde.topology import (dx, dy, dz)
 from sympde.topology import FunctionSpace, VectorFunctionSpace
 from sympde.topology import Field, VectorField
@@ -667,6 +667,79 @@ def test_system_2d():
     print(evaluate(l, verbose=True))
     # ...
 
+#==============================================================================
+def test_curldiv_2d():
+
+    domain = Square()
+
+    W1 = VectorFunctionSpace('W1', domain)
+    T1 = VectorFunctionSpace('T1', domain)
+
+    w1 = VectorTestFunction(W1, name='w1')
+    t1 = VectorTestFunction(T1, name='t1')
+
+    mu = Constant('mu')
+
+    # ...
+    a = BilinearForm((w1, t1), rot(w1)*rot(t1) + mu*div(w1)*div(t1), name='a')
+    print(a)
+    print(atomize(a))
+    print(evaluate(a))
+    # ...
+
+
+#==============================================================================
+def test_calls_2d_2():
+
+    domain = Square()
+
+    V = FunctionSpace('V', domain)
+    x,y = V.coordinates
+
+    u,v = [TestFunction(V, name=i) for i in ['u','v']]
+    Un = Field('Un', V)
+
+    # ...
+    a = BilinearForm((v,u), dot(grad(u), grad(v)))
+
+    expr = a(v, Un)
+    print(evaluate(expr, verbose=True))
+    # ...
+
+    # ...
+    l = LinearForm(v, a(v, Un))
+
+    print(evaluate(l, verbose=True))
+    # ...
+
+#==============================================================================
+def test_calls_2d_3():
+
+    domain = Square()
+
+    V = FunctionSpace('V', domain)
+
+    x,y = domain.coordinates
+
+    pn = Field('pn', V)
+    wn = Field('wn', V)
+
+    dp    = TestFunction(V, name='dp')
+    dw    = TestFunction(V, name='dw')
+    tau   = TestFunction(V, name='tau')
+    sigma = TestFunction(V, name='sigma')
+
+    Re    = Constant('Re', real=True)
+    dt    = Constant('dt', real=True)
+    alpha = Constant('alpha', real=True)
+
+    l1 = LinearForm(tau, bracket(pn, wn)*tau - 1./Re * dot(grad(tau), grad(wn)))
+
+    # ...
+    l = LinearForm((tau, sigma), dt*l1(tau))
+
+    print(evaluate(l, verbose=True))
+    # ...
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
@@ -679,5 +752,3 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
-
-test_system_2d()
