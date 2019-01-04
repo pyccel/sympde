@@ -786,5 +786,3 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
-
-test_nonlinear_2d_1()
