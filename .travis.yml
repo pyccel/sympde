@@ -12,6 +12,8 @@ cache: pip
 
 # 
 before_install:
+  - sudo apt-get install gfortran
+  - sudo apt-get install libopenmpi-dev openmpi-bin # libhdf5-openmpi-dev
   - python -m pip install --upgrade pip
   - python -m pip uninstall -y sympde
 
