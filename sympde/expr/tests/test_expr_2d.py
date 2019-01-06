@@ -742,6 +742,65 @@ def test_calls_2d_3():
     # ...
 
 #==============================================================================
+def test_evaluation_2d_1():
+    domain = Domain('Omega', dim=2)
+    B_neumann = Boundary(r'\Gamma_1', domain)
+
+    V = FunctionSpace('V', domain)
+    W = VectorFunctionSpace('W', domain)
+
+    p,q = [TestFunction(V, name=i) for i in ['p', 'q']]
+    u,v = [VectorTestFunction(W, name=i) for i in ['u', 'v']]
+
+    alpha = Constant('alpha')
+
+    x,y = V.coordinates
+    F = Field('F', space=V)
+
+    a1 = BilinearForm((p, q), dot(grad(p), grad(q)))
+    m  = BilinearForm((p, q), p*q)
+    a2 = BilinearForm((p, q), a1(p,q) + alpha*m(p,q))
+    a3 = BilinearForm((u, v), rot(u)*rot(v) + alpha*div(u)*div(v))
+
+    a11 = BilinearForm((v,u), inner(grad(v), grad(u)))
+    a12 = BilinearForm((v,p), div(v)*p)
+    a4  = BilinearForm(((v,q),(u,p)), a11(v,u) - a12(v,p) + a12(u,q))
+
+    l0 = LinearForm(p, F*p)
+    l_neu = LinearForm(p, p*trace_1(grad(F), B_neumann))
+    l = LinearForm(p, l0(p) + l_neu(p))
+
+    # ...
+    print(a1)
+    print(evaluate(a1))
+    print('')
+    # ...
+
+    # ...
+    print(a2)
+    print(evaluate(a2))
+    print('')
+    # ...
+
+    # ...
+    print(a3)
+    print(evaluate(a3))
+    print('')
+    # ...
+
+    # ...
+    print(a4)
+    print(evaluate(a4))
+    print('')
+    # ...
+
+    # ...
+    print(l)
+    print(evaluate(l))
+    print('')
+    # ...
+
+#==============================================================================
 #def test_nonlinear_2d_1():
 #
 #    domain = Square()
@@ -786,3 +845,4 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
+
