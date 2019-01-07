@@ -1,0 +1,10 @@
+Domain(dim=2)        :: Omega
+FunctionSpace(Omega) :: V
+Field(V)             :: phi
+Function(x,y)        :: f
+
+a1(v::V, u::V) = laplace(v) * laplace(u)
+a2(v::V, u::V) = dot(grad(v), grad(u))
+
+b(v::V) = f * v 
+

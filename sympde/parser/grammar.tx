@@ -1,0 +1,182 @@
+PDE:
+  declarations*=Declaration
+;
+
+Declaration:
+  Domain | Space | Field | Real | Form | Function
+;
+
+Form:
+  BilinearForm | LinearForm
+;
+
+Domain: 
+  "Domain" LPAREN "dim" EQ dim=INT RPAREN DEF name=ID
+;
+
+Space: 
+  FunctionSpace | VectorFunctionSpace
+;
+
+FunctionSpace: 
+  "FunctionSpace" LPAREN domain=ID (COMMA "kind" EQ kind=STRING)? RPAREN  DEF name=ID
+;
+
+VectorFunctionSpace: 
+  "VectorFunctionSpace" LPAREN domain=ID (COMMA "kind" EQ kind=STRING)? RPAREN  DEF name=ID
+;
+
+Field: 
+  "Field" LPAREN space=ID RPAREN  DEF name=ID
+;
+
+Function: 
+  "Function" LPAREN parameters*=ID[','] RPAREN  DEF name=ID
+;
+
+Real: 
+  "Real" DEF name=ID
+;
+
+LinearForm: 
+  name=ID 
+  LPAREN 
+    args=ArgForm 
+  RPAREN 
+  DEF 
+  body=BodyForm
+;
+
+BilinearForm: 
+  name=ID 
+  LPAREN 
+    args_test=ArgForm 
+    COMMA
+    args_trial=ArgForm
+  RPAREN 
+  DEF 
+  body=BodyForm
+;
+
+BodyForm:
+  SimpleBodyForm | ExpressionBodyForm 
+;
+
+SimpleBodyForm:
+  expression=Expression
+;
+
+ExpressionBodyForm:
+  op=TermForm (op=PlusOrMinus op=TermForm)* 
+;
+
+// TODO only Mul should be available
+TermForm: 
+  op=CallForm (op=MulOrDiv op=CallForm)*
+;
+
+CallForm:
+  name=ID LPAREN args+=ID[','] RPAREN
+;
+
+ArgForm:
+  ArgFormSep | ArgFormParen
+;
+
+ArgFormSep:
+  functions+=TestTrialFunction[',']  IN space=ID 
+;
+
+ArgFormParen:
+  LPAREN functions+=TestTrialFunction[','] RPAREN IN space=ID 
+;
+
+TestTrialFunction:
+  ID
+;
+
+Expression: 
+  op=Term (op=PlusOrMinus op=Term)* 
+;
+
+Term: 
+  op=Factor (op=MulOrDiv op=Factor)*
+;
+
+Factor: 
+  FactorBinary | FactorUnary | FactorSigned
+;
+
+FactorSigned: 
+  (sign=PlusOrMinus)?  op=Operand
+;
+
+FactorUnary:
+  name=UnaryOp LPAREN op=Operand RPAREN
+;
+
+FactorBinary:
+  name=BinaryOp LPAREN op=Factor COMMA op=Factor RPAREN
+;
+
+// there is a problem with this rule, only on my laptop
+// it seems it can't parse a word like phi, and only returns "p"
+Operand: 
+  (op=NUMBER) | (op=ID) | (LPAREN op=Expression RPAREN)
+;
+
+UnaryOp:
+   ('grad'|'rot'|'curl'|'div'|'dxx'|'dyy'|'dzz'|'dxy'|'dyz'|'dxz'|'dx'|'dy'|'dz'|'laplace'|'hessian')
+;
+
+BinaryOp:
+   ('dot'|'inner'|'outer'|'cross'|'bracket')
+;
+
+EQ:
+  "="
+;
+
+DEF:
+  "::" | "="
+;
+
+IN:
+  "::"
+;
+
+COMMA:
+  ","
+;
+
+SUBSCRIPT:
+  '_'
+;
+
+LPAREN:
+  "("
+;
+
+RPAREN:
+  ")"
+;
+
+LTRIANGLE: 
+  '<'
+;
+
+RTRIANGLE:
+  '>'
+;
+
+PlusOrMinus: 
+  '+' | '-'
+;
+
+MulOrDiv: 
+  '*' | '/' 
+;
+
+Comment:
+  /#.*$/
+;

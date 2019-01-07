@@ -1,4 +1,5 @@
 sympy==1.2
+textx==1.6.1
 h5py
 pytest
 pyyaml

@@ -30,9 +30,18 @@ setup_args = dict(
 packages = find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"])
 # ...
 
+# ...
+install_requires = ['numpy', 'sympy', 'textx']
+
+try:
+    import textx
+except:
+    install_requires += ['textx']
+# ...
+
 def setup_package():
     if 'setuptools' in sys.modules:
-        setup_args['install_requires'] = ['numpy', 'sympy']
+        setup_args['install_requires'] = install_requires
 
     setup(packages = packages, \
           include_package_data = True, \
