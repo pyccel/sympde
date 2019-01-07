@@ -367,11 +367,11 @@ class BilinearForm(Form):
             stack.pop("parent")
             # ... 
 
-            # ... TODO check domain
-            for key, form in list(self.blocks.items()):
-                self.domain = form.domain
-                break
-            # ... 
+#            # ... TODO check domain
+#            for key, form in list(self.blocks.items()):
+#                self.domain = form.domain
+#                break
+#            # ... 
 
             # ... compute n_rows and n_cols 
             self._n_rows = len(self.args_test.functions)
@@ -471,6 +471,7 @@ class SimpleBodyForm(BodyForm):
     def __init__(self, **kwargs):
 
         self.expression = kwargs.pop('expression')
+        self.domain = kwargs.pop('domain', None)
 
         super(SimpleBodyForm, self).__init__()
 

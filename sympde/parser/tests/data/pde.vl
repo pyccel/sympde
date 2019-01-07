@@ -3,8 +3,10 @@ FunctionSpace(Omega) :: V
 Field(V)             :: phi
 Function(x,y)        :: f
 
-a1(v::V, u::V) = laplace(v) * laplace(u)
-a2(v::V, u::V) = dot(grad(v), grad(u))
+a1(v::V, u::V) = < laplace(v) * laplace(u) >
+a2(v::V, u::V) = < dot(grad(v), grad(u)) >
+a3(v::V, u::V) = a1(v,u) + a2(v,u)
+a4((v1,v2)::V, (u1,u2)::V) = a1(v1,u1) + a2(v2,u2)
 
-b(v::V) = f * v 
+b(v::V) = < f * v >
 

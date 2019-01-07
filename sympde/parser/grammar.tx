@@ -63,7 +63,9 @@ BodyForm:
 ;
 
 SimpleBodyForm:
-  expression=Expression
+  LTRIANGLE 
+    expression=Expression
+  RTRIANGLE (SUBSCRIPT domain=ID)?
 ;
 
 ExpressionBodyForm:
