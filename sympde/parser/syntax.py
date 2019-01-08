@@ -235,8 +235,8 @@ class LinearForm(BasicPDE):
         if isinstance(body, SimpleBodyForm):
             expression = body.expression.expr
 
-        elif isinstance(body, ExpressionBodyForm):
-            raise NotImplementedError('')
+        elif isinstance(body, Expression):
+            expression = body.expr
         # ...
 
         atom = sym_LinearForm(functions, expression, name=name)
@@ -313,8 +313,8 @@ class BilinearForm(BasicPDE):
         if isinstance(body, SimpleBodyForm):
             expression = body.expression.expr
 
-        elif isinstance(body, ExpressionBodyForm):
-            raise NotImplementedError('')
+        elif isinstance(body, Expression):
+            expression = body.expr
         # ...
 
         args = (test_functions, trial_functions)

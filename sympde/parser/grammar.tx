@@ -59,7 +59,7 @@ BilinearForm:
 ;
 
 BodyForm:
-  SimpleBodyForm //| Expression
+  SimpleBodyForm | Expression
 ;
 
 SimpleBodyForm:
