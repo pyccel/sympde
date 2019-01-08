@@ -59,7 +59,7 @@ BilinearForm:
 ;
 
 BodyForm:
-  SimpleBodyForm | Expression
+  SimpleBodyForm //| Expression
 ;
 
 SimpleBodyForm:
@@ -68,21 +68,9 @@ SimpleBodyForm:
   RTRIANGLE (SUBSCRIPT domain=ID)?
 ;
 
-ArgForm:
-  ArgFormSep | ArgFormParen
-;
-
-ArgFormSep:
-  functions+=TestFunction[',']  IN space=ID 
-;
-
-ArgFormParen:
-  LPAREN functions+=TestFunction[','] RPAREN IN space=ID 
-;
-
-TestFunction:
-  name=ID
-;
+ArgForm: ArgFormSep | ArgFormParen;
+ArgFormSep: functions+=TestFunction[',']  IN space=ID;
+ArgFormParen: LPAREN functions+=TestFunction[','] RPAREN IN space=ID;
 
 Expression: 
   op=Term (op=PlusOrMinus op=Term)* 
@@ -93,11 +81,11 @@ Term:
 ;
 
 FactorSigned: 
-  (sign=PlusOrMinus)?  op=Operand (trailer=Trailer)?
+  (sign=PlusOrMinus)?  (op=Operand) (trailer=Trailer)?
 ;
 
 Trailer:
-  LPAREN args+=Operand[','] RPAREN
+  LPAREN args*=Expression[','] RPAREN
 ;
 
 // there is a problem with this rule, only on my laptop
@@ -118,3 +106,4 @@ RTRIANGLE:   '>';
 PlusOrMinus: '+' | '-';
 MulOrDiv:    '*' | '/';
 Comment:     /#.*$/;
+TestFunction: name=ID;

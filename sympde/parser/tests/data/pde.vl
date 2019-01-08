@@ -1,21 +1,21 @@
 Domain(dim=2)        :: Omega
 FunctionSpace(Omega) :: V
-Field(V)             :: phi
-Real                 :: alpha
+#Field(V)             :: phi
+#Real                 :: alpha
 #Complex              :: beta # TODO not working
 
 #Function(x,y)        :: f
 
 b1(v::V) = < v >
 b2(v::V) = < dx(v) >
+b3(v::V) = < dx(dx(v)) >
 
 a(v::V, u::V) = < v * u >
 a0(v::V, u::V) = < dx(v) * dx(u) >
 a1(v::V, u::V) = < laplace(v) * laplace(u) >
+a2(v::V, u::V) = < dot(grad(v), grad(u)) >
 
-#a2(v::V, u::V) = < dot(grad(v), grad(u)) >
 #a3(v::V, u::V) = a1(v,u) + a2(v,u)
 #a4((v1,v2)::V, (u1,u2)::V) = a1(v1,u1) + a2(v2,u2)
 
 #b1(v::V) = < f * v >
-#b(v::V) = < dx(dx(v)) >
