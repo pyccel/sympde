@@ -8,8 +8,7 @@ from .syntax import (PDE,
                      Expression, Term, Operand,
                      FactorSigned, Trailer,
                      LinearForm, BilinearForm,
-                     BodyForm, SimpleBodyForm, ExpressionBodyForm,
-                     TermForm, CallForm,
+                     BodyForm, SimpleBodyForm,
                      Domain, FunctionSpace, VectorFunctionSpace, Field, Function,
                      Real, Complex)
 
@@ -140,8 +139,7 @@ class Parser(BasicParser):
                    Expression, Term, Operand,
                    FactorSigned, Trailer,
                    LinearForm, BilinearForm,
-                   BodyForm, SimpleBodyForm, ExpressionBodyForm,
-                   TermForm, CallForm,
+                   BodyForm, SimpleBodyForm,
                    Domain, FunctionSpace, VectorFunctionSpace,
                    Field, Function,
                    Real, Complex

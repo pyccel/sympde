@@ -59,26 +59,13 @@ BilinearForm:
 ;
 
 BodyForm:
-  SimpleBodyForm //| ExpressionBodyForm 
+  SimpleBodyForm | Expression
 ;
 
 SimpleBodyForm:
   LTRIANGLE 
     expression=Expression
   RTRIANGLE (SUBSCRIPT domain=ID)?
-;
-
-ExpressionBodyForm:
-  op=TermForm (op=PlusOrMinus op=TermForm)* 
-;
-
-// TODO only Mul should be available
-TermForm: 
-  op=CallForm (op=MulOrDiv op=CallForm)*
-;
-
-CallForm:
-  name=ID LPAREN args+=ID[','] RPAREN
 ;
 
 ArgForm:
