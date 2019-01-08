@@ -10,7 +10,6 @@ from .syntax import (PDE,
                      LinearForm, BilinearForm,
                      BodyForm, SimpleBodyForm, ExpressionBodyForm,
                      TermForm, CallForm,
-                     TestFunction,
                      Domain, FunctionSpace, VectorFunctionSpace, Field, Function,
                      Real, Complex)
 
@@ -144,7 +143,6 @@ class Parser(BasicParser):
                    BodyForm, SimpleBodyForm, ExpressionBodyForm,
                    TermForm, CallForm,
                    Domain, FunctionSpace, VectorFunctionSpace,
-                   TestFunction,
                    Field, Function,
                    Real, Complex
                    ]
@@ -165,14 +163,14 @@ class Parser(BasicParser):
             a file containing the instructions to parse.
         """
         ast = super(Parser, self).parse_from_file(filename)
-        print(ast)
 
         # ... annotating the AST
         for token in ast.declarations:
             ns = token.namespace
-            print(ns[token.name])
+            print(ns[token.name], type(ns[token.name]))
 #            annotate_form(token, ast)
         # ...
+        print('done.')
 
         return ast
 
