@@ -6,9 +6,10 @@ from sympy import Symbol, sympify
 #from .utilities import grad, d_var, inner, outer, cross, dot
 from .syntax import (PDE,
                      Expression, Term, Operand,
-                     FactorSigned, Trailer,
+                     Factor, Trailer, Power,
                      LinearForm, BilinearForm,
                      BodyForm, SimpleBodyForm,
+                     Equation,
                      Domain, FunctionSpace, VectorFunctionSpace, Field, Function,
                      Real, Complex)
 
@@ -137,11 +138,12 @@ class Parser(BasicParser):
         """
         classes = [PDE,
                    Expression, Term, Operand,
-                   FactorSigned, Trailer,
+                   Factor, Trailer, Power,
                    LinearForm, BilinearForm,
                    BodyForm, SimpleBodyForm,
                    Domain, FunctionSpace, VectorFunctionSpace,
                    Field, Function,
+                   Equation,
                    Real, Complex
                    ]
 

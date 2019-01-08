@@ -2,12 +2,16 @@
 
 from sympy import Tuple
 from sympy import Function
+from sympy import pi
+from sympy import Pow
 
 #from vale.utilities import (grad, d_var, inner, outer, cross, dot, \
 #                           replace_symbol_derivatives)
 
 DEBUG = False
 #DEBUG = True
+
+from pyccel.ast.utilities import math_functions as _known_functions_math
 
 from sympde.topology import Domain              as sym_Domain
 from sympde.topology import FunctionSpace       as sym_FunctionSpace
@@ -20,6 +24,7 @@ from sympde.topology import Constant            as sym_Constant
 
 from sympde.expr     import LinearForm          as sym_LinearForm
 from sympde.expr     import BilinearForm        as sym_BilinearForm
+from sympde.expr     import Equation            as sym_Equation
 
 from sympde.core import grad, dot, inner, cross, rot, curl, div
 from sympde.core import laplace, hessian, bracket
@@ -40,6 +45,8 @@ _known_operators = {
     'hessian': hessian,
     'bracket': bracket,
 }
+
+_known_constants_math = {'pi':pi}
 
 # Global variable namespace
 namespace = {}
@@ -78,6 +85,10 @@ class Domain(BasicPDE):
         if not( dim is None ):
             atom = sym_Domain(name, dim=dim)
             insert_namespace(name, atom)
+
+            # insert coordinates
+            for x in atom.coordinates:
+                insert_namespace(x.name, x)
 
         elif not( filename is None ):
             raise NotImplementedError('')
@@ -151,6 +162,88 @@ class Field(BasicPDE):
             v = sym_VectorField(name, space=space)
 
         insert_namespace(name, v)
+
+        self.name = name
+        BasicPDE.__init__(self, **kwargs)
+
+#======================================================================
+# TODO - add bc
+#      - add name/label
+class Equation(BasicPDE):
+    """Class representing an Equation."""
+    def __init__(self, **kwargs):
+        name  = kwargs.pop('name', 'equation')
+
+        tests  = kwargs.pop('tests')
+        trials = kwargs.pop('trials')
+        lhs    = kwargs.pop('lhs')
+        rhs    = kwargs.pop('rhs')
+
+        # ... create test functions
+        args = tests
+        space = namespace[args.space]
+        functions = []
+        if isinstance(space, sym_FunctionSpace):
+            for i in args.functions:
+                v = sym_TestFunction(space, name=i.name)
+                functions.append(v)
+
+        elif isinstance(space, sym_VectorFunctionSpace):
+            for i in args.functions:
+                v = sym_VectorTestFunction(space, name=i.name)
+                functions.append(v)
+
+        for v in functions:
+            insert_namespace(v.name, v)
+
+        if len(functions) == 1:
+            functions = functions[0]
+
+        test_functions = functions
+        # ...
+
+        # ... create trial functions
+        args = trials
+        space = namespace[args.space]
+        functions = []
+        if isinstance(space, sym_FunctionSpace):
+            for i in args.functions:
+                v = sym_TestFunction(space, name=i.name)
+                functions.append(v)
+
+        elif isinstance(space, sym_VectorFunctionSpace):
+            for i in args.functions:
+                v = sym_VectorTestFunction(space, name=i.name)
+                functions.append(v)
+
+        for v in functions:
+            insert_namespace(v.name, v)
+
+        if len(functions) == 1:
+            functions = functions[0]
+
+        trial_functions = functions
+        # ...
+
+        # ... define sympde Equation
+        rhs = rhs.expr
+        lhs = lhs.expr
+        bc  = None
+
+        atom = sym_Equation(lhs, rhs, bc=bc)
+        insert_namespace(name, atom)
+        # ...
+
+        # ... clean namespace
+        if not isinstance(test_functions, (tuple, list, Tuple)):
+            test_functions = [test_functions]
+
+        if not isinstance(trial_functions, (tuple, list, Tuple)):
+            trial_functions = [trial_functions]
+
+        for v in test_functions + trial_functions:
+            namespace.pop(v.name)
+        # ...
 
         self.name = name
         BasicPDE.__init__(self, **kwargs)
@@ -366,6 +459,17 @@ class Trailer(object):
         return [i.expr for i in self.args]
 
 #======================================================================
+class Power(object):
+    """Class representing a power."""
+    def __init__(self, **kwargs):
+        self.arg = kwargs.pop('arg', None)
+        self.op  = kwargs.pop('op',  None)
+
+    @property
+    def expr(self):
+        return Pow(self.op.expr, self.arg.expr, evaluate=False)
+
+#======================================================================
 class ExpressionElement(object):
     """Class representing an element of an expression."""
     def __init__(self, **kwargs):
@@ -381,20 +485,18 @@ class ExpressionElement(object):
 
 
 #======================================================================
-class FactorSigned(ExpressionElement):
+class Factor(ExpressionElement):
     """Class representing a signed factor."""
     def __init__(self, **kwargs):
         self.sign = kwargs.pop('sign', '+')
         self.trailer = kwargs.pop('trailer', [])
-        super(FactorSigned, self).__init__(**kwargs)
+        super(Factor, self).__init__(**kwargs)
 
     @property
     def expr(self):
         expr = self.op.expr
         trailer = self.trailer
         if trailer:
-#            print('> expr    = ', expr)
-#            print('> trailer = ', trailer.expr)
             expr = expr(*trailer.expr)
 
         return -expr if self.sign == '-' else expr
@@ -425,7 +527,6 @@ class Expression(ExpressionElement):
                 ret -= operand.expr
         return ret
 
-
 #======================================================================
 class Operand(ExpressionElement):
     @property
@@ -442,6 +543,12 @@ class Operand(ExpressionElement):
         elif isinstance(op, str):
             if op in _known_operators.keys():
                 return _known_operators[op]
+
+            if op in _known_functions_math.keys():
+                return _known_functions_math[op]
+
+            if op in _known_constants_math.keys():
+                return _known_constants_math[op]
 
             if not(op in namespace.keys()):
                 raise ValueError('{} not found'.format(op))

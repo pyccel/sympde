@@ -3,7 +3,7 @@ PDE:
 ;
 
 Declaration:
-  Domain | Space | Field | Real | Complex | Form | Function
+  Domain | Space | Field | Real | Complex | Form | Function | Equation
 ;
 
 Form:
@@ -33,6 +33,12 @@ Field:
 
 Function: 
   "Function" LPAREN parameters*=ID[','] RPAREN  DEF name=ID
+;
+
+Equation: 
+  "find" trials=ArgForm "such" "that" 
+  lhs=Expression EQ rhs=Expression
+  "forall" tests=ArgForm 
 ;
 
 Real:    "Real" DEF name=ID;
@@ -77,16 +83,18 @@ Expression:
 ;
 
 Term: 
-  op=FactorSigned (op=MulOrDiv op=FactorSigned)*
+  op=Factor (op=MulOrDiv op=Factor)*
 ;
 
-FactorSigned: 
-  (sign=PlusOrMinus)?  (op=Operand) (trailer=Trailer)?
+Factor: 
+  (op=Power) | (sign=PlusOrMinus)?  (op=Operand) (trailer=Trailer)? 
 ;
 
 Trailer:
   LPAREN args*=Expression[','] RPAREN
 ;
+
+Power: (op=Operand) '**' (arg=Factor);
 
 // there is a problem with this rule, only on my laptop
 // it seems it can't parse a word like phi, and only returns "p"
