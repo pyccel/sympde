@@ -1,6 +1,7 @@
 # coding: utf-8
 
 from sympy import Symbol, sympify
+from sympy import Function
 
 #from vale.utilities import (grad, d_var, inner, outer, cross, dot, \
 #                           replace_symbol_derivatives)
@@ -13,138 +14,143 @@ namespace = {}
 stack     = {}
 settings  = {}
 
-operators = {}
-operators["1"] = ["dx", "dy", "dz"]
-operators["2"] = ["dxx", "dyy", "dzz", "dxy", "dyz", "dxz"]
+from sympde.topology import Domain              as sym_Domain
+from sympde.topology import FunctionSpace       as sym_FunctionSpace
+from sympde.topology import VectorFunctionSpace as sym_VectorFunctionSpace
+from sympde.topology import Field               as sym_Field
+from sympde.topology import VectorField         as sym_VectorField
+from sympde.topology import TestFunction        as sym_TestFunction
+from sympde.topology import VectorTestFunction  as sym_VectorTestFunction
+from sympde.topology import Constant            as sym_Constant
+
+from sympde.expr     import LinearForm          as sym_LinearForm
+from sympde.expr     import BilinearForm        as sym_BilinearForm
 
 
-class PDE(object):
+#======================================================================
+class BasicPDE(object):
+
+    def __init__(self, **kwargs):
+        self.namespace = namespace
+
+#======================================================================
+class PDE(BasicPDE):
     """Class for PDE syntax."""
     def __init__(self, **kwargs):
-        """
-        Constructor for PDE.
-
-        In PDE, we only have declarations for the moment.
-        """
         self.declarations = kwargs.pop('declarations')
+        BasicPDE.__init__(self, **kwargs)
 
-class Domain(object):
+#======================================================================
+class Domain(BasicPDE):
     """Class representing a Domain."""
     def __init__(self, **kwargs):
-        """
-        A Domain has the following attributs
+        name = kwargs.pop('name')
+        dim  = kwargs.pop('dim', None)
+        filename = kwargs.pop('filename', None)
 
-        * name
-        * dim
-        * kind
+        expr = self
+        if not( dim is None ):
+            namespace[name] = sym_Domain(name, dim=dim)
 
-        .. note::
-            The grammar rule to define a Domain is
+        elif not( filename is None ):
+            raise NotImplementedError('')
 
-            Domain:
-            "Domain" LPAREN "dim" EQ dim=INT COMMA "kind" EQ kind=STRING RPAREN DEF name=ID
-            ;
-        """
-        self.name = kwargs.pop('name')
-        self.dim  = kwargs.pop('dim')
+        self.name = name
+        BasicPDE.__init__(self, **kwargs)
 
-        namespace[self.name] = self
-
-class FunctionSpace(object):
+#======================================================================
+# TODO kind is not used yet
+class FunctionSpace(BasicPDE):
     """Class representing a Finite Element FunctionSpace."""
     def __init__(self, **kwargs):
-        """
-        A FunctionSpace has the following attributs
+        name   = kwargs.pop('name')
+        domain = kwargs.pop('domain')
+        kind   = kwargs.pop('kind', 'h1')
 
-        * name
-        * domain
-        * kind
+        domain = namespace[domain]
+        V = sym_FunctionSpace(name, domain)
 
-        .. note::
-            The grammar rule to define a FunctionSpace is
+        namespace[name] = V
 
-            FunctionSpace:
-            "FunctionSpace" LPAREN "domain" EQ domain=ID COMMA "kind" EQ kind=STRING RPAREN  DEF name=ID
-            ;
-        """
-        self.name   = kwargs.pop('name')
-        self.domain = kwargs.pop('domain')
-        self.kind   = kwargs.pop('kind', 'h1')
+        self.name = name
+        BasicPDE.__init__(self, **kwargs)
 
-        namespace[self.name] = self
-
-class VectorFunctionSpace(object):
+#======================================================================
+# TODO kind is not used yet
+class VectorFunctionSpace(BasicPDE):
     """Class representing a Finite Element VectorFunctionSpace."""
     def __init__(self, **kwargs):
-        """
-        A VectorFunctionSpace has the following attributs
+        name   = kwargs.pop('name')
+        domain = kwargs.pop('domain')
+        kind   = kwargs.pop('kind', 'h1')
 
-        * name
-        * domain
-        * kind
+        domain = namespace[domain]
+        V = sym_VectorFunctionSpace(name, domain)
 
-        .. note::
-            The grammar rule to define a VectorFunctionSpace is
+        namespace[name] = V
 
-            VectorFunctionSpace:
-            "VectorFunctionSpace" LPAREN "domain" EQ domain=ID COMMA "kind" EQ kind=STRING RPAREN  DEF name=ID
-            ;
-        """
-        self.name   = kwargs.pop('name')
-        self.domain = kwargs.pop('domain')
-        self.kind   = kwargs.pop('kind', 'h1')
+        self.name = name
+        BasicPDE.__init__(self, **kwargs)
 
-        namespace[self.name] = self
-
-class Field(object):
-    """Class representing a Field."""
+#======================================================================
+class TestFunction(BasicPDE):
+    """Class representing a test function."""
     def __init__(self, **kwargs):
         """
         A Field has the following attributs
 
         * name
-        * space
-
-        .. note::
-            The grammar rule to define a Field is
-
-            Field:
-            "Field" LPAREN "space" EQ space=ID RPAREN  DEF name=ID
-            ;
         """
-        self.name  = kwargs.pop('name')
-        self.space = kwargs.pop('space')
+        name  = kwargs.pop('name')
 
-        namespace[self.name] = self
+        # the appropriate object will created later in the Linear/Bilinear form
+        namespace[name] = Symbol(name)
 
-    @property
-    def expr(self):
-        return Symbol(self.name)
+        self.name = name
+        BasicPDE.__init__(self, **kwargs)
 
-class Real(object):
+#======================================================================
+class Field(BasicPDE):
+    """Class representing a Field."""
+    def __init__(self, **kwargs):
+        name  = kwargs.pop('name')
+        space = kwargs.pop('space')
+
+        space = namespace[space]
+        if isinstance(space, sym_FunctionSpace):
+            v = sym_Field(name, space=space)
+
+        elif isinstance(space, sym_VectorFunctionSpace):
+            v = sym_VectorField(name, space=space)
+
+        namespace[name] = v
+
+        self.name = name
+        BasicPDE.__init__(self, **kwargs)
+
+#======================================================================
+class Real(BasicPDE):
     """Class representing a Real number."""
     def __init__(self, **kwargs):
-        """
-        A Real number is defined by
+        name  = kwargs.pop('name')
 
-        * name
+        namespace[name] = sym_Constant(name, real=True)
 
-        .. note::
-            The grammar rule to define a Real is
+        self.name = name
+        BasicPDE.__init__(self, **kwargs)
 
-            Real:
-            "Real" DEF name=ID
-            ;
-        """
-        self.name  = kwargs.pop('name')
+#======================================================================
+class Complex(BasicPDE):
+    """Class representing a Complex number."""
+    def __init__(self, **kwargs):
+        name  = kwargs.pop('name')
 
-        namespace[self.name] = self
+        namespace[name] = sym_Constant(name, complex=True)
 
-    @property
-    def expr(self):
-        return Symbol(self.name)
+        self.name = name
+        BasicPDE.__init__(self, **kwargs)
 
-
+# TODO
 class Function(object):
     """Class representing a Function."""
     def __init__(self, **kwargs):
@@ -166,299 +172,126 @@ class Function(object):
 
         namespace[self.name] = self
 
-    @property
-    def expr(self):
-        return Symbol(self.name)
+#    @property
+#    def expr(self):
+#        return Symbol(self.name)
+#
 
-
-class Form(object):
-    """Abstract Class for Linear/Bilinear forms."""
-    def __init__(self, **kwargs):
-        self._attributs = {}
-
-    @property
-    def attributs(self):
-        return self._attributs
-
-    def set(self, attribut, value):
-        """Sets value to the attribut"""
-        if attribut in self._available_attributs:
-            self._attributs[attribut] = value
-        else:
-            raise ValueError("Unknown attribut : %s" % attribut)
-
-
-class LinearForm(Form):
+#======================================================================
+class LinearForm(BasicPDE):
     """Class representing a Linear Form."""
-    _available_attributs = ["dim", \
-                            "space", \
-                            "user_fields", \
-                            "user_functions", \
-                            "user_constants"]
 
     def __init__(self, **kwargs):
-        """
-        A Domain has the following attributs
+        name = kwargs.pop('name')
+        args = kwargs.pop('args')
+        body = kwargs.pop('body')
 
-        * name
-        * args
-        * body
-        * -- domain
-        * -- expression
+        # ... create test functions
+        space = namespace[args.space]
+        functions = []
+        if isinstance(space, sym_FunctionSpace):
+            for i in args.functions:
+                v = sym_TestFunction(space, name=i.name)
+                functions.append(v)
 
-        .. note::
-            The grammar rule to define a LinearForm is
+        elif isinstance(space, sym_VectorFunctionSpace):
+            for i in args.functions:
+                v = sym_VectorTestFunction(space, name=i.name)
+                functions.append(v)
 
-            LinearForm:
-            name=ID
-            LPAREN
-            args=ArgForm
-            RPAREN
-            DEF
-            LTRIANGLE
-            expression=Expression
-            RTRIANGLE SUBSCRIPT domain=ID
-            ;
-        """
-        self.name       = kwargs.pop('name')
-        self.args       = kwargs.pop('args')
-        self.body       = kwargs.pop('body')
-        self.blocks     = None
-        self._n_rows    = 1
+        for v in functions:
+            namespace[v.name] = v
 
-        namespace[self.name] = self
+        if len(functions) == 1:
+            functions = functions[0]
+        # ...
 
-        super(LinearForm, self).__init__(**kwargs)
+        # ...
+        if isinstance(body, SimpleBodyForm):
+            expression = body.expression.expr
 
-        if isinstance(self.body, SimpleBodyForm):
-            self.expression = self.body.expression
-        elif isinstance(self.body, ExpressionBodyForm):
-            self.blocks     = {}
+        elif isinstance(body, ExpressionBodyForm):
+            raise NotImplementedError('')
+        # ...
 
-            # ... 
-            stack["parent"] = self.name
-            self.body.expr
-            stack.pop("parent")
-            # ... 
+        namespace[name] = sym_LinearForm(functions, expression,
+                                         name=name)
 
-            # ... TODO check domain
-            for key, form in list(self.blocks.items()):
-                self.domain = form.domain
-                break
-            # ... 
+        self.name = name
+        BasicPDE.__init__(self, **kwargs)
 
-            # ... compute n_rows 
-            self._n_rows = len(self.args.functions)
-            # ... 
-        else:
-            raise Exception('Could not parse the linear form body at position {}'
-                            .format(self._tx_position))
-
-        self.set("user_fields",    [])
-        self.set("user_functions", [])
-        self.set("user_constants", [])
-
-        self.set("space", self.args.space)
-
-    @property
-    def n_rows(self):
-        """
-        Returns the number of rows of the linear form. different from 1 when
-        using block linear forms.
-        """
-        return self._n_rows
-
-    def to_sympy(self):
-        if type(self.blocks) == dict:
-            expr = {}
-            self.n_deriv        = 0
-            self.n_deriv_fields = 0
-
-            for key, form in list(self.blocks.items()):
-                expr[key] = form.to_sympy()
-                if len(form.args.functions) == 1:
-                    old = form.args.functions[0]
-                    new = self.args.functions[key]
-
-                    expr[key] = replace_symbol_derivatives(expr[key], old, new)
-                else:
-                    raise ValueError("Expecting one argument but given: %s" % form.args.functions)
-
-                self.n_deriv        = max(self.n_deriv, form.n_deriv)
-                self.n_deriv_fields = max(self.n_deriv_fields, \
-                                          form.n_deriv_fields)
-        else:
-            for f in self.args.functions:
-                stack[f] = f
-
-            settings["n_deriv"] = 0
-            settings["n_deriv_fields"] = 0
-
-            expr = self.expression.expr
-
-            for f in self.args.functions:
-                stack.pop(f)
-
-            self.n_deriv        = settings["n_deriv"]
-            self.n_deriv_fields = settings["n_deriv_fields"]
-
-            settings.pop("n_deriv")
-            settings.pop("n_deriv_fields")
-
-#        print(">> Linear.n_deriv        : " + str(self.n_deriv))
-#        print(">> Linear.n_deriv_fields : " + str(self.n_deriv_fields))
-
-        return expr
-
-class BilinearForm(Form):
+#======================================================================
+class BilinearForm(BasicPDE):
     """Class representing a Bilinear Form."""
-    _available_attributs = ["dim", \
-                            "space_test", \
-                            "space_trial", \
-                            "user_fields", \
-                            "user_functions", \
-                            "user_constants"]
 
     def __init__(self, **kwargs):
-        """
-        A Domain has the following attributs
+        name       = kwargs.pop('name')
+        args_test  = kwargs.pop('args_test')
+        args_trial = kwargs.pop('args_trial')
+        body       = kwargs.pop('body')
 
-        * name
-        * args
-        * domain
-        * expression
+        # ... create test functions
+        args = args_test
+        space = namespace[args.space]
+        functions = []
+        if isinstance(space, sym_FunctionSpace):
+            for i in args.functions:
+                v = sym_TestFunction(space, name=i.name)
+                functions.append(v)
 
-        .. note::
-            The grammar rule to define a LinearForm is
+        elif isinstance(space, sym_VectorFunctionSpace):
+            for i in args.functions:
+                v = sym_VectorTestFunction(space, name=i.name)
+                functions.append(v)
 
-            BilinearForm:
-            name=ID
-            LPAREN
-            args_test=ArgForm
-            COMMA
-            args_trial=ArgForm
-            RPAREN
-            DEF
-            LTRIANGLE
-            expression=Expression
-            RTRIANGLE SUBSCRIPT domain=ID
-            ;
-        """
-        self.name       = kwargs.pop('name')
-        self.args_test  = kwargs.pop('args_test')
-        self.args_trial = kwargs.pop('args_trial')
-        self.body       = kwargs.pop('body')
-        self.blocks     = None
-        self._n_rows    = 1
-        self._n_cols    = 1
+        for v in functions:
+            namespace[v.name] = v
 
-        namespace[self.name] = self
+        if len(functions) == 1:
+            functions = functions[0]
 
-        super(BilinearForm, self).__init__(**kwargs)
+        test_functions = functions
+        # ...
 
-        if isinstance(self.body, SimpleBodyForm):
-            self.expression = self.body.expression
-        elif isinstance(self.body, ExpressionBodyForm):
-            self.blocks     = {}
+        # ... create trial functions
+        args = args_trial
+        space = namespace[args.space]
+        functions = []
+        if isinstance(space, sym_FunctionSpace):
+            for i in args.functions:
+                v = sym_TestFunction(space, name=i.name)
+                functions.append(v)
 
-            # ... 
-            stack["parent"] = self.name
-            self.body.expr
-            stack.pop("parent")
-            # ... 
+        elif isinstance(space, sym_VectorFunctionSpace):
+            for i in args.functions:
+                v = sym_VectorTestFunction(space, name=i.name)
+                functions.append(v)
 
-#            # ... TODO check domain
-#            for key, form in list(self.blocks.items()):
-#                self.domain = form.domain
-#                break
-#            # ... 
+        for v in functions:
+            namespace[v.name] = v
 
-            # ... compute n_rows and n_cols 
-            self._n_rows = len(self.args_test.functions)
-            self._n_cols = len(self.args_trial.functions)
-            # ... 
-        else:
-            raise Exception('Could not parse the bilinear form body at position {}'
-                            .format(self._tx_position))
+        if len(functions) == 1:
+            functions = functions[0]
 
-        self.set("user_fields",    [])
-        self.set("user_functions", [])
-        self.set("user_constants", [])
+        trial_functions = functions
+        # ...
 
-        self.set("space_test",  self.args_test.space)
-        self.set("space_trial", self.args_trial.space)
+        # ...
+        if isinstance(body, SimpleBodyForm):
+            expression = body.expression.expr
 
-    @property
-    def n_rows(self):
-        """
-        Returns the number of rows of the bilinear form. different from 1 when
-        using block bilinear forms.
-        """
-        return self._n_rows
+        elif isinstance(body, ExpressionBodyForm):
+            raise NotImplementedError('')
+        # ...
 
-    @property
-    def n_cols(self):
-        """
-        Returns the number of columns of the bilinear form. different from 1 when
-        using block bilinear forms.
-        """
-        return self._n_cols
+        args = (test_functions, trial_functions)
+        namespace[name] = sym_BilinearForm(args, expression,
+                                           name=name)
 
-    def to_sympy(self):
-        if type(self.blocks) == dict:
-            expr = {}
-            self.n_deriv        = 0
-            self.n_deriv_fields = 0
+        self.name = name
+        BasicPDE.__init__(self, **kwargs)
 
-            for key, form in list(self.blocks.items()):
-                expr[key] = form.to_sympy()
-                if (len(form.args_test.functions) == 1) and \
-                   (len(form.args_trial.functions) == 1):
-
-                    # ...
-                    old = form.args_test.functions[0]
-                    new = self.args_test.functions[key[0]]
-
-                    expr[key] = replace_symbol_derivatives(expr[key], old, new)
-                    # ...
-
-                    # ...
-                    old = form.args_trial.functions[0]
-                    new = self.args_trial.functions[key[1]]
-
-                    expr[key] = replace_symbol_derivatives(expr[key], old, new)
-                    # ...
-                else:
-                    raise ValueError("Expecting one argument but given: %s" % form.args.functions)
-
-                self.n_deriv        = max(self.n_deriv, form.n_deriv)
-                self.n_deriv_fields = max(self.n_deriv_fields, \
-                                          form.n_deriv_fields)
-        else:
-            args = self.args_test.functions + self.args_trial.functions
-            for f in args:
-                stack[f] = f
-
-            settings["n_deriv"] = 0
-            settings["n_deriv_fields"] = 0
-
-            expr = self.expression.expr
-
-            for f in args:
-                stack.pop(f)
-
-            self.n_deriv        = settings["n_deriv"]
-            self.n_deriv_fields = settings["n_deriv_fields"]
-
-            settings.pop("n_deriv")
-            settings.pop("n_deriv_fields")
-
-#        print(">> Bilinear.n_deriv        : " + str(self.n_deriv))
-#        print(">> Bilinear.n_deriv_fields : " + str(self.n_deriv_fields))
-
-        return expr
-
-
+#======================================================================
 class BodyForm(object):
     """Class representing the body of a linear/bilinear form."""
     def __init__(self, **kwargs):
@@ -466,6 +299,7 @@ class BodyForm(object):
         super(BodyForm, self).__init__()
 
 
+#======================================================================
 class SimpleBodyForm(BodyForm):
     """Class representing the body of a simple linear/bilinear form."""
     def __init__(self, **kwargs):
@@ -476,6 +310,19 @@ class SimpleBodyForm(BodyForm):
         super(SimpleBodyForm, self).__init__()
 
 
+#======================================================================
+class Trailer(object):
+    """Class representing a trailer."""
+    def __init__(self, **kwargs):
+        self.args = kwargs.pop('args', [])
+
+    @property
+    def expr(self):
+        if DEBUG:
+            print("> Trailer ")
+        return [i.expr.expr for i in self.args]
+
+#======================================================================
 class ExpressionElement(object):
     """Class representing an element of an expression."""
     def __init__(self, **kwargs):
@@ -490,100 +337,28 @@ class ExpressionElement(object):
         super(ExpressionElement, self).__init__()
 
 
+#======================================================================
 class FactorSigned(ExpressionElement):
     """Class representing a signed factor."""
     def __init__(self, **kwargs):
         self.sign = kwargs.pop('sign', '+')
+        self.trailer = kwargs.pop('trailer', [])
         super(FactorSigned, self).__init__(**kwargs)
 
     @property
     def expr(self):
         if DEBUG:
             print("> FactorSigned ")
+        trailer = self.trailer
+        if trailer:
+            print(trailer.expr)
+            print('PAR ICI')
+            import sys; sys.exit(0)
         expr = self.op.expr
         return -expr if self.sign == '-' else expr
 
-class FactorUnary(ExpressionElement):
-    """Class representing a unary factor."""
-    def __init__(self, **kwargs):
-        # name of the unary operator
-        self.name = kwargs['name']
 
-        super(FactorUnary, self).__init__(**kwargs)
-
-    @property
-    def expr(self):
-        if DEBUG:
-            print("> FactorUnary ")
-        expr = self.op.expr
-        # TODO gets dim from Domain
-        dim = 2
-
-        try:
-            if isinstance(namespace[str(expr)], Field):
-                if self.name in operators["1"]:
-                    settings["n_deriv_fields"] = max(settings["n_deriv_fields"], 1)
-                elif self.name in operators["2"]:
-                    settings["n_deriv_fields"] = max(settings["n_deriv_fields"], 2)
-        except:
-            if self.name in operators["1"]:
-                settings["n_deriv"] = max(settings["n_deriv"], 1)
-            elif self.name in operators["2"]:
-                settings["n_deriv"] = max(settings["n_deriv"], 2)
-
-        if self.name == "dx":
-            return d_var(expr, 'x')
-        elif self.name == "dy":
-            return d_var(expr, 'y')
-        elif self.name == "dz":
-            return d_var(expr, 'z')
-        elif self.name == "dxx":
-            return d_var(expr, 'xx')
-        elif self.name == "dyy":
-            return d_var(expr, 'yy')
-        elif self.name == "dzz":
-            return d_var(expr, 'zz')
-        elif self.name == "dxy":
-            return d_var(expr, 'xy')
-        elif self.name == "dyz":
-            return d_var(expr, 'yz')
-        elif self.name == "dxz":
-            return d_var(expr, 'xz')
-        elif self.name == "grad":
-            return grad(expr, dim=dim)
-        else:
-            raise Exception('Unknown variable "{}" at position {}'
-                            .format(op, self._tx_position))
-
-class FactorBinary(ExpressionElement):
-    def __init__(self, **kwargs):
-        # name of the unary operator
-        self.name = kwargs['name']
-
-        super(FactorBinary, self).__init__(**kwargs)
-
-    @property
-    def expr(self):
-        if DEBUG:
-            print("> FactorBinary ")
-#        print self.op
-
-        expr_l = self.op[0].expr
-        expr_r = self.op[1].expr
-
-        if self.name == "dot":
-            return dot(expr_l, expr_r)
-        elif self.name == "inner":
-            return inner(expr_l, expr_r)
-        elif self.name == "outer":
-            return outer(expr_l, expr_r)
-        elif self.name == "cross":
-            return cross(expr_l, expr_r)
-        else:
-            raise Exception('Unknown variable "{}" at position {}'
-                            .format(op, self._tx_position))
-
-
+#======================================================================
 class Term(ExpressionElement):
     @property
     def expr(self):
@@ -598,6 +373,7 @@ class Term(ExpressionElement):
         return ret
 
 
+#======================================================================
 class Expression(ExpressionElement):
     @property
     def expr(self):
@@ -612,6 +388,7 @@ class Expression(ExpressionElement):
         return ret
 
 
+#======================================================================
 class Operand(ExpressionElement):
     @property
     def expr(self):
@@ -655,22 +432,8 @@ class Operand(ExpressionElement):
             raise Exception('Unknown variable "{}" at position {}'
                             .format(op, self._tx_position))
 
-#                try:
-#                    if O in namespace:
-#                        # TODO use isinstance
-#                        if type(namespace[O]) in [Field, Function, Real]:
-#                            return namespace[O].expr
-#                        else:
-#                            return namespace[O]
-#                    elif O in stack:
-#                        if DEBUG:
-#                            print ">>> found local variables: " + op
-#                        return Symbol(O)
-#                except:
-#                    raise Exception('Unknown variable "{}" at position {}'
-#                                    .format(O, self._tx_position))
 
-
+#======================================================================
 class ExpressionBodyForm(ExpressionElement):
     @property
     def expr(self):
@@ -686,6 +449,7 @@ class ExpressionBodyForm(ExpressionElement):
         return ret
 
 
+#======================================================================
 class TermForm(ExpressionElement):
     @property
     def expr(self):
@@ -701,6 +465,7 @@ class TermForm(ExpressionElement):
         return ret
 
 
+#======================================================================
 class CallForm(ExpressionBodyForm):
     """Class representing the call to a linear/bilinear form."""
     def __init__(self, **kwargs):

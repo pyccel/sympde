@@ -10,9 +10,10 @@ Form:
   BilinearForm | LinearForm
 ;
 
-Domain: 
-  "Domain" LPAREN "dim" EQ dim=INT RPAREN DEF name=ID
-;
+Domain: "Domain" LPAREN 
+                 ("dim" EQ dim=INT)? 
+                 ("filename" EQ filename=STRING)? 
+                 RPAREN DEF name=ID;
 
 Space: 
   FunctionSpace | VectorFunctionSpace
@@ -34,9 +35,8 @@ Function:
   "Function" LPAREN parameters*=ID[','] RPAREN  DEF name=ID
 ;
 
-Real: 
-  "Real" DEF name=ID
-;
+Real:    "Real" DEF name=ID;
+Complex: "Complex" DEF name=ID;
 
 LinearForm: 
   name=ID 
@@ -59,7 +59,7 @@ BilinearForm:
 ;
 
 BodyForm:
-  SimpleBodyForm | ExpressionBodyForm 
+  SimpleBodyForm //| ExpressionBodyForm 
 ;
 
 SimpleBodyForm:
@@ -86,15 +86,15 @@ ArgForm:
 ;
 
 ArgFormSep:
-  functions+=TestTrialFunction[',']  IN space=ID 
+  functions+=TestFunction[',']  IN space=ID 
 ;
 
 ArgFormParen:
-  LPAREN functions+=TestTrialFunction[','] RPAREN IN space=ID 
+  LPAREN functions+=TestFunction[','] RPAREN IN space=ID 
 ;
 
-TestTrialFunction:
-  ID
+TestFunction:
+  name=ID
 ;
 
 Expression: 
@@ -102,23 +102,15 @@ Expression:
 ;
 
 Term: 
-  op=Factor (op=MulOrDiv op=Factor)*
-;
-
-Factor: 
-  FactorBinary | FactorUnary | FactorSigned
+  op=FactorSigned (op=MulOrDiv op=FactorSigned)*
 ;
 
 FactorSigned: 
-  (sign=PlusOrMinus)?  op=Operand
+  (sign=PlusOrMinus)?  op=Operand (trailer=Trailer)?
 ;
 
-FactorUnary:
-  name=UnaryOp LPAREN op=Operand RPAREN
-;
-
-FactorBinary:
-  name=BinaryOp LPAREN op=Factor COMMA op=Factor RPAREN
+Trailer:
+  LPAREN args+=Operand[','] RPAREN
 ;
 
 // there is a problem with this rule, only on my laptop
@@ -127,58 +119,15 @@ Operand:
   (op=NUMBER) | (op=ID) | (LPAREN op=Expression RPAREN)
 ;
 
-UnaryOp:
-   ('grad'|'rot'|'curl'|'div'|'dxx'|'dyy'|'dzz'|'dxy'|'dyz'|'dxz'|'dx'|'dy'|'dz'|'laplace'|'hessian')
-;
-
-BinaryOp:
-   ('dot'|'inner'|'outer'|'cross'|'bracket')
-;
-
-EQ:
-  "="
-;
-
-DEF:
-  "::" | "="
-;
-
-IN:
-  "::"
-;
-
-COMMA:
-  ","
-;
-
-SUBSCRIPT:
-  '_'
-;
-
-LPAREN:
-  "("
-;
-
-RPAREN:
-  ")"
-;
-
-LTRIANGLE: 
-  '<'
-;
-
-RTRIANGLE:
-  '>'
-;
-
-PlusOrMinus: 
-  '+' | '-'
-;
-
-MulOrDiv: 
-  '*' | '/' 
-;
-
-Comment:
-  /#.*$/
-;
+EQ:          "=";
+DEF:         "::" | "=";
+IN:          "::";
+COMMA:       ",";
+SUBSCRIPT:   '_';
+LPAREN:      "(";
+RPAREN:      ")";
+LTRIANGLE:   '<';
+RTRIANGLE:   '>';
+PlusOrMinus: '+' | '-';
+MulOrDiv:    '*' | '/';
+Comment:     /#.*$/;

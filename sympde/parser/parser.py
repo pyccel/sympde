@@ -4,13 +4,15 @@ import os
 from sympy import Symbol, sympify
 
 #from .utilities import grad, d_var, inner, outer, cross, dot
-from sympde.parser.syntax import (PDE,
+from .syntax import (PDE,
                      Expression, Term, Operand,
-                     FactorSigned, FactorUnary, FactorBinary,
+                     FactorSigned, Trailer,
                      LinearForm, BilinearForm,
                      BodyForm, SimpleBodyForm, ExpressionBodyForm,
                      TermForm, CallForm,
-                     Domain, FunctionSpace, VectorFunctionSpace, Field, Function, Real)
+                     TestFunction,
+                     Domain, FunctionSpace, VectorFunctionSpace, Field, Function,
+                     Real, Complex)
 
 from textx.metamodel import metamodel_from_str
 
@@ -137,11 +139,14 @@ class Parser(BasicParser):
         """
         classes = [PDE,
                    Expression, Term, Operand,
-                   FactorSigned, FactorUnary, FactorBinary,
+                   FactorSigned, Trailer,
                    LinearForm, BilinearForm,
                    BodyForm, SimpleBodyForm, ExpressionBodyForm,
                    TermForm, CallForm,
-                   Domain, FunctionSpace, VectorFunctionSpace, Field, Function, Real
+                   Domain, FunctionSpace, VectorFunctionSpace,
+                   TestFunction,
+                   Field, Function,
+                   Real, Complex
                    ]
 
         try:
@@ -164,94 +169,10 @@ class Parser(BasicParser):
 
         # ... annotating the AST
         for token in ast.declarations:
-            print(token)
+            ns = token.namespace
+            print(ns[token.name])
 #            annotate_form(token, ast)
         # ...
 
         return ast
 
-## ...
-#def annotate_form(token, ast):
-#    """Annotates a linear/bilinear form using the ast.
-#
-#    token: sympde.syntax.LinearForm or sympde.syntax.BilinearForm
-#        a linear/bilinear form object to annotate
-#
-#    ast: list
-#        abstract tree
-#    """
-#    if isinstance(token, LinearForm):
-#        user_fields    = []
-#        user_functions = []
-#        user_constants = []
-#
-#        space  = get_by_name(ast, token.args.space)
-#        domain = get_by_name(ast, space.domain)
-#
-#        expr = token.to_sympy()
-#        if type(expr) == dict:
-#            for key, form in list(expr.items()):
-#                free_symbols = form.free_symbols
-#                for symbol in free_symbols:
-#                    var = get_by_name(ast, str(symbol))
-#                    if isinstance(var, Field):
-#                        user_fields.append(var.name)
-#                    elif isinstance(var, Function):
-#                        user_functions.append(var.name)
-#                    elif isinstance(var, Real):
-#                        user_constants.append(var.name)
-#        else:
-#            free_symbols = expr.free_symbols
-#            for symbol in free_symbols:
-#                var = get_by_name(ast, str(symbol))
-#                if isinstance(var, Field):
-#                    user_fields.append(var.name)
-#                elif isinstance(var, Function):
-#                    user_functions.append(var.name)
-#                elif isinstance(var, Real):
-#                    user_constants.append(var.name)
-#
-#        token.set("dim", domain.dim)
-#        token.set("user_fields", user_fields)
-#        token.set("user_functions", user_functions)
-#        token.set("user_constants", user_constants)
-#
-#    elif isinstance(token, BilinearForm):
-#        user_fields    = []
-#        user_functions = []
-#        user_constants = []
-#
-#        space_test  = get_by_name(ast, token.args_test.space)
-#        space_trial = get_by_name(ast, token.args_trial.space)
-#        domain      = get_by_name(ast, space_test.domain)
-#
-#        expr = token.to_sympy()
-#        if type(expr) == dict:
-#            for key, form in list(expr.items()):
-#                free_symbols = form.free_symbols
-#                for symbol in free_symbols:
-#                    var = get_by_name(ast, str(symbol))
-#                    if isinstance(var, Field):
-#                        user_fields.append(var.name)
-#                    elif isinstance(var, Function):
-#                        user_functions.append(var.name)
-#                    elif isinstance(var, Real):
-#                        user_constants.append(var.name)
-#        else:
-#            free_symbols = expr.free_symbols
-#            for symbol in free_symbols:
-#                var = get_by_name(ast, str(symbol))
-#                if isinstance(var, Field):
-#                    user_fields.append(var.name)
-#                elif isinstance(var, Function):
-#                    user_functions.append(var.name)
-#                elif isinstance(var, Real):
-#                    user_constants.append(var.name)
-#
-#        token.set("dim", domain.dim)
-#        token.set("user_fields", user_fields)
-#        token.set("user_functions", user_functions)
-#        token.set("user_constants", user_constants)
-#
-#    return token
-## ...
