@@ -54,6 +54,9 @@ class BasicFunctionSpace(Basic):
         sstr = printer.doprint
         return sstr(self.name)
 
+    def __mul__(self, other):
+        return ProductSpace(self, other)
+
 #==============================================================================
 class FunctionSpace(BasicFunctionSpace):
     """

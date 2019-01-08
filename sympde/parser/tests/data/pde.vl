@@ -15,7 +15,9 @@ a1(v::V, u::V) = < v * u >
 a2(v::V, u::V) = < laplace(v) * laplace(u) >
 a3(v::V, u::V) = < dot(grad(v), grad(u)) >
 a4(v::V, u::V) = a2(v,u) + a3(v,u)
-a5((v1,v2)::V, (u1,u2)::V) = a2(v1,u1) + a3(v2,u2) + a1(v1,u2)
+
+X = V*V
+a5((v1,v2)::X, (u1,u2)::X) = a2(v1,u1) + a3(v2,u2) + a1(v1,u2)
 
 m1(v::W, u::W) = < rot(v)*rot(u) + div(v)*div(u) >
 m2(v::W, u::W) = < inner(grad(v), grad(u)) >

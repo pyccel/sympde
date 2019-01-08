@@ -3,7 +3,7 @@ PDE:
 ;
 
 Declaration:
-  Domain | Space | Field | Real | Complex | Form | Function | Equation
+  Domain | Space | Field | Real | Complex | Alias | Form | Function | Equation
 ;
 
 Form:
@@ -33,6 +33,10 @@ Field:
 
 Function: 
   "Function" LPAREN parameters*=ID[','] RPAREN  DEF name=ID
+;
+
+Alias: 
+  name=ID  DEF rhs=Expression
 ;
 
 Equation: 

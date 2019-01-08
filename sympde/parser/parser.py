@@ -9,7 +9,7 @@ from .syntax import (PDE,
                      Factor, Trailer, Power,
                      LinearForm, BilinearForm,
                      BodyForm, SimpleBodyForm,
-                     Equation,
+                     Equation, Alias,
                      Domain, FunctionSpace, VectorFunctionSpace, Field, Function,
                      Real, Complex)
 
@@ -143,7 +143,7 @@ class Parser(BasicParser):
                    BodyForm, SimpleBodyForm,
                    Domain, FunctionSpace, VectorFunctionSpace,
                    Field, Function,
-                   Equation,
+                   Equation, Alias,
                    Real, Complex
                    ]
 

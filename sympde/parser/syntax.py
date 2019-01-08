@@ -16,6 +16,7 @@ from pyccel.ast.utilities import math_functions as _known_functions_math
 from sympde.topology import Domain              as sym_Domain
 from sympde.topology import FunctionSpace       as sym_FunctionSpace
 from sympde.topology import VectorFunctionSpace as sym_VectorFunctionSpace
+from sympde.topology import ProductSpace        as sym_ProductSpace
 from sympde.topology import Field               as sym_Field
 from sympde.topology import VectorField         as sym_VectorField
 from sympde.topology import TestFunction        as sym_TestFunction
@@ -130,22 +131,6 @@ class VectorFunctionSpace(BasicPDE):
         self.name = name
         BasicPDE.__init__(self, **kwargs)
 
-#======================================================================
-class TestFunction(BasicPDE):
-    """Class representing a test function."""
-    def __init__(self, **kwargs):
-        """
-        A Field has the following attributs
-
-        * name
-        """
-        name  = kwargs.pop('name')
-
-        # the appropriate object will created later in the Linear/Bilinear form
-        insert_namespace(name, Symbol(name))
-
-        self.name = name
-        BasicPDE.__init__(self, **kwargs)
 
 #======================================================================
 class Field(BasicPDE):
@@ -162,6 +147,18 @@ class Field(BasicPDE):
             v = sym_VectorField(name, space=space)
 
         insert_namespace(name, v)
+
+        self.name = name
+        BasicPDE.__init__(self, **kwargs)
+
+#======================================================================
+class Alias(BasicPDE):
+    """Class representing an Alias."""
+    def __init__(self, **kwargs):
+        name  = kwargs.pop('name')
+        rhs = kwargs.pop('rhs')
+
+        insert_namespace(name, rhs.expr)
 
         self.name = name
         BasicPDE.__init__(self, **kwargs)
@@ -306,16 +303,23 @@ class LinearForm(BasicPDE):
 
         # ... create test functions
         space = namespace[args.space]
-        functions = []
-        if isinstance(space, sym_FunctionSpace):
-            for i in args.functions:
-                v = sym_TestFunction(space, name=i.name)
-                functions.append(v)
 
-        elif isinstance(space, sym_VectorFunctionSpace):
-            for i in args.functions:
-                v = sym_VectorTestFunction(space, name=i.name)
-                functions.append(v)
+        if isinstance(space, sym_ProductSpace):
+            space = space.spaces
+        else:
+            space = [space]
+
+        assert(len(space) == len(args.functions))
+
+        functions = []
+        for i,V in zip(args.functions, space):
+            if isinstance(V, sym_FunctionSpace):
+                v = sym_TestFunction(V, name=i.name)
+
+            elif isinstance(V, sym_VectorFunctionSpace):
+                v = sym_VectorTestFunction(V, name=i.name)
+
+            functions.append(v)
 
         for v in functions:
             insert_namespace(v.name, v)
@@ -359,16 +363,23 @@ class BilinearForm(BasicPDE):
         # ... create test functions
         args = args_test
         space = namespace[args.space]
-        functions = []
-        if isinstance(space, sym_FunctionSpace):
-            for i in args.functions:
-                v = sym_TestFunction(space, name=i.name)
-                functions.append(v)
 
-        elif isinstance(space, sym_VectorFunctionSpace):
-            for i in args.functions:
-                v = sym_VectorTestFunction(space, name=i.name)
-                functions.append(v)
+        if isinstance(space, sym_ProductSpace):
+            space = space.spaces
+        else:
+            space = [space]
+
+        assert(len(space) == len(args.functions))
+
+        functions = []
+        for i,V in zip(args.functions, space):
+            if isinstance(V, sym_FunctionSpace):
+                v = sym_TestFunction(V, name=i.name)
+
+            elif isinstance(V, sym_VectorFunctionSpace):
+                v = sym_VectorTestFunction(V, name=i.name)
+
+            functions.append(v)
 
         for v in functions:
             insert_namespace(v.name, v)
@@ -382,16 +393,22 @@ class BilinearForm(BasicPDE):
         # ... create trial functions
         args = args_trial
         space = namespace[args.space]
-        functions = []
-        if isinstance(space, sym_FunctionSpace):
-            for i in args.functions:
-                v = sym_TestFunction(space, name=i.name)
-                functions.append(v)
 
-        elif isinstance(space, sym_VectorFunctionSpace):
-            for i in args.functions:
-                v = sym_VectorTestFunction(space, name=i.name)
-                functions.append(v)
+        if isinstance(space, sym_ProductSpace):
+            space = space.spaces
+        else:
+            space = [space]
+
+        assert(len(space) == len(args.functions))
+        functions = []
+        for i,V in zip(args.functions, space):
+            if isinstance(V, sym_FunctionSpace):
+                v = sym_TestFunction(V, name=i.name)
+
+            elif isinstance(V, sym_VectorFunctionSpace):
+                v = sym_VectorTestFunction(V, name=i.name)
+
+            functions.append(v)
 
         for v in functions:
             insert_namespace(v.name, v)
