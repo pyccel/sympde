@@ -3,7 +3,7 @@ PDE:
 ;
 
 Declaration:
-  Domain | Space | Field | Real | Form | Function
+  Domain | Space | Field | Real | Complex | Form | Function
 ;
 
 Form:
