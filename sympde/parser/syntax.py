@@ -14,6 +14,9 @@ DEBUG = False
 from pyccel.ast.utilities import math_functions as _known_functions_math
 
 from sympde.topology import Domain              as sym_Domain
+from sympde.topology import Boundary            as sym_Boundary
+from sympde.topology import NormalVector        as sym_NormalVector
+from sympde.topology import TangentVector       as sym_TangentVector
 from sympde.topology import FunctionSpace       as sym_FunctionSpace
 from sympde.topology import VectorFunctionSpace as sym_VectorFunctionSpace
 from sympde.topology import ProductSpace        as sym_ProductSpace
@@ -26,6 +29,7 @@ from sympde.topology import Constant            as sym_Constant
 from sympde.expr     import LinearForm          as sym_LinearForm
 from sympde.expr     import BilinearForm        as sym_BilinearForm
 from sympde.expr     import Equation            as sym_Equation
+from sympde.expr     import DirichletBC         as sym_DirichletBC
 
 from sympde.core import grad, dot, inner, cross, rot, curl, div
 from sympde.core import laplace, hessian, bracket
@@ -90,6 +94,10 @@ class Domain(BasicPDE):
             # insert coordinates
             for x in atom.coordinates:
                 insert_namespace(x.name, x)
+
+            # insert normal and tangent vectors
+            insert_namespace('nn', sym_NormalVector('nn'))
+            insert_namespace('tt', sym_TangentVector('tt'))
 
         elif not( filename is None ):
             raise NotImplementedError('')
@@ -175,20 +183,28 @@ class Equation(BasicPDE):
         trials = kwargs.pop('trials')
         lhs    = kwargs.pop('lhs')
         rhs    = kwargs.pop('rhs')
+        bc     = kwargs.pop('bc', None)
 
         # ... create test functions
         args = tests
         space = namespace[args.space]
-        functions = []
-        if isinstance(space, sym_FunctionSpace):
-            for i in args.functions:
-                v = sym_TestFunction(space, name=i.name)
-                functions.append(v)
 
-        elif isinstance(space, sym_VectorFunctionSpace):
-            for i in args.functions:
-                v = sym_VectorTestFunction(space, name=i.name)
-                functions.append(v)
+        if isinstance(space, sym_ProductSpace):
+            space = space.spaces
+        else:
+            space = [space]
+
+        assert(len(space) == len(args.functions))
+
+        functions = []
+        for i,V in zip(args.functions, space):
+            if isinstance(V, sym_FunctionSpace):
+                v = sym_TestFunction(V, name=i.name)
+
+            elif isinstance(V, sym_VectorFunctionSpace):
+                v = sym_VectorTestFunction(V, name=i.name)
+
+            functions.append(v)
 
         for v in functions:
             insert_namespace(v.name, v)
@@ -202,16 +218,22 @@ class Equation(BasicPDE):
         # ... create trial functions
         args = trials
         space = namespace[args.space]
-        functions = []
-        if isinstance(space, sym_FunctionSpace):
-            for i in args.functions:
-                v = sym_TestFunction(space, name=i.name)
-                functions.append(v)
 
-        elif isinstance(space, sym_VectorFunctionSpace):
-            for i in args.functions:
-                v = sym_VectorTestFunction(space, name=i.name)
-                functions.append(v)
+        if isinstance(space, sym_ProductSpace):
+            space = space.spaces
+        else:
+            space = [space]
+
+        assert(len(space) == len(args.functions))
+        functions = []
+        for i,V in zip(args.functions, space):
+            if isinstance(V, sym_FunctionSpace):
+                v = sym_TestFunction(V, name=i.name)
+
+            elif isinstance(V, sym_VectorFunctionSpace):
+                v = sym_VectorTestFunction(V, name=i.name)
+
+            functions.append(v)
 
         for v in functions:
             insert_namespace(v.name, v)
@@ -222,10 +244,34 @@ class Equation(BasicPDE):
         trial_functions = functions
         # ...
 
+        # ... prepare boundary conditions
+        if bc:
+            # TODO get domain from space
+            domain = [i for i in namespace.values() if isinstance(i, sym_Domain)]
+            domain = domain[0]
+
+            _bc = []
+            for b in bc:
+                bnd     = b.boundary
+                bnd     = sym_Boundary(bnd, domain)
+
+                # TODO lhs not used for the moment
+                bnd_lhs = b.lhs.expr
+                bnd_rhs = b.rhs.expr
+
+                if bnd_rhs == 0:
+                    sym_bc = sym_DirichletBC(bnd)
+
+                else:
+                    raise NotImplementedError('')
+
+                _bc.append(sym_bc)
+            bc = _bc
+        # ...
+
         # ... define sympde Equation
         rhs = rhs.expr
         lhs = lhs.expr
-        bc  = None
 
         atom = sym_Equation(lhs, rhs, bc=bc)
         insert_namespace(name, atom)

@@ -43,7 +43,14 @@ Equation:
   "find" trials=ArgForm "such" "that" 
   lhs=Expression EQ rhs=Expression
   "forall" tests=ArgForm 
+  ('and' bc*=BoundaryCondition['and'])?
+  ("label" ":" name=STRING)?
 ;
+
+BoundaryCondition:
+  lhs=Expression EQ rhs=Expression 'on' boundary=STRING
+;
+
 
 Real:    "Real" DEF name=ID;
 Complex: "Complex" DEF name=ID;

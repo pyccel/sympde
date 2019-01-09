@@ -22,4 +22,25 @@ a5((v1,v2)::X, (u1,u2)::X) = a2(v1,u1) + a3(v2,u2) + a1(v1,u2)
 m1(v::W, u::W) = < rot(v)*rot(u) + div(v)*div(u) >
 m2(v::W, u::W) = < inner(grad(v), grad(u)) >
 
-find u :: V such that a1(v,u) = l1(v) forall v :: V
+find u :: V such that 
+  a1(v,u) = l1(v) forall v :: V 
+  and u = 0 on 'Gamma_1' 
+  and dot(grad(u), nn) = 0 on 'Gamma_2' 
+  label: 'poisson'
+
+
+#a11(v::W, u::W) = < inner(grad(v), grad(u)) >
+#a12(v::W, p::V) = < div(v)*p >
+#
+#U = W*V
+#a13((v,q)::U, (u,p)::U) = a11(v,u) - a12(v,p) + a12(u,q)
+#
+##l6(v::W) = < dot((1, 3), v) >
+#l6(v::W) = < v >
+#
+#
+#find u,p :: U such that 
+#  a13((v,q), (u,p)) = l6(v) forall (v,q) :: U
+##  and u = 0 on 'Gamma_1' 
+##  and dot(grad(u), nn) = 0 on 'Gamma_2' 
+#  label: 'stokes'
