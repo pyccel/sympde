@@ -10,6 +10,9 @@ from sympde.topology.basic import Boundary, Union
 from sympde.topology.space import TestFunction
 from sympde.topology.space import VectorTestFunction
 from sympde.topology.space import FunctionSpace
+from sympde.topology import Boundary, NormalVector, TangentVector
+from sympde.topology import Trace, trace_0, trace_1
+from sympde.core import grad, dot
 from sympde.core.utils import random_string
 
 from .expr import FormCall, BilinearForm, LinearForm
@@ -18,6 +21,10 @@ from .errors import ( UnconsistentLhsError, UnconsistentRhsError,
 
 #==============================================================================
 class BasicBoundaryCondition(Basic):
+    pass
+
+#==============================================================================
+class DirichletBC(BasicBoundaryCondition):
 
     def __new__(cls, boundary, value=None):
         return Basic.__new__(cls, boundary, value)
@@ -31,9 +38,113 @@ class BasicBoundaryCondition(Basic):
         return self._args[1]
 
 #==============================================================================
-class DirichletBC(BasicBoundaryCondition):
-    pass
+class EssentialBC(BasicBoundaryCondition):
+    _order = None
+    _variable = None
+    _normal_component = None
 
+    def __new__(cls, lhs, rhs, boundary):
+        # ...
+        if not( rhs == 0 ):
+            raise NotImplementedError('Only homogeneous case is available')
+        # ...
+
+        # ...
+        normal_component = False
+        # ...
+
+        # ...
+        u  = list(lhs.atoms(TestFunction))
+        u += list(lhs.atoms(VectorTestFunction))
+        if not( len(u) == 1 ):
+            raise ValueError('Expecting one test function')
+
+        u = u[0]
+        # ...
+
+        # ...
+        order_0_expr = [u]
+        order_1_expr = []
+        # ...
+
+        # ...
+        nn               = list(lhs.atoms(NormalVector))
+        trace            = list(lhs.atoms(Trace))
+        normal_component = isinstance(u, VectorTestFunction) and (len(nn) + len(trace) > 0)
+        # ...
+
+        # ...
+        if nn:
+            assert(len(nn) == 1)
+
+            nn = nn[0]
+            if isinstance(u, VectorTestFunction):
+                order_0_expr += [dot(u, nn)]
+
+            order_1_expr += [dot(grad(u), nn)]
+        # ...
+
+        # ...
+        if trace:
+            assert(len(trace) == 1)
+            trace = trace[0]
+
+            if not( trace.order == 1 ):
+                raise NotImplementedError('only order 1 is available')
+
+            if isinstance(u, VectorTestFunction):
+                order_0_expr += [trace_1(u, boundary)]
+
+            order_1_expr += [trace_1(grad(u), boundary)]
+        # ...
+
+        # ...
+        if lhs in order_0_expr:
+            order = 0
+            variable = u
+
+        elif lhs in order_1_expr:
+            order = 1
+            variable = u
+
+        else:
+            # TODO change error to unconsistent error
+            print(order_1_expr)
+            print(lhs)
+            raise ValueError('Wrong lhs')
+        # ...
+
+        obj = Basic.__new__(cls, lhs, rhs, boundary)
+
+        obj._order = order
+        obj._variable = variable
+        obj._normal_component = normal_component
+
+        return obj
+
+    @property
+    def lhs(self):
+        return self._args[0]
+
+    @property
+    def rhs(self):
+        return self._args[1]
+
+    @property
+    def boundary(self):
+        return self._args[2]
+
+    @property
+    def order(self):
+        return self._order
+
+    @property
+    def variable(self):
+        return self._variable
+
+    @property
+    def normal_component(self):
+        return self._normal_component
 
 #==============================================================================
 # TODO add check on test/trial functions between lhs/rhs
@@ -42,60 +153,53 @@ class Equation(Basic):
         # ...
         if not isinstance(lhs, FormCall):
             raise UnconsistentLhsError('> lhs must be a call')
-        # ...
 
-        # ...
         if not isinstance(rhs, FormCall):
             raise UnconsistentRhsError('> rhs must be a call')
         # ...
 
-        # find unknowns of the equation
         # ...
-        if isinstance(lhs.expr, BilinearForm):
-            tests_lhs, trials_lhs = lhs.arguments
-
-            # ...
-            if isinstance(tests_lhs, (TestFunction, VectorTestFunction)):
-                tests_lhs = [tests_lhs]
-
-            elif not isinstance(tests_lhs, (list, tuple, Tuple)):
-                msg =  '> Expecting iterable or TestFunction/VectorTestFunction'
-                raise UnconsistentArgumentsError(msg)
-
-            tests_lhs = Tuple(*tests_lhs)
-            # ...
-
-            # ...
-            if isinstance(trials_lhs, (TestFunction, VectorTestFunction)):
-                trials_lhs = [trials_lhs]
-
-            elif not isinstance(trials_lhs, (list, tuple, Tuple)):
-                msg =  '> Expecting iterable or TestFunction/VectorTestFunction'
-                raise UnconsistentArgumentsError(msg)
-
-            trials_lhs = Tuple(*trials_lhs)
-            # ...
-
-        else:
+        if not isinstance(lhs.expr, BilinearForm):
             raise UnconsistentLhsError('> lhs must be a bilinear')
 
-        if isinstance(rhs.expr, LinearForm):
-            tests_rhs = rhs.arguments
-
-            # ...
-            if isinstance(tests_rhs, (TestFunction, VectorTestFunction)):
-                tests_rhs = [tests_rhs]
-
-            elif not isinstance(tests_rhs, (list, tuple, Tuple)):
-                msg =  '> Expecting iterable or TestFunction/VectorTestFunction'
-                raise UnconsistentArgumentsError(msg)
-
-            tests_rhs = Tuple(*tests_rhs)
-            # ...
-
-        else:
+        if not isinstance(rhs.expr, LinearForm):
             raise UnconsistentRhsError('> rhs must be a linear')
+        # ...
+
         # ...
+        # find unknowns and tests of the equation
+        # ...
+        tests_lhs, trials_lhs = lhs.arguments
+        if isinstance(tests_lhs, (TestFunction, VectorTestFunction)):
+            tests_lhs = [tests_lhs]
+
+        elif not isinstance(tests_lhs, (list, tuple, Tuple)):
+            msg =  '> Expecting iterable or TestFunction/VectorTestFunction'
+            raise UnconsistentArgumentsError(msg)
+
+        tests_lhs = Tuple(*tests_lhs)
+
+        if isinstance(trials_lhs, (TestFunction, VectorTestFunction)):
+            trials_lhs = [trials_lhs]
+
+        elif not isinstance(trials_lhs, (list, tuple, Tuple)):
+            msg =  '> Expecting iterable or TestFunction/VectorTestFunction'
+            raise UnconsistentArgumentsError(msg)
+
+        trials_lhs = Tuple(*trials_lhs)
+        # ...
+
+        # ... find test functions
+        tests_rhs = rhs.arguments
+        if isinstance(tests_rhs, (TestFunction, VectorTestFunction)):
+            tests_rhs = [tests_rhs]
+
+        elif not isinstance(tests_rhs, (list, tuple, Tuple)):
+            msg =  '> Expecting iterable or TestFunction/VectorTestFunction'
+            raise UnconsistentArgumentsError(msg)
+
+        tests_rhs = Tuple(*tests_rhs)
+        # ...
 
         # ...
         for u_lhs, u_rhs in zip(tests_lhs, tests_rhs):
@@ -121,31 +225,36 @@ class Equation(Basic):
 
             newbc = []
             for i in bc:
-                if not isinstance(i, DirichletBC):
+                if not isinstance(i, (DirichletBC, EssentialBC)):
                     raise NotImplementedError('')
 
                 if isinstance(i.boundary, Union):
-                    newbc += [DirichletBC(j) for j in i.boundary._args]
+                    if isinstance(i, DirichletBC):
+                        newbc += [DirichletBC(j) for j in i.boundary._args]
+
+                    if isinstance(i, EssentialBC):
+                        newbc += [EssentialBC(i.lhs, i.rhs, j) for j in i.boundary._args]
 
                 else:
                     newbc += [i]
 
             bc = Tuple(*newbc)
 
-            # ... check that the same boundary is not used in the weak
-            #     formulation and strong condition
-            lhs_bnd = lhs.atoms(Boundary)
-            rhs_bnd = rhs.atoms(Boundary)
-            bc_bnd  = bc.atoms(Boundary)
-
-            if lhs_bnd & bc_bnd:
-                msg = '> {} used for lhs and Dirichlet'.format(lhs_bnd & bc_bnd)
-                raise UnconsistentBCError(msg)
-
-            if rhs_bnd & bc_bnd:
-                msg = '> {} used for rhs and Dirichlet'.format(rhs_bnd & bc_bnd)
-                raise UnconsistentBCError(msg)
-            # ...
+#            # TODO must be improved: use the bc wrt the variable
+#            # ... check that the same boundary is not used in the weak
+#            #     formulation and strong condition
+#            lhs_bnd = lhs.atoms(Boundary)
+#            rhs_bnd = rhs.atoms(Boundary)
+#            bc_bnd  = bc.atoms(Boundary)
+#
+#            if lhs_bnd & bc_bnd:
+#                msg = '> {} used for lhs and Dirichlet'.format(lhs_bnd & bc_bnd)
+#                raise UnconsistentBCError(msg)
+#
+#            if rhs_bnd & bc_bnd:
+#                msg = '> {} used for rhs and Dirichlet'.format(rhs_bnd & bc_bnd)
+#                raise UnconsistentBCError(msg)
+#            # ...
         # ...
 
         return Basic.__new__(cls, lhs, rhs, trials_lhs, bc)
