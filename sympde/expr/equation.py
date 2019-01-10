@@ -228,6 +228,11 @@ class Equation(Basic):
                 if not isinstance(i, (DirichletBC, EssentialBC)):
                     raise NotImplementedError('')
 
+                if isinstance(i, EssentialBC):
+                    if not( i.variable in trials_lhs ):
+                        msg = 'Essential bc must be on trial functions'
+                        raise UnconsistentArgumentsError(msg)
+
                 if isinstance(i.boundary, Union):
                     if isinstance(i, DirichletBC):
                         newbc += [DirichletBC(j) for j in i.boundary._args]

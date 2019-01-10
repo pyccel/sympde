@@ -40,7 +40,7 @@ from sympde.expr.errors import UnconsistentLhsError
 from sympde.expr.errors import UnconsistentRhsError
 from sympde.expr.errors import UnconsistentBCError
 
-from sympde.expr import Equation, DirichletBC
+from sympde.expr import Equation, DirichletBC, EssentialBC
 
 DIM = 2
 domain = Domain('Omega', dim=DIM)
@@ -204,6 +204,36 @@ def test_equation_2d_2():
     print(evaluate(equation.rhs.expr, verbose=True))
 
 #==============================================================================
+def test_equation_2d_3():
+
+    V = FunctionSpace('V', domain)
+
+    v = TestFunction(V, name='v')
+    u = TestFunction(V, name='u')
+
+    x,y = domain.coordinates
+
+    B1 = Boundary(r'\Gamma_1', domain)
+
+    # ... bilinear/linear forms
+    a1 = BilinearForm((v,u), dot(grad(v), grad(u)))
+    a2 = BilinearForm((v,u), v*u)
+
+    l1 = LinearForm(v, x*y*v)
+    l2 = LinearForm(v, cos(x+y)*v)
+    # ...
+
+    # ...
+    bc = EssentialBC(u, 0, B1)
+    eq = Equation(a1(v,u), l1(v), bc=bc)
+    # ...
+
+    # ...
+    bc = EssentialBC(trace_1(grad(u), B1), 0, B1)
+    eq = Equation(a1(v,u), l1(v), bc=bc)
+    # ...
+
+#==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
 
@@ -214,3 +244,5 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
+
+test_equation_2d_3()
