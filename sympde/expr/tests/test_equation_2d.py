@@ -229,9 +229,46 @@ def test_equation_2d_3():
     # ...
 
     # ...
-    bc = EssentialBC(trace_1(grad(u), B1), 0, B1)
+    nn = NormalVector('nn')
+    bc = EssentialBC(dot(grad(u), nn), 0, B1)
     eq = Equation(a1(v,u), l1(v), bc=bc)
     # ...
+
+#==============================================================================
+def test_equation_2d_4():
+
+    V = VectorFunctionSpace('V', domain)
+
+    v = VectorTestFunction(V, name='v')
+    u = VectorTestFunction(V, name='u')
+
+    x,y = domain.coordinates
+
+    B1 = Boundary(r'\Gamma_1', domain)
+
+    # ... bilinear/linear forms
+    a1 = BilinearForm((v,u), inner(grad(v), grad(u)))
+
+    f = Tuple(x*y, sin(pi*x)*sin(pi*y))
+    l1 = LinearForm(v, dot(f,v))
+    # ...
+
+    # ...
+    bc = EssentialBC(u, 0, B1)
+    eq = Equation(a1(v,u), l1(v), bc=bc)
+    # ...
+
+    # ...
+    bc = EssentialBC(u[0], 0, B1)
+    eq = Equation(a1(v,u), l1(v), bc=bc)
+    # ...
+
+    # ...
+    nn = NormalVector('nn')
+    bc = EssentialBC(dot(u, nn), 0, B1)
+    eq = Equation(a1(v,u), l1(v), bc=bc)
+    # ...
+
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
@@ -244,5 +281,3 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
-
-test_equation_2d_3()

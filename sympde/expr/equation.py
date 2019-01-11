@@ -8,7 +8,7 @@ from pyccel.ast.core import Nil
 
 from sympde.topology.basic import Boundary, Union
 from sympde.topology.space import TestFunction
-from sympde.topology.space import VectorTestFunction
+from sympde.topology.space import VectorTestFunction, IndexedTestTrial
 from sympde.topology.space import FunctionSpace
 from sympde.topology import Boundary, NormalVector, TangentVector
 from sympde.topology import Trace, trace_0, trace_1
@@ -42,8 +42,9 @@ class EssentialBC(BasicBoundaryCondition):
     _order = None
     _variable = None
     _normal_component = None
+    _position = None
 
-    def __new__(cls, lhs, rhs, boundary):
+    def __new__(cls, lhs, rhs, boundary, position=None):
         # ...
         if not( rhs == 0 ):
             raise NotImplementedError('Only homogeneous case is available')
@@ -51,15 +52,29 @@ class EssentialBC(BasicBoundaryCondition):
 
         # ...
         normal_component = False
+        index_component = None
         # ...
 
         # ...
+        indexed = list(lhs.atoms(IndexedTestTrial))
+
         u  = list(lhs.atoms(TestFunction))
-        u += list(lhs.atoms(VectorTestFunction))
+        if not indexed:
+            u += list(lhs.atoms(VectorTestFunction))
+
+        else:
+            u += indexed
+
         if not( len(u) == 1 ):
             raise ValueError('Expecting one test function')
 
         u = u[0]
+        # ...
+
+        # ... do not allow to use Trace operator
+        trace = list(lhs.atoms(Trace))
+        if trace:
+            raise TypeError('Trace operator is not allowed')
         # ...
 
         # ...
@@ -69,8 +84,7 @@ class EssentialBC(BasicBoundaryCondition):
 
         # ...
         nn               = list(lhs.atoms(NormalVector))
-        trace            = list(lhs.atoms(Trace))
-        normal_component = isinstance(u, VectorTestFunction) and (len(nn) + len(trace) > 0)
+        normal_component = isinstance(u, VectorTestFunction) and (len(nn) > 0)
         # ...
 
         # ...
@@ -85,27 +99,27 @@ class EssentialBC(BasicBoundaryCondition):
         # ...
 
         # ...
-        if trace:
-            assert(len(trace) == 1)
-            trace = trace[0]
-
-            if not( trace.order == 1 ):
-                raise NotImplementedError('only order 1 is available')
-
-            if isinstance(u, VectorTestFunction):
-                order_0_expr += [trace_1(u, boundary)]
-
-            order_1_expr += [trace_1(grad(u), boundary)]
-        # ...
-
-        # ...
         if lhs in order_0_expr:
             order = 0
-            variable = u
+            if isinstance(u, IndexedTestTrial):
+                variable = u.base
+                index_component = list(u.indices)
+                if len(index_component) == 1:
+                    index_component = index_component[0]
+
+                else:
+                    raise ValueError('expecting one component')
+
+
+            else:
+                variable = u
 
         elif lhs in order_1_expr:
             order = 1
             variable = u
+
+            if isinstance(u, IndexedTestTrial):
+                raise NotImplementedError('Indexed case')
 
         else:
             # TODO change error to unconsistent error
@@ -119,6 +133,8 @@ class EssentialBC(BasicBoundaryCondition):
         obj._order = order
         obj._variable = variable
         obj._normal_component = normal_component
+        obj._index_component = index_component
+        obj._position = position
 
         return obj
 
@@ -145,6 +161,17 @@ class EssentialBC(BasicBoundaryCondition):
     @property
     def normal_component(self):
         return self._normal_component
+
+    @property
+    def index_component(self):
+        return self._index_component
+
+    @property
+    def position(self):
+        return self._position
+
+    def set_position(self, value):
+        self._position = value
 
 #==============================================================================
 # TODO add check on test/trial functions between lhs/rhs
@@ -233,12 +260,18 @@ class Equation(Basic):
                         msg = 'Essential bc must be on trial functions'
                         raise UnconsistentArgumentsError(msg)
 
+                    else:
+                        # TODO treate case of vector test function
+                        position = trials_lhs.index(i.variable)
+                        i.set_position(position)
+
                 if isinstance(i.boundary, Union):
                     if isinstance(i, DirichletBC):
                         newbc += [DirichletBC(j) for j in i.boundary._args]
 
                     if isinstance(i, EssentialBC):
-                        newbc += [EssentialBC(i.lhs, i.rhs, j) for j in i.boundary._args]
+                        newbc += [EssentialBC(i.lhs, i.rhs, j, position=i.position)
+                                  for j in i.boundary._args]
 
                 else:
                     newbc += [i]

@@ -62,14 +62,7 @@ def test_essential_bc_1():
     assert( bc.variable is v )
     assert( bc.order == 0 )
     assert( bc.normal_component == False )
-    # ...
-
-    # ... scalar case
-    bc = EssentialBC(trace_1(grad(v), B1), 0, B1)
-
-    assert( bc.variable is v )
-    assert( bc.order == 1 )
-    assert( bc.normal_component == False )
+    assert( bc.index_component == None )
     # ...
 
     # ... scalar case
@@ -78,6 +71,7 @@ def test_essential_bc_1():
     assert( bc.variable is v )
     assert( bc.order == 1 )
     assert( bc.normal_component == False )
+    assert( bc.index_component == None )
     # ...
 
     # ... vector case
@@ -85,6 +79,7 @@ def test_essential_bc_1():
     assert( bc.variable is w )
     assert( bc.order == 0 )
     assert( bc.normal_component == False )
+    assert( bc.index_component == None )
     # ...
 
     # ... vector case
@@ -93,7 +88,17 @@ def test_essential_bc_1():
     assert( bc.variable is w )
     assert( bc.order == 0 )
     assert( bc.normal_component == True )
+    assert( bc.index_component == None )
     # ...
+
+    # ... vector case
+    bc = EssentialBC(w[0], 0, B1)
+    assert( bc.variable is w )
+    assert( bc.order == 0 )
+    assert( bc.normal_component == False )
+    assert( bc.index_component == 0 )
+    # ...
+
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
