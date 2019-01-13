@@ -785,31 +785,34 @@ class FormCall(AtomicExpr):
 
     is_commutative = False
 
-    def __new__(cls, expr, args, name=None):
-
-        if not isinstance(expr, (BilinearForm, LinearForm)):
-            raise TypeError('> Expecting BilinearForm, LinearForm')
-
-        if not isinstance(args, (list, tuple, Tuple)):
-            args = [args]
-
-        if isinstance(expr, BilinearForm):
-            expr = subs_bilinear_form(expr, args)
-
-        if isinstance(expr, LinearForm):
-            expr = subs_linear_form(expr, args)
+    def __new__(cls, expr, args):
 
         # ...
-        if not name:
-            if expr.name:
-                name = expr.name
+        if not isinstance(args, (list, tuple, Tuple)):
+            args = [args]
+        # ...
 
-            else:
-                name = 'FormCall'
-#                raise ValueError('Callable Bilinear/Linear form must have a name')
+        # ...
+        name = expr.name
+        if isinstance( expr, BilinearForm ):
+            expr = subs_form(expr, args)
 
+            if not isinstance(expr, BilinearForm):
+                expr = BilinearForm(args, expr, name=name)
+
+        elif isinstance( expr, LinearForm ):
+            expr = subs_form(expr, args)
+
+            if not isinstance(expr, LinearForm):
+                expr = LinearForm(args, expr, name=name)
+
+        else:
+            raise TypeError('> Expecting BilinearForm, LinearForm')
+        # ...
+
+        # ...
         args = Tuple(*args)
-        obj = Basic.__new__(cls, expr, args, name)
+        obj = Basic.__new__(cls, expr, args)
         # ...
 
         return obj
@@ -821,59 +824,6 @@ class FormCall(AtomicExpr):
     @property
     def arguments(self):
         return self._args[1]
-
-    @property
-    def name(self):
-        return self._args[2]
-
-    @property
-    def form_name(self):
-        return self.name
-
-    def _sympystr(self, printer):
-        sstr = printer.doprint
-
-        expr = self.expr
-
-        name = sstr(self.name)
-        expr_str = sstr(expr)
-
-        # ...
-        test = [sstr(i) for i in expr.test_functions]
-        test_str = ','.join(i for i in test)
-
-        if len(test) == 1:
-            test = test_str
-
-        else:
-            test = '({})'.format(test_str)
-        # ...
-
-        # ...
-        trial = None
-        if isinstance(expr, BilinearForm):
-            trial = [sstr(i) for i in expr.trial_functions]
-            trial_str = ','.join(i for i in trial)
-
-            if len(trial) == 1:
-                trial = trial_str
-
-            else:
-                trial = '({})'.format(trial_str)
-        # ...
-
-        if trial:
-            args = (test, trial)
-        else:
-            args = test
-
-        args = ','.join(i for i in args)
-
-        if not( expr.name is None ):
-            return '{name}({args})'.format(name=expr.name, args=args)
-
-        else:
-            return '"{expr}"'.format(expr=expr)
 
 
 def is_mul_of_form_call(expr):
@@ -1806,8 +1756,60 @@ def subs_mul(expr):
 
         return expr
 
+# form here is a BilinearForm
+def subs_form(form, newargs):
+#    print('>>> subs_form : ', form)
 
-def subs_bilinear_form(form, newargs):
+    if isinstance( form, BilinearForm ):
+        calls = form.expr.atoms(FormCall)
+        if calls:
+            return subs_form(form.expr, newargs)
+
+        else:
+            return _subs_bilinear_form_core(form, newargs)
+
+    elif isinstance( form, LinearForm ):
+        calls = form.expr.atoms(FormCall)
+        if calls:
+            return subs_form(form.expr, newargs)
+
+        else:
+            return _subs_linear_form_core(form, newargs)
+
+    elif isinstance( form, FormCall ):
+        return form
+
+    elif isinstance( form, Add ):
+        args = [subs_form(a, newargs) for a in form.args]
+        return Add(*args)
+
+    elif isinstance( form, Mul ):
+        coeffs  = [i for i in form.args if isinstance(i, _coeffs_registery)]
+        vectors = [i for i in form.args if not(i in coeffs)]
+
+        i = S.One
+        if coeffs:
+            i = Mul(*coeffs)
+
+        j = S.One
+        if vectors:
+            args = [subs_form(a, newargs) for a in vectors]
+            j = Mul(*args)
+
+        return Mul(i, j)
+
+    elif isinstance( form, Pow ):
+
+        b = subs_form(form.base, newargs)
+        e = form.exp
+
+        return Pow(b, e)
+
+    else:
+        return form
+
+
+def _subs_bilinear_form_core(form, newargs):
     # ...
     test_trial = _sanitize_form_arguments(newargs, form, is_bilinear=True)
 
@@ -1839,17 +1841,18 @@ def subs_bilinear_form(form, newargs):
     # in order to avoid problems when swapping indices, we need to create
     # temp symbols
 
-    domain = form.domain
-
     # ...
     d_tmp = {}
     for x in trial_functions:
-        name = 'trial_{}'.format(abs(hash(x)))
-        if isinstance(x, VectorTestFunction):
-            X = VectorUnknown(name, domain, shape=x.shape)
+        name = random_string( 6 )
+        if isinstance(x, TestFunction):
+            X = TestFunction(x.space, name=name)
+
+        elif isinstance(x, VectorTestFunction):
+            X = VectorTestFunction(x.space, name=name)
 
         else:
-            X = Unknown(name, domain)
+            raise TypeError('Only TestFunction and VectorTestFunction are available')
 
         d_tmp[X] = x
     # ...
@@ -1857,35 +1860,32 @@ def subs_bilinear_form(form, newargs):
     expr = form.expr
 
     # ... replacing trial functions by tmp symbols
-    d = {}
     for k,v in zip(form.trial_functions, d_tmp):
-        d[k] = v
-    expr = expr.subs(d)
+        expr = expr.subs(k,v)
     # ...
 
     # ... replacing test functions
-    d = {}
     for k,v in zip(form.test_functions, test_functions):
-        d[k] = v
-    expr = expr.subs(d)
+        expr = expr.subs(k,v)
     # ...
 
     # ... replacing trial functions from tmp symbols
-    expr = expr.subs(d_tmp)
+    for k,v in d_tmp.items():
+        expr = expr.subs(k,v)
     # ...
 
     # ...
-    if len(test_functions) == 1: test_functions = test_functions[0]
+    if len(test_functions)  == 1: test_functions  = test_functions[0]
     if len(trial_functions) == 1: trial_functions = trial_functions[0]
 
     test_trial = (test_functions, trial_functions)
     # ...
 
-    return BilinearForm(test_trial, expr, measure=form.measure,
-                        name=form.name)
+    return BilinearForm(test_trial, expr, name=form.name)
 
 
-def subs_linear_form(form, newargs):
+def _subs_linear_form_core(form, newargs):
+
     # ...
     test_functions = _sanitize_form_arguments(newargs, form, is_linear=True)
     test_functions = test_functions[0]
@@ -1902,11 +1902,9 @@ def subs_linear_form(form, newargs):
     # ... replacing test functions
     d = {}
     for k,v in zip(form.test_functions, test_functions):
-        d[k] = v
-    expr = expr.subs(d)
+        expr = expr.subs(k,v)
     # ...
 
     if len(test_functions) == 1: test_functions = test_functions[0]
 
-    return LinearForm(test_functions, expr, measure=form.measure,
-                      name=form.name)
+    return LinearForm(test_functions, expr, name=form.name)

@@ -59,7 +59,7 @@ def test_essential_bc_1():
     # ... scalar case
     bc = EssentialBC(v, 0, B1)
 
-    assert( bc.variable is v )
+    assert( bc.variable == v )
     assert( bc.order == 0 )
     assert( bc.normal_component == False )
     assert( bc.index_component == None )
@@ -68,7 +68,7 @@ def test_essential_bc_1():
     # ... scalar case
     bc = EssentialBC(dot(grad(v), nn), 0, B1)
 
-    assert( bc.variable is v )
+    assert( bc.variable == v )
     assert( bc.order == 1 )
     assert( bc.normal_component == False )
     assert( bc.index_component == None )
@@ -76,16 +76,16 @@ def test_essential_bc_1():
 
     # ... vector case
     bc = EssentialBC(w, 0, B1)
-    assert( bc.variable is w )
+    assert( bc.variable == w )
     assert( bc.order == 0 )
     assert( bc.normal_component == False )
-    assert( bc.index_component == None )
+    assert( bc.index_component == [0,1] )
     # ...
 
     # ... vector case
     bc = EssentialBC(dot(w, nn), 0, B1)
 
-    assert( bc.variable is w )
+    assert( bc.variable == w )
     assert( bc.order == 0 )
     assert( bc.normal_component == True )
     assert( bc.index_component == None )
@@ -93,10 +93,10 @@ def test_essential_bc_1():
 
     # ... vector case
     bc = EssentialBC(w[0], 0, B1)
-    assert( bc.variable is w )
+    assert( bc.variable == w )
     assert( bc.order == 0 )
     assert( bc.normal_component == False )
-    assert( bc.index_component == 0 )
+    assert( bc.index_component == [0] )
     # ...
 
 
@@ -111,5 +111,3 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
-
-test_essential_bc_1()

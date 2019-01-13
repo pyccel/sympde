@@ -104,12 +104,10 @@ class EssentialBC(BasicBoundaryCondition):
             if isinstance(u, IndexedTestTrial):
                 variable = u.base
                 index_component = list(u.indices)
-                if len(index_component) == 1:
-                    index_component = index_component[0]
 
-                else:
-                    raise ValueError('expecting one component')
-
+            elif isinstance(u, VectorTestFunction) and not normal_component:
+                variable = u
+                index_component = list(range(u.ldim))
 
             else:
                 variable = u
@@ -127,6 +125,17 @@ class EssentialBC(BasicBoundaryCondition):
             print(lhs)
             raise ValueError('Wrong lhs')
         # ...
+
+#        # ... for simple geometries we can compute the indices for the normal
+#        # compoenent
+#        if normal_component and order == 0:
+#            d = boundary.domain.dtype
+#            if d:
+#                if d['type'] in ['Line', 'Square', 'Cube']:
+#                    print('ICI')
+#                    index_component = boundary.axis
+#                    # TODO shall we use the ext for the sign?
+#        # ...
 
         obj = Basic.__new__(cls, lhs, rhs, boundary)
 

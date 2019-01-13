@@ -4,6 +4,6 @@ import string
 import random
 
 def random_string( n ):
-    chars    = string.ascii_uppercase + string.ascii_lowercase + string.digits
+    chars    = string.ascii_uppercase + string.ascii_lowercase
     selector = random.SystemRandom()
     return ''.join( selector.choice( chars ) for _ in range( n ) )

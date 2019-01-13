@@ -271,6 +271,70 @@ def test_equation_2d_4():
 
 
 #==============================================================================
+def test_equation_2d_5():
+    domain = Square()
+    x,y = domain.coordinates
+
+    f0 = Tuple(2*pi**2*sin(pi*x)*sin(pi*y),
+              2*pi**2*sin(pi*x)*sin(pi*y))
+
+    f1 = cos(pi*x)*cos(pi*y)
+
+    W = VectorFunctionSpace('W', domain)
+    V = FunctionSpace('V', domain)
+    X = ProductSpace(W, V)
+
+    # TODO improve: naming are not given the same way
+    F = VectorField(W, name='F')
+    G = Field('G', V)
+
+    u,v = [VectorTestFunction(W, name=i) for i in ['u', 'v']]
+    p,q = [      TestFunction(V, name=i) for i in ['p', 'q']]
+
+    a0 = BilinearForm((v,u), inner(grad(v), grad(u)))
+    print('     a0 done.')
+    a1 = BilinearForm((q,p), p*q)
+    print('     a1 done.')
+    a  = BilinearForm(((v,q),(u,p)), a0(v,u) + a1(q,p))
+    print('     a  done.')
+
+    l0 = LinearForm(v, dot(f0, v))
+    l1 = LinearForm(q, f1*q)
+    l  = LinearForm((v,q), l0(v) + l1(q))
+
+#    # ...
+#    print('=======')
+#    print(a)
+#    print(evaluate(a))
+#    print('')
+#    # ...
+#
+#    # ...
+#    print('=======')
+#    print(l)
+#    print(evaluate(l))
+#    print('')
+#    # ...
+
+    print('****************************')
+    bc = EssentialBC(u, 0, domain.boundary)
+    equation = Equation(a((v,q),(u,p)), l(v,q), bc=bc)
+
+    # ...
+    print('=======')
+    print(equation.lhs.expr)
+    print(evaluate(equation.lhs.expr))
+    print('')
+    # ...
+
+    # ...
+    print('=======')
+    print(equation.rhs.expr)
+    print(evaluate(equation.rhs.expr))
+    print('')
+    # ...
+
+#==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
 

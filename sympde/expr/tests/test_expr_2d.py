@@ -801,6 +801,47 @@ def test_evaluation_2d_1():
     # ...
 
 #==============================================================================
+def test_evaluation_2d_2():
+    domain = Square()
+    x,y = domain.coordinates
+
+    f0 = Tuple(2*pi**2*sin(pi*x)*sin(pi*y),
+              2*pi**2*sin(pi*x)*sin(pi*y))
+
+    f1 = cos(pi*x)*cos(pi*y)
+
+    W = VectorFunctionSpace('W', domain)
+    V = FunctionSpace('V', domain)
+    X = ProductSpace(W, V)
+
+    # TODO improve: naming are not given the same way
+    F = VectorField(W, name='F')
+    G = Field('G', V)
+
+    u,v = [VectorTestFunction(W, name=i) for i in ['u', 'v']]
+    p,q = [      TestFunction(V, name=i) for i in ['p', 'q']]
+
+    a0 = BilinearForm((v,u), inner(grad(v), grad(u)))
+    a1 = BilinearForm((q,p), p*q)
+    a  = BilinearForm(((v,q),(u,p)), a0(v,u) + a1(q,p))
+
+    l0 = LinearForm(v, dot(f0, v))
+    l1 = LinearForm(q, f1*q)
+    l  = LinearForm((v,q), l0(v) + l1(q))
+
+    # ...
+    print(a)
+    print(evaluate(a))
+    print('')
+    # ...
+
+    # ...
+    print(l)
+    print(evaluate(l))
+    print('')
+    # ...
+
+#==============================================================================
 #def test_nonlinear_2d_1():
 #
 #    domain = Square()
@@ -845,4 +886,3 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
-

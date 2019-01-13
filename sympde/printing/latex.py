@@ -157,7 +157,7 @@ class LatexPrinter(LatexPrinterSympy):
 
     def _print_FormCall(self, expr):
         form = expr.expr
-        name = expr.form_name
+        name = form.name
         if name is None:
             raise ValueError('> undefined name for a form')
 
@@ -262,60 +262,6 @@ class LatexPrinter(LatexPrinterSympy):
                 body +
                 epilogue +
                 r'\end{align*}')
-        return code
-
-    def _print_Model(self, expr):
-
-        eq_names = []
-        if expr.equation:
-            for x in [expr.equation.lhs, expr.equation.rhs]:
-                if not isinstance(x, Nil): eq_names.append(x.name)
-
-        preludes = []
-        epilogues = []
-        body = []
-
-        domain = self._print(expr.domain)
-        dim = self._print(expr.domain.dim)
-        preludes += [domain + ' \subset \mathbb{R}^{' + dim + '}']
-
-        for name, form in list(expr.forms.items()):
-            if isinstance(form, BilinearForm):
-                tests = form.test_functions
-                trials = form.trial_functions
-
-                args = (tests, trials)
-
-            elif isinstance(form, LinearForm):
-                tests = form.test_functions
-
-                args = tests
-
-            call = FormCall(form, args, name=name)
-            code = '{call} &:= {form}'.format(call=self._print(call),
-                                              form=self._print(form))
-
-            if name in eq_names:
-                epilogues.append(code)
-
-            else:
-                body.append(code)
-
-        # ...
-        body = preludes + body
-        # ...
-
-        # ...
-        if expr.equation:
-            equation = self._print(expr.equation)
-
-        body += epilogues
-        # ...
-
-        code = '\n\\\\'.join(body)
-        code = '\n' + r'\begin{align*}' + code + '\n' + r'\end{align*}'
-        code += '\n' + equation + '\n'
-
         return code
 
     def _print_Measure(self, expr):
