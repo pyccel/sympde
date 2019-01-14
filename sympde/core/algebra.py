@@ -42,6 +42,7 @@ from .basic import CalculusFunction
 from .basic import _coeffs_registery
 
 # ...
+# TODO update default name
 class LinearOperator(CalculusFunction):
     """
 

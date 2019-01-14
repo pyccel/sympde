@@ -48,4 +48,4 @@ class BasicDerivable(Basic):
     pass
 
 #==============================================================================
-_coeffs_registery = (Integer, Float, Constant)
+_coeffs_registery = (int, complex, Integer, Float, Constant)
