@@ -17,8 +17,8 @@ from sympy import srepr
 from sympy.physics.quantum import TensorProduct
 
 from sympde.core import Constant
-from sympde.core import grad, dot, inner, cross, rot, curl, div
-from sympde.core import laplace, hessian, bracket
+from sympde.calculus import grad, dot, inner, cross, rot, curl, div
+from sympde.calculus import laplace, hessian, bracket
 from sympde.topology import (dx, dy, dz)
 from sympde.topology import FunctionSpace, VectorFunctionSpace
 from sympde.topology import Field, VectorField
@@ -36,7 +36,6 @@ from sympde.topology import Square
 from sympde.expr import BilinearForm, LinearForm, Integral
 from sympde.expr import atomize
 from sympde.expr import evaluate
-from sympde.expr import tensorize
 from sympde.expr import Mass, Stiffness, Advection, AdvectionT
 from sympde.expr import Projection
 from sympde.expr import Norm
@@ -484,85 +483,24 @@ def test_norm_2d():
 
     x,y = domain.coordinates
 
+    # ...
     expr = x*y
-    l2_norm_u = Norm(expr, domain, kind='l2', name='u')
-    h1_norm_u = Norm(expr, domain, kind='h1', name='u')
+    l2_norm_u = Norm(expr, domain, kind='l2')
+    h1_norm_u = Norm(expr, domain, kind='h1')
 
     print('> l2 norm = ', evaluate(l2_norm_u))
-    print('> l2 norm = ', evaluate(h1_norm_u))
-
-#==============================================================================
-def test_tensorize_2d():
-    domain = Domain('Omega', dim=DIM)
-
-    V = FunctionSpace('V', domain)
-    U = FunctionSpace('U', domain)
-    W1 = VectorFunctionSpace('W1', domain)
-    T1 = VectorFunctionSpace('T1', domain)
-
-    v = TestFunction(V, name='v')
-    u = TestFunction(U, name='u')
-    w1 = VectorTestFunction(W1, name='w1')
-    t1 = VectorTestFunction(T1, name='t1')
-
-    x,y = domain.coordinates
-
-    alpha = Constant('alpha')
-
-    # ...
-    expr = dot(grad(v), grad(u))
-    a = BilinearForm((v,u), expr, name='a')
-    print(a)
-    print(tensorize(a))
-    print('')
+    print('> h1 norm = ', evaluate(h1_norm_u))
     # ...
 
     # ...
-    expr = x*dx(v)*dx(u) + y*dy(v)*dy(u)
-    a = BilinearForm((v,u), expr, name='a')
-    print(a)
-    print(tensorize(a))
-    print('')
+    expr = sin(pi*x)*sin(pi*y)
+    l2_norm_u = Norm(expr, domain, kind='l2')
+    h1_norm_u = Norm(expr, domain, kind='h1')
+
+    print('> l2 norm = ', evaluate(l2_norm_u))
+    print('> h1 norm = ', evaluate(h1_norm_u))
     # ...
 
-    # ...
-    expr = sin(x)*dx(v)*dx(u)
-    a = BilinearForm((v,u), expr, name='a')
-    print(a)
-    print(tensorize(a))
-    print('')
-    # ...
-
-    # ...
-#    expr = rot(w1)*rot(t1) + div(w1)*div(t1)
-    expr = rot(w1)*rot(t1) #+ div(w1)*div(t1)
-    a = BilinearForm((w1, t1), expr, name='a')
-    print(a)
-    print(tensorize(a))
-    print('')
-    # ...
-
-#==============================================================================
-def test_tensorize_2d_stokes():
-    domain = Domain('Omega', dim=DIM)
-
-    # ... abstract model
-    V = VectorFunctionSpace('V', domain)
-    W = FunctionSpace('W', domain)
-
-    v = VectorTestFunction(V, name='v')
-    u = VectorTestFunction(V, name='u')
-    p = TestFunction(W, name='p')
-    q = TestFunction(W, name='q')
-
-    a = BilinearForm((v,u), inner(grad(v), grad(u)), name='a')
-    b = BilinearForm((v,p), div(v)*p, name='b')
-    A = BilinearForm(((v,q),(u,p)), a(v,u) - b(v,p) + b(u,q), name='A')
-    # ...
-
-    print(A)
-    print(tensorize(A))
-    print('')
 
 #==============================================================================
 def test_vector_2d_1():

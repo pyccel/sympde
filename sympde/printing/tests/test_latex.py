@@ -3,7 +3,7 @@
 from sympy import sin, cos, pi
 
 from sympde.core import Constant
-from sympde.core import grad, dot, inner, cross, rot, curl, div
+from sympde.calculus import grad, dot, inner, cross, rot, curl, div
 
 from sympde.topology import (dx, dy, dz)
 from sympde.topology import FunctionSpace, VectorFunctionSpace

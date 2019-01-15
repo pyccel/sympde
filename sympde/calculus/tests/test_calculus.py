@@ -137,9 +137,6 @@ def test_calculus_3d():
     assert( curl(f*grad(g)) == cross(grad(f), grad(g)) )
     # ...
 
-    expr = curl(f*grad(g))
-    print(expr)
-
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
@@ -154,4 +151,4 @@ def teardown_function():
     cache.clear_cache()
 
 #test_calculus_2d()
-test_calculus_3d()
+#test_calculus_3d()

@@ -54,6 +54,12 @@ class Dot(BasicOperator):
         if (a == 0) or (b == 0):
             return 0
 
+        if isinstance(a, (list, tuple, Tuple)) and isinstance(b, (list, tuple, Tuple)):
+            assert( len(a) == len(b) )
+            n = len(a)
+            args = [a[i]*b[i] for i in range(0,n)]
+            return Add(*args)
+
         return cls(a, b, evaluate=False)
 
 #==============================================================================

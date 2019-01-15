@@ -8,9 +8,6 @@ from sympy import Function
 from sympy import Matrix
 
 from sympde.core.basic import BasicMapping
-from sympde.core.generic import Dot, Inner, Cross
-from sympde.core.generic import Grad, Rot, Curl, Div
-from sympde.core.generic import _generic_ops
 from sympde.core.algebra import (Dot_1d,
                                  Dot_2d, Inner_2d, Cross_2d,
                                  Dot_3d, Inner_3d, Cross_3d)

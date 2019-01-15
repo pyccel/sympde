@@ -7,8 +7,8 @@ from sympy import Tuple
 
 from pyccel.codegen.printing.pycode import PythonCodePrinter as PyccelPythonCodePrinter
 
-from sympde.core.generic import Dot, Inner, Cross
-from sympde.core.generic import Grad, Rot, Curl, Div
+from sympde.calculus import Dot, Inner, Cross
+from sympde.calculus import Grad, Rot, Curl, Div
 from sympde.topology import Line, Square, Cube
 from sympde.topology.derivatives import _partial_derivatives
 from sympde.topology.derivatives import print_expression

@@ -31,8 +31,8 @@ from sympde.expr     import BilinearForm        as sym_BilinearForm
 from sympde.expr     import Equation            as sym_Equation
 from sympde.expr     import DirichletBC         as sym_DirichletBC
 
-from sympde.core import grad, dot, inner, cross, rot, curl, div
-from sympde.core import laplace, hessian, bracket
+from sympde.calculus import grad, dot, inner, cross, rot, curl, div
+from sympde.calculus import laplace, hessian, bracket
 from sympde.topology import (dx, dy, dz)
 
 _known_operators = {

@@ -7,8 +7,8 @@ from sympy import Tuple
 from sympy import Matrix
 from sympy import srepr
 
-from sympde.core import grad, dot, inner
 from sympde.core import Constant
+from sympde.calculus import grad, dot, inner
 from sympde.topology import Domain
 from sympde.topology import Field
 from sympde.topology import get_index_derivatives_atom

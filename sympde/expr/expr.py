@@ -24,15 +24,16 @@ from sympy.physics.quantum import TensorProduct
 from sympde.core.basic import _coeffs_registery
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import Constant
-from sympde.core.generic import Dot, Inner, Cross
-from sympde.core.generic import Grad, Rot, Curl, Div
-from sympde.core.generic import Bracket
-from sympde.core.generic import Laplace
-from sympde.core.generic import _generic_ops
 from sympde.core.algebra import (Dot_1d,
                  Dot_2d, Inner_2d, Cross_2d,
                  Dot_3d, Inner_3d, Cross_3d)
 from sympde.core.utils import random_string
+
+from sympde.calculus import Dot, Inner, Cross
+from sympde.calculus import Grad, Rot, Curl, Div
+from sympde.calculus import Bracket
+from sympde.calculus import Laplace
+from sympde.calculus.core import _generic_ops
 
 from sympde.topology import BasicDomain, Domain, MappedDomain, Union, Interval
 from sympde.topology import BoundaryVector, NormalVector, TangentVector, Boundary

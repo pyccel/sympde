@@ -8,8 +8,8 @@ from sympy.printing.latex import LatexPrinter as LatexPrinterSympy
 from pyccel.ast.core import Nil
 
 from sympde.expr.expr import BilinearForm, LinearForm, Integral, FormCall
-from sympde.core.generic import Dot, Inner, Cross
-from sympde.core.generic import Grad, Rot, Curl, Div
+from sympde.calculus import Dot, Inner, Cross
+from sympde.calculus import Grad, Rot, Curl, Div
 from sympde.topology import Line, Square, Cube, Domain
 from sympde.topology.derivatives import sort_partial_derivatives
 from sympde.topology.derivatives import get_index_derivatives

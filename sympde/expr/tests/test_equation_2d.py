@@ -13,8 +13,8 @@ from sympy import srepr
 from sympy.physics.quantum import TensorProduct
 
 from sympde.core import Constant
-from sympde.core import grad, dot, inner, cross, rot, curl, div
-from sympde.core import laplace, hessian, bracket
+from sympde.calculus import grad, dot, inner, cross, rot, curl, div
+from sympde.calculus import laplace, hessian, bracket
 from sympde.topology import (dx, dy, dz)
 from sympde.topology import FunctionSpace, VectorFunctionSpace
 from sympde.topology import Field, VectorField

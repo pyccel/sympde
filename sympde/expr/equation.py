@@ -12,7 +12,7 @@ from sympde.topology.space import VectorTestFunction, IndexedTestTrial
 from sympde.topology.space import FunctionSpace
 from sympde.topology import Boundary, NormalVector, TangentVector
 from sympde.topology import Trace, trace_0, trace_1
-from sympde.core import grad, dot
+from sympde.calculus import grad, dot
 from sympde.core.utils import random_string
 
 from .expr import FormCall, BilinearForm, LinearForm
