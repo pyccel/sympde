@@ -288,6 +288,16 @@ def test_calls_2d():
     # ...
 
     # ...
+    a = BilinearForm((v1, u1), dot(grad(v1), grad(u1)), name='a')
+
+    print(a)
+    print(atomize(a))
+    print(evaluate(a))
+    print('')
+    # ...
+#    import sys;  sys.exit(0)
+
+    # ...
     a1 = BilinearForm((v1, u1), dot(grad(v1), grad(u1)), name='a1')
 
     expr = a1(v2, u2)
@@ -482,6 +492,8 @@ def test_norm_2d():
     domain = Domain('Omega', dim=DIM)
 
     x,y = domain.coordinates
+    V = FunctionSpace('V', domain)
+    F = Field('F', V)
 
     # ...
     expr = x*y
@@ -490,6 +502,7 @@ def test_norm_2d():
 
     print('> l2 norm = ', evaluate(l2_norm_u))
     print('> h1 norm = ', evaluate(h1_norm_u))
+    print('')
     # ...
 
     # ...
@@ -499,6 +512,27 @@ def test_norm_2d():
 
     print('> l2 norm = ', evaluate(l2_norm_u))
     print('> h1 norm = ', evaluate(h1_norm_u))
+    print('')
+    # ...
+
+    # ...
+    expr = F-x*y
+    l2_norm_u = Norm(expr, domain, kind='l2')
+    h1_norm_u = Norm(expr, domain, kind='h1')
+
+    print('> l2 norm = ', evaluate(l2_norm_u))
+    print('> h1 norm = ', evaluate(h1_norm_u))
+    print('')
+    # ...
+
+    # ...
+    expr = F-sin(pi*x)*sin(pi*y)
+    l2_norm_u = Norm(expr, domain, kind='l2')
+    h1_norm_u = Norm(expr, domain, kind='h1')
+
+    print('> l2 norm = ', evaluate(l2_norm_u))
+    print('> h1 norm = ', evaluate(h1_norm_u))
+    print('')
     # ...
 
 

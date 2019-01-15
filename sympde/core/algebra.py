@@ -182,24 +182,19 @@ class Dot_2d(DotBasic):
             else:
                 return Tuple(u[0,0]*v[0] + u[0,1]*v[1], u[1,0]*v[0] + u[1,1]*v[1])
 
-        else:
+        if isinstance(u, Add):
             ls = u.atoms(Tuple)
             for i in ls:
                 u = u.subs(i, Matrix(i))
             u = simplify(u)
 
+        if isinstance(v, Add):
             ls = v.atoms(Tuple)
             for i in ls:
                 v = v.subs(i, Matrix(i))
             v = simplify(v)
 
-            return u[0]*v[0] + u[1]*v[1]
-
-#            if isinstance(v, (Matrix, ImmutableDenseMatrix)):
-#                raise NotImplementedError('TODO')
-#
-#            else:
-#                return u[0]*v[0] + u[1]*v[1]
+        return u[0]*v[0] + u[1]*v[1]
 
 class Dot_3d(DotBasic):
     """
@@ -231,12 +226,19 @@ class Dot_3d(DotBasic):
                              u[1,0]*v[0] + u[1,1]*v[1] + u[1,2]*v[2],
                              u[2,0]*v[0] + u[2,1]*v[1] + u[2,2]*v[2])
 
-        else:
-            if isinstance(v, (Matrix, ImmutableDenseMatrix)):
-                raise NotImplementedError('TODO')
+        if isinstance(u, Add):
+            ls = u.atoms(Tuple)
+            for i in ls:
+                u = u.subs(i, Matrix(i))
+            u = simplify(u)
 
-            else:
-                return u[0]*v[0] + u[1]*v[1] + u[2]*v[2]
+        if isinstance(v, Add):
+            ls = v.atoms(Tuple)
+            for i in ls:
+                v = v.subs(i, Matrix(i))
+            v = simplify(v)
+
+        return u[0]*v[0] + u[1]*v[1] + u[2]*v[2]
 # ...
 
 # ...

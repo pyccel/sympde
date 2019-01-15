@@ -66,6 +66,11 @@ class DifferentialOperator(LinearOperator):
     """
     coordinate = None
 
+    # this is a hack since sometimes we use Matrix in the eval of abstract
+    # operators
+    def __getitem__(self, indices, **kw_args):
+        return self
+
     @classmethod
     def eval(cls, *_args):
         """."""
