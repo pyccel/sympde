@@ -14,7 +14,6 @@ from sympy import lambdify
 from sympy import cos
 from sympy import sin
 from sympy import Rational
-from sympy import simplify
 from sympy import diff
 from sympy import Matrix, ImmutableDenseMatrix
 from sympy import latex
@@ -182,13 +181,13 @@ class Dot_2d(DotBasic):
             else:
                 return Tuple(u[0,0]*v[0] + u[0,1]*v[1], u[1,0]*v[0] + u[1,1]*v[1])
 
-        if isinstance(u, Add):
+        if isinstance(u, (Add, Mul)):
             ls = u.atoms(Tuple)
             for i in ls:
                 u = u.subs(i, Matrix(i))
             u = simplify(u)
 
-        if isinstance(v, Add):
+        if isinstance(v, (Add, Mul)):
             ls = v.atoms(Tuple)
             for i in ls:
                 v = v.subs(i, Matrix(i))
@@ -226,13 +225,13 @@ class Dot_3d(DotBasic):
                              u[1,0]*v[0] + u[1,1]*v[1] + u[1,2]*v[2],
                              u[2,0]*v[0] + u[2,1]*v[1] + u[2,2]*v[2])
 
-        if isinstance(u, Add):
+        if isinstance(u, (Add, Mul)):
             ls = u.atoms(Tuple)
             for i in ls:
                 u = u.subs(i, Matrix(i))
             u = simplify(u)
 
-        if isinstance(v, Add):
+        if isinstance(v, (Add, Mul)):
             ls = v.atoms(Tuple)
             for i in ls:
                 v = v.subs(i, Matrix(i))

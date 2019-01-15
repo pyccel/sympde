@@ -535,6 +535,26 @@ def test_norm_2d():
     print('')
     # ...
 
+    # ...
+    expr = F-sin(0.5*pi*(1.-x))*sin(pi*y)
+    l2_norm_u = Norm(expr, domain, kind='l2')
+    h1_norm_u = Norm(expr, domain, kind='h1')
+
+    print('> l2 norm = ', evaluate(l2_norm_u))
+    print('> h1 norm = ', evaluate(h1_norm_u))
+    print('')
+    # ...
+
+    # ...
+    expr = F-cos(0.5*pi*x)*sin(pi*y)
+    l2_norm_u = Norm(expr, domain, kind='l2')
+    h1_norm_u = Norm(expr, domain, kind='h1')
+
+    print('> l2 norm = ', evaluate(l2_norm_u))
+    print('> h1 norm = ', evaluate(h1_norm_u))
+    print('')
+    # ...
+
 
 #==============================================================================
 def test_vector_2d_1():

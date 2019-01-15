@@ -12,6 +12,7 @@ from itertools import groupby
 from sympy.core import Basic
 from sympy.core import Symbol
 from sympy.core import Function
+from sympy.simplify.simplify import simplify
 from sympy.core import Expr, Add, Mul, Pow
 from sympy import S
 from sympy.core.containers import Tuple
@@ -1001,6 +1002,12 @@ def atomize(expr, dim=None):
             if dim == 1:
                 return M
             else:
+                if isinstance(M, (Add, Mul)):
+                    ls = M.atoms(Tuple)
+                    for i in ls:
+                        M = M.subs(i, Matrix(i))
+                    M = simplify(M)
+
                 e = 0
                 for i in range(0, dim):
                     e += M[i] * n[i]
