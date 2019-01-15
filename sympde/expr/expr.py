@@ -64,6 +64,7 @@ from sympde.topology.measure import Measure
 from .errors import UnconsistentError
 
 
+#==============================================================================
 def _initialize_measure(measure, coordinates):
     if not( measure is None ):
         return measure
@@ -74,6 +75,7 @@ def _initialize_measure(measure, coordinates):
     else:
         raise NotImplementedError('')
 
+#==============================================================================
 def _initialize_boundary(expr):
 
     traces = expr.atoms(Trace)
@@ -109,6 +111,7 @@ def _initialize_boundary(expr):
     return boundary
 
 
+#==============================================================================
 class BasicForm(Expr):
     _name = None
     _boundary = None
@@ -148,6 +151,7 @@ class BasicForm(Expr):
         return self._name
 
 
+#==============================================================================
 # TODO we should check that the only free symbols are fields, constants or coordinates
 class Integral(BasicForm):
     """
@@ -257,6 +261,7 @@ class Integral(BasicForm):
         raise NotImplementedError('')
 
 
+#==============================================================================
 class LinearForm(BasicForm):
     """
 
@@ -356,6 +361,7 @@ class LinearForm(BasicForm):
 
 
 
+#==============================================================================
 class BilinearForm(BasicForm):
     """
 
@@ -522,6 +528,7 @@ class BilinearForm(BasicForm):
         return FormCall(expr, args)
 
 
+#==============================================================================
 class Norm(Integral):
     def __new__(cls, expr, domain, kind='l2', measure=None,
                 name=None):
@@ -595,6 +602,7 @@ class Norm(Integral):
         return self._exponent
 
 
+#==============================================================================
 class BilinearAtomicForm(BilinearForm, AtomicExpr):
     """
 
@@ -614,6 +622,7 @@ class BilinearAtomicForm(BilinearForm, AtomicExpr):
 
         return '{name}({test},{trial})'.format(name=name, trial=trial, test=test)
 
+#==============================================================================
 class Mass(BilinearAtomicForm):
     """
 
@@ -627,6 +636,7 @@ class Mass(BilinearAtomicForm):
 
         return BilinearForm.__new__(cls, test_trial, expr, name='Mass')
 
+#==============================================================================
 class Stiffness(BilinearAtomicForm):
     """
 
@@ -649,6 +659,7 @@ class Stiffness(BilinearAtomicForm):
 
         return BilinearForm.__new__(cls, test_trial, expr, name='Stiffness')
 
+#==============================================================================
 class Advection(BilinearAtomicForm):
     """
 
@@ -671,6 +682,7 @@ class Advection(BilinearAtomicForm):
 
         return BilinearForm.__new__(cls, test_trial, expr, name='Advection')
 
+#==============================================================================
 class AdvectionT(BilinearAtomicForm):
     """
 
@@ -693,6 +705,7 @@ class AdvectionT(BilinearAtomicForm):
 
         return BilinearForm.__new__(cls, test_trial, expr, name='AdvectionT')
 
+#==============================================================================
 class Bilaplacian(BilinearAtomicForm):
     """
 
@@ -716,6 +729,7 @@ class Bilaplacian(BilinearAtomicForm):
         return BilinearForm.__new__(cls, test_trial, expr, name='Bilaplacian')
 
 
+#==============================================================================
 class Kron(BilinearAtomicForm):
 
     """."""
@@ -783,6 +797,7 @@ class Kron(BilinearAtomicForm):
         return 'Kron'
 
 
+#==============================================================================
 class FormCall(AtomicExpr):
 
     is_commutative = False
@@ -1404,6 +1419,7 @@ def evaluate(a, verbose=False):
     return expr_bnd + expr_domain
 
 
+#==============================================================================
 class KernelExpression(Basic):
     def __new__(cls, target, expr):
         return Basic.__new__(cls, target, expr)
@@ -1416,13 +1432,16 @@ class KernelExpression(Basic):
     def expr(self):
         return self._args[1]
 
+#==============================================================================
 class DomainExpression(KernelExpression):
     pass
 
+#==============================================================================
 class BoundaryExpression(KernelExpression):
     pass
 
 
+#==============================================================================
 # TODO - get dim from atoms
 #      - check coefficinets/functions
 def _tensorize_core(expr, dim, tests, trials):
@@ -1512,6 +1531,7 @@ def _tensorize_core(expr, dim, tests, trials):
 
     return expr
 
+#==============================================================================
 def _tensorize_weights(expr):
 
     if isinstance(expr, Add):
@@ -1572,6 +1592,7 @@ def _tensorize_weights(expr):
 
     return expr
 
+#==============================================================================
 def tensorize(a):
 
     if not isinstance(a, BilinearForm):
@@ -1741,6 +1762,7 @@ def tensorize(a):
 
     return expr
 
+#==============================================================================
 def subs_mul(expr):
     """substitute Mul with TensorProduct"""
 
@@ -1764,6 +1786,7 @@ def subs_mul(expr):
 
         return expr
 
+#==============================================================================
 # form here is a BilinearForm
 def subs_form(form, newargs):
 #    print('>>> subs_form : ', form)
@@ -1817,6 +1840,7 @@ def subs_form(form, newargs):
         return form
 
 
+#==============================================================================
 def _subs_bilinear_form_core(form, newargs):
     # ...
     test_trial = _sanitize_form_arguments(newargs, form, is_bilinear=True)
@@ -1892,10 +1916,12 @@ def _subs_bilinear_form_core(form, newargs):
     return BilinearForm(test_trial, expr, name=form.name)
 
 
+#==============================================================================
 def _subs_linear_form_core(form, newargs):
 
     # ...
     test_functions = _sanitize_form_arguments(newargs, form, is_linear=True)
+    # TODO is it ok to do this?
     test_functions = test_functions[0]
 
     if isinstance(test_functions, (TestFunction, VectorTestFunction)):
@@ -1908,7 +1934,6 @@ def _subs_linear_form_core(form, newargs):
     expr = form.expr
 
     # ... replacing test functions
-    d = {}
     for k,v in zip(form.test_functions, test_functions):
         expr = expr.subs(k,v)
     # ...
@@ -1916,3 +1941,199 @@ def _subs_linear_form_core(form, newargs):
     if len(test_functions) == 1: test_functions = test_functions[0]
 
     return LinearForm(test_functions, expr, name=form.name)
+
+#==============================================================================
+def is_bilinear_form(expr, args):
+    """checks if an expression is bilinear with respect to the given arguments."""
+    # ...
+    test_trial = _sanitize_form_arguments(args, expr, is_bilinear=True)
+
+    if not isinstance(test_trial, (tuple, list, Tuple)):
+        raise TypeError('(test, trial) must be a tuple, list or Tuple')
+
+    if not(len(test_trial) == 2):
+        raise ValueError('Expecting a couple (test, trial)')
+    # ...
+
+    # ...
+    test_functions = test_trial[0]
+    if isinstance(test_functions, (TestFunction, VectorTestFunction)):
+        test_functions = [test_functions]
+
+    elif isinstance(test_functions, (tuple, list, Tuple)):
+        test_functions = Tuple(*test_functions)
+    # ...
+
+    # ...
+    trial_functions = test_trial[1]
+    if isinstance(trial_functions, (TestFunction, VectorTestFunction)):
+        trial_functions = [trial_functions]
+
+    elif isinstance(trial_functions, (tuple, list, Tuple)):
+        trial_functions = Tuple(*trial_functions)
+    # ...
+
+    # ...
+    newargs = []
+    d_newargs = {}
+    for x in test_functions:
+        tag    = random_string( 4 )
+        c_left  = Constant('alpha_' + tag)
+        c_right = Constant('beta_'  + tag)
+
+        if isinstance(x, TestFunction):
+            left  = TestFunction(x.space, name='l_' + tag)
+            right = TestFunction(x.space, name='r_' + tag)
+
+        elif isinstance(x, VectorTestFunction):
+            left  = VectorTestFunction(x.space, name='l_' + tag)
+            right = VectorTestFunction(x.space, name='r_' + tag)
+
+        else:
+            raise TypeError('Only TestFunction and VectorTestFunction are available')
+
+        newargs += [c_left*left + c_right*right]
+        d_newargs[x] = {'left':  (c_left, left),
+                        'right': (c_right, right)}
+
+    test_newargs   = newargs
+    d_test_newargs = d_newargs
+    # ...
+
+    # ...
+    newargs = []
+    d_newargs = {}
+    for x in trial_functions:
+        tag    = random_string( 4 )
+        c_left  = Constant('alpha_' + tag)
+        c_right = Constant('beta_'  + tag)
+
+        if isinstance(x, TestFunction):
+            left  = TestFunction(x.space, name='l_' + tag)
+            right = TestFunction(x.space, name='r_' + tag)
+
+        elif isinstance(x, VectorTestFunction):
+            left  = VectorTestFunction(x.space, name='l_' + tag)
+            right = VectorTestFunction(x.space, name='r_' + tag)
+
+        else:
+            raise TypeError('Only TestFunction and VectorTestFunction are available')
+
+        newargs += [c_left*left + c_right*right]
+        d_newargs[x] = {'left':  (c_left, left),
+                        'right': (c_right, right)}
+
+    trial_newargs   = newargs
+    d_trial_newargs = d_newargs
+    # ...
+
+    # ... replacing test functions for a1*u1+a2*u2
+    test_newexpr = expr
+    for k,v in zip(test_functions, test_newargs):
+        test_newexpr = test_newexpr.subs(k,v)
+    # ...
+
+    # ... replacing test functions for a1*u1
+    test_left_expr = expr
+    for old in test_functions:
+        c,u = d_test_newargs[old]['left']
+        test_left_expr = test_left_expr.subs(old,c*u)
+    # ...
+
+    # ... replacing test functions for a2*u2
+    test_right_expr = expr
+    for old in test_functions:
+        c,u = d_test_newargs[old]['right']
+        test_right_expr = test_right_expr.subs(old,c*u)
+    # ...
+
+    # ... replacing trial functions for a1*u1+a2*u2
+    trial_newexpr = expr
+    for k,v in zip(trial_functions, trial_newargs):
+        trial_newexpr = trial_newexpr.subs(k,v)
+    # ...
+
+    # ... replacing trial functions for a1*u1
+    trial_left_expr = expr
+    for old in trial_functions:
+        c,u = d_trial_newargs[old]['left']
+        trial_left_expr = trial_left_expr.subs(old,c*u)
+    # ...
+
+    # ... replacing trial functions for a2*u2
+    trial_right_expr = expr
+    for old in trial_functions:
+        c,u = d_trial_newargs[old]['right']
+        trial_right_expr = trial_right_expr.subs(old,c*u)
+    # ...
+
+    test_condition  = expand(test_newexpr) == test_left_expr + test_right_expr
+    trial_condition = expand(trial_newexpr) == trial_left_expr + trial_right_expr
+    if test_condition and trial_condition:
+        return True
+
+    return False
+
+#==============================================================================
+def is_linear_form(expr, args):
+    """checks if an expression is linear with respect to the given arguments."""
+    # ...
+    test_functions = _sanitize_form_arguments(args, expr, is_linear=True)
+    # TODO is it ok to do this?
+    test_functions = test_functions[0]
+
+    if isinstance(test_functions, (TestFunction, VectorTestFunction)):
+        test_functions = [test_functions]
+
+    elif isinstance(test_functions, (tuple, list, Tuple)):
+        test_functions = list(*test_functions)
+    # ...
+
+    # ...
+    newargs = []
+    d_newargs = {}
+    for x in test_functions:
+        tag    = random_string( 4 )
+        c_left  = Constant('alpha_' + tag)
+        c_right = Constant('beta_'  + tag)
+
+        if isinstance(x, TestFunction):
+            left  = TestFunction(x.space, name='l_' + tag)
+            right = TestFunction(x.space, name='r_' + tag)
+
+        elif isinstance(x, VectorTestFunction):
+            left  = VectorTestFunction(x.space, name='l_' + tag)
+            right = VectorTestFunction(x.space, name='r_' + tag)
+
+        else:
+            raise TypeError('Only TestFunction and VectorTestFunction are available')
+
+        newargs += [c_left*left + c_right*right]
+        d_newargs[x] = {'left':  (c_left, left),
+                        'right': (c_right, right)}
+    # ...
+
+    # ... replacing test functions for a1*u1+a2*u2
+    newexpr = expr
+    for k,v in zip(test_functions, newargs):
+        newexpr = newexpr.subs(k,v)
+    # ...
+
+    # ... replacing test functions for a1*u1
+    left_expr = expr
+    for old in test_functions:
+        c,u = d_newargs[old]['left']
+        left_expr = left_expr.subs(old,c*u)
+    # ...
+
+    # ... replacing test functions for a2*u2
+    right_expr = expr
+    for old in test_functions:
+        c,u = d_newargs[old]['right']
+        right_expr = right_expr.subs(old,c*u)
+    # ...
+
+    if expand(newexpr) == left_expr + right_expr:
+        return True
+
+    return False

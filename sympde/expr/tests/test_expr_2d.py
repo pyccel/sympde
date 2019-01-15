@@ -40,6 +40,7 @@ from sympde.expr import Mass, Stiffness, Advection, AdvectionT
 from sympde.expr import Projection
 from sympde.expr import Norm
 from sympde.expr import FormCall
+from sympde.expr import is_linear_form, is_bilinear_form
 
 from sympde.expr.errors import UnconsistentError
 from sympde.expr.errors import UnconsistentLhsError
@@ -834,6 +835,127 @@ def test_evaluation_2d_2():
     # ...
 
 #==============================================================================
+def test_linearity_2d_1():
+    domain = Square()
+    x,y = domain.coordinates
+
+    alpha = Constant('alpha')
+
+    f1 = x*y
+    f2 = x+y
+    f = Tuple(f1, f2)
+
+    V = FunctionSpace('V', domain)
+
+    # TODO improve: naming are not given the same way
+    G = Field('G', V)
+
+    p,q = [TestFunction(V, name=i) for i in ['p', 'q']]
+
+    #####################################
+    # linear expressions
+    #####################################
+    # ...
+    expr = p
+    assert(is_linear_form(expr, p))
+    # ...
+
+    # ...
+    expr = alpha*p
+    assert(is_linear_form(expr, p))
+    # ...
+
+    # ...
+    expr = dx(p)
+    assert(is_linear_form(expr, p))
+    # ...
+
+    # ...
+    expr = dot(grad(p), f)
+    assert(is_linear_form(expr, p))
+    # ...
+
+    # ...
+    expr = laplace(p)
+    assert(is_linear_form(expr, p))
+    # ...
+
+    # ...
+    expr = alpha*p + dot(grad(p), f) + dx(p) + laplace(p)
+    assert(is_linear_form(expr, p))
+    # ...
+    #####################################
+
+    #####################################
+    # nonlinear expressions
+    #####################################
+    # ...
+    expr = p**2
+    assert(not is_linear_form(expr, p))
+    # ...
+
+    # ...
+    expr = dot(grad(p), grad(p))
+    assert(not is_linear_form(expr, p))
+    # ...
+    #####################################
+
+#    expr = dot(grad(p), grad(p))
+#    print(is_linear_form(expr, p))
+
+
+#==============================================================================
+def test_bilinearity_2d_1():
+    domain = Square()
+    x,y = domain.coordinates
+
+    alpha = Constant('alpha')
+    beta = Constant('beta')
+
+    f1 = x*y
+    f2 = x+y
+    f = Tuple(f1, f2)
+
+    V = FunctionSpace('V', domain)
+
+    # TODO improve: naming are not given the same way
+    G = Field('G', V)
+
+    p,q = [TestFunction(V, name=i) for i in ['p', 'q']]
+
+    #####################################
+    # linear expressions
+    #####################################
+    # ...
+    expr = p*q
+    assert(is_bilinear_form(expr, (p,q)))
+    # ...
+
+    # ...
+    expr = dot(grad(p), grad(q))
+    assert(is_bilinear_form(expr, (p,q)))
+    # ...
+
+    # ...
+    expr = alpha*dot(grad(p), grad(q)) + beta*p*q + laplace(p)*laplace(q)
+    assert(is_bilinear_form(expr, (p,q)))
+    # ...
+    #####################################
+
+    #####################################
+    # nonlinear expressions
+    #####################################
+    # ...
+    expr = alpha*dot(grad(p**2), grad(q)) + beta*p*q
+    assert(not is_bilinear_form(expr, (p,q)))
+    # ...
+    #####################################
+
+#    expr = p*q
+#    print(is_bilinear_form(expr, (p,q)))
+
+
+#==============================================================================
 #def test_nonlinear_2d_1():
 #
 #    domain = Square()
@@ -878,3 +1000,5 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
+
+test_bilinearity_2d_1()

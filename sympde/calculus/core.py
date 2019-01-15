@@ -60,6 +60,14 @@ class Dot(BasicOperator):
             args = [a[i]*b[i] for i in range(0,n)]
             return Add(*args)
 
+        if isinstance(a, Add):
+            args = [cls.eval(i, b) for i in a.args]
+            return Add(*args)
+
+        if isinstance(b, Add):
+            args = [cls.eval(a, i) for i in b.args]
+            return Add(*args)
+
         return cls(a, b, evaluate=False)
 
 #==============================================================================
@@ -104,7 +112,6 @@ class Grad(BasicOperator):
 
         expr = _args[0]
         if isinstance(expr, Add):
-            args = expr.args
             args = [cls.eval(a) for a in expr.args]
             return Add(*args)
 
@@ -390,10 +397,12 @@ class Laplace(BasicOperator):
         return cls(expr, evaluate=False)
 
 #==============================================================================
+# TODO add properties
 class Bracket(BasicOperator):
     pass
 
 #==============================================================================
+# TODO add properties
 class Hessian(BasicOperator):
     pass
 
