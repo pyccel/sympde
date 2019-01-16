@@ -1190,7 +1190,7 @@ def teardown_function():
     cache.clear_cache()
 
 #test_linearity_2d_1()
-test_linearity_2d_2()
+#test_linearity_2d_2()
 #test_bilinearity_2d_1()
 #test_bilinearity_2d_2()
 
