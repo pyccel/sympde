@@ -46,6 +46,8 @@ from sympde.expr.errors import UnconsistentError
 from sympde.expr.errors import UnconsistentLhsError
 from sympde.expr.errors import UnconsistentRhsError
 from sympde.expr.errors import UnconsistentBCError
+from sympde.expr.errors import UnconsistentLinearFormError
+from sympde.expr.errors import UnconsistentBilinearFormError
 
 DIM = 2
 VERBOSE = False
@@ -987,33 +989,43 @@ def test_linearity_2d_2():
     # ...
     l1 = LinearForm(v1, x*y*v1, check=True)
 
-    expr = l1(v2)
-    l = LinearForm(v2, expr, check=True)
+    l = LinearForm(v2, l1(v2), check=True)
     # ...
 
     # ...
     l1 = LinearForm(v1, x*y*v1, check=True)
     l2 = LinearForm(v2, cos(x+y)*v2, check=True)
 
-    expr = l1(u1) + l2(u2)
-    l = LinearForm((u1,u2), expr, check=True)
+    l = LinearForm((u1,u2), l1(u1) + l2(u2), check=True)
     # ...
 
     # ...
     l1 = LinearForm(v1, x*y*v1, check=True)
     l2 = LinearForm(v2, cos(x+y)*v2, check=True)
 
-    expr = l1(u1) + alpha * l2(u2)
-    l = LinearForm((u1,u2), expr, check=True)
+    l = LinearForm((u1,u2), l1(u1) + alpha * l2(u2), check=True)
     # ...
 
     # ...
     l1 = LinearForm(v1, x*y*v1, check=True)
     l2 = LinearForm(w1, div(w1), check=True)
 
-    expr = l1(v2) + l2(w2)
-    l = LinearForm((v2,w2), expr, check=True)
+    l = LinearForm((v2,w2), l1(v2) + l2(w2), check=True)
     # ...
+
+    ################################
+    #    non bilinear forms
+    ################################
+    # ...
+    with pytest.raises(UnconsistentLinearFormError):
+        l = LinearForm(v1, x*y*v1**2, check=True)
+    # ...
+
+    # ...
+    with pytest.raises(UnconsistentLinearFormError):
+        l = LinearForm(v1, x*y, check=True)
+    # ...
+    ################################
 
 #==============================================================================
 def test_bilinearity_2d_2():
@@ -1048,28 +1060,22 @@ def test_bilinearity_2d_2():
 
     # ...
     a1 = BilinearForm((v1, u1), u1*v1, check=True)
-
-    expr = a1(v2, u2)
-    a = BilinearForm((v2, u2), expr, check=True)
+    a  = BilinearForm((v2, u2), a1(v2, u2), check=True)
     # ...
 
     # ...
-    a = BilinearForm((v1, u1), dot(grad(v1), grad(u1)), check=True)
+    a  = BilinearForm((v1, u1), dot(grad(v1), grad(u1)), check=True)
     # ...
 
     # ...
     a1 = BilinearForm((v1, u1), dot(grad(v1), grad(u1)), check=True)
-
-    expr = a1(v2, u2)
-    a = BilinearForm((v2, u2), expr, check=True)
+    a  = BilinearForm((v2, u2), a1(v2, u2), check=True)
     # ...
 
     # ...
     a1 = BilinearForm((v1, u1), u1*v1)
     a2 = BilinearForm((v1, u1), dx(u1)*dx(v1), check=True)
-
-    expr = a1(v2, u2) + a2(v2, u2)
-    a = BilinearForm((v2, u2), expr, check=True)
+    a = BilinearForm((v2, u2), a1(v2, u2) + a2(v2, u2), check=True)
     # ...
 
     # ...
@@ -1080,9 +1086,7 @@ def test_bilinearity_2d_2():
     # ...
     a1 = BilinearForm((v1, u1), u1*v1, check=True)
     a2 = BilinearForm((v1, u1), dx(u1)*dx(v1), check=True)
-
-    expr =  a1(v1, u2) + a2(v2, u1)
-    a = BilinearForm(((v1,v2),(u1,u2)), expr, check=True)
+    a  = BilinearForm(((v1,v2),(u1,u2)), a1(v1, u2) + a2(v2, u1), check=True)
     # ...
 
     # ...
@@ -1095,8 +1099,7 @@ def test_bilinearity_2d_2():
     a3 = BilinearForm((w1, t1), rot(w1)*rot(t1) + div(w1)*div(t1), check=True)
     a4 = BilinearForm((w1, u1), div(w1)*u1, check=True)
 
-    expr = a3(w2,t2) + a2(v2,u2) + a4(w2,u2)
-    a = BilinearForm(((w2,v2),(t2,u2)), expr, check=True)
+    a = BilinearForm(((w2,v2),(t2,u2)), a3(w2,t2) + a2(v2,u2) + a4(w2,u2), check=True)
     # ...
 
     # ...
@@ -1120,6 +1123,25 @@ def test_bilinearity_2d_2():
     b = BilinearForm((v,p), div(v)*p, check=True)
     A = BilinearForm(((v,q),(u,p)), a(v,u) - b(v,p) + b(u,q), check=True)
     # ...
+
+    ################################
+    #    non bilinear forms
+    ################################
+    # ...
+    with pytest.raises(UnconsistentBilinearFormError):
+        a  = BilinearForm((v1, u1), dot(grad(v1), grad(u1)) + v1, check=True)
+    # ...
+
+    # ...
+    with pytest.raises(UnconsistentBilinearFormError):
+        a  = BilinearForm((v1, u1), v1**2*u1, check=True)
+    # ...
+
+    # ...
+    with pytest.raises(UnconsistentBilinearFormError):
+        a  = BilinearForm((v1, u1), dot(grad(v1), grad(v1)), check=True)
+    # ...
+    ################################
 
 #==============================================================================
 #def test_nonlinear_2d_1():
@@ -1167,10 +1189,10 @@ def teardown_function():
     from sympy import cache
     cache.clear_cache()
 
+#test_linearity_2d_1()
+test_linearity_2d_2()
 #test_bilinearity_2d_1()
 #test_bilinearity_2d_2()
-#test_linearity_2d_1()
-#test_linearity_2d_2()
 
 #test_boundary_2d_1()
 #test_boundary_2d_2()

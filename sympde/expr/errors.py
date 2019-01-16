@@ -15,3 +15,10 @@ class UnconsistentBCError(UnconsistentError):
 
 class UnconsistentArgumentsError(UnconsistentError):
     pass
+
+class UnconsistentLinearFormError(UnconsistentError):
+    pass
+
+class UnconsistentBilinearFormError(UnconsistentError):
+    pass
+

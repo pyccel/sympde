@@ -62,6 +62,8 @@ from sympde.topology.measure import CartesianMeasure
 from sympde.topology.measure import Measure
 
 from .errors import UnconsistentError
+from .errors import UnconsistentLinearFormError
+from .errors import UnconsistentBilinearFormError
 
 
 #==============================================================================
@@ -301,8 +303,8 @@ class LinearForm(BasicForm):
         calls = list(expr.atoms(FormCall))
         if check and not calls:
             if not is_linear_form(expr, arguments):
-                # TODO raise sympde error => create a new one
-                raise ValueError('Expression is not linear')
+                msg = '> Expression is not bilinear'
+                raise UnconsistentLinearFormError(msg)
         # ...
 
         args = _sanitize_form_arguments(arguments, expr, is_linear=True)
@@ -414,8 +416,8 @@ class BilinearForm(BasicForm):
         calls = list(expr.atoms(FormCall))
         if check and not calls:
             if not is_bilinear_form(expr, arguments):
-                # TODO raise sympde error => create a new one
-                raise ValueError('Expression is not bilinear')
+                msg = '> Expression is not bilinear'
+                raise UnconsistentBilinearFormError(msg)
         # ...
 
         args = _sanitize_form_arguments(arguments, expr, is_bilinear=True)
