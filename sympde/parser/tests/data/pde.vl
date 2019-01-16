@@ -29,18 +29,15 @@ find u :: V such that
   label: 'poisson'
 
 
-#a11(v::W, u::W) = < inner(grad(v), grad(u)) >
-#a12(v::W, p::V) = < div(v)*p >
-#
-#U = W*V
-#a13((v,q)::U, (u,p)::U) = a11(v,u) - a12(v,p) + a12(u,q)
-#
-##l6(v::W) = < dot((1, 3), v) >
-#l6(v::W) = < v >
-#
-#
+a11(v::W, u::W) = < inner(grad(v), grad(u)) >
+a12(v::W, p::V) = < div(v)*p >
+
+U = W*V
+a13((v,q)::U, (u,p)::U) = a11(v,u) - a12(v,p) + a12(u,q)
+
+
 #find u,p :: U such that 
 #  a13((v,q), (u,p)) = l6(v) forall (v,q) :: U
-##  and u = 0 on 'Gamma_1' 
-##  and dot(grad(u), nn) = 0 on 'Gamma_2' 
+#  and u = 0 on 'Gamma_1' 
+#  and dot(grad(u), nn) = 0 on 'Gamma_2' 
 #  label: 'stokes'

@@ -29,7 +29,7 @@ from sympde.topology import Constant            as sym_Constant
 from sympde.expr     import LinearForm          as sym_LinearForm
 from sympde.expr     import BilinearForm        as sym_BilinearForm
 from sympde.expr     import Equation            as sym_Equation
-from sympde.expr     import DirichletBC         as sym_DirichletBC
+from sympde.expr     import EssentialBC         as sym_EssentialBC
 
 from sympde.calculus import grad, dot, inner, cross, rot, curl, div
 from sympde.calculus import laplace, hessian, bracket
@@ -255,17 +255,12 @@ class Equation(BasicPDE):
                 bnd     = b.boundary
                 bnd     = sym_Boundary(bnd, domain)
 
-                # TODO lhs not used for the moment
                 bnd_lhs = b.lhs.expr
                 bnd_rhs = b.rhs.expr
 
-                if bnd_rhs == 0:
-                    sym_bc = sym_DirichletBC(bnd)
-
-                else:
-                    raise NotImplementedError('')
-
+                sym_bc = sym_EssentialBC(bnd_lhs, bnd_rhs, bnd)
                 _bc.append(sym_bc)
+
             bc = _bc
         # ...
 
