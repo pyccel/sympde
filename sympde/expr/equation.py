@@ -24,20 +24,6 @@ class BasicBoundaryCondition(Basic):
     pass
 
 #==============================================================================
-class DirichletBC(BasicBoundaryCondition):
-
-    def __new__(cls, boundary, value=None):
-        return Basic.__new__(cls, boundary, value)
-
-    @property
-    def boundary(self):
-        return self._args[0]
-
-    @property
-    def value(self):
-        return self._args[1]
-
-#==============================================================================
 class EssentialBC(BasicBoundaryCondition):
     _order = None
     _variable = None
@@ -261,7 +247,7 @@ class Equation(Basic):
 
             newbc = []
             for i in bc:
-                if not isinstance(i, (DirichletBC, EssentialBC)):
+                if not isinstance(i, EssentialBC):
                     raise NotImplementedError('')
 
                 if isinstance(i, EssentialBC):
@@ -275,9 +261,6 @@ class Equation(Basic):
                         i.set_position(position)
 
                 if isinstance(i.boundary, Union):
-                    if isinstance(i, DirichletBC):
-                        newbc += [DirichletBC(j) for j in i.boundary._args]
-
                     if isinstance(i, EssentialBC):
                         newbc += [EssentialBC(i.lhs, i.rhs, j, position=i.position)
                                   for j in i.boundary._args]

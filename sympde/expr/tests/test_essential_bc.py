@@ -40,7 +40,7 @@ from sympde.expr.errors import UnconsistentLhsError
 from sympde.expr.errors import UnconsistentRhsError
 from sympde.expr.errors import UnconsistentBCError
 
-from sympde.expr import Equation, DirichletBC, EssentialBC
+from sympde.expr import Equation, EssentialBC
 
 
 #==============================================================================

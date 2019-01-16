@@ -40,7 +40,7 @@ from sympde.expr.errors import UnconsistentLhsError
 from sympde.expr.errors import UnconsistentRhsError
 from sympde.expr.errors import UnconsistentBCError
 
-from sympde.expr import Equation, DirichletBC, EssentialBC
+from sympde.expr import Equation, EssentialBC
 
 DIM = 2
 domain = Domain('Omega', dim=DIM)
@@ -131,24 +131,24 @@ def test_equation_2d():
     # ...
 
     # ... using bc
-    equation = Equation(a1(v,u), l1(v), bc=DirichletBC(B1))
+    equation = Equation(a1(v,u), l1(v), bc=EssentialBC(u, 0, B1))
     # ...
 
 #    # ... using bc
-#    equation = Equation(a1(v,u), l1(v), bc=DirichletBC(ComplementBoundary(B1)))
+#    equation = Equation(a1(v,u), l1(v), bc=EssentialBC(u,0,ComplementBoundary(B1)))
 #    # ...
 
 #    # ... TODO FIX THIS, NOT RAISED ANYMORE!
 #    with pytest.raises(UnconsistentBCError):
 #        a = BilinearForm((v,u), a1(v,u) + a_B1(v,u))
-#        equation = Equation(a(v,u), l1(v), bc=DirichletBC(B1))
+#        equation = Equation(a(v,u), l1(v), bc=EssentialBC(u,0,B1))
 #    # ...
 
 #    # ... TODO FIX THIS, NOT RAISED ANYMORE!
 #    # ...
 #    with pytest.raises(UnconsistentBCError):
 #        l = LinearForm(v, l1(v) + alpha*l_B2(v))
-#        equation = Equation(a1(v,u), l(v), bc=DirichletBC(B2))
+#        equation = Equation(a1(v,u), l(v), bc=EssentialBC(u,0,B2))
 #    # ...
 
 
@@ -196,7 +196,9 @@ def test_equation_2d_2():
 
     l = LinearForm((tau, sigma), dt*l1(tau))
 
-    equation = Equation(a((tau, sigma),(dp,dw)), l(tau, sigma), bc=DirichletBC(domain.boundary))
+    bc  = [EssentialBC(dp, 0, domain.boundary)]
+    bc += [EssentialBC(dw, 0, domain.boundary)]
+    equation = Equation(a((tau, sigma),(dp,dw)), l(tau, sigma), bc=bc)
 
     # TODO not working yet!! gives the wrong result => result must be a vector
     # and not a scalar
