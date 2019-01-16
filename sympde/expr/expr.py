@@ -268,7 +268,7 @@ class LinearForm(BasicForm):
     Examples
 
     """
-    def __new__(cls, arguments, expr, measure=None, name=None):
+    def __new__(cls, arguments, expr, measure=None, name=None, check=False):
         # ... treat union of domains
         #     TODO improve
         unions = expr.atoms(Union)
@@ -295,6 +295,14 @@ class LinearForm(BasicForm):
                     forms.append(form(arguments))
 
                 expr = Add(*forms)
+        # ...
+
+        # ...
+        calls = list(expr.atoms(FormCall))
+        if check and not calls:
+            if not is_linear_form(expr, arguments):
+                # TODO raise sympde error => create a new one
+                raise ValueError('Expression is not linear')
         # ...
 
         args = _sanitize_form_arguments(arguments, expr, is_linear=True)
@@ -368,7 +376,8 @@ class BilinearForm(BasicForm):
     Examples
 
     """
-    def __new__(cls, arguments, expr, measure=None, name=None):
+
+    def __new__(cls, arguments, expr, measure=None, name=None, check=False):
         # ... treat union of domains
         #     TODO improve
         unions = expr.atoms(Union)
@@ -399,6 +408,15 @@ class BilinearForm(BasicForm):
 
         if not(len(arguments) == 2):
             raise ValueError('Expecting a couple (test, trial)')
+        # ...
+
+        # ...
+        calls = list(expr.atoms(FormCall))
+        if check and not calls:
+            if not is_bilinear_form(expr, arguments):
+                # TODO raise sympde error => create a new one
+                raise ValueError('Expression is not bilinear')
+        # ...
 
         args = _sanitize_form_arguments(arguments, expr, is_bilinear=True)
         obj = Basic.__new__(cls, args, expr)
@@ -522,7 +540,7 @@ class BilinearForm(BasicForm):
                 for old, new in zip(target, free_variables):
                     expr = expr.subs(old, new)
 
-                expr = LinearForm(args, expr)
+                expr = LinearForm(args, expr, check=False)
         # ...
 
         return FormCall(expr, args)
@@ -815,13 +833,13 @@ class FormCall(AtomicExpr):
             expr = subs_form(expr, args)
 
             if not isinstance(expr, BilinearForm):
-                expr = BilinearForm(args, expr, name=name)
+                expr = BilinearForm(args, expr, name=name, check=False)
 
         elif isinstance( expr, LinearForm ):
             expr = subs_form(expr, args)
 
             if not isinstance(expr, LinearForm):
-                expr = LinearForm(args, expr, name=name)
+                expr = LinearForm(args, expr, name=name, check=False)
 
         else:
             raise TypeError('> Expecting BilinearForm, LinearForm')
@@ -949,6 +967,9 @@ def atomize(expr, dim=None):
     calls = expr.atoms(FormCall)
     for call in calls:
         expr = expr.subs(call, call.expr)
+#        expr = expr.subs(call, call.expr, simultaneous=True)
+#        expr = expr.xreplace({call: call.expr})
+#        expr = expr.replace(call, call.expr)
     # ...
 
 #    print('> expr [atomize] = ', expr, type(expr))
@@ -1913,7 +1934,7 @@ def _subs_bilinear_form_core(form, newargs):
     test_trial = (test_functions, trial_functions)
     # ...
 
-    return BilinearForm(test_trial, expr, name=form.name)
+    return BilinearForm(test_trial, expr, name=form.name, check=False)
 
 
 #==============================================================================
@@ -1940,7 +1961,7 @@ def _subs_linear_form_core(form, newargs):
 
     if len(test_functions) == 1: test_functions = test_functions[0]
 
-    return LinearForm(test_functions, expr, name=form.name)
+    return LinearForm(test_functions, expr, name=form.name, check=False)
 
 #==============================================================================
 def is_bilinear_form(expr, args):

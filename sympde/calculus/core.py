@@ -76,7 +76,71 @@ class Cross(BasicOperator):
 
 #==============================================================================
 class Inner(BasicOperator):
-    pass
+
+    def __new__(cls, *args, **options):
+        # (Try to) sympify args first
+
+        if options.pop('evaluate', True):
+            r = cls.eval(*args)
+        else:
+            r = None
+
+        if r is None:
+            return Basic.__new__(cls, *args, **options)
+        else:
+            return r
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        if not len(_args) == 2:
+            raise ValueError('Expecting two arguments')
+
+        left,right = _args
+        if (left == 0) or (right == 0):
+            return 0
+
+        if isinstance(left, Add):
+            args = [cls.eval(i, right) for i in left.args]
+            return Add(*args)
+
+        if isinstance(right, Add):
+            args = [cls.eval(left, i) for i in right.args]
+            return Add(*args)
+
+        if isinstance(left, Mul):
+            coeffs  = [i for i in left.args if isinstance(i, _coeffs_registery)]
+            vectors = [i for i in left.args if not(i in coeffs)]
+
+            a = S.One
+            if coeffs:
+                a = Mul(*coeffs)
+
+            b = S.One
+            if vectors:
+                b = Mul(*vectors)
+
+            return Mul(a, cls.eval(b, right))
+
+        if isinstance(right, Mul):
+            coeffs  = [i for i in right.args if isinstance(i, _coeffs_registery)]
+            vectors = [i for i in right.args if not(i in coeffs)]
+
+            a = S.One
+            if coeffs:
+                a = Mul(*coeffs)
+
+            b = S.One
+            if vectors:
+                b = Mul(*vectors)
+
+            return Mul(a, cls.eval(left, b))
+
+        return cls(left, right, evaluate=False)
 
 #==============================================================================
 # TODO add it to evaluation
@@ -397,14 +461,58 @@ class Laplace(BasicOperator):
         return cls(expr, evaluate=False)
 
 #==============================================================================
+class Hessian(BasicOperator):
+
+    def __new__(cls, *args, **options):
+        # (Try to) sympify args first
+
+        if options.pop('evaluate', True):
+            r = cls.eval(*args)
+        else:
+            r = None
+
+        if r is None:
+            return Basic.__new__(cls, *args, **options)
+        else:
+            return r
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        if not len(_args) == 1:
+            raise ValueError('Expecting one argument')
+
+        expr = _args[0]
+        if isinstance(expr, Add):
+            args = expr.args
+            args = [cls.eval(a) for a in expr.args]
+            return Add(*args)
+
+        elif isinstance(expr, Mul):
+            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            vectors = [a for a in expr.args if not(a in coeffs)]
+
+            a = S.One
+            if coeffs:
+                a = Mul(*coeffs)
+
+            b = S.One
+            if vectors:
+                b = cls(Mul(*vectors), evaluate=False)
+
+            return Mul(a, b)
+
+        return cls(expr, evaluate=False)
+
+#==============================================================================
 # TODO add properties
 class Bracket(BasicOperator):
     pass
 
-#==============================================================================
-# TODO add properties
-class Hessian(BasicOperator):
-    pass
 
 Outer = Dot # TODO add the Outer class Function
 

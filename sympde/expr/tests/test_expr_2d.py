@@ -296,7 +296,6 @@ def test_calls_2d():
     print(evaluate(a))
     print('')
     # ...
-#    import sys;  sys.exit(0)
 
     # ...
     a1 = BilinearForm((v1, u1), dot(grad(v1), grad(u1)), name='a1')
@@ -954,6 +953,173 @@ def test_bilinearity_2d_1():
 #    expr = p*q
 #    print(is_bilinear_form(expr, (p,q)))
 
+#==============================================================================
+def test_linearity_2d_2():
+    domain = Domain('Omega', dim=DIM)
+
+    V1 = FunctionSpace('V1', domain)
+    V2 = FunctionSpace('V2', domain)
+    U1 = FunctionSpace('U1', domain)
+    U2 = FunctionSpace('U2', domain)
+    W1 = VectorFunctionSpace('W1', domain)
+    W2 = VectorFunctionSpace('W2', domain)
+    T1 = VectorFunctionSpace('T1', domain)
+    T2 = VectorFunctionSpace('T2', domain)
+
+    v1 = TestFunction(V1, name='v1')
+    v2 = TestFunction(V2, name='v2')
+    u1 = TestFunction(U1, name='u1')
+    u2 = TestFunction(U2, name='u2')
+    w1 = VectorTestFunction(W1, name='w1')
+    w2 = VectorTestFunction(W2, name='w2')
+    t1 = VectorTestFunction(T1, name='t1')
+    t2 = VectorTestFunction(T2, name='t2')
+
+    V = ProductSpace(V1, V2)
+    U = ProductSpace(U1, U2)
+
+    x,y = V1.coordinates
+
+    alpha = Constant('alpha')
+
+    F = Field('F', space=V1)
+
+    # ...
+    l1 = LinearForm(v1, x*y*v1, check=True)
+
+    expr = l1(v2)
+    l = LinearForm(v2, expr, check=True)
+    # ...
+
+    # ...
+    l1 = LinearForm(v1, x*y*v1, check=True)
+    l2 = LinearForm(v2, cos(x+y)*v2, check=True)
+
+    expr = l1(u1) + l2(u2)
+    l = LinearForm((u1,u2), expr, check=True)
+    # ...
+
+    # ...
+    l1 = LinearForm(v1, x*y*v1, check=True)
+    l2 = LinearForm(v2, cos(x+y)*v2, check=True)
+
+    expr = l1(u1) + alpha * l2(u2)
+    l = LinearForm((u1,u2), expr, check=True)
+    # ...
+
+    # ...
+    l1 = LinearForm(v1, x*y*v1, check=True)
+    l2 = LinearForm(w1, div(w1), check=True)
+
+    expr = l1(v2) + l2(w2)
+    l = LinearForm((v2,w2), expr, check=True)
+    # ...
+
+#==============================================================================
+def test_bilinearity_2d_2():
+    domain = Domain('Omega', dim=DIM)
+
+    V1 = FunctionSpace('V1', domain)
+    V2 = FunctionSpace('V2', domain)
+    U1 = FunctionSpace('U1', domain)
+    U2 = FunctionSpace('U2', domain)
+    W1 = VectorFunctionSpace('W1', domain)
+    W2 = VectorFunctionSpace('W2', domain)
+    T1 = VectorFunctionSpace('T1', domain)
+    T2 = VectorFunctionSpace('T2', domain)
+
+    v1 = TestFunction(V1, name='v1')
+    v2 = TestFunction(V2, name='v2')
+    u1 = TestFunction(U1, name='u1')
+    u2 = TestFunction(U2, name='u2')
+    w1 = VectorTestFunction(W1, name='w1')
+    w2 = VectorTestFunction(W2, name='w2')
+    t1 = VectorTestFunction(T1, name='t1')
+    t2 = VectorTestFunction(T2, name='t2')
+
+    V = ProductSpace(V1, V2)
+    U = ProductSpace(U1, U2)
+
+    x,y = V1.coordinates
+
+    alpha = Constant('alpha')
+
+    F = Field('F', space=V1)
+
+    # ...
+    a1 = BilinearForm((v1, u1), u1*v1, check=True)
+
+    expr = a1(v2, u2)
+    a = BilinearForm((v2, u2), expr, check=True)
+    # ...
+
+    # ...
+    a = BilinearForm((v1, u1), dot(grad(v1), grad(u1)), check=True)
+    # ...
+
+    # ...
+    a1 = BilinearForm((v1, u1), dot(grad(v1), grad(u1)), check=True)
+
+    expr = a1(v2, u2)
+    a = BilinearForm((v2, u2), expr, check=True)
+    # ...
+
+    # ...
+    a1 = BilinearForm((v1, u1), u1*v1)
+    a2 = BilinearForm((v1, u1), dx(u1)*dx(v1), check=True)
+
+    expr = a1(v2, u2) + a2(v2, u2)
+    a = BilinearForm((v2, u2), expr, check=True)
+    # ...
+
+    # ...
+    a1 = BilinearForm((v1, u1), u1*v1, check=True)
+    a2 = BilinearForm((v1, u1), dx(u1)*dx(v1), check=True)
+    # ...
+
+    # ...
+    a1 = BilinearForm((v1, u1), u1*v1, check=True)
+    a2 = BilinearForm((v1, u1), dx(u1)*dx(v1), check=True)
+
+    expr =  a1(v1, u2) + a2(v2, u1)
+    a = BilinearForm(((v1,v2),(u1,u2)), expr, check=True)
+    # ...
+
+    # ...
+    a = BilinearForm((w1, t1), rot(w1)*rot(t1) + div(w1)*div(t1), check=True)
+    # ...
+
+    # ...
+    a1 = BilinearForm((v1, u1), u1*v1, check=True)
+    a2 = BilinearForm((v1, u1), dx(u1)*dx(v1), check=True)
+    a3 = BilinearForm((w1, t1), rot(w1)*rot(t1) + div(w1)*div(t1), check=True)
+    a4 = BilinearForm((w1, u1), div(w1)*u1, check=True)
+
+    expr = a3(w2,t2) + a2(v2,u2) + a4(w2,u2)
+    a = BilinearForm(((w2,v2),(t2,u2)), expr, check=True)
+    # ...
+
+    # ...
+    a1 = BilinearForm((v1, u1), laplace(u1)*laplace(v1), check=True)
+    # ...
+
+    # ...
+    a1 = BilinearForm((v1, u1), inner(hessian(u1),hessian(v1)), check=True)
+    # ...
+
+    # ... stokes
+    V = VectorFunctionSpace('V', domain)
+    W = FunctionSpace('W', domain)
+
+    v = VectorTestFunction(V, name='v')
+    u = VectorTestFunction(V, name='u')
+    p = TestFunction(W, name='p')
+    q = TestFunction(W, name='q')
+
+    a = BilinearForm((v,u), inner(grad(v), grad(u)), check=True)
+    b = BilinearForm((v,p), div(v)*p, check=True)
+    A = BilinearForm(((v,q),(u,p)), a(v,u) - b(v,p) + b(u,q), check=True)
+    # ...
 
 #==============================================================================
 #def test_nonlinear_2d_1():
@@ -1001,4 +1167,21 @@ def teardown_function():
     from sympy import cache
     cache.clear_cache()
 
-test_bilinearity_2d_1()
+#test_bilinearity_2d_1()
+#test_bilinearity_2d_2()
+#test_linearity_2d_1()
+#test_linearity_2d_2()
+
+#test_boundary_2d_1()
+#test_boundary_2d_2()
+#test_projection_2d()
+#test_norm_2d()
+#test_vector_2d_1()
+#test_expr_mapping_2d()
+#test_system_2d()
+#test_curldiv_2d()
+#test_calls_2d()
+#test_calls_2d_2()
+#test_calls_2d_3()
+#test_evaluation_2d_1()
+#test_evaluation_2d_2()

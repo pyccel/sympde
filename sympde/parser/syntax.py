@@ -382,7 +382,7 @@ class LinearForm(BasicPDE):
             expression = body.expr
         # ...
 
-        atom = sym_LinearForm(functions, expression, name=name)
+        atom = sym_LinearForm(functions, expression, name=name, check=True)
         insert_namespace(name, atom)
 
         # ... clean namespace
@@ -474,7 +474,7 @@ class BilinearForm(BasicPDE):
         # ...
 
         args = (test_functions, trial_functions)
-        atom = sym_BilinearForm(args, expression, name=name)
+        atom = sym_BilinearForm(args, expression, name=name, check=True)
         insert_namespace(name, atom)
 
         # ... clean namespace
