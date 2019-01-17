@@ -65,19 +65,19 @@ class Dot(BasicOperator):
             args = [cls.eval(i, right) for i in left.args]
             return Add(*args)
 
-        elif isinstance(left, Mul):
-            coeffs  = [a for a in left.args if isinstance(a, _coeffs_registery)]
-            vectors = [a for a in left.args if not(a in coeffs)]
-
-            a = S.One
-            if coeffs:
-                a = Mul(*coeffs)
-
-            b = S.One
-            if vectors:
-                b = Mul(*vectors)
-
-            return a*cls(b, right)
+#        elif isinstance(left, Mul):
+#            coeffs  = [a for a in left.args if isinstance(a, _coeffs_registery)]
+#            vectors = [a for a in left.args if not(a in coeffs)]
+#
+#            a = S.One
+#            if coeffs:
+#                a = Mul(*coeffs)
+#
+#            b = S.One
+#            if vectors:
+#                b = Mul(*vectors)
+#
+#            return a*cls(b, right)
         # ...
 
         # ...
@@ -85,19 +85,19 @@ class Dot(BasicOperator):
             args = [cls.eval(left, i) for i in right.args]
             return Add(*args)
 
-        elif isinstance(right, Mul):
-            coeffs  = [a for a in right.args if isinstance(a, _coeffs_registery)]
-            vectors = [a for a in right.args if not(a in coeffs)]
-
-            a = S.One
-            if coeffs:
-                a = Mul(*coeffs)
-
-            b = S.One
-            if vectors:
-                b = Mul(*vectors)
-
-            return a*cls(left, b)
+#        elif isinstance(right, Mul):
+#            coeffs  = [a for a in right.args if isinstance(a, _coeffs_registery)]
+#            vectors = [a for a in right.args if not(a in coeffs)]
+#
+#            a = S.One
+#            if coeffs:
+#                a = Mul(*coeffs)
+#
+#            b = S.One
+#            if vectors:
+#                b = Mul(*vectors)
+#
+#            return a*cls(left, b)
         # ...
 
         return cls(left, right, evaluate=False)
