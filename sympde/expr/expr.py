@@ -13,6 +13,8 @@ from sympy.core import Basic
 from sympy.core import Symbol
 from sympy.core import Function
 from sympy.simplify.simplify import simplify
+from sympy import collect
+from sympy.series.order import Order
 from sympy.core import Expr, Add, Mul, Pow
 from sympy import S
 from sympy.core.containers import Tuple
@@ -21,6 +23,7 @@ from sympy import expand
 from sympy import Integer, Float
 from sympy.core.expr import AtomicExpr
 from sympy.physics.quantum import TensorProduct
+from sympy.series.series import series
 
 from sympde.core.basic import _coeffs_registery
 from sympde.core.basic import CalculusFunction
@@ -2160,3 +2163,82 @@ def is_linear_form(expr, args):
         return True
 
     return False
+
+
+#==============================================================================
+def linearize(form, fields, trials=None):
+    """linearize a LinearForm around the fields."""
+    # ...
+    if not isinstance(form, LinearForm):
+        raise TypeError('> Expecting a LinearForm')
+
+    if not isinstance(fields, (list, tuple, Tuple)):
+        fields = [fields]
+
+    for f in fields:
+        if not isinstance(f, (Field, VectorField)):
+            raise TypeError('{} is not Field/VectorField'.format(f))
+
+    if not(trials is None):
+        if not isinstance(trials, (list, tuple, Tuple)):
+            trials = [trials]
+
+        assert( all([isinstance(i, str) for i in trials]) )
+        assert( len(fields) == len(trials) )
+    # ...
+
+    expr           = form.expr
+    test_functions = form.test_functions
+    fields          = Tuple(*fields)
+
+    # ...
+    calls = list(expr.atoms(FormCall))
+    if calls:
+        raise NotImplementedError()
+    # ...
+
+    # ...
+    trial_functions = []
+    coeffs          = []
+    newargs         = []
+    for i,x in enumerate(fields):
+        tag  = random_string( 4 )
+        eps  = Constant('eps_' + tag)
+
+        if trials is None:
+            name = x.name + '_' + tag
+        else:
+            name = trials[i]
+
+        if isinstance(x, Field):
+            trial  = TestFunction(x.space, name=name)
+
+        elif isinstance(x, VectorField):
+            trial  = VectorTestFunction(x.space, name=name)
+
+        else:
+            raise TypeError('Only TestFunction and VectorTestFunction are available')
+
+        newargs         += [x + eps*trial]
+        trial_functions += [trial]
+        coeffs          += [eps]
+    # ...
+
+    # ... replacing test functions for a1*u1+a2*u2
+    newexpr = expr
+    for k,v in zip(fields, newargs):
+        newexpr = newexpr.subs(k,v)
+    # ...
+
+    newexpr = expand(newexpr)
+
+    args = []
+    for eps in coeffs:
+        e = newexpr.series(eps,0,2)
+        d = collect(e, eps, evaluate=False)
+        args += [d[eps]]
+
+    expr = Add(*args)
+
+    test_trial = (trial_functions, test_functions)
+    return BilinearForm(test_trial, expr, check=True)

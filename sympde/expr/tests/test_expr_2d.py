@@ -12,7 +12,7 @@ from sympy import symbols
 from sympy import IndexedBase
 from sympy import Matrix
 from sympy import Function
-from sympy import pi, cos, sin
+from sympy import pi, cos, sin, exp
 from sympy import srepr
 from sympy.physics.quantum import TensorProduct
 
@@ -41,6 +41,7 @@ from sympde.expr import Projection
 from sympde.expr import Norm
 from sympde.expr import FormCall
 from sympde.expr import is_linear_form, is_bilinear_form
+from sympde.expr import linearize
 
 from sympde.expr.errors import UnconsistentError
 from sympde.expr.errors import UnconsistentLhsError
@@ -1178,6 +1179,55 @@ def test_bilinearity_2d_2():
 #    # ...
 
 #==============================================================================
+def test_linearize_2d_1():
+    domain = Domain('Omega', dim=DIM)
+    x,y = domain.coordinates
+
+    V1 = FunctionSpace('V1', domain)
+
+    v1 = TestFunction(V1, name='v1')
+
+    alpha = Constant('alpha')
+
+    F = Field('F', space=V1)
+
+    # ...
+    l = LinearForm(v1, F**2*v1, check=True)
+    a = linearize(l, F, trials='u1')
+    print(a)
+    # ...
+
+    # ...
+    l = LinearForm(v1, dot(grad(F), grad(F))*v1, check=True)
+    a = linearize(l, F, trials='u1')
+    print(a)
+    # ...
+
+    # ...
+    l = LinearForm(v1, exp(-F)*v1, check=True)
+    a = linearize(l, F, trials='u1')
+    print(a)
+    # ...
+
+    # ...
+    l = LinearForm(v1, cos(F)*v1, check=True)
+    a = linearize(l, F, trials='u1')
+    print(a)
+    # ...
+
+    # ...
+    l = LinearForm(v1, cos(F**2)*v1, check=True)
+    a = linearize(l, F, trials='u1')
+    print(a)
+    # ...
+
+    # ...
+    l = LinearForm(v1, F**2*dot(grad(F), grad(v1)), check=True)
+    a = linearize(l, F, trials='u1')
+    print(a)
+    # ...
+
+#==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
 
@@ -1188,6 +1238,8 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
+
+test_linearize_2d_1()
 
 #test_linearity_2d_1()
 #test_linearity_2d_2()
