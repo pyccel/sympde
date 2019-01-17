@@ -372,7 +372,8 @@ class LinearForm(BasicForm):
 
         return FormCall(self, args)
 
-
+    def _eval_nseries(self, x, n, logx):
+        return self.expr._eval_nseries(x, n, logx)
 
 #==============================================================================
 class BilinearForm(BasicForm):
@@ -972,9 +973,6 @@ def atomize(expr, dim=None):
     calls = expr.atoms(FormCall)
     for call in calls:
         expr = expr.subs(call, call.expr)
-#        expr = expr.subs(call, call.expr, simultaneous=True)
-#        expr = expr.xreplace({call: call.expr})
-#        expr = expr.replace(call, call.expr)
     # ...
 
 #    print('> expr [atomize] = ', expr, type(expr))
@@ -2191,10 +2189,10 @@ def linearize(form, fields, trials=None):
     test_functions = form.test_functions
     fields          = Tuple(*fields)
 
-    # ...
-    calls = list(expr.atoms(FormCall))
-    if calls:
-        raise NotImplementedError()
+    # ... replace a FormCall by its expression
+    calls = expr.atoms(FormCall)
+    for call in calls:
+        expr = expr.subs(call, call.expr)
     # ...
 
     # ...
@@ -2203,7 +2201,8 @@ def linearize(form, fields, trials=None):
     newargs         = []
     for i,x in enumerate(fields):
         tag  = random_string( 4 )
-        eps  = Constant('eps_' + tag)
+#        eps  = Constant('eps_' + tag)
+        eps  = Constant('eps')
 
         if trials is None:
             name = x.name + '_' + tag
@@ -2224,7 +2223,7 @@ def linearize(form, fields, trials=None):
         coeffs          += [eps]
     # ...
 
-    # ... replacing test functions for a1*u1+a2*u2
+    # ...
     newexpr = expr
     for k,v in zip(fields, newargs):
         newexpr = newexpr.subs(k,v)
@@ -2234,7 +2233,7 @@ def linearize(form, fields, trials=None):
 
     args = []
     for eps in coeffs:
-        e = newexpr.series(eps,0,2)
+        e = newexpr.series(eps, 0, 2)
         d = collect(e, eps, evaluate=False)
         args += [d[eps]]
 

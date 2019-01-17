@@ -1236,6 +1236,31 @@ def test_linearize_2d_1():
     print(a)
     # ...
 
+#==============================================================================
+def test_linearize_2d_2():
+    domain = Domain('Omega', dim=DIM)
+    x,y = domain.coordinates
+
+    V1 = FunctionSpace('V1', domain)
+
+    v1 = TestFunction(V1, name='v1')
+
+    alpha = Constant('alpha')
+
+    F = Field('F', space=V1)
+    G = Field('G', space=V1)
+
+    # ...
+    l1 = LinearForm(v1, F**2*v1, check=True)
+    l = LinearForm(v1, l1(v1))
+
+    a = linearize(l, F, trials='u1')
+    print(a)
+
+    expected = linearize(l1, F, trials='u1')
+    assert( linearize(l, F, trials='u1') == expected )
+    # ...
+
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
@@ -1250,6 +1275,7 @@ def teardown_function():
     cache.clear_cache()
 
 #test_linearize_2d_1()
+test_linearize_2d_2()
 
 #test_linearity_2d_1()
 #test_linearity_2d_2()
