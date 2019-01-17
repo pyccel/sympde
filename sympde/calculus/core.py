@@ -50,25 +50,57 @@ class Dot(BasicOperator):
         if not len(_args) == 2:
             raise ValueError('Expecting two arguments')
 
-        a,b = _args
-        if (a == 0) or (b == 0):
+        left,right = _args
+        if (left == 0) or (right == 0):
             return 0
 
-        if isinstance(a, (list, tuple, Tuple)) and isinstance(b, (list, tuple, Tuple)):
-            assert( len(a) == len(b) )
-            n = len(a)
-            args = [a[i]*b[i] for i in range(0,n)]
+        if isinstance(left, (list, tuple, Tuple)) and isinstance(right, (list, tuple, Tuple)):
+            assert( len(left) == len(right) )
+            n = len(left)
+            args = [left[i]*right[i] for i in range(0,n)]
             return Add(*args)
 
-        if isinstance(a, Add):
-            args = [cls.eval(i, b) for i in a.args]
+        # ...
+        if isinstance(left, Add):
+            args = [cls.eval(i, right) for i in left.args]
             return Add(*args)
 
-        if isinstance(b, Add):
-            args = [cls.eval(a, i) for i in b.args]
+        elif isinstance(left, Mul):
+            coeffs  = [a for a in left.args if isinstance(a, _coeffs_registery)]
+            vectors = [a for a in left.args if not(a in coeffs)]
+
+            a = S.One
+            if coeffs:
+                a = Mul(*coeffs)
+
+            b = S.One
+            if vectors:
+                b = Mul(*vectors)
+
+            return a*cls(b, right)
+        # ...
+
+        # ...
+        if isinstance(right, Add):
+            args = [cls.eval(left, i) for i in right.args]
             return Add(*args)
 
-        return cls(a, b, evaluate=False)
+        elif isinstance(right, Mul):
+            coeffs  = [a for a in right.args if isinstance(a, _coeffs_registery)]
+            vectors = [a for a in right.args if not(a in coeffs)]
+
+            a = S.One
+            if coeffs:
+                a = Mul(*coeffs)
+
+            b = S.One
+            if vectors:
+                b = Mul(*vectors)
+
+            return a*cls(left, b)
+        # ...
+
+        return cls(left, right, evaluate=False)
 
 #==============================================================================
 class Cross(BasicOperator):
