@@ -1184,12 +1184,15 @@ def test_linearize_2d_1():
     x,y = domain.coordinates
 
     V1 = FunctionSpace('V1', domain)
+    W1 = VectorFunctionSpace('W1', domain)
 
     v1 = TestFunction(V1, name='v1')
+    w1 = VectorTestFunction(W1, name='w1')
 
     alpha = Constant('alpha')
 
     F = Field('F', space=V1)
+    G = VectorField(W1, 'G')
 
     # ...
     l = LinearForm(v1, F**2*v1, check=True)
@@ -1197,11 +1200,11 @@ def test_linearize_2d_1():
     print(a)
     # ...
 
-#    # ...
-#    l = LinearForm(v1, dot(grad(F), grad(F))*v1, check=True)
-#    a = linearize(l, F, trials='u1')
-#    print(a)
-#    # ...
+    # ...
+    l = LinearForm(v1, dot(grad(F), grad(F))*v1, check=True)
+    a = linearize(l, F, trials='u1')
+    print(a)
+    # ...
 
     # ...
     l = LinearForm(v1, exp(-F)*v1, check=True)
@@ -1221,11 +1224,18 @@ def test_linearize_2d_1():
     print(a)
     # ...
 
-#    # ...
-#    l = LinearForm(v1, F**2*dot(grad(F), grad(v1)), check=True)
-#    a = linearize(l, F, trials='u1')
-#    print(a)
-#    # ...
+    # ...
+    l = LinearForm(v1, F**2*dot(grad(F), grad(v1)), check=True)
+    a = linearize(l, F, trials='u1')
+    print(a)
+    # ...
+
+    # ...
+    l = LinearForm(w1, dot(rot(G), grad(G))*w1, check=True)
+    a = linearize(l, G, trials='u1')
+    print(a)
+    # ...
+
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
@@ -1239,7 +1249,7 @@ def teardown_function():
     from sympy import cache
     cache.clear_cache()
 
-test_linearize_2d_1()
+#test_linearize_2d_1()
 
 #test_linearity_2d_1()
 #test_linearity_2d_2()
