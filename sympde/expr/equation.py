@@ -322,6 +322,7 @@ class NewtonIteration(Equation):
         a = linearize(form, fields, trials=trials)
 
         tests  = a.test_functions
+        trials = a.trial_functions
         test_trial = a.variables
 
         lhs = a(*test_trial)
@@ -332,9 +333,6 @@ class NewtonIteration(Equation):
         form = LinearForm(tests, -form.expr)
 
         rhs = form(*tests)
-
-        if not( bc is None ):
-            raise NotImplementedError()
 
         return Equation.__new__(cls, lhs, rhs, bc=bc)
 

@@ -340,6 +340,8 @@ def test_equation_2d_5():
 def test_equation_2d_6():
 
     # ... abstract model
+    B1 = Boundary(r'\Gamma_1', domain)
+
     V = FunctionSpace('V', domain)
 
     x,y = domain.coordinates
@@ -368,6 +370,11 @@ def test_equation_2d_6():
 
     expr = evaluate(eq.rhs)[0]
     assert(expr.expr == expected)
+    # ...
+
+    # ...
+    bc = EssentialBC(u, 0, B1)
+    eq = NewtonIteration(l, Un, bc=bc, trials=u)
     # ...
 
 #==============================================================================

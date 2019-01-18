@@ -2142,8 +2142,18 @@ def linearize(form, fields, trials=None):
         if not isinstance(trials, (list, tuple, Tuple)):
             trials = [trials]
 
-        assert( all([isinstance(i, str) for i in trials]) )
+        assert( all([isinstance(i, (str, TestFunction, VectorTestFunction)) for i in trials]) )
         assert( len(fields) == len(trials) )
+
+        newtrials = []
+        for i in trials:
+            if isinstance(i, (TestFunction, VectorTestFunction)):
+                newtrials += [i.name]
+
+            else:
+                newtrials += [i]
+
+        trials = newtrials
     # ...
 
     expr           = form.expr
