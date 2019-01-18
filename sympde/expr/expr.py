@@ -65,8 +65,7 @@ from sympde.topology.measure import CartesianMeasure
 from sympde.topology.measure import Measure
 
 from .errors import UnconsistentError
-from .errors import UnconsistentLinearFormError
-from .errors import UnconsistentBilinearFormError
+from .errors import UnconsistentLinearExpressionError
 
 
 #==============================================================================
@@ -307,7 +306,7 @@ class LinearForm(BasicForm):
         if check and not calls:
             if not is_linear_form(expr, arguments):
                 msg = '> Expression is not linear'
-                raise UnconsistentLinearFormError(msg)
+                raise UnconsistentLinearExpressionError(msg)
         # ...
 
         args = _sanitize_form_arguments(arguments, expr, is_linear=True)
@@ -421,7 +420,7 @@ class BilinearForm(BasicForm):
         if check and not calls:
             if not is_bilinear_form(expr, arguments):
                 msg = '> Expression is not bilinear'
-                raise UnconsistentBilinearFormError(msg)
+                raise UnconsistentLinearExpressionError(msg)
         # ...
 
         args = _sanitize_form_arguments(arguments, expr, is_bilinear=True)
@@ -1967,6 +1966,61 @@ def _subs_linear_form_core(form, newargs):
     return LinearForm(test_functions, expr, name=form.name, check=False)
 
 #==============================================================================
+def is_linear_expression(expr, arg):
+    """checks if an expression is linear with respect to the given argument."""
+    # ...
+    tag    = random_string( 4 )
+    c_left  = Constant('alpha_' + tag)
+    c_right = Constant('beta_'  + tag)
+
+    if isinstance(arg, TestFunction):
+        left  = TestFunction(arg.space, name='l_' + tag)
+        right = TestFunction(arg.space, name='r_' + tag)
+
+    elif isinstance(arg, VectorTestFunction):
+        left  = VectorTestFunction(arg.space, name='l_' + tag)
+        right = VectorTestFunction(arg.space, name='r_' + tag)
+
+    elif isinstance(arg, Field):
+        left  = TestFunction('l_' + tag, space=arg.space)
+        right = TestFunction('r_' + tag, space=arg.space)
+
+    elif isinstance(arg, VectorField):
+        left  = VectorTestFunction(arg.space, 'l_' + tag)
+        right = VectorTestFunction(arg.space, 'r_' + tag)
+
+    else:
+        raise TypeError('')
+
+    newarg = c_left*left + c_right*right
+    d_newarg = {'left':  (c_left, left),
+                'right': (c_right, right)}
+    # ...
+
+    # ... replacing test functions for a1*u1+a2*u2
+    newexpr = expr
+    newexpr = newexpr.subs(arg, newarg)
+    # ...
+
+    # ... replacing test functions for a1*u1
+    left_expr = expr
+    c,u = d_newarg['left']
+    left_expr = left_expr.subs(arg, c*u)
+    # ...
+
+    # ... replacing test functions for a2*u2
+    right_expr = expr
+    c,u = d_newarg['right']
+    right_expr = right_expr.subs(arg, c*u)
+    # ...
+
+    if expand(newexpr) == expand(left_expr) + expand(right_expr):
+        return True
+
+    return False
+
+
+#==============================================================================
 def is_bilinear_form(expr, args):
     """checks if an expression is bilinear with respect to the given arguments."""
     # ...
@@ -1998,105 +2052,20 @@ def is_bilinear_form(expr, args):
     # ...
 
     # ...
-    newargs = []
-    d_newargs = {}
     for x in test_functions:
-        tag    = random_string( 4 )
-        c_left  = Constant('alpha_' + tag)
-        c_right = Constant('beta_'  + tag)
-
-        if isinstance(x, TestFunction):
-            left  = TestFunction(x.space, name='l_' + tag)
-            right = TestFunction(x.space, name='r_' + tag)
-
-        elif isinstance(x, VectorTestFunction):
-            left  = VectorTestFunction(x.space, name='l_' + tag)
-            right = VectorTestFunction(x.space, name='r_' + tag)
-
-        else:
-            raise TypeError('Only TestFunction and VectorTestFunction are available')
-
-        newargs += [c_left*left + c_right*right]
-        d_newargs[x] = {'left':  (c_left, left),
-                        'right': (c_right, right)}
-
-    test_newargs   = newargs
-    d_test_newargs = d_newargs
+        if not is_linear_expression(expr, x):
+            msg = ' Expression is not linear w.r.t [{}]'.format(x)
+            raise UnconsistentLinearExpressionError(msg)
     # ...
 
     # ...
-    newargs = []
-    d_newargs = {}
     for x in trial_functions:
-        tag    = random_string( 4 )
-        c_left  = Constant('alpha_' + tag)
-        c_right = Constant('beta_'  + tag)
-
-        if isinstance(x, TestFunction):
-            left  = TestFunction(x.space, name='l_' + tag)
-            right = TestFunction(x.space, name='r_' + tag)
-
-        elif isinstance(x, VectorTestFunction):
-            left  = VectorTestFunction(x.space, name='l_' + tag)
-            right = VectorTestFunction(x.space, name='r_' + tag)
-
-        else:
-            raise TypeError('Only TestFunction and VectorTestFunction are available')
-
-        newargs += [c_left*left + c_right*right]
-        d_newargs[x] = {'left':  (c_left, left),
-                        'right': (c_right, right)}
-
-    trial_newargs   = newargs
-    d_trial_newargs = d_newargs
+        if not is_linear_expression(expr, x):
+            msg = ' Expression is not linear w.r.t [{}]'.format(x)
+            raise UnconsistentLinearExpressionError(msg)
     # ...
 
-    # ... replacing test functions for a1*u1+a2*u2
-    test_newexpr = expr
-    for k,v in zip(test_functions, test_newargs):
-        test_newexpr = test_newexpr.subs(k,v)
-    # ...
-
-    # ... replacing test functions for a1*u1
-    test_left_expr = expr
-    for old in test_functions:
-        c,u = d_test_newargs[old]['left']
-        test_left_expr = test_left_expr.subs(old,c*u)
-    # ...
-
-    # ... replacing test functions for a2*u2
-    test_right_expr = expr
-    for old in test_functions:
-        c,u = d_test_newargs[old]['right']
-        test_right_expr = test_right_expr.subs(old,c*u)
-    # ...
-
-    # ... replacing trial functions for a1*u1+a2*u2
-    trial_newexpr = expr
-    for k,v in zip(trial_functions, trial_newargs):
-        trial_newexpr = trial_newexpr.subs(k,v)
-    # ...
-
-    # ... replacing trial functions for a1*u1
-    trial_left_expr = expr
-    for old in trial_functions:
-        c,u = d_trial_newargs[old]['left']
-        trial_left_expr = trial_left_expr.subs(old,c*u)
-    # ...
-
-    # ... replacing trial functions for a2*u2
-    trial_right_expr = expr
-    for old in trial_functions:
-        c,u = d_trial_newargs[old]['right']
-        trial_right_expr = trial_right_expr.subs(old,c*u)
-    # ...
-
-    test_condition  = expand(test_newexpr)  == expand(test_left_expr) + expand(test_right_expr)
-    trial_condition = expand(trial_newexpr) == expand(trial_left_expr) + expand(trial_right_expr)
-    if test_condition and trial_condition:
-        return True
-
-    return False
+    return True
 
 #==============================================================================
 def is_linear_form(expr, args):
@@ -2114,53 +2083,13 @@ def is_linear_form(expr, args):
     # ...
 
     # ...
-    newargs = []
-    d_newargs = {}
     for x in test_functions:
-        tag    = random_string( 4 )
-        c_left  = Constant('alpha_' + tag)
-        c_right = Constant('beta_'  + tag)
-
-        if isinstance(x, TestFunction):
-            left  = TestFunction(x.space, name='l_' + tag)
-            right = TestFunction(x.space, name='r_' + tag)
-
-        elif isinstance(x, VectorTestFunction):
-            left  = VectorTestFunction(x.space, name='l_' + tag)
-            right = VectorTestFunction(x.space, name='r_' + tag)
-
-        else:
-            raise TypeError('Only TestFunction and VectorTestFunction are available')
-
-        newargs += [c_left*left + c_right*right]
-        d_newargs[x] = {'left':  (c_left, left),
-                        'right': (c_right, right)}
+        if not is_linear_expression(expr, x):
+            msg = ' Expression is not linear w.r.t [{}]'.format(x)
+            raise UnconsistentLinearExpressionError(msg)
     # ...
 
-    # ... replacing test functions for a1*u1+a2*u2
-    newexpr = expr
-    for k,v in zip(test_functions, newargs):
-        newexpr = newexpr.subs(k,v)
-    # ...
-
-    # ... replacing test functions for a1*u1
-    left_expr = expr
-    for old in test_functions:
-        c,u = d_newargs[old]['left']
-        left_expr = left_expr.subs(old,c*u)
-    # ...
-
-    # ... replacing test functions for a2*u2
-    right_expr = expr
-    for old in test_functions:
-        c,u = d_newargs[old]['right']
-        right_expr = right_expr.subs(old,c*u)
-    # ...
-
-    if expand(newexpr) == expand(left_expr) + expand(right_expr):
-        return True
-
-    return False
+    return True
 
 
 #==============================================================================

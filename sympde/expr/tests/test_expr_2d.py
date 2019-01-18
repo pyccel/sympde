@@ -44,11 +44,10 @@ from sympde.expr import is_linear_form, is_bilinear_form
 from sympde.expr import linearize
 
 from sympde.expr.errors import UnconsistentError
+from sympde.expr.errors import UnconsistentLinearExpressionError
 from sympde.expr.errors import UnconsistentLhsError
 from sympde.expr.errors import UnconsistentRhsError
 from sympde.expr.errors import UnconsistentBCError
-from sympde.expr.errors import UnconsistentLinearFormError
-from sympde.expr.errors import UnconsistentBilinearFormError
 
 DIM = 2
 VERBOSE = False
@@ -892,13 +891,15 @@ def test_linearity_2d_1():
     # nonlinear expressions
     #####################################
     # ...
-    expr = p**2
-    assert(not is_linear_form(expr, p))
+    with pytest.raises(UnconsistentLinearExpressionError):
+        expr = p**2
+        is_linear_form(expr, p)
     # ...
 
     # ...
-    expr = dot(grad(p), grad(p))
-    assert(not is_linear_form(expr, p))
+    with pytest.raises(UnconsistentLinearExpressionError):
+        expr = dot(grad(p), grad(p))
+        is_linear_form(expr, p)
     # ...
     #####################################
 
@@ -948,8 +949,9 @@ def test_bilinearity_2d_1():
     # nonlinear expressions
     #####################################
     # ...
-    expr = alpha*dot(grad(p**2), grad(q)) + beta*p*q
-    assert(not is_bilinear_form(expr, (p,q)))
+    with pytest.raises(UnconsistentLinearExpressionError):
+        expr = alpha*dot(grad(p**2), grad(q)) + beta*p*q
+        is_bilinear_form(expr, (p,q))
     # ...
     #####################################
 
@@ -1018,12 +1020,12 @@ def test_linearity_2d_2():
     #    non bilinear forms
     ################################
     # ...
-    with pytest.raises(UnconsistentLinearFormError):
+    with pytest.raises(UnconsistentLinearExpressionError):
         l = LinearForm(v1, x*y*v1**2, check=True)
     # ...
 
     # ...
-    with pytest.raises(UnconsistentLinearFormError):
+    with pytest.raises(UnconsistentLinearExpressionError):
         l = LinearForm(v1, x*y, check=True)
     # ...
     ################################
@@ -1129,17 +1131,17 @@ def test_bilinearity_2d_2():
     #    non bilinear forms
     ################################
     # ...
-    with pytest.raises(UnconsistentBilinearFormError):
+    with pytest.raises(UnconsistentLinearExpressionError):
         a  = BilinearForm((v1, u1), dot(grad(v1), grad(u1)) + v1, check=True)
     # ...
 
     # ...
-    with pytest.raises(UnconsistentBilinearFormError):
+    with pytest.raises(UnconsistentLinearExpressionError):
         a  = BilinearForm((v1, u1), v1**2*u1, check=True)
     # ...
 
     # ...
-    with pytest.raises(UnconsistentBilinearFormError):
+    with pytest.raises(UnconsistentLinearExpressionError):
         a  = BilinearForm((v1, u1), dot(grad(v1), grad(v1)), check=True)
     # ...
     ################################
@@ -1295,8 +1297,8 @@ def test_linearize_2d_3():
     # ...
 
 
-    a1 = linearize(l1, [Rho_0, U_0], trials=['d_rho', 'd_u'])
-    print(a1)
+#    a1 = linearize(l1, [Rho_0, U_0], trials=['d_rho', 'd_u'])
+#    print(a1)
 
 #    a3 = linearize(l3, [P_0, U_0], trials=['d_p', 'd_u'])
 #    print(a3)

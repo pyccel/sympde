@@ -16,9 +16,5 @@ class UnconsistentBCError(UnconsistentError):
 class UnconsistentArgumentsError(UnconsistentError):
     pass
 
-class UnconsistentLinearFormError(UnconsistentError):
+class UnconsistentLinearExpressionError(UnconsistentError):
     pass
-
-class UnconsistentBilinearFormError(UnconsistentError):
-    pass
-
