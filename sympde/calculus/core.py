@@ -79,6 +79,15 @@ class Dot(BasicOperator):
         alpha = S.One
         if isinstance(left, Mul):
             coeffs  = [a for a in left.args if isinstance(a, _coeffs_registery)]
+            for a in left.args:
+                if ( isinstance(a, Pow) and
+                     isinstance(a.base, _coeffs_registery) and
+                     isinstance(a.exp, _coeffs_registery) ):
+                    coeffs += [a]
+
+                elif isinstance(a, (Field, TestFunction)):
+                    coeffs += [a]
+
             vectors = [a for a in left.args if not(a in coeffs)]
 
             a = S.One
@@ -94,6 +103,15 @@ class Dot(BasicOperator):
 
         if isinstance(right, Mul):
             coeffs  = [a for a in right.args if isinstance(a, _coeffs_registery)]
+            for a in right.args:
+                if ( isinstance(a, Pow) and
+                     isinstance(a.base, _coeffs_registery) and
+                     isinstance(a.exp, _coeffs_registery) ):
+                    coeffs += [a]
+
+                elif isinstance(a, (Field, TestFunction)):
+                    coeffs += [a]
+
             vectors = [a for a in right.args if not(a in coeffs)]
 
             a = S.One

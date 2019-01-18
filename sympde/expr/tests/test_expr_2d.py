@@ -1261,6 +1261,49 @@ def test_linearize_2d_2():
     assert( linearize(l, F, trials='u1') == expected )
     # ...
 
+#==============================================================================
+def test_linearize_2d_3():
+    """steady Euler equation."""
+    domain = Domain('Omega', dim=DIM)
+    x,y = domain.coordinates
+
+    U = VectorFunctionSpace('U', domain)
+    W =       FunctionSpace('W', domain)
+
+#    u   = VectorTestFunction(U, name='u')
+#    rho =       TestFunction(W, name='rho')
+#    p   =       TestFunction(W, name='p')
+
+    v   = VectorTestFunction(U, name='v')
+    phi =       TestFunction(W, name='phi')
+    q   =       TestFunction(W, name='q')
+
+    U_0   = VectorField(U, name='U_0')
+    Rho_0 =       Field('Rho_0', W)
+    P_0   =       Field('P_0', W)
+
+    # ...
+    expr = div(Rho_0*U_0) * phi
+    l1 = LinearForm(phi, expr, check=True)
+
+    # TODO
+#    expr = Rho_0*convect(U_0, grad(U_0))
+#    l2 = LinearForm(phi, expr, check=True)
+
+    expr = dot(U_0, grad(P_0)) * q + P_0 * div(U_0) * q
+    l3 = LinearForm(q, expr, check=True)
+    # ...
+
+
+    a1 = linearize(l1, [Rho_0, U_0], trials=['d_rho', 'd_u'])
+    print(a1)
+
+#    a3 = linearize(l3, [P_0, U_0], trials=['d_p', 'd_u'])
+#    print(a3)
+#
+#    l = LinearForm((phi, q), l1(phi) + l3(q))
+#    a = linearize(l, [Rho_0, U_0, P_0], trials=['d_rho', 'd_u', 'd_p'])
+#    print(a)
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
@@ -1275,7 +1318,8 @@ def teardown_function():
     cache.clear_cache()
 
 #test_linearize_2d_1()
-test_linearize_2d_2()
+#test_linearize_2d_2()
+#test_linearize_2d_3()
 
 #test_linearity_2d_1()
 #test_linearity_2d_2()

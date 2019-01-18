@@ -306,7 +306,7 @@ class LinearForm(BasicForm):
         calls = list(expr.atoms(FormCall))
         if check and not calls:
             if not is_linear_form(expr, arguments):
-                msg = '> Expression is not bilinear'
+                msg = '> Expression is not linear'
                 raise UnconsistentLinearFormError(msg)
         # ...
 
@@ -2091,8 +2091,8 @@ def is_bilinear_form(expr, args):
         trial_right_expr = trial_right_expr.subs(old,c*u)
     # ...
 
-    test_condition  = expand(test_newexpr) == test_left_expr + test_right_expr
-    trial_condition = expand(trial_newexpr) == trial_left_expr + trial_right_expr
+    test_condition  = expand(test_newexpr)  == expand(test_left_expr) + expand(test_right_expr)
+    trial_condition = expand(trial_newexpr) == expand(trial_left_expr) + expand(trial_right_expr)
     if test_condition and trial_condition:
         return True
 
@@ -2157,7 +2157,7 @@ def is_linear_form(expr, args):
         right_expr = right_expr.subs(old,c*u)
     # ...
 
-    if expand(newexpr) == left_expr + right_expr:
+    if expand(newexpr) == expand(left_expr) + expand(right_expr):
         return True
 
     return False
@@ -2197,12 +2197,11 @@ def linearize(form, fields, trials=None):
 
     # ...
     trial_functions = []
-    coeffs          = []
     newargs         = []
+    eps  = Constant('eps')
+#    eps  = Constant('eps_' + random_string( 4 ))
     for i,x in enumerate(fields):
         tag  = random_string( 4 )
-#        eps  = Constant('eps_' + tag)
-        eps  = Constant('eps')
 
         if trials is None:
             name = x.name + '_' + tag
@@ -2220,7 +2219,6 @@ def linearize(form, fields, trials=None):
 
         newargs         += [x + eps*trial]
         trial_functions += [trial]
-        coeffs          += [eps]
     # ...
 
     # ...
@@ -2231,13 +2229,12 @@ def linearize(form, fields, trials=None):
 
     newexpr = expand(newexpr)
 
-    args = []
-    for eps in coeffs:
-        e = newexpr.series(eps, 0, 2)
-        d = collect(e, eps, evaluate=False)
-        args += [d[eps]]
+#    print(newexpr)
+#    import sys; sys.exit(0)
 
-    expr = Add(*args)
+    e = newexpr.series(eps, 0, 2)
+    d = collect(e, eps, evaluate=False)
+    expr = d[eps]
 
     test_trial = (trial_functions, test_functions)
     return BilinearForm(test_trial, expr, check=True)
