@@ -16,8 +16,10 @@ from sympde.calculus import grad, dot
 from sympde.core.utils import random_string
 
 from .expr import FormCall, BilinearForm, LinearForm
+from .expr import linearize
 from .errors import ( UnconsistentLhsError, UnconsistentRhsError,
                       UnconsistentArgumentsError, UnconsistentBCError )
+
 
 #==============================================================================
 class BasicBoundaryCondition(Basic):
@@ -309,9 +311,33 @@ class Equation(Basic):
     def test_functions(self):
         return self.rhs.arguments
 
-    @property
-    def is_undefined(self):
-        return isinstance(self.lhs, Nil) or isinstance(self.rhs, Nil)
+
+#==============================================================================
+class NewtonIteration(Equation):
+
+    def __new__(cls, form, fields, bc=None, trials=None):
+
+        assert( isinstance(form, LinearForm) )
+
+        a = linearize(form, fields, trials=trials)
+
+        tests  = a.test_functions
+        test_trial = a.variables
+
+        lhs = a(*test_trial)
+
+        # TODO to be improved
+        # THIS IS A HACK => WEITING TO MAKE FORM CALLABLE FUNCTION AS SYMPDE
+        # OPERATORS
+        form = LinearForm(tests, -form.expr)
+
+        rhs = form(*tests)
+
+        if not( bc is None ):
+            raise NotImplementedError()
+
+        return Equation.__new__(cls, lhs, rhs, bc=bc)
+
 
 #==============================================================================
 class LambdaEquation(Equation):

@@ -2196,5 +2196,5 @@ def linearize(form, fields, trials=None):
 #    print('> linearize = ', expr)
 #    import sys; sys.exit(0)
 
-    test_trial = (trial_functions, test_functions)
+    test_trial = (test_functions, trial_functions)
     return BilinearForm(test_trial, expr, check=True)

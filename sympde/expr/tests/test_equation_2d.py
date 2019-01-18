@@ -8,7 +8,7 @@ from sympy import symbols
 from sympy import IndexedBase
 from sympy import Matrix
 from sympy import Function
-from sympy import pi, cos, sin
+from sympy import pi, cos, sin, exp
 from sympy import srepr
 from sympy.physics.quantum import TensorProduct
 
@@ -40,13 +40,13 @@ from sympde.expr.errors import UnconsistentLhsError
 from sympde.expr.errors import UnconsistentRhsError
 from sympde.expr.errors import UnconsistentBCError
 
-from sympde.expr import Equation, EssentialBC
+from sympde.expr import Equation, EssentialBC, NewtonIteration
 
 DIM = 2
 domain = Domain('Omega', dim=DIM)
 
 #==============================================================================
-def test_equation_2d():
+def test_equation_2d_1():
 
     V = FunctionSpace('V', domain)
     U = FunctionSpace('U', domain)
@@ -334,6 +334,40 @@ def test_equation_2d_5():
     print(equation.rhs.expr)
     print(evaluate(equation.rhs.expr))
     print('')
+    # ...
+
+#==============================================================================
+def test_equation_2d_6():
+
+    # ... abstract model
+    V = FunctionSpace('V', domain)
+
+    x,y = domain.coordinates
+
+    Un = Field('Un', V)
+
+    v = TestFunction(V, name='v')
+
+    f  = -4.*exp(-Un)
+    l = LinearForm(v, dot(grad(v), grad(Un)) - f*v )
+
+    eq = NewtonIteration(l, Un, trials='u')
+    # ...
+
+    u = TestFunction(V, name='u')
+
+    # ...
+    expected =  -4.0*u*v*exp(-Un) + dx(u)*dx(v) + dy(u)*dy(v)
+
+    expr = evaluate(eq.lhs)[0]
+    assert(expr.expr == expected)
+    # ...
+
+    # ...
+    expected = -4.0*v*exp(-Un) - dx(Un)*dx(v) - dy(Un)*dy(v)
+
+    expr = evaluate(eq.rhs)[0]
+    assert(expr.expr == expected)
     # ...
 
 #==============================================================================
