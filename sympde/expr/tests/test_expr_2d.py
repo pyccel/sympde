@@ -18,7 +18,7 @@ from sympy.physics.quantum import TensorProduct
 
 from sympde.core import Constant
 from sympde.calculus import grad, dot, inner, cross, rot, curl, div
-from sympde.calculus import laplace, hessian, bracket
+from sympde.calculus import laplace, hessian, bracket, convect
 from sympde.topology import (dx, dy, dz)
 from sympde.topology import FunctionSpace, VectorFunctionSpace
 from sympde.topology import Field, VectorField
@@ -1272,10 +1272,6 @@ def test_linearize_2d_3():
     U = VectorFunctionSpace('U', domain)
     W =       FunctionSpace('W', domain)
 
-#    u   = VectorTestFunction(U, name='u')
-#    rho =       TestFunction(W, name='rho')
-#    p   =       TestFunction(W, name='p')
-
     v   = VectorTestFunction(U, name='v')
     phi =       TestFunction(W, name='phi')
     q   =       TestFunction(W, name='q')
@@ -1286,12 +1282,10 @@ def test_linearize_2d_3():
 
     # ...
     expr = div(Rho_0*U_0) * phi
-#    expr = Rho_0*dot(U_0, grad(phi))
     l1 = LinearForm(phi, expr, check=True)
 
-    # TODO
-#    expr = Rho_0*convect(U_0, grad(U_0))
-#    l2 = LinearForm(phi, expr, check=True)
+    expr = Rho_0*dot(convect(U_0, grad(U_0)), v) + dot(grad(P_0), v)
+    l2 = LinearForm(v, expr, check=True)
 
     expr = dot(U_0, grad(P_0)) * q + P_0 * div(U_0) * q
     l3 = LinearForm(q, expr, check=True)
@@ -1299,13 +1293,19 @@ def test_linearize_2d_3():
 
     a1 = linearize(l1, [Rho_0, U_0], trials=['d_rho', 'd_u'])
     print(a1)
+    print('')
+
+    a2 = linearize(l2, [Rho_0, U_0, P_0], trials=['d_rho', 'd_u', 'd_p'])
+    print(a2)
+    print('')
 
     a3 = linearize(l3, [P_0, U_0], trials=['d_p', 'd_u'])
     print(a3)
+    print('')
 
-#    l = LinearForm((phi, q), l1(phi) + l3(q))
-#    a = linearize(l, [Rho_0, U_0, P_0], trials=['d_rho', 'd_u', 'd_p'])
-#    print(a)
+    l = LinearForm((phi, v, q), l1(phi) + l2(v) + l3(q))
+    a = linearize(l, [Rho_0, U_0, P_0], trials=['d_rho', 'd_u', 'd_p'])
+    print(a)
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE

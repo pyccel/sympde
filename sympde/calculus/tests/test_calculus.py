@@ -22,7 +22,7 @@ from sympde.topology import Field, VectorField
 
 
 #==============================================================================
-def test_calculus_2d():
+def test_calculus_2d_1():
     domain = Domain('Omega', dim=2)
 
     V = FunctionSpace('V', domain)
@@ -80,6 +80,24 @@ def test_calculus_2d():
 
     expr = grad(dot(F,G))
     print(expr)
+
+#==============================================================================
+def test_calculus_2d_2():
+    domain = Domain('Omega', dim=2)
+
+    V = FunctionSpace('V', domain)
+    W = VectorFunctionSpace('W', domain)
+
+    alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
+
+    f,g,h = [Field(i, space=V) for i in ['f','g','h']]
+    F,G,H = [VectorField(W, i) for i in ['F','G','H']]
+
+    # ... vector gradient properties
+    assert( convect(F+G, H) == convect(F,H) + convect(G,H) )
+    assert( convect(alpha*F,H) == alpha*convect(F,H) )
+    assert( convect(F,alpha*H) == alpha*convect(F,H) )
+    # ...
 
 #==============================================================================
 def test_calculus_3d():
@@ -150,5 +168,6 @@ def teardown_function():
     from sympy import cache
     cache.clear_cache()
 
-#test_calculus_2d()
+#test_calculus_2d_1()
+#test_calculus_2d_2()
 #test_calculus_3d()
