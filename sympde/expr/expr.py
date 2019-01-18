@@ -1966,58 +1966,93 @@ def _subs_linear_form_core(form, newargs):
     return LinearForm(test_functions, expr, name=form.name, check=False)
 
 #==============================================================================
-def is_linear_expression(expr, arg):
-    """checks if an expression is linear with respect to the given argument."""
+def is_linear_expression(expr, args, debug=True):
+    """checks if an expression is linear with respect to the given arguments."""
     # ...
-    tag    = random_string( 4 )
-    c_left  = Constant('alpha_' + tag)
-    c_right = Constant('beta_'  + tag)
+    left_args  = []
+    right_args = []
+    for arg in args:
+        tag    = random_string( 4 )
 
-    if isinstance(arg, TestFunction):
-        left  = TestFunction(arg.space, name='l_' + tag)
-        right = TestFunction(arg.space, name='r_' + tag)
+        if isinstance(arg, TestFunction):
+            left  = TestFunction(arg.space, name='l_' + tag)
+            right = TestFunction(arg.space, name='r_' + tag)
 
-    elif isinstance(arg, VectorTestFunction):
-        left  = VectorTestFunction(arg.space, name='l_' + tag)
-        right = VectorTestFunction(arg.space, name='r_' + tag)
+        elif isinstance(arg, VectorTestFunction):
+            left  = VectorTestFunction(arg.space, name='l_' + tag)
+            right = VectorTestFunction(arg.space, name='r_' + tag)
 
-    elif isinstance(arg, Field):
-        left  = TestFunction('l_' + tag, space=arg.space)
-        right = TestFunction('r_' + tag, space=arg.space)
+        elif isinstance(arg, Field):
+            left  = Field('l_' + tag, space=arg.space)
+            right = Field('r_' + tag, space=arg.space)
 
-    elif isinstance(arg, VectorField):
-        left  = VectorTestFunction(arg.space, 'l_' + tag)
-        right = VectorTestFunction(arg.space, 'r_' + tag)
+        elif isinstance(arg, VectorField):
+            left  = VectorField(arg.space, 'l_' + tag)
+            right = VectorField(arg.space, 'r_' + tag)
 
-    else:
-        raise TypeError('')
+        else:
+            raise TypeError('')
 
-    newarg = c_left*left + c_right*right
-    d_newarg = {'left':  (c_left, left),
-                'right': (c_right, right)}
+        left_args  += [left]
+        right_args += [right]
     # ...
 
-    # ... replacing test functions for a1*u1+a2*u2
+    # ... check addition
     newexpr = expr
-    newexpr = newexpr.subs(arg, newarg)
-    # ...
+    for arg, left, right in zip(args, left_args, right_args):
+        newarg  = left + right
+        newexpr = newexpr.subs(arg, newarg)
 
-    # ... replacing test functions for a1*u1
     left_expr = expr
-    c,u = d_newarg['left']
-    left_expr = left_expr.subs(arg, c*u)
-    # ...
+    for arg, left in zip(args, left_args):
+        left_expr = left_expr.subs(arg, left)
 
-    # ... replacing test functions for a2*u2
     right_expr = expr
-    c,u = d_newarg['right']
-    right_expr = right_expr.subs(arg, c*u)
+    for arg, right in zip(args, right_args):
+        right_expr = right_expr.subs(arg, right)
+
+    if not( expand(newexpr) == expand(left_expr) + expand(right_expr) ):
+        # TODO use a warning or exception?
+        if debug:
+            print('Failed to assert addition property')
+
+#            print('===========')
+#            print(arg, left, right)
+#
+#            print(expand(newexpr))
+#            print(expand(left_expr))
+#            print(expand(right_expr))
+#            print(expand(newexpr) - expand(left_expr) - expand(right_expr))
+#            import sys; sys.exit(0)
+
+
+        return False
     # ...
 
-    if expand(newexpr) == expand(left_expr) + expand(right_expr):
-        return True
+    # ... check multiplication
+    tag   = random_string( 4 )
+    coeff = Constant('alpha_' + tag)
 
-    return False
+    newexpr = expr
+    for arg, left in zip(args, left_args):
+        newarg  = coeff * left
+        newexpr = newexpr.subs(arg, newarg)
+
+    left_expr = expr
+    for arg, left in zip(args, left_args):
+        left_expr = left_expr.subs(arg, left)
+
+    left_expr = coeff * left_expr.subs(arg, left)
+
+    if not( expand(newexpr) == expand(left_expr)):
+        # TODO use a warning or exception?
+        if debug:
+            print('Failed to assert multiplication property')
+
+        return False
+    # ...
+
+    return True
 
 
 #==============================================================================
@@ -2052,17 +2087,15 @@ def is_bilinear_form(expr, args):
     # ...
 
     # ...
-    for x in test_functions:
-        if not is_linear_expression(expr, x):
-            msg = ' Expression is not linear w.r.t [{}]'.format(x)
-            raise UnconsistentLinearExpressionError(msg)
+    if not is_linear_expression(expr, test_functions):
+        msg = ' Expression is not linear w.r.t [{}]'.format(test_functions)
+        raise UnconsistentLinearExpressionError(msg)
     # ...
 
     # ...
-    for x in trial_functions:
-        if not is_linear_expression(expr, x):
-            msg = ' Expression is not linear w.r.t [{}]'.format(x)
-            raise UnconsistentLinearExpressionError(msg)
+    if not is_linear_expression(expr, trial_functions):
+        msg = ' Expression is not linear w.r.t [{}]'.format(trial_functions)
+        raise UnconsistentLinearExpressionError(msg)
     # ...
 
     return True
@@ -2083,10 +2116,9 @@ def is_linear_form(expr, args):
     # ...
 
     # ...
-    for x in test_functions:
-        if not is_linear_expression(expr, x):
-            msg = ' Expression is not linear w.r.t [{}]'.format(x)
-            raise UnconsistentLinearExpressionError(msg)
+    if not is_linear_expression(expr, test_functions):
+        msg = ' Expression is not linear w.r.t [{}]'.format(test_functions)
+        raise UnconsistentLinearExpressionError(msg)
     # ...
 
     return True
@@ -2127,8 +2159,7 @@ def linearize(form, fields, trials=None):
     # ...
     trial_functions = []
     newargs         = []
-    eps  = Constant('eps')
-#    eps  = Constant('eps_' + random_string( 4 ))
+    eps  = Constant('eps_' + random_string( 4 ))
     for i,x in enumerate(fields):
         tag  = random_string( 4 )
 
@@ -2158,12 +2189,12 @@ def linearize(form, fields, trials=None):
 
     newexpr = expand(newexpr)
 
-#    print(newexpr)
-#    import sys; sys.exit(0)
-
     e = newexpr.series(eps, 0, 2)
     d = collect(e, eps, evaluate=False)
     expr = d[eps]
+
+#    print('> linearize = ', expr)
+#    import sys; sys.exit(0)
 
     test_trial = (trial_functions, test_functions)
     return BilinearForm(test_trial, expr, check=True)

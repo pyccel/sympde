@@ -1286,6 +1286,7 @@ def test_linearize_2d_3():
 
     # ...
     expr = div(Rho_0*U_0) * phi
+#    expr = Rho_0*dot(U_0, grad(phi))
     l1 = LinearForm(phi, expr, check=True)
 
     # TODO
@@ -1296,13 +1297,12 @@ def test_linearize_2d_3():
     l3 = LinearForm(q, expr, check=True)
     # ...
 
+    a1 = linearize(l1, [Rho_0, U_0], trials=['d_rho', 'd_u'])
+    print(a1)
 
-#    a1 = linearize(l1, [Rho_0, U_0], trials=['d_rho', 'd_u'])
-#    print(a1)
+    a3 = linearize(l3, [P_0, U_0], trials=['d_p', 'd_u'])
+    print(a3)
 
-#    a3 = linearize(l3, [P_0, U_0], trials=['d_p', 'd_u'])
-#    print(a3)
-#
 #    l = LinearForm((phi, q), l1(phi) + l3(q))
 #    a = linearize(l, [Rho_0, U_0, P_0], trials=['d_rho', 'd_u', 'd_p'])
 #    print(a)
