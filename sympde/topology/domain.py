@@ -9,10 +9,15 @@ import os
 from collections import OrderedDict
 from collections import abc
 
+from sympy.core.singleton import Singleton
+from sympy.core.compatibility import with_metaclass
 from sympy.core import Basic, Symbol
 from sympy.core.containers import Tuple
 from sympy.tensor import IndexedBase
+from sympy.core import Add, Mul, Pow
+from sympy.core.expr import AtomicExpr
 
+from sympde.core.basic import CalculusFunction
 from .basic import BasicDomain, InteriorDomain, Boundary, Union, Connectivity
 from .basic import Interval
 from .basic import ProductDomain
@@ -404,3 +409,77 @@ class NormalVector(BoundaryVector):
 
 class TangentVector(BoundaryVector):
     pass
+
+#==============================================================================
+class ElementDomain(with_metaclass(Singleton, Basic)):
+    pass
+
+#==============================================================================
+class BasicArea(AtomicExpr):
+
+    def __new__(cls, domain):
+        if not isinstance(domain, (BasicDomain, ElementDomain)):
+            raise TypeError('expecting a BasicDomain or ElementDomain')
+
+        return Basic.__new__(cls, domain)
+
+    @property
+    def domain(self):
+        return self._args[0]
+
+class DomainArea(BasicArea):
+    pass
+
+class ElementArea(BasicArea):
+    pass
+
+#==============================================================================
+class BasicGeometryOperator(CalculusFunction):
+
+    def __getitem__(self, indices, **kw_args):
+        if is_sequence(indices):
+            # Special case needed because M[*my_tuple] is a syntax error.
+            return Indexed(self, *indices, **kw_args)
+        else:
+            return Indexed(self, indices, **kw_args)
+
+#==============================================================================
+class Area(BasicGeometryOperator):
+
+    def __new__(cls, *args, **options):
+        # (Try to) sympify args first
+
+        if options.pop('evaluate', True):
+            r = cls.eval(*args)
+        else:
+            r = None
+
+        if r is None:
+            return Basic.__new__(cls, *args, **options)
+        else:
+            return r
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        if not len(_args) == 1:
+            raise ValueError('Expecting one argument')
+
+        expr = _args[0]
+        if isinstance(expr, Union):
+            args = expr._args
+            args = [cls.eval(a) for a in expr.args]
+            return Add(*args)
+
+        elif isinstance(expr, ElementDomain):
+            return ElementArea(expr)
+
+#        elif isinstance(expr, InteriorDomain):
+#            return DomainArea(expr)
+
+        return cls(expr, evaluate=False)
+

@@ -25,6 +25,8 @@ from sympde.topology import Unknown
 from sympde.topology import Domain, Boundary, NormalVector, TangentVector
 from sympde.topology import Trace, trace_0, trace_1
 from sympde.topology import Square
+from sympde.topology import ElementDomain
+from sympde.topology import Area
 
 from sympde.expr import BilinearForm, LinearForm, Integral
 from sympde.expr import atomize
@@ -376,6 +378,99 @@ def test_equation_2d_6():
     bc = EssentialBC(u, 0, B1)
     eq = NewtonIteration(l, Un, bc=bc, trials=u)
     # ...
+
+#==============================================================================
+def test_equation_2d_7():
+
+    domain = Square()
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    b1 = 1.
+    b2 = 0.
+    b = Tuple(b1, b2)
+
+    # right hand side
+    f = x*y
+
+    e = ElementDomain()
+    area = Area(e)
+
+    V = FunctionSpace('V', domain)
+
+    u,v = [TestFunction(V, name=i) for i in ['u', 'v']]
+
+    # ...
+    expr = kappa * dot(grad(u), grad(v)) + dot(b, grad(u)) * v
+    a = BilinearForm((v,u), expr)
+    # ...
+
+    # ...
+    expr = f * v
+    l0 = LinearForm(v, expr)
+    # ...
+
+    # ...
+    expr = (- kappa * laplace(u) + dot(b, grad(u))) * dot(b, grad(v))
+    s1 = BilinearForm((v,u), expr)
+
+    expr = - f * dot(b, grad(v))
+    l1 = LinearForm(v, expr)
+    # ...
+
+    # ...
+    expr = (- kappa * laplace(u) + dot(b, grad(u))) * ( dot(b, grad(v)) - kappa * laplace(v))
+    s2 = BilinearForm((v,u), expr)
+
+    expr = - f * ( dot(b, grad(v)) - kappa * laplace(v))
+    l2 = LinearForm(v, expr)
+    # ...
+
+    # ...
+    expr = (- kappa * laplace(u) + dot(b, grad(u))) * ( dot(b, grad(v)) + kappa * laplace(v))
+    s3 = BilinearForm((v,u), expr)
+
+    expr = - f * ( dot(b, grad(v)) + kappa * laplace(v))
+    l3 = LinearForm(v, expr)
+    # ...
+
+    # ...
+    expr = a(v,u) + mu*area*s1(v,u)
+    a1 = BilinearForm((v,u), expr)
+    # ...
+
+    # ...
+    expr = a(v,u) + mu*area*s2(v,u)
+    a2 = BilinearForm((v,u), expr)
+    # ...
+
+    # ...
+    expr = a(v,u) + mu*area*s3(v,u)
+    a3 = BilinearForm((v,u), expr)
+    # ...
+
+    bc = EssentialBC(u, 0, domain.boundary)
+
+    # ...
+    l = LinearForm(v, l0(v) + mu*area*l1(v))
+
+    eq_1 = Equation(a1(v,u), l(v), bc=bc)
+    # ...
+
+    # ...
+    l = LinearForm(v, l0(v) + mu*area*l2(v))
+
+    eq_2 = Equation(a2(v,u), l(v), bc=bc)
+    # ...
+
+    # ...
+    l = LinearForm(v, l0(v) + mu*area*l3(v))
+
+    eq_3 = Equation(a3(v,u), l(v), bc=bc)
+    # ...
+
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE

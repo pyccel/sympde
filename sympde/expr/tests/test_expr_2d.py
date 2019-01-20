@@ -32,6 +32,8 @@ from sympde.topology import Domain
 from sympde.topology import Trace, trace_0, trace_1
 from sympde.topology import Mapping
 from sympde.topology import Square
+from sympde.topology import ElementDomain
+from sympde.topology import Area
 
 from sympde.expr import BilinearForm, LinearForm, Integral
 from sympde.expr import atomize
@@ -1308,6 +1310,110 @@ def test_linearize_2d_3():
     print(a)
 
 #==============================================================================
+def test_area_2d_1():
+
+    domain = Domain('Omega', dim=2)
+    x,y = domain.coordinates
+
+    mu    = Constant('mu'   , is_real=True)
+
+    e = ElementDomain(domain)
+    area = Area(e)
+
+    V = FunctionSpace('V', domain)
+
+    u,v = [TestFunction(V, name=i) for i in ['u', 'v']]
+
+    # ...
+    a = BilinearForm((v,u), area * u * v)
+    # ...
+
+#==============================================================================
+def test_stabilization_2d_1():
+
+    domain = Domain('Omega', dim=2)
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    b1 = 1.
+    b2 = 0.
+    b = Tuple(b1, b2)
+
+    # right hand side
+    f = x*y
+
+    e = ElementDomain()
+    area = Area(e)
+
+    V = FunctionSpace('V', domain)
+
+    u,v = [TestFunction(V, name=i) for i in ['u', 'v']]
+
+    # ...
+    expr = kappa * dot(grad(u), grad(v)) + dot(b, grad(u)) * v
+    a = BilinearForm((v,u), expr)
+    # ...
+
+    # ...
+    expr = f * v
+    l = LinearForm(v, expr)
+    # ...
+
+    # ...
+    expr = (- kappa * laplace(u) + dot(b, grad(u))) * dot(b, grad(v))
+    s1 = BilinearForm((v,u), expr)
+
+    expr = - f * dot(b, grad(v))
+    l1 = LinearForm(v, expr)
+    # ...
+
+    # ...
+    expr = (- kappa * laplace(u) + dot(b, grad(u))) * ( dot(b, grad(v)) - kappa * laplace(v))
+    s2 = BilinearForm((v,u), expr)
+
+    expr = - f * ( dot(b, grad(v)) - kappa * laplace(v))
+    l2 = LinearForm(v, expr)
+    # ...
+
+    # ...
+    expr = (- kappa * laplace(u) + dot(b, grad(u))) * ( dot(b, grad(v)) + kappa * laplace(v))
+    s3 = BilinearForm((v,u), expr)
+
+    expr = - f * ( dot(b, grad(v)) + kappa * laplace(v))
+    l3 = LinearForm(v, expr)
+    # ...
+
+    # ...
+    expr = a(v,u) + mu*area*s1(v,u)
+    a1 = BilinearForm((v,u), expr)
+    # ...
+
+    # ...
+    expr = a(v,u) + mu*area*s2(v,u)
+    a2 = BilinearForm((v,u), expr)
+    # ...
+
+    # ...
+    expr = a(v,u) + mu*area*s3(v,u)
+    a3 = BilinearForm((v,u), expr)
+    # ...
+
+    print(a1)
+    print(evaluate(a1, verbose=True))
+    print('')
+
+    print(a2)
+    print(evaluate(a2, verbose=True))
+    print('')
+
+    print(a3)
+    print(evaluate(a3, verbose=True))
+    print('')
+
+
+#==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
 
@@ -1318,6 +1424,9 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
+
+#test_area_2d_1()
+#test_stabilization_2d_1()
 
 #test_linearize_2d_1()
 #test_linearize_2d_2()

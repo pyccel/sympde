@@ -7,7 +7,8 @@ from sympy.tensor import Indexed
 from sympde.topology import InteriorDomain, Union
 from sympde.topology import Boundary, NormalVector, TangentVector
 from sympde.topology import Connectivity, Edge
-from sympde.topology import Domain
+from sympde.topology import Domain, ElementDomain
+from sympde.topology import Area
 
 import os
 
@@ -110,6 +111,23 @@ def test_boundary_2():
     assert(Omega.boundary == Union(Gamma_1, Gamma_2, Gamma_3))
     assert(Omega.boundary.complement(Gamma_1) == Union(Gamma_2, Gamma_3))
     assert(Omega.boundary - Gamma_1 == Union(Gamma_2, Gamma_3))
+
+#==============================================================================
+def test_element():
+    D1 = InteriorDomain('D1', dim=2)
+    D2 = InteriorDomain('D2', dim=2)
+
+    D = Union(D1, D2)
+
+    e1 = ElementDomain()
+
+    a = Area(e1)
+    print(a)
+
+    a = Area(D1)
+    print(a)
+
+    assert(Area(D) ==  Area(D1) + Area(D2))
 
 
 #==============================================================================
