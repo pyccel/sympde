@@ -1412,6 +1412,39 @@ def test_stabilization_2d_1():
     print(evaluate(a3, verbose=True))
     print('')
 
+#==============================================================================
+def test_user_function_2d_1():
+
+    domain = Domain('Omega', dim=2)
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    # right hand side
+    f = Function('f')
+
+    V = FunctionSpace('V', domain)
+
+    u,v = [TestFunction(V, name=i) for i in ['u', 'v']]
+
+    # ...
+    expr = dot(grad(u), grad(v)) + f(x,y) * u * v
+    a = BilinearForm((v,u), expr)
+
+    print(a)
+    print(evaluate(a, verbose=True))
+    print('')
+    # ...
+
+    # ...
+    expr = f(x,y) * v
+    l = LinearForm(v, expr)
+
+    print(l)
+    print(evaluate(l, verbose=True))
+    print('')
+    # ...
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
@@ -1424,6 +1457,8 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
+
+#test_user_function_2d_1()
 
 #test_area_2d_1()
 #test_stabilization_2d_1()
