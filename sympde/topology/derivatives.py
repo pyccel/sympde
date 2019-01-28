@@ -251,6 +251,9 @@ def find_partial_derivatives(expr):
     elif isinstance(expr, _partial_derivatives):
         return [expr]
 
+    elif isinstance(expr, _logical_partial_derivatives):
+        return [expr]
+
     return []
 # ...
 
@@ -350,6 +353,46 @@ def get_atom_derivatives(expr):
         assert(len(expr.args) == 1)
 
         return get_atom_derivatives(expr.args[0])
+
+    else:
+        return expr
+# ...
+
+# ...
+def get_index_logical_derivatives(expr):
+    """
+    """
+    coord = ['x1','x2','x3']
+
+    d = OrderedDict()
+    for c in coord:
+        d[c] = 0
+
+    ops = [a for a in preorder_traversal(expr) if isinstance(a, _logical_partial_derivatives)]
+    for i in ops:
+        op = type(i)
+
+        if isinstance(i, dx1):
+            d['x1'] += 1
+
+        elif isinstance(i, dx2):
+            d['x2'] += 1
+
+        elif isinstance(i, dx3):
+            d['x3'] += 1
+
+    return d
+# ...
+
+# ...
+def get_atom_logical_derivatives(expr):
+    """
+    """
+
+    if isinstance(expr, _logical_partial_derivatives):
+        assert(len(expr.args) == 1)
+
+        return get_atom_logical_derivatives(expr.args[0])
 
     else:
         return expr
@@ -1267,6 +1310,26 @@ def get_index_derivatives_atom(expr, atom, verbose=False):
         a = get_atom_derivatives(i)
         if a == atom:
             index = get_index_derivatives(i)
+            indices.append(index)
+
+    return indices
+# ...
+
+# ...
+def get_index_logical_derivatives_atom(expr, atom, verbose=False):
+    """This function return a dictionary of partial derivative indices for
+    a given atom.
+    it must be called after atomizing the expression.
+    """
+    ops = sort_partial_derivatives(expr)
+    if verbose:
+        print('> ops = ', ops)
+
+    indices = []
+    for i in ops:
+        a = get_atom_logical_derivatives(i)
+        if a == atom:
+            index = get_index_logical_derivatives(i)
             indices.append(index)
 
     return indices

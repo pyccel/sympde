@@ -13,11 +13,13 @@ from sympde.core import Constant
 from sympde.calculus import grad, dot, inner, cross, rot, curl, div
 from sympde.calculus import laplace, hessian, bracket, convect
 from sympde.topology import (dx, dy, dz)
+from sympde.topology import (dx1, dx2, dx3)
 from sympde.topology import FunctionSpace, VectorFunctionSpace
 from sympde.topology import Field, VectorField
 from sympde.topology import TestFunction
 from sympde.topology import VectorTestFunction
 from sympde.topology import LogicalExpr
+from sympde.topology import SymbolicExpr
 
 # ...
 def test_logical_expr_2d_1():
@@ -37,43 +39,53 @@ def test_logical_expr_2d_1():
     det_M = DetJacobian(M)
     det   = Symbol('det')
 
+#    # ...
+#    expr = 2*u + alpha*v
+#    expr = LogicalExpr(M, expr)
+#    print(expr)
+#    print('')
+#    # ...
+#
+#    # ...
+#    expr = dx(u)
+#    expr = LogicalExpr(M, expr)
+#    print(expr.subs(det_M, det))
+#    print('')
+#    # ...
+#
+#    # ...
+#    expr = dy(u)
+#    expr = LogicalExpr(M, expr)
+#    print(expr.subs(det_M, det))
+#    print('')
+#    # ...
+#
+#    # ...
+#    expr = dx(det_M)
+#    expr = LogicalExpr(M, expr)
+#    expr = expr.subs(det_M, det)
+#    expr = expand(expr)
+#    print(expr)
+#    print('')
+#    # ...
+#
+#    # ...
+#    expr = dx(dx(u))
+#    expr = LogicalExpr(M, expr)
+#    print(expr.subs(det_M, det))
+#    print('')
+#    # ...
+
     # ...
-    expr = 2*u + alpha*v
+#    expr = u
+#    expr = dx1(u)
+    expr = dx1(dx2(u))
+#    expr = dx1(M[0])
+#    expr = dx(u)
     expr = LogicalExpr(M, expr)
+    expr = SymbolicExpr(expr)
     print(expr)
-    print('')
     # ...
-
-    # ...
-    expr = dx(u)
-    expr = LogicalExpr(M, expr)
-    print(expr.subs(det_M, det))
-    print('')
-    # ...
-
-    # ...
-    expr = dy(u)
-    expr = LogicalExpr(M, expr)
-    print(expr.subs(det_M, det))
-    print('')
-    # ...
-
-    # ...
-    expr = dx(det_M)
-    expr = LogicalExpr(M, expr)
-    expr = expr.subs(det_M, det)
-    expr = expand(expr)
-    print(expr)
-    print('')
-    # ...
-
-    # ...
-    expr = dx(dx(u))
-    expr = LogicalExpr(M, expr)
-    print(expr.subs(det_M, det))
-    print('')
-    # ...
-
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE

@@ -1,7 +1,9 @@
 # coding: utf-8
 
+from collections  import OrderedDict
+
 from sympy.core import Basic
-from sympy.tensor import IndexedBase
+from sympy.tensor import IndexedBase, Indexed
 from sympy.core import Symbol
 from sympy.core.containers import Tuple
 from sympy import Function
@@ -24,6 +26,7 @@ from .derivatives import (Grad_1d, Div_1d,
                           Grad_2d, Curl_2d, Rot_2d, Div_2d,
                           Grad_3d, Curl_3d, Div_3d)
 from .derivatives import _logical_partial_derivatives
+from .derivatives import get_atom_logical_derivatives, get_index_logical_derivatives_atom
 
 from .space import TestFunction, VectorTestFunction, IndexedTestTrial
 from .space import Field, VectorField, IndexedVectorField
@@ -440,8 +443,108 @@ class LogicalExpr(CalculusFunction):
         return cls(M, expr, evaluate=False)
 
 #==============================================================================
-def sympify_expression(expr):
-    """returns an expression where calls to partial derivatives are replaced by
-    sympy symbols."""
-    pass
+class SymbolicExpr(CalculusFunction):
+    """returns a sympy expression where partial derivatives are converted into
+    sympy Symbols."""
+
+    def __new__(cls, *args, **options):
+        # (Try to) sympify args first
+
+        if options.pop('evaluate', True):
+            r = cls.eval(*args)
+        else:
+            r = None
+
+        if r is None:
+            return Basic.__new__(cls, *args, **options)
+        else:
+            return r
+
+    def __getitem__(self, indices, **kw_args):
+        if is_sequence(indices):
+            # Special case needed because M[*my_tuple] is a syntax error.
+            return Indexed(self, *indices, **kw_args)
+        else:
+            return Indexed(self, indices, **kw_args)
+
+    @classmethod
+    def eval(cls, *_args, **kwargs):
+        """."""
+
+        if not _args:
+            return
+
+        if not len(_args) == 1:
+            raise ValueError('Expecting one argument')
+
+        expr = _args[0]
+
+        if isinstance(expr, Add):
+            args = [cls.eval(a) for a in expr.args]
+            return Add(*args)
+
+        elif isinstance(expr, Mul):
+            coeffs   = [i for i in expr.args if isinstance(i, _coeffs_registery)]
+            vectors  = [i for i in expr.args if not(i in coeffs)]
+
+            a = S.One
+            if coeffs:
+                a = Mul(*coeffs)
+
+            b = S.One
+            if vectors:
+                b = Mul(*vectors)
+
+            return Mul(a, cls.eval(b))
+
+        elif isinstance(expr, (Field, TestFunction)):
+            code = kwargs.pop('code', None)
+            if code:
+                name = '{name}_{code}'.format(name=expr.name, code=code)
+            else:
+                name = str(expr.name)
+
+            return Symbol(name)
+
+        elif isinstance(expr, (VectorField, VectorTestFunction)):
+            raise NotImplementedError('')
+
+        elif isinstance(expr, Indexed):
+            base = expr.base
+            if isinstance(base, Mapping):
+                if expr.indices[0] == 0:
+                    name = 'x'
+                elif expr.indices[0] == 1:
+                    name = 'y'
+                elif expr.indices[0] == 2:
+                    name = 'z'
+                else:
+                    raise ValueError('Wrong index')
+
+            else:
+                name =  '{base}_{i}'.format(base=base.name, i=expr.indices[0])
+
+            code = kwargs.pop('code', None)
+            if code:
+                name = '{name}_{code}'.format(name=name, code=code)
+
+            return Symbol(name)
+
+        elif isinstance(expr, _logical_partial_derivatives):
+
+            atom = get_atom_logical_derivatives(expr)
+            indices = get_index_logical_derivatives_atom(expr, atom)
+
+            code = None
+            if indices:
+                index = indices[0]
+                code = ''
+                index = OrderedDict(sorted(index.items()))
+
+                for k,n in list(index.items()):
+                    code += k*n
+
+            return cls.eval(atom, code=code)
+
+        return cls(expr, evaluate=False)
 
