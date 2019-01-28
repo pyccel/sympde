@@ -39,52 +39,129 @@ def test_logical_expr_2d_1():
     det_M = DetJacobian(M)
     det   = Symbol('det')
 
-#    # ...
-#    expr = 2*u + alpha*v
-#    expr = LogicalExpr(M, expr)
-#    print(expr)
-#    print('')
-#    # ...
-#
-#    # ...
-#    expr = dx(u)
-#    expr = LogicalExpr(M, expr)
-#    print(expr.subs(det_M, det))
-#    print('')
-#    # ...
-#
-#    # ...
-#    expr = dy(u)
-#    expr = LogicalExpr(M, expr)
-#    print(expr.subs(det_M, det))
-#    print('')
-#    # ...
-#
-#    # ...
-#    expr = dx(det_M)
-#    expr = LogicalExpr(M, expr)
-#    expr = expr.subs(det_M, det)
-#    expr = expand(expr)
-#    print(expr)
-#    print('')
-#    # ...
-#
-#    # ...
-#    expr = dx(dx(u))
-#    expr = LogicalExpr(M, expr)
-#    print(expr.subs(det_M, det))
-#    print('')
-#    # ...
+    # ...
+    expr = 2*u + alpha*v
+    expr = LogicalExpr(M, expr)
+    print(expr)
+    print('')
+    # ...
 
     # ...
-#    expr = u
-#    expr = dx1(u)
-    expr = dx1(dx2(u))
-#    expr = dx1(M[0])
-#    expr = dx(u)
+    expr = dx(u)
+    expr = LogicalExpr(M, expr)
+    print(expr.subs(det_M, det))
+    print('')
+    # ...
+
+    # ...
+    expr = dy(u)
+    expr = LogicalExpr(M, expr)
+    print(expr.subs(det_M, det))
+    print('')
+    # ...
+
+    # ...
+    expr = dx(det_M)
+    expr = LogicalExpr(M, expr)
+    expr = expr.subs(det_M, det)
+    expr = expand(expr)
+    print(expr)
+    print('')
+    # ...
+
+    # ...
+    expr = dx(dx(u))
+    expr = LogicalExpr(M, expr)
+    print(expr.subs(det_M, det))
+    print('')
+    # ...
+
+# ...
+def test_symbolic_expr_2d_1():
+    print('============ test_symbolic_expr_2d_1 ==============')
+
+    rdim = 2
+
+    M = Mapping('M', rdim)
+    domain = Domain('Omega', dim=rdim)
+
+    alpha = Constant('alpha')
+
+    V = FunctionSpace('V', domain)
+
+    u,v = [TestFunction(V, name=i) for i in ['u', 'v']]
+
+    det_M = DetJacobian(M)
+    det_M = SymbolicExpr(det_M)
+    print('>>> ', det_M)
+    det   = Symbol('det')
+
+    # ...
+    expr = u
     expr = LogicalExpr(M, expr)
     expr = SymbolicExpr(expr)
     print(expr)
+    # ...
+
+    # ...
+    expr = dx1(u)
+    expr = LogicalExpr(M, expr)
+    expr = SymbolicExpr(expr)
+    print(expr)
+    # ...
+
+    # ...
+    expr = dx1(dx2(u))
+    expr = LogicalExpr(M, expr)
+    expr = SymbolicExpr(expr)
+    print(expr)
+    # ...
+
+    # ...
+    expr = dx1(M[0])
+    expr = LogicalExpr(M, expr)
+    expr = SymbolicExpr(expr)
+    print(expr)
+    # ...
+
+    # ...
+    expr = dx(u)
+    expr = LogicalExpr(M, expr)
+    expr = SymbolicExpr(expr)
+    expr = expr.subs(det_M, det)
+    print(expr)
+    # ...
+
+    # ...
+    expr = dx(DetJacobian(M))
+    expr = LogicalExpr(M, expr)
+    expr = SymbolicExpr(expr)
+    expr = expr.subs(det_M, det)
+    print(expand(expr))
+    # ...
+
+    # ...
+    expr = dx(dx(u))
+    expr = LogicalExpr(M, expr)
+    expr = SymbolicExpr(expr)
+    expr = expr.subs(det_M, det)
+    print(expand(expr))
+    # ...
+
+    # ...
+    expr = dx(dx(dx(u)))
+    expr = LogicalExpr(M, expr)
+    expr = SymbolicExpr(expr)
+    expr = expr.subs(det_M, det)
+    print(expand(expr))
+    # ...
+
+    # ...
+    expr = dx(dx(dx(dx(u))))
+    expr = LogicalExpr(M, expr)
+    expr = SymbolicExpr(expr)
+    expr = expr.subs(det_M, det)
+    print(expand(expr))
     # ...
 
 #==============================================================================
@@ -100,4 +177,5 @@ def teardown_function():
     cache.clear_cache()
 
 
-test_logical_expr_2d_1()
+#test_logical_expr_2d_1()
+test_symbolic_expr_2d_1()

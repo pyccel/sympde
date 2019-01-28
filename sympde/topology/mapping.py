@@ -390,27 +390,16 @@ class LogicalExpr(CalculusFunction):
             return Add(*args)
 
         elif isinstance(expr, Mul):
-            coeffs   = [i for i in expr.args if isinstance(i, _coeffs_registery)]
+            args = [cls.eval(M, a) for a in expr.args]
+            return Mul(*args)
 
-            # we add everything that was computed in the logical domain
-            coeffs  += [i for i in expr.args if isinstance(i, _logical_partial_derivatives)]
-
-            vectors  = [i for i in expr.args if not(i in coeffs)]
-
-            a = S.One
-            if coeffs:
-                a = Mul(*coeffs)
-
-            b = S.One
-            if vectors:
-                b = Mul(*vectors)
-
-            return Mul(a, cls.eval(M, b))
-
-        elif isinstance(expr, (Field, TestFunction)):
+        elif isinstance(expr, _coeffs_registery):
             return expr
 
         elif isinstance(expr, _logical_partial_derivatives):
+            return expr
+
+        elif isinstance(expr, (Field, TestFunction)):
             return expr
 
         elif isinstance(expr, (VectorField, VectorTestFunction)):
@@ -478,27 +467,25 @@ class SymbolicExpr(CalculusFunction):
             raise ValueError('Expecting one argument')
 
         expr = _args[0]
+        code = kwargs.pop('code', None)
 
         if isinstance(expr, Add):
-            args = [cls.eval(a) for a in expr.args]
+            args = [cls.eval(a, code=code) for a in expr.args]
             return Add(*args)
 
         elif isinstance(expr, Mul):
-            coeffs   = [i for i in expr.args if isinstance(i, _coeffs_registery)]
-            vectors  = [i for i in expr.args if not(i in coeffs)]
+            args = [cls.eval(a, code=code) for a in expr.args]
+            return Mul(*args)
 
-            a = S.One
-            if coeffs:
-                a = Mul(*coeffs)
+        elif isinstance(expr, Pow):
+            b = expr.base
+            e = expr.exp
+            return Pow(cls(b, code=code), e)
 
-            b = S.One
-            if vectors:
-                b = Mul(*vectors)
-
-            return Mul(a, cls.eval(b))
+        elif isinstance(expr, _coeffs_registery):
+            return expr
 
         elif isinstance(expr, (Field, TestFunction)):
-            code = kwargs.pop('code', None)
             if code:
                 name = '{name}_{code}'.format(name=expr.name, code=code)
             else:
@@ -524,7 +511,6 @@ class SymbolicExpr(CalculusFunction):
             else:
                 name =  '{base}_{i}'.format(base=base.name, i=expr.indices[0])
 
-            code = kwargs.pop('code', None)
             if code:
                 name = '{name}_{code}'.format(name=name, code=code)
 
