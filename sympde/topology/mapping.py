@@ -6,21 +6,29 @@ from sympy.core import Symbol
 from sympy.core.containers import Tuple
 from sympy import Function
 from sympy import Matrix
+from sympy.core import Add, Mul, Pow
+from sympy.core.singleton import S
 
 from sympde.core.basic import BasicMapping
 from sympde.core.algebra import (Dot_1d,
                                  Dot_2d, Inner_2d, Cross_2d,
                                  Dot_3d, Inner_3d, Cross_3d)
 
+from sympde.core.basic import CalculusFunction
+from sympde.core.basic import _coeffs_registery
 from .basic import BasicDomain
 from .domain import Domain
 from .derivatives import dx, dy, dz
+from .derivatives import dx1, dx2, dx3
 from .derivatives import (Grad_1d, Div_1d,
                           Grad_2d, Curl_2d, Rot_2d, Div_2d,
                           Grad_3d, Curl_3d, Div_3d)
+from .derivatives import _logical_partial_derivatives
 
+from .space import TestFunction, VectorTestFunction, IndexedTestTrial
+from .space import Field, VectorField, IndexedVectorField
 
-# ...
+#==============================================================================
 class Mapping(BasicMapping):
     """
     Represents a Mapping object.
@@ -189,8 +197,9 @@ class Mapping(BasicMapping):
 
     def _compute_hessian(self):
         raise NotImplementedError('TODO')
-# ...
 
+
+#==============================================================================
 class MappedDomain(BasicDomain):
     def __new__(cls, mapping, domain):
         assert(isinstance(mapping, Mapping))
@@ -211,6 +220,7 @@ class MappedDomain(BasicDomain):
         return self.domain.dim
 
 
+#==============================================================================
 class MappingApplication(Function):
     nargs = None
 
@@ -226,6 +236,7 @@ class MappingApplication(Function):
         else:
             return r
 
+#==============================================================================
 class Jacobian(MappingApplication):
     """
 
@@ -245,14 +256,21 @@ class Jacobian(MappingApplication):
         F = Tuple(*F)
 
         if rdim == 1:
-            return Grad_1d(F)
+            expr = Grad_1d(F)
 
         elif rdim == 2:
-            return Grad_2d(F)
+            expr = Grad_2d(F)
 
         elif rdim == 3:
-            return Grad_3d(F)
+            expr = Grad_3d(F)
 
+        expr = expr.subs(dx, dx1)
+        expr = expr.subs(dy, dx2)
+        expr = expr.subs(dz, dx3)
+
+        return expr
+
+#==============================================================================
 class DetJacobian(MappingApplication):
     """
 
@@ -268,6 +286,7 @@ class DetJacobian(MappingApplication):
 
         return F.det_jacobian
 
+#==============================================================================
 class Covariant(MappingApplication):
     """
 
@@ -303,6 +322,7 @@ class Covariant(MappingApplication):
 
             return Tuple(*w)
 
+#==============================================================================
 class Contravariant(MappingApplication):
     """
 
@@ -323,3 +343,105 @@ class Contravariant(MappingApplication):
         v = Matrix(v)
         v = M*v
         return Tuple(*v)
+
+
+#==============================================================================
+class LogicalExpr(CalculusFunction):
+
+    def __new__(cls, *args, **options):
+        # (Try to) sympify args first
+
+        if options.pop('evaluate', True):
+            r = cls.eval(*args)
+        else:
+            r = None
+
+        if r is None:
+            return Basic.__new__(cls, *args, **options)
+        else:
+            return r
+
+    def __getitem__(self, indices, **kw_args):
+        if is_sequence(indices):
+            # Special case needed because M[*my_tuple] is a syntax error.
+            return Indexed(self, *indices, **kw_args)
+        else:
+            return Indexed(self, indices, **kw_args)
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        if not len(_args) == 2:
+            raise ValueError('Expecting two arguments')
+
+        M    = _args[0]
+        expr = _args[1]
+        dim  = M.rdim # TODO this is not the dim of the domain
+
+        if isinstance(expr, Add):
+            args = [cls.eval(M, a) for a in expr.args]
+            return Add(*args)
+
+        elif isinstance(expr, Mul):
+            coeffs   = [i for i in expr.args if isinstance(i, _coeffs_registery)]
+
+            # we add everything that was computed in the logical domain
+            coeffs  += [i for i in expr.args if isinstance(i, _logical_partial_derivatives)]
+
+            vectors  = [i for i in expr.args if not(i in coeffs)]
+
+            a = S.One
+            if coeffs:
+                a = Mul(*coeffs)
+
+            b = S.One
+            if vectors:
+                b = Mul(*vectors)
+
+            return Mul(a, cls.eval(M, b))
+
+        elif isinstance(expr, (Field, TestFunction)):
+            return expr
+
+        elif isinstance(expr, _logical_partial_derivatives):
+            return expr
+
+        elif isinstance(expr, (VectorField, VectorTestFunction)):
+            raise NotImplementedError('')
+
+        elif isinstance(expr, dx):
+            det = DetJacobian(M)
+
+            arg = expr.args[0]
+            arg = cls.eval(M, arg)
+
+            if dim == 2:
+                return (dx2(M[1]) * dx1(arg) - dx1(M[1]) * dx2(arg)) / det
+
+            else:
+                raise NotImplementedError('')
+
+        elif isinstance(expr, dy):
+            det = DetJacobian(M)
+
+            arg = expr.args[0]
+            arg = cls.eval(M, arg)
+
+            if dim == 2:
+                return (-dx2(M[0]) * dx1(arg) + dx1(M[0]) * dx2(arg)) / det
+
+            else:
+                raise NotImplementedError('')
+
+        return cls(M, expr, evaluate=False)
+
+#==============================================================================
+def sympify_expression(expr):
+    """returns an expression where calls to partial derivatives are replaced by
+    sympy symbols."""
+    pass
+

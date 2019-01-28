@@ -83,18 +83,22 @@ class DifferentialOperator(LinearOperator):
 
         elif isinstance(expr, (Field, TestFunction)):
 
-            coord = cls.coordinate
-            coordinates = expr.space.coordinates
-            # 1d case
-            if not isinstance(coordinates, (list, tuple, Tuple)):
-                coordinates = [coordinates]
+            # TODO commented while dev logical expr
+#            coord = cls.coordinate
+#            coordinates = expr.space.coordinates
+#            # 1d case
+#            if not isinstance(coordinates, (list, tuple, Tuple)):
+#                coordinates = [coordinates]
+#
+#            names = [c.name for c in coordinates]
+#            if coord in names:
+#                return cls(expr, evaluate=False)
+#
+#            else:
+#                return S.Zero
 
-            names = [c.name for c in coordinates]
-            if coord in names:
-                return cls(expr, evaluate=False)
+            return cls(expr, evaluate=False)
 
-            else:
-                return S.Zero
 
         elif isinstance(expr, (VectorTestFunction, VectorField)):
             n = expr.shape[0]
@@ -104,18 +108,21 @@ class DifferentialOperator(LinearOperator):
 
         elif isinstance(expr, Indexed) and isinstance(expr.base, BasicMapping):
 
-            coord = cls.coordinate
-            coordinates = expr.base.coordinates
-            # 1d case
-            if not isinstance(coordinates, (list, tuple, Tuple)):
-                coordinates = [coordinates]
+            # TODO commented while dev logical expr
+#            coord = cls.coordinate
+#            coordinates = expr.base.coordinates
+#            # 1d case
+#            if not isinstance(coordinates, (list, tuple, Tuple)):
+#                coordinates = [coordinates]
+#
+#            names = [c.name for c in coordinates]
+#            if coord in names:
+#                return cls(expr, evaluate=False)
+#
+#            else:
+#                return S.Zero
 
-            names = [c.name for c in coordinates]
-            if coord in names:
-                return cls(expr, evaluate=False)
-
-            else:
-                return S.Zero
+            return cls(expr, evaluate=False)
 
         elif isinstance(expr, (list, tuple, Tuple)):
             args = [cls(i, evaluate=True) for i in expr]
@@ -203,6 +210,25 @@ class dz(DifferentialOperator):
     pass
 
 _partial_derivatives = (dx, dy, dz)
+# ...
+
+# ...
+class dx1(DifferentialOperator):
+    coordinate = 'x1'
+    grad_index = 0 # index in grad
+    pass
+
+class dx2(DifferentialOperator):
+    coordinate = 'x2'
+    grad_index = 1 # index in grad
+    pass
+
+class dx3(DifferentialOperator):
+    coordinate = 'x3'
+    grad_index = 2 # index in grad
+    pass
+
+_logical_partial_derivatives = (dx1, dx2, dx3)
 # ...
 
 # ...
