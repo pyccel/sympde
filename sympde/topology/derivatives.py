@@ -77,28 +77,11 @@ class DifferentialOperator(LinearOperator):
 
         expr = _args[0]
 
-        # TODO use coordinates for IndexedTestTrial?
         if isinstance(expr, (IndexedTestTrial, IndexedVectorField, DifferentialOperator)):
             return cls(expr, evaluate=False)
 
         elif isinstance(expr, (Field, TestFunction)):
-
-            # TODO commented while dev logical expr
-#            coord = cls.coordinate
-#            coordinates = expr.space.coordinates
-#            # 1d case
-#            if not isinstance(coordinates, (list, tuple, Tuple)):
-#                coordinates = [coordinates]
-#
-#            names = [c.name for c in coordinates]
-#            if coord in names:
-#                return cls(expr, evaluate=False)
-#
-#            else:
-#                return S.Zero
-
             return cls(expr, evaluate=False)
-
 
         elif isinstance(expr, (VectorTestFunction, VectorField)):
             n = expr.shape[0]
@@ -107,21 +90,6 @@ class DifferentialOperator(LinearOperator):
             return Matrix([args])
 
         elif isinstance(expr, Indexed) and isinstance(expr.base, BasicMapping):
-
-            # TODO commented while dev logical expr
-#            coord = cls.coordinate
-#            coordinates = expr.base.coordinates
-#            # 1d case
-#            if not isinstance(coordinates, (list, tuple, Tuple)):
-#                coordinates = [coordinates]
-#
-#            names = [c.name for c in coordinates]
-#            if coord in names:
-#                return cls(expr, evaluate=False)
-#
-#            else:
-#                return S.Zero
-
             return cls(expr, evaluate=False)
 
         elif isinstance(expr, (list, tuple, Tuple)):

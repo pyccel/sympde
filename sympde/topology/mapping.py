@@ -396,7 +396,7 @@ class LogicalExpr(CalculusFunction):
         elif isinstance(expr, _logical_partial_derivatives):
             return expr
 
-        elif isinstance(expr, (Field, TestFunction)):
+        elif isinstance(expr, (Field, TestFunction, IndexedTestTrial, IndexedVectorField)):
             return expr
 
         elif isinstance(expr, (VectorField, VectorTestFunction)):
@@ -517,6 +517,23 @@ class SymbolicExpr(CalculusFunction):
 
         elif isinstance(expr, _coeffs_registery):
             return expr
+
+        elif isinstance(expr, (list, tuple, Tuple)):
+            expr = [cls.eval(a, code=code) for a in expr]
+            return Tuple(*expr)
+
+        elif isinstance(expr, Matrix):
+
+            lines = []
+            n_row,n_col = expr.shape
+            for i_row in range(0,n_row):
+                line = []
+                for i_col in range(0,n_col):
+                    line.append(cls.eval(expr[i_row, i_col], code=code))
+
+                lines.append(line)
+
+            return Matrix(lines)
 
         elif isinstance(expr, (Field, TestFunction)):
             if code:

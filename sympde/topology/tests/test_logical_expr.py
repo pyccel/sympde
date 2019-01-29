@@ -158,8 +158,10 @@ def test_logical_expr_2d_1():
     alpha = Constant('alpha')
 
     V = FunctionSpace('V', domain)
+    W = VectorFunctionSpace('V', domain)
 
     u,v = [TestFunction(V, name=i) for i in ['u', 'v']]
+    w = VectorTestFunction(W, name='w')
 
     det_M = DetJacobian(M)
     print('det = ', det_M)
@@ -197,6 +199,13 @@ def test_logical_expr_2d_1():
 
     # ...
     expr = dx(dx(u))
+    expr = LogicalExpr(M, expr)
+    print(expr.subs(det_M, det))
+    print('')
+    # ...
+
+    # ...
+    expr = dx(w[0])
     expr = LogicalExpr(M, expr)
     print(expr.subs(det_M, det))
     print('')
