@@ -1355,3 +1355,87 @@ def get_max_partial_derivatives(expr, F=None):
         for k,v in dd.items():
             if v > d[k]: d[k] = v
     return d
+
+
+class LogicalGrad_1d(GradBasic):
+    """
+
+    Examples
+    ========
+
+    """
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        u = _args[0]
+
+        return dx1(u)
+
+class LogicalGrad_2d(GradBasic):
+    """
+
+    Examples
+    ========
+
+    """
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        u = _args[0]
+
+        if isinstance(u, Tuple):
+            n = len(u)
+            lines = []
+            for i in range(0, n):
+                line = [dx1(u)[0,i], dx2(u)[0,i]]
+                lines.append(line)
+
+            v = Matrix(lines)
+
+        else:
+            v = Tuple(dx1(u), dx2(u))
+
+        return v
+
+class LogicalGrad_3d(GradBasic):
+    """
+
+    Examples
+    ========
+
+    """
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        u = _args[0]
+
+        if isinstance(u, Tuple):
+            n = len(u)
+            lines = []
+            for i in range(0, n):
+                line = [dx1(u)[0,i], dx2(u)[0,i], dx3(u)[0,i]]
+                lines.append(line)
+
+            v = Matrix(lines)
+
+        else:
+            v = Tuple(dx1(u), dx2(u), dx3(u))
+
+        return v
+# ...
+

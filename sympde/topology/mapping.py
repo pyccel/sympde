@@ -25,6 +25,7 @@ from .derivatives import dx1, dx2, dx3
 from .derivatives import (Grad_1d, Div_1d,
                           Grad_2d, Curl_2d, Rot_2d, Div_2d,
                           Grad_3d, Curl_3d, Div_3d)
+from .derivatives import LogicalGrad_1d, LogicalGrad_2d, LogicalGrad_3d
 from .derivatives import _logical_partial_derivatives
 from .derivatives import get_atom_logical_derivatives, get_index_logical_derivatives_atom
 
@@ -259,17 +260,13 @@ class Jacobian(MappingApplication):
         F = Tuple(*F)
 
         if rdim == 1:
-            expr = Grad_1d(F)
+            expr = LogicalGrad_1d(F)
 
         elif rdim == 2:
-            expr = Grad_2d(F)
+            expr = LogicalGrad_2d(F)
 
         elif rdim == 3:
-            expr = Grad_3d(F)
-
-        expr = expr.subs(dx, dx1)
-        expr = expr.subs(dy, dx2)
-        expr = expr.subs(dz, dx3)
+            expr = LogicalGrad_3d(F)
 
         return expr
 
@@ -406,28 +403,64 @@ class LogicalExpr(CalculusFunction):
             raise NotImplementedError('')
 
         elif isinstance(expr, dx):
-            det = DetJacobian(M)
-
             arg = expr.args[0]
             arg = cls.eval(M, arg)
 
-            if dim == 2:
-                return (dx2(M[1]) * dx1(arg) - dx1(M[1]) * dx2(arg)) / det
+            # ...
+            if dim == 1:
+                lgrad_arg = LogicalGrad_1d(arg)
 
-            else:
-                raise NotImplementedError('')
+                if not isinstance(lgrad_arg, (list, tuple, Tuple, Matrix)):
+                    lgrad_arg = Tuple(lgrad_arg)
+
+            elif dim == 2:
+                lgrad_arg = LogicalGrad_2d(arg)
+
+            elif dim == 3:
+                lgrad_arg = LogicalGrad_3d(arg)
+
+            grad_arg = Covariant(M, lgrad_arg)
+            # ...
+
+            return grad_arg[0]
 
         elif isinstance(expr, dy):
-            det = DetJacobian(M)
-
             arg = expr.args[0]
             arg = cls.eval(M, arg)
 
-            if dim == 2:
-                return (-dx2(M[0]) * dx1(arg) + dx1(M[0]) * dx2(arg)) / det
+            # ...
+            if dim == 1:
+                lgrad_arg = LogicalGrad_1d(arg)
 
-            else:
-                raise NotImplementedError('')
+            elif dim == 2:
+                lgrad_arg = LogicalGrad_2d(arg)
+
+            elif dim == 3:
+                lgrad_arg = LogicalGrad_3d(arg)
+
+            grad_arg = Covariant(M, lgrad_arg)
+            # ...
+
+            return grad_arg[1]
+
+        elif isinstance(expr, dz):
+            arg = expr.args[0]
+            arg = cls.eval(M, arg)
+
+            # ...
+            if dim == 1:
+                lgrad_arg = LogicalGrad_1d(arg)
+
+            elif dim == 2:
+                lgrad_arg = LogicalGrad_2d(arg)
+
+            elif dim == 3:
+                lgrad_arg = LogicalGrad_3d(arg)
+
+            grad_arg = Covariant(M, lgrad_arg)
+            # ...
+
+            return grad_arg[2]
 
         return cls(M, expr, evaluate=False)
 
