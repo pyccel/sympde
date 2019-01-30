@@ -15,8 +15,8 @@ from sympde.topology import Trace, trace_0, trace_1
 from sympde.calculus import grad, dot
 from sympde.core.utils import random_string
 
-from .expr import FormCall, BilinearForm, LinearForm
-from .expr import linearize
+from .form import FormCall, BilinearForm, LinearForm
+from .form import linearize
 from .errors import ( UnconsistentLhsError, UnconsistentRhsError,
                       UnconsistentArgumentsError, UnconsistentBCError )
 
