@@ -123,6 +123,7 @@ def _sanitize_arguments(arguments, is_bilinear=False, is_linear=False):
 
 #==============================================================================
 class BasicExpr(Expr):
+    is_Function = True
 
     # TODO use .atoms
     @property
@@ -140,9 +141,15 @@ class BasicExpr(Expr):
 
 #==============================================================================
 class LinearExpr(BasicExpr):
-    is_Function = True
 
     def __new__(cls, arguments, expr, check=False):
+        # ... this is a hack to avoid having expressions with integrals, a
+        #     consequence of using xreplace
+        integral = expr.atoms(BasicIntegral)
+        if integral:
+            expr = expr._args[0].expr
+        # ...
+
         # ...
         if check and not is_linear_form(expr, arguments):
             msg = '> Expression is not linear'
@@ -161,9 +168,7 @@ class LinearExpr(BasicExpr):
         return self._args[1]
 
     def __call__(self, *args):
-        args = Tuple(*args)
-
-        return self.expr.xreplace(dict(list(zip(self.variables, args))))
+        return Call(self, args)
 
 #==============================================================================
 class BilinearExpr(BasicExpr):
@@ -175,6 +180,13 @@ class BilinearExpr(BasicExpr):
 
         if not(len(arguments) == 2):
             raise ValueError('Expecting a couple (test, trial)')
+        # ...
+
+        # ... this is a hack to avoid having expressions with integrals, a
+        #     consequence of using xreplace
+        integral = expr.atoms(BasicIntegral)
+        if integral:
+            expr = expr._args[0].expr
         # ...
 
         # ...
@@ -195,21 +207,7 @@ class BilinearExpr(BasicExpr):
         return self._args[1]
 
     def __call__(self, *args):
-        assert(len(args) == 2)
-
-        left,right = args
-        if not is_sequence(left):
-            left = [left]
-
-        if not is_sequence(right):
-            right = [right]
-
-        args = Tuple(*left, *right)
-
-        variables = Tuple(*self.variables[0], *self.variables[1])
-
-        return self.expr.xreplace(dict(list(zip(variables, args))))
-
+        return Call(self, args)
 
 #==============================================================================
 # TODO to be moved
@@ -292,6 +290,7 @@ class BoundaryIntegral(BasicIntegral):
 
 #==============================================================================
 class BasicForm(Expr):
+    is_Function = True
 
     # TODO use .atoms
     @property
@@ -309,7 +308,6 @@ class BasicForm(Expr):
 
 #==============================================================================
 class LinearForm(BasicForm):
-    is_Function = True
 
     def __new__(cls, arguments, expr):
         if not isinstance(expr, LinearExpr):
@@ -317,24 +315,20 @@ class LinearForm(BasicForm):
 
         assert(isinstance(expr, LinearExpr))
 
-        obj = Basic.__new__(cls, BasicIntegral(expr))
-
-        obj._expr = expr
-
-        return obj
+        variables = expr.variables
+        expr = BasicIntegral(expr)
+        return Basic.__new__(cls, variables, expr)
 
     @property
     def variables(self):
-        return self.expr.variables
+        return self._args[0]
 
     @property
     def expr(self):
-        return self._expr
+        return self._args[1]
 
     def __call__(self, *args):
-        args = Tuple(*args)
-
-        return self.expr.xreplace(dict(list(zip(self.variables, args))))
+        return Call(self, args)
 
 #==============================================================================
 class BilinearForm(BasicForm):
@@ -346,44 +340,28 @@ class BilinearForm(BasicForm):
         assert(isinstance(expr, BilinearExpr))
 
         variables = expr.variables
-        obj = Basic.__new__(cls, BasicIntegral(expr))
-
-        obj._expr = expr
-
-        return obj
+        expr = BasicIntegral(expr)
+        return Basic.__new__(cls, variables, expr)
 
     @property
     def variables(self):
-        return self.expr.variables
+        return self._args[0]
 
     @property
     def expr(self):
-        return self._expr
+        return self._args[1]
 
     def __call__(self, *args):
-        assert(len(args) == 2)
-
-        left,right = args
-        if not is_sequence(left):
-            left = [left]
-
-        if not is_sequence(right):
-            right = [right]
-
-        args = Tuple(*left, *right)
-
-        variables = Tuple(*self.variables[0], *self.variables[1])
-
-        return self.expr.xreplace(dict(list(zip(variables, args))))
-
+        return Call(self, args)
 
 #==============================================================================
+# default behavior is not to evaluate the call
 class Call(CalculusFunction):
 
     def __new__(cls, *args, **options):
         # (Try to) sympify args first
 
-        if options.pop('evaluate', True):
+        if options.pop('evaluate', False):
             r = cls.eval(*args)
         else:
             r = None
@@ -420,5 +398,24 @@ class Call(CalculusFunction):
                                    is_linear=is_linear,
                                    is_bilinear=is_bilinear)
 
+        if is_linear:
+            args = Tuple(*args)
+            variables = expr.variables
+            return expr.xreplace(dict(list(zip(variables, args))))
+
+        if is_bilinear:
+            left,right = args
+            if not is_sequence(left):
+                left = [left]
+
+            if not is_sequence(right):
+                right = [right]
+
+            args = Tuple(*left, *right)
+
+            variables = expr.variables
+            variables = Tuple(*variables[0], *variables[1])
+
+            return expr.xreplace(dict(list(zip(variables, args))))
 
         return cls(expr, args, evaluate=False)

@@ -202,9 +202,76 @@ def test_call_linear_expr_2d_1():
     # ...
     l = LinearExpr(v, x*y*v)
     print(Call(l, v1))
+    print(Call(l, v1, evaluate=True))
+    print(l(v1))
     print('')
     # ...
 
+#==============================================================================
+def test_call_bilinear_expr_2d_1():
+
+    domain = Domain('Omega', dim=2)
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    V = FunctionSpace('V', domain)
+
+    u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    # ...
+    a = BilinearExpr((u,v), u*v)
+    print(Call(a, (u1,v1)))
+    print(Call(a, (u1,v1), evaluate=True))
+    print(a(u1,v1))
+    print('')
+    # ...
+
+#==============================================================================
+def test_call_linear_form_2d_1():
+
+    domain = Domain('Omega', dim=2)
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    V = FunctionSpace('V', domain)
+
+    u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    # ...
+    l = LinearForm(v, x*y*v)
+    print(Call(l, v1))
+    print(Call(l, v1, evaluate=True))
+    print(l(v1))
+    print('')
+    # ...
+
+#==============================================================================
+def test_call_bilinear_form_2d_1():
+
+    domain = Domain('Omega', dim=2)
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    V = FunctionSpace('V', domain)
+
+    u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    # ...
+    a = BilinearForm((u,v), u*v)
+    print(Call(a, (u1,v1)))
+    print(Call(a, (u1,v1), evaluate=True))
+    print(a(u1,v1))
+    print('')
+    # ...
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
@@ -218,14 +285,21 @@ def teardown_function():
     from sympy import cache
     cache.clear_cache()
 
-#test_linear_expr_2d_1()
-#print('================')
-#test_bilinear_expr_2d_1()
-#print('================')
-#test_integral_2d_1()
-#print('================')
-#test_bilinear_form_2d_1()
-#print('================')
-#test_linear_form_2d_1()
-#print('================')
+test_linear_expr_2d_1()
+print('================')
+test_bilinear_expr_2d_1()
+print('================')
+test_integral_2d_1()
+print('================')
+test_bilinear_form_2d_1()
+print('================')
+test_linear_form_2d_1()
+print('================')
 test_call_linear_expr_2d_1()
+print('================')
+test_call_bilinear_expr_2d_1()
+print('================')
+test_call_linear_form_2d_1()
+print('================')
+test_call_bilinear_form_2d_1()
+
