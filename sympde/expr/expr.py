@@ -167,8 +167,8 @@ class LinearExpr(BasicExpr):
     def expr(self):
         return self._args[1]
 
-    def __call__(self, *args):
-        return Call(self, args)
+    def __call__(self, *args, evaluate=False):
+        return Call(self, args, evaluate=evaluate)
 
 #==============================================================================
 class BilinearExpr(BasicExpr):
@@ -206,8 +206,8 @@ class BilinearExpr(BasicExpr):
     def expr(self):
         return self._args[1]
 
-    def __call__(self, *args):
-        return Call(self, args)
+    def __call__(self, *args, evaluate=False):
+        return Call(self, args, evaluate=evaluate)
 
 #==============================================================================
 # TODO to be moved
@@ -327,8 +327,8 @@ class LinearForm(BasicForm):
     def expr(self):
         return self._args[1]
 
-    def __call__(self, *args):
-        return Call(self, args)
+    def __call__(self, *args, evaluate=False):
+        return Call(self, args, evaluate=evaluate)
 
 #==============================================================================
 class BilinearForm(BasicForm):
@@ -351,8 +351,8 @@ class BilinearForm(BasicForm):
     def expr(self):
         return self._args[1]
 
-    def __call__(self, *args):
-        return Call(self, args)
+    def __call__(self, *args, evaluate=False):
+        return Call(self, args, evaluate=evaluate)
 
 #==============================================================================
 # default behavior is not to evaluate the call

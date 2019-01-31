@@ -204,6 +204,7 @@ def test_call_linear_expr_2d_1():
     print(Call(l, v1))
     print(Call(l, v1, evaluate=True))
     print(l(v1))
+    print(l(v1, evaluate=True))
     print('')
     # ...
 
@@ -226,6 +227,7 @@ def test_call_bilinear_expr_2d_1():
     print(Call(a, (u1,v1)))
     print(Call(a, (u1,v1), evaluate=True))
     print(a(u1,v1))
+    print(a(u1,v1, evaluate=True))
     print('')
     # ...
 
@@ -248,6 +250,7 @@ def test_call_linear_form_2d_1():
     print(Call(l, v1))
     print(Call(l, v1, evaluate=True))
     print(l(v1))
+    print(l(v1, evaluate=True))
     print('')
     # ...
 
@@ -270,6 +273,7 @@ def test_call_bilinear_form_2d_1():
     print(Call(a, (u1,v1)))
     print(Call(a, (u1,v1), evaluate=True))
     print(a(u1,v1))
+    print(a(u1,v1, evaluate=True))
     print('')
     # ...
 
