@@ -376,3 +376,49 @@ class BilinearForm(BasicForm):
 
         return self.expr.xreplace(dict(list(zip(variables, args))))
 
+
+#==============================================================================
+class Call(CalculusFunction):
+
+    def __new__(cls, *args, **options):
+        # (Try to) sympify args first
+
+        if options.pop('evaluate', True):
+            r = cls.eval(*args)
+        else:
+            r = None
+
+        if r is None:
+            return Basic.__new__(cls, *args, **options)
+        else:
+            return r
+
+    def __getitem__(self, indices, **kw_args):
+        if is_sequence(indices):
+            # Special case needed because M[*my_tuple] is a syntax error.
+            return Indexed(self, *indices, **kw_args)
+        else:
+            return Indexed(self, indices, **kw_args)
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        if not len(_args) == 2:
+            raise ValueError('Expecting two arguments')
+
+        expr = _args[0]
+        args = _args[1]
+
+        is_linear   = isinstance(expr, (LinearExpr, LinearForm))
+        is_bilinear = isinstance(expr, (BilinearExpr, BilinearForm))
+
+        args = _sanitize_arguments(args,
+                                   is_linear=is_linear,
+                                   is_bilinear=is_bilinear)
+
+
+        return cls(expr, args, evaluate=False)

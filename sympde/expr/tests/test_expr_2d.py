@@ -1,9 +1,5 @@
 # coding: utf-8
 
-# TODO - split the asserts between algebraic and weak formulations ones
-#      - add assert for grad in vector case
-# TODO: - __call__ examples are not working anymore
-
 import pytest
 
 from sympy import Symbol
@@ -38,6 +34,7 @@ from sympde.topology import Area
 from sympde.expr import LinearExpr, BilinearExpr
 from sympde.expr.expr import LinearForm, BilinearForm
 from sympde.expr.expr import DomainIntegral, BoundaryIntegral
+from sympde.expr.expr import Call
 from sympde.expr import atomize
 from sympde.expr import evaluate
 from sympde.expr import Mass, Stiffness, Advection, AdvectionT
@@ -169,6 +166,47 @@ def test_bilinear_form_2d_1():
     # ...
 
 #==============================================================================
+def test_linear_form_2d_1():
+
+    domain = Domain('Omega', dim=2)
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    V = FunctionSpace('V', domain)
+
+    u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    # ...
+    l = LinearForm(v, x*y*v)
+    print(l)
+    print('')
+    # ...
+
+#==============================================================================
+def test_call_linear_expr_2d_1():
+
+    domain = Domain('Omega', dim=2)
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    V = FunctionSpace('V', domain)
+
+    u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    # ...
+    l = LinearExpr(v, x*y*v)
+    print(Call(l, v1))
+    print('')
+    # ...
+
+
+#==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
 
@@ -180,10 +218,14 @@ def teardown_function():
     from sympy import cache
     cache.clear_cache()
 
-test_linear_expr_2d_1()
-print('================')
-test_bilinear_expr_2d_1()
-print('================')
-test_integral_2d_1()
-print('================')
-test_bilinear_form_2d_1()
+#test_linear_expr_2d_1()
+#print('================')
+#test_bilinear_expr_2d_1()
+#print('================')
+#test_integral_2d_1()
+#print('================')
+#test_bilinear_form_2d_1()
+#print('================')
+#test_linear_form_2d_1()
+#print('================')
+test_call_linear_expr_2d_1()
