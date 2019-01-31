@@ -213,7 +213,7 @@ class BilinearExpr(BasicExpr):
 
 #==============================================================================
 # TODO to be moved
-class NewIntegral(CalculusFunction):
+class BasicIntegral(CalculusFunction):
 
     def __new__(cls, *args, **options):
         # (Try to) sympify args first
@@ -247,8 +247,48 @@ class NewIntegral(CalculusFunction):
 
         expr = _args[0]
 
+        boundary = list(expr.atoms(Boundary))
+        if boundary:
+            return BoundaryIntegral(expr)
+
+        else:
+            return DomainIntegral(expr)
+
+#==============================================================================
+# TODO to be moved
+class DomainIntegral(BasicIntegral):
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        if not len(_args) == 1:
+            raise ValueError('Expecting one argument')
+
+        expr = _args[0]
+
         return cls(expr, evaluate=False)
 
+#==============================================================================
+# TODO to be moved
+class BoundaryIntegral(BasicIntegral):
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        if not len(_args) == 1:
+            raise ValueError('Expecting one argument')
+
+        expr = _args[0]
+
+        return cls(expr, evaluate=False)
 
 #==============================================================================
 class BasicForm(Expr):
@@ -268,24 +308,28 @@ class BasicForm(Expr):
         return list(set(ls))
 
 #==============================================================================
-class NewLinearForm(BasicForm):
+class LinearForm(BasicForm):
     is_Function = True
 
     def __new__(cls, arguments, expr):
+        if not isinstance(expr, LinearExpr):
+            expr = LinearExpr(arguments, expr)
+
         assert(isinstance(expr, LinearExpr))
 
-        variables = expr.variables
-        expr = NewIntegral(expr)
+        obj = Basic.__new__(cls, BasicIntegral(expr))
 
-        return Basic.__new__(cls, args, expr)
+        obj._expr = expr
+
+        return obj
 
     @property
     def variables(self):
-        return self._args[0]
+        return self.expr.variables
 
     @property
     def expr(self):
-        return self._args[1]
+        return self._expr
 
     def __call__(self, *args):
         args = Tuple(*args)
@@ -293,23 +337,28 @@ class NewLinearForm(BasicForm):
         return self.expr.xreplace(dict(list(zip(self.variables, args))))
 
 #==============================================================================
-class NewBilinearForm(BasicForm):
+class BilinearForm(BasicForm):
 
     def __new__(cls, arguments, expr):
+        if not isinstance(expr, BilinearExpr):
+            expr = BilinearExpr(arguments, expr)
+
         assert(isinstance(expr, BilinearExpr))
 
         variables = expr.variables
-        expr = NewIntegral(expr)
+        obj = Basic.__new__(cls, BasicIntegral(expr))
 
-        return Basic.__new__(cls, args, expr)
+        obj._expr = expr
+
+        return obj
 
     @property
     def variables(self):
-        return self._args[0]
+        return self.expr.variables
 
     @property
     def expr(self):
-        return self._args[1]
+        return self._expr
 
     def __call__(self, *args):
         assert(len(args) == 2)

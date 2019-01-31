@@ -36,8 +36,8 @@ from sympde.topology import ElementDomain
 from sympde.topology import Area
 
 from sympde.expr import LinearExpr, BilinearExpr
-from sympde.expr import NewLinearForm, NewBilinearForm
-from sympde.expr import NewIntegral
+from sympde.expr.expr import LinearForm, BilinearForm
+from sympde.expr.expr import DomainIntegral, BoundaryIntegral
 from sympde.expr import atomize
 from sympde.expr import evaluate
 from sympde.expr import Mass, Stiffness, Advection, AdvectionT
@@ -136,7 +136,7 @@ def test_integral_2d_1():
     # ...
     a = BilinearExpr((u,v), u*v)
     print(a)
-    a = NewIntegral(a)
+    a = DomainIntegral(a)
     print(a)
     print('')
     # ...
@@ -144,8 +144,28 @@ def test_integral_2d_1():
     # ...
     l = LinearExpr(v, x*y*v)
     print(l)
-    l = NewIntegral(l)
+    l = DomainIntegral(l)
     print(l)
+    # ...
+
+#==============================================================================
+def test_bilinear_form_2d_1():
+
+    domain = Domain('Omega', dim=2)
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    V = FunctionSpace('V', domain)
+
+    u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    # ...
+    a = BilinearForm((u,v), u*v)
+    print(a)
+    print('')
     # ...
 
 #==============================================================================
@@ -160,8 +180,10 @@ def teardown_function():
     from sympy import cache
     cache.clear_cache()
 
-#test_linear_expr_2d_1()
-#print('================')
-#test_bilinear_expr_2d_1()
-#print('================')
+test_linear_expr_2d_1()
+print('================')
+test_bilinear_expr_2d_1()
+print('================')
 test_integral_2d_1()
+print('================')
+test_bilinear_form_2d_1()
