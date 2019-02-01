@@ -300,8 +300,17 @@ def test_call_linear_form_2d_1():
 
     # ...
     l1 = LinearForm(v1, x*y*v1)
-    print(l1)
     l = LinearForm(v, l1(v))
+    print(l)
+    print('')
+    # ...
+
+    # ...
+    g = Tuple(x,y)
+    l1 = LinearForm(v1, x*y*v1)
+    l2 = LinearForm(v2, dot(grad(v2), g))
+
+    l = LinearForm(v, l1(v) + l2(v))
     print(l)
     print('')
     # ...
@@ -333,6 +342,91 @@ def test_call_bilinear_form_2d_1():
     a1 = BilinearForm((u1,v1), u1*v1)
     a = BilinearForm((u,v), a1(u,v))
     print(a)
+    print('')
+    # ...
+
+    # ...
+    a1 = BilinearForm((u1,v1), u1*v1)
+    a2 = BilinearForm((u2,v2), dot(grad(u2), grad(v2)))
+    a = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v))
+    print(a)
+    print('')
+    # ...
+
+#==============================================================================
+def test_terminal_expr_linear_2d_1():
+
+    domain = Domain('Omega', dim=2)
+    B1 = Boundary(r'\Gamma_1', domain)
+
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    V = FunctionSpace('V', domain)
+
+    u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    # ...
+    l = LinearForm(v, x*y*v)
+    print(TerminalExpr(l))
+    print('')
+    # ...
+
+    # ...
+    l = LinearForm(v, x*y*v + v)
+    print(TerminalExpr(l))
+    print('')
+    # ...
+
+    # ...
+    g = Tuple(x**2, y**2)
+    l = LinearForm(v, v*trace_1(g, B1))
+    print(TerminalExpr(l))
+    print('')
+    # ...
+
+    # ...
+    g = Tuple(x**2, y**2)
+    l = LinearForm(v, v*trace_1(g, B1) + x*y*v)
+    print(TerminalExpr(l))
+    print('')
+    # ...
+
+    # ...
+    l1 = LinearForm(v1, x*y*v1)
+    l = LinearForm(v, l1(v))
+    print(TerminalExpr(l))
+    print('')
+    # ...
+
+    # ...
+    g = Tuple(x,y)
+    l1 = LinearForm(v1, x*y*v1)
+    l2 = LinearForm(v2, dot(grad(v2), g))
+
+    l = LinearForm(v, l1(v) + l2(v))
+    print(TerminalExpr(l))
+    print('')
+    # ...
+
+    # ...
+    l1 = LinearForm(v1, x*y*v1)
+    l2 = LinearForm(v1, v1)
+    l = LinearForm(v, l1(v) + kappa*l2(v))
+    print(TerminalExpr(l))
+    print('')
+    # ...
+
+    # ...
+    g = Tuple(x**2, y**2)
+    l1 = LinearForm(v1, x*y*v1)
+    l2 = LinearForm(v1, v1)
+    l3 = LinearForm(v, v*trace_1(g, B1))
+    l = LinearForm(v, l1(v) + kappa*l2(v) + mu*l3(v))
+    print(TerminalExpr(l))
     print('')
     # ...
 
@@ -389,62 +483,30 @@ def test_terminal_expr_bilinear_2d_1():
     print('')
     # ...
 
-#==============================================================================
-def test_terminal_expr_linear_2d_1():
-
-    domain = Domain('Omega', dim=2)
-    B1 = Boundary(r'\Gamma_1', domain)
-
-    x,y = domain.coordinates
-
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
-
-    V = FunctionSpace('V', domain)
-
-    u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
-
     # ...
-    l = LinearForm(v, x*y*v)
-    print(TerminalExpr(l))
+    a1 = BilinearForm((u1,v1), u1*v1)
+    a2 = BilinearForm((u2,v2), dot(grad(u2), grad(v2)))
+    a = BilinearForm((u,v), a1(u,v) + a2(u,v))
+    print(TerminalExpr(a))
     print('')
     # ...
 
     # ...
-    l = LinearForm(v, x*y*v + v)
-    print(TerminalExpr(l))
+    a1 = BilinearForm((u1,v1), u1*v1)
+    a2 = BilinearForm((u2,v2), dot(grad(u2), grad(v2)))
+    a = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v))
+    print(TerminalExpr(a))
     print('')
     # ...
 
     # ...
-    g = Tuple(x**2, y**2)
-    l = LinearForm(v, v*trace_1(g, B1))
-    print(TerminalExpr(l))
+    a1 = BilinearForm((u1,v1), u1*v1)
+    a2 = BilinearForm((u2,v2), dot(grad(u2), grad(v2)))
+    a3 = BilinearForm((u,v), v*trace_1(grad(u), B1))
+    a = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v) + mu*a3(u,v))
+    print(TerminalExpr(a))
     print('')
     # ...
-
-    # ...
-    g = Tuple(x**2, y**2)
-    l = LinearForm(v, v*trace_1(g, B1) + x*y*v)
-    print(TerminalExpr(l))
-    print('')
-    # ...
-
-    # ...
-    l1 = LinearForm(v1, x*y*v1)
-    l = LinearForm(v, l1(v))
-    print(TerminalExpr(l))
-    print('')
-    # ...
-
-#    # ...
-#    l1 = LinearForm(v1, x*y*v1)
-#    l2 = LinearForm(v1, v1)
-#    l = LinearForm(v, l1(v) + kappa*l2(v))
-#    print(TerminalExpr(l))
-#    print('')
-#    # ...
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
@@ -476,6 +538,6 @@ def teardown_function():
 #print('================')
 #test_call_bilinear_form_2d_1()
 #print('================')
-test_terminal_expr_linear_2d_1()
-print('================')
-test_terminal_expr_bilinear_2d_1()
+#test_terminal_expr_linear_2d_1()
+#print('================')
+#test_terminal_expr_bilinear_2d_1()

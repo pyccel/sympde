@@ -394,9 +394,10 @@ class LinearForm(BasicForm):
             newexpr = call_expr(*args, evaluate=True)
             expr = expr.subs(call, newexpr)
 
-        if calls:
-            # take the BasicExpr
-            expr = expr.expr._args[0]
+        # take the BasicExpr
+        forms = list(expr.atoms(LinearForm))
+        for form in forms:
+            expr = expr.subs(form, form.expr._args[0])
         # ...
 
         if not isinstance(expr, LinearExpr):
@@ -447,9 +448,10 @@ class BilinearForm(BasicForm):
             newexpr = call_expr(*args, evaluate=True)
             expr = expr.subs(call, newexpr)
 
-        if calls:
-            # take the BasicExpr
-            expr = expr.expr._args[0]
+        # take the BasicExpr
+        forms = list(expr.atoms(BilinearForm))
+        for form in forms:
+            expr = expr.subs(form, form.expr._args[0])
         # ...
 
         if not isinstance(expr, BilinearExpr):
@@ -750,11 +752,11 @@ class TerminalExpr(CalculusFunction):
         dim    = kwargs.pop('dim', None)
 
         if isinstance(expr, Add):
-            args = [cls.eval(a) for a in expr.args]
+            args = [cls.eval(a, dim=dim) for a in expr.args]
             return Add(*args)
 
         elif isinstance(expr, Mul):
-            args = [cls.eval(a) for a in expr.args]
+            args = [cls.eval(a, dim=dim) for a in expr.args]
             return Mul(*args)
 
         elif isinstance(expr, BasicForm):
@@ -830,6 +832,34 @@ class TerminalExpr(CalculusFunction):
 
             args = [cls.eval(i, dim=dim) for i in expr.args]
             return new(*args)
+
+        elif isinstance(expr, Trace):
+            # TODO treate different spaces
+            if expr.order == 0:
+                return cls.eval(expr.expr, dim=dim)
+
+            elif expr.order == 1:
+                # TODO give a name to normal vector
+                normal_vector_name = 'n'
+                n = NormalVector(normal_vector_name)
+                M = cls.eval(expr.expr, dim=dim)
+                if dim == 1:
+                    return M
+                else:
+                    if isinstance(M, (Add, Mul)):
+                        ls = M.atoms(Tuple)
+                        for i in ls:
+                            M = M.subs(i, Matrix(i))
+                        M = simplify(M)
+
+                    e = 0
+                    for i in range(0, dim):
+                        e += M[i] * n[i]
+                    return e
+
+            else:
+                raise ValueError('> Only traces of order 0 and 1 are available')
+
 
         elif isinstance(expr, Matrix):
             n,m = expr.shape
