@@ -46,6 +46,7 @@ from sympde.topology.derivatives import (Grad_1d, Div_1d,
 from sympde.topology.derivatives import Bracket_2d
 from sympde.topology.derivatives import Laplace_1d, Laplace_2d, Laplace_3d
 from sympde.topology.derivatives import Hessian_1d, Hessian_2d, Hessian_3d
+from sympde.topology.space import BasicFunctionSpace
 from sympde.topology.space import FunctionSpace
 from sympde.topology.space import ProductSpace
 from sympde.topology.space import TestFunction
@@ -124,6 +125,8 @@ def _sanitize_arguments(arguments, is_bilinear=False, is_linear=False):
 #==============================================================================
 class BasicExpr(Expr):
     is_Function = True
+    is_linear   = False
+    is_bilinear = False
 
     # TODO use .atoms
     @property
@@ -141,6 +144,7 @@ class BasicExpr(Expr):
 
 #==============================================================================
 class LinearExpr(BasicExpr):
+    is_linear = True
 
     def __new__(cls, arguments, expr, check=False):
         # ... this is a hack to avoid having expressions with integrals, a
@@ -172,6 +176,7 @@ class LinearExpr(BasicExpr):
 
 #==============================================================================
 class BilinearExpr(BasicExpr):
+    is_bilinear = True
 
     def __new__(cls, arguments, expr, check=False):
         # ...
@@ -210,7 +215,8 @@ class BilinearExpr(BasicExpr):
         return Call(self, args, evaluate=evaluate)
 
 #==============================================================================
-# TODO to be moved
+# TODO: - to be moved
+#       - Union of Domain and Boundary
 class BasicIntegral(CalculusFunction):
 
     def __new__(cls, *args, **options):
@@ -244,6 +250,18 @@ class BasicIntegral(CalculusFunction):
             raise ValueError('Expecting one argument')
 
         expr = _args[0]
+
+        if isinstance(expr, LinearExpr):
+            if isinstance(expr.expr, Add):
+                args = [cls.eval(LinearExpr(expr.variables, a))
+                        for a in expr.expr.args]
+                return Add(*args)
+
+        elif isinstance(expr, BilinearExpr):
+            if isinstance(expr.expr, Add):
+                args = [cls.eval(BilinearExpr(expr.variables, a))
+                        for a in expr.expr.args]
+                return Add(*args)
 
         boundary = list(expr.atoms(Boundary))
         if boundary:
@@ -286,11 +304,18 @@ class BoundaryIntegral(BasicIntegral):
 
         expr = _args[0]
 
+        boundary = list(expr.atoms(Boundary))
+        if len(boundary) > 1:
+            raise ValueError('Expecting one single boundary')
+
         return cls(expr, evaluate=False)
 
 #==============================================================================
+# TODO check unicity of domain in __new__
 class BasicForm(Expr):
     is_Function = True
+    is_linear   = False
+    is_bilinear = False
 
     # TODO use .atoms
     @property
@@ -306,8 +331,34 @@ class BasicForm(Expr):
         # no redanduncy
         return list(set(ls))
 
+    @property
+    def domain(self):
+        if isinstance(self.expr, BoundaryIntegral):
+            boundary = list(self.expr.atoms(Boundary))
+            return boundary[0]
+
+        elif isinstance(self.expr, DomainIntegral):
+            # ...
+            if self.is_linear:
+                spaces = [u.space for u in self.variables]
+
+            elif self.is_bilinear:
+                spaces  = [u.space for u in self.variables[0]]
+                spaces += [u.space for u in self.variables[1]]
+
+            else:
+                raise TypeError('Expecting linear or bilinear form')
+            # ...
+
+            domains = [V.domain for V in spaces]
+            return domains[0]
+
+        else:
+            raise TypeError('Expecting a Boundary or Domain integral')
+
 #==============================================================================
 class LinearForm(BasicForm):
+    is_linear = True
 
     def __new__(cls, arguments, expr):
         if not isinstance(expr, LinearExpr):
@@ -332,6 +383,7 @@ class LinearForm(BasicForm):
 
 #==============================================================================
 class BilinearForm(BasicForm):
+    is_bilinear = True
 
     def __new__(cls, arguments, expr):
         if not isinstance(expr, BilinearExpr):
