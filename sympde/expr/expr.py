@@ -355,6 +355,8 @@ class BasicForm(Expr):
     is_Function = True
     is_linear   = False
     is_bilinear = False
+    _domain     = None
+    _dim        = None
 
     # TODO use .atoms
     @property
@@ -372,7 +374,11 @@ class BasicForm(Expr):
 
     @property
     def domain(self):
-        return _get_domain(self.expr)
+        return self._domain
+
+    @property
+    def dim(self):
+        return self._dim
 
 #==============================================================================
 class LinearForm(BasicForm):
@@ -386,7 +392,21 @@ class LinearForm(BasicForm):
 
         variables = expr.variables
         expr = BasicIntegral(expr)
-        return Basic.__new__(cls, variables, expr)
+        obj = Basic.__new__(cls, variables, expr)
+
+        # ...
+        domain = _get_domain(expr)
+        if is_sequence(domain):
+            dim = domain[0].dim
+
+        else:
+            dim = domain.dim
+
+        obj._domain = domain
+        obj._dim = dim
+        # ...
+
+        return obj
 
     @property
     def variables(self):
@@ -411,7 +431,21 @@ class BilinearForm(BasicForm):
 
         variables = expr.variables
         expr = BasicIntegral(expr)
-        return Basic.__new__(cls, variables, expr)
+        obj = Basic.__new__(cls, variables, expr)
+
+        # ...
+        domain = _get_domain(expr)
+        if is_sequence(domain):
+            dim = domain[0].dim
+
+        else:
+            dim = domain.dim
+
+        obj._domain = domain
+        obj._dim = dim
+        # ...
+
+        return obj
 
     @property
     def variables(self):
@@ -541,7 +575,7 @@ def _init_matrix(expr):
         M = Matrix(lines)
         # ...
 
-        return  M, test_indices
+        return  M, test_indices, None
 
     else:
         raise TypeError('Expecting BasicExpr or BasicForm')
@@ -619,6 +653,34 @@ def _to_matrix_linear_form(expr, M, test_indices):
 
     return M
 
+def _to_matrix_form(expr, M, test_indices, trial_indices):
+    if trial_indices is None:
+        return _to_matrix_linear_form(expr, M, test_indices)
+
+    else:
+        return _to_matrix_bilinear_form(expr, M, test_indices, trial_indices)
+
+#==============================================================================
+class KernelExpression(Basic):
+    def __new__(cls, target, expr):
+        return Basic.__new__(cls, target, expr)
+
+    @property
+    def target(self):
+        return self._args[0]
+
+    @property
+    def expr(self):
+        return self._args[1]
+
+#==============================================================================
+class DomainExpression(KernelExpression):
+    pass
+
+#==============================================================================
+class BoundaryExpression(KernelExpression):
+    pass
+
 
 #==============================================================================
 class TerminalExpr(CalculusFunction):
@@ -668,23 +730,60 @@ class TerminalExpr(CalculusFunction):
             return Mul(*args)
 
         elif isinstance(expr, BasicForm):
-            dim = expr.domain.dim
+            # ...
+            dim = expr.dim
             is_bilinear = expr.is_bilinear
 
-            newexpr = cls.eval(expr.expr, dim=dim)
+            domain = expr.domain
+            if not is_sequence(domain):
+                domain = [domain]
+            # ...
 
-            if is_bilinear:
-                M, test_indices, trial_indices = _init_matrix(expr)
-                M = _to_matrix_bilinear_form(newexpr, M, test_indices, trial_indices)
+            # ...
+            d_expr = {}
+            for d in domain:
+                d_expr[d] = S.Zero
+            # ...
+
+            # ...
+            if isinstance(expr.expr, Add):
+                for a in expr.expr.args:
+                    newexpr = cls.eval(a, dim=dim)
+                    domain = _get_domain(a)
+                    d_expr[domain] += newexpr
 
             else:
-                M, test_indices = _init_matrix(expr)
-                M = _to_matrix_linear_form(newexpr, M, test_indices)
+                newexpr = cls.eval(expr.expr, dim=dim)
+                domain = _get_domain(expr.expr)
+                d_expr[domain] += newexpr
+            # ...
 
-            n,m = M.shape
-            if n*m == 1: M = M[0,0]
+            # ...
+            d_new = {}
+            for domain, newexpr in d_expr.items():
 
-            return M
+                M, test_indices, trial_indices = _init_matrix(expr)
+                M = _to_matrix_form(newexpr, M, test_indices, trial_indices)
+
+                n,m = M.shape
+                if n*m == 1: M = M[0,0]
+
+                d_new[domain] = M
+            # ...
+
+            # ...
+            ls = []
+            for domain, newexpr in d_new.items():
+                if isinstance(domain, Boundary):
+                    ls += [BoundaryExpression(domain, newexpr)]
+
+                elif isinstance(domain, BasicDomain):
+                    ls += [DomainExpression(domain, newexpr)]
+                else:
+                    raise TypeError('')
+            # ...
+
+            return ls
 
         elif isinstance(expr, BasicIntegral):
             if dim is None:

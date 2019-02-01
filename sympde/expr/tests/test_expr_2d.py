@@ -325,6 +325,8 @@ def test_call_bilinear_form_2d_1():
 def test_terminal_expr_bilinear_2d_1():
 
     domain = Domain('Omega', dim=2)
+    B1 = Boundary(r'\Gamma_1', domain)
+
     x,y = domain.coordinates
 
     kappa = Constant('kappa', is_real=True)
@@ -349,6 +351,12 @@ def test_terminal_expr_bilinear_2d_1():
 
     # ...
     a = BilinearForm((u,v), u*v + dot(grad(u),grad(v)))
+    print(TerminalExpr(a))
+    print('')
+    # ...
+
+    # ...
+    a = BilinearForm((u,v), u*v + dot(grad(u),grad(v)) + v*trace_1(grad(u), B1) )
     print(TerminalExpr(a))
     print('')
     # ...
@@ -381,19 +389,25 @@ def test_terminal_expr_linear_2d_1():
     print('')
     # ...
 
-#    # ...
-#    g = Tuple(x**2, y**2)
-#    l = LinearForm(v, v*trace_1(g, B1))
-#    print(TerminalExpr(l))
-#    print('')
-#    # ...
-#
-#    # ...
-#    g = Tuple(x**2, y**2)
-#    l = LinearForm(v, v*trace_1(g, B1) + x*y*v)
-#    print(TerminalExpr(l))
-#    print('')
-#    # ...
+    # ...
+    l = LinearForm(v, x*y*v + v)
+    print(TerminalExpr(l))
+    print('')
+    # ...
+
+    # ...
+    g = Tuple(x**2, y**2)
+    l = LinearForm(v, v*trace_1(g, B1))
+    print(TerminalExpr(l))
+    print('')
+    # ...
+
+    # ...
+    g = Tuple(x**2, y**2)
+    l = LinearForm(v, v*trace_1(g, B1) + x*y*v)
+    print(TerminalExpr(l))
+    print('')
+    # ...
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
