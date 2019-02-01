@@ -311,6 +311,45 @@ class BoundaryIntegral(BasicIntegral):
         return cls(expr, evaluate=False)
 
 #==============================================================================
+def _get_domain(a):
+    # expr is an integral of BasicExpr or Add of Integral of BasicExpr
+    if isinstance(a, BoundaryIntegral):
+        boundary = list(a.atoms(Boundary))
+        return boundary[0]
+
+    elif isinstance(a, DomainIntegral):
+        expr = a._args[0]
+        variables = expr.variables
+
+        # ...
+        if expr.is_linear:
+            spaces = [u.space for u in variables]
+
+        elif expr.is_bilinear:
+            spaces  = [u.space for u in variables[0]]
+            spaces += [u.space for u in variables[1]]
+
+        else:
+            raise TypeError('Expecting linear or bilinear form')
+        # ...
+
+        domains = [V.domain for V in spaces]
+        return domains[0]
+
+    elif isinstance(a, Add):
+        domains = [_get_domain(i) for i in a.args]
+        domains = list(set(domains))
+        if len(domains) == 1:
+            return domains[0]
+
+        else:
+            return domains
+
+    else:
+        raise TypeError('Expecting a Boundary or Domain integral')
+
+
+#==============================================================================
 # TODO check unicity of domain in __new__
 class BasicForm(Expr):
     is_Function = True
@@ -333,28 +372,7 @@ class BasicForm(Expr):
 
     @property
     def domain(self):
-        if isinstance(self.expr, BoundaryIntegral):
-            boundary = list(self.expr.atoms(Boundary))
-            return boundary[0]
-
-        elif isinstance(self.expr, DomainIntegral):
-            # ...
-            if self.is_linear:
-                spaces = [u.space for u in self.variables]
-
-            elif self.is_bilinear:
-                spaces  = [u.space for u in self.variables[0]]
-                spaces += [u.space for u in self.variables[1]]
-
-            else:
-                raise TypeError('Expecting linear or bilinear form')
-            # ...
-
-            domains = [V.domain for V in spaces]
-            return domains[0]
-
-        else:
-            raise TypeError('Expecting a Boundary or Domain integral')
+        return _get_domain(self.expr)
 
 #==============================================================================
 class LinearForm(BasicForm):
@@ -578,6 +596,10 @@ class TerminalExpr(CalculusFunction):
             return cls.eval(expr.expr, dim=dim)
 
         elif isinstance(expr, BasicIntegral):
+            if dim is None:
+                domain = _get_domain(expr)
+                dim = domain.dim
+
             return cls.eval(expr._args[0], dim=dim)
 
         elif isinstance(expr, BasicExpr):

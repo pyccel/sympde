@@ -60,6 +60,8 @@ class Domain(BasicDomain):
             else:
                 if not all([isinstance(i, InteriorDomain) for i in interiors]):
                     raise TypeError('> all interiors must be of type InteriorDomain')
+
+            interiors = Tuple(*interiors)
         # ...
 
         # ...
@@ -77,6 +79,8 @@ class Domain(BasicDomain):
 
         else:
             boundaries = []
+
+        boundaries = Tuple(*boundaries)
         # ...
 
         # ...

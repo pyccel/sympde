@@ -170,6 +170,13 @@ def test_bilinear_form_2d_1():
     # ...
 
     # ...
+    a = BilinearForm((u,v), u*v + dot(grad(u), grad(v)))
+    print(a)
+    print(a.domain)
+    print('')
+    # ...
+
+    # ...
     a = BilinearForm((u,v), v*trace_1(grad(u), B1))
     print(a)
     print(a.domain)
@@ -179,6 +186,7 @@ def test_bilinear_form_2d_1():
     # ...
     a = BilinearForm((u,v), u*v + v*trace_1(grad(u), B1))
     print(a)
+    print(a.domain)
     print('')
     # ...
 
@@ -339,6 +347,12 @@ def test_terminal_expr_bilinear_2d_1():
     print('')
     # ...
 
+    # ...
+    a = BilinearForm((u,v), u*v + dot(grad(u),grad(v)))
+    print(TerminalExpr(a))
+    print('')
+    # ...
+
 #    # ...
 #    a = BilinearForm(((u1,u2),(v1,v2)), u1*v1 + u2*v2)
 #    print(TerminalExpr(a))
@@ -374,6 +388,5 @@ def teardown_function():
 #test_call_linear_form_2d_1()
 #print('================')
 #test_call_bilinear_form_2d_1()
-print('================')
-test_terminal_expr_bilinear_2d_1()
-
+#print('================')
+#test_terminal_expr_bilinear_2d_1()
