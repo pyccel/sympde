@@ -298,6 +298,14 @@ def test_call_linear_form_2d_1():
     print('')
     # ...
 
+    # ...
+    l1 = LinearForm(v1, x*y*v1)
+    print(l1)
+    l = LinearForm(v, l1(v))
+    print(l)
+    print('')
+    # ...
+
 #==============================================================================
 def test_call_bilinear_form_2d_1():
 
@@ -318,6 +326,13 @@ def test_call_bilinear_form_2d_1():
     print(Call(a, (u1,v1), evaluate=True))
     print(a(u1,v1))
     print(a(u1,v1, evaluate=True))
+    print('')
+    # ...
+
+    # ...
+    a1 = BilinearForm((u1,v1), u1*v1)
+    a = BilinearForm((u,v), a1(u,v))
+    print(a)
     print('')
     # ...
 
@@ -367,6 +382,13 @@ def test_terminal_expr_bilinear_2d_1():
     print('')
     # ...
 
+    # ...
+    a1 = BilinearForm((u1,v1), u1*v1)
+    a = BilinearForm((u,v), a1(u,v))
+    print(TerminalExpr(a))
+    print('')
+    # ...
+
 #==============================================================================
 def test_terminal_expr_linear_2d_1():
 
@@ -408,6 +430,21 @@ def test_terminal_expr_linear_2d_1():
     print(TerminalExpr(l))
     print('')
     # ...
+
+    # ...
+    l1 = LinearForm(v1, x*y*v1)
+    l = LinearForm(v, l1(v))
+    print(TerminalExpr(l))
+    print('')
+    # ...
+
+#    # ...
+#    l1 = LinearForm(v1, x*y*v1)
+#    l2 = LinearForm(v1, v1)
+#    l = LinearForm(v, l1(v) + kappa*l2(v))
+#    print(TerminalExpr(l))
+#    print('')
+#    # ...
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE

@@ -385,6 +385,20 @@ class LinearForm(BasicForm):
     is_linear = True
 
     def __new__(cls, arguments, expr):
+
+        # ...
+        calls = list(expr.atoms(Call))
+        for call in calls:
+            args = call._args[1]
+            call_expr = call._args[0]
+            newexpr = call_expr(*args, evaluate=True)
+            expr = expr.subs(call, newexpr)
+
+        if calls:
+            # take the BasicExpr
+            expr = expr.expr._args[0]
+        # ...
+
         if not isinstance(expr, LinearExpr):
             expr = LinearExpr(arguments, expr)
 
@@ -424,6 +438,20 @@ class BilinearForm(BasicForm):
     is_bilinear = True
 
     def __new__(cls, arguments, expr):
+
+        # ...
+        calls = list(expr.atoms(Call))
+        for call in calls:
+            args = call._args[1]
+            call_expr = call._args[0]
+            newexpr = call_expr(*args, evaluate=True)
+            expr = expr.subs(call, newexpr)
+
+        if calls:
+            # take the BasicExpr
+            expr = expr.expr._args[0]
+        # ...
+
         if not isinstance(expr, BilinearExpr):
             expr = BilinearExpr(arguments, expr)
 
@@ -813,15 +841,4 @@ class TerminalExpr(CalculusFunction):
                 lines.append(line)
             return Matrix(lines)
 
-#        elif isinstance(expr, _coeffs_registery):
-#            return expr
-#
-#        elif isinstance(expr, (TestFunction, VectorTestFunction, IndexedTestTrial,
-#                               Field, VectorField, IndexedVectorField)):
-#
-#            return expr
-#
-#        return cls(expr, evaluate=False)
-
         return expr
-
