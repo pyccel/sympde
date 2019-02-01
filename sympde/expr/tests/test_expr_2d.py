@@ -353,9 +353,45 @@ def test_terminal_expr_bilinear_2d_1():
     print('')
     # ...
 
+    # ...
+    a = BilinearForm(((u1,u2),(v1,v2)), u1*v1 + u2*v2)
+    print(TerminalExpr(a))
+    print('')
+    # ...
+
+#==============================================================================
+def test_terminal_expr_linear_2d_1():
+
+    domain = Domain('Omega', dim=2)
+    B1 = Boundary(r'\Gamma_1', domain)
+
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    V = FunctionSpace('V', domain)
+
+    u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    # ...
+    l = LinearForm(v, x*y*v)
+    print(TerminalExpr(l))
+    print('')
+    # ...
+
 #    # ...
-#    a = BilinearForm(((u1,u2),(v1,v2)), u1*v1 + u2*v2)
-#    print(TerminalExpr(a))
+#    g = Tuple(x**2, y**2)
+#    l = LinearForm(v, v*trace_1(g, B1))
+#    print(TerminalExpr(l))
+#    print('')
+#    # ...
+#
+#    # ...
+#    g = Tuple(x**2, y**2)
+#    l = LinearForm(v, v*trace_1(g, B1) + x*y*v)
+#    print(TerminalExpr(l))
 #    print('')
 #    # ...
 
@@ -389,4 +425,6 @@ def teardown_function():
 #print('================')
 #test_call_bilinear_form_2d_1()
 #print('================')
-#test_terminal_expr_bilinear_2d_1()
+test_terminal_expr_linear_2d_1()
+print('================')
+test_terminal_expr_bilinear_2d_1()

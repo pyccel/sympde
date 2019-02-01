@@ -529,9 +529,11 @@ def _init_matrix(expr):
         M = Matrix(lines)
         # ...
 
+        return  M, test_indices, trial_indices
+
     elif expr.is_linear:
 
-        tests = list(expr.variables[0])
+        tests = list(expr.variables)
         n_rows, test_indices = _get_size_and_starts(tests)
 
         # ...
@@ -539,10 +541,84 @@ def _init_matrix(expr):
         M = Matrix(lines)
         # ...
 
+        return  M, test_indices
+
     else:
         raise TypeError('Expecting BasicExpr or BasicForm')
 
     return M
+
+def _to_matrix_bilinear_form(expr, M, test_indices, trial_indices):
+
+    # ...
+    def treat_form(arg, M):
+        atoms  = list(arg.atoms(TestFunction))
+        atoms += list(arg.atoms(VectorTestFunction))
+        atoms += list(arg.atoms(IndexedTestTrial))
+
+        for atom in atoms:
+            if atom in test_indices:
+                i_row = test_indices[atom]
+
+            elif atom in trial_indices:
+                i_col = trial_indices[atom]
+
+            else:
+                raise ValueError('> Could not find {}'.format(atom))
+
+        M[i_row, i_col] += arg
+        return M
+    # ...
+
+    # ...
+    if isinstance(expr, Add):
+        args = expr.args
+        for arg in args:
+            if isinstance(arg, Mul):
+                M = treat_form(arg, M)
+
+    elif isinstance(expr, Mul):
+        M = treat_form(expr, M)
+
+    else:
+        raise TypeError('> wrong type, given {}'.format(type(expr)))
+    # ...
+
+    return M
+
+def _to_matrix_linear_form(expr, M, test_indices):
+    # ...
+    def treat_form(arg, M):
+        atoms  = list(arg.atoms(TestFunction))
+        atoms += list(arg.atoms(VectorTestFunction))
+        atoms += list(arg.atoms(IndexedTestTrial))
+
+        for atom in atoms:
+            if atom in test_indices:
+                i_row = test_indices[atom]
+
+            else:
+                raise ValueError('> Could not find {}'.format(atom))
+
+        M[i_row] += arg
+        return M
+    # ...
+
+    # ...
+    if isinstance(expr, Add):
+        args = expr.args
+        for arg in args:
+            M = treat_form(arg, M)
+
+    elif isinstance(expr, Mul):
+        M = treat_form(expr, M)
+
+    else:
+        raise TypeError('> wrong type, given {}'.format(type(expr)))
+    # ...
+
+    return M
+
 
 #==============================================================================
 class TerminalExpr(CalculusFunction):
@@ -593,7 +669,22 @@ class TerminalExpr(CalculusFunction):
 
         elif isinstance(expr, BasicForm):
             dim = expr.domain.dim
-            return cls.eval(expr.expr, dim=dim)
+            is_bilinear = expr.is_bilinear
+
+            newexpr = cls.eval(expr.expr, dim=dim)
+
+            if is_bilinear:
+                M, test_indices, trial_indices = _init_matrix(expr)
+                M = _to_matrix_bilinear_form(newexpr, M, test_indices, trial_indices)
+
+            else:
+                M, test_indices = _init_matrix(expr)
+                M = _to_matrix_linear_form(newexpr, M, test_indices)
+
+            n,m = M.shape
+            if n*m == 1: M = M[0,0]
+
+            return M
 
         elif isinstance(expr, BasicIntegral):
             if dim is None:
@@ -603,7 +694,6 @@ class TerminalExpr(CalculusFunction):
             return cls.eval(expr._args[0], dim=dim)
 
         elif isinstance(expr, BasicExpr):
-            M = _init_matrix(expr)
             return cls.eval(expr.expr, dim=dim)
 
         elif isinstance(expr, _generic_ops):
