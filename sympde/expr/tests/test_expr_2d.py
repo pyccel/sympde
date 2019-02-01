@@ -35,6 +35,7 @@ from sympde.expr import LinearExpr, BilinearExpr
 from sympde.expr.expr import LinearForm, BilinearForm
 from sympde.expr.expr import DomainIntegral, BoundaryIntegral
 from sympde.expr.expr import Call
+from sympde.expr.expr import TerminalExpr
 from sympde.expr import atomize
 from sympde.expr import evaluate
 from sympde.expr import Mass, Stiffness, Advection, AdvectionT
@@ -313,6 +314,38 @@ def test_call_bilinear_form_2d_1():
     # ...
 
 #==============================================================================
+def test_terminal_expr_bilinear_2d_1():
+
+    domain = Domain('Omega', dim=2)
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    V = FunctionSpace('V', domain)
+
+    u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    # ...
+    a = BilinearForm((u,v), u*v)
+    print(TerminalExpr(a))
+    print('')
+    # ...
+
+    # ...
+    a = BilinearForm((u,v), dot(grad(u),grad(v)))
+    print(TerminalExpr(a))
+    print('')
+    # ...
+
+#    # ...
+#    a = BilinearForm(((u1,u2),(v1,v2)), u1*v1 + u2*v2)
+#    print(TerminalExpr(a))
+#    print('')
+#    # ...
+
+#==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
 
@@ -330,9 +363,9 @@ def teardown_function():
 #print('================')
 #test_integral_2d_1()
 #print('================')
-test_bilinear_form_2d_1()
-print('================')
-test_linear_form_2d_1()
+#test_bilinear_form_2d_1()
+#print('================')
+#test_linear_form_2d_1()
 #print('================')
 #test_call_linear_expr_2d_1()
 #print('================')
@@ -341,3 +374,6 @@ test_linear_form_2d_1()
 #test_call_linear_form_2d_1()
 #print('================')
 #test_call_bilinear_form_2d_1()
+print('================')
+test_terminal_expr_bilinear_2d_1()
+

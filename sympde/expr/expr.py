@@ -471,3 +471,146 @@ class Call(CalculusFunction):
             return expr.xreplace(dict(list(zip(variables, args))))
 
         return cls(expr, args, evaluate=False)
+
+#==============================================================================
+def _get_size_and_starts(ls):
+    n = 0
+    d_indices = {}
+    for x in ls:
+        d_indices[x] = n
+        if isinstance(x, TestFunction):
+            n += 1
+
+        elif isinstance(x, VectorTestFunction):
+            for j in range(0, x.shape[0]):
+                d_indices[x[j]] = n + j
+
+            n += x.shape[0]
+
+    return n, d_indices
+
+def _init_matrix(expr):
+    assert(isinstance(expr, (BasicForm, BasicExpr)))
+
+    if expr.is_bilinear:
+
+        trials = list(expr.variables[0])
+        n_rows, trial_indices = _get_size_and_starts(trials)
+
+        tests = list(expr.variables[1])
+        n_cols, test_indices = _get_size_and_starts(tests)
+
+        # ...
+        lines = []
+        for i in range(0, n_rows):
+            line = []
+            for j in range(0, n_cols):
+                line.append(0)
+            lines.append(line)
+
+        M = Matrix(lines)
+        # ...
+
+    elif expr.is_linear:
+
+        tests = list(expr.variables[0])
+        n_rows, test_indices = _get_size_and_starts(tests)
+
+        # ...
+        lines = [0 for i in range(0, n_rows)]
+        M = Matrix(lines)
+        # ...
+
+    else:
+        raise TypeError('Expecting BasicExpr or BasicForm')
+
+    return M
+
+#==============================================================================
+class TerminalExpr(CalculusFunction):
+
+    def __new__(cls, *args, **options):
+        # (Try to) sympify args first
+
+        if options.pop('evaluate', True):
+            r = cls.eval(*args)
+        else:
+            r = None
+
+        if r is None:
+            return Basic.__new__(cls, *args, **options)
+        else:
+            return r
+
+    def __getitem__(self, indices, **kw_args):
+        if is_sequence(indices):
+            # Special case needed because M[*my_tuple] is a syntax error.
+            return Indexed(self, *indices, **kw_args)
+        else:
+            return Indexed(self, indices, **kw_args)
+
+    @classmethod
+    def eval(cls, *_args, **kwargs):
+        """."""
+
+        if not _args:
+            return
+
+        if not len(_args) == 1:
+            raise ValueError('Expecting one argument')
+
+        expr = _args[0]
+
+        n_rows = kwargs.pop('n_rows', None)
+        n_cols = kwargs.pop('n_cols', None)
+        dim    = kwargs.pop('dim', None)
+
+        if isinstance(expr, Add):
+            args = [cls.eval(a) for a in expr.args]
+            return Add(*args)
+
+        elif isinstance(expr, Mul):
+            args = [cls.eval(a) for a in expr.args]
+            return Mul(*args)
+
+        elif isinstance(expr, BasicForm):
+            dim = expr.domain.dim
+            return cls.eval(expr.expr, dim=dim)
+
+        elif isinstance(expr, BasicIntegral):
+            return cls.eval(expr._args[0], dim=dim)
+
+        elif isinstance(expr, BasicExpr):
+            M = _init_matrix(expr)
+            return cls.eval(expr.expr, dim=dim)
+
+        elif isinstance(expr, _generic_ops):
+            # if i = Dot(...) then type(i) is Grad
+            op = type(expr)
+            new  = eval('{0}_{1}d'.format(op, dim))
+
+            args = [cls.eval(i, dim=dim) for i in expr.args]
+            return new(*args)
+
+        elif isinstance(expr, Matrix):
+            n,m = expr.shape
+            lines = []
+            for i in range(0, n):
+                line = []
+                for j in range(0, m):
+                    line.append(cls.eval(expr[i,j], dim=dim))
+                lines.append(line)
+            return Matrix(lines)
+
+#        elif isinstance(expr, _coeffs_registery):
+#            return expr
+#
+#        elif isinstance(expr, (TestFunction, VectorTestFunction, IndexedTestTrial,
+#                               Field, VectorField, IndexedVectorField)):
+#
+#            return expr
+#
+#        return cls(expr, evaluate=False)
+
+        return expr
+
