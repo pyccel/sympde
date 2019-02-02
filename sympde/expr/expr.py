@@ -779,11 +779,13 @@ class TerminalExpr(CalculusFunction):
             if isinstance(expr.expr, Add):
                 for a in expr.expr.args:
                     newexpr = cls.eval(a, dim=dim)
+                    newexpr = expand(newexpr)
                     domain = _get_domain(a)
                     d_expr[domain] += newexpr
 
             else:
                 newexpr = cls.eval(expr.expr, dim=dim)
+                newexpr = expand(newexpr)
                 domain = _get_domain(expr.expr)
                 d_expr[domain] += newexpr
             # ...

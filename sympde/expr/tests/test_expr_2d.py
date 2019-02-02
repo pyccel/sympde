@@ -947,6 +947,30 @@ def test_terminal_expr_bilinear_2d_2():
 #    # ...
 
 #==============================================================================
+# stokes
+def test_terminal_expr_bilinear_2d_3():
+
+    domain = Domain('Omega', dim=2)
+
+    x,y = domain.coordinates
+
+    V = VectorFunctionSpace('V', domain)
+    W = FunctionSpace('W', domain)
+
+    v = VectorTestFunction(V, name='v')
+    u = VectorTestFunction(V, name='u')
+    p = TestFunction(W, name='p')
+    q = TestFunction(W, name='q')
+
+    a = BilinearForm((u,v), inner(grad(v), grad(u)))
+    b = BilinearForm((v,p), div(v)*p)
+    A = BilinearForm(((u,p),(v,q)), a(v,u) - b(v,p) + b(u,q))
+
+    print(TerminalExpr(A))
+    print('')
+
+
+#==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
 
@@ -988,4 +1012,5 @@ def teardown_function():
 #test_terminal_expr_linear_2d_2()
 #print('================')
 #test_terminal_expr_bilinear_2d_1()
-test_terminal_expr_bilinear_2d_2()
+#test_terminal_expr_bilinear_2d_2()
+test_terminal_expr_bilinear_2d_3()
