@@ -88,6 +88,41 @@ def test_linear_expr_2d_1():
     # ...
 
 #==============================================================================
+def test_linear_expr_2d_2():
+
+    domain = Domain('Omega', dim=2)
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    V = VectorFunctionSpace('V', domain)
+
+    u,u1,u2 = [VectorTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [VectorTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    # ...
+    g = Tuple(x,y)
+    l = LinearExpr(v, dot(g, v))
+    print(l)
+    print(l.expr)
+    print(l(v1))
+    print(l(v1+v2))
+    print('')
+    # ...
+
+    # ...
+    g1 = Tuple(x,0)
+    g2 = Tuple(0,y)
+    l = LinearExpr((v1,v2), dot(g1, v1) + dot(g2, v2))
+    print(l)
+    print(l.expr)
+    print(l(u1, u2))
+    print(l(u1+v1, u2+v2))
+    print('')
+    # ...
+
+#==============================================================================
 def test_bilinear_expr_2d_1():
 
     domain = Domain('Omega', dim=2)
@@ -113,6 +148,36 @@ def test_bilinear_expr_2d_1():
     # ...
     a1 = BilinearExpr((u,v), u*v)
     a2 = BilinearExpr((u,v), dot(grad(u),grad(v)))
+    print(a1(u1,v1) + a2(u2,v2))
+    print('')
+    # ...
+
+#==============================================================================
+def test_bilinear_expr_2d_2():
+
+    domain = Domain('Omega', dim=2)
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    V = VectorFunctionSpace('V', domain)
+
+    u,u1,u2 = [VectorTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [VectorTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    # ...
+    a = BilinearExpr((u,v), dot(u,v))
+    print(a)
+    print(a.expr)
+    print(a(u1,v1))
+    print(a(u1+u2,v1+v2))
+    print('')
+    # ...
+
+    # ...
+    a1 = BilinearExpr((u,v), dot(u,v))
+    a2 = BilinearExpr((u,v), inner(grad(u),grad(v)))
     print(a1(u1,v1) + a2(u2,v2))
     print('')
     # ...
@@ -145,6 +210,85 @@ def test_integral_2d_1():
     l = DomainIntegral(l)
     print(l)
     # ...
+
+#==============================================================================
+def test_linear_form_2d_1():
+
+    domain = Domain('Omega', dim=2)
+    B1 = Boundary(r'\Gamma_1', domain)
+
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    V = FunctionSpace('V', domain)
+
+    u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    # ...
+    l = LinearForm(v, x*y*v)
+    print(l)
+    print(l.domain)
+    print('')
+    # ...
+
+    # ...
+    g = Tuple(x**2, y**2)
+    l = LinearForm(v, v*trace_1(g, B1))
+    print(l)
+    print(l.domain)
+    print('')
+    # ...
+
+    # ...
+    g = Tuple(x**2, y**2)
+    l = LinearForm(v, v*trace_1(g, B1) + x*y*v)
+    print(l)
+    print('')
+    # ...
+
+#==============================================================================
+def test_linear_form_2d_2():
+
+    domain = Domain('Omega', dim=2)
+    B1 = Boundary(r'\Gamma_1', domain)
+
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    V = VectorFunctionSpace('V', domain)
+
+    u,u1,u2 = [VectorTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [VectorTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    # ...
+    g = Tuple(x,y)
+    l = LinearForm(v, dot(g, v))
+    print(l)
+    print(l.domain)
+    print('')
+    # ...
+
+    # TODO
+#    # ...
+#    g = Tuple(x**2, y**2)
+#    l = LinearForm(v, v*trace_1(g, B1))
+#    print(l)
+#    print(l.domain)
+#    print('')
+#    # ...
+
+    # TODO
+#    # ...
+#    g = Tuple(x**2, y**2)
+#    l = LinearForm(v, v*trace_1(g, B1) + x*y*v)
+#    print(l)
+#    print('')
+#    # ...
 
 #==============================================================================
 def test_bilinear_form_2d_1():
@@ -191,7 +335,7 @@ def test_bilinear_form_2d_1():
     # ...
 
 #==============================================================================
-def test_linear_form_2d_1():
+def test_bilinear_form_2d_2():
 
     domain = Domain('Omega', dim=2)
     B1 = Boundary(r'\Gamma_1', domain)
@@ -201,32 +345,39 @@ def test_linear_form_2d_1():
     kappa = Constant('kappa', is_real=True)
     mu    = Constant('mu'   , is_real=True)
 
-    V = FunctionSpace('V', domain)
+    V = VectorFunctionSpace('V', domain)
 
-    u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    u,u1,u2 = [VectorTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [VectorTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
-    l = LinearForm(v, x*y*v)
-    print(l)
-    print(l.domain)
+    a = BilinearForm((u,v), dot(u,v))
+    print(a)
+    print(a.domain)
     print('')
     # ...
 
     # ...
-    g = Tuple(x**2, y**2)
-    l = LinearForm(v, v*trace_1(g, B1))
-    print(l)
-    print(l.domain)
+    a = BilinearForm((u,v), dot(u,v) + inner(grad(u), grad(v)))
+    print(a)
+    print(a.domain)
     print('')
     # ...
 
-    # ...
-    g = Tuple(x**2, y**2)
-    l = LinearForm(v, v*trace_1(g, B1) + x*y*v)
-    print(l)
-    print('')
-    # ...
+    # TODO
+#    # ...
+#    a = BilinearForm((u,v), v*trace_1(grad(u), B1))
+#    print(a)
+#    print(a.domain)
+#    print('')
+#    # ...
+#
+#    # ...
+#    a = BilinearForm((u,v), u*v + v*trace_1(grad(u), B1))
+#    print(a)
+#    print(a.domain)
+#    print('')
+#    # ...
 
 
 #==============================================================================
@@ -253,6 +404,30 @@ def test_call_linear_expr_2d_1():
     # ...
 
 #==============================================================================
+def test_call_linear_expr_2d_2():
+
+    domain = Domain('Omega', dim=2)
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    V = VectorFunctionSpace('V', domain)
+
+    u,u1,u2 = [VectorTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [VectorTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    # ...
+    g = Tuple(x,y)
+    l = LinearExpr(v, dot(g, v))
+    print(Call(l, v1))
+    print(Call(l, v1, evaluate=True))
+    print(l(v1))
+    print(l(v1, evaluate=True))
+    print('')
+    # ...
+
+#==============================================================================
 def test_call_bilinear_expr_2d_1():
 
     domain = Domain('Omega', dim=2)
@@ -268,6 +443,29 @@ def test_call_bilinear_expr_2d_1():
 
     # ...
     a = BilinearExpr((u,v), u*v)
+    print(Call(a, (u1,v1)))
+    print(Call(a, (u1,v1), evaluate=True))
+    print(a(u1,v1))
+    print(a(u1,v1, evaluate=True))
+    print('')
+    # ...
+
+#==============================================================================
+def test_call_bilinear_expr_2d_2():
+
+    domain = Domain('Omega', dim=2)
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    V = VectorFunctionSpace('V', domain)
+
+    u,u1,u2 = [VectorTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [VectorTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    # ...
+    a = BilinearExpr((u,v), dot(u,v))
     print(Call(a, (u1,v1)))
     print(Call(a, (u1,v1), evaluate=True))
     print(a(u1,v1))
@@ -316,6 +514,49 @@ def test_call_linear_form_2d_1():
     # ...
 
 #==============================================================================
+def test_call_linear_form_2d_2():
+
+    domain = Domain('Omega', dim=2)
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    V = VectorFunctionSpace('V', domain)
+
+    u,u1,u2 = [VectorTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [VectorTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    # ...
+    g = Tuple(x,y)
+    l = LinearForm(v, dot(g, v))
+    print(Call(l, v1))
+    print(Call(l, v1, evaluate=True))
+    print(l(v1))
+    print(l(v1, evaluate=True))
+    print('')
+    # ...
+
+    # ...
+    g = Tuple(x,y)
+    l1 = LinearForm(v1, dot(g, v1))
+    l = LinearForm(v, l1(v))
+    print(l)
+    print('')
+    # ...
+
+    # ...
+    g1 = Tuple(x,0)
+    g2 = Tuple(0,y)
+    l1 = LinearForm(v1, dot(v1, g1))
+    l2 = LinearForm(v2, dot(v2, g2))
+
+    l = LinearForm(v, l1(v) + l2(v))
+    print(l)
+    print('')
+    # ...
+
+#==============================================================================
 def test_call_bilinear_form_2d_1():
 
     domain = Domain('Omega', dim=2)
@@ -348,6 +589,44 @@ def test_call_bilinear_form_2d_1():
     # ...
     a1 = BilinearForm((u1,v1), u1*v1)
     a2 = BilinearForm((u2,v2), dot(grad(u2), grad(v2)))
+    a = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v))
+    print(a)
+    print('')
+    # ...
+
+#==============================================================================
+def test_call_bilinear_form_2d_2():
+
+    domain = Domain('Omega', dim=2)
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    V = VectorFunctionSpace('V', domain)
+
+    u,u1,u2 = [VectorTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [VectorTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    # ...
+    a = BilinearForm((u,v), dot(u,v))
+    print(Call(a, (u1,v1)))
+    print(Call(a, (u1,v1), evaluate=True))
+    print(a(u1,v1))
+    print(a(u1,v1, evaluate=True))
+    print('')
+    # ...
+
+    # ...
+    a1 = BilinearForm((u1,v1), dot(u1,v1))
+    a = BilinearForm((u,v), a1(u,v))
+    print(a)
+    print('')
+    # ...
+
+    # ...
+    a1 = BilinearForm((u1,v1), dot(u1,v1))
+    a2 = BilinearForm((u2,v2), inner(grad(u2), grad(v2)))
     a = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v))
     print(a)
     print('')
@@ -431,6 +710,86 @@ def test_terminal_expr_linear_2d_1():
     # ...
 
 #==============================================================================
+def test_terminal_expr_linear_2d_2():
+
+    domain = Domain('Omega', dim=2)
+    B1 = Boundary(r'\Gamma_1', domain)
+
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    V = VectorFunctionSpace('V', domain)
+
+    u,u1,u2 = [VectorTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [VectorTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    # ...
+    g = Tuple(x,y)
+    l = LinearForm(v, dot(g, v))
+    print(TerminalExpr(l))
+    print('')
+    # ...
+
+    # ...
+    g = Tuple(x,y)
+    l = LinearForm(v, dot(g, v) + div(v))
+    print(TerminalExpr(l))
+    print('')
+    # ...
+
+    # TODO
+#    # ...
+#    g = Tuple(x**2, y**2)
+#    l = LinearForm(v, v*trace_1(g, B1))
+#    print(TerminalExpr(l))
+#    print('')
+#    # ...
+#
+#    # ...
+#    g = Tuple(x**2, y**2)
+#    l = LinearForm(v, v*trace_1(g, B1) + x*y*v)
+#    print(TerminalExpr(l))
+#    print('')
+#    # ...
+#
+#    # ...
+#    l1 = LinearForm(v1, x*y*v1)
+#    l = LinearForm(v, l1(v))
+#    print(TerminalExpr(l))
+#    print('')
+#    # ...
+#
+#    # ...
+#    g = Tuple(x,y)
+#    l1 = LinearForm(v1, x*y*v1)
+#    l2 = LinearForm(v2, dot(grad(v2), g))
+#
+#    l = LinearForm(v, l1(v) + l2(v))
+#    print(TerminalExpr(l))
+#    print('')
+#    # ...
+#
+#    # ...
+#    l1 = LinearForm(v1, x*y*v1)
+#    l2 = LinearForm(v1, v1)
+#    l = LinearForm(v, l1(v) + kappa*l2(v))
+#    print(TerminalExpr(l))
+#    print('')
+#    # ...
+#
+#    # ...
+#    g = Tuple(x**2, y**2)
+#    l1 = LinearForm(v1, x*y*v1)
+#    l2 = LinearForm(v1, v1)
+#    l3 = LinearForm(v, v*trace_1(g, B1))
+#    l = LinearForm(v, l1(v) + kappa*l2(v) + mu*l3(v))
+#    print(TerminalExpr(l))
+#    print('')
+#    # ...
+
+#==============================================================================
 def test_terminal_expr_bilinear_2d_1():
 
     domain = Domain('Omega', dim=2)
@@ -509,6 +868,85 @@ def test_terminal_expr_bilinear_2d_1():
     # ...
 
 #==============================================================================
+def test_terminal_expr_bilinear_2d_2():
+
+    domain = Domain('Omega', dim=2)
+    B1 = Boundary(r'\Gamma_1', domain)
+
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    V = VectorFunctionSpace('V', domain)
+
+    u,u1,u2 = [VectorTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [VectorTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    # ...
+    a = BilinearForm((u,v), dot(u,v))
+    print(TerminalExpr(a))
+    print('')
+    # ...
+
+    # ...
+    a = BilinearForm((u,v), inner(grad(u),grad(v)))
+    print(TerminalExpr(a))
+    print('')
+    # ...
+
+    # ...
+    a = BilinearForm((u,v), dot(u,v) + inner(grad(u),grad(v)))
+    print(TerminalExpr(a))
+    print('')
+    # ...
+
+    # TODO
+#    # ...
+#    a = BilinearForm((u,v), u*v + dot(grad(u),grad(v)) + v*trace_1(grad(u), B1) )
+#    print(TerminalExpr(a))
+#    print('')
+#    # ...
+#
+#    # ...
+#    a = BilinearForm(((u1,u2),(v1,v2)), u1*v1 + u2*v2)
+#    print(TerminalExpr(a))
+#    print('')
+#    # ...
+#
+#    # ...
+#    a1 = BilinearForm((u1,v1), u1*v1)
+#    a = BilinearForm((u,v), a1(u,v))
+#    print(TerminalExpr(a))
+#    print('')
+#    # ...
+#
+#    # ...
+#    a1 = BilinearForm((u1,v1), u1*v1)
+#    a2 = BilinearForm((u2,v2), dot(grad(u2), grad(v2)))
+#    a = BilinearForm((u,v), a1(u,v) + a2(u,v))
+#    print(TerminalExpr(a))
+#    print('')
+#    # ...
+#
+#    # ...
+#    a1 = BilinearForm((u1,v1), u1*v1)
+#    a2 = BilinearForm((u2,v2), dot(grad(u2), grad(v2)))
+#    a = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v))
+#    print(TerminalExpr(a))
+#    print('')
+#    # ...
+#
+#    # ...
+#    a1 = BilinearForm((u1,v1), u1*v1)
+#    a2 = BilinearForm((u2,v2), dot(grad(u2), grad(v2)))
+#    a3 = BilinearForm((u,v), v*trace_1(grad(u), B1))
+#    a = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v) + mu*a3(u,v))
+#    print(TerminalExpr(a))
+#    print('')
+#    # ...
+
+#==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
 
@@ -521,23 +959,33 @@ def teardown_function():
     cache.clear_cache()
 
 #test_linear_expr_2d_1()
+#test_linear_expr_2d_2()
 #print('================')
 #test_bilinear_expr_2d_1()
+#test_bilinear_expr_2d_2()
 #print('================')
 #test_integral_2d_1()
 #print('================')
-#test_bilinear_form_2d_1()
-#print('================')
 #test_linear_form_2d_1()
+#test_linear_form_2d_2()
+#print('================')
+#test_bilinear_form_2d_1()
+#test_bilinear_form_2d_2()
 #print('================')
 #test_call_linear_expr_2d_1()
+#test_call_linear_expr_2d_2()
 #print('================')
 #test_call_bilinear_expr_2d_1()
+#test_call_bilinear_expr_2d_2()
 #print('================')
 #test_call_linear_form_2d_1()
+#test_call_linear_form_2d_2()
 #print('================')
 #test_call_bilinear_form_2d_1()
+#test_call_bilinear_form_2d_2()
 #print('================')
 #test_terminal_expr_linear_2d_1()
+#test_terminal_expr_linear_2d_2()
 #print('================')
 #test_terminal_expr_bilinear_2d_1()
+test_terminal_expr_bilinear_2d_2()
