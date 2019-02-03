@@ -31,19 +31,11 @@ from sympde.topology import Square
 from sympde.topology import ElementDomain
 from sympde.topology import Area
 
-from sympde.expr import LinearExpr, BilinearExpr
-from sympde.expr.expr import LinearForm, BilinearForm
+from sympde.expr.expr import LinearExpr, BilinearExpr
+from sympde.expr.form import LinearForm, BilinearForm
 from sympde.expr.expr import DomainIntegral, BoundaryIntegral
-from sympde.expr.expr import Call
-from sympde.expr.expr import TerminalExpr
-from sympde.expr import atomize
-from sympde.expr import evaluate
-from sympde.expr import Mass, Stiffness, Advection, AdvectionT
-from sympde.expr import Projection
-from sympde.expr import Norm
-from sympde.expr import FormCall
-from sympde.expr import is_linear_form, is_bilinear_form
-from sympde.expr import linearize
+from sympde.expr.basic import Call
+from sympde.expr.evaluation import TerminalExpr
 
 from sympde.expr.errors import UnconsistentError
 from sympde.expr.errors import UnconsistentLinearExpressionError
