@@ -7,7 +7,7 @@ from sympy.printing.latex import LatexPrinter as LatexPrinterSympy
 
 from pyccel.ast.core import Nil
 
-from sympde.expr import BilinearForm, LinearForm, Integral, FormCall
+#from sympde.expr import BilinearForm, LinearForm, Integral, FormCall
 from sympde.calculus import Dot, Inner, Cross
 from sympde.calculus import Grad, Rot, Curl, Div
 from sympde.topology import Line, Square, Cube, Domain

@@ -183,17 +183,20 @@ class Equation(Basic):
         # ...
 
         # ...
-        if not isinstance(lhs.expr, BilinearForm):
+        if not isinstance(lhs._args[0], BilinearForm):
             raise UnconsistentLhsError('> lhs must be a bilinear')
 
-        if not isinstance(rhs.expr, LinearForm):
+        if not isinstance(rhs._args[0], LinearForm):
             raise UnconsistentRhsError('> rhs must be a linear')
         # ...
+
+        lhs = lhs._args[0]
+        rhs = rhs._args[0]
 
         # ...
         # find unknowns and tests of the equation
         # ...
-        tests_lhs, trials_lhs = lhs.arguments
+        tests_lhs, trials_lhs = lhs.variables
         if isinstance(tests_lhs, (TestFunction, VectorTestFunction)):
             tests_lhs = [tests_lhs]
 
@@ -214,7 +217,7 @@ class Equation(Basic):
         # ...
 
         # ... find test functions
-        tests_rhs = rhs.arguments
+        tests_rhs = rhs.variables
         if isinstance(tests_rhs, (TestFunction, VectorTestFunction)):
             tests_rhs = [tests_rhs]
 
