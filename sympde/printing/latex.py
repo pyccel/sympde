@@ -82,37 +82,22 @@ class LatexPrinter(LatexPrinterSympy):
 
     # ... forms
     def _print_BilinearForm(self, expr):
-        calls = expr.atoms(FormCall)
-        if not calls:
-            domain = expr.domain
-            if expr.boundary:
-                domain = expr.boundary
-            return self._write_integral_expr(domain, expr.expr,
-                                             measure=expr.measure)
-        else:
-            return self._print(expr.expr)
+        domain = expr.domain
+#        if expr.boundary:
+#            domain = expr.boundary
+        return self._write_integral_expr(domain, expr.expr)
 
     def _print_LinearForm(self, expr):
-        calls = expr.atoms(FormCall)
-        if not calls:
-            domain = expr.domain
-            if expr.boundary:
-                domain = expr.boundary
-            return self._write_integral_expr(domain, expr.expr,
-                                             measure=expr.measure)
-        else:
-            return self._print(expr.expr)
+        domain = expr.domain
+#        if expr.boundary:
+#            domain = expr.boundary
+        return self._write_integral_expr(domain, expr.expr)
 
     def _print_Integral(self, expr):
-        calls = expr.atoms(FormCall)
-        if not calls:
-            domain = expr.domain
-            if expr.boundary:
-                domain = expr.boundary
-            return self._write_integral_expr(domain, expr.expr,
-                                             measure=expr.measure)
-        else:
-            return self._print(expr.expr)
+        domain = expr.domain
+#        if expr.boundary:
+#            domain = expr.boundary
+        return self._write_integral_expr(domain, expr.expr)
 
     def _print_Kron(self, expr):
         raise NotImplementedError('TODO')

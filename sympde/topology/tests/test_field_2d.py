@@ -19,7 +19,6 @@ from sympde.topology import Domain
 from sympde.topology import dx, dy, dz
 from sympde.topology import FunctionSpace, VectorFunctionSpace
 from sympde.topology import VectorField
-from sympde.expr import evaluate
 
 
 DIM = 2
@@ -41,7 +40,6 @@ def test_field_2d_1():
 
     expr = inner(grad(F), grad(F))
     print(expr)
-    print(evaluate(expr))
 
 
 #==============================================================================

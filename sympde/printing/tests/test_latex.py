@@ -14,10 +14,8 @@ from sympde.topology import VectorTestFunction
 from sympde.topology import Unknown
 from sympde.topology import Domain, Boundary, NormalVector, TangentVector
 from sympde.topology import Trace, trace_0, trace_1
-from sympde.expr import atomize
-from sympde.expr import evaluate
-from sympde.expr import tensorize
-from sympde.expr import BilinearForm, LinearForm, Integral
+#from sympde.expr import tensorize
+from sympde.expr import BilinearForm, LinearForm#, Integral
 
 from sympde.printing.latex import latex
 
@@ -48,9 +46,9 @@ def test_latex_1d():
     print(latex(b))
 #    assert(latex(b) == r'\int_{0}^{1} v \sin{\left (\pi x \right )} dx')
 
-    f = Integral(dx(F)-x, domain)
-    print(latex(f))
-#    assert(latex(f) == r'\int_{0}^{1} - x + \partial_{x}F dx')
+#    f = Integral(dx(F)-x, domain)
+#    print(latex(f))
+##    assert(latex(f) == r'\int_{0}^{1} - x + \partial_{x}F dx')
 
 #==============================================================================
 def test_latex_2d_1():
@@ -78,9 +76,9 @@ def test_latex_2d_1():
     print(latex(b))
 #    assert(latex(b) == r'\int_{0}^{1}\int_{0}^{1} v \sin{\left (\pi x \right )} \cos{\left (\pi y \right )} dxdy')
 
-    f = Integral(dx(F)-dy(F)-x*y, domain)
-    print(latex(f))
-#    assert(latex(f) == r'\int_{0}^{1}\int_{0}^{1} - x y + \partial_{x}F - \partial_{y}F dxdy')
+#    f = Integral(dx(F)-dy(F)-x*y, domain)
+#    print(latex(f))
+##    assert(latex(f) == r'\int_{0}^{1}\int_{0}^{1} - x y + \partial_{x}F - \partial_{y}F dxdy')
 
 #==============================================================================
 def test_latex_2d_2():
@@ -135,9 +133,9 @@ def test_latex_3d_1():
     print(latex(b))
 #    assert(latex(b) == r'\int_{0}^{1}\int_{0}^{1}\int_{0}^{1} v \sin{\left (\pi x \right )} \cos{\left (\pi y \right )} \cos{\left (2 \pi z \right )} dxdydz')
 
-    f = Integral(dx(F)-dy(F)+dz(F)-x*y*z, domain)
-    print(latex(f))
-#    assert(latex(f) == r'\int_{0}^{1}\int_{0}^{1} - x y z + \partial_{x}F - \partial_{y}F + \partial_{z}F dxdy')
+#    f = Integral(dx(F)-dy(F)+dz(F)-x*y*z, domain)
+#    print(latex(f))
+##    assert(latex(f) == r'\int_{0}^{1}\int_{0}^{1} - x y z + \partial_{x}F - \partial_{y}F + \partial_{z}F dxdy')
 
 #==============================================================================
 def test_latex_3d_2():
@@ -186,13 +184,13 @@ def test_latex_2d_3():
 
     # ...
     expr = dot(grad(v), grad(u))
-    a_0 = BilinearForm((v,u), expr, name='a_0')
+    a_0 = BilinearForm((v,u), expr)
 
     expr = v*trace_0(u, B1)
-    a_bnd = BilinearForm((v, u), expr, name='a_bnd')
+    a_bnd = BilinearForm((v, u), expr)
 
     expr = a_0(v,u) + a_bnd(v,u)
-    a = BilinearForm((v,u), expr, name='a')
+    a = BilinearForm((v,u), expr)
     print(latex(a_0))
     print(latex(a_bnd))
     print(latex(a))
@@ -215,13 +213,13 @@ def test_latex_2d_4():
     p = TestFunction(W, name='p')
     q = TestFunction(W, name='q')
 
-    a = BilinearForm((v,u), inner(grad(v), grad(u)), name='a')
-    b = BilinearForm((v,p), div(v)*p, name='b')
-    A = BilinearForm(((v,q),(u,p)), a(v,u) - b(v,p) + b(u,q), name='A')
+    a = BilinearForm((v,u), inner(grad(v), grad(u)))
+    b = BilinearForm((v,p), div(v)*p)
+    A = BilinearForm(((v,q),(u,p)), a(v,u) - b(v,p) + b(u,q))
     # ...
 
     print(latex(A))
-    print(latex(tensorize(A)))
+#    print(latex(tensorize(A)))
     print('')
     # ...
 
@@ -239,14 +237,14 @@ def test_latex_2d_5():
     F = VectorField(W1, 'F')
 
     # ...
-    l1 = LinearForm(w1, dot(w1, F), name='l1')
+    l1 = LinearForm(w1, dot(w1, F))
 
     print(latex(l1))
     print('')
     # ...
 
     # ...
-    l2 = LinearForm(w1, rot(w1)*rot(F) + div(w1)*div(F), name='l2')
+    l2 = LinearForm(w1, rot(w1)*rot(F) + div(w1)*div(F))
 
     print(latex(l2))
     print('')
