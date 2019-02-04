@@ -97,6 +97,9 @@ class LinearExpr(BasicExpr):
         args = Tuple(*args)
         return self.expr.xreplace(dict(list(zip(self.variables, args))))
 
+    def _eval_nseries(self, x, n, logx):
+        return self.expr._eval_nseries(x, n, logx)
+
 #==============================================================================
 class BilinearExpr(BasicExpr):
     is_bilinear = True
@@ -325,6 +328,19 @@ class LinearForm(BasicForm):
     def expr(self):
         return self._args[1]
 
+    @property
+    def body(self):
+        if self._body is None:
+            expr = self.expr
+            integrals = expr.atoms(BasicIntegral)
+            if integrals:
+                for integral in integrals:
+                    expr = expr.subs(integral, integral._args[0].expr)
+
+            self._body = expr
+
+        return self._body
+
     def __call__(self, *args):
         args = _sanitize_arguments(args, is_linear=True)
         args = Tuple(*args)
@@ -371,6 +387,19 @@ class BilinearForm(BasicForm):
     @property
     def expr(self):
         return self._args[1]
+
+    @property
+    def body(self):
+        if self._body is None:
+            expr = self.expr
+            integrals = expr.atoms(BasicIntegral)
+            if integrals:
+                for integral in integrals:
+                    expr = expr.subs(integral, integral._args[0].expr)
+
+            self._body = expr
+
+        return self._body
 
     def __call__(self, *args):
         args = _sanitize_arguments(args, is_bilinear=True)
@@ -448,3 +477,94 @@ def as_bilinear_form(expr):
     else:
         raise NotImplementedError('')
 
+
+#==============================================================================
+def linearize(form, fields, trials=None):
+    """linearize a LinearForm around the fields."""
+    # ...
+    if not isinstance(form, (LinearExpr, LinearForm)):
+        raise TypeError('> Expecting a LinearExpr or LinearForm')
+
+    if not isinstance(fields, (list, tuple, Tuple)):
+        fields = [fields]
+
+    for f in fields:
+        if not isinstance(f, (Field, VectorField)):
+            raise TypeError('{} is not Field/VectorField'.format(f))
+
+    if not(trials is None):
+        if not isinstance(trials, (list, tuple, Tuple)):
+            trials = [trials]
+
+        assert( all([isinstance(i, (str, TestFunction, VectorTestFunction)) for i in trials]) )
+        assert( len(fields) == len(trials) )
+
+        newtrials = []
+        for i in trials:
+            if isinstance(i, (TestFunction, VectorTestFunction)):
+                newtrials += [i.name]
+
+            else:
+                newtrials += [i]
+
+        trials = newtrials
+    # ...
+
+    if isinstance(form, LinearForm):
+        is_form = True
+        expr = form.body
+
+    else:
+        is_form = False
+        expr = form.expr
+
+    test_functions = form.variables
+    fields         = Tuple(*fields)
+
+    # ...
+    trial_functions = []
+    newargs         = []
+    eps  = Constant('eps_' + random_string( 4 ))
+    for i,x in enumerate(fields):
+        tag  = random_string( 4 )
+
+        if trials is None:
+            name = x.name + '_' + tag
+        else:
+            name = trials[i]
+
+        if isinstance(x, Field):
+            trial  = TestFunction(x.space, name=name)
+
+        elif isinstance(x, VectorField):
+            trial  = VectorTestFunction(x.space, name=name)
+
+        else:
+            raise TypeError('Only TestFunction and VectorTestFunction are available')
+
+        newargs         += [x + eps*trial]
+        trial_functions += [trial]
+    # ...
+
+    # ...
+    newexpr = expr
+    for k,v in zip(fields, newargs):
+        newexpr = newexpr.subs(k,v)
+    # ...
+
+    newexpr = expand(newexpr)
+
+    e = newexpr.series(eps, 0, 2)
+    d = collect(e, eps, evaluate=False)
+    expr = d[eps]
+
+#    print('> linearize = ', expr)
+#    import sys; sys.exit(0)
+
+    test_trial = (test_functions, trial_functions)
+
+    if is_form:
+        return BilinearForm(test_trial, expr)
+
+    else:
+        return BilinearExpr(test_trial, expr)

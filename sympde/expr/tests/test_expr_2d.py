@@ -34,6 +34,7 @@ from sympde.topology import Area
 from sympde.expr.expr import LinearExpr, BilinearExpr
 from sympde.expr.expr import LinearForm, BilinearForm
 from sympde.expr.expr import DomainIntegral, BoundaryIntegral
+from sympde.expr.expr import linearize
 from sympde.expr.evaluation import TerminalExpr
 
 from sympde.expr.errors import UnconsistentError
@@ -981,6 +982,354 @@ def test_terminal_expr_bilinear_2d_3():
 
 
 #==============================================================================
+def test_linearize_expr_2d_1():
+    domain = Domain('Omega', dim=DIM)
+    x,y = domain.coordinates
+
+    V1 = FunctionSpace('V1', domain)
+    W1 = VectorFunctionSpace('W1', domain)
+
+    v1 = TestFunction(V1, name='v1')
+    w1 = VectorTestFunction(W1, name='w1')
+
+    alpha = Constant('alpha')
+
+    F = Field('F', space=V1)
+    G = VectorField(W1, 'G')
+
+    # ...
+    l = LinearExpr(v1, F**2*v1)
+    a = linearize(l, F, trials='u1')
+    print(a)
+    # ...
+
+    # ...
+    l = LinearExpr(v1, dot(grad(F), grad(F))*v1)
+    a = linearize(l, F, trials='u1')
+    print(a)
+    # ...
+
+    # ...
+    l = LinearExpr(v1, exp(-F)*v1)
+    a = linearize(l, F, trials='u1')
+    print(a)
+    # ...
+
+    # ...
+    l = LinearExpr(v1, cos(F)*v1)
+    a = linearize(l, F, trials='u1')
+    print(a)
+    # ...
+
+    # ...
+    l = LinearExpr(v1, cos(F**2)*v1)
+    a = linearize(l, F, trials='u1')
+    print(a)
+    # ...
+
+    # ...
+    l = LinearExpr(v1, F**2*dot(grad(F), grad(v1)))
+    a = linearize(l, F, trials='u1')
+    print(a)
+    # ...
+
+    # ...
+    l = LinearExpr(w1, dot(rot(G), grad(G))*w1)
+    a = linearize(l, G, trials='u1')
+    print(a)
+    # ...
+
+#==============================================================================
+def test_linearize_expr_2d_2():
+    domain = Domain('Omega', dim=DIM)
+    x,y = domain.coordinates
+
+    V1 = FunctionSpace('V1', domain)
+
+    v1 = TestFunction(V1, name='v1')
+
+    alpha = Constant('alpha')
+
+    F = Field('F', space=V1)
+    G = Field('G', space=V1)
+
+    # ...
+    l1 = LinearExpr(v1, F**2*v1)
+    l  = LinearExpr(v1, l1(v1))
+
+    a = linearize(l, F, trials='u1')
+    print(a)
+
+    expected = linearize(l1, F, trials='u1')
+    assert( linearize(l, F, trials='u1') == expected )
+    # ...
+
+#==============================================================================
+def test_linearize_form_2d_1():
+    domain = Domain('Omega', dim=DIM)
+    x,y = domain.coordinates
+
+    V1 = FunctionSpace('V1', domain)
+    W1 = VectorFunctionSpace('W1', domain)
+
+    v1 = TestFunction(V1, name='v1')
+    w1 = VectorTestFunction(W1, name='w1')
+
+    alpha = Constant('alpha')
+
+    F = Field('F', space=V1)
+    G = VectorField(W1, 'G')
+
+    # ...
+    l = LinearForm(v1, F**2*v1)
+    a = linearize(l, F, trials='u1')
+    print(a)
+    # ...
+
+    # ...
+    l = LinearForm(v1, dot(grad(F), grad(F))*v1)
+    a = linearize(l, F, trials='u1')
+    print(a)
+    # ...
+
+    # ...
+    l = LinearForm(v1, exp(-F)*v1)
+    a = linearize(l, F, trials='u1')
+    print(a)
+    # ...
+
+    # ...
+    l = LinearForm(v1, cos(F)*v1)
+    a = linearize(l, F, trials='u1')
+    print(a)
+    # ...
+
+    # ...
+    l = LinearForm(v1, cos(F**2)*v1)
+    a = linearize(l, F, trials='u1')
+    print(a)
+    # ...
+
+    # ...
+    l = LinearForm(v1, F**2*dot(grad(F), grad(v1)))
+    a = linearize(l, F, trials='u1')
+    print(a)
+    # ...
+
+    # ...
+    l = LinearForm(w1, dot(rot(G), grad(G))*w1)
+    a = linearize(l, G, trials='u1')
+    print(a)
+    # ...
+
+#==============================================================================
+def test_linearize_form_2d_2():
+    domain = Domain('Omega', dim=DIM)
+    x,y = domain.coordinates
+
+    V1 = FunctionSpace('V1', domain)
+
+    v1 = TestFunction(V1, name='v1')
+
+    alpha = Constant('alpha')
+
+    F = Field('F', space=V1)
+    G = Field('G', space=V1)
+
+    # ...
+    l1 = LinearForm(v1, F**2*v1)
+    l  = LinearForm(v1, l1(v1))
+
+    a = linearize(l, F, trials='u1')
+    print(a)
+
+    expected = linearize(l1, F, trials='u1')
+    assert( linearize(l, F, trials='u1') == expected )
+    # ...
+
+#==============================================================================
+def test_linearize_form_2d_3():
+    """steady Euler equation."""
+    domain = Domain('Omega', dim=DIM)
+    x,y = domain.coordinates
+
+    U = VectorFunctionSpace('U', domain)
+    W =       FunctionSpace('W', domain)
+
+    v   = VectorTestFunction(U, name='v')
+    phi =       TestFunction(W, name='phi')
+    q   =       TestFunction(W, name='q')
+
+    U_0   = VectorField(U, name='U_0')
+    Rho_0 =       Field('Rho_0', W)
+    P_0   =       Field('P_0', W)
+
+    # ...
+    expr = div(Rho_0*U_0) * phi
+    l1 = LinearForm(phi, expr)
+
+    expr = Rho_0*dot(convect(U_0, grad(U_0)), v) + dot(grad(P_0), v)
+    l2 = LinearForm(v, expr)
+
+    expr = dot(U_0, grad(P_0)) * q + P_0 * div(U_0) * q
+    l3 = LinearForm(q, expr)
+    # ...
+
+    a1 = linearize(l1, [Rho_0, U_0], trials=['d_rho', 'd_u'])
+    print(a1)
+    print('')
+
+    a2 = linearize(l2, [Rho_0, U_0, P_0], trials=['d_rho', 'd_u', 'd_p'])
+    print(a2)
+    print('')
+
+    a3 = linearize(l3, [P_0, U_0], trials=['d_p', 'd_u'])
+    print(a3)
+    print('')
+
+    l = LinearForm((phi, v, q), l1(phi) + l2(v) + l3(q))
+    a = linearize(l, [Rho_0, U_0, P_0], trials=['d_rho', 'd_u', 'd_p'])
+    print(a)
+
+#==============================================================================
+def test_area_2d_1():
+
+    domain = Domain('Omega', dim=2)
+    x,y = domain.coordinates
+
+    mu    = Constant('mu'   , is_real=True)
+
+    e = ElementDomain(domain)
+    area = Area(e)
+
+    V = FunctionSpace('V', domain)
+
+    u,v = [TestFunction(V, name=i) for i in ['u', 'v']]
+
+    # ...
+    a = BilinearForm((v,u), area * u * v)
+    print(TerminalExpr(a))
+    # ...
+
+#==============================================================================
+def test_stabilization_2d_1():
+
+    domain = Domain('Omega', dim=2)
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    b1 = 1.
+    b2 = 0.
+    b = Tuple(b1, b2)
+
+    # right hand side
+    f = x*y
+
+    e = ElementDomain()
+    area = Area(e)
+
+    V = FunctionSpace('V', domain)
+
+    u,v = [TestFunction(V, name=i) for i in ['u', 'v']]
+
+    # ...
+    expr = kappa * dot(grad(u), grad(v)) + dot(b, grad(u)) * v
+    a = BilinearForm((v,u), expr)
+    # ...
+
+    # ...
+    expr = f * v
+    l = LinearForm(v, expr)
+    # ...
+
+    # ...
+    expr = (- kappa * laplace(u) + dot(b, grad(u))) * dot(b, grad(v))
+    s1 = BilinearForm((v,u), expr)
+
+    expr = - f * dot(b, grad(v))
+    l1 = LinearForm(v, expr)
+    # ...
+
+    # ...
+    expr = (- kappa * laplace(u) + dot(b, grad(u))) * ( dot(b, grad(v)) - kappa * laplace(v))
+    s2 = BilinearForm((v,u), expr)
+
+    expr = - f * ( dot(b, grad(v)) - kappa * laplace(v))
+    l2 = LinearForm(v, expr)
+    # ...
+
+    # ...
+    expr = (- kappa * laplace(u) + dot(b, grad(u))) * ( dot(b, grad(v)) + kappa * laplace(v))
+    s3 = BilinearForm((v,u), expr)
+
+    expr = - f * ( dot(b, grad(v)) + kappa * laplace(v))
+    l3 = LinearForm(v, expr)
+    # ...
+
+    # ...
+    expr = a(v,u) + mu*area*s1(v,u)
+    a1 = BilinearForm((v,u), expr)
+    # ...
+
+    # ...
+    expr = a(v,u) + mu*area*s2(v,u)
+    a2 = BilinearForm((v,u), expr)
+    # ...
+
+    # ...
+    expr = a(v,u) + mu*area*s3(v,u)
+    a3 = BilinearForm((v,u), expr)
+    # ...
+
+    print(a1)
+    print(TerminalExpr(a1))
+    print('')
+
+    print(a2)
+    print(TerminalExpr(a2))
+    print('')
+
+    print(a3)
+    print(TerminalExpr(a3))
+    print('')
+
+#==============================================================================
+def test_user_function_2d_1():
+
+    domain = Domain('Omega', dim=2)
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    # right hand side
+    f = Function('f')
+
+    V = FunctionSpace('V', domain)
+
+    u,v = [TestFunction(V, name=i) for i in ['u', 'v']]
+
+    # ...
+    expr = dot(grad(u), grad(v)) + f(x,y) * u * v
+    a = BilinearForm((v,u), expr)
+
+    print(a)
+    print(TerminalExpr(a))
+    print('')
+    # ...
+
+    # ...
+    expr = f(x,y) * v
+    l = LinearForm(v, expr)
+
+    print(l)
+    print(TerminalExpr(l))
+    print('')
+    # ...
+
+#==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
 
@@ -992,36 +1341,11 @@ def teardown_function():
     from sympy import cache
     cache.clear_cache()
 
-#test_linear_expr_2d_1()
-#test_linear_expr_2d_2()
-#print('================')
-#test_bilinear_expr_2d_1()
-#test_bilinear_expr_2d_2()
-#print('================')
-#test_integral_2d_1()
-#print('================')
-#test_linear_form_2d_1()
-#test_linear_form_2d_2()
-#print('================')
-#test_bilinear_form_2d_1()
-#test_bilinear_form_2d_2()
-#print('================')
-#test_call_linear_expr_2d_1()
-#test_call_linear_expr_2d_2()
-#print('================')
-#test_call_bilinear_expr_2d_1()
-#test_call_bilinear_expr_2d_2()
-#print('================')
-#test_call_linear_form_2d_1()
-#test_call_linear_form_2d_2()
-#test_call_linear_form_2d_3()
-#print('================')
-#test_call_bilinear_form_2d_1()
-#test_call_bilinear_form_2d_2()
-#print('================')
-#test_terminal_expr_linear_2d_1()
-#test_terminal_expr_linear_2d_2()
-#print('================')
-test_terminal_expr_bilinear_2d_1()
-#test_terminal_expr_bilinear_2d_2()
-#test_terminal_expr_bilinear_2d_3()
+#test_linearize_expr_2d_1()
+#test_linearize_expr_2d_2()
+#test_linearize_form_2d_1()
+#test_linearize_form_2d_2()
+#test_linearize_form_2d_3()
+#test_area_2d_1()
+#test_stabilization_2d_1()
+#test_user_function_2d_1()

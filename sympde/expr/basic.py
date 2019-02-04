@@ -119,7 +119,7 @@ def _sanitize_arguments(arguments, is_bilinear=False, is_linear=False):
 def is_linear_form(expr, args):
     """checks if an expression is linear with respect to the given arguments."""
     # ...
-    test_functions = _sanitize_form_arguments(args, expr, is_linear=True)
+    test_functions = _sanitize_arguments(args, expr, is_linear=True)
     # TODO is it ok to do this?
     test_functions = test_functions[0]
 
@@ -168,6 +168,7 @@ class BasicForm(Expr):
     is_bilinear = False
     _domain     = None
     _dim        = None
+    _body       = None
 
     # TODO use .atoms
     @property

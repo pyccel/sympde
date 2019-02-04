@@ -420,6 +420,7 @@ class IndexedVectorField(Indexed):
         return self.base.space.ldim
 
 #==============================================================================
+# TODO Expr or AtomicExpr?
 class Trace(Expr):
     """
     Represents the trace over a boundary and a space function
