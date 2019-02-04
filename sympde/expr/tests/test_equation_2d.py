@@ -29,7 +29,7 @@ from sympde.topology import ElementDomain
 from sympde.topology import Area
 
 from sympde.expr import BilinearForm, LinearForm
-#from sympde.expr import Projection
+from sympde.expr import Projection
 
 from sympde.expr.errors import UnconsistentLhsError
 from sympde.expr.errors import UnconsistentRhsError
@@ -77,27 +77,27 @@ def test_equation_2d_1():
     l_B2 = LinearForm(v, expr)
     # ...
 
-    # ...
-    with pytest.raises(UnconsistentLhsError):
-        equation = Equation(a1, l1(v))
-
-    with pytest.raises(UnconsistentLhsError):
-        equation = Equation(l1(v), l1(v))
-
-    with pytest.raises(UnconsistentLhsError):
-        equation = Equation(a1(v,u) + alpha*a2(v,u), l1(v))
-    # ...
-
-    # ...
-    with pytest.raises(UnconsistentRhsError):
-        equation = Equation(a1(v,u), l1)
-
-    with pytest.raises(UnconsistentRhsError):
-        equation = Equation(a1(v,u), a1(v,u))
-
-    with pytest.raises(UnconsistentRhsError):
-        equation = Equation(a1(v,u), l1(v) + l2(v))
-    # ...
+#    # ...
+#    with pytest.raises(UnconsistentLhsError):
+#        equation = Equation(a1, l1(v))
+#
+#    with pytest.raises(UnconsistentLhsError):
+#        equation = Equation(l1(v), l1(v))
+#
+#    with pytest.raises(UnconsistentLhsError):
+#        equation = Equation(a1(v,u) + alpha*a2(v,u), l1(v))
+#    # ...
+#
+#    # ...
+#    with pytest.raises(UnconsistentRhsError):
+#        equation = Equation(a1(v,u), l1)
+#
+#    with pytest.raises(UnconsistentRhsError):
+#        equation = Equation(a1(v,u), a1(v,u))
+#
+#    with pytest.raises(UnconsistentRhsError):
+#        equation = Equation(a1(v,u), l1(v) + l2(v))
+#    # ...
 
     # ...
     equation = Equation(a1(v,u), l1(v))
@@ -129,10 +129,6 @@ def test_equation_2d_1():
     equation = Equation(a1(v,u), l1(v), bc=EssentialBC(u, 0, B1))
     # ...
 
-#    # ... using bc
-#    equation = Equation(a1(v,u), l1(v), bc=EssentialBC(u,0,ComplementBoundary(B1)))
-#    # ...
-
 #    # ... TODO FIX THIS, NOT RAISED ANYMORE!
 #    with pytest.raises(UnconsistentBCError):
 #        a = BilinearForm((v,u), a1(v,u) + a_B1(v,u))
@@ -147,19 +143,18 @@ def test_equation_2d_1():
 #    # ...
 
 
-##==============================================================================
-#def test_projection_2d():
-#
-#    V = FunctionSpace('V', domain)
-#    x,y = domain.coordinates
-#
-#    alpha = Constant('alpha')
-#
-#    u = Projection(x**2+alpha*y, V, name='u')
-#
+#==============================================================================
+def test_projection_2d():
+
+    V = FunctionSpace('V', domain)
+    x,y = domain.coordinates
+
+    alpha = Constant('alpha')
+
+    u = Projection(x**2+alpha*y, V)
+
 
 #==============================================================================
-# TODO
 def test_equation_2d_2():
 
     domain = Square()
@@ -180,22 +175,22 @@ def test_equation_2d_2():
     dt    = Constant('dt', real=True)
     alpha = Constant('alpha', real=True)
 
-#    s  = BilinearForm((tau,sigma), dot(grad(tau), grad(sigma)))
-#    m  = BilinearForm((tau,sigma), tau*sigma)
-#    b1 = BilinearForm((tau,dw), bracket(pn, dw) * tau)
-#    b2 = BilinearForm((tau,dp), bracket(dp, wn) * tau)
+    s  = BilinearForm((tau,sigma), dot(grad(tau), grad(sigma)))
+    m  = BilinearForm((tau,sigma), tau*sigma)
+    b1 = BilinearForm((tau,dw), bracket(pn, dw) * tau)
+    b2 = BilinearForm((tau,dp), bracket(dp, wn) * tau)
 
     l1 = LinearForm(tau, bracket(pn, wn)*tau - 1./Re * dot(grad(tau), grad(wn)))
 
-#    expr =  m(tau,dw) - alpha*dt*b1(tau,dw) - dt*b2(tau,dp) - (alpha*dt/Re)*s(tau,dw)
-#    a = BilinearForm(((tau, sigma),(dp,dw)), expr)
+    expr =  m(tau,dw) - alpha*dt*b1(tau,dw) - dt*b2(tau,dp) - (alpha*dt/Re)*s(tau,dw)
+    a = BilinearForm(((tau, sigma),(dp,dw)), expr)
 
-#    l = LinearForm((tau, sigma), dt*l1(tau))
+    l = LinearForm((tau, sigma), dt*l1(tau))
 
-#    bc  = [EssentialBC(dp, 0, domain.boundary)]
-#    bc += [EssentialBC(dw, 0, domain.boundary)]
-#    equation = Equation(a((tau, sigma),(dp,dw)), l(tau, sigma), bc=bc)
-#
+    bc  = [EssentialBC(dp, 0, domain.boundary)]
+    bc += [EssentialBC(dw, 0, domain.boundary)]
+    equation = Equation(a((tau, sigma),(dp,dw)), l(tau, sigma), bc=bc)
+
 #    # TODO not working yet!! gives the wrong result => result must be a vector
 #    # and not a scalar
 #    print(evaluate(l, verbose=True))
@@ -304,20 +299,17 @@ def test_equation_2d_5():
     bc = EssentialBC(u, 0, domain.boundary)
     equation = Equation(a((v,q),(u,p)), l(v,q), bc=bc)
 
-    # TODO
-#    # ...
-#    print('=======')
-#    print(equation.lhs.expr)
-#    print(evaluate(equation.lhs.expr))
-#    print('')
-#    # ...
-#
-#    # ...
-#    print('=======')
-#    print(equation.rhs.expr)
-#    print(evaluate(equation.rhs.expr))
-#    print('')
-#    # ...
+    # ...
+    print('=======')
+    print(equation.lhs.expr)
+    print('')
+    # ...
+
+    # ...
+    print('=======')
+    print(equation.rhs.expr)
+    print('')
+    # ...
 
 ##==============================================================================
 #def test_equation_2d_6():
@@ -359,98 +351,98 @@ def test_equation_2d_5():
 #    bc = EssentialBC(u, 0, B1)
 #    eq = NewtonIteration(l, Un, bc=bc, trials=u)
 #    # ...
-#
-##==============================================================================
-#def test_equation_2d_7():
-#
-#    domain = Square()
-#    x,y = domain.coordinates
-#
-#    kappa = Constant('kappa', is_real=True)
-#    mu    = Constant('mu'   , is_real=True)
-#
-#    b1 = 1.
-#    b2 = 0.
-#    b = Tuple(b1, b2)
-#
-#    # right hand side
-#    f = x*y
-#
-#    e = ElementDomain()
-#    area = Area(e)
-#
-#    V = FunctionSpace('V', domain)
-#
-#    u,v = [TestFunction(V, name=i) for i in ['u', 'v']]
-#
-#    # ...
-#    expr = kappa * dot(grad(u), grad(v)) + dot(b, grad(u)) * v
-#    a = BilinearForm((v,u), expr)
-#    # ...
-#
-#    # ...
-#    expr = f * v
-#    l0 = LinearForm(v, expr)
-#    # ...
-#
-#    # ...
-#    expr = (- kappa * laplace(u) + dot(b, grad(u))) * dot(b, grad(v))
-#    s1 = BilinearForm((v,u), expr)
-#
-#    expr = - f * dot(b, grad(v))
-#    l1 = LinearForm(v, expr)
-#    # ...
-#
-#    # ...
-#    expr = (- kappa * laplace(u) + dot(b, grad(u))) * ( dot(b, grad(v)) - kappa * laplace(v))
-#    s2 = BilinearForm((v,u), expr)
-#
-#    expr = - f * ( dot(b, grad(v)) - kappa * laplace(v))
-#    l2 = LinearForm(v, expr)
-#    # ...
-#
-#    # ...
-#    expr = (- kappa * laplace(u) + dot(b, grad(u))) * ( dot(b, grad(v)) + kappa * laplace(v))
-#    s3 = BilinearForm((v,u), expr)
-#
-#    expr = - f * ( dot(b, grad(v)) + kappa * laplace(v))
-#    l3 = LinearForm(v, expr)
-#    # ...
-#
-#    # ...
-#    expr = a(v,u) + mu*area*s1(v,u)
-#    a1 = BilinearForm((v,u), expr)
-#    # ...
-#
-#    # ...
-#    expr = a(v,u) + mu*area*s2(v,u)
-#    a2 = BilinearForm((v,u), expr)
-#    # ...
-#
-#    # ...
-#    expr = a(v,u) + mu*area*s3(v,u)
-#    a3 = BilinearForm((v,u), expr)
-#    # ...
-#
-#    bc = EssentialBC(u, 0, domain.boundary)
-#
-#    # ...
-#    l = LinearForm(v, l0(v) + mu*area*l1(v))
-#
-#    eq_1 = Equation(a1(v,u), l(v), bc=bc)
-#    # ...
-#
-#    # ...
-#    l = LinearForm(v, l0(v) + mu*area*l2(v))
-#
-#    eq_2 = Equation(a2(v,u), l(v), bc=bc)
-#    # ...
-#
-#    # ...
-#    l = LinearForm(v, l0(v) + mu*area*l3(v))
-#
-#    eq_3 = Equation(a3(v,u), l(v), bc=bc)
-#    # ...
+
+#==============================================================================
+def test_equation_2d_7():
+
+    domain = Square()
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    b1 = 1.
+    b2 = 0.
+    b = Tuple(b1, b2)
+
+    # right hand side
+    f = x*y
+
+    e = ElementDomain()
+    area = Area(e)
+
+    V = FunctionSpace('V', domain)
+
+    u,v = [TestFunction(V, name=i) for i in ['u', 'v']]
+
+    # ...
+    expr = kappa * dot(grad(u), grad(v)) + dot(b, grad(u)) * v
+    a = BilinearForm((v,u), expr)
+    # ...
+
+    # ...
+    expr = f * v
+    l0 = LinearForm(v, expr)
+    # ...
+
+    # ...
+    expr = (- kappa * laplace(u) + dot(b, grad(u))) * dot(b, grad(v))
+    s1 = BilinearForm((v,u), expr)
+
+    expr = - f * dot(b, grad(v))
+    l1 = LinearForm(v, expr)
+    # ...
+
+    # ...
+    expr = (- kappa * laplace(u) + dot(b, grad(u))) * ( dot(b, grad(v)) - kappa * laplace(v))
+    s2 = BilinearForm((v,u), expr)
+
+    expr = - f * ( dot(b, grad(v)) - kappa * laplace(v))
+    l2 = LinearForm(v, expr)
+    # ...
+
+    # ...
+    expr = (- kappa * laplace(u) + dot(b, grad(u))) * ( dot(b, grad(v)) + kappa * laplace(v))
+    s3 = BilinearForm((v,u), expr)
+
+    expr = - f * ( dot(b, grad(v)) + kappa * laplace(v))
+    l3 = LinearForm(v, expr)
+    # ...
+
+    # ...
+    expr = a(v,u) + mu*area*s1(v,u)
+    a1 = BilinearForm((v,u), expr)
+    # ...
+
+    # ...
+    expr = a(v,u) + mu*area*s2(v,u)
+    a2 = BilinearForm((v,u), expr)
+    # ...
+
+    # ...
+    expr = a(v,u) + mu*area*s3(v,u)
+    a3 = BilinearForm((v,u), expr)
+    # ...
+
+    bc = EssentialBC(u, 0, domain.boundary)
+
+    # ...
+    l = LinearForm(v, l0(v) + mu*area*l1(v))
+
+    eq_1 = Equation(a1(v,u), l(v), bc=bc)
+    # ...
+
+    # ...
+    l = LinearForm(v, l0(v) + mu*area*l2(v))
+
+    eq_2 = Equation(a2(v,u), l(v), bc=bc)
+    # ...
+
+    # ...
+    l = LinearForm(v, l0(v) + mu*area*l3(v))
+
+    eq_3 = Equation(a3(v,u), l(v), bc=bc)
+    # ...
 
 
 #==============================================================================
@@ -465,4 +457,5 @@ def teardown_function():
     from sympy import cache
     cache.clear_cache()
 
-test_equation_2d_2()
+# TODO
+#test_equation_2d_6()

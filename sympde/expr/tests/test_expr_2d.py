@@ -34,7 +34,6 @@ from sympde.topology import Area
 from sympde.expr.expr import LinearExpr, BilinearExpr
 from sympde.expr.expr import LinearForm, BilinearForm
 from sympde.expr.expr import DomainIntegral, BoundaryIntegral
-from sympde.expr.expr import Call
 from sympde.expr.evaluation import TerminalExpr
 
 from sympde.expr.errors import UnconsistentError
@@ -66,7 +65,8 @@ def test_linear_expr_2d_1():
     print(l)
     print(l.expr)
     print(l(v1))
-    print(l(v1+v2))
+    # TODO
+#    print(l(v1+v2))
     print('')
     # ...
 
@@ -75,7 +75,8 @@ def test_linear_expr_2d_1():
     print(l)
     print(l.expr)
     print(l(u1, u2))
-    print(l(u1+v1, u2+v2))
+    # TODO
+#    print(l(u1+v1, u2+v2))
     print('')
     # ...
 
@@ -99,7 +100,8 @@ def test_linear_expr_2d_2():
     print(l)
     print(l.expr)
     print(l(v1))
-    print(l(v1+v2))
+    # TODO
+#    print(l(v1+v2))
     print('')
     # ...
 
@@ -110,7 +112,8 @@ def test_linear_expr_2d_2():
     print(l)
     print(l.expr)
     print(l(u1, u2))
-    print(l(u1+v1, u2+v2))
+    # TODO
+#    print(l(u1+v1, u2+v2))
     print('')
     # ...
 
@@ -133,7 +136,8 @@ def test_bilinear_expr_2d_1():
     print(a)
     print(a.expr)
     print(a(u1,v1))
-    print(a(u1+u2,v1+v2))
+    # TODO
+#    print(a(u1+u2,v1+v2))
     print('')
     # ...
 
@@ -163,7 +167,8 @@ def test_bilinear_expr_2d_2():
     print(a)
     print(a.expr)
     print(a(u1,v1))
-    print(a(u1+u2,v1+v2))
+    # TODO
+#    print(a(u1+u2,v1+v2))
     print('')
     # ...
 
@@ -388,10 +393,8 @@ def test_call_linear_expr_2d_1():
 
     # ...
     l = LinearExpr(v, x*y*v)
-    print(Call(l, v1))
-    print(Call(l, v1, evaluate=True))
+    print(l)
     print(l(v1))
-    print(l(v1, evaluate=True))
     print('')
     # ...
 
@@ -412,10 +415,7 @@ def test_call_linear_expr_2d_2():
     # ...
     g = Tuple(x,y)
     l = LinearExpr(v, dot(g, v))
-    print(Call(l, v1))
-    print(Call(l, v1, evaluate=True))
     print(l(v1))
-    print(l(v1, evaluate=True))
     print('')
     # ...
 
@@ -435,10 +435,7 @@ def test_call_bilinear_expr_2d_1():
 
     # ...
     a = BilinearExpr((u,v), u*v)
-    print(Call(a, (u1,v1)))
-    print(Call(a, (u1,v1), evaluate=True))
     print(a(u1,v1))
-    print(a(u1,v1, evaluate=True))
     print('')
     # ...
 
@@ -458,10 +455,7 @@ def test_call_bilinear_expr_2d_2():
 
     # ...
     a = BilinearExpr((u,v), dot(u,v))
-    print(Call(a, (u1,v1)))
-    print(Call(a, (u1,v1), evaluate=True))
     print(a(u1,v1))
-    print(a(u1,v1, evaluate=True))
     print('')
     # ...
 
@@ -481,10 +475,7 @@ def test_call_linear_form_2d_1():
 
     # ...
     l = LinearForm(v, x*y*v)
-    print(Call(l, v1))
-    print(Call(l, v1, evaluate=True))
     print(l(v1))
-    print(l(v1, evaluate=True))
     print('')
     # ...
 
@@ -522,10 +513,7 @@ def test_call_linear_form_2d_2():
     # ...
     g = Tuple(x,y)
     l = LinearForm(v, dot(g, v))
-    print(Call(l, v1))
-    print(Call(l, v1, evaluate=True))
     print(l(v1))
-    print(l(v1, evaluate=True))
     print('')
     # ...
 
@@ -549,6 +537,31 @@ def test_call_linear_form_2d_2():
     # ...
 
 #==============================================================================
+def test_call_linear_form_2d_3():
+
+    domain = Domain('Omega', dim=2)
+    x,y = domain.coordinates
+
+    V = FunctionSpace('V', domain)
+
+    pn = Field('pn', V)
+    wn = Field('wn', V)
+
+    dp    = TestFunction(V, name='dp')
+    dw    = TestFunction(V, name='dw')
+    tau   = TestFunction(V, name='tau')
+    sigma = TestFunction(V, name='sigma')
+
+    Re    = Constant('Re', real=True)
+    dt    = Constant('dt', real=True)
+    alpha = Constant('alpha', real=True)
+
+    l1 = LinearForm(tau, bracket(pn, wn)*tau - 1./Re * dot(grad(tau), grad(wn)))
+
+    l = LinearForm((tau, sigma), dt*l1(tau))
+    print(l)
+
+#==============================================================================
 def test_call_bilinear_form_2d_1():
 
     domain = Domain('Omega', dim=2)
@@ -564,10 +577,7 @@ def test_call_bilinear_form_2d_1():
 
     # ...
     a = BilinearForm((u,v), u*v)
-    print(Call(a, (u1,v1)))
-    print(Call(a, (u1,v1), evaluate=True))
     print(a(u1,v1))
-    print(a(u1,v1, evaluate=True))
     print('')
     # ...
 
@@ -602,10 +612,7 @@ def test_call_bilinear_form_2d_2():
 
     # ...
     a = BilinearForm((u,v), dot(u,v))
-    print(Call(a, (u1,v1)))
-    print(Call(a, (u1,v1), evaluate=True))
     print(a(u1,v1))
-    print(a(u1,v1, evaluate=True))
     print('')
     # ...
 
@@ -996,6 +1003,7 @@ def teardown_function():
 #print('================')
 #test_call_linear_form_2d_1()
 #test_call_linear_form_2d_2()
+#test_call_linear_form_2d_3()
 #print('================')
 #test_call_bilinear_form_2d_1()
 #test_call_bilinear_form_2d_2()

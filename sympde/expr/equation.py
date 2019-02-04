@@ -15,8 +15,8 @@ from sympde.topology import Trace, trace_0, trace_1
 from sympde.calculus import grad, dot
 from sympde.core.utils import random_string
 
-from .expr import Call
 from .expr import BilinearForm, LinearForm
+from .expr import as_bilinear_form, as_linear_form
 #from .form import linearize
 from .errors import ( UnconsistentLhsError, UnconsistentRhsError,
                       UnconsistentArgumentsError, UnconsistentBCError )
@@ -175,24 +175,26 @@ class EssentialBC(BasicBoundaryCondition):
 # TODO add check on test/trial functions between lhs/rhs
 class Equation(Basic):
     def __new__(cls, lhs, rhs, bc=None):
-        # ...
-        if not isinstance(lhs, Call):
-            raise UnconsistentLhsError('> lhs must be a call')
+#        # ...
+#        if not isinstance(lhs, CallForm):
+#            raise UnconsistentLhsError('> lhs must be a call')
+#
+#        if not isinstance(rhs, CallForm):
+#            raise UnconsistentRhsError('> rhs must be a call')
+#        # ...
+#
+#        # ...
+#        if not isinstance(lhs._args[0], BilinearForm):
+#            raise UnconsistentLhsError('> lhs must be a bilinear')
+#
+#        if not isinstance(rhs._args[0], LinearForm):
+#            raise UnconsistentRhsError('> rhs must be a linear')
+#        # ...
 
-        if not isinstance(rhs, Call):
-            raise UnconsistentRhsError('> rhs must be a call')
-        # ...
-
-        # ...
-        if not isinstance(lhs._args[0], BilinearForm):
-            raise UnconsistentLhsError('> lhs must be a bilinear')
-
-        if not isinstance(rhs._args[0], LinearForm):
-            raise UnconsistentRhsError('> rhs must be a linear')
         # ...
-
-        lhs = lhs._args[0]
-        rhs = rhs._args[0]
+        lhs = as_bilinear_form(lhs)
+        rhs = as_linear_form(rhs)
+        # ...
 
         # ...
         # find unknowns and tests of the equation
@@ -342,6 +344,7 @@ class NewtonIteration(Equation):
 
 
 #==============================================================================
+# TODO finish implementation
 class LambdaEquation(Equation):
 
     @property
@@ -349,8 +352,9 @@ class LambdaEquation(Equation):
         return self.trial_functions
 
 #==============================================================================
+# TODO finish implementation
 class Projection(LambdaEquation):
-    def __new__(cls, expr, space, kind='l2', bc=None, name=None):
+    def __new__(cls, expr, space, kind='l2', bc=None):
         # ...
         tests = expr.atoms((TestFunction, VectorTestFunction))
         if tests or not isinstance(expr, Expr):
@@ -390,20 +394,16 @@ class Projection(LambdaEquation):
                 expr_lhs = Dot(v,u)
                 expr_rhs = Dot(expr, v)
 
-            lhs = BilinearForm((v,u), expr_lhs, name=lhs_name)
-            rhs = LinearForm(v, expr_rhs, name=rhs_name)
+            lhs = BilinearForm((v,u), expr_lhs)
+            rhs = LinearForm(v, expr_rhs)
         # ...
 
         obj = Equation.__new__(cls, lhs(v,u), rhs(v), bc=bc)
-        obj._name = name
-
-    @property
-    def name(self):
-        return self._name
 
 #==============================================================================
+# TODO finish implementation
 class Interpolation(LambdaEquation):
-    def __new__(cls, expr, space, kind='nodal', name=None):
+    def __new__(cls, expr, space, kind='nodal'):
         raise NotImplementedError('TODO')
 
         # ...
@@ -426,8 +426,3 @@ class Interpolation(LambdaEquation):
         # ... defining the lhs and rhs
         V = space
         # ...
-
-    @property
-    def name(self):
-        return self._name
-

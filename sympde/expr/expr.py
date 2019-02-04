@@ -69,17 +69,10 @@ class LinearExpr(BasicExpr):
     is_linear = True
 
     def __new__(cls, arguments, expr, check=False):
-        # ... this is a hack to avoid having expressions with integrals, a
-        #     consequence of using xreplace
-#        print(expr)
-        integral = expr.atoms(BasicIntegral)
-        if integral:
-#            try:
-#                expr = expr._args[0].expr
-#            except:
-#                import sys; sys.exit(0)
 
-            expr = expr._args[0].expr
+        # ...
+        if expr.atoms(BasicIntegral):
+            raise TypeError('')
         # ...
 
         # ...
@@ -99,27 +92,28 @@ class LinearExpr(BasicExpr):
     def expr(self):
         return self._args[1]
 
-    def __call__(self, *args, evaluate=False):
-        return Call(self, args, evaluate=evaluate)
+    def __call__(self, *args):
+        args = _sanitize_arguments(args, is_linear=True)
+        args = Tuple(*args)
+        return self.expr.xreplace(dict(list(zip(self.variables, args))))
 
 #==============================================================================
 class BilinearExpr(BasicExpr):
     is_bilinear = True
 
     def __new__(cls, arguments, expr, check=False):
+
+        # ...
+        if expr.atoms(BasicIntegral):
+            raise TypeError('')
+        # ...
+
         # ...
         if not isinstance(arguments, (tuple, list, Tuple)):
             raise TypeError('(test, trial) must be a tuple, list or Tuple')
 
         if not(len(arguments) == 2):
             raise ValueError('Expecting a couple (test, trial)')
-        # ...
-
-        # ... this is a hack to avoid having expressions with integrals, a
-        #     consequence of using xreplace
-        integral = expr.atoms(BasicIntegral)
-        if integral:
-            expr = expr._args[0].expr
         # ...
 
         # ...
@@ -139,8 +133,19 @@ class BilinearExpr(BasicExpr):
     def expr(self):
         return self._args[1]
 
-    def __call__(self, *args, evaluate=False):
-        return Call(self, args, evaluate=evaluate)
+    def __call__(self, *args):
+        args = _sanitize_arguments(args, is_bilinear=True)
+        left,right = args
+        if not is_sequence(left):
+            left = [left]
+
+        if not is_sequence(right):
+            right = [right]
+
+        args = Tuple(*left, *right)
+
+        variables = Tuple(*self.variables[0], *self.variables[1])
+        return self.expr.xreplace(dict(list(zip(self.variables, args))))
 
 
 #==============================================================================
@@ -284,19 +289,10 @@ class LinearForm(BasicForm):
 
     def __new__(cls, arguments, expr):
 
-        # ...
-        calls = list(expr.atoms(Call))
-        for call in calls:
-            args = call._args[1]
-            call_expr = call._args[0]
-            newexpr = call_expr(*args, evaluate=True)
-            expr = expr.subs(call, newexpr)
-
-        # take the BasicExpr
-        forms = list(expr.atoms(LinearForm))
-        for form in forms:
-            expr = expr.subs(form, form.expr._args[0])
-        # ...
+        integrals = expr.atoms(BasicIntegral)
+        if integrals:
+            for integral in integrals:
+                expr = expr.subs(integral, integral._args[0].expr)
 
         if not isinstance(expr, LinearExpr):
             expr = LinearExpr(arguments, expr)
@@ -329,8 +325,10 @@ class LinearForm(BasicForm):
     def expr(self):
         return self._args[1]
 
-    def __call__(self, *args, evaluate=False):
-        return Call(self, args, evaluate=evaluate)
+    def __call__(self, *args):
+        args = _sanitize_arguments(args, is_linear=True)
+        args = Tuple(*args)
+        return self.expr.xreplace(dict(list(zip(self.variables, args))))
 
 #==============================================================================
 class BilinearForm(BasicForm):
@@ -338,19 +336,10 @@ class BilinearForm(BasicForm):
 
     def __new__(cls, arguments, expr):
 
-        # ...
-        calls = list(expr.atoms(Call))
-        for call in calls:
-            args = call._args[1]
-            call_expr = call._args[0]
-            newexpr = call_expr(*args, evaluate=True)
-            expr = expr.subs(call, newexpr)
-
-        # take the BasicExpr
-        forms = list(expr.atoms(BilinearForm))
-        for form in forms:
-            expr = expr.subs(form, form.expr._args[0])
-        # ...
+        integrals = expr.atoms(BasicIntegral)
+        if integrals:
+            for integral in integrals:
+                expr = expr.subs(integral, integral._args[0].expr)
 
         if not isinstance(expr, BilinearExpr):
             expr = BilinearExpr(arguments, expr)
@@ -383,78 +372,79 @@ class BilinearForm(BasicForm):
     def expr(self):
         return self._args[1]
 
-    def __call__(self, *args, evaluate=False):
-        return Call(self, args, evaluate=evaluate)
+    def __call__(self, *args):
+        args = _sanitize_arguments(args, is_bilinear=True)
+        left,right = args
+        if not is_sequence(left):
+            left = [left]
 
+        if not is_sequence(right):
+            right = [right]
 
+        args = Tuple(*left, *right)
+
+        variables = Tuple(*self.variables[0], *self.variables[1])
+        return self.expr.xreplace(dict(list(zip(variables, args))))
 
 #==============================================================================
-# default behavior is not to evaluate the call
-class Call(CalculusFunction):
+def as_linear_form(expr):
 
-    def __new__(cls, *args, **options):
-        # (Try to) sympify args first
+    if isinstance(expr, LinearExpr):
+        return LinearForm(expr.variables, expr)
 
-        if options.pop('evaluate', False):
-            r = cls.eval(*args)
-        else:
-            r = None
+    elif isinstance(expr, BasicIntegral):
+        return as_linear_form(expr._args[0])
 
-        if r is None:
-            return Basic.__new__(cls, *args, **options)
-        else:
-            return r
+    elif isinstance(expr, Add):
+        args = []
+        variables = None # TODO make sure they are all the same
+        for i in expr.args:
+            if isinstance(i, BasicIntegral) and isinstance(i._args[0], LinearExpr):
+                args += [i._args[0].expr]
+                variables = i._args[0].variables
 
-    def __getitem__(self, indices, **kw_args):
-        if is_sequence(indices):
-            # Special case needed because M[*my_tuple] is a syntax error.
-            return Indexed(self, *indices, **kw_args)
-        else:
-            return Indexed(self, indices, **kw_args)
+            elif isinstance(i, LinearExpr):
+                args += [i.expr]
+                variables = i.variables
 
-    @classmethod
-    def eval(cls, *_args):
-        """."""
+            else:
+                raise TypeError('')
 
-        if not _args:
-            return
+        expr =  Add(*args)
+        expr = LinearExpr(variables, expr)
+        return as_linear_form(expr)
 
-        if not len(_args) == 2:
-            raise ValueError('Expecting two arguments')
+    else:
+        raise NotImplementedError('')
 
-        expr = _args[0]
-        args = _args[1]
+#==============================================================================
+def as_bilinear_form(expr):
 
-        if not isinstance(expr, (BasicExpr, BasicForm)):
-            raise NotImplementedError('')
+    if isinstance(expr, BilinearExpr):
+        return BilinearForm(expr.variables, expr)
 
-        is_linear   = expr.is_linear
-        is_bilinear = expr.is_bilinear
+    elif isinstance(expr, BasicIntegral):
+        return as_bilinear_form(expr._args[0])
 
-        args = _sanitize_arguments(args,
-                                   is_linear=is_linear,
-                                   is_bilinear=is_bilinear)
+    elif isinstance(expr, Add):
+        args = []
+        variables = None # TODO make sure they are all the same
+        for i in expr.args:
+            if isinstance(i, BasicIntegral) and isinstance(i._args[0], BilinearExpr):
+                args += [i._args[0].expr]
+                variables = i._args[0].variables
 
-        if is_linear:
-            args = Tuple(*args)
-            variables = expr.variables
-            return expr.xreplace(dict(list(zip(variables, args))))
+            elif isinstance(i, BilinearExpr):
+                args += [i.expr]
+                variables = i.variables
 
-        if is_bilinear:
-            left,right = args
-            if not is_sequence(left):
-                left = [left]
+            else:
+                raise TypeError('')
 
-            if not is_sequence(right):
-                right = [right]
+        expr =  Add(*args)
+        expr = BilinearExpr(variables, expr)
+        return as_bilinear_form(expr)
 
-            args = Tuple(*left, *right)
-
-            variables = expr.variables
-            variables = Tuple(*variables[0], *variables[1])
-
-            return expr.xreplace(dict(list(zip(variables, args))))
-
-        return cls(expr, args, evaluate=False)
-
+    else:
+        raise NotImplementedError('')
 
