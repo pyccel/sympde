@@ -64,6 +64,8 @@ from .basic import BasicForm
 from .basic  import BasicExpr
 from .basic  import is_linear_form, _sanitize_arguments
 
+
+
 #==============================================================================
 class LinearExpr(BasicExpr):
     is_linear = True
@@ -187,8 +189,8 @@ class BasicIntegral(CalculusFunction):
 
         expr = _args[0]
 
-        if not isinstance(expr, BasicExpr):
-            raise NotImplementedError('')
+        if not isinstance(expr, (BasicExpr, Expr)):
+            raise TypeError('')
 
         if isinstance(expr, BasicExpr) and expr.is_linear:
             if isinstance(expr.expr, Add):
@@ -284,6 +286,32 @@ def _get_domain(a):
 
     else:
         raise TypeError('Expecting a Boundary or Domain integral')
+
+
+#==============================================================================
+class Functional(BasicForm):
+    is_functional = True
+
+    def __new__(cls, expr, domain):
+
+        expr = BasicIntegral(expr)
+        return Basic.__new__(cls, expr, domain)
+
+    @property
+    def expr(self):
+        return self._args[0]
+
+    @property
+    def domain(self):
+        return self._args[1]
+
+    @property
+    def dim(self):
+        return self.domain.dim
+
+    # TODO do we need it?
+#    def _eval_nseries(self, x, n, logx):
+#        return self.expr._eval_nseries(x, n, logx)
 
 
 #==============================================================================
@@ -414,6 +442,70 @@ class BilinearForm(BasicForm):
 
         variables = Tuple(*self.variables[0], *self.variables[1])
         return self.expr.xreplace(dict(list(zip(variables, args))))
+
+#==============================================================================
+class Norm(Functional):
+    def __new__(cls, expr, domain, kind='l2'):
+#        # ...
+#        tests = expr.atoms((TestFunction, VectorTestFunction))
+#        if tests:
+#            msg = '> Expecting an Expression without test functions'
+#            raise UnconsistentArgumentsError(msg)
+#
+#        if not isinstance(expr, (Expr, Matrix, ImmutableDenseMatrix)):
+#            msg = '> Expecting Expr, Matrix, ImmutableDenseMatrix'
+#            raise UnconsistentArgumentsError(msg)
+#        # ...
+
+        # ...
+        if not(kind in ['l2', 'h1']):
+            raise ValueError('> Only L2, H1 norms are available')
+        # ...
+
+        # ...
+        is_vector = isinstance(expr, (Matrix, Tuple, list, tuple))
+        if is_vector:
+            expr = Matrix(expr)
+        # ...
+
+        # ...
+        exponent = None
+        if kind == 'l2':
+            exponent = 2
+
+            if not is_vector:
+                expr = expr*expr
+
+            else:
+                if not( expr.shape[1] == 1 ):
+                    raise ValueError('Wrong expression for Matrix. must be a row')
+
+                v = Tuple(*expr[:,0])
+                expr = Dot(v, v)
+
+        elif kind == 'h1':
+            exponent = 2
+
+            if not is_vector:
+                expr = Dot(Grad(expr), Grad(expr))
+
+            else:
+                if not( expr.shape[1] == 1 ):
+                    raise ValueError('Wrong expression for Matrix. must be a row')
+
+                v = Tuple(*expr[:,0])
+                expr = Inner(Grad(v), Grad(v))
+        # ...
+
+        obj = Functional.__new__(cls, expr, domain)
+        obj._exponent = exponent
+
+        return obj
+
+    @property
+    def exponent(self):
+        return self._exponent
+
 
 #==============================================================================
 def as_linear_form(expr):

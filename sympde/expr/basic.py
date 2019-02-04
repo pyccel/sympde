@@ -141,9 +141,10 @@ def is_linear_form(expr, args):
 
 #==============================================================================
 class BasicExpr(Expr):
-    is_Function = True
-    is_linear   = False
-    is_bilinear = False
+    is_Function   = True
+    is_linear     = False
+    is_bilinear   = False
+    is_functional = False
 
     # TODO use .atoms
     @property
@@ -166,6 +167,7 @@ class BasicForm(Expr):
     is_Function = True
     is_linear   = False
     is_bilinear = False
+    is_functional = False
     _domain     = None
     _dim        = None
     _body       = None

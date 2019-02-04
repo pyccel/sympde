@@ -63,6 +63,7 @@ from .basic  import BasicExpr, BasicForm
 from .expr   import LinearExpr, BilinearExpr
 from .expr   import LinearForm, BilinearForm
 from .expr import BasicIntegral, DomainIntegral, BoundaryIntegral
+from .expr import Functional
 from .expr import _get_domain
 
 #==============================================================================
@@ -117,6 +118,14 @@ def _init_matrix(expr):
         # ...
 
         return  M, test_indices, None
+
+    elif expr.is_functional:
+
+        # ...
+        M = Matrix([0.])
+        # ...
+
+        return  M, None, None
 
     else:
         raise TypeError('Expecting BasicExpr or BasicForm')
@@ -194,12 +203,20 @@ def _to_matrix_linear_form(expr, M, test_indices):
 
     return M
 
+def _to_matrix_functional_form(expr, M):
+    M[0] += expr
+
+    return M
+
 def _to_matrix_form(expr, M, test_indices, trial_indices):
-    if trial_indices is None:
+    if not(test_indices is None) and not(trial_indices is None):
+        return _to_matrix_bilinear_form(expr, M, test_indices, trial_indices)
+
+    if not(test_indices is None) and trial_indices is None:
         return _to_matrix_linear_form(expr, M, test_indices)
 
-    else:
-        return _to_matrix_bilinear_form(expr, M, test_indices, trial_indices)
+    if test_indices is None and trial_indices is None:
+        return _to_matrix_functional_form(expr, M)
 
 #==============================================================================
 class KernelExpression(Basic):
@@ -276,7 +293,10 @@ class TerminalExpr(CalculusFunction):
             is_bilinear = expr.is_bilinear
 
             domain = expr.domain
-            if not is_sequence(domain):
+            if isinstance(domain, Union):
+                domain = list(domain._args)
+
+            elif not is_sequence(domain):
                 domain = [domain]
             # ...
 
@@ -291,24 +311,43 @@ class TerminalExpr(CalculusFunction):
                 for a in expr.expr.args:
                     newexpr = cls.eval(a, dim=dim)
                     newexpr = expand(newexpr)
+
+                    # ...
                     domain = _get_domain(a)
+                    if isinstance(domain, Union):
+                        domain = list(domain._args)
 
-                    if not is_sequence(domain):
+                    elif not is_sequence(domain):
                         domain = [domain]
+                    # ...
 
+                    # ...
                     for d in domain:
                         d_expr[d] += newexpr
+                    # ...
 
             else:
                 newexpr = cls.eval(expr.expr, dim=dim)
                 newexpr = expand(newexpr)
-                domain = _get_domain(expr.expr)
 
-                if not is_sequence(domain):
+                # ...
+                if isinstance(expr, Functional):
+                    domain = expr.domain
+
+                else:
+                    domain = _get_domain(expr.expr)
+
+                if isinstance(domain, Union):
+                    domain = list(domain._args)
+
+                elif not is_sequence(domain):
                     domain = [domain]
+                # ...
 
+                # ...
                 for d in domain:
                     d_expr[d] += newexpr
+                # ...
             # ...
 
             # ...

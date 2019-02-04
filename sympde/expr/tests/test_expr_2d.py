@@ -34,6 +34,7 @@ from sympde.topology import Area
 from sympde.expr.expr import LinearExpr, BilinearExpr
 from sympde.expr.expr import LinearForm, BilinearForm
 from sympde.expr.expr import DomainIntegral, BoundaryIntegral
+from sympde.expr.expr import Functional, Norm
 from sympde.expr.expr import linearize
 from sympde.expr.evaluation import TerminalExpr
 
@@ -811,6 +812,29 @@ def test_terminal_expr_linear_2d_3():
     # ...
 
 #==============================================================================
+def test_terminal_expr_linear_2d_4():
+
+    D1 = InteriorDomain('D1', dim=2)
+    D2 = InteriorDomain('D2', dim=2)
+    domain = Union(D1, D2)
+
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    V = FunctionSpace('V', domain)
+
+    u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    # ...
+    l = LinearForm(v, x*y*v)
+    print(TerminalExpr(l))
+    print('')
+    # ...
+
+#==============================================================================
 def test_terminal_expr_bilinear_2d_1():
 
     domain = Domain('Omega', dim=2)
@@ -1351,6 +1375,126 @@ def test_user_function_2d_1():
     # ...
 
 #==============================================================================
+def test_functional_2d_1():
+
+    domain = Domain('Omega', dim=2)
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    V = FunctionSpace('V', domain)
+    F = Field('F', space=V)
+
+    # ...
+    expr = x*y
+    a = Functional(expr, domain)
+
+    print(a)
+    print(TerminalExpr(a))
+    print('')
+    # ...
+
+    # ...
+    expr = F - cos(2*pi*x)*cos(3*pi*y)
+    expr = dot(grad(expr), grad(expr))
+    a = Functional(expr, domain)
+
+    print(a)
+    print(TerminalExpr(a))
+    print('')
+    # ...
+
+#==============================================================================
+def test_norm_2d_1():
+
+    domain = Domain('Omega', dim=2)
+    x,y = domain.coordinates
+
+    V = FunctionSpace('V', domain)
+    F = Field('F', space=V)
+
+    # ...
+    expr = x*y
+    l2_norm_u = Norm(expr, domain, kind='l2')
+    h1_norm_u = Norm(expr, domain, kind='h1')
+
+    print('> l2 norm = ', TerminalExpr(l2_norm_u))
+    print('> h1 norm = ', TerminalExpr(h1_norm_u))
+    print('')
+    # ...
+
+    # ...
+    expr = sin(pi*x)*sin(pi*y)
+    l2_norm_u = Norm(expr, domain, kind='l2')
+    h1_norm_u = Norm(expr, domain, kind='h1')
+
+    print('> l2 norm = ', TerminalExpr(l2_norm_u))
+    print('> h1 norm = ', TerminalExpr(h1_norm_u))
+    print('')
+    # ...
+
+    # ...
+    expr = F-x*y
+    l2_norm_u = Norm(expr, domain, kind='l2')
+    h1_norm_u = Norm(expr, domain, kind='h1')
+
+    print('> l2 norm = ', TerminalExpr(l2_norm_u))
+    print('> h1 norm = ', TerminalExpr(h1_norm_u))
+    print('')
+    # ...
+
+    # ...
+    expr = F-sin(pi*x)*sin(pi*y)
+    l2_norm_u = Norm(expr, domain, kind='l2')
+    h1_norm_u = Norm(expr, domain, kind='h1')
+
+    print('> l2 norm = ', TerminalExpr(l2_norm_u))
+    print('> h1 norm = ', TerminalExpr(h1_norm_u))
+    print('')
+    # ...
+
+    # ...
+    expr = F-sin(0.5*pi*(1.-x))*sin(pi*y)
+    l2_norm_u = Norm(expr, domain, kind='l2')
+    h1_norm_u = Norm(expr, domain, kind='h1')
+
+    print('> l2 norm = ', TerminalExpr(l2_norm_u))
+    print('> h1 norm = ', TerminalExpr(h1_norm_u))
+    print('')
+    # ...
+
+    # ...
+    expr = F-cos(0.5*pi*x)*sin(pi*y)
+    l2_norm_u = Norm(expr, domain, kind='l2')
+    h1_norm_u = Norm(expr, domain, kind='h1')
+
+    print('> l2 norm = ', TerminalExpr(l2_norm_u))
+    print('> h1 norm = ', TerminalExpr(h1_norm_u))
+    print('')
+    # ...
+
+#==============================================================================
+def test_norm_2d_2():
+
+    domain = Domain('Omega', dim=2)
+    x,y = domain.coordinates
+
+    V = VectorFunctionSpace('V', domain)
+    F = VectorField(V, 'F')
+
+    # ...
+    f = Tuple(sin(pi*x)*sin(pi*y), sin(pi*x)*sin(pi*y))
+    expr = Matrix([F[0]-f[0], F[1]-f[1]])
+    l2_norm_u = Norm(expr, domain, kind='l2')
+    h1_norm_u = Norm(expr, domain, kind='h1')
+
+    print('> l2 norm = ', TerminalExpr(l2_norm_u))
+    print('> h1 norm = ', TerminalExpr(h1_norm_u))
+    print('')
+    # ...
+
+#==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
 
@@ -1362,4 +1506,6 @@ def teardown_function():
     from sympy import cache
     cache.clear_cache()
 
-#test_terminal_expr_linear_2d_3()
+#test_functional_2d_1()
+#test_norm_2d_1()
+#test_norm_2d_2()
