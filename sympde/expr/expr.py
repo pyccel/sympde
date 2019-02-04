@@ -60,7 +60,8 @@ from sympde.topology.measure import CartesianMeasure
 from sympde.topology.measure import Measure
 
 from .errors import UnconsistentLinearExpressionError
-from .basic  import BasicExpr, Call
+from .basic import BasicForm
+from .basic  import BasicExpr
 from .basic  import is_linear_form, _sanitize_arguments
 
 #==============================================================================
@@ -70,8 +71,14 @@ class LinearExpr(BasicExpr):
     def __new__(cls, arguments, expr, check=False):
         # ... this is a hack to avoid having expressions with integrals, a
         #     consequence of using xreplace
+#        print(expr)
         integral = expr.atoms(BasicIntegral)
         if integral:
+#            try:
+#                expr = expr._args[0].expr
+#            except:
+#                import sys; sys.exit(0)
+
             expr = expr._args[0].expr
         # ...
 
@@ -134,6 +141,7 @@ class BilinearExpr(BasicExpr):
 
     def __call__(self, *args, evaluate=False):
         return Call(self, args, evaluate=evaluate)
+
 
 #==============================================================================
 # TODO: - Union of Domain and Boundary
@@ -268,4 +276,185 @@ def _get_domain(a):
 
     else:
         raise TypeError('Expecting a Boundary or Domain integral')
+
+
+#==============================================================================
+class LinearForm(BasicForm):
+    is_linear = True
+
+    def __new__(cls, arguments, expr):
+
+        # ...
+        calls = list(expr.atoms(Call))
+        for call in calls:
+            args = call._args[1]
+            call_expr = call._args[0]
+            newexpr = call_expr(*args, evaluate=True)
+            expr = expr.subs(call, newexpr)
+
+        # take the BasicExpr
+        forms = list(expr.atoms(LinearForm))
+        for form in forms:
+            expr = expr.subs(form, form.expr._args[0])
+        # ...
+
+        if not isinstance(expr, LinearExpr):
+            expr = LinearExpr(arguments, expr)
+
+        assert(isinstance(expr, LinearExpr))
+
+        variables = expr.variables
+        expr = BasicIntegral(expr)
+        obj = Basic.__new__(cls, variables, expr)
+
+        # ...
+        domain = _get_domain(expr)
+        if is_sequence(domain):
+            dim = domain[0].dim
+
+        else:
+            dim = domain.dim
+
+        obj._domain = domain
+        obj._dim = dim
+        # ...
+
+        return obj
+
+    @property
+    def variables(self):
+        return self._args[0]
+
+    @property
+    def expr(self):
+        return self._args[1]
+
+    def __call__(self, *args, evaluate=False):
+        return Call(self, args, evaluate=evaluate)
+
+#==============================================================================
+class BilinearForm(BasicForm):
+    is_bilinear = True
+
+    def __new__(cls, arguments, expr):
+
+        # ...
+        calls = list(expr.atoms(Call))
+        for call in calls:
+            args = call._args[1]
+            call_expr = call._args[0]
+            newexpr = call_expr(*args, evaluate=True)
+            expr = expr.subs(call, newexpr)
+
+        # take the BasicExpr
+        forms = list(expr.atoms(BilinearForm))
+        for form in forms:
+            expr = expr.subs(form, form.expr._args[0])
+        # ...
+
+        if not isinstance(expr, BilinearExpr):
+            expr = BilinearExpr(arguments, expr)
+
+        assert(isinstance(expr, BilinearExpr))
+
+        variables = expr.variables
+        expr = BasicIntegral(expr)
+        obj = Basic.__new__(cls, variables, expr)
+
+        # ...
+        domain = _get_domain(expr)
+        if is_sequence(domain):
+            dim = domain[0].dim
+
+        else:
+            dim = domain.dim
+
+        obj._domain = domain
+        obj._dim = dim
+        # ...
+
+        return obj
+
+    @property
+    def variables(self):
+        return self._args[0]
+
+    @property
+    def expr(self):
+        return self._args[1]
+
+    def __call__(self, *args, evaluate=False):
+        return Call(self, args, evaluate=evaluate)
+
+
+
+#==============================================================================
+# default behavior is not to evaluate the call
+class Call(CalculusFunction):
+
+    def __new__(cls, *args, **options):
+        # (Try to) sympify args first
+
+        if options.pop('evaluate', False):
+            r = cls.eval(*args)
+        else:
+            r = None
+
+        if r is None:
+            return Basic.__new__(cls, *args, **options)
+        else:
+            return r
+
+    def __getitem__(self, indices, **kw_args):
+        if is_sequence(indices):
+            # Special case needed because M[*my_tuple] is a syntax error.
+            return Indexed(self, *indices, **kw_args)
+        else:
+            return Indexed(self, indices, **kw_args)
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        if not len(_args) == 2:
+            raise ValueError('Expecting two arguments')
+
+        expr = _args[0]
+        args = _args[1]
+
+        if not isinstance(expr, (BasicExpr, BasicForm)):
+            raise NotImplementedError('')
+
+        is_linear   = expr.is_linear
+        is_bilinear = expr.is_bilinear
+
+        args = _sanitize_arguments(args,
+                                   is_linear=is_linear,
+                                   is_bilinear=is_bilinear)
+
+        if is_linear:
+            args = Tuple(*args)
+            variables = expr.variables
+            return expr.xreplace(dict(list(zip(variables, args))))
+
+        if is_bilinear:
+            left,right = args
+            if not is_sequence(left):
+                left = [left]
+
+            if not is_sequence(right):
+                right = [right]
+
+            args = Tuple(*left, *right)
+
+            variables = expr.variables
+            variables = Tuple(*variables[0], *variables[1])
+
+            return expr.xreplace(dict(list(zip(variables, args))))
+
+        return cls(expr, args, evaluate=False)
+
 

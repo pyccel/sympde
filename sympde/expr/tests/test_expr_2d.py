@@ -32,9 +32,9 @@ from sympde.topology import ElementDomain
 from sympde.topology import Area
 
 from sympde.expr.expr import LinearExpr, BilinearExpr
-from sympde.expr.form import LinearForm, BilinearForm
+from sympde.expr.expr import LinearForm, BilinearForm
 from sympde.expr.expr import DomainIntegral, BoundaryIntegral
-from sympde.expr.basic import Call
+from sympde.expr.expr import Call
 from sympde.expr.evaluation import TerminalExpr
 
 from sympde.expr.errors import UnconsistentError

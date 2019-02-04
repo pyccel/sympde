@@ -3,4 +3,3 @@ from .equation   import *
 from .errors     import *
 from .evaluation import *
 from .expr       import *
-from .form       import *

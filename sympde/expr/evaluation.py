@@ -61,7 +61,7 @@ from sympde.topology.measure import Measure
 
 from .basic  import BasicExpr, BasicForm
 from .expr   import LinearExpr, BilinearExpr
-from .form   import LinearForm, BilinearForm
+from .expr   import LinearForm, BilinearForm
 from .expr import BasicIntegral, DomainIntegral, BoundaryIntegral
 from .expr import _get_domain
 

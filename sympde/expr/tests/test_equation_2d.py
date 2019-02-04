@@ -157,41 +157,41 @@ def test_equation_2d_1():
 #
 #    u = Projection(x**2+alpha*y, V, name='u')
 #
-#
-##==============================================================================
-## TODO
-#def test_equation_2d_2():
-#
-#    domain = Square()
-#
-#    V = FunctionSpace('V', domain)
-#
-#    x,y = domain.coordinates
-#
-#    pn = Field('pn', V)
-#    wn = Field('wn', V)
-#
-#    dp    = TestFunction(V, name='dp')
-#    dw    = TestFunction(V, name='dw')
-#    tau   = TestFunction(V, name='tau')
-#    sigma = TestFunction(V, name='sigma')
-#
-#    Re    = Constant('Re', real=True)
-#    dt    = Constant('dt', real=True)
-#    alpha = Constant('alpha', real=True)
-#
+
+#==============================================================================
+# TODO
+def test_equation_2d_2():
+
+    domain = Square()
+
+    V = FunctionSpace('V', domain)
+
+    x,y = domain.coordinates
+
+    pn = Field('pn', V)
+    wn = Field('wn', V)
+
+    dp    = TestFunction(V, name='dp')
+    dw    = TestFunction(V, name='dw')
+    tau   = TestFunction(V, name='tau')
+    sigma = TestFunction(V, name='sigma')
+
+    Re    = Constant('Re', real=True)
+    dt    = Constant('dt', real=True)
+    alpha = Constant('alpha', real=True)
+
 #    s  = BilinearForm((tau,sigma), dot(grad(tau), grad(sigma)))
 #    m  = BilinearForm((tau,sigma), tau*sigma)
 #    b1 = BilinearForm((tau,dw), bracket(pn, dw) * tau)
 #    b2 = BilinearForm((tau,dp), bracket(dp, wn) * tau)
-#
-#    l1 = LinearForm(tau, bracket(pn, wn)*tau - 1./Re * dot(grad(tau), grad(wn)))
-#
+
+    l1 = LinearForm(tau, bracket(pn, wn)*tau - 1./Re * dot(grad(tau), grad(wn)))
+
 #    expr =  m(tau,dw) - alpha*dt*b1(tau,dw) - dt*b2(tau,dp) - (alpha*dt/Re)*s(tau,dw)
 #    a = BilinearForm(((tau, sigma),(dp,dw)), expr)
-#
+
 #    l = LinearForm((tau, sigma), dt*l1(tau))
-#
+
 #    bc  = [EssentialBC(dp, 0, domain.boundary)]
 #    bc += [EssentialBC(dw, 0, domain.boundary)]
 #    equation = Equation(a((tau, sigma),(dp,dw)), l(tau, sigma), bc=bc)
@@ -464,3 +464,5 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
+
+test_equation_2d_2()
