@@ -790,6 +790,27 @@ def test_terminal_expr_linear_2d_2():
 #    # ...
 
 #==============================================================================
+def test_terminal_expr_linear_2d_3():
+
+    domain = Square()
+
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    V = FunctionSpace('V', domain)
+
+    u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    # ...
+    l = LinearForm(v, trace_1(grad(v), domain.boundary))
+    print(TerminalExpr(l))
+    print('')
+    # ...
+
+#==============================================================================
 def test_terminal_expr_bilinear_2d_1():
 
     domain = Domain('Omega', dim=2)
@@ -1341,11 +1362,4 @@ def teardown_function():
     from sympy import cache
     cache.clear_cache()
 
-#test_linearize_expr_2d_1()
-#test_linearize_expr_2d_2()
-#test_linearize_form_2d_1()
-#test_linearize_form_2d_2()
-#test_linearize_form_2d_3()
-#test_area_2d_1()
-#test_stabilization_2d_1()
-#test_user_function_2d_1()
+#test_terminal_expr_linear_2d_3()

@@ -241,18 +241,18 @@ class BoundaryIntegral(BasicIntegral):
 
         expr = _args[0]
 
-        boundary = list(expr.atoms(Boundary))
-        if len(boundary) > 1:
-            raise ValueError('Expecting one single boundary')
-
         return cls(expr, evaluate=False)
 
 #==============================================================================
 def _get_domain(a):
     # expr is an integral of BasicExpr or Add of Integral of BasicExpr
     if isinstance(a, BoundaryIntegral):
-        boundary = list(a.atoms(Boundary))
-        return boundary[0]
+        domains = list(a.atoms(Boundary))
+        if len(domains) == 1:
+            return domains[0]
+
+        else:
+            return domains
 
     elif isinstance(a, DomainIntegral):
         expr = a._args[0]
