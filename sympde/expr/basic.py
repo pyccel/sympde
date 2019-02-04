@@ -169,7 +169,7 @@ class BasicForm(Expr):
     is_bilinear = False
     is_functional = False
     _domain     = None
-    _dim        = None
+    _ldim        = None
     _body       = None
 
     # TODO use .atoms
@@ -191,5 +191,5 @@ class BasicForm(Expr):
         return self._domain
 
     @property
-    def dim(self):
-        return self._dim
+    def ldim(self):
+        return self._ldim

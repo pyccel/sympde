@@ -247,7 +247,7 @@ class TerminalExpr(CalculusFunction):
         # (Try to) sympify args first
 
         if options.pop('evaluate', True):
-            r = cls.eval(*args)
+            r = cls.eval(*args, **options)
         else:
             r = None
 
@@ -289,7 +289,7 @@ class TerminalExpr(CalculusFunction):
 
         elif isinstance(expr, BasicForm):
             # ...
-            dim = expr.dim
+            dim = expr.ldim
             is_bilinear = expr.is_bilinear
 
             domain = expr.domain

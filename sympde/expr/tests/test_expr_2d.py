@@ -835,6 +835,47 @@ def test_terminal_expr_linear_2d_4():
     # ...
 
 #==============================================================================
+def test_terminal_expr_linear_2d_5(boundary=['Gamma_1', 'Gamma_3']):
+
+    # ... abstract model
+    domain = Square()
+
+    V = FunctionSpace('V', domain)
+
+    B_neumann = [domain.get_boundary(i) for i in boundary]
+    if len(B_neumann) == 1:
+        B_neumann = B_neumann[0]
+
+    else:
+        B_neumann = Union(*B_neumann)
+
+    x,y = domain.coordinates
+
+    F = Field('F', V)
+
+    v = TestFunction(V, name='v')
+    u = TestFunction(V, name='u')
+
+    expr = dot(grad(v), grad(u))
+    a = BilinearForm((v,u), expr)
+
+    solution = cos(0.5*pi*x)*cos(0.5*pi*y)
+    f        = (1./2.)*pi**2*solution
+
+    expr = f*v
+    l0 = LinearForm(v, expr)
+
+    expr = v*trace_1(grad(solution), B_neumann)
+    l_B_neumann = LinearForm(v, expr)
+
+    expr = l0(v) + l_B_neumann(v)
+    l = LinearForm(v, expr)
+
+    print(TerminalExpr(l))
+    print('')
+    # ...
+
+#==============================================================================
 def test_terminal_expr_bilinear_2d_1():
 
     domain = Domain('Omega', dim=2)
@@ -1506,6 +1547,4 @@ def teardown_function():
     from sympy import cache
     cache.clear_cache()
 
-#test_functional_2d_1()
-#test_norm_2d_1()
-#test_norm_2d_2()
+test_terminal_expr_linear_2d_5()

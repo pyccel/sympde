@@ -276,7 +276,13 @@ def _get_domain(a):
         return domains[0]
 
     elif isinstance(a, Add):
-        domains = [_get_domain(i) for i in a.args]
+        domains = []
+        for i in a.args:
+            b = _get_domain(i)
+            if not is_sequence(b): b = [b]
+
+            domains += b
+
         domains = list(set(domains))
         if len(domains) == 1:
             return domains[0]
@@ -295,7 +301,24 @@ class Functional(BasicForm):
     def __new__(cls, expr, domain):
 
         expr = BasicIntegral(expr)
-        return Basic.__new__(cls, expr, domain)
+        obj = Basic.__new__(cls, expr, domain)
+
+        # compute dim from fields if available
+        ls = list(expr.atoms((Field, VectorField)))
+        if ls:
+            F = ls[0]
+            space = F.space
+
+        else:
+            tag = random_string( 3 )
+            space_name = 'space_{}'.format(tag)
+            space = FunctionSpace(space_name, domain)
+            # TODO vector case
+
+        obj._ldim = domain.dim
+        obj._space = space
+
+        return obj
 
     @property
     def expr(self):
@@ -306,8 +329,12 @@ class Functional(BasicForm):
         return self._args[1]
 
     @property
-    def dim(self):
-        return self.domain.dim
+    def coordinates(self):
+        return self.domain.coordinates
+
+    @property
+    def space(self):
+        return self._space
 
     # TODO do we need it?
 #    def _eval_nseries(self, x, n, logx):
@@ -336,14 +363,7 @@ class LinearForm(BasicForm):
 
         # ...
         domain = _get_domain(expr)
-        if is_sequence(domain):
-            dim = domain[0].dim
-
-        else:
-            dim = domain.dim
-
         obj._domain = domain
-        obj._dim = dim
         # ...
 
         return obj
@@ -368,6 +388,22 @@ class LinearForm(BasicForm):
             self._body = expr
 
         return self._body
+
+    @property
+    def test_functions(self):
+        return self.variables
+
+    @property
+    def test_spaces(self):
+        return [u.space for u in self.test_functions]
+
+    @property
+    def coordinates(self):
+        return self.test_spaces[0].coordinates
+
+    @property
+    def ldim(self):
+        return self.test_spaces[0].ldim
 
     def __call__(self, *args):
         args = _sanitize_arguments(args, is_linear=True)
@@ -396,14 +432,7 @@ class BilinearForm(BasicForm):
 
         # ...
         domain = _get_domain(expr)
-        if is_sequence(domain):
-            dim = domain[0].dim
-
-        else:
-            dim = domain.dim
-
         obj._domain = domain
-        obj._dim = dim
         # ...
 
         return obj
@@ -428,6 +457,30 @@ class BilinearForm(BasicForm):
             self._body = expr
 
         return self._body
+
+    @property
+    def test_functions(self):
+        return self.variables[0]
+
+    @property
+    def trial_functions(self):
+        return self.variables[1]
+
+    @property
+    def test_spaces(self):
+        return [u.space for u in self.test_functions]
+
+    @property
+    def trial_spaces(self):
+        return [u.space for u in self.trial_functions]
+
+    @property
+    def coordinates(self):
+        return self.test_spaces[0].coordinates
+
+    @property
+    def ldim(self):
+        return self.test_spaces[0].ldim
 
     def __call__(self, *args):
         args = _sanitize_arguments(args, is_bilinear=True)
