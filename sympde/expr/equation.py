@@ -17,7 +17,7 @@ from sympde.core.utils import random_string
 
 from .expr import BilinearForm, LinearForm
 from .expr import as_bilinear_form, as_linear_form
-#from .form import linearize
+from .expr import linearize
 from .errors import ( UnconsistentLhsError, UnconsistentRhsError,
                       UnconsistentArgumentsError, UnconsistentBCError )
 
@@ -327,17 +327,12 @@ class NewtonIteration(Equation):
 
         a = linearize(form, fields, trials=trials)
 
-        tests  = a.test_functions
-        trials = a.trial_functions
+        tests, trials  = a.variables
         test_trial = a.variables
 
         lhs = a(*test_trial)
 
-        # TODO to be improved
-        # THIS IS A HACK => WEITING TO MAKE FORM CALLABLE FUNCTION AS SYMPDE
-        # OPERATORS
         form = LinearForm(tests, -form.expr)
-
         rhs = form(*tests)
 
         return Equation.__new__(cls, lhs, rhs, bc=bc)

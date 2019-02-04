@@ -30,6 +30,7 @@ from sympde.topology import Area
 
 from sympde.expr import BilinearForm, LinearForm
 from sympde.expr import Projection
+from sympde.expr import TerminalExpr
 
 from sympde.expr.errors import UnconsistentLhsError
 from sympde.expr.errors import UnconsistentRhsError
@@ -324,46 +325,46 @@ def test_equation_2d_5():
     print('')
     # ...
 
-##==============================================================================
-#def test_equation_2d_6():
-#
-#    # ... abstract model
-#    B1 = Boundary(r'\Gamma_1', domain)
-#
-#    V = FunctionSpace('V', domain)
-#
-#    x,y = domain.coordinates
-#
-#    Un = Field('Un', V)
-#
-#    v = TestFunction(V, name='v')
-#
-#    f  = -4.*exp(-Un)
-#    l = LinearForm(v, dot(grad(v), grad(Un)) - f*v )
-#
-#    eq = NewtonIteration(l, Un, trials='u')
-#    # ...
-#
-#    u = TestFunction(V, name='u')
-#
-#    # ...
-#    expected =  -4.0*u*v*exp(-Un) + dx(u)*dx(v) + dy(u)*dy(v)
-#
-#    expr = evaluate(eq.lhs)[0]
-#    assert(expr.expr == expected)
-#    # ...
-#
-#    # ...
-#    expected = -4.0*v*exp(-Un) - dx(Un)*dx(v) - dy(Un)*dy(v)
-#
-#    expr = evaluate(eq.rhs)[0]
-#    assert(expr.expr == expected)
-#    # ...
-#
-#    # ...
-#    bc = EssentialBC(u, 0, B1)
-#    eq = NewtonIteration(l, Un, bc=bc, trials=u)
-#    # ...
+#==============================================================================
+def test_equation_2d_6():
+
+    # ... abstract model
+    B1 = Boundary(r'\Gamma_1', domain)
+
+    V = FunctionSpace('V', domain)
+
+    x,y = domain.coordinates
+
+    Un = Field('Un', V)
+
+    v = TestFunction(V, name='v')
+
+    f  = -4.*exp(-Un)
+    l = LinearForm(v, dot(grad(v), grad(Un)) - f*v )
+
+    eq = NewtonIteration(l, Un, trials='u')
+    # ...
+
+    u = TestFunction(V, name='u')
+
+    # ...
+    expected =  -4.0*u*v*exp(-Un) + dx(u)*dx(v) + dy(u)*dy(v)
+
+    expr = TerminalExpr(eq.lhs)[0]
+    assert(expr.expr == expected)
+    # ...
+
+    # ...
+    expected = -4.0*v*exp(-Un) - dx(Un)*dx(v) - dy(Un)*dy(v)
+
+    expr = TerminalExpr(eq.rhs)[0]
+    assert(expr.expr == expected)
+    # ...
+
+    # ...
+    bc = EssentialBC(u, 0, B1)
+    eq = NewtonIteration(l, Un, bc=bc, trials=u)
+    # ...
 
 #==============================================================================
 def test_equation_2d_7():
@@ -469,6 +470,3 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
-
-# TODO
-#test_equation_2d_6()
