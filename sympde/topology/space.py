@@ -420,7 +420,7 @@ class IndexedVectorField(Indexed):
         return self.base.space.ldim
 
 #==============================================================================
-class Trace(Basic):
+class Trace(Expr):
     """
     Represents the trace over a boundary and a space function
 

@@ -798,6 +798,7 @@ def test_terminal_expr_bilinear_2d_1():
 
     kappa = Constant('kappa', is_real=True)
     mu    = Constant('mu'   , is_real=True)
+    eps   = Constant('eps', real=True)
 
     V = FunctionSpace('V', domain)
 
@@ -862,6 +863,16 @@ def test_terminal_expr_bilinear_2d_1():
     a2 = BilinearForm((u2,v2), dot(grad(u2), grad(v2)))
     a3 = BilinearForm((u,v), v*trace_1(grad(u), B1))
     a = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v) + mu*a3(u,v))
+    print(TerminalExpr(a))
+    print('')
+    # ...
+
+    # ... Poisson with Nitsch method
+    a0 = BilinearForm((u,v), dot(grad(u),grad(v)))
+    a_B1 = BilinearForm((u,v), - kappa * u*trace_1(grad(v), B1)
+                               - v*trace_1(grad(u), B1)
+                               + trace_0(u, B1) * trace_0(v, B1) / eps)
+    a = BilinearForm((u,v), a0(u,v) + a_B1(u,v))
     print(TerminalExpr(a))
     print('')
     # ...
@@ -1011,6 +1022,6 @@ def teardown_function():
 #test_terminal_expr_linear_2d_1()
 #test_terminal_expr_linear_2d_2()
 #print('================')
-#test_terminal_expr_bilinear_2d_1()
+test_terminal_expr_bilinear_2d_1()
 #test_terminal_expr_bilinear_2d_2()
 #test_terminal_expr_bilinear_2d_3()

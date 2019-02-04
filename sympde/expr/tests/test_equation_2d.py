@@ -52,6 +52,8 @@ def test_equation_2d_1():
     x,y = domain.coordinates
 
     alpha = Constant('alpha')
+    kappa = Constant('kappa', real=True)
+    eps   = Constant('eps', real=True)
 
     B1 = Boundary(r'\Gamma_1', domain)
     B2 = Boundary(r'\Gamma_2', domain)
@@ -127,6 +129,17 @@ def test_equation_2d_1():
 
     # ... using bc
     equation = Equation(a1(v,u), l1(v), bc=EssentialBC(u, 0, B1))
+    # ...
+
+    # ... Poisson with Nitsch method
+    g = cos(pi*x)*cos(pi*y)
+    a0 = BilinearForm((u,v), dot(grad(u),grad(v)))
+    a_B1 = BilinearForm((u,v), - kappa * u*trace_1(grad(v), B1)
+                               - v*trace_1(grad(u), B1)
+                               + trace_0(u, B1) * trace_0(v, B1) / eps)
+    a = BilinearForm((u,v), a0(u,v) + a_B1(u,v))
+    l = LinearForm(v, g*v/eps - kappa * trace_1(v, B1) * g)
+    equation = Equation(a(v,u), l(v))
     # ...
 
 #    # ... TODO FIX THIS, NOT RAISED ANYMORE!
