@@ -93,7 +93,7 @@ def test_latex_2d_2():
     v = VectorTestFunction(V, name='v')
     u = VectorTestFunction(V, name='u')
 
-    F = Field(V, name='F')
+    F = VectorField(V, name='F')
 
     assert(latex(v) == r'\mathbf{v}')
     assert(latex(inner(grad(v), grad(u))) == r'\nabla{\mathbf{v}} : \nabla{\mathbf{u}}')
@@ -150,7 +150,7 @@ def test_latex_3d_2():
     v = VectorTestFunction(V, name='v')
     u = VectorTestFunction(V, name='u')
 
-    F = Field(V, name='F')
+    F = VectorField(V, name='F')
 
     assert(latex(v) == r'\mathbf{v}')
     assert(latex(inner(grad(v), grad(u))) == r'\nabla{\mathbf{v}} : \nabla{\mathbf{u}}')

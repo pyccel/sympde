@@ -318,6 +318,9 @@ class Field(Symbol):
     _space = None
     is_commutative = True
     def __new__(cls, space, name=None):
+        if not isinstance(space, FunctionSpace):
+            raise ValueError('Expecting a FunctionSpace')
+
         obj = Symbol.__new__(cls, name)
         obj._space = space
         return obj
