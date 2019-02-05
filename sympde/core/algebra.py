@@ -44,12 +44,6 @@ from .basic import _coeffs_registery
 # ...
 # TODO update default name
 class LinearOperator(CalculusFunction):
-    """
-
-    Examples
-    ========
-
-    """
 
     nargs = None
     name = 'Grad'
@@ -107,12 +101,6 @@ class LinearOperator(CalculusFunction):
 
 # ...
 class DotBasic(CalculusFunction):
-    """
-
-    Examples
-    ========
-
-    """
 
     nargs = None
     name = 'Dot'
@@ -131,12 +119,6 @@ class DotBasic(CalculusFunction):
             return r
 
 class Dot_1d(DotBasic):
-    """
-
-    Examples
-    ========
-
-    """
 
     @classmethod
     def eval(cls, *_args):
@@ -154,12 +136,6 @@ class Dot_1d(DotBasic):
         return u * v
 
 class Dot_2d(DotBasic):
-    """
-
-    Examples
-    ========
-
-    """
 
     @classmethod
     def eval(cls, *_args):
@@ -196,12 +172,6 @@ class Dot_2d(DotBasic):
         return u[0]*v[0] + u[1]*v[1]
 
 class Dot_3d(DotBasic):
-    """
-
-    Examples
-    ========
-
-    """
 
     @classmethod
     def eval(cls, *_args):
@@ -242,12 +212,6 @@ class Dot_3d(DotBasic):
 
 # ...
 class CrossBasic(CalculusFunction):
-    """
-
-    Examples
-    ========
-
-    """
 
     nargs = None
     name = 'Cross'
@@ -266,12 +230,6 @@ class CrossBasic(CalculusFunction):
             return r
 
 class Cross_2d(CrossBasic):
-    """
-
-    Examples
-    ========
-
-    """
 
     @classmethod
     def eval(cls, *_args):
@@ -286,12 +244,6 @@ class Cross_2d(CrossBasic):
         return u[0]*v[1] - u[1]*v[0]
 
 class Cross_3d(CrossBasic):
-    """
-
-    Examples
-    ========
-
-    """
 
     def __getitem__(self, indices, **kw_args):
         if is_sequence(indices):
@@ -318,12 +270,6 @@ class Cross_3d(CrossBasic):
 
 # ...
 class InnerBasic(CalculusFunction):
-    """
-
-    Examples
-    ========
-
-    """
 
     nargs = None
     name = 'Inner'
@@ -342,12 +288,6 @@ class InnerBasic(CalculusFunction):
             return r
 
 class Inner_2d(InnerBasic):
-    """
-
-    Examples
-    ========
-
-    """
 
     @classmethod
     def eval(cls, *_args):
@@ -371,12 +311,6 @@ class Inner_2d(InnerBasic):
 
 
 class Inner_3d(InnerBasic):
-    """
-
-    Examples
-    ========
-
-    """
 
     @classmethod
     def eval(cls, *_args):

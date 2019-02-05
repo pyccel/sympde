@@ -166,3 +166,12 @@ texinfo_documents = [
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
+
+
+# -- APIDOC ----------------------------------------------
+import subprocess
+cmd = 'rm -rf source; sphinx-apidoc --force --maxdepth=3 -o source/ ../sympde'
+subprocess.call(cmd, shell=True)
+
+# create _static directory
+subprocess.call('mkdir -p _static', shell=True)

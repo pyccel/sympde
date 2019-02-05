@@ -1,4 +1,94 @@
 # coding: utf-8
+"""
+The calculus subpackage provides different operators, as generic as possible,
+but knowning properties between them. For instance, the following statement will
+naturally give 0
+
+>>> from sympde.calculus import grad, curl
+>>> from sympde.topology import Domain
+>>> from sympde.topology import FunctionSpace
+>>> from sympde.topology import TestFunction
+
+>>> domain = Domain('Omega', dim=2)
+>>> V = FunctionSpace('V', domain)
+>>> u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+
+>>> curl(grad(u))
+0
+
+
+>>> domain = Domain('Omega', dim=2)
+
+>>> V = FunctionSpace('V', domain)
+>>> W = VectorFunctionSpace('W', domain)
+
+>>> alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
+
+>>> f,g,h = [Field(i, space=V) for i in ['f','g','h']]
+>>> F,G,H = [VectorField(W, i) for i in ['F','G','H']]
+
+Generic properties
+******************
+
+scalar gradient properties
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+>>> assert( grad(f+g) == grad(f) + grad(g) )
+>>> assert( grad(alpha*f) == alpha*grad(f) )
+>>> assert( grad(alpha*f + beta*g) == alpha*grad(f) + beta*grad(g)  )
+
+>>> assert( grad(f*g) == f*grad(g) + g*grad(f) )
+>>> assert( grad(f/g) == -f*grad(g)/g**2 + grad(f)/g )
+
+>>> assert( expand(grad(f*g*h)) == f*g*grad(h) + f*h*grad(g) + g*h*grad(f) )
+
+vector gradient properties
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+>>> assert( grad(F+G) == grad(F) + grad(G) )
+>>> assert( grad(alpha*F) == alpha*grad(F) )
+>>> assert( grad(alpha*F + beta*G) == alpha*grad(F) + beta*grad(G)  )
+
+>>> assert( grad(dot(F,G)) == convect(F, G) + convect(G, F) + cross(F, curl(G)) - cross(curl(F), G) )
+
+curl properties
+^^^^^^^^^^^^^^^
+
+>>> assert( curl(f+g) == curl(f) + curl(g) )
+>>> assert( curl(alpha*f) == alpha*curl(f) )
+>>> assert( curl(alpha*f + beta*g) == alpha*curl(f) + beta*curl(g)  )
+
+laplace properties
+^^^^^^^^^^^^^^^^^^
+
+>>> assert( laplace(f+g) == laplace(f) + laplace(g) )
+>>> assert( laplace(alpha*f) == alpha*laplace(f) )
+>>> assert( laplace(alpha*f + beta*g) == alpha*laplace(f) + beta*laplace(g)  )
+
+divergence properties
+^^^^^^^^^^^^^^^^^^^^^
+
+>>> assert( div(F+G) == div(F) + div(G) )
+>>> assert( div(alpha*F) == alpha*div(F) )
+>>> assert( div(alpha*F + beta*G) == alpha*div(F) + beta*div(G)  )
+
+>>> assert( div(cross(F,G)) == -dot(F, curl(G)) + dot(G, curl(F)) )
+
+2D specific properties
+**********************
+
+rot properties
+^^^^^^^^^^^^^^
+
+>>> assert( rot(F+G) == rot(F) + rot(G) )
+>>> assert( rot(alpha*F) == alpha*rot(F) )
+>>> assert( rot(alpha*F + beta*G) == alpha*rot(F) + beta*rot(G)  )
+
+3D specific properties
+**********************
+
+
+"""
 
 from sympy.core.compatibility import is_sequence
 from sympy.core import Basic
@@ -16,6 +106,9 @@ from sympde.topology.space import Field, VectorField, IndexedVectorField
 
 #==============================================================================
 class BasicOperator(CalculusFunction):
+    """
+    Basic class for calculus operators.
+    """
 
     def __getitem__(self, indices, **kw_args):
         if is_sequence(indices):
@@ -26,6 +119,40 @@ class BasicOperator(CalculusFunction):
 
 #==============================================================================
 class Dot(BasicOperator):
+    """
+    Represents a generic Dot operator, without knowledge of the dimension.
+
+    Examples
+
+    >>> from sympde.calculus import Dot
+    >>> from sympy import Tuple
+    >>> from sympy.abc import x,y
+
+    >>> a = Tuple(x,1)
+    >>> b = Tuple(1,y)
+    >>> dot(a,b)
+    x + y
+
+    This operator implements the properties of addition and multiplication
+
+    >>> from sympde.core import Constant
+    >>> from sympde.topology import Domain
+    >>> from sympde.topology import VectorFunctionSpace
+    >>> from sympde.topology import VectorTestFunction
+
+    >>> domain = Domain('Omega', dim=2)
+    >>> V = VectorFunctionSpace('V', domain)
+    >>> u,u1,u2 = [VectorTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    >>> v,v1,v2 = [VectorTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    >>> alpha = Constant('alpha', is_real=True)
+
+    >>> dot(u1+u2,v1)
+    Dot(u1, v1) + Dot(u2, v1)
+
+    >>> dot(u1,alpha*v1)
+    alpha*Dot(u1, v1)
+    """
 
     def __new__(cls, *args, **options):
         # (Try to) sympify args first
@@ -129,11 +256,39 @@ class Dot(BasicOperator):
         return alpha*cls(left, right, evaluate=False)
 
 #==============================================================================
+# TODO add properties
 class Cross(BasicOperator):
+    """
+    This operator represents the cross product between two expressions,
+    regardless of the dimension.
+    """
     pass
 
 #==============================================================================
 class Inner(BasicOperator):
+    """
+    Represents a generic Frobenius inner operator, without knowledge of the dimension.
+
+    This operator implements the properties of addition and multiplication
+
+    Examples
+
+    >>> from sympde.calculus import inner, grad
+    >>> from sympde.topology import Domain
+    >>> from sympde.topology import VectorFunctionSpace
+    >>> from sympde.topology import VectorTestFunction
+
+    >>> domain = Domain('Omega', dim=2)
+    >>> V = VectorFunctionSpace('V', domain)
+    >>> u,u1,u2 = [VectorTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    >>> v,v1,v2 = [VectorTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    >>> inner(grad(u), grad(v))
+    Inner(Grad(u), Grad(v))
+
+    >>> inner(grad(u1+u2), grad(v))
+    Inner(Grad(u1), Grad(v)) + Inner(Grad(u2), Grad(v))
+    """
 
     def __new__(cls, *args, **options):
         # (Try to) sympify args first
@@ -204,6 +359,30 @@ class Inner(BasicOperator):
 # TODO add it to evaluation
 # Convect(F, G) = dot(F, nabla) G
 class Convect(BasicOperator):
+    """
+    This operator represents the convection operator defined as
+    :math:`convect(F, G) := (F \cdot \\nabla) G`.
+
+    This operator implements the properties of addition and multiplication
+
+    Examples
+
+    >>> domain = Domain('Omega', dim=2)
+    >>> V = FunctionSpace('V', domain)
+    >>> W = VectorFunctionSpace('W', domain)
+    >>> alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
+    >>> f,g,h = [Field(i, space=V) for i in ['f','g','h']]
+    >>> F,G,H = [VectorField(W, i) for i in ['F','G','H']]
+
+    >>> convect(F+G, H)
+    convect(F,H) + convect(G,H)
+
+    >>> convect(alpha*F,H)
+    alpha*convect(F,H)
+
+    >>> convect(F,alpha*H)
+    alpha*convect(F,H)
+    """
 
     def __new__(cls, *args, **options):
         # (Try to) sympify args first
@@ -282,6 +461,35 @@ class Convect(BasicOperator):
 
 #==============================================================================
 class Grad(BasicOperator):
+    """
+    Represents a generic Grad operator, without knowledge of the dimension.
+
+    This operator implements the properties of addition and multiplication
+
+    Examples
+
+
+    >>> from sympde.core import Constant
+    >>> from sympde.topology import Domain
+    >>> from sympde.topology import VectorFunctionSpace
+    >>> from sympde.topology import VectorTestFunction
+
+    >>> domain = Domain('Omega', dim=2)
+    >>> V = FunctionSpace('V', domain)
+    >>> u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    >>> v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    >>> alpha = Constant('alpha', is_real=True)
+
+    >>> grad(u1+u2,v1)
+    Grad(u1, v1) + Grad(u2, v1)
+
+    >>> grad(alpha*u1)
+    alpha*Grad(u1)
+
+    >>> grad(2)
+    0
+    """
 
     def __new__(cls, *args, **options):
         # (Try to) sympify args first
@@ -353,6 +561,32 @@ class Grad(BasicOperator):
 
 #==============================================================================
 class Curl(BasicOperator):
+    """
+    Represents a generic Curl operator, without knowledge of the dimension.
+
+    This operator implements the properties of addition and multiplication
+
+    Examples
+
+
+    >>> from sympde.core import Constant
+    >>> from sympde.topology import Domain
+    >>> from sympde.topology import VectorFunctionSpace
+    >>> from sympde.topology import VectorTestFunction
+
+    >>> domain = Domain('Omega', dim=2)
+    >>> V = VectorFunctionSpace('V', domain)
+    >>> u,u1,u2 = [VectorTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    >>> v,v1,v2 = [VectorTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    >>> alpha = Constant('alpha', is_real=True)
+
+    >>> curl(u1+u2,v1)
+    Curl(u1, v1) + Curl(u2, v1)
+
+    >>> curl(alpha*u1)
+    alpha*Curl(u1)
+    """
 
     def __new__(cls, *args, **options):
         # (Try to) sympify args first
@@ -424,6 +658,32 @@ class Curl(BasicOperator):
 
 #==============================================================================
 class Rot(BasicOperator):
+    """
+    Represents a generic 2D rotational operator.
+
+    This operator implements the properties of addition and multiplication
+
+    Examples
+
+
+    >>> from sympde.core import Constant
+    >>> from sympde.topology import Domain
+    >>> from sympde.topology import VectorFunctionSpace
+    >>> from sympde.topology import VectorTestFunction
+
+    >>> domain = Domain('Omega', dim=2)
+    >>> V = FunctionSpace('V', domain)
+    >>> u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    >>> v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    >>> alpha = Constant('alpha', is_real=True)
+
+    >>> rot(u1+u2,v1)
+    Rot(u1, v1) + Rot(u2, v1)
+
+    >>> rot(alpha*u1)
+    alpha*Rot(u1)
+    """
 
     def __new__(cls, *args, **options):
         # (Try to) sympify args first
@@ -472,6 +732,32 @@ class Rot(BasicOperator):
 
 #==============================================================================
 class Div(BasicOperator):
+    """
+    Represents a generic Div operator, without knowledge of the dimension.
+
+    This operator implements the properties of addition and multiplication
+
+    Examples
+
+
+    >>> from sympde.core import Constant
+    >>> from sympde.topology import Domain
+    >>> from sympde.topology import VectorFunctionSpace
+    >>> from sympde.topology import VectorTestFunction
+
+    >>> domain = Domain('Omega', dim=2)
+    >>> V = VectorFunctionSpace('V', domain)
+    >>> u,u1,u2 = [VectorTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    >>> v,v1,v2 = [VectorTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    >>> alpha = Constant('alpha', is_real=True)
+
+    >>> div(u1+u2,v1)
+    Div(u1, v1) + Div(u2, v1)
+
+    >>> div(alpha*u1)
+    alpha*Div(u1)
+    """
 
     def __new__(cls, *args, **options):
         # (Try to) sympify args first
@@ -537,6 +823,32 @@ class Div(BasicOperator):
 
 #==============================================================================
 class Laplace(BasicOperator):
+    """
+    Represents a generic Laplace operator, without knowledge of the dimension.
+
+    This operator implements the properties of addition and multiplication
+
+    Examples
+
+
+    >>> from sympde.core import Constant
+    >>> from sympde.topology import Domain
+    >>> from sympde.topology import VectorFunctionSpace
+    >>> from sympde.topology import VectorTestFunction
+
+    >>> domain = Domain('Omega', dim=2)
+    >>> V = FunctionSpace('V', domain)
+    >>> u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    >>> v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    >>> alpha = Constant('alpha', is_real=True)
+
+    >>> laplace(u1+u2,v1)
+    Laplace(u1, v1) + Laplace(u2, v1)
+
+    >>> laplace(alpha*u1)
+    alpha*Laplace(u1)
+    """
 
     def __new__(cls, *args, **options):
         # (Try to) sympify args first
@@ -594,6 +906,32 @@ class Laplace(BasicOperator):
 
 #==============================================================================
 class Hessian(BasicOperator):
+    """
+    Represents a generic Hessian operator, without knowledge of the dimension.
+
+    This operator implements the properties of addition and multiplication
+
+    Examples
+
+
+    >>> from sympde.core import Constant
+    >>> from sympde.topology import Domain
+    >>> from sympde.topology import VectorFunctionSpace
+    >>> from sympde.topology import VectorTestFunction
+
+    >>> domain = Domain('Omega', dim=2)
+    >>> V = FunctionSpace('V', domain)
+    >>> u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    >>> v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    >>> alpha = Constant('alpha', is_real=True)
+
+    >>> hessian(u1+u2,v1)
+    Hessian(u1, v1) + Hessian(u2, v1)
+
+    >>> hessian(alpha*u1)
+    alpha*Hessian(u1)
+    """
 
     def __new__(cls, *args, **options):
         # (Try to) sympify args first
@@ -643,6 +981,9 @@ class Hessian(BasicOperator):
 #==============================================================================
 # TODO add properties
 class Bracket(BasicOperator):
+    """
+    This operator represents the Poisson bracket between two expressions.
+    """
     pass
 
 

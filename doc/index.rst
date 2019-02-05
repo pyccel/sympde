@@ -13,7 +13,13 @@ Welcome to sympde's documentation!
    quick
    advanced
 
+API
+===
 
+.. toctree::
+   :maxdepth: 1
+
+   source/modules
 
 Indices and tables
 ==================
