@@ -149,7 +149,7 @@ class Field(BasicPDE):
 
         space = namespace[space]
         if isinstance(space, sym_FunctionSpace):
-            v = sym_Field(name, space=space)
+            v = sym_Field(space, name=name)
 
         elif isinstance(space, sym_VectorFunctionSpace):
             v = sym_VectorField(name, space=space)

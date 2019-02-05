@@ -24,7 +24,7 @@ naturally give 0
 
 >>> alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
 
->>> f,g,h = [Field(i, space=V) for i in ['f','g','h']]
+>>> f,g,h = [Field(V, name=i) for i in ['f','g','h']]
 >>> F,G,H = [VectorField(W, i) for i in ['F','G','H']]
 
 Generic properties
@@ -371,7 +371,7 @@ class Convect(BasicOperator):
     >>> V = FunctionSpace('V', domain)
     >>> W = VectorFunctionSpace('W', domain)
     >>> alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
-    >>> f,g,h = [Field(i, space=V) for i in ['f','g','h']]
+    >>> f,g,h = [Field(V, name=i) for i in ['f','g','h']]
     >>> F,G,H = [VectorField(W, i) for i in ['F','G','H']]
 
     >>> convect(F+G, H)

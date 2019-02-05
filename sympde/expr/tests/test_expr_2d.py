@@ -546,8 +546,7 @@ def test_call_linear_form_2d_3():
 
     V = FunctionSpace('V', domain)
 
-    pn = Field('pn', V)
-    wn = Field('wn', V)
+    pn, wn = [Field(V, name=i) for i in ['pn', 'wn']]
 
     dp    = TestFunction(V, name='dp')
     dw    = TestFunction(V, name='dw')
@@ -851,7 +850,7 @@ def test_terminal_expr_linear_2d_5(boundary=['Gamma_1', 'Gamma_3']):
 
     x,y = domain.coordinates
 
-    F = Field('F', V)
+    F = Field(V, name='F')
 
     v = TestFunction(V, name='v')
     u = TestFunction(V, name='u')
@@ -1080,7 +1079,7 @@ def test_linearize_expr_2d_1():
 
     alpha = Constant('alpha')
 
-    F = Field('F', space=V1)
+    F = Field(V1, name='F')
     G = VectorField(W1, 'G')
 
     # ...
@@ -1136,8 +1135,8 @@ def test_linearize_expr_2d_2():
 
     alpha = Constant('alpha')
 
-    F = Field('F', space=V1)
-    G = Field('G', space=V1)
+    F = Field(V1, name='F')
+    G = Field(V1, name='G')
 
     # ...
     l1 = LinearExpr(v1, F**2*v1)
@@ -1163,7 +1162,7 @@ def test_linearize_form_2d_1():
 
     alpha = Constant('alpha')
 
-    F = Field('F', space=V1)
+    F = Field(V1, name='F')
     G = VectorField(W1, 'G')
 
     # ...
@@ -1219,8 +1218,8 @@ def test_linearize_form_2d_2():
 
     alpha = Constant('alpha')
 
-    F = Field('F', space=V1)
-    G = Field('G', space=V1)
+    F = Field(V1, name='F')
+    G = Field(V1, name='G')
 
     # ...
     l1 = LinearForm(v1, F**2*v1)
@@ -1247,8 +1246,8 @@ def test_linearize_form_2d_3():
     q   =       TestFunction(W, name='q')
 
     U_0   = VectorField(U, name='U_0')
-    Rho_0 =       Field('Rho_0', W)
-    P_0   =       Field('P_0', W)
+    Rho_0 = Field(W, name='Rho_0')
+    P_0   = Field(W, name='P_0')
 
     # ...
     expr = div(Rho_0*U_0) * phi
@@ -1425,7 +1424,7 @@ def test_functional_2d_1():
     mu    = Constant('mu'   , is_real=True)
 
     V = FunctionSpace('V', domain)
-    F = Field('F', space=V)
+    F = Field(V, name='F')
 
     # ...
     expr = x*y
@@ -1453,7 +1452,7 @@ def test_norm_2d_1():
     x,y = domain.coordinates
 
     V = FunctionSpace('V', domain)
-    F = Field('F', space=V)
+    F = Field(V, name='F')
 
     # ...
     expr = x*y

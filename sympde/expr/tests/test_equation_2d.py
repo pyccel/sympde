@@ -177,8 +177,7 @@ def test_equation_2d_2():
 
     x,y = domain.coordinates
 
-    pn = Field('pn', V)
-    wn = Field('wn', V)
+    pn, wn = [Field(V, name=i) for i in ['pn', 'wn']]
 
     dp    = TestFunction(V, name='dp')
     dw    = TestFunction(V, name='dw')
@@ -291,9 +290,8 @@ def test_equation_2d_5():
     V = FunctionSpace('V', domain)
     X = ProductSpace(W, V)
 
-    # TODO improve: naming are not given the same way
     F = VectorField(W, name='F')
-    G = Field('G', V)
+    G = Field(V, name='G')
 
     u,v = [VectorTestFunction(W, name=i) for i in ['u', 'v']]
     p,q = [      TestFunction(V, name=i) for i in ['p', 'q']]
@@ -335,7 +333,7 @@ def test_equation_2d_6():
 
     x,y = domain.coordinates
 
-    Un = Field('Un', V)
+    Un = Field(V, name='Un')
 
     v = TestFunction(V, name='v')
 

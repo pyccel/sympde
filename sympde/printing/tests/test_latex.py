@@ -33,7 +33,7 @@ def test_latex_1d():
     v = TestFunction(V, name='v')
     u = TestFunction(V, name='u')
 
-    F = Field('F', space=V)
+    F = Field(V, name='F')
 
     assert(latex(grad(v)) == r'\nabla{v}')
     assert(latex(dot(grad(v), grad(u))) == r'\nabla{v} \cdot \nabla{u}')
@@ -63,7 +63,7 @@ def test_latex_2d_1():
     v = TestFunction(V, name='v')
     u = TestFunction(V, name='u')
 
-    F = Field('F', space=V)
+    F = Field(V, name='F')
 
     assert(latex(grad(v)) == r'\nabla{v}')
     assert(latex(dot(grad(v), grad(u))) == r'\nabla{v} \cdot \nabla{u}')
@@ -93,7 +93,7 @@ def test_latex_2d_2():
     v = VectorTestFunction(V, name='v')
     u = VectorTestFunction(V, name='u')
 
-    F = Field('F', space=V)
+    F = Field(V, name='F')
 
     assert(latex(v) == r'\mathbf{v}')
     assert(latex(inner(grad(v), grad(u))) == r'\nabla{\mathbf{v}} : \nabla{\mathbf{u}}')
@@ -120,7 +120,7 @@ def test_latex_3d_1():
     v = TestFunction(V, name='v')
     u = TestFunction(V, name='u')
 
-    F = Field('F', space=V)
+    F = Field(V, name='F')
 
     assert(latex(grad(v)) == r'\nabla{v}')
     assert(latex(dot(grad(v), grad(u))) == r'\nabla{v} \cdot \nabla{u}')
@@ -150,7 +150,7 @@ def test_latex_3d_2():
     v = VectorTestFunction(V, name='v')
     u = VectorTestFunction(V, name='u')
 
-    F = Field('F', space=V)
+    F = Field(V, name='F')
 
     assert(latex(v) == r'\mathbf{v}')
     assert(latex(inner(grad(v), grad(u))) == r'\nabla{\mathbf{v}} : \nabla{\mathbf{u}}')

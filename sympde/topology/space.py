@@ -317,8 +317,8 @@ class Field(Symbol):
     """
     _space = None
     is_commutative = True
-    def __new__(cls, name, space=None):
-        obj =  Basic.__new__(cls, name)
+    def __new__(cls, space, name=None):
+        obj = Symbol.__new__(cls, name)
         obj._space = space
         return obj
 
@@ -327,8 +327,8 @@ class Field(Symbol):
         return self._space
 
     @property
-    def name(self):
-        return self._args[0]
+    def ldim(self):
+        return self.space.ldim
 
     def _sympystr(self, printer):
         sstr = printer.doprint

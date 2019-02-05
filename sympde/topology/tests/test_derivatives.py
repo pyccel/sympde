@@ -37,10 +37,7 @@ def test_partial_derivatives_1():
 
     V = FunctionSpace('V', domain)
 
-    F = Field('F', space=V)
-    u = Field('u', space=V)
-    v = Field('v', space=V)
-    w = Field('w', space=V)
+    F,u,v,w = [Field(V, name=i) for i in ['F', 'u', 'v', 'w']]
     uvw = Tuple(u,v,w)
 
     alpha = Constant('alpha')
@@ -80,7 +77,7 @@ def test_partial_derivatives_2():
     x,y = domain.coordinates
 
     V = FunctionSpace('V', domain)
-    F = Field('F', space=V)
+    F = Field(V, name='F')
 
     alpha = Constant('alpha')
     beta = Constant('beta')

@@ -15,7 +15,6 @@ from sympde.calculus import laplace, hessian, bracket, convect
 from sympde.topology import (dx, dy, dz)
 from sympde.topology import (dx1, dx2, dx3)
 from sympde.topology import FunctionSpace, VectorFunctionSpace
-from sympde.topology import Field, VectorField
 from sympde.topology import TestFunction
 from sympde.topology import VectorTestFunction
 from sympde.topology import LogicalExpr
