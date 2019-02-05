@@ -2,6 +2,8 @@
 
 - add a coordinates system
 
+- remove Unknown and VectorUnknown
+
 Linearity
 *********
 
@@ -23,5 +25,3 @@ Kron
 ****
 
 the kronecker features must be upgraded as well as the tensorize function
-
-
