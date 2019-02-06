@@ -19,14 +19,19 @@ class BasicFunctionSpace(Basic):
 
     """
     _domain = None
-    _shape = None
-    def __new__(cls, name, domain, shape):
+    _shape  = None
+    _kind   = None
+    def __new__(cls, name, domain, shape, kind):
 
         if not isinstance(domain, BasicDomain):
             raise TypeError('> Expecting a BasicDomain object for domain')
 
         obj = Basic.__new__(cls, name, domain)
         obj._shape = shape
+
+        # TODO improve: introduce types for kind
+        assert(kind in ['h1', 'hcurl', 'hdiv', 'l2'])
+        obj._kind = kind
 
         return obj
 
@@ -47,6 +52,10 @@ class BasicFunctionSpace(Basic):
         return self._shape
 
     @property
+    def kind(self):
+        return self._kind
+
+    @property
     def coordinates(self):
         return self.domain.coordinates
 
@@ -62,18 +71,18 @@ class FunctionSpace(BasicFunctionSpace):
     """
     Represents a basic continuous scalar Function space.
     """
-    def __new__(cls, name, domain):
+    def __new__(cls, name, domain, kind='h1'):
         shape = 1
-        return BasicFunctionSpace.__new__(cls, name, domain, shape)
+        return BasicFunctionSpace.__new__(cls, name, domain, shape, kind)
 
 #==============================================================================
 class VectorFunctionSpace(BasicFunctionSpace):
     """
     Represents a basic continuous vector Function space.
     """
-    def __new__(cls, name, domain):
+    def __new__(cls, name, domain, kind='h1'):
         shape = domain.dim
-        return BasicFunctionSpace.__new__(cls, name, domain, shape)
+        return BasicFunctionSpace.__new__(cls, name, domain, shape, kind)
 
 #==============================================================================
 # TODO must check that all spaces have the same domain
