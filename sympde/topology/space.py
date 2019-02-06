@@ -30,6 +30,8 @@ class BasicFunctionSpace(Basic):
         obj._shape = shape
 
         # TODO improve: introduce types for kind
+        assert(isinstance(kind, str))
+        kind = kind.lower()
         assert(kind in ['h1', 'hcurl', 'hdiv', 'l2'])
         obj._kind = kind
 
