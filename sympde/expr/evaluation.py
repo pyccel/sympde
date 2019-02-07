@@ -313,12 +313,15 @@ class TerminalExpr(CalculusFunction):
                     newexpr = expand(newexpr)
 
                     # ...
-                    domain = _get_domain(a)
-                    if isinstance(domain, Union):
-                        domain = list(domain._args)
+                    try:
+                        domain = _get_domain(a)
+                        if isinstance(domain, Union):
+                            domain = list(domain._args)
 
-                    elif not is_sequence(domain):
-                        domain = [domain]
+                        elif not is_sequence(domain):
+                            domain = [domain]
+                    except:
+                        pass
                     # ...
 
                     # ...

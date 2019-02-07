@@ -1,5 +1,7 @@
 # coding: utf-8
 
+# TODO: - add assert to every test
+
 import pytest
 
 from sympy import Symbol
@@ -182,35 +184,6 @@ def test_bilinear_expr_2d_2():
     # ...
 
 #==============================================================================
-def test_integral_2d_1():
-
-    domain = Domain('Omega', dim=2)
-    x,y = domain.coordinates
-
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
-
-    V = FunctionSpace('V', domain)
-
-    u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
-
-    # ...
-    a = BilinearExpr((u,v), u*v)
-    print(a)
-    a = DomainIntegral(a)
-    print(a)
-    print('')
-    # ...
-
-    # ...
-    l = LinearExpr(v, x*y*v)
-    print(l)
-    l = DomainIntegral(l)
-    print(l)
-    # ...
-
-#==============================================================================
 def test_linear_form_2d_1():
 
     domain = Domain('Omega', dim=2)
@@ -228,24 +201,66 @@ def test_linear_form_2d_1():
 
     # ...
     l = LinearForm(v, x*y*v)
-    print(l)
-    print(l.domain)
-    print('')
+
+    assert(l.domain == domain)
+    assert(l(v1) == DomainIntegral(x*y*v1))
     # ...
 
     # ...
     g = Tuple(x**2, y**2)
     l = LinearForm(v, v*trace_1(g, B1))
-    print(l)
-    print(l.domain)
-    print('')
+
+    assert(l.domain == B1)
+    assert(l(v1) == BoundaryIntegral(v1*trace_1(g, B1)))
     # ...
 
     # ...
     g = Tuple(x**2, y**2)
     l = LinearForm(v, v*trace_1(g, B1) + x*y*v)
-    print(l)
-    print('')
+
+    # TODO l.domain are not ordered
+    assert(len(l.domain) == 2)
+    for i in l.domain:
+        assert(i in [domain, B1])
+
+    assert(l(v1) == BoundaryIntegral(v1*trace_1(g, B1)) + DomainIntegral(x*y*v1))
+    # ...
+
+    # ...
+    l1 = LinearForm(v1, x*y*v1)
+    l = LinearForm(v, l1(v))
+
+    assert(l.domain == domain)
+    assert(l(u1) == DomainIntegral(x*y*u1))
+    # ...
+
+    # ...
+    g = Tuple(x,y)
+    l1 = LinearForm(u1, x*y*u1)
+    l2 = LinearForm(u2, dot(grad(u2), g))
+
+    l = LinearForm(v, l1(v) + l2(v))
+
+    assert(l.domain == domain)
+    assert(l(v1) == DomainIntegral(x*y*v1) + DomainIntegral(dot(grad(v1), g)))
+    # ...
+
+    # ...
+    pn, wn = [Field(V, name=i) for i in ['pn', 'wn']]
+
+    tau   = TestFunction(V, name='tau')
+    sigma = TestFunction(V, name='sigma')
+
+    Re    = Constant('Re', real=True)
+    dt    = Constant('dt', real=True)
+    alpha = Constant('alpha', real=True)
+
+    l1 = LinearForm(tau, bracket(pn, wn)*tau - 1./Re * dot(grad(tau), grad(wn)))
+
+    l = LinearForm((tau, sigma), dt*l1(tau))
+    assert(l.domain == domain)
+    assert(l(u1,u2) == DomainIntegral(-1.0*dt*dot(grad(u1), grad(wn))/Re) +
+                       DomainIntegral(dt*u1*bracket(pn, wn)))
     # ...
 
 #==============================================================================
@@ -267,27 +282,31 @@ def test_linear_form_2d_2():
     # ...
     g = Tuple(x,y)
     l = LinearForm(v, dot(g, v))
-    print(l)
-    print(l.domain)
-    print('')
+
+    assert(l.domain == domain)
+    assert(l(v1) == DomainIntegral(dot(g, v1)))
     # ...
 
-    # TODO
-#    # ...
-#    g = Tuple(x**2, y**2)
-#    l = LinearForm(v, v*trace_1(g, B1))
-#    print(l)
-#    print(l.domain)
-#    print('')
-#    # ...
+    # ...
+    g = Tuple(x,y)
+    l1 = LinearForm(v1, dot(g, v1))
+    l = LinearForm(v, l1(v))
 
-    # TODO
-#    # ...
-#    g = Tuple(x**2, y**2)
-#    l = LinearForm(v, v*trace_1(g, B1) + x*y*v)
-#    print(l)
-#    print('')
-#    # ...
+    assert(l.domain == domain)
+    assert(l(u1) == DomainIntegral(dot(g, u1)))
+    # ...
+
+    # ...
+    g1 = Tuple(x,0)
+    g2 = Tuple(0,y)
+    l1 = LinearForm(v1, dot(v1, g1))
+    l2 = LinearForm(v2, dot(v2, g2))
+
+    l = LinearForm(v, l1(v) + l2(v))
+
+    assert(l.domain == domain)
+    assert(l(u) == DomainIntegral(dot(u, g1)) + DomainIntegral(dot(u, g2)))
+    # ...
 
 #==============================================================================
 def test_bilinear_form_2d_1():
@@ -307,30 +326,51 @@ def test_bilinear_form_2d_1():
 
     # ...
     a = BilinearForm((u,v), u*v)
-    print(a)
-    print(a.domain)
-    print('')
+
+    assert(a.domain == domain)
+    assert(a(u1,v1) == DomainIntegral(u1*v1))
     # ...
 
     # ...
     a = BilinearForm((u,v), u*v + dot(grad(u), grad(v)))
-    print(a)
-    print(a.domain)
-    print('')
+
+    assert(a.domain == domain)
+    assert(a(u1,v1) == DomainIntegral(u1*v1) + DomainIntegral(dot(grad(u1), grad(v1))))
     # ...
 
     # ...
     a = BilinearForm((u,v), v*trace_1(grad(u), B1))
-    print(a)
-    print(a.domain)
-    print('')
+
+    assert(a.domain == B1)
+    assert(a(u1,v1) == BoundaryIntegral(v1*trace_1(grad(u1), B1)))
     # ...
 
     # ...
     a = BilinearForm((u,v), u*v + v*trace_1(grad(u), B1))
-    print(a)
-    print(a.domain)
-    print('')
+
+    # TODO a.domain are not ordered
+    assert(len(a.domain) == 2)
+    for i in a.domain:
+        assert(i in [domain, B1])
+
+    assert(a(u1,v1) == DomainIntegral(u1*v1) + BoundaryIntegral(v1*trace_1(grad(u1), B1)))
+    # ...
+
+    # ...
+    a1 = BilinearForm((u1,v1), u1*v1)
+    a = BilinearForm((u,v), a1(u,v))
+
+    assert(a.domain == domain)
+    assert(a(u2,v2) == DomainIntegral(u2*v2))
+    # ...
+
+    # ...
+    a1 = BilinearForm((u1,v1), u1*v1)
+    a2 = BilinearForm((u2,v2), dot(grad(u2), grad(v2)))
+    a = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v))
+
+    assert(a.domain == domain)
+    assert(a(u,v) == DomainIntegral(u*v) + DomainIntegral(kappa*dot(grad(u), grad(v))))
     # ...
 
 #==============================================================================
@@ -351,285 +391,33 @@ def test_bilinear_form_2d_2():
 
     # ...
     a = BilinearForm((u,v), dot(u,v))
-    print(a)
-    print(a.domain)
-    print('')
+
+    assert(a.domain == domain)
+    assert(a(u1,v1) == DomainIntegral(dot(u1,v1)))
     # ...
 
     # ...
     a = BilinearForm((u,v), dot(u,v) + inner(grad(u), grad(v)))
-    print(a)
-    print(a.domain)
-    print('')
-    # ...
 
-    # TODO
-#    # ...
-#    a = BilinearForm((u,v), v*trace_1(grad(u), B1))
-#    print(a)
-#    print(a.domain)
-#    print('')
-#    # ...
-#
-#    # ...
-#    a = BilinearForm((u,v), u*v + v*trace_1(grad(u), B1))
-#    print(a)
-#    print(a.domain)
-#    print('')
-#    # ...
-
-
-#==============================================================================
-def test_call_linear_expr_2d_1():
-
-    domain = Domain('Omega', dim=2)
-    x,y = domain.coordinates
-
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
-
-    V = FunctionSpace('V', domain)
-
-    u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
-
-    # ...
-    l = LinearExpr(v, x*y*v)
-    print(l)
-    print(l(v1))
-    print('')
-    # ...
-
-#==============================================================================
-def test_call_linear_expr_2d_2():
-
-    domain = Domain('Omega', dim=2)
-    x,y = domain.coordinates
-
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
-
-    V = VectorFunctionSpace('V', domain)
-
-    u,u1,u2 = [VectorTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [VectorTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
-
-    # ...
-    g = Tuple(x,y)
-    l = LinearExpr(v, dot(g, v))
-    print(l(v1))
-    print('')
-    # ...
-
-#==============================================================================
-def test_call_bilinear_expr_2d_1():
-
-    domain = Domain('Omega', dim=2)
-    x,y = domain.coordinates
-
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
-
-    V = FunctionSpace('V', domain)
-
-    u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
-
-    # ...
-    a = BilinearExpr((u,v), u*v)
-    print(a(u1,v1))
-    print('')
-    # ...
-
-#==============================================================================
-def test_call_bilinear_expr_2d_2():
-
-    domain = Domain('Omega', dim=2)
-    x,y = domain.coordinates
-
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
-
-    V = VectorFunctionSpace('V', domain)
-
-    u,u1,u2 = [VectorTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [VectorTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
-
-    # ...
-    a = BilinearExpr((u,v), dot(u,v))
-    print(a(u1,v1))
-    print('')
-    # ...
-
-#==============================================================================
-def test_call_linear_form_2d_1():
-
-    domain = Domain('Omega', dim=2)
-    x,y = domain.coordinates
-
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
-
-    V = FunctionSpace('V', domain)
-
-    u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
-
-    # ...
-    l = LinearForm(v, x*y*v)
-    print(l(v1))
-    print('')
-    # ...
-
-    # ...
-    l1 = LinearForm(v1, x*y*v1)
-    l = LinearForm(v, l1(v))
-    print(l)
-    print('')
-    # ...
-
-    # ...
-    g = Tuple(x,y)
-    l1 = LinearForm(v1, x*y*v1)
-    l2 = LinearForm(v2, dot(grad(v2), g))
-
-    l = LinearForm(v, l1(v) + l2(v))
-    print(l)
-    print('')
-    # ...
-
-#==============================================================================
-def test_call_linear_form_2d_2():
-
-    domain = Domain('Omega', dim=2)
-    x,y = domain.coordinates
-
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
-
-    V = VectorFunctionSpace('V', domain)
-
-    u,u1,u2 = [VectorTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [VectorTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
-
-    # ...
-    g = Tuple(x,y)
-    l = LinearForm(v, dot(g, v))
-    print(l(v1))
-    print('')
-    # ...
-
-    # ...
-    g = Tuple(x,y)
-    l1 = LinearForm(v1, dot(g, v1))
-    l = LinearForm(v, l1(v))
-    print(l)
-    print('')
-    # ...
-
-    # ...
-    g1 = Tuple(x,0)
-    g2 = Tuple(0,y)
-    l1 = LinearForm(v1, dot(v1, g1))
-    l2 = LinearForm(v2, dot(v2, g2))
-
-    l = LinearForm(v, l1(v) + l2(v))
-    print(l)
-    print('')
-    # ...
-
-#==============================================================================
-def test_call_linear_form_2d_3():
-
-    domain = Domain('Omega', dim=2)
-    x,y = domain.coordinates
-
-    V = FunctionSpace('V', domain)
-
-    pn, wn = [Field(V, name=i) for i in ['pn', 'wn']]
-
-    dp    = TestFunction(V, name='dp')
-    dw    = TestFunction(V, name='dw')
-    tau   = TestFunction(V, name='tau')
-    sigma = TestFunction(V, name='sigma')
-
-    Re    = Constant('Re', real=True)
-    dt    = Constant('dt', real=True)
-    alpha = Constant('alpha', real=True)
-
-    l1 = LinearForm(tau, bracket(pn, wn)*tau - 1./Re * dot(grad(tau), grad(wn)))
-
-    l = LinearForm((tau, sigma), dt*l1(tau))
-    print(l)
-
-#==============================================================================
-def test_call_bilinear_form_2d_1():
-
-    domain = Domain('Omega', dim=2)
-    x,y = domain.coordinates
-
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
-
-    V = FunctionSpace('V', domain)
-
-    u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
-
-    # ...
-    a = BilinearForm((u,v), u*v)
-    print(a(u1,v1))
-    print('')
-    # ...
-
-    # ...
-    a1 = BilinearForm((u1,v1), u1*v1)
-    a = BilinearForm((u,v), a1(u,v))
-    print(a)
-    print('')
-    # ...
-
-    # ...
-    a1 = BilinearForm((u1,v1), u1*v1)
-    a2 = BilinearForm((u2,v2), dot(grad(u2), grad(v2)))
-    a = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v))
-    print(a)
-    print('')
-    # ...
-
-#==============================================================================
-def test_call_bilinear_form_2d_2():
-
-    domain = Domain('Omega', dim=2)
-    x,y = domain.coordinates
-
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
-
-    V = VectorFunctionSpace('V', domain)
-
-    u,u1,u2 = [VectorTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [VectorTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
-
-    # ...
-    a = BilinearForm((u,v), dot(u,v))
-    print(a(u1,v1))
-    print('')
+    assert(a.domain == domain)
+    assert(a(u1,v1) == DomainIntegral(dot(u1,v1)) + DomainIntegral(inner(grad(u1), grad(v1))))
     # ...
 
     # ...
     a1 = BilinearForm((u1,v1), dot(u1,v1))
     a = BilinearForm((u,v), a1(u,v))
-    print(a)
-    print('')
+
+    assert(a.domain == domain)
+    assert(a(u2,v2) == DomainIntegral(dot(u2,v2)))
     # ...
 
     # ...
     a1 = BilinearForm((u1,v1), dot(u1,v1))
     a2 = BilinearForm((u2,v2), inner(grad(u2), grad(v2)))
     a = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v))
-    print(a)
-    print('')
+
+    assert(a.domain == domain)
+    assert(a(u,v) == DomainIntegral(dot(u,v)) + DomainIntegral(kappa*inner(grad(u), grad(v))))
     # ...
 
 #==============================================================================

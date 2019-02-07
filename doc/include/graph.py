@@ -118,7 +118,7 @@ def test_bilinear_form_2d_1():
     d_forms['a3'] = BilinearForm((u,v), v*trace_1(grad(u), B1))
 
 
-    # ... Poisson with Nitsch method
+    # Poisson with Nitsch method
     a0 = BilinearForm((u,v), dot(grad(u),grad(v)))
     a_B1 = BilinearForm((u,v), - kappa * u*trace_1(grad(v), B1)
                                - v*trace_1(grad(u), B1)
@@ -128,9 +128,20 @@ def test_bilinear_form_2d_1():
     d_forms['a4'] = a
     # ...
 
+    # ... calls
+    d_calls = {}
+    for name, a in d_forms.items():
+        d_calls[name] = a(u,v)
     # ...
+
+    # ... export forms
     for name, expr in d_forms.items():
         export(expr, 'biform_2d_{}.png'.format(name))
+    # ...
+
+    # ... export calls
+    for name, expr in d_calls.items():
+        export(expr, 'biform_2d_call_{}.png'.format(name))
     # ...
 
 
@@ -160,5 +171,5 @@ def test_bilinear_form_2d_3():
 if __name__ == '__main__':
 
 #    test_linear_form_2d_1()
-#    test_bilinear_form_2d_1()
-    test_bilinear_form_2d_3()
+    test_bilinear_form_2d_1()
+#    test_bilinear_form_2d_3()

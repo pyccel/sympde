@@ -154,7 +154,6 @@ class BilinearExpr(BasicExpr):
 
 
 #==============================================================================
-# TODO: - Union of Domain and Boundary
 class BasicIntegral(CalculusFunction):
 
     def __new__(cls, *args, **options):
@@ -192,17 +191,12 @@ class BasicIntegral(CalculusFunction):
         if not isinstance(expr, (BasicExpr, Expr)):
             raise TypeError('')
 
-        if isinstance(expr, BasicExpr) and expr.is_linear:
-            if isinstance(expr.expr, Add):
-                args = [cls.eval(LinearExpr(expr.variables, a))
-                        for a in expr.expr.args]
-                return Add(*args)
+        if isinstance(expr, BasicExpr):
+            expr = expr.expr
 
-        elif isinstance(expr, BasicExpr) and expr.is_bilinear:
-            if isinstance(expr.expr, Add):
-                args = [cls.eval(BilinearExpr(expr.variables, a))
-                        for a in expr.expr.args]
-                return Add(*args)
+        if isinstance(expr, Add):
+            args = [cls.eval(a) for a in expr.args]
+            return Add(*args)
 
         boundary = list(expr.atoms(Boundary))
         if boundary:
@@ -258,40 +252,27 @@ def _get_domain(a):
 
     elif isinstance(a, DomainIntegral):
         expr = a._args[0]
-        variables = expr.variables
-
-        # ...
-        if expr.is_linear:
-            spaces = [u.space for u in variables]
-
-        elif expr.is_bilinear:
-            spaces  = [u.space for u in variables[0]]
-            spaces += [u.space for u in variables[1]]
-
-        else:
-            raise TypeError('Expecting linear or bilinear form')
-        # ...
-
-        domains = [V.domain for V in spaces]
-        return domains[0]
-
-    elif isinstance(a, Add):
-        domains = []
-        for i in a.args:
-            b = _get_domain(i)
-            if not is_sequence(b): b = [b]
-
-            domains += b
-
-        domains = list(set(domains))
-        if len(domains) == 1:
-            return domains[0]
-
-        else:
-            return domains
 
     else:
-        raise TypeError('Expecting a Boundary or Domain integral')
+        expr = a
+
+    atoms  = []
+    atoms += list(expr.atoms(TestFunction))
+    atoms += list(expr.atoms(VectorTestFunction))
+    atoms += list(expr.atoms(Field))
+    atoms += list(expr.atoms(VectorField))
+
+    if len(atoms) == 0:
+        raise ValueError('could not find any test function or field')
+
+    space = atoms[0].space
+
+    domains = list(expr.atoms(Boundary)) + [space.domain]
+    if len(domains) == 1:
+        return domains[0]
+
+    else:
+        return domains
 
 
 #==============================================================================
@@ -347,19 +328,20 @@ class LinearForm(BasicForm):
 
     def __new__(cls, arguments, expr):
 
+        # ...
         integrals = expr.atoms(BasicIntegral)
         if integrals:
             for integral in integrals:
-                expr = expr.subs(integral, integral._args[0].expr)
+                expr = expr.subs(integral, integral._args[0])
+        # ...
 
-        if not isinstance(expr, LinearExpr):
-            expr = LinearExpr(arguments, expr)
+        # ...
+        expr = expand(expr)
+        # ...
 
-        assert(isinstance(expr, LinearExpr))
-
-        variables = expr.variables
+        args = _sanitize_arguments(arguments, is_linear=True)
         expr = BasicIntegral(expr)
-        obj = Basic.__new__(cls, variables, expr)
+        obj = Basic.__new__(cls, args, expr)
 
         # ...
         domain = _get_domain(expr)
@@ -383,7 +365,7 @@ class LinearForm(BasicForm):
             integrals = expr.atoms(BasicIntegral)
             if integrals:
                 for integral in integrals:
-                    expr = expr.subs(integral, integral._args[0].expr)
+                    expr = expr.subs(integral, integral._args[0])
 
             self._body = expr
 
@@ -416,19 +398,20 @@ class BilinearForm(BasicForm):
 
     def __new__(cls, arguments, expr):
 
+        # ...
         integrals = expr.atoms(BasicIntegral)
         if integrals:
             for integral in integrals:
-                expr = expr.subs(integral, integral._args[0].expr)
+                expr = expr.subs(integral, integral._args[0])
+        # ...
 
-        if not isinstance(expr, BilinearExpr):
-            expr = BilinearExpr(arguments, expr)
+        # ...
+        expr = expand(expr)
+        # ...
 
-        assert(isinstance(expr, BilinearExpr))
-
-        variables = expr.variables
+        args = _sanitize_arguments(arguments, is_bilinear=True)
         expr = BasicIntegral(expr)
-        obj = Basic.__new__(cls, variables, expr)
+        obj = Basic.__new__(cls, args, expr)
 
         # ...
         domain = _get_domain(expr)
@@ -452,7 +435,7 @@ class BilinearForm(BasicForm):
             integrals = expr.atoms(BasicIntegral)
             if integrals:
                 for integral in integrals:
-                    expr = expr.subs(integral, integral._args[0].expr)
+                    expr = expr.subs(integral, integral._args[0])
 
             self._body = expr
 
