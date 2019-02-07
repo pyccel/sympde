@@ -157,15 +157,16 @@ def test_equation_2d_1():
 #    # ...
 
 
-#==============================================================================
-def test_projection_2d():
-
-    V = FunctionSpace('V', domain)
-    x,y = domain.coordinates
-
-    alpha = Constant('alpha')
-
-    u = Projection(x**2+alpha*y, V)
+##==============================================================================
+## TODO
+#def test_projection_2d():
+#
+#    V = FunctionSpace('V', domain)
+#    x,y = domain.coordinates
+#
+#    alpha = Constant('alpha')
+#
+#    u = Projection(x**2+alpha*y, V)
 
 
 #==============================================================================
@@ -415,47 +416,6 @@ def test_equation_2d_6():
     eq_3 = Equation(a3, l, tests=v, trials=u, bc=bc)
     # ...
 
-#==============================================================================
-def test_newton_2d_1():
-
-    # ... abstract model
-    B1 = Boundary(r'\Gamma_1', domain)
-
-    V = FunctionSpace('V', domain)
-
-    x,y = domain.coordinates
-
-    Un = Field(V, name='Un')
-
-    v = TestFunction(V, name='v')
-
-    f  = -4.*exp(-Un)
-    l = LinearForm(v, dot(grad(v), grad(Un)) - f*v )
-
-    eq = NewtonIteration(l, Un, trials='u')
-    # ...
-
-    u = TestFunction(V, name='u')
-
-    # ...
-    expected =  -4.0*u*v*exp(-Un) + dx(u)*dx(v) + dy(u)*dy(v)
-
-    expr = TerminalExpr(eq.lhs)[0]
-    assert(expr.expr == expected)
-    # ...
-
-    # ...
-    expected = -4.0*v*exp(-Un) - dx(Un)*dx(v) - dy(Un)*dy(v)
-
-    expr = TerminalExpr(eq.rhs)[0]
-    assert(expr.expr == expected)
-    # ...
-
-    # ...
-    bc = EssentialBC(u, 0, B1)
-    eq = NewtonIteration(l, Un, bc=bc, trials=u)
-    # ...
-
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
@@ -468,10 +428,3 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
-
-test_equation_2d_1()
-test_equation_2d_2()
-test_equation_2d_3()
-test_equation_2d_4()
-test_equation_2d_5()
-test_equation_2d_6()

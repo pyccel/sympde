@@ -193,8 +193,8 @@ class Equation(Basic):
             tests = [tests]
 
         else:
-            assert(isinstance(tests, (list, tuple)))
-            tests = list(tests)
+            assert(isinstance(tests, (list, tuple, Tuple)))
+            tests = [*tests]
 
             assert(all([_is_test_function(i) for i in tests]))
         # ...
@@ -204,8 +204,8 @@ class Equation(Basic):
             trials = [trials]
 
         else:
-            assert(isinstance(trials, (list, tuple)))
-            trials = list(trials)
+            assert(isinstance(trials, (list, tuple, Tuple)))
+            trials = [*trials]
 
             assert(all([_is_test_function(i) for i in trials]))
         # ...
@@ -328,12 +328,17 @@ class NewtonIteration(Equation):
         tests, trials  = a.variables
         test_trial = a.variables
 
-        lhs = a(*test_trial)
+#        lhs = a(*test_trial)
+        lhs = a
 
         form = LinearForm(tests, -form.expr)
-        rhs = form(*tests)
+#        rhs = form(*tests)
+        rhs = form
 
-        return Equation.__new__(cls, lhs, rhs, bc=bc)
+        print('> tests = ', tests)
+        print('> trials = ', trials)
+
+        return Equation.__new__(cls, lhs, rhs, tests, trials, bc=None)
 
 
 #==============================================================================
