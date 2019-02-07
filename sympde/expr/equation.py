@@ -293,6 +293,11 @@ class Equation(Basic):
             bc = Tuple(*newbc)
         # ...
 
+        # ... sympify tests/trials
+        tests = Tuple(*tests)
+        trials = Tuple(*trials)
+        # ...
+
         return Basic.__new__(cls, lhs, rhs, tests, trials, bc)
 
     @property
@@ -317,6 +322,7 @@ class Equation(Basic):
 
 
 #==============================================================================
+# TODO must subtitute expr by given args => call then create BasicForm
 class NewtonIteration(Equation):
 
     def __new__(cls, form, fields, bc=None, trials=None):
@@ -335,10 +341,7 @@ class NewtonIteration(Equation):
 #        rhs = form(*tests)
         rhs = form
 
-        print('> tests = ', tests)
-        print('> trials = ', trials)
-
-        return Equation.__new__(cls, lhs, rhs, tests, trials, bc=None)
+        return Equation.__new__(cls, lhs, rhs, tests, trials, bc=bc)
 
 
 #==============================================================================
@@ -424,3 +427,33 @@ class Interpolation(LambdaEquation):
         # ... defining the lhs and rhs
         V = space
         # ...
+
+
+#==============================================================================
+# user friendly function to create Equation objects
+def find(trials, *, forall, lhs, **kwargs):
+
+    bc = kwargs.pop('bc', None)
+
+    if isinstance(lhs, BilinearForm):
+        rhs = kwargs.pop('rhs', None)
+        if rhs is None:
+            raise ValueError('Expecting a rhs')
+
+        if not isinstance(rhs, LinearForm):
+            raise TypeError('Expecting a LinearForm for the rhs')
+
+        return Equation(lhs, rhs, forall, trials, bc=bc)
+
+    elif isinstance(lhs, LinearForm):
+        fields = kwargs.pop('fields', None)
+        if fields is None:
+            raise ValueError('Expecting a fields')
+
+        rhs = kwargs.pop('rhs', None)
+        assert((rhs is None) or (rhs == 0))
+
+        return NewtonIteration(lhs, fields, bc=bc, trials=trials)
+
+    else:
+        raise NotImplementedError('')
