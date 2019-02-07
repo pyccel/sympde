@@ -4,8 +4,6 @@ from sympy.core import Basic
 from sympy.core.containers import Tuple
 from sympy.core import Expr
 
-from pyccel.ast.core import Nil
-
 from sympde.topology.basic import Boundary, Union
 from sympde.topology.space import TestFunction
 from sympde.topology.space import VectorTestFunction, IndexedTestTrial
