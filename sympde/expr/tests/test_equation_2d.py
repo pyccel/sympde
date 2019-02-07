@@ -103,33 +103,33 @@ def test_equation_2d_1():
 #    # ...
 
     # ...
-    equation = Equation(a1(v,u), l1(v))
+    equation = Equation(a1, l1, tests=v, trials=u)
     # ...
 
     # ...
     a = BilinearForm((v,u), a1(v,u) + alpha*a2(v,u))
-    equation = Equation(a(v,u), l1(v))
+    equation = Equation(a, l1, tests=v, trials=u)
     # ...
 
     # ...
     a = BilinearForm((v,u), a1(v,u) + a_B1(v,u))
-    equation = Equation(a(v,u), l1(v))
+    equation = Equation(a, l1, tests=v, trials=u)
     # ...
 
     # ...
     a = BilinearForm((v,u), a1(v,u) + a_B1(v,u))
     l = LinearForm(v, l1(v) + l2(v))
-    equation = Equation(a(v,u), l(v))
+    equation = Equation(a, l, tests=v, trials=u)
     # ...
 
     # ...
     a = BilinearForm((v,u), a1(v,u) + a_B1(v,u))
     l = LinearForm(v, l1(v) + alpha*l_B2(v))
-    equation = Equation(a(v,u), l(v))
+    equation = Equation(a, l, tests=v, trials=u)
     # ...
 
     # ... using bc
-    equation = Equation(a1(v,u), l1(v), bc=EssentialBC(u, 0, B1))
+    equation = Equation(a1, l1, tests=v, trials=u, bc=EssentialBC(u, 0, B1))
     # ...
 
     # ... Poisson with Nitsch method
@@ -140,7 +140,7 @@ def test_equation_2d_1():
                                + trace_0(u, B1) * trace_0(v, B1) / eps)
     a = BilinearForm((u,v), a0(u,v) + a_B1(u,v))
     l = LinearForm(v, g*v/eps - kappa * trace_1(v, B1) * g)
-    equation = Equation(a(v,u), l(v))
+    equation = Equation(a, l, tests=v, trials=u)
     # ...
 
 #    # ... TODO FIX THIS, NOT RAISED ANYMORE!
@@ -202,7 +202,7 @@ def test_equation_2d_2():
 
     bc  = [EssentialBC(dp, 0, domain.boundary)]
     bc += [EssentialBC(dw, 0, domain.boundary)]
-    equation = Equation(a((tau, sigma),(dp,dw)), l(tau, sigma), bc=bc)
+    equation = Equation(a, l, tests=[tau, sigma], trials=[dp,dw], bc=bc)
 
 #    # TODO not working yet!! gives the wrong result => result must be a vector
 #    # and not a scalar
@@ -231,13 +231,13 @@ def test_equation_2d_3():
 
     # ...
     bc = EssentialBC(u, 0, B1)
-    eq = Equation(a1(v,u), l1(v), bc=bc)
+    eq = Equation(a1, l1, tests=v, trials=u, bc=bc)
     # ...
 
     # ...
     nn = NormalVector('nn')
     bc = EssentialBC(dot(grad(u), nn), 0, B1)
-    eq = Equation(a1(v,u), l1(v), bc=bc)
+    eq = Equation(a1, l1, tests=v, trials=u, bc=bc)
     # ...
 
 #==============================================================================
@@ -261,18 +261,18 @@ def test_equation_2d_4():
 
     # ...
     bc = EssentialBC(u, 0, B1)
-    eq = Equation(a1(v,u), l1(v), bc=bc)
+    eq = Equation(a1, l1, tests=v, trials=u, bc=bc)
     # ...
 
     # ...
     bc = EssentialBC(u[0], 0, B1)
-    eq = Equation(a1(v,u), l1(v), bc=bc)
+    eq = Equation(a1, l1, tests=v, trials=u, bc=bc)
     # ...
 
     # ...
     nn = NormalVector('nn')
     bc = EssentialBC(dot(u, nn), 0, B1)
-    eq = Equation(a1(v,u), l1(v), bc=bc)
+    eq = Equation(a1, l1, tests=v, trials=u, bc=bc)
     # ...
 
 
@@ -309,7 +309,7 @@ def test_equation_2d_5():
 
     print('****************************')
     bc = EssentialBC(u, 0, domain.boundary)
-    equation = Equation(a((v,q),(u,p)), l(v,q), bc=bc)
+    equation = Equation(a, l, tests=[v,q], trials=[u,p], bc=bc)
 
     # ...
     print('=======')
@@ -325,47 +325,6 @@ def test_equation_2d_5():
 
 #==============================================================================
 def test_equation_2d_6():
-
-    # ... abstract model
-    B1 = Boundary(r'\Gamma_1', domain)
-
-    V = FunctionSpace('V', domain)
-
-    x,y = domain.coordinates
-
-    Un = Field(V, name='Un')
-
-    v = TestFunction(V, name='v')
-
-    f  = -4.*exp(-Un)
-    l = LinearForm(v, dot(grad(v), grad(Un)) - f*v )
-
-    eq = NewtonIteration(l, Un, trials='u')
-    # ...
-
-    u = TestFunction(V, name='u')
-
-    # ...
-    expected =  -4.0*u*v*exp(-Un) + dx(u)*dx(v) + dy(u)*dy(v)
-
-    expr = TerminalExpr(eq.lhs)[0]
-    assert(expr.expr == expected)
-    # ...
-
-    # ...
-    expected = -4.0*v*exp(-Un) - dx(Un)*dx(v) - dy(Un)*dy(v)
-
-    expr = TerminalExpr(eq.rhs)[0]
-    assert(expr.expr == expected)
-    # ...
-
-    # ...
-    bc = EssentialBC(u, 0, B1)
-    eq = NewtonIteration(l, Un, bc=bc, trials=u)
-    # ...
-
-#==============================================================================
-def test_equation_2d_7():
 
     domain = Square()
     x,y = domain.coordinates
@@ -441,19 +400,60 @@ def test_equation_2d_7():
     # ...
     l = LinearForm(v, l0(v) + mu*area*l1(v))
 
-    eq_1 = Equation(a1(v,u), l(v), bc=bc)
+    eq_1 = Equation(a1, l, tests=v, trials=u, bc=bc)
     # ...
 
     # ...
     l = LinearForm(v, l0(v) + mu*area*l2(v))
 
-    eq_2 = Equation(a2(v,u), l(v), bc=bc)
+    eq_2 = Equation(a2, l, tests=v, trials=u, bc=bc)
     # ...
 
     # ...
     l = LinearForm(v, l0(v) + mu*area*l3(v))
 
-    eq_3 = Equation(a3(v,u), l(v), bc=bc)
+    eq_3 = Equation(a3, l, tests=v, trials=u, bc=bc)
+    # ...
+
+#==============================================================================
+def test_newton_2d_1():
+
+    # ... abstract model
+    B1 = Boundary(r'\Gamma_1', domain)
+
+    V = FunctionSpace('V', domain)
+
+    x,y = domain.coordinates
+
+    Un = Field(V, name='Un')
+
+    v = TestFunction(V, name='v')
+
+    f  = -4.*exp(-Un)
+    l = LinearForm(v, dot(grad(v), grad(Un)) - f*v )
+
+    eq = NewtonIteration(l, Un, trials='u')
+    # ...
+
+    u = TestFunction(V, name='u')
+
+    # ...
+    expected =  -4.0*u*v*exp(-Un) + dx(u)*dx(v) + dy(u)*dy(v)
+
+    expr = TerminalExpr(eq.lhs)[0]
+    assert(expr.expr == expected)
+    # ...
+
+    # ...
+    expected = -4.0*v*exp(-Un) - dx(Un)*dx(v) - dy(Un)*dy(v)
+
+    expr = TerminalExpr(eq.rhs)[0]
+    assert(expr.expr == expected)
+    # ...
+
+    # ...
+    bc = EssentialBC(u, 0, B1)
+    eq = NewtonIteration(l, Un, bc=bc, trials=u)
     # ...
 
 
@@ -468,3 +468,10 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
+
+test_equation_2d_1()
+test_equation_2d_2()
+test_equation_2d_3()
+test_equation_2d_4()
+test_equation_2d_5()
+test_equation_2d_6()
