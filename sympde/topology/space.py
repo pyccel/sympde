@@ -30,9 +30,11 @@ class BasicFunctionSpace(Basic):
         obj._shape = shape
 
         # TODO improve: introduce types for kind
-        assert(isinstance(kind, str))
-        kind = kind.lower()
-        assert(kind in ['h1', 'hcurl', 'hdiv', 'l2'])
+        if not(kind is None):
+            assert(isinstance(kind, str))
+            kind = kind.lower()
+            assert(kind in ['h1', 'hcurl', 'hdiv', 'l2'])
+
         obj._kind = kind
 
         return obj
@@ -73,7 +75,7 @@ class FunctionSpace(BasicFunctionSpace):
     """
     Represents a basic continuous scalar Function space.
     """
-    def __new__(cls, name, domain, kind='h1'):
+    def __new__(cls, name, domain, kind=None):
         shape = 1
         return BasicFunctionSpace.__new__(cls, name, domain, shape, kind)
 
@@ -82,7 +84,7 @@ class VectorFunctionSpace(BasicFunctionSpace):
     """
     Represents a basic continuous vector Function space.
     """
-    def __new__(cls, name, domain, kind='h1'):
+    def __new__(cls, name, domain, kind=None):
         shape = domain.dim
         return BasicFunctionSpace.__new__(cls, name, domain, shape, kind)
 
