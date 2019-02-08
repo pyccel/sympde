@@ -253,7 +253,18 @@ class Dot(BasicOperator):
             right  = b
         # ...
 
+        # ... this is a hack to ensure commutativity
+        #     TODO to be improved
+        try:
+            if str(right) < str(left):
+                return alpha*cls(right, left, evaluate=False)
+
+        except:
+            pass
+        # ...
+
         return alpha*cls(left, right, evaluate=False)
+
 
 #==============================================================================
 # TODO add properties
@@ -325,9 +336,21 @@ class Inner(BasicOperator):
             args = [cls.eval(left, i) for i in right.args]
             return Add(*args)
 
+        # ... from now on, we construct left and right with some coeffs
+        #     return is done at the end
+        alpha = S.One
         if isinstance(left, Mul):
-            coeffs  = [i for i in left.args if isinstance(i, _coeffs_registery)]
-            vectors = [i for i in left.args if not(i in coeffs)]
+            coeffs  = [a for a in left.args if isinstance(a, _coeffs_registery)]
+            for a in left.args:
+                if ( isinstance(a, Pow) and
+                     isinstance(a.base, _coeffs_registery) and
+                     isinstance(a.exp, _coeffs_registery) ):
+                    coeffs += [a]
+
+                elif isinstance(a, (Field, TestFunction)):
+                    coeffs += [a]
+
+            vectors = [a for a in left.args if not(a in coeffs)]
 
             a = S.One
             if coeffs:
@@ -337,11 +360,21 @@ class Inner(BasicOperator):
             if vectors:
                 b = Mul(*vectors)
 
-            return Mul(a, cls.eval(b, right))
+            alpha *= a
+            left   = b
 
         if isinstance(right, Mul):
-            coeffs  = [i for i in right.args if isinstance(i, _coeffs_registery)]
-            vectors = [i for i in right.args if not(i in coeffs)]
+            coeffs  = [a for a in right.args if isinstance(a, _coeffs_registery)]
+            for a in right.args:
+                if ( isinstance(a, Pow) and
+                     isinstance(a.base, _coeffs_registery) and
+                     isinstance(a.exp, _coeffs_registery) ):
+                    coeffs += [a]
+
+                elif isinstance(a, (Field, TestFunction)):
+                    coeffs += [a]
+
+            vectors = [a for a in right.args if not(a in coeffs)]
 
             a = S.One
             if coeffs:
@@ -351,9 +384,21 @@ class Inner(BasicOperator):
             if vectors:
                 b = Mul(*vectors)
 
-            return Mul(a, cls.eval(left, b))
+            alpha *= a
+            right  = b
+        # ...
 
-        return cls(left, right, evaluate=False)
+        # ... this is a hack to ensure commutativity
+        #     TODO to be improved
+        try:
+            if str(right) < str(left):
+                return alpha*cls(right, left, evaluate=False)
+
+        except:
+            pass
+        # ...
+
+        return alpha*cls(left, right, evaluate=False)
 
 #==============================================================================
 # TODO add it to evaluation

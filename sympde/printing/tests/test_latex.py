@@ -36,7 +36,7 @@ def test_latex_1d():
     F = Field(V, name='F')
 
     assert(latex(grad(v)) == r'\nabla{v}')
-    assert(latex(dot(grad(v), grad(u))) == r'\nabla{v} \cdot \nabla{u}')
+    assert(latex(dot(grad(v), grad(u))) == r'\nabla{u} \cdot \nabla{v}')
 
     a = BilinearForm((v,u), dot(grad(v), grad(u)))
     print(latex(a))
@@ -66,7 +66,7 @@ def test_latex_2d_1():
     F = Field(V, name='F')
 
     assert(latex(grad(v)) == r'\nabla{v}')
-    assert(latex(dot(grad(v), grad(u))) == r'\nabla{v} \cdot \nabla{u}')
+    assert(latex(dot(grad(v), grad(u))) == r'\nabla{u} \cdot \nabla{v}')
 
     a = BilinearForm((v,u), dot(grad(v), grad(u)))
     print(latex(a))
@@ -96,7 +96,7 @@ def test_latex_2d_2():
     F = VectorField(V, name='F')
 
     assert(latex(v) == r'\mathbf{v}')
-    assert(latex(inner(grad(v), grad(u))) == r'\nabla{\mathbf{v}} : \nabla{\mathbf{u}}')
+    assert(latex(inner(grad(v), grad(u))) == r'\nabla{\mathbf{u}} : \nabla{\mathbf{v}}')
 
     a = BilinearForm((v,u), inner(grad(v), grad(u)))
     print(latex(a))
@@ -123,7 +123,7 @@ def test_latex_3d_1():
     F = Field(V, name='F')
 
     assert(latex(grad(v)) == r'\nabla{v}')
-    assert(latex(dot(grad(v), grad(u))) == r'\nabla{v} \cdot \nabla{u}')
+    assert(latex(dot(grad(v), grad(u))) == r'\nabla{u} \cdot \nabla{v}')
 
     a = BilinearForm((v,u), dot(grad(v), grad(u)))
     print(latex(a))
@@ -153,7 +153,7 @@ def test_latex_3d_2():
     F = VectorField(V, name='F')
 
     assert(latex(v) == r'\mathbf{v}')
-    assert(latex(inner(grad(v), grad(u))) == r'\nabla{\mathbf{v}} : \nabla{\mathbf{u}}')
+    assert(latex(inner(grad(v), grad(u))) == r'\nabla{\mathbf{u}} : \nabla{\mathbf{v}}')
 
     a = BilinearForm((v,u), inner(grad(v), grad(u)))
     print(latex(a))

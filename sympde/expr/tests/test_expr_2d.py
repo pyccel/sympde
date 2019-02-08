@@ -1323,6 +1323,61 @@ def test_norm_2d_2():
     # ...
 
 #==============================================================================
+# this test checks some properties of bilinear forms
+def test_bilinear_form_2d_3():
+
+    domain = Domain('Omega', dim=2)
+    B1 = Boundary(r'\Gamma_1', domain)
+
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    V = FunctionSpace('V', domain)
+
+    u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    # ...
+    a = BilinearForm((u,v), u*v)
+    assert(a.is_symmetric)
+    # ...
+
+    # ...
+    a = BilinearForm((u,v), dot(grad(u), grad(v)))
+    assert(a.is_symmetric)
+    # ...
+
+#==============================================================================
+# this test checks some properties of bilinear forms
+def test_bilinear_form_2d_4():
+
+    domain = Domain('Omega', dim=2)
+    B1 = Boundary(r'\Gamma_1', domain)
+
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    V = VectorFunctionSpace('V', domain)
+
+    u,u1,u2 = [VectorTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [VectorTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    # ...
+    a = BilinearForm((u,v), dot(u,v))
+    assert(a.is_symmetric)
+    # ...
+
+    # ...
+    a = BilinearForm((u,v), inner(grad(u), grad(v)))
+    assert(a.is_symmetric)
+    # ...
+
+
+#==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
 
@@ -1333,3 +1388,6 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
+
+#test_bilinear_form_2d_3()
+#test_bilinear_form_2d_4()

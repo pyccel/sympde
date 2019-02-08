@@ -395,6 +395,7 @@ class LinearForm(BasicForm):
 #==============================================================================
 class BilinearForm(BasicForm):
     is_bilinear = True
+    _is_symmetric = None
 
     def __new__(cls, arguments, expr):
 
@@ -464,6 +465,22 @@ class BilinearForm(BasicForm):
     @property
     def ldim(self):
         return self.test_spaces[0].ldim
+
+    @property
+    def is_symmetric(self):
+        if self._is_symmetric is None:
+            left, right = self.variables
+            a1 = self(left, right)
+            a2 = self(right, left)
+            a1 = expand(a1)
+            a2 = expand(a2)
+#            print(a1)
+#            print(a2)
+            value = a1 == a2
+
+            self._is_symmetric = value
+
+        return self._is_symmetric
 
     def __call__(self, *args):
         args = _sanitize_arguments(args, is_bilinear=True)
