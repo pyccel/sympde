@@ -9,6 +9,7 @@ from sympy.core import Expr
 from sympy.core.containers import Tuple
 
 from .basic import BasicDomain
+from .datatype import SpaceType, dtype_space_registry
 
 #==============================================================================
 class BasicFunctionSpace(Basic):
@@ -29,11 +30,17 @@ class BasicFunctionSpace(Basic):
         obj = Basic.__new__(cls, name, domain)
         obj._shape = shape
 
-        # TODO improve: introduce types for kind
+        # ...
         if not(kind is None):
-            assert(isinstance(kind, str))
-            kind = kind.lower()
-            assert(kind in ['h1', 'hcurl', 'hdiv', 'l2'])
+            if isinstance(kind, str):
+                kind = kind.lower()
+                assert(kind in ['h1', 'hcurl', 'hdiv', 'l2'])
+
+                kind = dtype_space_registry[kind]
+
+            if not isinstance(kind, SpaceType):
+                raise TypeError('Expecting kind to be of SpaceType')
+        # ...
 
         obj._kind = kind
 
