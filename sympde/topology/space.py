@@ -468,3 +468,6 @@ class Trace(Expr):
 # ... user friendly functions
 trace_0 = lambda x, B: Trace(x, B, order=0)
 trace_1 = lambda x, B: Trace(x, B, order=1)
+
+_is_sympde_atom = lambda a: isinstance(a, (TestFunction, VectorTestFunction,
+                                                   Field, VectorField))
