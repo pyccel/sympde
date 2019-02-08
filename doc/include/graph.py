@@ -72,6 +72,7 @@ def test_linear_form_2d_1():
 
     kappa = Constant('kappa', is_real=True)
     mu    = Constant('mu'   , is_real=True)
+    eps   = Constant('eps', real=True)
 
     V = FunctionSpace('V', domain)
 
@@ -86,6 +87,16 @@ def test_linear_form_2d_1():
     d_forms['l1'] = LinearForm(v, x*y*v)
     d_forms['l2'] = LinearForm(v, v*trace_1(g, B1))
     d_forms['l3'] = LinearForm(v, v*trace_1(g, B1) + x*y*v)
+
+    # nitsche
+    f = Function('f')
+    g = Function('g')
+
+    l0   = LinearForm(v, f(x,y)*v)
+    l_B1 = LinearForm(v, g(x,y)*trace_0(v, B1)/eps
+                         - kappa * g(x,y) * trace_1(grad(v), B1))
+
+    d_forms['l4'] = LinearForm(v, l0(v) + l_B1(v))
     # ...
 
     # ...
@@ -131,7 +142,7 @@ def test_bilinear_form_2d_1():
     # ... calls
     d_calls = {}
     for name, a in d_forms.items():
-        d_calls[name] = a(u,v)
+        d_calls[name] = a(u1,v1)
     # ...
 
     # ... export forms
@@ -167,9 +178,57 @@ def test_bilinear_form_2d_3():
 
     export(A, 'stokes_2d.png')
 
+#==============================================================================
+def test_linearize_form_2d_3():
+    """steady Euler equation."""
+    domain = Domain('Omega', dim=2)
+    x,y = domain.coordinates
+
+    U = VectorFunctionSpace('U', domain)
+    W =       FunctionSpace('W', domain)
+
+    v   = VectorTestFunction(U, name='v')
+    phi =       TestFunction(W, name='phi')
+    q   =       TestFunction(W, name='q')
+
+    U_0   = VectorField(U, name='U_0')
+    Rho_0 = Field(W, name='Rho_0')
+    P_0   = Field(W, name='P_0')
+
+    # ...
+    expr = div(Rho_0*U_0) * phi
+    l1 = LinearForm(phi, expr)
+
+    expr = Rho_0*dot(convect(U_0, grad(U_0)), v) + dot(grad(P_0), v)
+    l2 = LinearForm(v, expr)
+
+    expr = dot(U_0, grad(P_0)) * q + P_0 * div(U_0) * q
+    l3 = LinearForm(q, expr)
+    # ...
+
+    a1 = linearize(l1, [Rho_0, U_0], trials=['d_rho', 'd_u'])
+    print(a1)
+    print('')
+
+    a2 = linearize(l2, [Rho_0, U_0, P_0], trials=['d_rho', 'd_u', 'd_p'])
+    print(a2)
+    print('')
+
+    a3 = linearize(l3, [P_0, U_0], trials=['d_p', 'd_u'])
+    print(a3)
+    print('')
+
+    l = LinearForm((phi, v, q), l1(phi) + l2(v) + l3(q))
+    a = linearize(l, [Rho_0, U_0, P_0], trials=['d_rho', 'd_u', 'd_p'])
+    print(a)
+
+    export(a, 'steady_euler.png')
+
 ############################################
 if __name__ == '__main__':
 
 #    test_linear_form_2d_1()
-    test_bilinear_form_2d_1()
+#    test_bilinear_form_2d_1()
 #    test_bilinear_form_2d_3()
+
+    test_linearize_form_2d_3()
