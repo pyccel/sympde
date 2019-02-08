@@ -82,82 +82,83 @@ def test_find_2d_1():
     # ...
 
     # ...
-    equation = find(u, forall=v, lhs=a1, rhs=l1)
+    equation = find(u, forall=v, lhs=a1(u,v), rhs=l1(v))
     # ...
 
     # ...
     a = BilinearForm((v,u), a1(v,u) + alpha*a2(v,u))
-    equation = find(u, forall=v, lhs=a, rhs=l1)
+    equation = find(u, forall=v, lhs=a(u,v), rhs=l1(v))
     # ...
 
     # ...
     a = BilinearForm((v,u), a1(v,u) + a_B1(v,u))
-    equation = find(u, forall=v, lhs=a, rhs=l1)
+    equation = find(u, forall=v, lhs=a(u,v), rhs=l1(v))
     # ...
 
     # ...
     a = BilinearForm((v,u), a1(v,u) + a_B1(v,u))
     l = LinearForm(v, l1(v) + l2(v))
-    equation = find(u, forall=v, lhs=a, rhs=l)
+    equation = find(u, forall=v, lhs=a(u,v), rhs=l(v))
     # ...
 
     # ...
     a = BilinearForm((v,u), a1(v,u) + a_B1(v,u))
     l = LinearForm(v, l1(v) + alpha*l_B2(v))
-    equation = find(u, forall=v, lhs=a, rhs=l)
+    equation = find(u, forall=v, lhs=a(u,v), rhs=l(v))
     # ...
 
     # ... using bc
-    equation = find(u, forall=v, lhs=a, rhs=l, bc=EssentialBC(u, 0, B1))
+    equation = find(u, forall=v, lhs=a(u,v), rhs=l(v), bc=EssentialBC(u, 0, B1))
     # ...
 
-#==============================================================================
-def test_find_newton_2d_1():
-
-    # ... abstract model
-    B1 = Boundary(r'\Gamma_1', domain)
-
-    V = FunctionSpace('V', domain)
-
-    x,y = domain.coordinates
-
-    Un = Field(V, name='Un')
-
-    v = TestFunction(V, name='v')
-
-    f  = -4.*exp(-Un)
-    l = LinearForm(v, dot(grad(v), grad(Un)) - f*v )
-
-    eq = NewtonIteration(l, Un, trials='u')
-    # ...
-
-    u = TestFunction(V, name='u')
-
-    # ...
-    expected =  -4.0*u*v*exp(-Un) + dx(u)*dx(v) + dy(u)*dy(v)
-
-    expr = TerminalExpr(eq.lhs)[0]
-    assert(expr.expr == expected)
-    # ...
-
-    # ...
-    expected = -4.0*v*exp(-Un) - dx(Un)*dx(v) - dy(Un)*dy(v)
-
-    expr = TerminalExpr(eq.rhs)[0]
-    assert(expr.expr == expected)
-    # ...
-
-    # ...
-    bc = EssentialBC(u, 0, B1)
-
-    # can be called with rhs = 0
-    equation = find(u, forall=v, lhs=l, rhs=0, fields=Un, bc=bc)
-    print(equation)
-
-    # or without rhs
-    equation = find(u, forall=v, lhs=l, fields=Un, bc=bc)
-    print(equation)
-    # ...
+##==============================================================================
+# TODO shall we have 'find' with Newton?
+#def test_find_newton_2d_1():
+#
+#    # ... abstract model
+#    B1 = Boundary(r'\Gamma_1', domain)
+#
+#    V = FunctionSpace('V', domain)
+#
+#    x,y = domain.coordinates
+#
+#    Un = Field(V, name='Un')
+#
+#    v = TestFunction(V, name='v')
+#
+#    f  = -4.*exp(-Un)
+#    l = LinearForm(v, dot(grad(v), grad(Un)) - f*v )
+#
+#    eq = NewtonIteration(l, Un, trials='u')
+#    # ...
+#
+#    u = TestFunction(V, name='u')
+#
+#    # ...
+#    expected =  -4.0*u*v*exp(-Un) + dx(u)*dx(v) + dy(u)*dy(v)
+#
+#    expr = TerminalExpr(eq.lhs)[0]
+#    assert(expr.expr == expected)
+#    # ...
+#
+#    # ...
+#    expected = -4.0*v*exp(-Un) - dx(Un)*dx(v) - dy(Un)*dy(v)
+#
+#    expr = TerminalExpr(eq.rhs)[0]
+#    assert(expr.expr == expected)
+#    # ...
+#
+#    # ...
+#    bc = EssentialBC(u, 0, B1)
+#
+#    # can be called with rhs = 0
+#    equation = find(u, forall=v, lhs=l, rhs=0, fields=Un, bc=bc)
+#    print(equation)
+#
+#    # or without rhs
+#    equation = find(u, forall=v, lhs=l, fields=Un, bc=bc)
+#    print(equation)
+#    # ...
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE

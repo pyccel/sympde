@@ -14,7 +14,6 @@ from sympde.calculus import grad, dot
 from sympde.core.utils import random_string
 
 from .expr import BilinearForm, LinearForm
-from .expr import as_bilinear_form, as_linear_form
 from .expr import linearize
 from .errors import ( UnconsistentLhsError, UnconsistentRhsError,
                       UnconsistentArgumentsError, UnconsistentBCError )
@@ -431,29 +430,24 @@ class Interpolation(LambdaEquation):
 
 #==============================================================================
 # user friendly function to create Equation objects
-def find(trials, *, forall, lhs, **kwargs):
+def find(trials, *, forall, lhs, rhs, **kwargs):
 
     bc = kwargs.pop('bc', None)
 
-    if isinstance(lhs, BilinearForm):
-        rhs = kwargs.pop('rhs', None)
-        if rhs is None:
-            raise ValueError('Expecting a rhs')
+    lhs = BilinearForm((trials, forall), lhs)
+    rhs =   LinearForm(          forall, rhs)
 
-        if not isinstance(rhs, LinearForm):
-            raise TypeError('Expecting a LinearForm for the rhs')
+    return Equation(lhs, rhs, forall, trials, bc=bc)
 
-        return Equation(lhs, rhs, forall, trials, bc=bc)
-
-    elif isinstance(lhs, LinearForm):
-        fields = kwargs.pop('fields', None)
-        if fields is None:
-            raise ValueError('Expecting a fields')
-
-        rhs = kwargs.pop('rhs', None)
-        assert((rhs is None) or (rhs == 0))
-
-        return NewtonIteration(lhs, fields, bc=bc, trials=trials)
-
-    else:
-        raise NotImplementedError('')
+#    elif isinstance(lhs, LinearForm):
+#        fields = kwargs.pop('fields', None)
+#        if fields is None:
+#            raise ValueError('Expecting a fields')
+#
+#        rhs = kwargs.pop('rhs', None)
+#        assert((rhs is None) or (rhs == 0))
+#
+#        return NewtonIteration(lhs, fields, bc=bc, trials=trials)
+#
+#    else:
+#        raise NotImplementedError('')

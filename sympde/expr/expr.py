@@ -544,69 +544,6 @@ class Norm(Functional):
 
 
 #==============================================================================
-def as_linear_form(expr):
-
-    if isinstance(expr, LinearExpr):
-        return LinearForm(expr.variables, expr)
-
-    elif isinstance(expr, BasicIntegral):
-        return as_linear_form(expr._args[0])
-
-    elif isinstance(expr, Add):
-        args = []
-        variables = None # TODO make sure they are all the same
-        for i in expr.args:
-            if isinstance(i, BasicIntegral) and isinstance(i._args[0], LinearExpr):
-                args += [i._args[0].expr]
-                variables = i._args[0].variables
-
-            elif isinstance(i, LinearExpr):
-                args += [i.expr]
-                variables = i.variables
-
-            else:
-                raise TypeError('')
-
-        expr =  Add(*args)
-        expr = LinearExpr(variables, expr)
-        return as_linear_form(expr)
-
-    else:
-        raise NotImplementedError('')
-
-#==============================================================================
-def as_bilinear_form(expr):
-
-    if isinstance(expr, BilinearExpr):
-        return BilinearForm(expr.variables, expr)
-
-    elif isinstance(expr, BasicIntegral):
-        return as_bilinear_form(expr._args[0])
-
-    elif isinstance(expr, Add):
-        args = []
-        variables = None # TODO make sure they are all the same
-        for i in expr.args:
-            if isinstance(i, BasicIntegral) and isinstance(i._args[0], BilinearExpr):
-                args += [i._args[0].expr]
-                variables = i._args[0].variables
-
-            elif isinstance(i, BilinearExpr):
-                args += [i.expr]
-                variables = i.variables
-
-            else:
-                raise TypeError('')
-
-        expr =  Add(*args)
-        expr = BilinearExpr(variables, expr)
-        return as_bilinear_form(expr)
-
-    else:
-        raise NotImplementedError('')
-
-
-#==============================================================================
 def linearize(form, fields, trials=None):
     """linearize a LinearForm around the fields."""
     # ...
