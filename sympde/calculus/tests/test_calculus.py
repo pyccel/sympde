@@ -16,9 +16,14 @@ from sympy.physics.quantum import TensorProduct
 from sympde.core import Constant
 from sympde.calculus import grad, dot, inner, cross, rot, curl, div
 from sympde.calculus import laplace, hessian, bracket, convect
+from sympde.calculus import ArgumentTypeError
 from sympde.topology import Domain
 from sympde.topology import FunctionSpace, VectorFunctionSpace
+from sympde.topology import ProductSpace
+from sympde.topology import H1Space, HcurlSpace, HdivSpace, L2Space, UndefinedSpace
+from sympde.topology import TestFunction, ScalarTestFunction, VectorTestFunction
 from sympde.topology import ScalarField, VectorField
+
 
 
 #==============================================================================
@@ -157,6 +162,70 @@ def test_calculus_3d():
 
 
 #==============================================================================
+def test_calculus_3d_3():
+    domain = Domain('Omega', dim=3)
+
+    H1    =       FunctionSpace('V0', domain, kind='H1')
+    Hcurl = VectorFunctionSpace('V1', domain, kind='Hcurl')
+    Hdiv  = VectorFunctionSpace('V2', domain, kind='Hdiv')
+    L2    =       FunctionSpace('V3', domain, kind='L2')
+    V     =       FunctionSpace('V', domain, kind=None)
+    W     = VectorFunctionSpace('W', domain, kind=None)
+
+    f,g,h = [ScalarField(V, name=i) for i in ['f','g','h']]
+    F,G,H = [VectorField(W, i) for i in ['F','G','H']]
+
+    X = ProductSpace(H1, Hcurl, Hdiv, L2)
+    v0, v1, v2, v3 = TestFunction(X, ['v0', 'v1', 'v2', 'v3'])
+
+    v = TestFunction(V, 'v')
+    w = TestFunction(W, 'w')
+
+    # ... consistency of grad operator
+    # we can apply grad on an undefined space type or H1
+    expr = grad(v0)
+    expr = grad(v)
+    expr = grad(w)
+
+    # wa cannot apply grad to a function in Hcurl
+    with pytest.raises(ArgumentTypeError): expr = grad(v1)
+
+    # wa cannot apply grad to a function in Hdiv
+    with pytest.raises(ArgumentTypeError): expr = grad(v2)
+
+    # wa cannot apply grad to a function in L2
+    with pytest.raises(ArgumentTypeError): expr = grad(v3)
+    # ...
+
+    # ... consistency of curl operator
+    # we can apply curl on an undefined space type, H1 or Hcurl
+    expr = curl(v0)
+    expr = curl(v1)
+    expr = curl(v)
+    expr = curl(w)
+
+    # wa cannot apply curl to a function in Hdiv
+    with pytest.raises(ArgumentTypeError): expr = curl(v2)
+
+    # wa cannot apply curl to a function in L2
+    with pytest.raises(ArgumentTypeError): expr = curl(v3)
+    # ...
+
+    # ... consistency of div operator
+    # we can apply div on an undefined space type, H1 or Hdiv
+    expr = div(v0)
+    expr = div(v2)
+    expr = div(v)
+    expr = div(w)
+
+    # wa cannot apply div to a function in Hcurl
+    with pytest.raises(ArgumentTypeError): expr = div(v1)
+
+    # wa cannot apply div to a function in L2
+    with pytest.raises(ArgumentTypeError): expr = div(v3)
+    # ...
+
+#==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
 
@@ -171,3 +240,6 @@ def teardown_function():
 #test_calculus_2d_1()
 #test_calculus_2d_2()
 #test_calculus_3d()
+
+test_calculus_3d_3()
+

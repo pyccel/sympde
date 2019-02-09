@@ -102,6 +102,11 @@ from sympde.core.basic import _coeffs_registery
 
 from sympde.topology.space import ScalarTestFunction, VectorTestFunction, IndexedTestTrial
 from sympde.topology.space import ScalarField, VectorField, IndexedVectorField
+from sympde.topology.space import _is_sympde_atom
+from sympde.topology.datatype import H1SpaceType, HcurlSpaceType
+from sympde.topology.datatype import HdivSpaceType, L2SpaceType, UndefinedSpaceType
+
+from .errors import ArgumentTypeError
 
 
 #==============================================================================
@@ -502,6 +507,14 @@ class Convect(BasicOperator):
             right  = b
         # ...
 
+        # ... check consistency between space type and the operator
+        # TODO add appropriate space types
+        if _is_sympde_atom(right):
+            if not isinstance(right.space.kind, UndefinedSpaceType):
+                msg = '> Wrong space kind, given {}'.format(right.space.kind)
+                raise ArgumentTypeError(msg)
+        # ...
+
         return alpha*cls(left, right, evaluate=False)
 
 #==============================================================================
@@ -602,6 +615,13 @@ class Grad(BasicOperator):
             a,b = expr._args
             return Cross(a, Curl(b)) - Cross(Curl(a), b) + Convect(a,b) + Convect(b,a)
 
+        # ... check consistency between space type and the operator
+        if _is_sympde_atom(expr):
+            if not isinstance(expr.space.kind, (UndefinedSpaceType, H1SpaceType)):
+                msg = '> Wrong space kind, given {}'.format(expr.space.kind)
+                raise ArgumentTypeError(msg)
+        # ...
+
         return cls(expr, evaluate=False)
 
 #==============================================================================
@@ -699,6 +719,15 @@ class Curl(BasicOperator):
             f = expr._args[0]
             return Grad(Div(f)) - Laplace(f)
 
+        # ... check consistency between space type and the operator
+        if _is_sympde_atom(expr):
+            if not isinstance(expr.space.kind, (UndefinedSpaceType,
+                                                HcurlSpaceType,
+                                                H1SpaceType)):
+                msg = '> Wrong space kind, given {}'.format(expr.space.kind)
+                raise ArgumentTypeError(msg)
+        # ...
+
         return cls(expr, evaluate=False)
 
 #==============================================================================
@@ -772,6 +801,14 @@ class Rot(BasicOperator):
                 b = cls(Mul(*vectors), evaluate=False)
 
             return Mul(a, b)
+
+        # ... check consistency between space type and the operator
+        # TODO add appropriate space types
+        if _is_sympde_atom(expr):
+            if not isinstance(expr.space.kind, UndefinedSpaceType):
+                msg = '> Wrong space kind, given {}'.format(expr.space.kind)
+                raise ArgumentTypeError(msg)
+        # ...
 
         return cls(expr, evaluate=False)
 
@@ -864,6 +901,15 @@ class Div(BasicOperator):
         elif isinstance(expr, Curl):
             return 0
 
+        # ... check consistency between space type and the operator
+        if _is_sympde_atom(expr):
+            if not isinstance(expr.space.kind, (UndefinedSpaceType,
+                                                HdivSpaceType,
+                                                H1SpaceType)):
+                msg = '> Wrong space kind, given {}'.format(expr.space.kind)
+                raise ArgumentTypeError(msg)
+        # ...
+
         return cls(expr, evaluate=False)
 
 #==============================================================================
@@ -947,6 +993,14 @@ class Laplace(BasicOperator):
 
             return Mul(a, b)
 
+        # ... check consistency between space type and the operator
+        # TODO add appropriate space types
+        if _is_sympde_atom(expr):
+            if not isinstance(expr.space.kind, UndefinedSpaceType):
+                msg = '> Wrong space kind, given {}'.format(expr.space.kind)
+                raise ArgumentTypeError(msg)
+        # ...
+
         return cls(expr, evaluate=False)
 
 #==============================================================================
@@ -1020,6 +1074,14 @@ class Hessian(BasicOperator):
                 b = cls(Mul(*vectors), evaluate=False)
 
             return Mul(a, b)
+
+        # ... check consistency between space type and the operator
+        # TODO add appropriate space types
+        if _is_sympde_atom(expr):
+            if not isinstance(expr.space.kind, UndefinedSpaceType):
+                msg = '> Wrong space kind, given {}'.format(expr.space.kind)
+                raise ArgumentTypeError(msg)
+        # ...
 
         return cls(expr, evaluate=False)
 

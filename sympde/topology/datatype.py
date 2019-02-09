@@ -1,5 +1,10 @@
 # coding: utf-8
 
+
+# TODO - add W(p,2) spaces and Sobolev of higher order => needed for high order
+#        derivatives
+
+
 from numpy import unique
 
 from sympy.core import Basic
@@ -41,4 +46,3 @@ dtype_space_registry = {'h1':        H1Space,
                         'hdiv':      HdivSpace,
                         'l2':        L2Space,
                         'undefined': UndefinedSpace}
-
