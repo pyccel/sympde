@@ -31,15 +31,18 @@ class BasicFunctionSpace(Basic):
         obj._shape = shape
 
         # ...
-        if not(kind is None):
-            if isinstance(kind, str):
-                kind = kind.lower()
-                assert(kind in ['h1', 'hcurl', 'hdiv', 'l2'])
+        if kind is None:
+            kind = 'undefined'
 
-                kind = dtype_space_registry[kind]
+        assert(isinstance(kind, (str, SpaceType)))
 
-            if not isinstance(kind, SpaceType):
-                raise TypeError('Expecting kind to be of SpaceType')
+        kind = kind.lower()
+        assert(kind in ['h1', 'hcurl', 'hdiv', 'l2', 'undefined'])
+
+        kind = dtype_space_registry[kind]
+
+        if not isinstance(kind, SpaceType):
+            raise TypeError('Expecting kind to be of SpaceType')
         # ...
 
         obj._kind = kind
@@ -98,7 +101,7 @@ class VectorFunctionSpace(BasicFunctionSpace):
 #==============================================================================
 # TODO must check that all spaces have the same domain
 #     for the moment this class is not used
-class ProductSpace(FunctionSpace):
+class ProductSpace(BasicFunctionSpace):
     """
     Represents a product of continuous Sobolev spaces.
 
@@ -305,6 +308,65 @@ class VectorTestFunction(Symbol, IndexedBase):
 
 
 #==============================================================================
+# this is implemented as a function, it would be better to have it as a class
+def TestFunction(space, name=None):
+
+    if isinstance(space, FunctionSpace):
+        return ScalarTestFunction(space, name=name)
+
+    elif isinstance(space, VectorFunctionSpace):
+        return VectorTestFunction(space, name=name)
+
+    elif isinstance(space, ProductSpace):
+
+        if not(name is None):
+            assert(isinstance(name, (tuple, list, Tuple)))
+            assert(len(name) == len(space.spaces))
+
+        else:
+            name = [None for V in space.spaces]
+
+        args = []
+        for V, n in zip(space.spaces, name):
+            args += [TestFunction(V, name=n)]
+
+        return Tuple(*args)
+
+    else:
+        raise TypeError('Wrong space type. given {}'.format(type(space)))
+
+#==============================================================================
+# TODO not tested yet
+# this is implemented as a function, it would be better to have it as a class
+def Field(space, name=None):
+
+    if isinstance(space, FunctionSpace):
+        return ScalarField(space, name=name)
+
+    elif isinstance(space, VectorFunctionSpace):
+        return VectorField(space, name=name)
+
+    elif isinstance(space, ProductSpace):
+
+        if not(name is None):
+            assert(isinstance(name, (tuple, list, Tuple)))
+            assert(len(name) == len(space.spaces))
+
+        else:
+            name = [None for V in space.spaces]
+
+        args = []
+        for V, n in zip(space.spaces, name):
+            args += [Field(V, name=n)]
+
+        return Tuple(*args)
+
+    else:
+        raise TypeError('Wrong space type. given {}'.format(type(space)))
+
+
+#==============================================================================
+# TODO to be removed
 class Unknown(ScalarTestFunction):
     """
     Represents an unknown function
@@ -317,6 +379,7 @@ class Unknown(ScalarTestFunction):
 
 
 #==============================================================================
+# TODO to be removed
 class VectorUnknown(VectorTestFunction):
     """
     Represents an unknown function

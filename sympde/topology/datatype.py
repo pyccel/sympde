@@ -27,13 +27,18 @@ class HdivSpaceType(SpaceType):
 class L2SpaceType(SpaceType):
     pass
 
-H1Space    = H1SpaceType()
-HcurlSpace = HcurlSpaceType()
-HdivSpace  = HdivSpaceType()
-L2Space    = L2SpaceType()
+class UndefinedSpaceType(SpaceType):
+    pass
 
-dtype_space_registry = {'h1':    H1Space,
-                        'hcurl': HcurlSpace,
-                        'hdiv':  HdivSpace,
-                        'l2':    L2Space}
+H1Space        = H1SpaceType()
+HcurlSpace     = HcurlSpaceType()
+HdivSpace      = HdivSpaceType()
+L2Space        = L2SpaceType()
+UndefinedSpace = UndefinedSpaceType()
+
+dtype_space_registry = {'h1':        H1Space,
+                        'hcurl':     HcurlSpace,
+                        'hdiv':      HdivSpace,
+                        'l2':        L2Space,
+                        'undefined': UndefinedSpace}
 
