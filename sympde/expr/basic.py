@@ -49,12 +49,12 @@ from sympde.topology.derivatives import Hessian_1d, Hessian_2d, Hessian_3d
 from sympde.topology.space import BasicFunctionSpace
 from sympde.topology.space import FunctionSpace
 from sympde.topology.space import ProductSpace
-from sympde.topology.space import TestFunction
+from sympde.topology.space import ScalarTestFunction
 from sympde.topology.space import VectorTestFunction
 from sympde.topology.space import IndexedTestTrial
 from sympde.topology.space import Unknown, VectorUnknown
 from sympde.topology.space import Trace
-from sympde.topology.space import Field, VectorField, IndexedVectorField
+from sympde.topology.space import ScalarField, VectorField, IndexedVectorField
 from sympde.topology.measure import CanonicalMeasure
 from sympde.topology.measure import CartesianMeasure
 from sympde.topology.measure import Measure
@@ -72,11 +72,11 @@ def _sanitize_arguments(arguments, is_bilinear=False, is_linear=False):
         elif is_linear:
             test_functions = arguments
 
-        if isinstance(test_functions, (TestFunction, VectorTestFunction)):
+        if isinstance(test_functions, (ScalarTestFunction, VectorTestFunction)):
             test_functions = [test_functions]
 
         elif isinstance(test_functions, (tuple, list, Tuple)):
-            are_valid = [isinstance(i, (TestFunction, VectorTestFunction)) for i in test_functions]
+            are_valid = [isinstance(i, (ScalarTestFunction, VectorTestFunction)) for i in test_functions]
             if not all(are_valid):
                 raise TypeError('> Wrong arguments for test functions')
 
@@ -91,11 +91,11 @@ def _sanitize_arguments(arguments, is_bilinear=False, is_linear=False):
     if is_bilinear:
 
         trial_functions = arguments[1]
-        if isinstance(trial_functions, (TestFunction, VectorTestFunction)):
+        if isinstance(trial_functions, (ScalarTestFunction, VectorTestFunction)):
             trial_functions = [trial_functions]
 
         elif isinstance(trial_functions, (tuple, list, Tuple)):
-            are_valid = [isinstance(i, (TestFunction, VectorTestFunction)) for i in trial_functions]
+            are_valid = [isinstance(i, (ScalarTestFunction, VectorTestFunction)) for i in trial_functions]
             if not all(are_valid):
                 raise TypeError('> Wrong arguments for trial functions')
 
@@ -123,7 +123,7 @@ def is_linear_form(expr, args):
     # TODO is it ok to do this?
     test_functions = test_functions[0]
 
-    if isinstance(test_functions, (TestFunction, VectorTestFunction)):
+    if isinstance(test_functions, (ScalarTestFunction, VectorTestFunction)):
         test_functions = [test_functions]
 
     elif isinstance(test_functions, (tuple, list, Tuple)):
@@ -149,7 +149,7 @@ class BasicExpr(Expr):
     # TODO use .atoms
     @property
     def fields(self):
-        ls = [a for a in self.expr.free_symbols if isinstance(a, (Field, VectorField))]
+        ls = [a for a in self.expr.free_symbols if isinstance(a, (ScalarField, VectorField))]
         # no redanduncy
         return sorted(list(set(ls)))
 
@@ -175,7 +175,7 @@ class BasicForm(Expr):
     # TODO use .atoms
     @property
     def fields(self):
-        ls = [a for a in self.expr.free_symbols if isinstance(a, (Field, VectorField))]
+        ls = [a for a in self.expr.free_symbols if isinstance(a, (ScalarField, VectorField))]
         # no redanduncy
         return sorted(list(set(ls)))
 

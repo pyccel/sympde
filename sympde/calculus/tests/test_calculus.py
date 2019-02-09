@@ -18,7 +18,7 @@ from sympde.calculus import grad, dot, inner, cross, rot, curl, div
 from sympde.calculus import laplace, hessian, bracket, convect
 from sympde.topology import Domain
 from sympde.topology import FunctionSpace, VectorFunctionSpace
-from sympde.topology import Field, VectorField
+from sympde.topology import ScalarField, VectorField
 
 
 #==============================================================================
@@ -30,7 +30,7 @@ def test_calculus_2d_1():
 
     alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
 
-    f,g,h = [Field(V, name=i) for i in ['f','g','h']]
+    f,g,h = [ScalarField(V, name=i) for i in ['f','g','h']]
     F,G,H = [VectorField(W, i) for i in ['F','G','H']]
 
     # ... scalar gradient properties
@@ -90,7 +90,7 @@ def test_calculus_2d_2():
 
     alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
 
-    f,g,h = [Field(V, name=i) for i in ['f','g','h']]
+    f,g,h = [ScalarField(V, name=i) for i in ['f','g','h']]
     F,G,H = [VectorField(W, i) for i in ['F','G','H']]
 
     # ... vector gradient properties
@@ -108,7 +108,7 @@ def test_calculus_3d():
 
     alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
 
-    f,g,h = [Field(V, name=i) for i in ['f','g','h']]
+    f,g,h = [ScalarField(V, name=i) for i in ['f','g','h']]
     F,G,H = [VectorField(W, i) for i in ['F','G','H']]
 
     # ... gradient properties

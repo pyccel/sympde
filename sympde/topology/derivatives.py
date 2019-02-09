@@ -50,9 +50,9 @@ from sympde.core.basic import Constant
 from sympde.core.basic import BasicMapping
 from sympde.core.algebra import LinearOperator
 from sympde.core.utils import random_string
-from .space import TestFunction, VectorTestFunction, IndexedTestTrial
+from .space import ScalarTestFunction, VectorTestFunction, IndexedTestTrial
 from .space import Unknown
-from .space import Field, VectorField, IndexedVectorField
+from .space import ScalarField, VectorField, IndexedVectorField
 from .domain import Domain
 
 # ...
@@ -80,7 +80,7 @@ class DifferentialOperator(LinearOperator):
         if isinstance(expr, (IndexedTestTrial, IndexedVectorField, DifferentialOperator)):
             return cls(expr, evaluate=False)
 
-        elif isinstance(expr, (Field, TestFunction)):
+        elif isinstance(expr, (ScalarField, ScalarTestFunction)):
             return cls(expr, evaluate=False)
 
         elif isinstance(expr, (VectorTestFunction, VectorField)):
@@ -1305,12 +1305,12 @@ def get_index_logical_derivatives_atom(expr, atom, verbose=False):
 
 def get_max_partial_derivatives(expr, F=None):
     if F is None:
-        Fs = (list(expr.atoms(TestFunction)) +
+        Fs = (list(expr.atoms(ScalarTestFunction)) +
               list(expr.atoms(VectorTestFunction)) +
               list(expr.atoms(IndexedTestTrial)) +
               list(expr.atoms(VectorField)) +
               list(expr.atoms(IndexedVectorField)) +
-              list(expr.atoms(Field)))
+              list(expr.atoms(ScalarField)))
 
         indices = []
         for F in Fs:

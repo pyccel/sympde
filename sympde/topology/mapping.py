@@ -29,8 +29,8 @@ from .derivatives import LogicalGrad_1d, LogicalGrad_2d, LogicalGrad_3d
 from .derivatives import _logical_partial_derivatives
 from .derivatives import get_atom_logical_derivatives, get_index_logical_derivatives_atom
 
-from .space import TestFunction, VectorTestFunction, IndexedTestTrial
-from .space import Field, VectorField, IndexedVectorField
+from .space import ScalarTestFunction, VectorTestFunction, IndexedTestTrial
+from .space import ScalarField, VectorField, IndexedVectorField
 
 #==============================================================================
 class Mapping(BasicMapping):
@@ -396,7 +396,7 @@ class LogicalExpr(CalculusFunction):
         elif isinstance(expr, _logical_partial_derivatives):
             return expr
 
-        elif isinstance(expr, (Field, TestFunction, IndexedTestTrial, IndexedVectorField)):
+        elif isinstance(expr, (ScalarField, ScalarTestFunction, IndexedTestTrial, IndexedVectorField)):
             return expr
 
         elif isinstance(expr, (VectorField, VectorTestFunction)):
@@ -535,7 +535,7 @@ class SymbolicExpr(CalculusFunction):
 
             return Matrix(lines)
 
-        elif isinstance(expr, (Field, TestFunction)):
+        elif isinstance(expr, (ScalarField, ScalarTestFunction)):
             if code:
                 name = '{name}_{code}'.format(name=expr.name, code=code)
             else:

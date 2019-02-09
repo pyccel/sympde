@@ -49,12 +49,12 @@ from sympde.topology.derivatives import Hessian_1d, Hessian_2d, Hessian_3d
 from sympde.topology.space import BasicFunctionSpace
 from sympde.topology.space import FunctionSpace
 from sympde.topology.space import ProductSpace
-from sympde.topology.space import TestFunction
+from sympde.topology.space import ScalarTestFunction
 from sympde.topology.space import VectorTestFunction
 from sympde.topology.space import IndexedTestTrial
 from sympde.topology.space import Unknown, VectorUnknown
 from sympde.topology.space import Trace
-from sympde.topology.space import Field, VectorField, IndexedVectorField
+from sympde.topology.space import ScalarField, VectorField, IndexedVectorField
 from sympde.topology.measure import CanonicalMeasure
 from sympde.topology.measure import CartesianMeasure
 from sympde.topology.measure import Measure
@@ -72,7 +72,7 @@ def _get_size_and_starts(ls):
     d_indices = {}
     for x in ls:
         d_indices[x] = n
-        if isinstance(x, TestFunction):
+        if isinstance(x, ScalarTestFunction):
             n += 1
 
         elif isinstance(x, VectorTestFunction):
@@ -136,7 +136,7 @@ def _to_matrix_bilinear_form(expr, M, test_indices, trial_indices):
 
     # ...
     def treat_form(arg, M):
-        atoms  = list(arg.atoms(TestFunction))
+        atoms  = list(arg.atoms(ScalarTestFunction))
         atoms += list(arg.atoms(VectorTestFunction))
         atoms += list(arg.atoms(IndexedTestTrial))
 
@@ -173,7 +173,7 @@ def _to_matrix_bilinear_form(expr, M, test_indices, trial_indices):
 def _to_matrix_linear_form(expr, M, test_indices):
     # ...
     def treat_form(arg, M):
-        atoms  = list(arg.atoms(TestFunction))
+        atoms  = list(arg.atoms(ScalarTestFunction))
         atoms += list(arg.atoms(VectorTestFunction))
         atoms += list(arg.atoms(IndexedTestTrial))
 

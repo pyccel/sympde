@@ -183,16 +183,16 @@ class ProductSpace(FunctionSpace):
         return sstr(self.name)
 
 #==============================================================================
-class TestFunction(Symbol):
+class ScalarTestFunction(Symbol):
     """
     Represents a test function as an element of a fem space.
 
     Examples
 
     >>> from sympde.codegen.core import SplineFemSpace
-    >>> from sympde.codegen.core import TestFunction
+    >>> from sympde.codegen.core import ScalarTestFunction
     >>> V = SplineFemSpace('V')
-    >>> phi = TestFunction(V, 'phi')
+    >>> phi = ScalarTestFunction(V, 'phi')
     """
     _space = None
     is_commutative = True
@@ -210,7 +210,7 @@ class TestFunction(Symbol):
         return self.space.ldim
 
     def duplicate(self, name):
-        return TestFunction(self.space, name)
+        return ScalarTestFunction(self.space, name)
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -305,7 +305,7 @@ class VectorTestFunction(Symbol, IndexedBase):
 
 
 #==============================================================================
-class Unknown(TestFunction):
+class Unknown(ScalarTestFunction):
     """
     Represents an unknown function
 
@@ -313,7 +313,7 @@ class Unknown(TestFunction):
     def __new__(cls, name, domain):
         space_name = 'space_{}'.format(abs(hash(name)))
         V = FunctionSpace(space_name, domain)
-        return TestFunction.__new__(cls, V, name)
+        return ScalarTestFunction.__new__(cls, V, name)
 
 
 #==============================================================================
@@ -328,9 +328,9 @@ class VectorUnknown(VectorTestFunction):
         return VectorTestFunction.__new__(cls, V, name)
 
 #==============================================================================
-class Field(Symbol):
+class ScalarField(Symbol):
     """
-    Represents a Field variable.
+    Represents a ScalarField variable.
 
     Examples
 
@@ -451,7 +451,7 @@ class Trace(Expr):
     """
     def __new__(cls, expr, boundary, order=0):
 #        # TODO these tests are not working for the moment for Grad(u)
-#        if not expr.atoms((TestFunction, VectorTestFunction, Field)):
+#        if not expr.atoms((ScalarTestFunction, VectorTestFunction, ScalarField)):
 #            raise TypeError('> Wrong type for expr')
 #
 #        if not(expr.space.domain is boundary.domain):
@@ -476,5 +476,5 @@ class Trace(Expr):
 trace_0 = lambda x, B: Trace(x, B, order=0)
 trace_1 = lambda x, B: Trace(x, B, order=1)
 
-_is_sympde_atom = lambda a: isinstance(a, (TestFunction, VectorTestFunction,
-                                                   Field, VectorField))
+_is_sympde_atom = lambda a: isinstance(a, (ScalarTestFunction, VectorTestFunction,
+                                                   ScalarField, VectorField))

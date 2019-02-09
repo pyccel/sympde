@@ -7,9 +7,9 @@ from sympde.calculus import grad, dot, inner, cross, rot, curl, div
 
 from sympde.topology import (dx, dy, dz)
 from sympde.topology import FunctionSpace, VectorFunctionSpace
-from sympde.topology import Field, VectorField
+from sympde.topology import ScalarField, VectorField
 from sympde.topology import ProductSpace
-from sympde.topology import TestFunction
+from sympde.topology import ScalarTestFunction
 from sympde.topology import VectorTestFunction
 from sympde.topology import Unknown
 from sympde.topology import Domain, Boundary, NormalVector, TangentVector
@@ -30,10 +30,10 @@ def test_latex_1d():
 
     x = V.coordinates
 
-    v = TestFunction(V, name='v')
-    u = TestFunction(V, name='u')
+    v = ScalarTestFunction(V, name='v')
+    u = ScalarTestFunction(V, name='u')
 
-    F = Field(V, name='F')
+    F = ScalarField(V, name='F')
 
     assert(latex(grad(v)) == r'\nabla{v}')
     assert(latex(dot(grad(v), grad(u))) == r'\nabla{u} \cdot \nabla{v}')
@@ -60,10 +60,10 @@ def test_latex_2d_1():
 
     x,y = V.coordinates
 
-    v = TestFunction(V, name='v')
-    u = TestFunction(V, name='u')
+    v = ScalarTestFunction(V, name='v')
+    u = ScalarTestFunction(V, name='u')
 
-    F = Field(V, name='F')
+    F = ScalarField(V, name='F')
 
     assert(latex(grad(v)) == r'\nabla{v}')
     assert(latex(dot(grad(v), grad(u))) == r'\nabla{u} \cdot \nabla{v}')
@@ -117,10 +117,10 @@ def test_latex_3d_1():
 
     x,y,z = V.coordinates
 
-    v = TestFunction(V, name='v')
-    u = TestFunction(V, name='u')
+    v = ScalarTestFunction(V, name='v')
+    u = ScalarTestFunction(V, name='u')
 
-    F = Field(V, name='F')
+    F = ScalarField(V, name='F')
 
     assert(latex(grad(v)) == r'\nabla{v}')
     assert(latex(dot(grad(v), grad(u))) == r'\nabla{u} \cdot \nabla{v}')
@@ -179,8 +179,8 @@ def test_latex_2d_3():
 
     x = V.coordinates
 
-    v = TestFunction(V, name='v')
-    u = TestFunction(V, name='u')
+    v = ScalarTestFunction(V, name='v')
+    u = ScalarTestFunction(V, name='u')
 
     # ...
     expr = dot(grad(v), grad(u))
@@ -210,8 +210,8 @@ def test_latex_2d_4():
 
     v = VectorTestFunction(V, name='v')
     u = VectorTestFunction(V, name='u')
-    p = TestFunction(W, name='p')
-    q = TestFunction(W, name='q')
+    p = ScalarTestFunction(W, name='p')
+    q = ScalarTestFunction(W, name='q')
 
     a = BilinearForm((v,u), inner(grad(v), grad(u)))
     b = BilinearForm((v,p), div(v)*p)

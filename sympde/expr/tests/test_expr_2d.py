@@ -19,9 +19,9 @@ from sympde.calculus import grad, dot, inner, cross, rot, curl, div
 from sympde.calculus import laplace, hessian, bracket, convect
 from sympde.topology import (dx, dy, dz)
 from sympde.topology import FunctionSpace, VectorFunctionSpace
-from sympde.topology import Field, VectorField
+from sympde.topology import ScalarField, VectorField
 from sympde.topology import ProductSpace
-from sympde.topology import TestFunction
+from sympde.topology import ScalarTestFunction
 from sympde.topology import VectorTestFunction
 from sympde.topology import Unknown
 from sympde.topology import InteriorDomain, Union
@@ -61,8 +61,8 @@ def test_linear_expr_2d_1():
 
     V = FunctionSpace('V', domain)
 
-    u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
     l = LinearExpr(v, x*y*v)
@@ -132,8 +132,8 @@ def test_bilinear_expr_2d_1():
 
     V = FunctionSpace('V', domain)
 
-    u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
     a = BilinearExpr((u,v), u*v)
@@ -196,8 +196,8 @@ def test_linear_form_2d_1():
 
     V = FunctionSpace('V', domain)
 
-    u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
     l = LinearForm(v, x*y*v)
@@ -246,10 +246,10 @@ def test_linear_form_2d_1():
     # ...
 
     # ...
-    pn, wn = [Field(V, name=i) for i in ['pn', 'wn']]
+    pn, wn = [ScalarField(V, name=i) for i in ['pn', 'wn']]
 
-    tau   = TestFunction(V, name='tau')
-    sigma = TestFunction(V, name='sigma')
+    tau   = ScalarTestFunction(V, name='tau')
+    sigma = ScalarTestFunction(V, name='sigma')
 
     Re    = Constant('Re', real=True)
     dt    = Constant('dt', real=True)
@@ -321,8 +321,8 @@ def test_bilinear_form_2d_1():
 
     V = FunctionSpace('V', domain)
 
-    u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
     a = BilinearForm((u,v), u*v)
@@ -433,8 +433,8 @@ def test_terminal_expr_linear_2d_1():
 
     V = FunctionSpace('V', domain)
 
-    u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
     l = LinearForm(v, x*y*v)
@@ -589,8 +589,8 @@ def test_terminal_expr_linear_2d_3():
 
     V = FunctionSpace('V', domain)
 
-    u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
     l = LinearForm(v, trace_1(grad(v), domain.boundary))
@@ -612,8 +612,8 @@ def test_terminal_expr_linear_2d_4():
 
     V = FunctionSpace('V', domain)
 
-    u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
     l = LinearForm(v, x*y*v)
@@ -638,10 +638,10 @@ def test_terminal_expr_linear_2d_5(boundary=['Gamma_1', 'Gamma_3']):
 
     x,y = domain.coordinates
 
-    F = Field(V, name='F')
+    F = ScalarField(V, name='F')
 
-    v = TestFunction(V, name='v')
-    u = TestFunction(V, name='u')
+    v = ScalarTestFunction(V, name='v')
+    u = ScalarTestFunction(V, name='u')
 
     expr = dot(grad(v), grad(u))
     a = BilinearForm((v,u), expr)
@@ -676,8 +676,8 @@ def test_terminal_expr_bilinear_2d_1():
 
     V = FunctionSpace('V', domain)
 
-    u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
     a = BilinearForm((u,v), u*v)
@@ -843,8 +843,8 @@ def test_terminal_expr_bilinear_2d_3():
 
     v = VectorTestFunction(V, name='v')
     u = VectorTestFunction(V, name='u')
-    p = TestFunction(W, name='p')
-    q = TestFunction(W, name='q')
+    p = ScalarTestFunction(W, name='p')
+    q = ScalarTestFunction(W, name='q')
 
     a = BilinearForm((u,v), inner(grad(v), grad(u)))
     b = BilinearForm((v,p), div(v)*p)
@@ -862,12 +862,12 @@ def test_linearize_expr_2d_1():
     V1 = FunctionSpace('V1', domain)
     W1 = VectorFunctionSpace('W1', domain)
 
-    v1 = TestFunction(V1, name='v1')
+    v1 = ScalarTestFunction(V1, name='v1')
     w1 = VectorTestFunction(W1, name='w1')
 
     alpha = Constant('alpha')
 
-    F = Field(V1, name='F')
+    F = ScalarField(V1, name='F')
     G = VectorField(W1, 'G')
 
     # ...
@@ -919,12 +919,12 @@ def test_linearize_expr_2d_2():
 
     V1 = FunctionSpace('V1', domain)
 
-    v1 = TestFunction(V1, name='v1')
+    v1 = ScalarTestFunction(V1, name='v1')
 
     alpha = Constant('alpha')
 
-    F = Field(V1, name='F')
-    G = Field(V1, name='G')
+    F = ScalarField(V1, name='F')
+    G = ScalarField(V1, name='G')
 
     # ...
     l1 = LinearExpr(v1, F**2*v1)
@@ -945,12 +945,12 @@ def test_linearize_form_2d_1():
     V1 = FunctionSpace('V1', domain)
     W1 = VectorFunctionSpace('W1', domain)
 
-    v1 = TestFunction(V1, name='v1')
+    v1 = ScalarTestFunction(V1, name='v1')
     w1 = VectorTestFunction(W1, name='w1')
 
     alpha = Constant('alpha')
 
-    F = Field(V1, name='F')
+    F = ScalarField(V1, name='F')
     G = VectorField(W1, 'G')
 
     # ...
@@ -1002,12 +1002,12 @@ def test_linearize_form_2d_2():
 
     V1 = FunctionSpace('V1', domain)
 
-    v1 = TestFunction(V1, name='v1')
+    v1 = ScalarTestFunction(V1, name='v1')
 
     alpha = Constant('alpha')
 
-    F = Field(V1, name='F')
-    G = Field(V1, name='G')
+    F = ScalarField(V1, name='F')
+    G = ScalarField(V1, name='G')
 
     # ...
     l1 = LinearForm(v1, F**2*v1)
@@ -1030,12 +1030,12 @@ def test_linearize_form_2d_3():
     W =       FunctionSpace('W', domain)
 
     v   = VectorTestFunction(U, name='v')
-    phi =       TestFunction(W, name='phi')
-    q   =       TestFunction(W, name='q')
+    phi =       ScalarTestFunction(W, name='phi')
+    q   =       ScalarTestFunction(W, name='q')
 
     U_0   = VectorField(U, name='U_0')
-    Rho_0 = Field(W, name='Rho_0')
-    P_0   = Field(W, name='P_0')
+    Rho_0 = ScalarField(W, name='Rho_0')
+    P_0   = ScalarField(W, name='P_0')
 
     # ...
     expr = div(Rho_0*U_0) * phi
@@ -1077,7 +1077,7 @@ def test_area_2d_1():
 
     V = FunctionSpace('V', domain)
 
-    u,v = [TestFunction(V, name=i) for i in ['u', 'v']]
+    u,v = [ScalarTestFunction(V, name=i) for i in ['u', 'v']]
 
     # ...
     a = BilinearForm((v,u), area * u * v)
@@ -1105,7 +1105,7 @@ def test_stabilization_2d_1():
 
     V = FunctionSpace('V', domain)
 
-    u,v = [TestFunction(V, name=i) for i in ['u', 'v']]
+    u,v = [ScalarTestFunction(V, name=i) for i in ['u', 'v']]
 
     # ...
     expr = kappa * dot(grad(u), grad(v)) + dot(b, grad(u)) * v
@@ -1182,7 +1182,7 @@ def test_user_function_2d_1():
 
     V = FunctionSpace('V', domain)
 
-    u,v = [TestFunction(V, name=i) for i in ['u', 'v']]
+    u,v = [ScalarTestFunction(V, name=i) for i in ['u', 'v']]
 
     # ...
     expr = dot(grad(u), grad(v)) + f(x,y) * u * v
@@ -1212,7 +1212,7 @@ def test_functional_2d_1():
     mu    = Constant('mu'   , is_real=True)
 
     V = FunctionSpace('V', domain)
-    F = Field(V, name='F')
+    F = ScalarField(V, name='F')
 
     # ...
     expr = x*y
@@ -1240,7 +1240,7 @@ def test_norm_2d_1():
     x,y = domain.coordinates
 
     V = FunctionSpace('V', domain)
-    F = Field(V, name='F')
+    F = ScalarField(V, name='F')
 
     # ...
     expr = x*y
@@ -1336,8 +1336,8 @@ def test_bilinear_form_2d_3():
 
     V = FunctionSpace('V', domain)
 
-    u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
     a = BilinearForm((u,v), u*v)

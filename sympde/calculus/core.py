@@ -7,11 +7,11 @@ naturally give 0
 >>> from sympde.calculus import grad, curl
 >>> from sympde.topology import Domain
 >>> from sympde.topology import FunctionSpace
->>> from sympde.topology import TestFunction
+>>> from sympde.topology import ScalarTestFunction
 
 >>> domain = Domain('Omega', dim=2)
 >>> V = FunctionSpace('V', domain)
->>> u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+>>> u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
 
 >>> curl(grad(u))
 0
@@ -24,7 +24,7 @@ naturally give 0
 
 >>> alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
 
->>> f,g,h = [Field(V, name=i) for i in ['f','g','h']]
+>>> f,g,h = [ScalarField(V, name=i) for i in ['f','g','h']]
 >>> F,G,H = [VectorField(W, i) for i in ['F','G','H']]
 
 Generic properties
@@ -100,8 +100,8 @@ from sympy.core.singleton import S
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import _coeffs_registery
 
-from sympde.topology.space import TestFunction, VectorTestFunction, IndexedTestTrial
-from sympde.topology.space import Field, VectorField, IndexedVectorField
+from sympde.topology.space import ScalarTestFunction, VectorTestFunction, IndexedTestTrial
+from sympde.topology.space import ScalarField, VectorField, IndexedVectorField
 
 
 #==============================================================================
@@ -212,7 +212,7 @@ class Dot(BasicOperator):
                      isinstance(a.exp, _coeffs_registery) ):
                     coeffs += [a]
 
-                elif isinstance(a, (Field, TestFunction)):
+                elif isinstance(a, (ScalarField, ScalarTestFunction)):
                     coeffs += [a]
 
             vectors = [a for a in left.args if not(a in coeffs)]
@@ -236,7 +236,7 @@ class Dot(BasicOperator):
                      isinstance(a.exp, _coeffs_registery) ):
                     coeffs += [a]
 
-                elif isinstance(a, (Field, TestFunction)):
+                elif isinstance(a, (ScalarField, ScalarTestFunction)):
                     coeffs += [a]
 
             vectors = [a for a in right.args if not(a in coeffs)]
@@ -347,7 +347,7 @@ class Inner(BasicOperator):
                      isinstance(a.exp, _coeffs_registery) ):
                     coeffs += [a]
 
-                elif isinstance(a, (Field, TestFunction)):
+                elif isinstance(a, (ScalarField, ScalarTestFunction)):
                     coeffs += [a]
 
             vectors = [a for a in left.args if not(a in coeffs)]
@@ -371,7 +371,7 @@ class Inner(BasicOperator):
                      isinstance(a.exp, _coeffs_registery) ):
                     coeffs += [a]
 
-                elif isinstance(a, (Field, TestFunction)):
+                elif isinstance(a, (ScalarField, ScalarTestFunction)):
                     coeffs += [a]
 
             vectors = [a for a in right.args if not(a in coeffs)]
@@ -416,7 +416,7 @@ class Convect(BasicOperator):
     >>> V = FunctionSpace('V', domain)
     >>> W = VectorFunctionSpace('W', domain)
     >>> alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
-    >>> f,g,h = [Field(V, name=i) for i in ['f','g','h']]
+    >>> f,g,h = [ScalarField(V, name=i) for i in ['f','g','h']]
     >>> F,G,H = [VectorField(W, i) for i in ['F','G','H']]
 
     >>> convect(F+G, H)
@@ -521,8 +521,8 @@ class Grad(BasicOperator):
 
     >>> domain = Domain('Omega', dim=2)
     >>> V = FunctionSpace('V', domain)
-    >>> u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    >>> v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    >>> u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    >>> v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
     >>> alpha = Constant('alpha', is_real=True)
 
@@ -718,8 +718,8 @@ class Rot(BasicOperator):
 
     >>> domain = Domain('Omega', dim=2)
     >>> V = FunctionSpace('V', domain)
-    >>> u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    >>> v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    >>> u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    >>> v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
     >>> alpha = Constant('alpha', is_real=True)
 
@@ -883,8 +883,8 @@ class Laplace(BasicOperator):
 
     >>> domain = Domain('Omega', dim=2)
     >>> V = FunctionSpace('V', domain)
-    >>> u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    >>> v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    >>> u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    >>> v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
     >>> alpha = Constant('alpha', is_real=True)
 
@@ -966,8 +966,8 @@ class Hessian(BasicOperator):
 
     >>> domain = Domain('Omega', dim=2)
     >>> V = FunctionSpace('V', domain)
-    >>> u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    >>> v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    >>> u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    >>> v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
     >>> alpha = Constant('alpha', is_real=True)
 

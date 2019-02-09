@@ -17,9 +17,9 @@ from sympde.calculus import grad, dot, inner, cross, rot, curl, div
 from sympde.calculus import laplace, hessian, bracket
 from sympde.topology import (dx, dy, dz)
 from sympde.topology import FunctionSpace, VectorFunctionSpace
-from sympde.topology import Field, VectorField
+from sympde.topology import ScalarField, VectorField
 from sympde.topology import ProductSpace
-from sympde.topology import TestFunction
+from sympde.topology import ScalarTestFunction
 from sympde.topology import VectorTestFunction
 from sympde.topology import Unknown
 from sympde.topology import Domain, Boundary, NormalVector, TangentVector
@@ -48,8 +48,8 @@ def test_find_2d_1():
     V = FunctionSpace('V', domain)
     U = FunctionSpace('U', domain)
 
-    v = TestFunction(V, name='v')
-    u = TestFunction(U, name='u')
+    v = ScalarTestFunction(V, name='v')
+    u = ScalarTestFunction(U, name='u')
 
     x,y = domain.coordinates
 
@@ -122,9 +122,9 @@ def test_find_2d_1():
 #
 #    x,y = domain.coordinates
 #
-#    Un = Field(V, name='Un')
+#    Un = ScalarField(V, name='Un')
 #
-#    v = TestFunction(V, name='v')
+#    v = ScalarTestFunction(V, name='v')
 #
 #    f  = -4.*exp(-Un)
 #    l = LinearForm(v, dot(grad(v), grad(Un)) - f*v )
@@ -132,7 +132,7 @@ def test_find_2d_1():
 #    eq = NewtonIteration(l, Un, trials='u')
 #    # ...
 #
-#    u = TestFunction(V, name='u')
+#    u = ScalarTestFunction(V, name='u')
 #
 #    # ...
 #    expected =  -4.0*u*v*exp(-Un) + dx(u)*dx(v) + dy(u)*dy(v)

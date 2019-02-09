@@ -5,7 +5,7 @@ from sympy.core.containers import Tuple
 from sympy.core import Expr
 
 from sympde.topology.basic import Boundary, Union
-from sympde.topology.space import TestFunction
+from sympde.topology.space import ScalarTestFunction
 from sympde.topology.space import VectorTestFunction, IndexedTestTrial
 from sympde.topology.space import FunctionSpace
 from sympde.topology import Boundary, NormalVector, TangentVector
@@ -44,7 +44,7 @@ class EssentialBC(BasicBoundaryCondition):
         # ...
         indexed = list(lhs.atoms(IndexedTestTrial))
 
-        u  = list(lhs.atoms(TestFunction))
+        u  = list(lhs.atoms(ScalarTestFunction))
         if not indexed:
             u += list(lhs.atoms(VectorTestFunction))
 
@@ -184,11 +184,11 @@ class Equation(Basic):
         # ...
 
         # ...
-        _is_test_function = lambda u: isinstance(u, (TestFunction, VectorTestFunction))
+        _is_test_function = lambda u: isinstance(u, (ScalarTestFunction, VectorTestFunction))
         # ...
 
         # ...
-        if isinstance(tests, (TestFunction, VectorTestFunction)):
+        if isinstance(tests, (ScalarTestFunction, VectorTestFunction)):
             tests = [tests]
 
         else:
@@ -199,7 +199,7 @@ class Equation(Basic):
         # ...
 
         # ...
-        if isinstance(trials, (TestFunction, VectorTestFunction)):
+        if isinstance(trials, (ScalarTestFunction, VectorTestFunction)):
             trials = [trials]
 
         else:
@@ -213,20 +213,20 @@ class Equation(Basic):
 #        # find unknowns and tests of the equation
 #        # ...
 #        tests_lhs, trials_lhs = lhs.variables
-#        if isinstance(tests_lhs, (TestFunction, VectorTestFunction)):
+#        if isinstance(tests_lhs, (ScalarTestFunction, VectorTestFunction)):
 #            tests_lhs = [tests_lhs]
 #
 #        elif not isinstance(tests_lhs, (list, tuple, Tuple)):
-#            msg =  '> Expecting iterable or TestFunction/VectorTestFunction'
+#            msg =  '> Expecting iterable or ScalarTestFunction/VectorTestFunction'
 #            raise UnconsistentArgumentsError(msg)
 #
 #        tests_lhs = Tuple(*tests_lhs)
 #
-#        if isinstance(trials_lhs, (TestFunction, VectorTestFunction)):
+#        if isinstance(trials_lhs, (ScalarTestFunction, VectorTestFunction)):
 #            trials_lhs = [trials_lhs]
 #
 #        elif not isinstance(trials_lhs, (list, tuple, Tuple)):
-#            msg =  '> Expecting iterable or TestFunction/VectorTestFunction'
+#            msg =  '> Expecting iterable or ScalarTestFunction/VectorTestFunction'
 #            raise UnconsistentArgumentsError(msg)
 #
 #        trials_lhs = Tuple(*trials_lhs)
@@ -234,11 +234,11 @@ class Equation(Basic):
 #
 #        # ... find test functions
 #        tests_rhs = rhs.variables
-#        if isinstance(tests_rhs, (TestFunction, VectorTestFunction)):
+#        if isinstance(tests_rhs, (ScalarTestFunction, VectorTestFunction)):
 #            tests_rhs = [tests_rhs]
 #
 #        elif not isinstance(tests_rhs, (list, tuple, Tuple)):
-#            msg =  '> Expecting iterable or TestFunction/VectorTestFunction'
+#            msg =  '> Expecting iterable or ScalarTestFunction/VectorTestFunction'
 #            raise UnconsistentArgumentsError(msg)
 #
 #        tests_rhs = Tuple(*tests_rhs)
@@ -356,7 +356,7 @@ class LambdaEquation(Equation):
 class Projection(LambdaEquation):
     def __new__(cls, expr, space, kind='l2', bc=None):
         # ...
-        tests = expr.atoms((TestFunction, VectorTestFunction))
+        tests = expr.atoms((ScalarTestFunction, VectorTestFunction))
         if tests or not isinstance(expr, Expr):
             msg = '> Expecting an Expression without test functions'
             raise UnconsistentArgumentsError(msg)
@@ -381,8 +381,8 @@ class Projection(LambdaEquation):
             lhs_name = 'lhs_{}'.format(tag)
             rhs_name = 'rhs_{}'.format(tag)
             if V.shape == 1:
-                v = TestFunction(V, name=v_name)
-                u = TestFunction(V, name=u_name)
+                v = ScalarTestFunction(V, name=v_name)
+                u = ScalarTestFunction(V, name=u_name)
 
                 expr_lhs = v*u
                 expr_rhs = expr*v
@@ -407,7 +407,7 @@ class Interpolation(LambdaEquation):
         raise NotImplementedError('TODO')
 
         # ...
-        tests = expr.atoms((TestFunction, VectorTestFunction))
+        tests = expr.atoms((ScalarTestFunction, VectorTestFunction))
         if tests or not isinstance(expr, Expr):
             msg = '> Expecting an Expression without test functions'
             raise UnconsistentArgumentsError(msg)

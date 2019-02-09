@@ -49,12 +49,12 @@ from sympde.topology.derivatives import Hessian_1d, Hessian_2d, Hessian_3d
 from sympde.topology.space import BasicFunctionSpace
 from sympde.topology.space import FunctionSpace
 from sympde.topology.space import ProductSpace
-from sympde.topology.space import TestFunction
+from sympde.topology.space import ScalarTestFunction
 from sympde.topology.space import VectorTestFunction
 from sympde.topology.space import IndexedTestTrial
 from sympde.topology.space import Unknown, VectorUnknown
 from sympde.topology.space import Trace
-from sympde.topology.space import Field, VectorField, IndexedVectorField
+from sympde.topology.space import ScalarField, VectorField, IndexedVectorField
 from sympde.topology.measure import CanonicalMeasure
 from sympde.topology.measure import CartesianMeasure
 from sympde.topology.measure import Measure
@@ -257,9 +257,9 @@ def _get_domain(a):
         expr = a
 
     atoms  = []
-    atoms += list(expr.atoms(TestFunction))
+    atoms += list(expr.atoms(ScalarTestFunction))
     atoms += list(expr.atoms(VectorTestFunction))
-    atoms += list(expr.atoms(Field))
+    atoms += list(expr.atoms(ScalarField))
     atoms += list(expr.atoms(VectorField))
 
     if len(atoms) == 0:
@@ -285,7 +285,7 @@ class Functional(BasicForm):
         obj = Basic.__new__(cls, expr, domain)
 
         # compute dim from fields if available
-        ls = list(expr.atoms((Field, VectorField)))
+        ls = list(expr.atoms((ScalarField, VectorField)))
         if ls:
             F = ls[0]
             space = F.space
@@ -500,7 +500,7 @@ class BilinearForm(BasicForm):
 class Norm(Functional):
     def __new__(cls, expr, domain, kind='l2'):
 #        # ...
-#        tests = expr.atoms((TestFunction, VectorTestFunction))
+#        tests = expr.atoms((ScalarTestFunction, VectorTestFunction))
 #        if tests:
 #            msg = '> Expecting an Expression without test functions'
 #            raise UnconsistentArgumentsError(msg)
@@ -571,19 +571,19 @@ def linearize(form, fields, trials=None):
         fields = [fields]
 
     for f in fields:
-        if not isinstance(f, (Field, VectorField)):
-            raise TypeError('{} is not Field/VectorField'.format(f))
+        if not isinstance(f, (ScalarField, VectorField)):
+            raise TypeError('{} is not ScalarField/VectorField'.format(f))
 
     if not(trials is None):
         if not isinstance(trials, (list, tuple, Tuple)):
             trials = [trials]
 
-        assert( all([isinstance(i, (str, TestFunction, VectorTestFunction)) for i in trials]) )
+        assert( all([isinstance(i, (str, ScalarTestFunction, VectorTestFunction)) for i in trials]) )
         assert( len(fields) == len(trials) )
 
         newtrials = []
         for i in trials:
-            if isinstance(i, (TestFunction, VectorTestFunction)):
+            if isinstance(i, (ScalarTestFunction, VectorTestFunction)):
                 newtrials += [i.name]
 
             else:
@@ -615,14 +615,14 @@ def linearize(form, fields, trials=None):
         else:
             name = trials[i]
 
-        if isinstance(x, Field):
-            trial  = TestFunction(x.space, name=name)
+        if isinstance(x, ScalarField):
+            trial  = ScalarTestFunction(x.space, name=name)
 
         elif isinstance(x, VectorField):
             trial  = VectorTestFunction(x.space, name=name)
 
         else:
-            raise TypeError('Only TestFunction and VectorTestFunction are available')
+            raise TypeError('Only ScalarTestFunction and VectorTestFunction are available')
 
         newargs         += [x + eps*trial]
         trial_functions += [trial]

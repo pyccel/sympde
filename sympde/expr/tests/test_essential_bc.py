@@ -17,9 +17,9 @@ from sympde.calculus import grad, dot, inner, cross, rot, curl, div
 from sympde.calculus import laplace, hessian, bracket
 from sympde.topology import (dx, dy, dz)
 from sympde.topology import FunctionSpace, VectorFunctionSpace
-from sympde.topology import Field, VectorField
+from sympde.topology import ScalarField, VectorField
 from sympde.topology import ProductSpace
-from sympde.topology import TestFunction
+from sympde.topology import ScalarTestFunction
 from sympde.topology import VectorTestFunction
 from sympde.topology import Unknown
 from sympde.topology import Domain, Boundary, NormalVector, TangentVector
@@ -36,7 +36,7 @@ def test_essential_bc_1():
     V = FunctionSpace('V', domain)
     W = VectorFunctionSpace('W', domain)
 
-    v = TestFunction(V, name='v')
+    v = ScalarTestFunction(V, name='v')
     w = VectorTestFunction(W, name='w')
 
     B1 = Boundary(r'\Gamma_1', domain)

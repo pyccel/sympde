@@ -16,11 +16,11 @@ from sympy.physics.quantum import TensorProduct
 
 from sympde.core import dx, dy, dz
 from sympde.core import Constant
-from sympde.core import Field
+from sympde.core import ScalarField
 from sympde.core import grad, dot, inner, cross, rot, curl, div
 from sympde.core import FunctionSpace
 from sympde.core import ProductSpace
-from sympde.core import TestFunction
+from sympde.core import ScalarTestFunction
 from sympde.core import VectorTestFunction
 from sympde.core import BilinearForm, LinearForm, Integral
 from sympde.core import atomize
@@ -41,10 +41,10 @@ def test_atomize_2d_1():
 
     V = FunctionSpace('V', domain)
 
-    v = TestFunction(V, name='v')
-    w = TestFunction(V, name='w')
+    v = ScalarTestFunction(V, name='v')
+    w = ScalarTestFunction(V, name='w')
     c = Constant('c')
-    F = Field('F', space=V)
+    F = ScalarField('F', space=V)
 
     # ...
     assert(atomize(grad(v)) == Tuple(dx(v),
@@ -69,13 +69,13 @@ def test_evaluate_2d_1():
     V = FunctionSpace('V', domain)
     U = FunctionSpace('U', domain)
 
-    v = TestFunction(V, name='v')
-    u = TestFunction(U, name='u')
+    v = ScalarTestFunction(V, name='v')
+    u = ScalarTestFunction(U, name='u')
 
     x,y = V.coordinates
 
     c = Constant('c')
-    F = Field('F', space=V)
+    F = ScalarField('F', space=V)
     f1 = Function('f1')
     f2 = Function('f2')
 
@@ -140,10 +140,10 @@ def test_evaluate_2d_3():
     V2 = FunctionSpace('V2', domain)
     U2 = FunctionSpace('U2', domain)
 
-    v1 = TestFunction(V1, name='v1')
-    u1 = TestFunction(U1, name='u1')
-    v2 = TestFunction(V2, name='v2')
-    u2 = TestFunction(U2, name='u2')
+    v1 = ScalarTestFunction(V1, name='v1')
+    u1 = ScalarTestFunction(U1, name='u1')
+    v2 = ScalarTestFunction(V2, name='v2')
+    u2 = ScalarTestFunction(U2, name='u2')
 
     V = ProductSpace(V1, V2)
     U = ProductSpace(U1, U2)
@@ -187,11 +187,11 @@ def test_evaluate_2d_3():
 #    U = FunctionSpace('U', domain)
 #    V = FunctionSpace('V', domain)
 #
-#    u = TestFunction(U, name='u')
-#    v = TestFunction(V, name='v')
+#    u = ScalarTestFunction(U, name='u')
+#    v = ScalarTestFunction(V, name='v')
 #
-#    u1 = TestFunction(U, name='u1')
-#    v1 = TestFunction(V, name='v1')
+#    u1 = ScalarTestFunction(U, name='u1')
+#    v1 = ScalarTestFunction(V, name='v1')
 #
 #    Ni, Ni_x, Ni_y = symbols('Ni Ni_x Ni_y')
 #    Nj, Nj_x, Nj_y = symbols('Nj Nj_x Nj_y')
@@ -240,7 +240,7 @@ def test_linear_form_2d_10():
 
     V = FunctionSpace('V', domain)
 
-    v = TestFunction(V, name='v')
+    v = ScalarTestFunction(V, name='v')
 
     x,y = V.coordinates
     f = Function('f')
@@ -294,7 +294,7 @@ def test_function_form_2d_10():
 
     V = FunctionSpace('V', domain)
 
-    F = Field('F', space=V)
+    F = ScalarField('F', space=V)
 
     x,y = V.coordinates
 
@@ -348,14 +348,14 @@ def test_tensorize_2d_1():
     V_0 = FunctionSpace('V_0', domain, coordinates=['x'])
     V_1 = FunctionSpace('V_1', domain, coordinates=['y'])
 
-    v = TestFunction(V, name='v')
-    u = TestFunction(V, name='u')
+    v = ScalarTestFunction(V, name='v')
+    u = ScalarTestFunction(V, name='u')
 
-    v0 = TestFunction(V_0, name='v0')
-    u0 = TestFunction(V_0, name='u0')
+    v0 = ScalarTestFunction(V_0, name='v0')
+    u0 = ScalarTestFunction(V_0, name='u0')
 
-    v1 = TestFunction(V_1, name='v1')
-    u1 = TestFunction(V_1, name='u1')
+    v1 = ScalarTestFunction(V_1, name='v1')
+    u1 = ScalarTestFunction(V_1, name='u1')
 
     c = Constant('c')
 
@@ -429,11 +429,11 @@ def test_tensorize_2d_2():
     v = VectorTestFunction(V, name='v')
     u = VectorTestFunction(V, name='u')
 
-#    v0 = TestFunction(V_0, name='v0')
-#    u0 = TestFunction(V_0, name='u0')
+#    v0 = ScalarTestFunction(V_0, name='v0')
+#    u0 = ScalarTestFunction(V_0, name='u0')
 #
-#    v1 = TestFunction(V_1, name='v1')
-#    u1 = TestFunction(V_1, name='u1')
+#    v1 = ScalarTestFunction(V_1, name='v1')
+#    u1 = ScalarTestFunction(V_1, name='u1')
 
     c = Constant('c')
 
