@@ -20,7 +20,7 @@ from sympde.core import LinearOperator
 from .form import DifferentialForm
 
 
-# ...
+#==============================================================================
 class ExteriorDerivative(LinearOperator):
 
     nargs = None
@@ -85,9 +85,8 @@ class ExteriorDerivative(LinearOperator):
     def _sympystr(self, printer):
         sstr = printer.doprint
         return '{d}({arg})'.format(d=sstr('d'), arg=sstr(self.args[0]))
-# ...
 
-# ...
+#==============================================================================
 class ExteriorProduct(LinearOperator):
 
     nargs = None
@@ -133,9 +132,8 @@ class ExteriorProduct(LinearOperator):
         return '{left} {math} {right}'.format( math=sstr(self.math_symbol),
                                                 left=sstr(left),
                                                 right=sstr(right) )
-# ...
 
-# ...
+#==============================================================================
 class InteriorProduct(LinearOperator):
 
     nargs = None
@@ -169,19 +167,12 @@ class InteriorProduct(LinearOperator):
 
         return cls(left, right, evaluate=False)
 
-    @property
-    def math_symbol(self):
-        math_str = '_|'
-        return math_str
-
     def _sympystr(self, printer):
         sstr = printer.doprint
-        return '{left} {math} {right}'.format( math=sstr(self.math_symbol),
-                                                left=sstr(self.args[0]),
-                                                right=sstr(self.args[1]) )
-# ...
+        return 'ip({left}, {right})'.format( left=sstr(self.args[0]),
+                                             right=sstr(self.args[1]) )
 
-# ...
+#==============================================================================
 class PullBack(LinearOperator):
 
     nargs = None
@@ -239,9 +230,118 @@ class PullBack(LinearOperator):
             name = 'PullBack'
         arg = self.args[0]
         return '{name}({arg})'.format( name=sstr(name), arg=sstr(arg) )
-# ...
 
-# ...
+
+#==============================================================================
+class Adjoint(LinearOperator):
+
+    nargs = None
+
+    def __new__(cls, *args, **options):
+        # (Try to) sympify args first
+
+        if options.pop('evaluate', True):
+            r = cls.eval(*args)
+        else:
+            r = None
+
+        if r is None:
+            return Basic.__new__(cls, *args, **options)
+        else:
+            return r
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        if not( len(_args) == 1):
+            raise ValueError('Expecting one argument')
+
+        expr = _args[0]
+
+        return cls(expr, evaluate=False)
+
+#==============================================================================
+# TODO add properties
+class AdjointExteriorDerivative(LinearOperator):
+
+    nargs = None
+
+    def __new__(cls, *args, **options):
+        # (Try to) sympify args first
+
+        if options.pop('evaluate', True):
+            r = cls.eval(*args)
+        else:
+            r = None
+
+        if r is None:
+            return Basic.__new__(cls, *args, **options)
+        else:
+            return r
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        if not( len(_args) == 1):
+            raise ValueError('Expecting one argument')
+
+        expr = _args[0]
+
+        return cls(expr, evaluate=False)
+
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        return '{d}({arg})'.format(d=sstr('delta'), arg=sstr(self.args[0]))
+
+#==============================================================================
+# TODO add properties
+class AdjointInteriorProduct(LinearOperator):
+
+    nargs = None
+
+    def __new__(cls, *args, **options):
+        # (Try to) sympify args first
+
+        if options.pop('evaluate', True):
+            r = cls.eval(*args)
+        else:
+            r = None
+
+        if r is None:
+            return Basic.__new__(cls, *args, **options)
+        else:
+            return r
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        if not( len(_args) == 2):
+            raise ValueError('Expecting two arguments')
+
+        left = _args[0]
+        right = _args[1]
+        # TODO add properties?
+
+        return cls(left, right, evaluate=False)
+
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        return 'jp({left}, {right})'.format( left=sstr(self.args[0]),
+                                             right=sstr(self.args[1]) )
+
+#==============================================================================
 def infere_index(expr):
     if isinstance(expr, DifferentialForm):
         return expr.index
@@ -269,10 +369,13 @@ def infere_index(expr):
         return indices[0]
 
     return None
-# ...
 
-# ... user friendly names
+#==============================================================================
+#      user friendly names
 d = ExteriorDerivative
 wedge = ExteriorProduct
 ip = InteriorProduct
+
+delta = AdjointExteriorDerivative
+jp = AdjointInteriorProduct
 # ...
