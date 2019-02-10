@@ -44,6 +44,7 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.imgmath',
     'sphinx.ext.viewcode',
+    'sphinxcontrib.bibtex',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -134,9 +135,33 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'sympde.tex', 'sympde Documentation',
-     'A. Ratnani, S. Hadjout', 'manual'),
+     'A. Ratnani', 'manual'),
 ]
 
+
+latex_engine='pdflatex'
+
+latex_additional_files = ['latex_macros.sty']
+latex_elements = {
+    'printmodindex': '',
+    'printindex': '',
+    'preamble' : r'\usepackage{amsmath} \usepackage{amssymb} \usepackage{latex_macros}',
+    'docclass':'report',
+    }
+
+#####################################################
+# add LaTeX macros
+
+f = open('latex_macros.sty', 'r')
+
+try:
+    imgmath_latex_preamble  # check whether this is already defined
+except NameError:
+    imgmath_latex_preamble = ""
+
+for macro in f:
+    # used when building html version
+    imgmath_latex_preamble += macro + '\n'
 
 # -- Options for manual page output ------------------------------------------
 

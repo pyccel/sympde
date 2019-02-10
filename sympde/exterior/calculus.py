@@ -1,5 +1,4 @@
 # coding: utf-8
-# TODO: - Unknown is not used here (mlhipy) remove it?
 
 from numpy import unique
 

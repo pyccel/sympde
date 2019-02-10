@@ -60,9 +60,6 @@ class DifferentialOperator(LinearOperator):
     """
     This class is a linear operator that applies the Leibniz formula
 
-    Examples
-    ========
-
     """
     coordinate = None
 
@@ -453,12 +450,6 @@ def print_expression(expr, logical=False, mapping_name=True):
 
 # ...
 class DotBasic(CalculusFunction):
-    """
-
-    Examples
-    ========
-
-    """
 
     nargs = None
     name = 'Dot'
@@ -477,12 +468,6 @@ class DotBasic(CalculusFunction):
             return r
 
 class Dot_1d(DotBasic):
-    """
-
-    Examples
-    ========
-
-    """
 
     @classmethod
     def eval(cls, *_args):
@@ -500,12 +485,6 @@ class Dot_1d(DotBasic):
         return u * v
 
 class Dot_2d(DotBasic):
-    """
-
-    Examples
-    ========
-
-    """
 
     @classmethod
     def eval(cls, *_args):
@@ -535,12 +514,6 @@ class Dot_2d(DotBasic):
                 return u[0]*v[0] + u[1]*v[1]
 
 class Dot_3d(DotBasic):
-    """
-
-    Examples
-    ========
-
-    """
 
     @classmethod
     def eval(cls, *_args):
@@ -574,12 +547,6 @@ class Dot_3d(DotBasic):
 
 # ...
 class CrossBasic(CalculusFunction):
-    """
-
-    Examples
-    ========
-
-    """
 
     nargs = None
     name = 'Cross'
@@ -598,12 +565,6 @@ class CrossBasic(CalculusFunction):
             return r
 
 class Cross_2d(CrossBasic):
-    """
-
-    Examples
-    ========
-
-    """
 
     @classmethod
     def eval(cls, *_args):
@@ -618,12 +579,6 @@ class Cross_2d(CrossBasic):
         return u[0]*v[1] - u[1]*v[0]
 
 class Cross_3d(CrossBasic):
-    """
-
-    Examples
-    ========
-
-    """
 
     def __getitem__(self, indices, **kw_args):
         if is_sequence(indices):
@@ -650,12 +605,6 @@ class Cross_3d(CrossBasic):
 
 # ...
 class GradBasic(CalculusFunction):
-    """
-
-    Examples
-    ========
-
-    """
 
     nargs = None
     name = 'Grad'
@@ -681,12 +630,6 @@ class GradBasic(CalculusFunction):
             return Indexed(self, indices, **kw_args)
 
 class Grad_1d(GradBasic):
-    """
-
-    Examples
-    ========
-
-    """
 
     @classmethod
     def eval(cls, *_args):
@@ -700,12 +643,6 @@ class Grad_1d(GradBasic):
         return dx(u)
 
 class Grad_2d(GradBasic):
-    """
-
-    Examples
-    ========
-
-    """
 
     @classmethod
     def eval(cls, *_args):
@@ -731,12 +668,6 @@ class Grad_2d(GradBasic):
         return v
 
 class Grad_3d(GradBasic):
-    """
-
-    Examples
-    ========
-
-    """
 
     @classmethod
     def eval(cls, *_args):
@@ -765,12 +696,6 @@ class Grad_3d(GradBasic):
 
 # ...
 class CurlBasic(CalculusFunction):
-    """
-
-    Examples
-    ========
-
-    """
 
     nargs = None
     name = 'Curl'
@@ -796,12 +721,6 @@ class CurlBasic(CalculusFunction):
             return Indexed(self, indices, **kw_args)
 
 class Curl_2d(CurlBasic):
-    """
-
-    Examples
-    ========
-
-    """
 
     @classmethod
     def eval(cls, *_args):
@@ -816,12 +735,6 @@ class Curl_2d(CurlBasic):
                      -dx(u))
 
 class Curl_3d(CurlBasic):
-    """
-
-    Examples
-    ========
-
-    """
 
     @classmethod
     def eval(cls, *_args):
@@ -839,12 +752,6 @@ class Curl_3d(CurlBasic):
 
 # ...
 class Rot_2d(CalculusFunction):
-    """
-
-    Examples
-    ========
-
-    """
 
     nargs = None
     name = 'Grad'
@@ -883,12 +790,6 @@ class Rot_2d(CalculusFunction):
 
 # ...
 class DivBasic(CalculusFunction):
-    """
-
-    Examples
-    ========
-
-    """
 
     nargs = None
     name = 'Div'
@@ -914,12 +815,6 @@ class DivBasic(CalculusFunction):
             return Indexed(self, indices, **kw_args)
 
 class Div_1d(DivBasic):
-    """
-
-    Examples
-    ========
-
-    """
 
     @classmethod
     def eval(cls, *_args):
@@ -933,12 +828,6 @@ class Div_1d(DivBasic):
         return dx(u)
 
 class Div_2d(DivBasic):
-    """
-
-    Examples
-    ========
-
-    """
 
     @classmethod
     def eval(cls, *_args):
@@ -952,12 +841,6 @@ class Div_2d(DivBasic):
         return dx(u[0]) + dy(u[1])
 
 class Div_3d(DivBasic):
-    """
-
-    Examples
-    ========
-
-    """
 
     @classmethod
     def eval(cls, *_args):
@@ -973,12 +856,6 @@ class Div_3d(DivBasic):
 
 # ...
 class LaplaceBasic(CalculusFunction):
-    """
-
-    Examples
-    ========
-
-    """
 
     nargs = None
     name = 'Laplace'
@@ -1004,12 +881,6 @@ class LaplaceBasic(CalculusFunction):
             return Indexed(self, indices, **kw_args)
 
 class Laplace_1d(LaplaceBasic):
-    """
-
-    Examples
-    ========
-
-    """
 
     @classmethod
     def eval(cls, *_args):
@@ -1025,12 +896,6 @@ class Laplace_1d(LaplaceBasic):
         return dx(dx(u))
 
 class Laplace_2d(LaplaceBasic):
-    """
-
-    Examples
-    ========
-
-    """
 
     @classmethod
     def eval(cls, *_args):
@@ -1046,12 +911,6 @@ class Laplace_2d(LaplaceBasic):
         return dx(dx(u)) + dy(dy(u))
 
 class Laplace_3d(LaplaceBasic):
-    """
-
-    Examples
-    ========
-
-    """
 
     @classmethod
     def eval(cls, *_args):
@@ -1069,12 +928,6 @@ class Laplace_3d(LaplaceBasic):
 
 # ...
 class HessianBasic(CalculusFunction):
-    """
-
-    Examples
-    ========
-
-    """
 
     nargs = None
     name = 'Hessian'
@@ -1100,12 +953,6 @@ class HessianBasic(CalculusFunction):
             return Indexed(self, indices, **kw_args)
 
 class Hessian_1d(HessianBasic):
-    """
-
-    Examples
-    ========
-
-    """
 
     @classmethod
     def eval(cls, *_args):
@@ -1121,12 +968,6 @@ class Hessian_1d(HessianBasic):
         return dx(dx(u))
 
 class Hessian_2d(HessianBasic):
-    """
-
-    Examples
-    ========
-
-    """
 
     @classmethod
     def eval(cls, *_args):
@@ -1143,12 +984,6 @@ class Hessian_2d(HessianBasic):
                        [dx(dy(u)), dy(dy(u))]])
 
 class Hessian_3d(HessianBasic):
-    """
-
-    Examples
-    ========
-
-    """
 
     @classmethod
     def eval(cls, *_args):
@@ -1171,12 +1006,6 @@ class BracketBasic(CalculusFunction):
     pass
 
 class Bracket_2d(BracketBasic):
-    """
-
-    Examples
-    ========
-
-    """
 
     nargs = None
     name = 'Bracket'
@@ -1326,12 +1155,6 @@ def get_max_partial_derivatives(expr, F=None):
 
 
 class LogicalGrad_1d(GradBasic):
-    """
-
-    Examples
-    ========
-
-    """
 
     @classmethod
     def eval(cls, *_args):
@@ -1345,12 +1168,6 @@ class LogicalGrad_1d(GradBasic):
         return dx1(u)
 
 class LogicalGrad_2d(GradBasic):
-    """
-
-    Examples
-    ========
-
-    """
 
     @classmethod
     def eval(cls, *_args):
@@ -1376,12 +1193,6 @@ class LogicalGrad_2d(GradBasic):
         return v
 
 class LogicalGrad_3d(GradBasic):
-    """
-
-    Examples
-    ========
-
-    """
 
     @classmethod
     def eval(cls, *_args):

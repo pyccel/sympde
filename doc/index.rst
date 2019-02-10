@@ -7,11 +7,20 @@ Welcome to sympde's documentation!
 ==================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Contents:
 
    quick
    advanced
+
+Mathematical background
+=======================
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Contents:
+
+   math/index
 
 API
 ===

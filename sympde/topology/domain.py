@@ -32,8 +32,6 @@ class Domain(BasicDomain):
     A domain can also be constructed from a connectivity, in which case, only the
     name and connectivity need to be passed.
 
-    Examples
-
     """
 
     def __new__(cls, name, interiors=None, boundaries=None, dim=None,
@@ -219,13 +217,7 @@ class Domain(BasicDomain):
         return OrderedDict(sorted(d.items()))
 
     def export( self, filename ):
-        """
-        Parameters
-        ----------
-        filename : str
-          Name of HDF5 output file.
 
-        """
         yml = self.todict()
 
         # Dump metadata to string in YAML file format
