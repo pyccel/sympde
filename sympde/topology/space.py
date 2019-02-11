@@ -78,19 +78,7 @@ class BasicFunctionSpace(Basic):
         return sstr(self.name)
 
     def __mul__(self, other):
-        if isinstance(self, ProductSpace):
-            left = self.spaces
-
-        else:
-            left = [self]
-
-        if isinstance(other, ProductSpace):
-            right = other.spaces
-
-        else:
-            right = [other]
-
-        return ProductSpace(*left, *right)
+        return ProductSpace(self, other)
 
 #==============================================================================
 class FunctionSpace(BasicFunctionSpace):
@@ -125,8 +113,18 @@ class ProductSpace(BasicFunctionSpace):
         # ...
         if not (isinstance(spaces, (tuple, list, Tuple))):
             raise TypeError('> Expecting a tuple, list or Tuple')
+        # ...
 
-        spaces = Tuple(*spaces)
+        # ...
+        args = []
+        for V in spaces:
+            if isinstance(V, ProductSpace):
+                args += [W for W in V.spaces]
+
+            else:
+                args += [V]
+
+        spaces = Tuple(*args)
         # ...
 
         # ... all spaces must have the same domain
