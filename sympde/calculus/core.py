@@ -1118,3 +1118,6 @@ bracket = Bracket
 laplace = Laplace
 hessian = Hessian
 # ...
+
+_is_op_test_function = lambda op: (isinstance(op, (Grad, Curl, Div)) and
+                                   isinstance(op._args[0], (ScalarTestFunction, VectorTestFunction)))

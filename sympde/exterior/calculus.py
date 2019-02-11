@@ -131,7 +131,53 @@ class ExteriorProduct(LinearOperator):
         right = _args[1]
         # TODO add properties in the spirit of ExteriorDerivative
 
-        return cls(left, right, evaluate=False)
+        # ...
+        if isinstance(left, Add):
+            args = [cls.eval(i, right) for i in left.args]
+            return Add(*args)
+        # ...
+
+        # ...
+        if isinstance(right, Add):
+            args = [cls.eval(left, i) for i in right.args]
+            return Add(*args)
+        # ...
+
+        # ... from now on, we construct left and right with some coeffs
+        #     return is done at the end
+        alpha = S.One
+        if isinstance(left, Mul):
+            coeffs  = [a for a in left.args if isinstance(a, _coeffs_registery)]
+            vectors = [a for a in left.args if not(a in coeffs)]
+
+            a = S.One
+            if coeffs:
+                a = Mul(*coeffs)
+
+            b = S.One
+            if vectors:
+                b = Mul(*vectors)
+
+            alpha *= a
+            left   = b
+
+        if isinstance(right, Mul):
+            coeffs  = [a for a in right.args if isinstance(a, _coeffs_registery)]
+            vectors = [a for a in right.args if not(a in coeffs)]
+
+            a = S.One
+            if coeffs:
+                a = Mul(*coeffs)
+
+            b = S.One
+            if vectors:
+                b = Mul(*vectors)
+
+            alpha *= a
+            right  = b
+        # ...
+
+        return alpha*cls(left, right, evaluate=False)
 
     @property
     def math_symbol(self):

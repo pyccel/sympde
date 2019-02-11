@@ -136,8 +136,18 @@ def test_compiler_3d_2():
     X = H1 * Hcurl * Hdiv * L2
 
     v0, v1, v2, v3 = TestFunction(X, ['v0', 'v1', 'v2', 'v3'])
+    u0, u1, u2, u3 = TestFunction(X, ['u0', 'u1', 'u2', 'u3'])
 
     beta = Field(V, 'beta')
+
+    expr = dot(grad(v0), u1)
+    print(ExteriorCalculusExpr(expr, tests=[v0]))
+
+    expr = dot(grad(u0), v1)
+    print(ExteriorCalculusExpr(expr, tests=[v0]))
+
+#    expr = dot(u1, v1)
+#    print(ExteriorCalculusExpr(expr, tests=[v1]))
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
@@ -152,4 +162,4 @@ def teardown_function():
     cache.clear_cache()
 
 test_compiler_3d_1()
-#test_compiler_3d_2()
+test_compiler_3d_2()

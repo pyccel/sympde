@@ -551,3 +551,5 @@ trace_1 = lambda x, B: Trace(x, B, order=1)
 
 _is_sympde_atom = lambda a: isinstance(a, (ScalarTestFunction, VectorTestFunction,
                                                    ScalarField, VectorField))
+
+_is_test_function = lambda a: isinstance(a, (ScalarTestFunction, VectorTestFunction))

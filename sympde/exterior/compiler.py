@@ -19,17 +19,20 @@ from sympy.core.singleton import S
 from sympde.core.basic import _coeffs_registery
 from sympde.core.basic import CalculusFunction
 from sympde.topology import FunctionSpace, VectorFunctionSpace
-from sympde.topology import H1Space, HcurlSpace, HdivSpace, L2Space, UndefinedSpace
+from sympde.topology import H1SpaceType, HcurlSpaceType, HdivSpaceType
+from sympde.topology import L2SpaceType, UndefinedSpaceType
 from sympde.topology import TestFunction, ScalarTestFunction, VectorTestFunction
 from sympde.topology import Field, ScalarField, VectorField
 from sympde.topology.space import _is_sympde_atom
+from sympde.topology.space import _is_test_function
+from sympde.calculus.core import _is_op_test_function
 from sympde.calculus import Grad, Curl, Div
 from sympde.calculus import Dot, Cross
 #from sympde.calculus import grad, dot, inner, cross, rot, curl, div
 
 from .form import DifferentialForm
 from .calculus import d, wedge, ip
-from .calculus import delta, jp
+from .calculus import delta, jp, hodge
 
 
 
@@ -69,54 +72,107 @@ class ExteriorCalculusExpr(CalculusFunction):
         expr = _args[0]
         tests = kwargs.pop('tests', [])
 
-        if isinstance(expr, Grad):
-            arg = expr._args[0]
-            name = arg.name
-            dim = arg.space.ldim
+        if isinstance(expr, (ScalarField, VectorField)):
+            return expr
 
-            if not(arg in tests):
-                return d(DifferentialForm(name, index=0, dim=dim))
+        if isinstance(expr, (tuple, list, Tuple)):
+            return expr
+
+        if isinstance(expr, _coeffs_registery):
+            return expr
+
+        if _is_test_function(expr):
+            name = expr.name
+            dim  = expr.space.ldim
+            kind = expr.space.kind
+
+            if isinstance(kind, H1SpaceType):
+                if not(expr in tests):
+                    return DifferentialForm(name, index=0, dim=dim)
+
+                else:
+                    return DifferentialForm(name, index=3, dim=dim)
+
+            elif isinstance(kind, HcurlSpaceType):
+                if not(expr in tests):
+                    return DifferentialForm(name, index=1, dim=dim)
+
+                else:
+                    return DifferentialForm(name, index=2, dim=dim)
+
+            elif isinstance(kind, HdivSpaceType):
+                if not(expr in tests):
+                    return DifferentialForm(name, index=2, dim=dim)
+
+                else:
+                    return DifferentialForm(name, index=1, dim=dim)
+
+            elif isinstance(kind, L2SpaceType):
+                if not(expr in tests):
+                    return DifferentialForm(name, index=3, dim=dim)
+
+                else:
+                    return DifferentialForm(name, index=0, dim=dim)
 
             else:
-                return -delta(DifferentialForm(name, index=3, dim=dim))
+                msg = 'Cannot convert {} to differential form'.format(expr)
+                raise TypeError(msg)
+
+        if isinstance(expr, Grad):
+            arg = expr._args[0]
+            newarg = cls.eval(arg, tests=tests)
+
+            if not(arg in tests):
+                return d(newarg)
+
+            else:
+                return -delta(newarg)
 
         if isinstance(expr, Curl):
             arg = expr._args[0]
-            name = arg.name
-            dim = arg.space.ldim
+            newarg = cls.eval(arg, tests=tests)
 
             if not(arg in tests):
-                return d(DifferentialForm(name, index=1, dim=dim))
+                return d(newarg)
 
             else:
-                return delta(DifferentialForm(name, index=2, dim=dim))
+                return delta(newarg)
 
         if isinstance(expr, Div):
             arg = expr._args[0]
-            name = arg.name
-            dim = arg.space.ldim
+            newarg = cls.eval(arg, tests=tests)
 
             if not(arg in tests):
-                return d(DifferentialForm(name, index=2, dim=dim))
+                return d(newarg)
 
             else:
-                return -delta(DifferentialForm(name, index=1, dim=dim))
+                return -delta(newarg)
 
         if isinstance(expr, Dot):
             # TODO ORDER OF LEFT AND RIGHT DEPEND ON THE STR!!
             #      TO BE IMPROVED
             left, right = expr._args[:]
 
-            if _is_sympde_atom(right):
-                dim = right.space.ldim
+            # TODO apply hodge only on test
+            newleft = cls.eval(left, tests=tests)
+            newright = cls.eval(right, tests=tests)
+
+            if _is_test_function(left) and _is_test_function(right):
+                raise NotImplementedError('')
+
+            elif _is_op_test_function(left) and _is_test_function(right):
+                return wedge(newright, hodge(newleft))
+
+            elif _is_test_function(left) and _is_op_test_function(right):
+                return wedge(newleft, hodge(newright))
+
+            elif _is_test_function(right):
 
                 if not(right in tests):
-                    right = DifferentialForm(right.name, index=1, dim=dim)
-                    return ip(left, right)
+                    return ip(newleft, newright)
 
                 else:
-                    right = DifferentialForm(right.name, index=2, dim=dim)
-                    return jp(left, right)
+                    return jp(newleft, newright)
 
             else:
                 raise NotImplementedError('')
@@ -126,7 +182,7 @@ class ExteriorCalculusExpr(CalculusFunction):
             #      TO BE IMPROVED
             left, right = expr._args[:]
 
-            if _is_sympde_atom(right):
+            if _is_test_function(right):
                 dim = right.space.ldim
 
                 if not(right in tests):
