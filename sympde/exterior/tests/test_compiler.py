@@ -32,7 +32,7 @@ def test_compiler_3d_1():
     L2    =       FunctionSpace('V3', domain, kind='L2')
     V     = VectorFunctionSpace('V', domain)
 
-    X = ProductSpace(H1, Hcurl, Hdiv, L2)
+    X = H1 * Hcurl * Hdiv * L2
 
     v0, v1, v2, v3 = TestFunction(X, ['v0', 'v1', 'v2', 'v3'])
 
@@ -99,6 +99,23 @@ def test_compiler_3d_1():
     # ...
 
 #==============================================================================
+def test_compiler_3d_2():
+
+    domain = Domain('Omega', dim=3)
+
+    H1    =       FunctionSpace('V0', domain, kind='H1')
+    Hcurl = VectorFunctionSpace('V1', domain, kind='Hcurl')
+    Hdiv  = VectorFunctionSpace('V2', domain, kind='Hdiv')
+    L2    =       FunctionSpace('V3', domain, kind='L2')
+    V     = VectorFunctionSpace('V', domain)
+
+    X = H1 * Hcurl * Hdiv * L2
+
+    v0, v1, v2, v3 = TestFunction(X, ['v0', 'v1', 'v2', 'v3'])
+
+    beta = Field(V, 'beta')
+
+#==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
 
@@ -110,4 +127,5 @@ def teardown_function():
     from sympy import cache
     cache.clear_cache()
 
-test_compiler_3d_1()
+#test_compiler_3d_1()
+#test_compiler_3d_2()

@@ -8,7 +8,7 @@ from sympy import srepr
 
 from sympde import Constant
 
-from sympde.exterior import d, wedge, ip
+from sympde.exterior import d, wedge, ip, jp, delta
 from sympde.exterior import DifferentialForm
 from sympde.exterior import PullBack
 from sympde.exterior import infere_index
@@ -19,7 +19,6 @@ def test_feec_1():
 
     x, y, z = symbols('x y z')
     a = Constant('a')
-
 
     # ...
     u_0 = DifferentialForm('u_0', index=0)
@@ -90,5 +89,3 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
-
-#test_feec_1()

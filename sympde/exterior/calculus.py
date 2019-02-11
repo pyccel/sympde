@@ -1,5 +1,7 @@
 # coding: utf-8
 
+# TODO - use BasicOperator instead of LinearOperator
+
 from numpy import unique
 
 from sympy.core import Basic
@@ -16,8 +18,24 @@ from sympy.core.singleton import S
 
 from sympde.core.basic import _coeffs_registery
 from sympde.core import LinearOperator
+from sympde.core.basic import CalculusFunction
 
 from .form import DifferentialForm
+
+
+
+#==============================================================================
+class BasicOperator(CalculusFunction):
+    """
+    Basic class for calculus operators.
+    """
+
+    def __getitem__(self, indices, **kw_args):
+        if is_sequence(indices):
+            # Special case needed because M[*my_tuple] is a syntax error.
+            return Indexed(self, *indices, **kw_args)
+        else:
+            return Indexed(self, indices, **kw_args)
 
 
 #==============================================================================
@@ -341,7 +359,20 @@ class AdjointInteriorProduct(LinearOperator):
         return 'jp({left}, {right})'.format( left=sstr(self.args[0]),
                                              right=sstr(self.args[1]) )
 
+
 #==============================================================================
+#      user friendly names
+d = ExteriorDerivative
+wedge = ExteriorProduct
+ip = InteriorProduct
+
+delta = AdjointExteriorDerivative
+jp = AdjointInteriorProduct
+# ...
+
+
+#==============================================================================
+# TODO to be moved
 def infere_index(expr):
     if isinstance(expr, DifferentialForm):
         return expr.index
@@ -369,13 +400,3 @@ def infere_index(expr):
         return indices[0]
 
     return None
-
-#==============================================================================
-#      user friendly names
-d = ExteriorDerivative
-wedge = ExteriorProduct
-ip = InteriorProduct
-
-delta = AdjointExteriorDerivative
-jp = AdjointInteriorProduct
-# ...
