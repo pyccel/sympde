@@ -23,7 +23,6 @@ from sympde.core.basic import CalculusFunction
 from .form import DifferentialForm
 
 
-
 #==============================================================================
 class BasicOperator(CalculusFunction):
     """
@@ -69,10 +68,6 @@ class ExteriorDerivative(LinearOperator):
         expr = _args[0]
 
         if isinstance(expr, ExteriorDerivative):
-            return 0
-
-        # TODO improve
-        elif isinstance(expr, (int, complex)):
             return 0
 
         elif isinstance(expr, _coeffs_registery):
@@ -191,6 +186,7 @@ class InteriorProduct(LinearOperator):
                                              right=sstr(self.args[1]) )
 
 #==============================================================================
+# TODO improve and test
 class PullBack(LinearOperator):
 
     nargs = None
@@ -359,6 +355,68 @@ class AdjointInteriorProduct(LinearOperator):
         return 'jp({left}, {right})'.format( left=sstr(self.args[0]),
                                              right=sstr(self.args[1]) )
 
+#==============================================================================
+class Hodge(LinearOperator):
+
+    nargs = None
+
+    def __new__(cls, *args, **options):
+        # (Try to) sympify args first
+
+        if options.pop('evaluate', True):
+            r = cls.eval(*args)
+        else:
+            r = None
+
+        if r is None:
+            return Basic.__new__(cls, *args, **options)
+        else:
+            return r
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        if not( len(_args) == 1):
+            raise ValueError('Expecting one argument')
+
+        expr = _args[0]
+
+        if isinstance(expr, ExteriorDerivative):
+            return 0
+
+        elif isinstance(expr, _coeffs_registery):
+            return 0
+
+        elif isinstance(expr, Add):
+            args = expr.args
+            args = [cls.eval(a) for a in expr.args]
+            return Add(*args)
+
+        # TODO improve
+        elif isinstance(expr, Mul):
+            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            vectors = [a for a in expr.args if not(a in coeffs)]
+
+            a = S.One
+            if coeffs:
+                a = Mul(*coeffs)
+
+            b = S.One
+            if vectors:
+                b = cls(Mul(*vectors), evaluate=False)
+
+            return Mul(a, b)
+
+
+        return cls(expr, evaluate=False)
+
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        return '{hodge}({arg})'.format(hodge=sstr('hodge'), arg=sstr(self.args[0]))
 
 #==============================================================================
 #      user friendly names
@@ -368,35 +426,5 @@ ip = InteriorProduct
 
 delta = AdjointExteriorDerivative
 jp = AdjointInteriorProduct
+hodge = Hodge
 # ...
-
-
-#==============================================================================
-# TODO to be moved
-def infere_index(expr):
-    if isinstance(expr, DifferentialForm):
-        return expr.index
-
-    elif isinstance(expr, ExteriorDerivative):
-        arg = expr.args[0]
-        i = infere_index(arg)
-
-        return get_index_form(i.index - 1)
-
-    elif isinstance(expr, ExteriorProduct):
-        left = expr.args[0]
-        right = expr.args[1]
-        i = infere_index(left)
-        j = infere_index(right)
-
-        return get_index_form(i.index + j.index)
-
-    elif isinstance(expr, Add):
-        indices = set([infere_index(i) for i in expr.args])
-        indices = list(indices)
-        if not( len(indices) == 1 ):
-            raise ValueError('> Incompatible types. Found {}'.format(indices))
-
-        return indices[0]
-
-    return None

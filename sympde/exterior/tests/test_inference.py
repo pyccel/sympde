@@ -16,9 +16,8 @@ from sympde.exterior import ZeroFormType, OneFormType, TwoFormType, ThreeFormTyp
 from sympde.exterior import FourFormType, FiveFormType, SixFormType
 
 
-
 #==============================================================================
-def test_exterior_1():
+def test_type_inference_1():
 
     x, y, z = symbols('x y z')
     a = Constant('a')
@@ -36,21 +35,33 @@ def test_exterior_1():
     u_3 = DifferentialForm('u_3', index=3)
     v_3 = DifferentialForm('v_3', index=3)
 
-    # ... exterior derivative
-    assert(d(d(u_0)) == 0)
-    assert(d(u_0+v_0) == d(u_0) + d(v_0))
-    assert(d(2*u_0) == 2*d(u_0))
-    assert(d(a*u_0+v_0) == a*d(u_0) + d(v_0))
+    # ...
+    expr = u_0
+    assert(isinstance(infere_type(expr), ZeroFormType))
     # ...
 
-    # ... exterior product
-    print('> ', wedge(u_0, u_1))
+    # ...
+    expr = d(u_1)
+    assert(isinstance(infere_type(expr), TwoFormType))
     # ...
 
-    # ... hodge operator
-    print('> ', hodge(u_0))
+    # ...
+    expr = delta(u_1)
+    assert(isinstance(infere_type(expr), ZeroFormType))
     # ...
 
+    # ...
+    expr = wedge(u_2, u_2)
+    assert(isinstance(infere_type(expr), FourFormType))
+    # ...
+
+#    expr = d(u_1) + u_0
+#    print('> ', infere_type(expr))
+#
+#    # this one will raise an error
+#    expr = d(u_1) + u_1
+#    print('> ', infere_type(expr))
+    # ...
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
@@ -64,4 +75,4 @@ def teardown_function():
     from sympy import cache
     cache.clear_cache()
 
-#test_exterior_1()
+test_type_inference_1()

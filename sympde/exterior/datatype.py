@@ -39,41 +39,50 @@ class FormType(with_metaclass(Singleton, Basic)):
     def __str__(self):
         return str(self.name)
 
-class TypeZeroForm(FormType):
+class ZeroFormType(FormType):
     _index = 0
     pass
 
-class TypeOneForm(FormType):
+class OneFormType(FormType):
     _index = 1
     pass
 
-class TypeTwoForm(FormType):
+class TwoFormType(FormType):
     _index = 2
     pass
 
-class TypeThreeForm(FormType):
+class ThreeFormType(FormType):
     _index = 3
     pass
 
-class TypeFourForm(FormType):
+class FourFormType(FormType):
     _index = 4
     pass
 
-class TypeFiveForm(FormType):
+class FiveFormType(FormType):
     _index = 5
     pass
 
-class TypeSixForm(FormType):
+class SixFormType(FormType):
     _index = 6
     pass
 
-dtype_registry = {0: TypeZeroForm(),
-                  1: TypeOneForm(),
-                  2: TypeTwoForm(),
-                  3: TypeThreeForm(),
-                  4: TypeFourForm(),
-                  5: TypeFiveForm(),
-                  6: TypeSixForm()}
+
+ZeroForm  = ZeroFormType()
+OneForm   = OneFormType()
+TwoForm   = TwoFormType()
+ThreeForm = ThreeFormType()
+FourForm  = FourFormType()
+FiveForm  = FiveFormType()
+SixForm   = SixFormType()
+
+dtype_registry = {0: ZeroForm,
+                  1: OneForm,
+                  2: TwoForm,
+                  3: ThreeForm,
+                  4: FourForm,
+                  5: FiveForm,
+                  6: SixForm}
 
 def get_index_form(dtype):
     if isinstance(dtype, FormType):
