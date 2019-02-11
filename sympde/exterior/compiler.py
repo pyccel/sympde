@@ -216,31 +216,62 @@ class ExteriorCalculusExpr(CalculusFunction):
 
         # TODO improve
         if isinstance(expr, Mul):
+
             if len(expr.args) == 2:
+                left, right = expr.args[:]
 
-                convert = False
-                if isinstance(expr.args[0], ScalarTestFunction):
-                    left  = expr.args[1]
-                    right = expr.args[0]
-                    convert = True
+                newleft = cls.eval(left, tests=tests)
+                newright = cls.eval(right, tests=tests)
+                if _is_test_function(left) and _is_test_function(right):
 
-                elif isinstance(expr.args[1], ScalarTestFunction):
-                    left  = expr.args[0]
-                    right = expr.args[1]
-                    convert = True
+                    if left in tests:
+                        return wedge(newright, hodge(newleft))
 
-                if convert:
-                    dim = right.space.ldim
-
-                    if not(right in tests):
-                        right = DifferentialForm(right.name, index=3, dim=dim)
-                        return ip(left, right)
+                    elif right in tests:
+                        return wedge(newleft, hodge(newright))
 
                     else:
-                        right = DifferentialForm(right.name, index=0, dim=dim)
-                        return jp(left, right)
+                        raise ValueError('argument not appears as a test function')
+
+                elif _is_op_test_function(left) and _is_test_function(right):
+                    if left._args[0] in tests:
+                        return wedge(newright, hodge(newleft))
+
+                    elif right in tests:
+                        return wedge(newleft, hodge(newright))
+
+                    else:
+                        raise ValueError('argument not appears as a test function')
+
+                elif _is_test_function(left) and _is_op_test_function(right):
+                    raise NotImplementedError('')
+
+                else:
+                    convert = False
+                    if isinstance(expr.args[0], ScalarTestFunction):
+                        left  = expr.args[1]
+                        right = expr.args[0]
+                        convert = True
+
+                    elif isinstance(expr.args[1], ScalarTestFunction):
+                        left  = expr.args[0]
+                        right = expr.args[1]
+                        convert = True
+
+                    if convert:
+                        dim = right.space.ldim
+
+                        if not(right in tests):
+                            right = DifferentialForm(right.name, index=3, dim=dim)
+                            return ip(left, right)
+
+                        else:
+                            right = DifferentialForm(right.name, index=0, dim=dim)
+                            return jp(left, right)
 
             else:
+                args = [cls.eval(a, tests=tests) for a in expr.args]
+
                 raise NotImplementedError('')
 
         return cls(expr, evaluate=False)
