@@ -67,52 +67,40 @@ class ExteriorCalculusExpr(CalculusFunction):
             raise ValueError('Expecting one argument')
 
         expr = _args[0]
-        index = kwargs.pop('index', None)
+        tests = kwargs.pop('tests', [])
 
         if isinstance(expr, Grad):
             arg = expr._args[0]
             name = arg.name
+            dim = arg.space.ldim
 
-            if index is None: index = 0
-
-            if index == 0:
-                return d(DifferentialForm(name, index=index))
-
-            elif index == 3:
-                return -delta(DifferentialForm(name, index=index))
+            if not(arg in tests):
+                return d(DifferentialForm(name, index=0, dim=dim))
 
             else:
-                raise ValueError('')
+                return -delta(DifferentialForm(name, index=3, dim=dim))
 
         if isinstance(expr, Curl):
             arg = expr._args[0]
             name = arg.name
+            dim = arg.space.ldim
 
-            if index is None: index = 1
-
-            if index == 1:
-                return d(DifferentialForm(name, index=index))
-
-            elif index == 2:
-                return delta(DifferentialForm(name, index=index))
+            if not(arg in tests):
+                return d(DifferentialForm(name, index=1, dim=dim))
 
             else:
-                raise ValueError('')
+                return delta(DifferentialForm(name, index=2, dim=dim))
 
         if isinstance(expr, Div):
             arg = expr._args[0]
             name = arg.name
+            dim = arg.space.ldim
 
-            if index is None: index = 2
-
-            if index == 2:
-                return d(DifferentialForm(name, index=index))
-
-            elif index == 1:
-                return -delta(DifferentialForm(name, index=index))
+            if not(arg in tests):
+                return d(DifferentialForm(name, index=2, dim=dim))
 
             else:
-                raise ValueError('')
+                return -delta(DifferentialForm(name, index=1, dim=dim))
 
         if isinstance(expr, Dot):
             # TODO ORDER OF LEFT AND RIGHT DEPEND ON THE STR!!
@@ -120,20 +108,15 @@ class ExteriorCalculusExpr(CalculusFunction):
             left, right = expr._args[:]
 
             if _is_sympde_atom(right):
-                if index is None: index = 1
+                dim = right.space.ldim
 
-                right = DifferentialForm(right.name, index=index)
-
-                if index == 1:
-
+                if not(right in tests):
+                    right = DifferentialForm(right.name, index=1, dim=dim)
                     return ip(left, right)
 
-                elif index == 2:
-
-                    return jp(left, right)
-
                 else:
-                    raise NotImplementedError('')
+                    right = DifferentialForm(right.name, index=2, dim=dim)
+                    return jp(left, right)
 
             else:
                 raise NotImplementedError('')
@@ -144,20 +127,15 @@ class ExteriorCalculusExpr(CalculusFunction):
             left, right = expr._args[:]
 
             if _is_sympde_atom(right):
-                if index is None: index = 2
+                dim = right.space.ldim
 
-                right = DifferentialForm(right.name, index=index)
-
-                if index == 2:
-
+                if not(right in tests):
+                    right = DifferentialForm(right.name, index=2, dim=dim)
                     return ip(left, right)
 
-                elif index == 1:
-
-                    return -jp(left, right)
-
                 else:
-                    raise NotImplementedError('')
+                    right = DifferentialForm(right.name, index=1, dim=dim)
+                    return -jp(left, right)
 
             else:
                 raise NotImplementedError('')
@@ -178,20 +156,15 @@ class ExteriorCalculusExpr(CalculusFunction):
                     convert = True
 
                 if convert:
-                    if index is None: index = 3
+                    dim = right.space.ldim
 
-                    right = DifferentialForm(right.name, index=index)
-
-                    if index == 3:
-
+                    if not(right in tests):
+                        right = DifferentialForm(right.name, index=3, dim=dim)
                         return ip(left, right)
 
-                    elif index == 0:
-
-                        return jp(left, right)
-
                     else:
-                        raise NotImplementedError('')
+                        right = DifferentialForm(right.name, index=0, dim=dim)
+                        return jp(left, right)
 
             else:
                 raise NotImplementedError('')

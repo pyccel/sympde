@@ -356,6 +356,7 @@ class AdjointInteriorProduct(LinearOperator):
                                              right=sstr(self.args[1]) )
 
 #==============================================================================
+# TODO even/odd dim
 class Hodge(LinearOperator):
 
     nargs = None
@@ -385,10 +386,15 @@ class Hodge(LinearOperator):
 
         expr = _args[0]
 
-        if isinstance(expr, ExteriorDerivative):
-            return 0
+        if isinstance(expr, Hodge):
+            arg = expr._args[0]
+            if isinstance(arg, DifferentialForm):
+                k = arg.index.index
+                n = arg.dim
+                c = (-1)**(k*(n-k))
+                return c*arg
 
-        elif isinstance(expr, _coeffs_registery):
+        if isinstance(expr, _coeffs_registery):
             return 0
 
         elif isinstance(expr, Add):

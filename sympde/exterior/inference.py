@@ -27,6 +27,18 @@ from .calculus import Hodge
 
 
 #==============================================================================
+def _get_dim(expr):
+    if isinstance(expr, DifferentialForm):
+        return expr.dim
+
+    else:
+        atoms = list(expr.atoms(DifferentialForm))
+        if not atoms:
+            raise ValueError('Cannot compute dim')
+
+        return atoms[0].dim
+
+#==============================================================================
 def infere_type(expr):
     if isinstance(expr, DifferentialForm):
         return expr.index
@@ -54,9 +66,7 @@ def infere_type(expr):
     elif isinstance(expr, Hodge):
         arg = expr.args[0]
         k = infere_type(arg)
-        # TODO improve
-#        n = arg.dim
-        n = 3
+        n = _get_dim(arg)
 
         return get_index_form(n-k.index)
 

@@ -19,7 +19,7 @@ from sympde.core import LinearOperator
 
 from .datatype import get_index_form
 
-# ...
+#==============================================================================
 class DifferentialForm(Symbol):
     """
     Represents a differential form symbol.
@@ -27,13 +27,15 @@ class DifferentialForm(Symbol):
     Examples
 
     """
-    def __new__(cls, name, index):
+    def __new__(cls, name, index, dim):
         if not isinstance(name, str):
             raise TypeError('> Expecting a string for name')
 
         index = get_index_form(index)
 
-        return Basic.__new__(cls, name, index)
+        assert(isinstance(dim, (int, Symbol)))
+
+        return Basic.__new__(cls, name, index, dim)
 
     @property
     def name(self):
@@ -43,15 +45,6 @@ class DifferentialForm(Symbol):
     def index(self):
         return self._args[1]
 
-#    _index = ''
-#    def __new__(cls, *args, **kwargs):
-#        index = kwargs.pop('index', '')
-#
-#        obj = Symbol.__new__(cls, *args, **kwargs)
-#        obj._index = index
-#        return obj
-#
-#    @property
-#    def index(self):
-#        return self._index
-# ...
+    @property
+    def dim(self):
+        return self._args[2]

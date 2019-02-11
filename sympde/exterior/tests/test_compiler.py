@@ -16,7 +16,7 @@ from sympde.topology import TestFunction, ScalarTestFunction, VectorTestFunction
 from sympde.topology import Field, ScalarField, VectorField
 from sympde.calculus import grad, dot, inner, cross, rot, curl, div
 
-from sympde.exterior import d, wedge, ip
+from sympde.exterior import d, wedge, ip, delta, jp
 from sympde.exterior import DifferentialForm
 from sympde.exterior import ExteriorCalculusExpr
 
@@ -40,62 +40,86 @@ def test_compiler_3d_1():
 
     # ...
     expr = grad(v0)
-    print(ExteriorCalculusExpr(expr))
+    expected = d(DifferentialForm('v0', index=0, dim=domain.dim))
+
+    assert(ExteriorCalculusExpr(expr) == expected)
     # ...
 
     # ...
     expr = curl(v1)
-    print(ExteriorCalculusExpr(expr))
+    expected = d(DifferentialForm('v1', index=1, dim=domain.dim))
+
+    assert(ExteriorCalculusExpr(expr) == expected)
     # ...
 
     # ...
     expr = div(v2)
-    print(ExteriorCalculusExpr(expr))
+    expected = d(DifferentialForm('v2', index=2, dim=domain.dim))
+
+    assert(ExteriorCalculusExpr(expr) == expected)
     # ...
 
-    # ... TODO to be improved
+    # ...
     expr = grad(v0)
-    print(ExteriorCalculusExpr(expr, index=3))
+    expected = - delta(DifferentialForm('v0', index=3, dim=domain.dim))
+
+    assert(ExteriorCalculusExpr(expr, tests=[v0]) == expected)
     # ...
 
-    # ... TODO to be improved
+    # ...
     expr = curl(v1)
-    print(ExteriorCalculusExpr(expr, index=2))
+    expected = delta(DifferentialForm('v1', index=2, dim=domain.dim))
+
+    assert(ExteriorCalculusExpr(expr, tests=[v1]) == expected)
     # ...
 
-    # ... TODO to be improved
+    # ...
     expr = div(v2)
-    print(ExteriorCalculusExpr(expr, index=1))
+    expected = -delta(DifferentialForm('v2', index=1, dim=domain.dim))
+
+    assert(ExteriorCalculusExpr(expr, tests=[v2]) == expected)
     # ...
 
     # ...
     expr = dot(beta, v1)
-    print(ExteriorCalculusExpr(expr))
+    expected = ip(beta, DifferentialForm('v1', index=1, dim=domain.dim))
+
+    assert(ExteriorCalculusExpr(expr) == expected)
     # ...
 
     # ...
     expr = cross(beta, v2)
-    print(ExteriorCalculusExpr(expr))
+    expected = ip(beta, DifferentialForm('v2', index=2, dim=domain.dim))
+
+    assert(ExteriorCalculusExpr(expr) == expected)
     # ...
 
     # ...
     expr = beta*v3
-    print(ExteriorCalculusExpr(expr))
+    expected = ip(beta, DifferentialForm('v3', index=3, dim=domain.dim))
+
+    assert(ExteriorCalculusExpr(expr) == expected)
     # ...
 
-    # ... TODO to be improved
+    # ...
     expr = dot(beta, v1)
-    print(ExteriorCalculusExpr(expr, index=2))
+    expected = jp(beta, DifferentialForm('v1', index=3, dim=domain.dim))
+
+    assert(ExteriorCalculusExpr(expr, tests=[v1]) == expected)
     # ...
 
-    # ... TODO to be improved
+    # ...
     expr = cross(beta, v2)
-    print(ExteriorCalculusExpr(expr, index=1))
+    expected = -jp(beta, DifferentialForm('v2', index=2, dim=domain.dim))
+
+    assert(ExteriorCalculusExpr(expr, tests=[v2]) == expected)
     # ...
 
-    # ... TODO to be improved
+    # ...
     expr = beta*v3
-    print(ExteriorCalculusExpr(expr, index=0))
+    expected = jp(beta, DifferentialForm('v3', index=1, dim=domain.dim))
+
+    assert(ExteriorCalculusExpr(expr, tests=[v3]) == expected)
     # ...
 
 #==============================================================================
@@ -127,5 +151,5 @@ def teardown_function():
     from sympy import cache
     cache.clear_cache()
 
-#test_compiler_3d_1()
+test_compiler_3d_1()
 #test_compiler_3d_2()
