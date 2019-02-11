@@ -45,7 +45,7 @@ def test_space_2d_1():
     U3 = VectorFunctionSpace('U3', domain)
 
     # ...
-    V = ProductSpace(V1, V2, V3)
+    V = V1 * V2 * V3
 
     assert(V.ldim == DIM)
     assert(V.shape == 3)
@@ -53,7 +53,7 @@ def test_space_2d_1():
     # ...
 
     # ...
-    U = ProductSpace(U1, U2, U3)
+    U = U1 * U2 * U3
 
     assert(U.ldim == DIM)
     assert(U.shape == 4)
@@ -139,6 +139,3 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
-
-#test_space_2d_1()
-test_space_2d_2()

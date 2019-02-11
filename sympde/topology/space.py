@@ -78,7 +78,19 @@ class BasicFunctionSpace(Basic):
         return sstr(self.name)
 
     def __mul__(self, other):
-        return ProductSpace(self, other)
+        if isinstance(self, ProductSpace):
+            left = self.spaces
+
+        else:
+            left = [self]
+
+        if isinstance(other, ProductSpace):
+            right = other.spaces
+
+        else:
+            right = [other]
+
+        return ProductSpace(*left, *right)
 
 #==============================================================================
 class FunctionSpace(BasicFunctionSpace):
