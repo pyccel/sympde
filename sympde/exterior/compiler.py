@@ -149,19 +149,30 @@ class ExteriorCalculusExpr(CalculusFunction):
                 return -delta(newarg)
 
         if isinstance(expr, Dot):
-            # TODO ORDER OF LEFT AND RIGHT DEPEND ON THE STR!!
-            #      TO BE IMPROVED
             left, right = expr._args[:]
 
-            # TODO apply hodge only on test
             newleft = cls.eval(left, tests=tests)
             newright = cls.eval(right, tests=tests)
 
             if _is_test_function(left) and _is_test_function(right):
-                raise NotImplementedError('')
+                if left in tests:
+                    return wedge(newright, hodge(newleft))
+
+                elif right in tests:
+                    return wedge(newleft, hodge(newright))
+
+                else:
+                    raise ValueError('argument not appears as a test function')
 
             elif _is_op_test_function(left) and _is_test_function(right):
-                return wedge(newright, hodge(newleft))
+                if left._args[0] in tests:
+                    return wedge(newright, hodge(newleft))
+
+                elif right in tests:
+                    return wedge(newleft, hodge(newright))
+
+                else:
+                    raise ValueError('argument not appears as a test function')
 
             elif _is_test_function(left) and _is_op_test_function(right):
                 return wedge(newleft, hodge(newright))
@@ -173,6 +184,9 @@ class ExteriorCalculusExpr(CalculusFunction):
 
                 else:
                     return jp(newleft, newright)
+
+            elif _is_test_function(left):
+                raise NotImplementedError('')
 
             else:
                 raise NotImplementedError('')
@@ -195,6 +209,10 @@ class ExteriorCalculusExpr(CalculusFunction):
 
             else:
                 raise NotImplementedError('')
+
+        if isinstance(expr, Add):
+            args = [cls.eval(a, tests=tests) for a in expr.args]
+            return Add(*args)
 
         # TODO improve
         if isinstance(expr, Mul):

@@ -140,14 +140,37 @@ def test_compiler_3d_2():
 
     beta = Field(V, 'beta')
 
+    # ...
+    expr = dot(u1, v1)
+    print(ExteriorCalculusExpr(expr, tests=[v1]))
+
+    expr = dot(u2, v2)
+    print(ExteriorCalculusExpr(expr, tests=[v2]))
+
     expr = dot(grad(v0), u1)
     print(ExteriorCalculusExpr(expr, tests=[v0]))
 
     expr = dot(grad(u0), v1)
-    print(ExteriorCalculusExpr(expr, tests=[v0]))
+    print(ExteriorCalculusExpr(expr, tests=[v1]))
 
-#    expr = dot(u1, v1)
-#    print(ExteriorCalculusExpr(expr, tests=[v1]))
+    expr = dot(curl(u1), v2)
+    print(ExteriorCalculusExpr(expr, tests=[v2]))
+
+    expr = dot(curl(v1), u2)
+    print(ExteriorCalculusExpr(expr, tests=[v1]))
+    # ...
+
+    # ...
+    expr = dot(u1, v1) + dot(u2, v2)
+    print(ExteriorCalculusExpr(expr, tests=[v1,v2]))
+
+    expr = dot(u1, v1) + dot(grad(v0), u1)
+    print(ExteriorCalculusExpr(expr, tests=[v0,v1]))
+
+    expr = dot(u1, v1) + dot(grad(v0), u1) + dot(grad(u0), v1)
+    print(ExteriorCalculusExpr(expr, tests=[v0,v1]))
+    # ...
+
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
