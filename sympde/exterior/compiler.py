@@ -3,6 +3,7 @@
 # TODO - assert the space type is not Undefined
 
 from numpy import unique
+from collections import OrderedDict
 
 from sympy.core import Basic
 from sympy.tensor import Indexed, IndexedBase
@@ -27,7 +28,7 @@ from sympde.topology.space import _is_sympde_atom
 from sympde.topology.space import _is_test_function
 from sympde.calculus.core import _is_op_test_function
 from sympde.calculus import Grad, Curl, Div
-from sympde.calculus import Dot, Cross
+from sympde.calculus import Dot, Inner, Cross
 #from sympde.calculus import grad, dot, inner, cross, rot, curl, div
 
 from .form import DifferentialForm
@@ -71,6 +72,9 @@ class ExteriorCalculusExpr(CalculusFunction):
 
         expr = _args[0]
         tests = kwargs.pop('tests', [])
+        atoms = kwargs.pop('atoms', {})
+
+        assert(isinstance(atoms, (dict, OrderedDict)))
 
         if isinstance(expr, (ScalarField, VectorField)):
             return expr
@@ -86,7 +90,10 @@ class ExteriorCalculusExpr(CalculusFunction):
             dim  = expr.space.ldim
             kind = expr.space.kind
 
-            if isinstance(kind, H1SpaceType):
+            if expr in atoms.keys():
+                return atoms[expr]
+
+            elif isinstance(kind, H1SpaceType):
                 if not(expr in tests):
                     return DifferentialForm(name, index=0, dim=dim)
 
@@ -120,7 +127,7 @@ class ExteriorCalculusExpr(CalculusFunction):
 
         if isinstance(expr, Grad):
             arg = expr._args[0]
-            newarg = cls.eval(arg, tests=tests)
+            newarg = cls.eval(arg, tests=tests, atoms=atoms)
 
             if not(arg in tests):
                 return d(newarg)
@@ -130,7 +137,7 @@ class ExteriorCalculusExpr(CalculusFunction):
 
         if isinstance(expr, Curl):
             arg = expr._args[0]
-            newarg = cls.eval(arg, tests=tests)
+            newarg = cls.eval(arg, tests=tests, atoms=atoms)
 
             if not(arg in tests):
                 return d(newarg)
@@ -140,7 +147,7 @@ class ExteriorCalculusExpr(CalculusFunction):
 
         if isinstance(expr, Div):
             arg = expr._args[0]
-            newarg = cls.eval(arg, tests=tests)
+            newarg = cls.eval(arg, tests=tests, atoms=atoms)
 
             if not(arg in tests):
                 return d(newarg)
@@ -151,8 +158,8 @@ class ExteriorCalculusExpr(CalculusFunction):
         if isinstance(expr, Dot):
             left, right = expr._args[:]
 
-            newleft = cls.eval(left, tests=tests)
-            newright = cls.eval(right, tests=tests)
+            newleft = cls.eval(left, tests=tests, atoms=atoms)
+            newright = cls.eval(right, tests=tests, atoms=atoms)
 
             if _is_test_function(left) and _is_test_function(right):
                 if left in tests:
@@ -210,8 +217,40 @@ class ExteriorCalculusExpr(CalculusFunction):
             else:
                 raise NotImplementedError('')
 
+        if isinstance(expr, Inner):
+            left, right = expr._args[:]
+
+            if isinstance(left, Grad) and isinstance(right, Grad):
+                if (_is_test_function(left._args[0]) and
+                    _is_test_function(right._args[0])):
+
+                    left  = left._args[0]
+                    right = right._args[0]
+
+                    newleft = cls.eval(left, tests=tests, atoms=atoms)
+                    newright = cls.eval(right, tests=tests, atoms=atoms)
+
+                    if left in tests:
+                        expr  = wedge(d(newright), hodge(d(newleft)))
+                        expr += wedge(d(delta(newright)), hodge(newleft))
+
+                    elif right in tests:
+                        expr  = wedge(d(newleft), hodge(d(newright)))
+                        expr += wedge(d(delta(newleft)), hodge(newright))
+
+                    else:
+                        raise ValueError('either left/right must be a test function')
+
+                    return expr
+
+                else:
+                    raise NotImplementedError('')
+
+            else:
+                raise NotImplementedError('')
+
         if isinstance(expr, Add):
-            args = [cls.eval(a, tests=tests) for a in expr.args]
+            args = [cls.eval(a, tests=tests, atoms=atoms) for a in expr.args]
             return Add(*args)
 
         # TODO improve
@@ -220,8 +259,8 @@ class ExteriorCalculusExpr(CalculusFunction):
             if len(expr.args) == 2:
                 left, right = expr.args[:]
 
-                newleft = cls.eval(left, tests=tests)
-                newright = cls.eval(right, tests=tests)
+                newleft = cls.eval(left, tests=tests, atoms=atoms)
+                newright = cls.eval(right, tests=tests, atoms=atoms)
                 if _is_test_function(left) and _is_test_function(right):
 
                     if left in tests:
@@ -270,7 +309,7 @@ class ExteriorCalculusExpr(CalculusFunction):
                             return jp(left, right)
 
             else:
-                args = [cls.eval(a, tests=tests) for a in expr.args]
+                args = [cls.eval(a, tests=tests, atoms=atoms) for a in expr.args]
 
                 raise NotImplementedError('')
 

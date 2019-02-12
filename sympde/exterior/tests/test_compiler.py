@@ -1,5 +1,7 @@
 # coding: utf-8
 
+import pytest
+
 
 from sympy import symbols
 from sympy import Tuple
@@ -19,6 +21,7 @@ from sympde.calculus import grad, dot, inner, cross, rot, curl, div
 from sympde.exterior import d, wedge, ip, delta, jp
 from sympde.exterior import DifferentialForm
 from sympde.exterior import ExteriorCalculusExpr
+from sympde.calculus.errors import ArgumentTypeError
 
 
 #==============================================================================
@@ -184,6 +187,66 @@ def test_compiler_3d_2():
 
 
 #==============================================================================
+def test_compiler_3d_poisson():
+
+    domain = Domain('Omega', dim=3)
+
+    H1    =       FunctionSpace('V0', domain, kind='H1')
+    Hcurl = VectorFunctionSpace('V1', domain, kind='Hcurl')
+    Hdiv  = VectorFunctionSpace('V2', domain, kind='Hdiv')
+    L2    =       FunctionSpace('V3', domain, kind='L2')
+    V     = VectorFunctionSpace('V', domain)
+
+    X = Hdiv * L2
+
+    sigma, u = TestFunction(X, ['sigma', 'u'])
+    tau,   v = TestFunction(X, [  'tau', 'v'])
+
+    expr = dot(sigma, tau) + div(tau)*u + div(sigma)*v
+    print(ExteriorCalculusExpr(expr, tests=[tau,v]))
+
+#==============================================================================
+def test_compiler_3d_stokes():
+    """
+    by setting the space type, we cannot evaluate grad of Hdiv function, then
+    ArgumentTypeError will be raised.
+    In order to avoid this problem, we need first to declare our space as an
+    undefined type.
+    """
+
+    domain = Domain('Omega', dim=3)
+
+    # ...
+    Hdiv  = VectorFunctionSpace('V2', domain, kind='Hdiv')
+    L2    =       FunctionSpace('V3', domain, kind='L2')
+
+    X = Hdiv * L2
+
+    u,p = TestFunction(X, ['u', 'p'])
+    v,q = TestFunction(X, ['v', 'q'])
+
+    with pytest.raises(ArgumentTypeError):
+        expr = inner(grad(u), grad(v)) - div(v)*p + q*div(u)
+    # ...
+
+    # ...
+    Hdiv  = VectorFunctionSpace('V2', domain)
+    L2    =       FunctionSpace('V3', domain)
+
+    X = Hdiv * L2
+
+    u,p = TestFunction(X, ['u', 'p'])
+    v,q = TestFunction(X, ['v', 'q'])
+
+    expr = inner(grad(u), grad(v)) #- div(v)*p + q*div(u)
+    atoms = {u: DifferentialForm('u', index=2, dim=domain.dim),
+             v: DifferentialForm('v', index=2, dim=domain.dim),
+             p: DifferentialForm('p', index=3, dim=domain.dim),
+             q: DifferentialForm('q', index=3, dim=domain.dim)}
+    print(ExteriorCalculusExpr(expr, tests=[v,q], atoms=atoms))
+    # ...
+
+#==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
 
@@ -195,5 +258,7 @@ def teardown_function():
     from sympy import cache
     cache.clear_cache()
 
-test_compiler_3d_1()
-test_compiler_3d_2()
+#test_compiler_3d_1()
+#test_compiler_3d_2()
+#test_compiler_3d_poisson()
+test_compiler_3d_stokes()
