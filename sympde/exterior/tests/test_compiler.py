@@ -20,7 +20,7 @@ from sympde.calculus import grad, dot, inner, cross, rot, curl, div
 
 from sympde.exterior import d, wedge, ip, delta, jp
 from sympde.exterior import DifferentialForm
-from sympde.exterior import ExteriorCalculusExpr
+from sympde.exterior import ExteriorCalculusExpr, augmented_expression
 from sympde.calculus.errors import ArgumentTypeError
 
 
@@ -241,7 +241,13 @@ def test_compiler_3d_stokes():
              v: DifferentialForm('v', index=2, dim=domain.dim),
              p: DifferentialForm('p', index=3, dim=domain.dim),
              q: DifferentialForm('q', index=3, dim=domain.dim)}
-    print(ExteriorCalculusExpr(expr, tests=[v,q], atoms=atoms))
+    newexpr = ExteriorCalculusExpr(expr, tests=[v,q], atoms=atoms)
+    print('===== BEFORE =====')
+    print(newexpr)
+
+    newexpr = augmented_expression(newexpr, tests=[v,q], atoms=atoms)
+    print('===== AFTER  =====')
+    print(newexpr)
     # ...
 
 #==============================================================================
@@ -259,4 +265,4 @@ def teardown_function():
 #test_compiler_3d_1()
 #test_compiler_3d_2()
 #test_compiler_3d_poisson()
-#test_compiler_3d_stokes()
+test_compiler_3d_stokes()

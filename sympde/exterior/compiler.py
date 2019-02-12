@@ -34,6 +34,7 @@ from sympde.calculus import Dot, Inner, Cross
 from .form import DifferentialForm
 from .calculus import d, wedge, ip
 from .calculus import delta, jp, hodge
+from .calculus import AdjointExteriorDerivative
 
 
 
@@ -326,3 +327,33 @@ class ExteriorCalculusExpr(CalculusFunction):
                 raise NotImplementedError('')
 
         return cls(expr, evaluate=False)
+
+
+#==============================================================================
+# TODO improve
+def augmented_expression(expr, tests, atoms):
+    trials = [atoms[i] for i in set(atoms.keys()) - set(tests) ]
+    tests  = [atoms[i] for i in tests]
+
+    constraints = {}
+
+    deltas = list(expr.atoms(AdjointExteriorDerivative))
+    trials_delta = [u for u in trials if delta(u) in deltas]
+
+    # ... replace delta(u) for all u in trials
+    for u in trials_delta:
+        name  = 'aux_{}'.format(u.name)
+        dim   = u.dim
+        index = u.index.index-1
+
+        aux = DifferentialForm(name, index, dim)
+
+        expr = expr.subs(delta(u), aux)
+
+        constraints[delta(u)] = aux
+    # ...
+
+    if constraints:
+        constraints = [k-v for k,v in constraints.items()]
+
+    return expr, constraints
