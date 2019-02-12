@@ -36,6 +36,7 @@ from sympde.calculus.core import _generic_ops
 from sympde.topology import BasicDomain, Domain, MappedDomain, Union, Interval
 from sympde.topology import BoundaryVector, NormalVector, TangentVector, Boundary
 from sympde.topology.derivatives import _partial_derivatives
+from sympde.topology.derivatives import _logical_partial_derivatives
 from sympde.topology.derivatives import partial_derivative_as_symbol
 from sympde.topology.derivatives import sort_partial_derivatives
 from sympde.topology.derivatives import get_atom_derivatives
@@ -437,3 +438,203 @@ class TerminalExpr(CalculusFunction):
             return Matrix(lines)
 
         return expr
+
+
+#==============================================================================
+def _split_test_function(expr):
+
+    if isinstance(expr, ScalarTestFunction):
+
+        dim = expr.space.ldim
+        name = expr.name
+
+        ls = []
+        for i in range(0, dim):
+            Di = Interval()
+            Vi = FunctionSpace('V_{}'.format(i), domain=Di)
+
+            ai = ScalarTestFunction(Vi, '{name}{i}'.format(name=name, i=i))
+            ls += [ai]
+
+        return ls
+
+    else:
+        raise NotImplementedError('')
+
+#==============================================================================
+def _tensorize_atomic_expr(expr, d_atoms):
+
+    if (isinstance(expr, _partial_derivatives) or
+        isinstance(expr,_logical_partial_derivatives)):
+
+        atom = get_atom_derivatives(expr)
+        args = d_atoms[atom]
+
+        op = eval(expr.__class__.__name__)
+        expr = _tensorize_atomic_expr(expr._args[0], d_atoms)
+
+        u = args[op.grad_index]
+        expr = expr.subs(u, dx(u))
+        return expr
+
+    elif isinstance(expr, ScalarTestFunction):
+        atoms = d_atoms[expr]
+        return Mul(*atoms)
+
+#==============================================================================
+Mass        = Function('Mass')
+Stiffness   = Function('Stiffness')
+Advection   = Function('Advection')
+AdvectionT  = Function('AdvectionT')
+Bilaplacian = Function('Bilaplacian')
+
+#==============================================================================
+def _replace_atomic_expr(expr, trials, tests, d_atoms):
+
+    d = dx
+
+    for u in trials:
+        u_atoms = d_atoms[u]
+        for v in tests:
+            v_atoms = d_atoms[v]
+
+            for ui in u_atoms:
+                for vi in v_atoms:
+
+                    # ... Mass
+                    old = vi*ui
+                    new = Mass(ui,vi)
+
+                    expr = expr.subs(old, new)
+                    # ...
+
+                    # ... Stiffness
+                    old = d(vi)*d(ui)
+                    new = Stiffness(ui,vi)
+
+                    expr = expr.subs(old, new)
+                    # ...
+
+                    # ... Advection
+                    old = vi*d(ui)
+                    new = Advection(ui,vi)
+
+                    expr = expr.subs(old, new)
+                    # ...
+
+                    # ... Transpose of Advection
+                    old = d(vi)*ui
+                    new = AdvectionT(ui,vi)
+
+                    expr = expr.subs(old, new)
+                    # ...
+
+                    # ... Bilaplacian
+                    old = d(d(vi))*d(d(ui))
+                    new = Bilaplacian(ui,vi)
+
+                    expr = expr.subs(old, new)
+                    # ...
+
+    # ...
+    # ...
+
+    return expr
+
+#==============================================================================
+class TensorExpr(CalculusFunction):
+
+    def __new__(cls, *args, **options):
+        # (Try to) sympify args first
+
+        if options.pop('evaluate', True):
+            r = cls.eval(*args, **options)
+        else:
+            r = None
+
+        if r is None:
+            return Basic.__new__(cls, *args, **options)
+        else:
+            return r
+
+    def __getitem__(self, indices, **kw_args):
+        if is_sequence(indices):
+            # Special case needed because M[*my_tuple] is a syntax error.
+            return Indexed(self, *indices, **kw_args)
+        else:
+            return Indexed(self, indices, **kw_args)
+
+    @classmethod
+    def eval(cls, *_args, **kwargs):
+        """."""
+
+        if not _args:
+            return
+
+        if not len(_args) == 1:
+            raise ValueError('Expecting one argument')
+
+        expr = _args[0]
+        d_atoms = kwargs.pop('d_atoms', {})
+
+        if isinstance(expr, Add):
+            args = [cls.eval(a, d_atoms=d_atoms) for a in expr.args]
+            return Add(*args)
+
+        elif isinstance(expr, Mul):
+            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            stests  = [a for a in expr.args if not(a in coeffs) and a.atoms(ScalarTestFunction)]
+            vtests  = [a for a in expr.args if not(a in coeffs) and a.atoms(VectorTestFunction)]
+            vectors = [a for a in expr.args if (not(a in coeffs) and
+                                                not(a in stests) and
+                                                not(a in vtests))]
+
+            a = S.One
+            if coeffs:
+                a = Mul(*coeffs)
+
+            b = S.One
+            if vectors:
+                args = [cls(i, evaluate=False) for i in vectors]
+                b = Mul(*args)
+
+            sb = S.One
+            if stests:
+                args = [cls.eval(i, d_atoms=d_atoms) for i in stests]
+                sb = Mul(*args)
+
+            vb = S.One
+            if vtests:
+                args = [cls.eval(i, d_atoms=d_atoms) for i in vtests]
+                vb = Mul(*args)
+
+            return Mul(a, b, sb, vb)
+
+        elif isinstance(expr, DomainExpression):
+            target = expr.target
+            expr   = expr.expr
+            return cls.eval(expr, d_atoms=d_atoms)
+
+        elif isinstance(expr, BilinearForm):
+            trials = list(expr.variables[0])
+            tests  = list(expr.variables[1])
+
+            # ...
+            d_atoms = {}
+            for a in trials+tests:
+                new = _split_test_function(a)
+                d_atoms[a] = new
+            # ...
+
+            # ...
+            ls = TerminalExpr(expr)
+            expr = ls[0] # TODO improve
+            expr = cls.eval(expr, d_atoms=d_atoms)
+            # ...
+
+            return _replace_atomic_expr(expr, trials, tests, d_atoms)
+
+        if expr.atoms(ScalarTestFunction):
+            return _tensorize_atomic_expr(expr, d_atoms)
+
+        return cls(expr, evaluate=False)
