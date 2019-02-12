@@ -245,7 +245,7 @@ def test_compiler_3d_stokes():
     print('===== BEFORE =====')
     print(newexpr)
 
-    newexpr = augmented_expression(newexpr, tests=[v,q], atoms=atoms)
+    newexpr = augmented_expression(newexpr, tests=[v,q], atoms=atoms, weak=False)
     print('===== AFTER  =====')
     print(newexpr)
     # ...
@@ -265,4 +265,4 @@ def teardown_function():
 #test_compiler_3d_1()
 #test_compiler_3d_2()
 #test_compiler_3d_poisson()
-test_compiler_3d_stokes()
+#test_compiler_3d_stokes()

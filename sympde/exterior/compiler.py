@@ -331,7 +331,7 @@ class ExteriorCalculusExpr(CalculusFunction):
 
 #==============================================================================
 # TODO improve
-def augmented_expression(expr, tests, atoms):
+def augmented_expression(expr, tests, atoms, weak=True):
     trials = [atoms[i] for i in set(atoms.keys()) - set(tests) ]
     tests  = [atoms[i] for i in tests]
 
@@ -356,4 +356,8 @@ def augmented_expression(expr, tests, atoms):
     if constraints:
         constraints = [k-v for k,v in constraints.items()]
 
-    return expr, constraints
+    if not weak:
+        return expr, constraints
+
+    else:
+        raise NotImplementedError('')
