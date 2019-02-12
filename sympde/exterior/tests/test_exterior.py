@@ -20,7 +20,6 @@ def test_exterior_1():
     x, y, z = symbols('x y z')
     a = Constant('a')
     n = Symbol('n')
-#    n = 3
 
     # ...
     u_0 = DifferentialForm('u_0', index=0, dim=n)
@@ -35,11 +34,25 @@ def test_exterior_1():
     u_3 = DifferentialForm('u_3', index=3, dim=n)
     v_3 = DifferentialForm('v_3', index=3, dim=n)
 
+    u_n = DifferentialForm('u_n', index=n, dim=n)
+    v_n = DifferentialForm('v_n', index=n, dim=n)
+    # ...
+
     # ... exterior derivative
     assert(d(d(u_0)) == 0)
     assert(d(u_0+v_0) == d(u_0) + d(v_0))
     assert(d(2*u_0) == 2*d(u_0))
     assert(d(a*u_0+v_0) == a*d(u_0) + d(v_0))
+    assert(d(u_n) == 0)
+    assert(not(d(u_0) == 0))
+    # ...
+
+    # ...
+    assert(delta(u_0) == 0)
+    assert(delta(u_1+v_1) == delta(u_1) + delta(v_1))
+    assert(delta(2*u_1) == 2*delta(u_1))
+    assert(delta(a*u_1+v_1) == a*delta(u_1) + delta(v_1))
+    assert(not(delta(u_n) == 0))
     # ...
 
     # ... exterior product
@@ -68,4 +81,4 @@ def teardown_function():
     from sympy import cache
     cache.clear_cache()
 
-test_exterior_1()
+#test_exterior_1()

@@ -259,4 +259,4 @@ def teardown_function():
 #test_compiler_3d_1()
 #test_compiler_3d_2()
 #test_compiler_3d_poisson()
-test_compiler_3d_stokes()
+#test_compiler_3d_stokes()

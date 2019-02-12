@@ -19,7 +19,7 @@ from sympde.core.basic import _coeffs_registery
 from sympde.core import LinearOperator
 
 
-# ...
+#==============================================================================
 class FormType(with_metaclass(Singleton, Basic)):
     """Base class representing differential form types"""
     _index = None
@@ -84,6 +84,9 @@ class SixFormType(FormType):
     pass
 
 
+#==============================================================================
+# user friendly
+
 ZeroForm  = ZeroFormType()
 OneForm   = OneFormType()
 TwoForm   = TwoFormType()
@@ -100,6 +103,37 @@ dtype_registry = {0: ZeroForm,
                   5: FiveForm,
                   6: SixForm}
 
+
+#==============================================================================
+def FormTypeFactory(argnames=["_index"], index=None):
+
+    name = 'Dynamic{}FormType'.format(index)
+
+    # ...
+    def __init__(self, **kwargs):
+        for key, value in list(kwargs.items()):
+            # here, the argnames variable is the one passed to the
+            # DataTypeFactory call
+            if key not in argnames:
+                raise TypeError("Argument %s not valid for %s"
+                    % (key, self.__class__.__name__))
+            setattr(self, key, value)
+        FormType.__init__(self)
+    # ...
+
+    if index is None:
+        raise ValueError('index must be given')
+
+    elif isinstance(index, int) and index <= 6:
+        raise ValueError('use dtype_registry for index <= 6')
+
+    newclass = type(name, (FormType,),
+                    {"__init__":          __init__,
+                     "_index":            index})
+    return newclass
+
+
+#==============================================================================
 def get_index_form(dtype):
     if isinstance(dtype, FormType):
         return dtype
@@ -110,6 +144,9 @@ def get_index_form(dtype):
 
         return dtype_registry[dtype]
 
+    elif isinstance(dtype, Symbol):
+        dtype = FormTypeFactory(index=dtype)
+        return dtype()
+
     else:
         raise TypeError('> Expecting an integer or a datatype')
-# ...

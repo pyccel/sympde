@@ -31,9 +31,9 @@ class DifferentialForm(Symbol):
         if not isinstance(name, str):
             raise TypeError('> Expecting a string for name')
 
-        index = get_index_form(index)
-
         assert(isinstance(dim, (int, Symbol)))
+
+        index = get_index_form(index)
 
         return Basic.__new__(cls, name, index, dim)
 

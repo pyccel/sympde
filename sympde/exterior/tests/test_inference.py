@@ -85,4 +85,4 @@ def teardown_function():
     from sympy import cache
     cache.clear_cache()
 
-test_type_inference_1()
+#test_type_inference_1()

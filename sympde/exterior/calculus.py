@@ -70,10 +70,14 @@ class ExteriorDerivative(LinearOperator):
         if isinstance(expr, ExteriorDerivative):
             return 0
 
-        elif isinstance(expr, _coeffs_registery):
+        if isinstance(expr, _coeffs_registery):
             return 0
 
-        elif isinstance(expr, Add):
+        if isinstance(expr, DifferentialForm):
+            if expr.index.index == expr.dim:
+                return 0
+
+        if isinstance(expr, Add):
             args = expr.args
             args = [cls.eval(a) for a in expr.args]
             return Add(*args)
@@ -354,6 +358,35 @@ class AdjointExteriorDerivative(LinearOperator):
             raise ValueError('Expecting one argument')
 
         expr = _args[0]
+
+        if isinstance(expr, AdjointExteriorDerivative):
+            return 0
+
+        if isinstance(expr, _coeffs_registery):
+            return 0
+
+        if isinstance(expr, DifferentialForm):
+            if expr.index.index == 0:
+                return 0
+
+        if isinstance(expr, Add):
+            args = expr.args
+            args = [cls.eval(a) for a in expr.args]
+            return Add(*args)
+
+        elif isinstance(expr, Mul):
+            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            vectors = [a for a in expr.args if not(a in coeffs)]
+
+            a = S.One
+            if coeffs:
+                a = Mul(*coeffs)
+
+            b = S.One
+            if vectors:
+                b = cls(Mul(*vectors), evaluate=False)
+
+            return Mul(a, b)
 
         return cls(expr, evaluate=False)
 
