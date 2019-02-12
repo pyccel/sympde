@@ -253,48 +253,61 @@ class ExteriorCalculusExpr(CalculusFunction):
             args = [cls.eval(a, tests=tests, atoms=atoms) for a in expr.args]
             return Add(*args)
 
-        # TODO improve
         if isinstance(expr, Mul):
 
-            if len(expr.args) == 2:
-                left, right = expr.args[:]
+            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            vectors = [a for a in expr.args if not(a in coeffs)]
+
+            alpha = S.One
+            if coeffs:
+                alpha = Mul(*coeffs)
+
+            if len(vectors) == 2:
+                left, right = vectors
 
                 newleft = cls.eval(left, tests=tests, atoms=atoms)
                 newright = cls.eval(right, tests=tests, atoms=atoms)
                 if _is_test_function(left) and _is_test_function(right):
 
                     if left in tests:
-                        return wedge(newright, hodge(newleft))
+                        return alpha*wedge(newright, hodge(newleft))
 
                     elif right in tests:
-                        return wedge(newleft, hodge(newright))
+                        return alpha*wedge(newleft, hodge(newright))
 
                     else:
                         raise ValueError('argument not appears as a test function')
 
                 elif _is_op_test_function(left) and _is_test_function(right):
                     if left._args[0] in tests:
-                        return wedge(newright, hodge(newleft))
+                        return alpha*wedge(newright, hodge(newleft))
 
                     elif right in tests:
-                        return wedge(newleft, hodge(newright))
+                        return alpha*wedge(newleft, hodge(newright))
 
                     else:
                         raise ValueError('argument not appears as a test function')
 
                 elif _is_test_function(left) and _is_op_test_function(right):
-                    raise NotImplementedError('')
+                    if right._args[0] in tests:
+                        return alpha*wedge(newleft, hodge(newright))
+
+                    elif left in tests:
+                        return alpha*wedge(newright, hodge(newleft))
+
+                    else:
+                        raise ValueError('argument not appears as a test function')
 
                 else:
                     convert = False
-                    if isinstance(expr.args[0], ScalarTestFunction):
-                        left  = expr.args[1]
-                        right = expr.args[0]
+                    if isinstance(vectors[0], ScalarTestFunction):
+                        left  = vectors[1]
+                        right = vectors[0]
                         convert = True
 
-                    elif isinstance(expr.args[1], ScalarTestFunction):
-                        left  = expr.args[0]
-                        right = expr.args[1]
+                    elif isinstance(vectors[1], ScalarTestFunction):
+                        left  = vectors[0]
+                        right = vectors[1]
                         convert = True
 
                     if convert:
@@ -302,14 +315,13 @@ class ExteriorCalculusExpr(CalculusFunction):
 
                         if not(right in tests):
                             right = DifferentialForm(right.name, index=3, dim=dim)
-                            return ip(left, right)
+                            return alpha*ip(left, right)
 
                         else:
                             right = DifferentialForm(right.name, index=0, dim=dim)
-                            return jp(left, right)
+                            return alpha*jp(left, right)
 
             else:
-                args = [cls.eval(a, tests=tests, atoms=atoms) for a in expr.args]
 
                 raise NotImplementedError('')
 

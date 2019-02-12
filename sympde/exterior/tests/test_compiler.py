@@ -207,16 +207,14 @@ def test_compiler_3d_poisson():
 
 #==============================================================================
 def test_compiler_3d_stokes():
-    """
-    by setting the space type, we cannot evaluate grad of Hdiv function, then
-    ArgumentTypeError will be raised.
-    In order to avoid this problem, we need first to declare our space as an
-    undefined type.
-    """
 
     domain = Domain('Omega', dim=3)
 
     # ...
+    #    by setting the space type, we cannot evaluate grad of Hdiv function, then
+    #    ArgumentTypeError will be raised.
+    #    In order to avoid this problem, we need first to declare our space as an
+    #    undefined type.
     Hdiv  = VectorFunctionSpace('V2', domain, kind='Hdiv')
     L2    =       FunctionSpace('V3', domain, kind='L2')
 
@@ -238,7 +236,7 @@ def test_compiler_3d_stokes():
     u,p = TestFunction(X, ['u', 'p'])
     v,q = TestFunction(X, ['v', 'q'])
 
-    expr = inner(grad(u), grad(v)) #- div(v)*p + q*div(u)
+    expr = inner(grad(u), grad(v)) - div(v)*p + q*div(u)
     atoms = {u: DifferentialForm('u', index=2, dim=domain.dim),
              v: DifferentialForm('v', index=2, dim=domain.dim),
              p: DifferentialForm('p', index=3, dim=domain.dim),
