@@ -39,6 +39,22 @@ class FormType(with_metaclass(Singleton, Basic)):
     def __str__(self):
         return str(self.name)
 
+    def __lt__(self, other):
+        assert(isinstance(other, FormType))
+        return self.index < other.index
+
+    def __le__(self, other):
+        assert(isinstance(other, FormType))
+        return self.index <= other.index
+
+    def __gt__(self, other):
+        assert(isinstance(other, FormType))
+        return self.index > other.index
+
+    def __ge__(self, other):
+        assert(isinstance(other, FormType))
+        return self.index >= other.index
+
 class ZeroFormType(FormType):
     _index = 0
     pass
