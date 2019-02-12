@@ -11,11 +11,15 @@ from sympde.topology import ScalarField, VectorField
 from sympde.topology import ProductSpace
 from sympde.topology import ScalarTestFunction
 from sympde.topology import VectorTestFunction
+from sympde.topology import TestFunction
+from sympde.topology import Field
 from sympde.topology import Unknown
 from sympde.topology import Domain, Boundary, NormalVector, TangentVector
 from sympde.topology import Trace, trace_0, trace_1
 #from sympde.expr import tensorize
 from sympde.expr import BilinearForm, LinearForm#, Integral
+from sympde.exterior import d, wedge, ip, jp, delta, hodge
+from sympde.exterior import DifferentialForm
 
 from sympde.printing.latex import latex
 
@@ -251,6 +255,42 @@ def test_latex_2d_5():
     # ...
 
 #==============================================================================
+def test_latex_ec_3d_1():
+
+    n = 3
+
+    # ...
+    u_0 = DifferentialForm('u_0', index=0, dim=n)
+    v_0 = DifferentialForm('v_0', index=0, dim=n)
+
+    u_1 = DifferentialForm('u_1', index=1, dim=n)
+    v_1 = DifferentialForm('v_1', index=1, dim=n)
+
+    u_2 = DifferentialForm('u_2', index=2, dim=n)
+    v_2 = DifferentialForm('v_2', index=2, dim=n)
+
+    u_3 = DifferentialForm('u_3', index=3, dim=n)
+    v_3 = DifferentialForm('v_3', index=3, dim=n)
+    # ...
+
+    # ...
+    domain = Domain('Omega', dim=3)
+    V = VectorFunctionSpace('V', domain)
+
+    beta = Field(V, 'beta')
+    # ...
+
+    print(latex(u_0))
+    print(latex(d(u_0)))
+    print(latex(d(delta(u_3))))
+    print(latex(d(delta(u_2)) + delta(d(u_2))))
+    print(latex(wedge(u_0, u_1)))
+
+    print(latex(ip(beta,u_1)))
+    print(latex(hodge(u_1)))
+    print(latex(jp(beta,u_1)))
+
+#==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
 
@@ -261,3 +301,6 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
+
+
+test_latex_ec_3d_1()

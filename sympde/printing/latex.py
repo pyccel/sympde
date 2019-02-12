@@ -138,47 +138,6 @@ class LatexPrinter(LatexPrinterSympy):
         spaces = [self._print(i) for i in expr.spaces]
         return r' \times '.join(spaces)
 
-    def _print_FormCall(self, expr):
-        form = expr.expr
-        name = form.name
-        if name is None:
-            raise ValueError('> undefined name for a form')
-
-        args = []
-
-        # ...
-        test = [self._print(i) for i in form.test_functions]
-        test_str = ','.join(i for i in test)
-
-        if len(test) == 1:
-            test = test_str
-
-        else:
-            test = '({})'.format(test_str)
-
-        args += [test]
-        # ...
-
-        # ...
-        if isinstance(form, BilinearForm):
-            # ...
-            trial = [self._print(i) for i in form.trial_functions]
-            trial_str = ','.join(i for i in trial)
-
-            if len(trial) == 1:
-                trial = trial_str
-
-            else:
-                trial = '({})'.format(trial_str)
-
-            args += [trial]
-            # ...
-        # ...
-
-        args = ', '.join(args)
-        name = self._print(name)
-        return '{name}({args})'.format(name=name, args=args)
-
     def _print_Equation(self, expr):
         lhs = self._print(expr.lhs)
         rhs = self._print(expr.rhs)
@@ -247,10 +206,6 @@ class LatexPrinter(LatexPrinterSympy):
                 r'\end{align*}')
         return code
 
-    def _print_Measure(self, expr):
-        txt = ''.join(j for j in ['d{}'.format(self._print(i)) for i in expr.args])
-        return txt
-
     def _print_dx(self, expr):
         arg = self._print(expr.args[0])
         return r'\partial_x {}'.format(arg)
@@ -284,6 +239,45 @@ class LatexPrinter(LatexPrinterSympy):
         return '{integral} {expr} {measure}'.format(integral=int_str,
                                                     expr=expr_str,
                                                     measure=measure_str)
+
+    # ........................................
+    #            EXTERIOR CALCULUS
+    # ........................................
+    def _print_ExteriorDerivative(self, expr):
+        arg = self._print(expr._args[0])
+        return r'\mathrm{d} ' + arg
+
+    def _print_AdjointExteriorDerivative(self, expr):
+        arg = self._print(expr._args[0])
+        # TODO which one to take?
+#        return r'\mathrm{\delta} ' + arg
+        return r'\star\mathrm{d} ' + arg
+
+    def _print_ExteriorProduct(self, expr):
+        left, right = expr._args[:]
+        left = self._print(left)
+        right = self._print(right)
+        return left + r' \wedge ' + right
+
+    def _print_InteriorProduct(self, expr):
+        left, right = expr._args[:]
+        left = self._print(left)
+        right = self._print(right)
+        return left + r' \lrcorner ' + right
+
+    def _print_AdjointInteriorProduct(self, expr):
+        left, right = expr._args[:]
+        left = self._print(left)
+        right = self._print(right)
+        return r'\star \left(' + left + r' \lrcorner ' + right + r' \right)'
+
+    def _print_Hodge(self, expr):
+        arg = self._print(expr._args[0])
+        return r'\star ' + arg
+
+    def _print_PullBack(self, expr):
+        raise NotImplementedError('')
+    # ........................................
 
 def latex(expr, **settings):
 

@@ -14,8 +14,8 @@ from sympde.topology import Domain
 from sympde.topology import FunctionSpace, VectorFunctionSpace
 from sympde.topology import ProductSpace
 from sympde.topology import H1Space, HcurlSpace, HdivSpace, L2Space, UndefinedSpace
-from sympde.topology import TestFunction, ScalarTestFunction, VectorTestFunction
-from sympde.topology import Field, ScalarField, VectorField
+from sympde.topology import TestFunction
+from sympde.topology import Field
 from sympde.calculus import grad, dot, inner, cross, rot, curl, div
 
 from sympde.exterior import d, wedge, ip, delta, jp
