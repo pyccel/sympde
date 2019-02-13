@@ -40,7 +40,7 @@ from sympde.expr.evaluation import TensorExpr
 
 
 #==============================================================================
-def test_bilinear_form_2d_1():
+def test_tensorize_2d_1():
 
     domain = Domain('Omega', dim=2)
     B1 = Boundary(r'\Gamma_1', domain)
@@ -52,8 +52,7 @@ def test_bilinear_form_2d_1():
 
     V = FunctionSpace('V', domain)
 
-    u,u1,u2 = [TestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [TestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    u,v = [TestFunction(V, name=i) for i in ['u', 'v']]
 
     # ...
 #    a = BilinearForm((u,v), u*v)
@@ -61,6 +60,29 @@ def test_bilinear_form_2d_1():
 #    a = BilinearForm((u,v), dot(grad(u),grad(v)))
 #    a = BilinearForm((u,v), dx(u)*v)
 #    a = BilinearForm((u,v), laplace(u)*laplace(v))
+
+    expr = TensorExpr(a)
+    print(expr)
+    # ...
+
+#==============================================================================
+def test_tensorize_2d_2():
+
+    domain = Domain('Omega', dim=2)
+    B1 = Boundary(r'\Gamma_1', domain)
+
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    V = VectorFunctionSpace('V', domain)
+
+    u,v = [TestFunction(V, name=i) for i in ['u', 'v']]
+
+    # ...
+#    a = BilinearForm((u,v), dot(u,v))
+    a = BilinearForm((u,v), rot(u)*rot(v) + div(u)*div(v))
 
     expr = TensorExpr(a)
     print(expr)
@@ -79,4 +101,5 @@ def teardown_function():
     from sympy import cache
     cache.clear_cache()
 
-test_bilinear_form_2d_1()
+test_tensorize_2d_1()
+test_tensorize_2d_2()

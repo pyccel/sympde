@@ -441,6 +441,7 @@ class TerminalExpr(CalculusFunction):
 
 
 #==============================================================================
+# TODO use random_string for space name and use it for 1d test function
 def _split_test_function(expr):
 
     if isinstance(expr, ScalarTestFunction):
@@ -451,15 +452,28 @@ def _split_test_function(expr):
         ls = []
         for i in range(0, dim):
             Di = Interval()
-            Vi = FunctionSpace('V_{}'.format(i), domain=Di)
+            Vi = FunctionSpace('tmp_V_{}'.format(i), domain=Di)
 
             ai = ScalarTestFunction(Vi, '{name}{i}'.format(name=name, i=i))
             ls += [ai]
 
         return ls
 
+    elif isinstance(expr, IndexedTestTrial):
+
+        i = expr.indices
+        assert(len(i) == 1)
+        i = i[0]
+
+        V = expr.base.space
+        Vi = FunctionSpace('tmpV_{}'.format(i), V.domain)
+        vi = ScalarTestFunction(Vi, '{test}{i}'.format(test=expr.base.name, i=i))
+
+        return _split_test_function(vi)
+
     else:
-        raise NotImplementedError('')
+        msg = 'Expecting ScalarTestFunction or IndexedTestTrial, given {}'.format(type(expr))
+        raise TypeError(msg)
 
 #==============================================================================
 def _tensorize_atomic_expr(expr, d_atoms):
@@ -477,9 +491,12 @@ def _tensorize_atomic_expr(expr, d_atoms):
         expr = expr.subs(u, dx(u))
         return expr
 
-    elif isinstance(expr, ScalarTestFunction):
+    elif isinstance(expr, (ScalarTestFunction, IndexedTestTrial)):
         atoms = d_atoms[expr]
         return Mul(*atoms)
+
+    else:
+        raise TypeError('{}'.format(type(expr)))
 
 #==============================================================================
 class BasicAtomicForm(AtomicExpr):
@@ -516,27 +533,37 @@ class BasicAtomicForm(AtomicExpr):
 class Mass(BasicAtomicForm):
 
     def __new__(cls, axis, weight=S.One):
-        return Basic.__new__(cls, 'Mass', axis, weight)
+#        name = 'Mass'
+        name = 'M'
+        return Basic.__new__(cls, name, axis, weight)
 
 class Stiffness(BasicAtomicForm):
 
     def __new__(cls, axis, weight=S.One):
-        return Basic.__new__(cls, 'Stiffness', axis, weight)
+#        name = 'Stiffness'
+        name = 'S'
+        return Basic.__new__(cls, name, axis, weight)
 
 class Advection(BasicAtomicForm):
 
     def __new__(cls, axis, weight=S.One):
-        return Basic.__new__(cls, 'Advection', axis, weight)
+#        name = 'Advection'
+        name = 'A'
+        return Basic.__new__(cls, name, axis, weight)
 
 class AdvectionT(BasicAtomicForm):
 
     def __new__(cls, axis, weight=S.One):
-        return Basic.__new__(cls, 'AdvectionT', axis, weight)
+#        name = 'AdvectionT'
+        name = 'AT'
+        return Basic.__new__(cls, name, axis, weight)
 
 class Bilaplacian(BasicAtomicForm):
 
     def __new__(cls, axis, weight=S.One):
-        return Basic.__new__(cls, 'Bilaplacian', axis, weight)
+#        name = 'Bilaplacian'
+        name = 'B'
+        return Basic.__new__(cls, name, axis, weight)
 
 
 Mass_0 = Mass(0)
@@ -669,6 +696,23 @@ class TensorExpr(CalculusFunction):
 
             return Mul(a, b, sb, vb)
 
+        elif isinstance(expr, _coeffs_registery):
+            return expr
+
+        elif isinstance(expr, (Matrix, ImmutableDenseMatrix)):
+
+            n_rows, n_cols = expr.shape
+
+            lines = []
+            for i_row in range(0, n_rows):
+                line = []
+                for i_col in range(0, n_cols):
+                    line.append(cls.eval(expr[i_row,i_col], d_atoms=d_atoms))
+
+                lines.append(line)
+
+            return Matrix(lines)
+
         elif isinstance(expr, DomainExpression):
             target = expr.target
             expr   = expr.expr
@@ -678,22 +722,35 @@ class TensorExpr(CalculusFunction):
             trials = list(expr.variables[0])
             tests  = list(expr.variables[1])
 
+            # ... # TODO improve
+            terminal_expr = TerminalExpr(expr)[0]
             # ...
+
+            # ...
+            variables  = list(terminal_expr.atoms(ScalarTestFunction))
+            variables += list(terminal_expr.atoms(IndexedTestTrial))
+
             d_atoms = {}
-            for a in trials+tests:
+            for a in variables:
                 new = _split_test_function(a)
                 d_atoms[a] = new
             # ...
 
             # ...
-            ls = TerminalExpr(expr)
-            expr = ls[0] # TODO improve
-            expr = cls.eval(expr, d_atoms=d_atoms)
+            expr = cls.eval(terminal_expr, d_atoms=d_atoms)
+            # ...
+
+            # ...
+            trials = [a for a in variables if ((isinstance(a, ScalarTestFunction) and a in trials) or
+                                               (isinstance(a, IndexedTestTrial) and a.base in trials))]
+
+            tests = [a for a in variables if ((isinstance(a, ScalarTestFunction) and a in tests) or
+                                              (isinstance(a, IndexedTestTrial) and a.base in tests))]
             # ...
 
             return _replace_atomic_expr(expr, trials, tests, d_atoms)
 
-        if expr.atoms(ScalarTestFunction):
+        if expr.atoms(ScalarTestFunction) or expr.atoms(IndexedTestTrial):
             return _tensorize_atomic_expr(expr, d_atoms)
 
         return cls(expr, evaluate=False)
