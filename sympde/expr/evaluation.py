@@ -482,14 +482,77 @@ def _tensorize_atomic_expr(expr, d_atoms):
         return Mul(*atoms)
 
 #==============================================================================
-Mass        = Function('Mass')
-Stiffness   = Function('Stiffness')
-Advection   = Function('Advection')
-AdvectionT  = Function('AdvectionT')
-Bilaplacian = Function('Bilaplacian')
+class BasicAtomicForm(AtomicExpr):
+    _name = None
+
+    def __new__(cls, name, weight=S.One):
+
+        return Basic.__new__(cls, name, weight)
+
+    @property
+    def name(self):
+        return self._args[0]
+
+    @property
+    def weight(self):
+        return self._args[1]
+
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        name = sstr(self.name)
+
+        if self.weight == S.One:
+            return name
+
+        else:
+            weight = sstr(self.weight)
+            return '{name}({weight})'.format(name=name, weight=weight)
+
+
+class Mass(BasicAtomicForm):
+    pass
+
+class Stiffness(BasicAtomicForm):
+    pass
+
+class Advection(BasicAtomicForm):
+    pass
+
+class AdvectionT(BasicAtomicForm):
+    pass
+
+class Bilaplacian(BasicAtomicForm):
+    pass
+
+
+Mass_0 = Mass('Mass_0')
+Mass_1 = Mass('Mass_1')
+Mass_2 = Mass('Mass_2')
+
+Stiffness_0 = Stiffness('Stiffness_0')
+Stiffness_1 = Stiffness('Stiffness_1')
+Stiffness_2 = Stiffness('Stiffness_2')
+
+Advection_0 = Advection('Advection_0')
+Advection_1 = Advection('Advection_1')
+Advection_2 = Advection('Advection_2')
+
+AdvectionT_0 = AdvectionT('AdvectionT_0')
+AdvectionT_1 = AdvectionT('AdvectionT_1')
+AdvectionT_2 = AdvectionT('AdvectionT_2')
+
+Bilaplacian_0 = Bilaplacian('Bilaplacian_0')
+Bilaplacian_1 = Bilaplacian('Bilaplacian_1')
+Bilaplacian_2 = Bilaplacian('Bilaplacian_2')
 
 #==============================================================================
 def _replace_atomic_expr(expr, trials, tests, d_atoms):
+
+    masses = [Mass_0, Mass_1, Mass_2]
+    stiffs = [Stiffness_0, Stiffness_1, Stiffness_2]
+    advs   = [Advection_0, Advection_1, Advection_2]
+    advts  = [AdvectionT_0, AdvectionT_1, AdvectionT_2]
+    bils   = [Bilaplacian_0, Bilaplacian_1, Bilaplacian_2]
 
     d = dx
 
@@ -498,46 +561,28 @@ def _replace_atomic_expr(expr, trials, tests, d_atoms):
         for v in tests:
             v_atoms = d_atoms[v]
 
-            for ui in u_atoms:
-                for vi in v_atoms:
+            for i,(ui,vi) in enumerate(zip(u_atoms, v_atoms)):
 
-                    # ... Mass
-                    old = vi*ui
-                    new = Mass(ui,vi)
+                mass  = masses[i]
+                stiff = stiffs[i]
+                adv   = advs[i]
+                advt  = advts[i]
+                bil   = bils[i]
 
-                    expr = expr.subs(old, new)
-                    # ...
+                # Mass
+                expr = expr.subs(vi*ui, mass)
 
-                    # ... Stiffness
-                    old = d(vi)*d(ui)
-                    new = Stiffness(ui,vi)
+                # Stiffness
+                expr = expr.subs(d(vi)*d(ui), stiff)
 
-                    expr = expr.subs(old, new)
-                    # ...
+                # Advection
+                expr = expr.subs(vi*d(ui), adv)
 
-                    # ... Advection
-                    old = vi*d(ui)
-                    new = Advection(ui,vi)
+                # Transpose of Advection
+                expr = expr.subs(d(vi)*ui, advt)
 
-                    expr = expr.subs(old, new)
-                    # ...
-
-                    # ... Transpose of Advection
-                    old = d(vi)*ui
-                    new = AdvectionT(ui,vi)
-
-                    expr = expr.subs(old, new)
-                    # ...
-
-                    # ... Bilaplacian
-                    old = d(d(vi))*d(d(ui))
-                    new = Bilaplacian(ui,vi)
-
-                    expr = expr.subs(old, new)
-                    # ...
-
-    # ...
-    # ...
+                # Bilaplacian
+                expr = expr.subs(d(d(vi))*d(d(ui)), bil)
 
     return expr
 
