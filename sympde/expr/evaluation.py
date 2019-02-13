@@ -499,7 +499,7 @@ def _tensorize_atomic_expr(expr, d_atoms):
         raise TypeError('{}'.format(type(expr)))
 
 #==============================================================================
-class BasicAtomicForm(AtomicExpr):
+class Basic1dForm(AtomicExpr):
 
     def __new__(cls, name, axis, weight=S.One):
         return Basic.__new__(cls, name, axis, weight)
@@ -530,35 +530,35 @@ class BasicAtomicForm(AtomicExpr):
             return '{name}({weight})'.format(name=name, weight=weight)
 
 
-class Mass(BasicAtomicForm):
+class Mass(Basic1dForm):
 
     def __new__(cls, axis, weight=S.One):
 #        name = 'Mass'
         name = 'M'
         return Basic.__new__(cls, name, axis, weight)
 
-class Stiffness(BasicAtomicForm):
+class Stiffness(Basic1dForm):
 
     def __new__(cls, axis, weight=S.One):
 #        name = 'Stiffness'
         name = 'S'
         return Basic.__new__(cls, name, axis, weight)
 
-class Advection(BasicAtomicForm):
+class Advection(Basic1dForm):
 
     def __new__(cls, axis, weight=S.One):
 #        name = 'Advection'
         name = 'A'
         return Basic.__new__(cls, name, axis, weight)
 
-class AdvectionT(BasicAtomicForm):
+class AdvectionT(Basic1dForm):
 
     def __new__(cls, axis, weight=S.One):
 #        name = 'AdvectionT'
         name = 'AT'
         return Basic.__new__(cls, name, axis, weight)
 
-class Bilaplacian(BasicAtomicForm):
+class Bilaplacian(Basic1dForm):
 
     def __new__(cls, axis, weight=S.One):
 #        name = 'Bilaplacian'
