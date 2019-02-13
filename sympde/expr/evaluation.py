@@ -483,23 +483,27 @@ def _tensorize_atomic_expr(expr, d_atoms):
 
 #==============================================================================
 class BasicAtomicForm(AtomicExpr):
-    _name = None
 
-    def __new__(cls, name, weight=S.One):
-
-        return Basic.__new__(cls, name, weight)
+    def __new__(cls, name, axis, weight=S.One):
+        return Basic.__new__(cls, name, axis, weight)
 
     @property
     def name(self):
         return self._args[0]
 
     @property
-    def weight(self):
+    def axis(self):
         return self._args[1]
+
+    @property
+    def weight(self):
+        return self._args[2]
 
     def _sympystr(self, printer):
         sstr = printer.doprint
         name = sstr(self.name)
+        axis = sstr(self.axis)
+        name = '{name}_{axis}'.format(name=name, axis=axis)
 
         if self.weight == S.One:
             return name
@@ -510,40 +514,50 @@ class BasicAtomicForm(AtomicExpr):
 
 
 class Mass(BasicAtomicForm):
-    pass
+
+    def __new__(cls, axis, weight=S.One):
+        return Basic.__new__(cls, 'Mass', axis, weight)
 
 class Stiffness(BasicAtomicForm):
-    pass
+
+    def __new__(cls, axis, weight=S.One):
+        return Basic.__new__(cls, 'Stiffness', axis, weight)
 
 class Advection(BasicAtomicForm):
-    pass
+
+    def __new__(cls, axis, weight=S.One):
+        return Basic.__new__(cls, 'Advection', axis, weight)
 
 class AdvectionT(BasicAtomicForm):
-    pass
+
+    def __new__(cls, axis, weight=S.One):
+        return Basic.__new__(cls, 'AdvectionT', axis, weight)
 
 class Bilaplacian(BasicAtomicForm):
-    pass
+
+    def __new__(cls, axis, weight=S.One):
+        return Basic.__new__(cls, 'Bilaplacian', axis, weight)
 
 
-Mass_0 = Mass('Mass_0')
-Mass_1 = Mass('Mass_1')
-Mass_2 = Mass('Mass_2')
+Mass_0 = Mass(0)
+Mass_1 = Mass(1)
+Mass_2 = Mass(2)
 
-Stiffness_0 = Stiffness('Stiffness_0')
-Stiffness_1 = Stiffness('Stiffness_1')
-Stiffness_2 = Stiffness('Stiffness_2')
+Stiffness_0 = Stiffness(0)
+Stiffness_1 = Stiffness(1)
+Stiffness_2 = Stiffness(2)
 
-Advection_0 = Advection('Advection_0')
-Advection_1 = Advection('Advection_1')
-Advection_2 = Advection('Advection_2')
+Advection_0 = Advection(0)
+Advection_1 = Advection(1)
+Advection_2 = Advection(2)
 
-AdvectionT_0 = AdvectionT('AdvectionT_0')
-AdvectionT_1 = AdvectionT('AdvectionT_1')
-AdvectionT_2 = AdvectionT('AdvectionT_2')
+AdvectionT_0 = AdvectionT(0)
+AdvectionT_1 = AdvectionT(1)
+AdvectionT_2 = AdvectionT(2)
 
-Bilaplacian_0 = Bilaplacian('Bilaplacian_0')
-Bilaplacian_1 = Bilaplacian('Bilaplacian_1')
-Bilaplacian_2 = Bilaplacian('Bilaplacian_2')
+Bilaplacian_0 = Bilaplacian(0)
+Bilaplacian_1 = Bilaplacian(1)
+Bilaplacian_2 = Bilaplacian(2)
 
 #==============================================================================
 def _replace_atomic_expr(expr, trials, tests, d_atoms):
