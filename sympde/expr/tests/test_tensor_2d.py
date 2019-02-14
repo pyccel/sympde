@@ -26,7 +26,7 @@ from sympde.topology import InteriorDomain, Union
 from sympde.topology import Boundary, NormalVector, TangentVector
 from sympde.topology import Domain
 from sympde.topology import Trace, trace_0, trace_1
-from sympde.topology import Mapping, DetJacobian
+from sympde.topology import Mapping
 from sympde.topology import Square
 from sympde.topology import ElementDomain
 from sympde.topology import Area
@@ -36,7 +36,6 @@ from sympde.expr.expr import LinearForm, BilinearForm
 from sympde.expr.expr import DomainIntegral, BoundaryIntegral
 from sympde.expr.expr import Functional, Norm
 from sympde.expr.expr import linearize
-from sympde.expr.evaluation import TerminalExpr
 from sympde.expr.evaluation import TensorExpr
 
 
