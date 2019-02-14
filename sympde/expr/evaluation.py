@@ -507,6 +507,7 @@ def _tensorize_atomic_expr(expr, d_atoms):
         return Mul(*atoms)
 
     else:
+        print(expr)
         raise TypeError('{}'.format(type(expr)))
 
 #==============================================================================

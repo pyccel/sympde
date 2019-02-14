@@ -89,7 +89,7 @@ def test_tensorize_2d_2():
     # ...
 
 #==============================================================================
-def test_tensorize_2d_3():
+def test_tensorize_2d_1_mapping():
 
     DIM = 2
 
@@ -118,6 +118,24 @@ def test_tensorize_2d_3():
     print(expr)
     # ...
 
+#==============================================================================
+def test_tensorize_2d_2_mapping():
+
+    DIM = 2
+    M = Mapping('M', DIM)
+    domain = Domain('Omega', dim=DIM)
+
+    V = VectorFunctionSpace('V', domain)
+
+    v = TestFunction(V, name='v')
+    u = TestFunction(V, name='u')
+
+    c = Constant('c')
+
+    a = BilinearForm((u,v), c * div(v) * div(u) + rot(v) * rot(u))
+    expr = TensorExpr(a, mapping=M)
+    print(expr)
+
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
@@ -133,4 +151,5 @@ def teardown_function():
 
 #test_tensorize_2d_1()
 #test_tensorize_2d_2()
-#test_tensorize_2d_3()
+#test_tensorize_2d_1_mapping()
+#test_tensorize_2d_2_mapping()

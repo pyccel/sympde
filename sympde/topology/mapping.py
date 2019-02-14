@@ -3,7 +3,7 @@
 from collections  import OrderedDict
 
 from sympy.core import Basic
-from sympy.tensor import IndexedBase, Indexed
+from sympy import Indexed, IndexedBase, Matrix, ImmutableDenseMatrix
 from sympy.core import Symbol
 from sympy.core.containers import Tuple
 from sympy import Function
@@ -237,6 +237,7 @@ class SymbolicMappingExpr(AtomicExpr):
         return self._args[0]
 
 class SymbolicDeterminant(SymbolicMappingExpr):
+    _name = 'det'
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -244,6 +245,7 @@ class SymbolicDeterminant(SymbolicMappingExpr):
         return 'det({})'.format(mapping)
 
 class SymbolicCovariant(SymbolicMappingExpr):
+    _name = 'covariant'
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -251,6 +253,7 @@ class SymbolicCovariant(SymbolicMappingExpr):
         return 'covariant({})'.format(mapping)
 
 class SymbolicContravariant(SymbolicMappingExpr):
+    _name = 'contravariant'
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -435,6 +438,21 @@ class LogicalExpr(CalculusFunction):
         elif isinstance(expr, (VectorField, VectorTestFunction)):
             raise NotImplementedError('')
 
+        # TODO MUST BE MOVED AFTER TREATING THE CASES OF GRAD, CURL, DIV IN FEEC
+        elif isinstance(expr, (Matrix, ImmutableDenseMatrix)):
+
+            n_rows, n_cols = expr.shape
+
+            lines = []
+            for i_row in range(0, n_rows):
+                line = []
+                for i_col in range(0, n_cols):
+                    line.append(cls.eval(M, expr[i_row,i_col]))
+
+                lines.append(line)
+
+            return Matrix(lines)
+
         elif isinstance(expr, dx):
             arg = expr.args[0]
             arg = cls.eval(M, arg)
@@ -614,6 +632,20 @@ class SymbolicExpr(CalculusFunction):
                     code += k*n
 
             return cls.eval(atom, code=code)
+
+        elif isinstance(expr, SymbolicMappingExpr):
+            name = '{name}_{mapping}'.format(name=expr._name,
+                                             mapping=expr.mapping)
+
+            return Symbol(name)
+
+        # ... this must be done here, otherwise codegen for FEM will not work
+        elif isinstance(expr, Symbol):
+            return expr
+
+        elif isinstance(expr, Function):
+            return expr
+        # ...
 
         return cls(expr, evaluate=False)
 
