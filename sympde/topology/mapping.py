@@ -10,6 +10,7 @@ from sympy import Function
 from sympy import Matrix
 from sympy.core import Add, Mul, Pow
 from sympy.core.singleton import S
+from sympy.core.expr import AtomicExpr
 
 from sympde.core.basic import BasicMapping
 from sympde.core.algebra import (Dot_1d,
@@ -223,6 +224,38 @@ class MappedDomain(BasicDomain):
     def dim(self):
         return self.domain.dim
 
+#==============================================================================
+class SymbolicMappingExpr(AtomicExpr):
+
+    def __new__(cls, mapping):
+        assert(isinstance(mapping, Mapping))
+
+        return Basic.__new__(cls, mapping)
+
+    @property
+    def mapping(self):
+        return self._args[0]
+
+class SymbolicDeterminant(SymbolicMappingExpr):
+
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        mapping = sstr(self.mapping)
+        return 'det({})'.format(mapping)
+
+class SymbolicCovariant(SymbolicMappingExpr):
+
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        mapping = sstr(self.mapping)
+        return 'covariant({})'.format(mapping)
+
+class SymbolicContravariant(SymbolicMappingExpr):
+
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        mapping = sstr(self.mapping)
+        return 'contravariant({})'.format(mapping)
 
 #==============================================================================
 class MappingApplication(Function):

@@ -40,7 +40,9 @@ from sympde.topology.derivatives import _logical_partial_derivatives
 from sympde.topology.derivatives import partial_derivative_as_symbol
 from sympde.topology.derivatives import sort_partial_derivatives
 from sympde.topology.derivatives import get_atom_derivatives
+from sympde.topology.derivatives import get_atom_logical_derivatives
 from sympde.topology.derivatives import dx, dy, dz
+from sympde.topology.derivatives import dx1, dx2, dx3
 from sympde.topology.derivatives import (Grad_1d, Div_1d,
                                          Grad_2d, Curl_2d, Rot_2d, Div_2d,
                                          Grad_3d, Curl_3d, Div_3d)
@@ -59,6 +61,10 @@ from sympde.topology.space import ScalarField, VectorField, IndexedVectorField
 from sympde.topology.measure import CanonicalMeasure
 from sympde.topology.measure import CartesianMeasure
 from sympde.topology.measure import Measure
+from sympde.topology import Mapping, DetJacobian
+from sympde.topology import SymbolicDeterminant, SymbolicCovariant, SymbolicContravariant
+
+from sympde.topology import LogicalExpr
 
 from .basic  import BasicExpr, BasicForm
 from .expr   import LinearExpr, BilinearExpr
@@ -481,14 +487,19 @@ def _tensorize_atomic_expr(expr, d_atoms):
     if (isinstance(expr, _partial_derivatives) or
         isinstance(expr,_logical_partial_derivatives)):
 
-        atom = get_atom_derivatives(expr)
+        if isinstance(expr, _partial_derivatives):
+            atom = get_atom_derivatives(expr)
+
+        else:
+            atom = get_atom_logical_derivatives(expr)
+
         args = d_atoms[atom]
 
         op = eval(expr.__class__.__name__)
         expr = _tensorize_atomic_expr(expr._args[0], d_atoms)
 
         u = args[op.grad_index]
-        expr = expr.subs(u, dx(u))
+        expr = expr.subs(u, op(u))
         return expr
 
     elif isinstance(expr, (ScalarTestFunction, IndexedTestTrial)):
@@ -587,7 +598,7 @@ Bilaplacian_1 = Bilaplacian(1)
 Bilaplacian_2 = Bilaplacian(2)
 
 #==============================================================================
-def _replace_atomic_expr(expr, trials, tests, d_atoms):
+def _replace_atomic_expr(expr, trials, tests, d_atoms, logical=False):
 
     masses = [Mass_0, Mass_1, Mass_2]
     stiffs = [Stiffness_0, Stiffness_1, Stiffness_2]
@@ -595,7 +606,11 @@ def _replace_atomic_expr(expr, trials, tests, d_atoms):
     advts  = [AdvectionT_0, AdvectionT_1, AdvectionT_2]
     bils   = [Bilaplacian_0, Bilaplacian_1, Bilaplacian_2]
 
-    d = dx
+    if not logical:
+        ops = [dx, dy, dz]
+
+    else:
+        ops = [dx1, dx2, dx3]
 
     for u in trials:
         u_atoms = d_atoms[u]
@@ -609,6 +624,8 @@ def _replace_atomic_expr(expr, trials, tests, d_atoms):
                 adv   = advs[i]
                 advt  = advts[i]
                 bil   = bils[i]
+
+                d = ops[i]
 
                 # Mass
                 expr = expr.subs(vi*ui, mass)
@@ -662,9 +679,10 @@ class TensorExpr(CalculusFunction):
 
         expr = _args[0]
         d_atoms = kwargs.pop('d_atoms', {})
+        mapping = kwargs.pop('mapping', None)
 
         if isinstance(expr, Add):
-            args = [cls.eval(a, d_atoms=d_atoms) for a in expr.args]
+            args = [cls.eval(a, d_atoms=d_atoms, mapping=mapping) for a in expr.args]
             return Add(*args)
 
         elif isinstance(expr, Mul):
@@ -681,17 +699,18 @@ class TensorExpr(CalculusFunction):
 
             b = S.One
             if vectors:
+
                 args = [cls(i, evaluate=False) for i in vectors]
                 b = Mul(*args)
 
             sb = S.One
             if stests:
-                args = [cls.eval(i, d_atoms=d_atoms) for i in stests]
+                args = [cls.eval(i, d_atoms=d_atoms, mapping=mapping) for i in stests]
                 sb = Mul(*args)
 
             vb = S.One
             if vtests:
-                args = [cls.eval(i, d_atoms=d_atoms) for i in vtests]
+                args = [cls.eval(i, d_atoms=d_atoms, mapping=mapping) for i in vtests]
                 vb = Mul(*args)
 
             return Mul(a, b, sb, vb)
@@ -707,16 +726,17 @@ class TensorExpr(CalculusFunction):
             for i_row in range(0, n_rows):
                 line = []
                 for i_col in range(0, n_cols):
-                    line.append(cls.eval(expr[i_row,i_col], d_atoms=d_atoms))
+                    line.append(cls.eval(expr[i_row,i_col], d_atoms=d_atoms, mapping=mapping))
 
                 lines.append(line)
 
             return Matrix(lines)
 
         elif isinstance(expr, DomainExpression):
+            # TODO to be removed
             target = expr.target
             expr   = expr.expr
-            return cls.eval(expr, d_atoms=d_atoms)
+            return cls.eval(expr, d_atoms=d_atoms, mapping=mapping)
 
         elif isinstance(expr, BilinearForm):
             trials = list(expr.variables[0])
@@ -737,7 +757,19 @@ class TensorExpr(CalculusFunction):
             # ...
 
             # ...
-            expr = cls.eval(terminal_expr, d_atoms=d_atoms)
+            logical = False
+            if not(mapping is None):
+                logical = True
+                terminal_expr = LogicalExpr(mapping, terminal_expr.expr)
+
+                det_M = DetJacobian(mapping)
+                det   = SymbolicDeterminant(mapping)
+                terminal_expr = terminal_expr.subs(det_M, det)
+                terminal_expr = expand(terminal_expr)
+            # ...
+
+            # ...
+            expr = cls.eval(terminal_expr, d_atoms=d_atoms, mapping=mapping)
             # ...
 
             # ...
@@ -748,7 +780,10 @@ class TensorExpr(CalculusFunction):
                                               (isinstance(a, IndexedTestTrial) and a.base in tests))]
             # ...
 
-            return _replace_atomic_expr(expr, trials, tests, d_atoms)
+            expr = _replace_atomic_expr(expr, trials, tests, d_atoms,
+                                        logical=logical)
+
+            return expr
 
         if expr.atoms(ScalarTestFunction) or expr.atoms(IndexedTestTrial):
             return _tensorize_atomic_expr(expr, d_atoms)

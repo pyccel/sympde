@@ -12,6 +12,7 @@ from sympy import Matrix
 from sympy import Function
 from sympy import pi, cos, sin, exp
 from sympy import srepr
+from sympy import expand
 from sympy.physics.quantum import TensorProduct
 
 from sympde.core import Constant
@@ -25,7 +26,7 @@ from sympde.topology import InteriorDomain, Union
 from sympde.topology import Boundary, NormalVector, TangentVector
 from sympde.topology import Domain
 from sympde.topology import Trace, trace_0, trace_1
-from sympde.topology import Mapping
+from sympde.topology import Mapping, DetJacobian
 from sympde.topology import Square
 from sympde.topology import ElementDomain
 from sympde.topology import Area
@@ -88,6 +89,36 @@ def test_tensorize_2d_2():
     print(expr)
     # ...
 
+#==============================================================================
+def test_tensorize_2d_3():
+
+    DIM = 2
+
+    M = Mapping('Map', DIM)
+
+    domain = Domain('Omega', dim=DIM)
+    B1 = Boundary(r'\Gamma_1', domain)
+
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    V = FunctionSpace('V', domain)
+
+    u,v = [TestFunction(V, name=i) for i in ['u', 'v']]
+
+    # ...
+#    a = BilinearForm((u,v), u*v)
+#    a = BilinearForm((u,v), mu*u*v + dot(grad(u),grad(v)))
+    a = BilinearForm((u,v), dot(grad(u),grad(v)))
+#    a = BilinearForm((u,v), dx(u)*v)
+#    a = BilinearForm((u,v), laplace(u)*laplace(v))
+
+    expr = TensorExpr(a, mapping=M)
+    print(expr)
+    # ...
+
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
@@ -103,3 +134,4 @@ def teardown_function():
 
 #test_tensorize_2d_1()
 #test_tensorize_2d_2()
+#test_tensorize_2d_3()
