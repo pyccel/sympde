@@ -11,6 +11,7 @@ from sympy import Matrix
 from sympy.core import Add, Mul, Pow
 from sympy.core.singleton import S
 from sympy.core.expr import AtomicExpr
+from sympy import Rational
 
 from sympde.core.basic import BasicMapping
 from sympde.core.algebra import (Dot_1d,
@@ -567,6 +568,9 @@ class SymbolicExpr(CalculusFunction):
             return Pow(cls(b, code=code), e)
 
         elif isinstance(expr, _coeffs_registery):
+            return expr
+
+        elif isinstance(expr, Rational):
             return expr
 
         elif isinstance(expr, (list, tuple, Tuple)):
