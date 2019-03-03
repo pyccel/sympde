@@ -18,7 +18,7 @@ from sympde.topology import TestFunction
 from sympde.topology import Field
 from sympde.calculus import grad, dot, inner, cross, rot, curl, div
 
-from sympde.exterior import d, wedge, ip, delta, jp
+from sympde.exterior import d, wedge, ip, ld, delta, jp, Ld
 from sympde.exterior import DifferentialForm
 from sympde.exterior import ExteriorCalculusExpr, augmented_expression
 from sympde.calculus.errors import ArgumentTypeError
@@ -41,89 +41,133 @@ def test_compiler_3d_1():
 
     beta = Field(V, 'beta')
 
+#    # ...
+#    expr = grad(v0)
+#    expected = d(DifferentialForm('v0', index=0, dim=domain.dim))
+#
+#    assert(ExteriorCalculusExpr(expr) == expected)
+#    # ...
+#
+#    # ...
+#    expr = curl(v1)
+#    expected = d(DifferentialForm('v1', index=1, dim=domain.dim))
+#
+#    assert(ExteriorCalculusExpr(expr) == expected)
+#    # ...
+#
+#    # ...
+#    expr = div(v2)
+#    expected = d(DifferentialForm('v2', index=2, dim=domain.dim))
+#
+#    assert(ExteriorCalculusExpr(expr) == expected)
+#    # ...
+#
+#    # ...
+#    expr = grad(v0)
+#    expected = - delta(DifferentialForm('v0', index=3, dim=domain.dim))
+#
+#    assert(ExteriorCalculusExpr(expr, tests=[v0]) == expected)
+#    # ...
+#
+#    # ...
+#    expr = curl(v1)
+#    expected = delta(DifferentialForm('v1', index=2, dim=domain.dim))
+#
+#    assert(ExteriorCalculusExpr(expr, tests=[v1]) == expected)
+#    # ...
+#
+#    # ...
+#    expr = div(v2)
+#    expected = -delta(DifferentialForm('v2', index=1, dim=domain.dim))
+#
+#    assert(ExteriorCalculusExpr(expr, tests=[v2]) == expected)
+#    # ...
+#
+#    # ...
+#    expr = dot(beta, v1)
+#    expected = ip(beta, DifferentialForm('v1', index=1, dim=domain.dim))
+#
+#    assert(ExteriorCalculusExpr(expr) == expected)
+#    # ...
+#
+#    # ...
+#    expr = cross(beta, v2)
+#    expected = ip(beta, DifferentialForm('v2', index=2, dim=domain.dim))
+#
+#    assert(ExteriorCalculusExpr(expr) == expected)
+#    # ...
+#
+#    # ...
+#    expr = beta*v3
+#    expected = ip(beta, DifferentialForm('v3', index=3, dim=domain.dim))
+#
+#    assert(ExteriorCalculusExpr(expr) == expected)
+#    # ...
+#
+#    # ...
+#    expr = dot(beta, v1)
+#    expected = jp(beta, DifferentialForm('v1', index=3, dim=domain.dim))
+#
+#    assert(ExteriorCalculusExpr(expr, tests=[v1]) == expected)
+#    # ...
+#
+#    # ...
+#    expr = cross(beta, v2)
+#    expected = -jp(beta, DifferentialForm('v2', index=2, dim=domain.dim))
+#
+#    assert(ExteriorCalculusExpr(expr, tests=[v2]) == expected)
+#    # ...
+#
+#    # ...
+#    expr = beta*v3
+#    expected = jp(beta, DifferentialForm('v3', index=1, dim=domain.dim))
+#
+#    assert(ExteriorCalculusExpr(expr, tests=[v3]) == expected)
+#    # ...
+
+    # ..................................................
+    #     LIE DERIVATIVES
+    # ..................................................
     # ...
-    expr = grad(v0)
-    expected = d(DifferentialForm('v0', index=0, dim=domain.dim))
+    expr = dot(beta, grad(v0))
+    expected = ld(beta, DifferentialForm('v0', index=0, dim=domain.dim))
 
     assert(ExteriorCalculusExpr(expr) == expected)
     # ...
 
     # ...
-    expr = curl(v1)
-    expected = d(DifferentialForm('v1', index=1, dim=domain.dim))
+    expr = grad(dot(beta,v1)) + cross(curl(v1), beta)
+    expected = ld(beta, DifferentialForm('v1', index=1, dim=domain.dim))
 
     assert(ExteriorCalculusExpr(expr) == expected)
     # ...
 
     # ...
-    expr = div(v2)
-    expected = d(DifferentialForm('v2', index=2, dim=domain.dim))
+    expr = curl(cross(v2, beta)) + div(v2)*beta
+    expected = ld(beta, DifferentialForm('v2', index=2, dim=domain.dim))
 
     assert(ExteriorCalculusExpr(expr) == expected)
     # ...
 
     # ...
-    expr = grad(v0)
-    expected = - delta(DifferentialForm('v0', index=3, dim=domain.dim))
-
-    assert(ExteriorCalculusExpr(expr, tests=[v0]) == expected)
-    # ...
-
-    # ...
-    expr = curl(v1)
-    expected = delta(DifferentialForm('v1', index=2, dim=domain.dim))
-
-    assert(ExteriorCalculusExpr(expr, tests=[v1]) == expected)
-    # ...
-
-    # ...
-    expr = div(v2)
-    expected = -delta(DifferentialForm('v2', index=1, dim=domain.dim))
-
-    assert(ExteriorCalculusExpr(expr, tests=[v2]) == expected)
-    # ...
-
-    # ...
-    expr = dot(beta, v1)
-    expected = ip(beta, DifferentialForm('v1', index=1, dim=domain.dim))
+    expr = div(beta*v3)
+    expected = ld(beta, DifferentialForm('v3', index=3, dim=domain.dim))
 
     assert(ExteriorCalculusExpr(expr) == expected)
     # ...
 
-    # ...
-    expr = cross(beta, v2)
-    expected = ip(beta, DifferentialForm('v2', index=2, dim=domain.dim))
-
-    assert(ExteriorCalculusExpr(expr) == expected)
-    # ...
-
-    # ...
-    expr = beta*v3
-    expected = ip(beta, DifferentialForm('v3', index=3, dim=domain.dim))
-
-    assert(ExteriorCalculusExpr(expr) == expected)
+    # ... TODO commutativity of LieDerivative
+#    expr = grad(dot(beta,v1)) + cross(curl(v1), beta) + div(beta*v3)
+#    expected  = ld(beta, DifferentialForm('v1', index=1, dim=domain.dim))
+#    expected += ld(beta, DifferentialForm('v3', index=3, dim=domain.dim))
+#
+#    assert(ExteriorCalculusExpr(expr) == expected)
     # ...
 
-    # ...
-    expr = dot(beta, v1)
-    expected = jp(beta, DifferentialForm('v1', index=3, dim=domain.dim))
-
-    assert(ExteriorCalculusExpr(expr, tests=[v1]) == expected)
-    # ...
-
-    # ...
-    expr = cross(beta, v2)
-    expected = -jp(beta, DifferentialForm('v2', index=2, dim=domain.dim))
-
-    assert(ExteriorCalculusExpr(expr, tests=[v2]) == expected)
-    # ...
-
-    # ...
-    expr = beta*v3
-    expected = jp(beta, DifferentialForm('v3', index=1, dim=domain.dim))
-
-    assert(ExteriorCalculusExpr(expr, tests=[v3]) == expected)
-    # ...
+#    print(expr)
+#    print('')
+#    print(ExteriorCalculusExpr(expr))
+    # ..................................................
 
 #==============================================================================
 def test_compiler_3d_2():
@@ -264,5 +308,5 @@ def teardown_function():
 
 #test_compiler_3d_1()
 #test_compiler_3d_2()
-#test_compiler_3d_poisson()
+test_compiler_3d_poisson()
 #test_compiler_3d_stokes()

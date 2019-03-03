@@ -120,12 +120,16 @@ def test_space_2d_2():
     V     =       FunctionSpace('V', domain, kind=None)
     W     = VectorFunctionSpace('W', domain, kind=None)
 
-    assert(H1.kind == H1Space)
+    assert(H1.kind    == H1Space)
     assert(Hcurl.kind == HcurlSpace)
-    assert(Hdiv.kind == HdivSpace)
-    assert(L2.kind == L2Space)
-    assert(V.kind == UndefinedSpace)
-    assert(W.kind == UndefinedSpace)
+    assert(Hdiv.kind  == HdivSpace)
+    assert(L2.kind    == L2Space)
+    assert(V.kind     == UndefinedSpace)
+    assert(W.kind     == UndefinedSpace)
+
+    assert(H1.regularity    > L2.regularity)
+    assert(H1.regularity    > Hcurl.regularity)
+    assert(Hcurl.regularity > L2.regularity)
 
 
 #==============================================================================

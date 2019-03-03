@@ -587,22 +587,26 @@ class Grad(BasicOperator):
 
             b = S.One
             if vectors:
-                if len(vectors) == 1:
-                    f = vectors[0]
-                    b = cls(f)
+                try:
+                    if len(vectors) == 1:
+                        f = vectors[0]
+                        b = cls(f)
 
-                elif len(vectors) == 2:
-                    f,g = vectors
-                    b = f*cls(g) + g*cls(f)
+                    elif len(vectors) == 2:
+                        f,g = vectors
+                        b = f*cls(g) + g*cls(f)
 
-                else:
-                    left = vectors[0]
-                    right = Mul(*vectors[1:])
+                    else:
+                        left = vectors[0]
+                        right = Mul(*vectors[1:])
 
-                    f_left  = cls(left, evaluate=True)
-                    f_right = cls(right, evaluate=True)
+                        f_left  = cls(left, evaluate=True)
+                        f_right = cls(right, evaluate=True)
 
-                    b = left * f_right + f_left * right
+                        b = left * f_right + f_left * right
+
+                except:
+                    b = cls(Mul(*vectors), evaluate=False)
 
             return Mul(a, b)
 
@@ -612,8 +616,12 @@ class Grad(BasicOperator):
             return e*cls(b)*Pow(b, e-1)
 
         elif isinstance(expr, Dot):
-            a,b = expr._args
-            return Cross(a, Curl(b)) - Cross(Curl(a), b) + Convect(a,b) + Convect(b,a)
+            try:
+                a,b = expr._args
+                return Cross(a, Curl(b)) - Cross(Curl(a), b) + Convect(a,b) + Convect(b,a)
+
+            except:
+                return cls(expr, evaluate=False)
 
         # ... check consistency between space type and the operator
         if _is_sympde_atom(expr):
@@ -709,8 +717,12 @@ class Curl(BasicOperator):
             return Mul(a, b)
 
         elif isinstance(expr, Cross):
-            a,b = expr._args
-            return a * Div(b) - b*Div(a) + Convect(b, a) - Convect(a, b)
+            try:
+                a,b = expr._args
+                return a * Div(b) - b*Div(a) + Convect(b, a) - Convect(a, b)
+
+            except:
+                return cls(expr, evaluate=False)
 
         elif isinstance(expr, Grad):
             return 0
@@ -882,13 +894,18 @@ class Div(BasicOperator):
             if vectors:
                 if len(vectors) == 2:
                     a,b = vectors
-                    if isinstance(a, (Tuple, VectorTestFunction, VectorField)):
-                        f = b ; F = a
-                        return f*Div(F) + Dot(F, grad(f))
+                    # TODO remove try/except using regularity from space
+                    try:
+                        if isinstance(a, (Tuple, VectorTestFunction, VectorField)):
+                            f = b ; F = a
+                            return f*Div(F) + Dot(F, grad(f))
 
-                    elif isinstance(b, (Tuple, VectorTestFunction, VectorField)):
-                        f = a ; F = b
-                        return f*Div(F) + Dot(F, grad(f))
+                        elif isinstance(b, (Tuple, VectorTestFunction, VectorField)):
+                            f = a ; F = b
+                            return f*Div(F) + Dot(F, grad(f))
+
+                    except:
+                        return cls(Mul(*vectors), evaluate=False)
 
                 b = cls(Mul(*vectors), evaluate=False)
 
@@ -1121,3 +1138,6 @@ hessian = Hessian
 
 _is_op_test_function = lambda op: (isinstance(op, (Grad, Curl, Div)) and
                                    isinstance(op._args[0], (ScalarTestFunction, VectorTestFunction)))
+
+_is_op_field         = lambda op: (isinstance(op, (Grad, Curl, Div)) and
+                                   isinstance(op._args[0], (ScalarField, VectorField)))

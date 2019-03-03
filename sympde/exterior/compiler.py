@@ -26,17 +26,50 @@ from sympde.topology import TestFunction, ScalarTestFunction, VectorTestFunction
 from sympde.topology import Field, ScalarField, VectorField
 from sympde.topology.space import _is_sympde_atom
 from sympde.topology.space import _is_test_function
+from sympde.topology.space import _is_field
 from sympde.calculus.core import _is_op_test_function
+from sympde.calculus.core import _is_op_field
 from sympde.calculus import Grad, Curl, Div
 from sympde.calculus import Dot, Inner, Cross
 #from sympde.calculus import grad, dot, inner, cross, rot, curl, div
 
 from .form import DifferentialForm
-from .calculus import d, wedge, ip
-from .calculus import delta, jp, hodge
+from .calculus import d, wedge, ip, ld
+from .calculus import delta, jp, Ld, hodge
 from .calculus import AdjointExteriorDerivative
 
+_is_proxy = lambda u: _is_field(u) or isinstance(u, Tuple)
 
+
+#==============================================================================
+def _decompose_lie_derivative(*args):
+    # ... 1 form
+    grad_term  = [i for i in args if (isinstance(i, Grad) and
+                                      isinstance(i._args[0], Dot))]
+
+    # TODO improve
+    cross_term = [i for i in args if (isinstance(i, Cross) and
+                                      (isinstance(i._args[0], Curl) or
+                                       isinstance(i._args[1], Curl)))]
+
+    if grad_term and cross_term:
+        return grad_term, cross_term
+    # ...
+
+    # ... 1 form
+    curl_term  = [i for i in args if (isinstance(i, Curl) and
+                                      isinstance(i._args[0], Cross))]
+
+    # TODO improve
+    mul_term = [i for i in args if (isinstance(i, Mul) and
+                                      (isinstance(i._args[0], Div) or
+                                       isinstance(i._args[1], Div)))]
+
+    if curl_term and mul_term:
+        return curl_term, mul_term
+    # ...
+
+    return [], []
 
 #==============================================================================
 class ExteriorCalculusExpr(CalculusFunction):
@@ -148,6 +181,23 @@ class ExteriorCalculusExpr(CalculusFunction):
 
         if isinstance(expr, Div):
             arg = expr._args[0]
+
+            if isinstance(arg, Mul):
+                if len(arg.args) == 2:
+                    left, right = arg.args[:]
+
+                    newleft = cls.eval(left, tests=tests, atoms=atoms)
+                    newright = cls.eval(right, tests=tests, atoms=atoms)
+
+                    if  _is_test_function(right) and _is_proxy(left):
+                        return ld(newleft, newright)
+
+                    elif  _is_test_function(left) and _is_proxy(right):
+                        return ld(newright, newleft)
+
+                else:
+                    raise NotImplementedError('')
+
             newarg = cls.eval(arg, tests=tests, atoms=atoms)
 
             if not(arg in tests):
@@ -196,7 +246,23 @@ class ExteriorCalculusExpr(CalculusFunction):
             elif _is_test_function(left):
                 raise NotImplementedError('')
 
+            elif  _is_op_test_function(right) and _is_proxy(left):
+                raise NotImplementedError('')
+
+            elif  _is_op_test_function(left) and _is_proxy(right):
+                if isinstance(left, Grad):
+                    if left._args[0] in tests:
+                        raise NotImplementedError('')
+
+                    else:
+                        return ld(newright, newleft._args[0])
+
+                else:
+                    raise NotImplementedError('')
+
             else:
+                print(type(left))
+                print(type(right))
                 raise NotImplementedError('')
 
         if isinstance(expr, Cross):
@@ -251,7 +317,100 @@ class ExteriorCalculusExpr(CalculusFunction):
                 raise NotImplementedError('')
 
         if isinstance(expr, Add):
-            args = [cls.eval(a, tests=tests, atoms=atoms) for a in expr.args]
+            # looking for Lie derivative terms
+            a, b = _decompose_lie_derivative(*expr.args)
+
+            newargs = []
+
+            for ai in a:
+                for bi in b:
+
+                    ai_tests  = list(ai.atoms(ScalarTestFunction))
+                    ai_tests += list(ai.atoms(VectorTestFunction))
+
+                    bi_tests  = list(bi.atoms(ScalarTestFunction))
+                    bi_tests += list(bi.atoms(VectorTestFunction))
+
+                    test = set(ai_tests) & set(bi_tests)
+                    test = list(test)
+                    if len(test) == 1:
+                        test = test[0]
+
+                        # to distinguish between lie deriv of 1 and 2 forms
+                        if isinstance(ai, Grad) and isinstance(bi, Cross):
+                            if isinstance(ai._args[0], Dot):
+                                # TODO implement anti commutativity for
+                                #      Cross
+                                if (isinstance(bi._args[0], Curl) and
+                                    (_is_field(bi._args[1]) or
+                                     isinstance(bi._args[1], Tuple))):
+                                    bi_test  = bi._args[0]._args[0]
+                                    bi_proxy = bi._args[1]
+                                    # grad(dot(,)) args
+                                    ai_left,ai_right = ai._args[0]._args[:]
+                                    if _is_test_function(ai_left):
+                                        ai_proxy = ai_right
+                                        ai_test  = ai_left
+
+                                    elif _is_test_function(ai_right):
+                                        ai_proxy = ai_left
+                                        ai_test  = ai_right
+
+                                    if ((ai_test == bi_test) and
+                                        (ai_proxy == bi_proxy)):
+
+                                        if not ai_test == test:
+                                            raise NotImplementedError('')
+
+                                        ai_proxy = cls.eval(ai_proxy, tests=tests, atoms=atoms)
+                                        ai_test  = cls.eval(ai_test, tests=tests, atoms=atoms)
+
+                                        newargs = [ld(ai_proxy, ai_test)]
+
+                                else:
+                                    raise NotImplementedError('')
+
+                        # to distinguish between lie deriv of 1 and 2 forms
+                        elif isinstance(ai, Curl) and isinstance(bi, Mul):
+                            if isinstance(ai._args[0], Cross) and len(bi.args) == 2:
+                                # TODO implement anti commutativity for
+                                #      Cross
+                                if (_is_test_function(bi._args[0]._args[0]) and
+                                    (_is_field(bi._args[1]) or
+                                     isinstance(bi._args[1], Tuple))):
+
+                                    bi_test  = bi._args[0]._args[0]
+                                    bi_proxy = bi._args[1]
+                                    # grad(dot(,)) args
+                                    ai_left,ai_right = ai._args[0]._args[:]
+                                    if _is_test_function(ai_left):
+                                        ai_proxy = ai_right
+                                        ai_test  = ai_left
+
+                                    elif _is_test_function(ai_right):
+                                        ai_proxy = ai_left
+                                        ai_test  = ai_right
+
+                                    if ((ai_test == bi_test) and
+                                        (ai_proxy == bi_proxy)):
+
+                                        if not ai_test == test:
+                                            raise NotImplementedError('')
+
+                                        ai_proxy = cls.eval(ai_proxy, tests=tests, atoms=atoms)
+                                        ai_test  = cls.eval(ai_test, tests=tests, atoms=atoms)
+
+                                        newargs = [ld(ai_proxy, ai_test)]
+
+                                else:
+                                    raise NotImplementedError('')
+
+                    elif len(test) > 1:
+                        raise ValueError('wrong expression')
+
+            args = [i for i in expr.args if not(i in a) and not(i in b)]
+            args = [cls.eval(i, tests=tests, atoms=atoms) for i in args]
+            args += newargs
             return Add(*args)
 
         if isinstance(expr, Mul):

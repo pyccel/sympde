@@ -10,6 +10,7 @@ from sympy.core.containers import Tuple
 
 from .basic import BasicDomain
 from .datatype import SpaceType, dtype_space_registry
+from .datatype import RegularityType, dtype_regularity_registry
 
 #==============================================================================
 class BasicFunctionSpace(Basic):
@@ -19,9 +20,10 @@ class BasicFunctionSpace(Basic):
     Examples
 
     """
-    _domain = None
-    _shape  = None
-    _kind   = None
+    _domain     = None
+    _shape      = None
+    _kind       = None
+    _regularity = None # TODO pass it as arg to __new__
     def __new__(cls, name, domain, shape, kind):
 
         if not isinstance(domain, BasicDomain):
@@ -36,16 +38,21 @@ class BasicFunctionSpace(Basic):
 
         assert(isinstance(kind, (str, SpaceType)))
 
-        kind = kind.lower()
-        assert(kind in ['h1', 'hcurl', 'hdiv', 'l2', 'undefined'])
+        kind_str = kind.lower()
+        assert(kind_str in ['h1', 'hcurl', 'hdiv', 'l2', 'undefined'])
 
-        kind = dtype_space_registry[kind]
+        kind = dtype_space_registry[kind_str]
 
         if not isinstance(kind, SpaceType):
             raise TypeError('Expecting kind to be of SpaceType')
-        # ...
 
         obj._kind = kind
+        # ...
+
+        # ...
+        if not(kind_str == 'undefined'):
+            obj._regularity = dtype_regularity_registry[kind_str]
+        # ...
 
         return obj
 
@@ -68,6 +75,10 @@ class BasicFunctionSpace(Basic):
     @property
     def kind(self):
         return self._kind
+
+    @property
+    def regularity(self):
+        return self._regularity
 
     @property
     def coordinates(self):
@@ -553,3 +564,4 @@ _is_sympde_atom = lambda a: isinstance(a, (ScalarTestFunction, VectorTestFunctio
                                                    ScalarField, VectorField))
 
 _is_test_function = lambda a: isinstance(a, (ScalarTestFunction, VectorTestFunction))
+_is_field         = lambda a: isinstance(a, (ScalarField, VectorField))

@@ -236,6 +236,46 @@ class InteriorProduct(LinearOperator):
                                              right=sstr(self.args[1]) )
 
 #==============================================================================
+class LieDerivative(LinearOperator):
+
+    nargs = None
+
+    def __new__(cls, *args, **options):
+        # (Try to) sympify args first
+
+        if options.pop('evaluate', True):
+            r = cls.eval(*args)
+        else:
+            r = None
+
+        if r is None:
+            return Basic.__new__(cls, *args, **options)
+        else:
+            return r
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        if not( len(_args) == 2):
+            raise ValueError('Expecting two arguments')
+
+        left = _args[0]
+        right = _args[1]
+        # TODO add properties?
+
+        return cls(left, right, evaluate=False)
+
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        return 'ld({left}, {right})'.format( left=sstr(self.args[0]),
+                                             right=sstr(self.args[1]) )
+
+
+#==============================================================================
 # TODO improve and test
 class PullBack(LinearOperator):
 
@@ -435,6 +475,46 @@ class AdjointInteriorProduct(LinearOperator):
                                              right=sstr(self.args[1]) )
 
 #==============================================================================
+# TODO add properties
+class AdjointLieDerivative(LinearOperator):
+
+    nargs = None
+
+    def __new__(cls, *args, **options):
+        # (Try to) sympify args first
+
+        if options.pop('evaluate', True):
+            r = cls.eval(*args)
+        else:
+            r = None
+
+        if r is None:
+            return Basic.__new__(cls, *args, **options)
+        else:
+            return r
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        if not( len(_args) == 2):
+            raise ValueError('Expecting two arguments')
+
+        left = _args[0]
+        right = _args[1]
+        # TODO add properties?
+
+        return cls(left, right, evaluate=False)
+
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        return 'Ld({left}, {right})'.format( left=sstr(self.args[0]),
+                                             right=sstr(self.args[1]) )
+
+#==============================================================================
 # TODO even/odd dim
 class Hodge(LinearOperator):
 
@@ -508,8 +588,11 @@ class Hodge(LinearOperator):
 d = ExteriorDerivative
 wedge = ExteriorProduct
 ip = InteriorProduct
+ld = LieDerivative
 
 delta = AdjointExteriorDerivative
 jp = AdjointInteriorProduct
+Ld = AdjointLieDerivative
+
 hodge = Hodge
 # ...
