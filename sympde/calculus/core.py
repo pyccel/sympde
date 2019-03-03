@@ -1110,6 +1110,18 @@ class Bracket(BasicOperator):
     """
     pass
 
+#==============================================================================
+# TODO improve
+class StrainTensor(Grad):
+    """
+    This operator represents the strain tensor (grad(u) + transpose(grad(u)))/2
+    """
+
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        return '{D}({arg})'.format(D=sstr('D'), arg=sstr(self.args[0]))
+
+
 
 Outer = Dot # TODO add the Outer class Function
 
@@ -1134,6 +1146,7 @@ convect = Convect
 bracket = Bracket
 laplace = Laplace
 hessian = Hessian
+D = StrainTensor
 # ...
 
 _is_op_test_function = lambda op: (isinstance(op, (Grad, Curl, Div)) and

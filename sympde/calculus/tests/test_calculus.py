@@ -15,7 +15,7 @@ from sympy.physics.quantum import TensorProduct
 
 from sympde.core import Constant
 from sympde.calculus import grad, dot, inner, cross, rot, curl, div
-from sympde.calculus import laplace, hessian, bracket, convect
+from sympde.calculus import laplace, hessian, bracket, convect, D
 from sympde.calculus import ArgumentTypeError
 from sympde.topology import Domain
 from sympde.topology import FunctionSpace, VectorFunctionSpace
@@ -226,6 +226,26 @@ def test_calculus_3d_3():
     # ...
 
 #==============================================================================
+def test_calculus_3d_4():
+    domain = Domain('Omega', dim=3)
+
+    W = VectorFunctionSpace('W', domain)
+
+    alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
+
+    F,G,H = [VectorField(W, i) for i in ['F','G','H']]
+
+    # ...
+    expr = inner(D(F), D(G))
+    print(expr)
+    # ...
+
+    # ...
+    expected = alpha*inner(D(F), D(G)) + beta*inner(D(F), D(H))
+    assert(inner(D(F), D(alpha*G+beta*H)) == expected)
+    # ...
+
+#==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
 
@@ -241,5 +261,5 @@ def teardown_function():
 #test_calculus_2d_2()
 #test_calculus_3d()
 
-test_calculus_3d_3()
-
+#test_calculus_3d_3()
+#test_calculus_3d_4()
