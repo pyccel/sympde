@@ -195,8 +195,7 @@ class BasicForm(Expr):
     def ldim(self):
         return self._ldim
 
-    @property
-    def kwargs(self):
+    def get_free_variables(self):
         if self._kwargs is None:
             fields = self.fields
             constants = self.constants
@@ -213,8 +212,11 @@ class BasicForm(Expr):
 
         expr = self.expr
 
+        if not kwargs:
+            return expr
+
         # ... use free variables if given and available
-        _kwargs = self.kwargs
+        _kwargs = self.get_free_variables()
         _kwargs_names = list(_kwargs.keys())
         for name, v in kwargs.items():
             if not(name in _kwargs_names):
