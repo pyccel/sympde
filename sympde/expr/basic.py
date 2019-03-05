@@ -171,6 +171,7 @@ class BasicForm(Expr):
     _domain     = None
     _ldim        = None
     _body       = None
+    _kwargs     = None
 
     # TODO use .atoms
     @property
@@ -193,3 +194,34 @@ class BasicForm(Expr):
     @property
     def ldim(self):
         return self._ldim
+
+    @property
+    def kwargs(self):
+        if self._kwargs is None:
+            fields = self.fields
+            constants = self.constants
+
+            _kwargs = {}
+            for i in fields + constants:
+                _kwargs[i.name] = i
+
+            self._kwargs = _kwargs
+
+        return self._kwargs
+
+    def _update_free_variables(self, **kwargs):
+
+        expr = self.expr
+
+        # ... use free variables if given and available
+        _kwargs = self.kwargs
+        _kwargs_names = list(_kwargs.keys())
+        for name, v in kwargs.items():
+            if not(name in _kwargs_names):
+                raise ValueError('{} is not a free variable'.format(name))
+
+            var = _kwargs[name]
+            expr = expr.xreplace({var: v})
+        # ...
+
+        return expr

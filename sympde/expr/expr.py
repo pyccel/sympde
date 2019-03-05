@@ -387,10 +387,21 @@ class LinearForm(BasicForm):
     def ldim(self):
         return self.test_spaces[0].ldim
 
-    def __call__(self, *args):
-        args = _sanitize_arguments(args, is_linear=True)
+    def __call__(self, *args, **kwargs):
+
+        # ... use free variables if given and available
+        expr = self._update_free_variables(**kwargs)
+        # ...
+
+        # ...
         args = Tuple(*args)
-        return self.expr.xreplace(dict(list(zip(self.variables, args))))
+
+        variables = self.variables
+        expr = expr.xreplace(dict(list(zip(variables, args))))
+        # ...
+
+        return expr
+
 
 #==============================================================================
 class BilinearForm(BasicForm):
@@ -482,19 +493,21 @@ class BilinearForm(BasicForm):
 
         return self._is_symmetric
 
-    def __call__(self, *args):
-        args = _sanitize_arguments(args, is_bilinear=True)
-        left,right = args
-        if not is_sequence(left):
-            left = [left]
+    def __call__(self, *args, **kwargs):
 
-        if not is_sequence(right):
-            right = [right]
+        # ... use free variables if given and available
+        expr = self._update_free_variables(**kwargs)
+        # ...
 
-        args = Tuple(*left, *right)
+        # ...
+        assert(len(args) == 2)
+        args = Tuple(*args)
 
         variables = Tuple(*self.variables[0], *self.variables[1])
-        return self.expr.xreplace(dict(list(zip(variables, args))))
+        expr = expr.xreplace(dict(list(zip(variables, args))))
+        # ...
+
+        return expr
 
 #==============================================================================
 class Norm(Functional):
