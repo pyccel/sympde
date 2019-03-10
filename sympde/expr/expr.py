@@ -411,7 +411,6 @@ class BilinearForm(BasicForm):
     def __new__(cls, arguments, expr):
 
         # ...
-
         integrals = expr.atoms(BasicIntegral)
         if integrals:
             for integral in integrals:
@@ -502,7 +501,7 @@ class BilinearForm(BasicForm):
         # ...
         assert(len(args) == 2)
         
-        if isinstance(args[0], (Tuple, tuple)):
+        if is_sequence(args[0]):
             args = tuple(args[0]) + tuple(args[1])
             
         args = Tuple(*args)
