@@ -429,7 +429,6 @@ class BilinearForm(BasicForm):
         domain = _get_domain(expr)
         obj._domain = domain
         # ...
-
         return obj
 
     @property
@@ -501,7 +500,17 @@ class BilinearForm(BasicForm):
 
         # ...
         assert(len(args) == 2)
-        args = Tuple(*args)
+        
+        new_args = []
+        
+        for arg in args:
+        
+            if is_sequence(arg):
+                new_args += list(arg)
+            else:
+                new_args.append(arg) 
+            
+        args = Tuple(*new_args)
 
         variables = Tuple(*self.variables[0], *self.variables[1])
         expr = expr.xreplace(dict(list(zip(variables, args))))
