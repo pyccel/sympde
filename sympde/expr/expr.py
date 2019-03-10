@@ -501,10 +501,16 @@ class BilinearForm(BasicForm):
         # ...
         assert(len(args) == 2)
         
-        if is_sequence(args[0]):
-            args = tuple(args[0]) + tuple(args[1])
+        new_args = []
+        
+        for arg in args:
+        
+            if is_sequence(arg):
+                new_args += list(arg)
+            else:
+                new_args.append(arg) 
             
-        args = Tuple(*args)
+        args = Tuple(*new_args)
 
         variables = Tuple(*self.variables[0], *self.variables[1])
         expr = expr.xreplace(dict(list(zip(variables, args))))
