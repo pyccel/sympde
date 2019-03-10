@@ -411,6 +411,7 @@ class BilinearForm(BasicForm):
     def __new__(cls, arguments, expr):
 
         # ...
+
         integrals = expr.atoms(BasicIntegral)
         if integrals:
             for integral in integrals:
@@ -429,7 +430,6 @@ class BilinearForm(BasicForm):
         domain = _get_domain(expr)
         obj._domain = domain
         # ...
-
         return obj
 
     @property
@@ -501,6 +501,10 @@ class BilinearForm(BasicForm):
 
         # ...
         assert(len(args) == 2)
+        
+        if isinstance(args[0], (Tuple, tuple)):
+            args = tuple(args[0]) + tuple(args[1])
+            
         args = Tuple(*args)
 
         variables = Tuple(*self.variables[0], *self.variables[1])
