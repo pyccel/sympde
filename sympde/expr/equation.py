@@ -330,14 +330,11 @@ class NewtonIteration(Equation):
 
         a = linearize(form, fields, trials=trials)
 
-        tests, trials  = a.variables
-        test_trial = a.variables
+        trials, tests  = a.variables
 
-#        lhs = a(*test_trial)
         lhs = a
 
         form = LinearForm(tests, -form.expr)
-#        rhs = form(*tests)
         rhs = form
 
         return Equation.__new__(cls, lhs, rhs, tests, trials, bc=bc)
