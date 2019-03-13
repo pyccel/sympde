@@ -1065,6 +1065,33 @@ def test_linearize_form_2d_3():
     print(a)
 
 #==============================================================================
+def test_linearize_form_2d_4():
+    domain = Domain('Omega', dim=DIM)
+    Gamma_N = Boundary(r'\Gamma_N', domain)
+
+    x,y = domain.coordinates
+
+    V = FunctionSpace('V', domain)
+
+    v  = ScalarTestFunction(V, name='v')
+    du = ScalarTestFunction(V, name='du')
+
+    u = ScalarField(V, name='u')
+
+    g = Tuple(cos(pi*x)*sin(pi*y),
+              sin(pi*x)*cos(pi*y))
+
+    expr = dot(grad(v), grad(u)) - 4.*exp(-u)*v # + v*trace_1(g, Gamma_N)
+
+    l = LinearForm(v, expr )
+
+    # linearising l around u, using du
+    a = linearize(l, u, trials=du)
+    # ...
+    print(a)
+    # ...
+
+#==============================================================================
 def test_area_2d_1():
 
     domain = Domain('Omega', dim=2)
@@ -1391,3 +1418,5 @@ def teardown_function():
 
 #test_bilinear_form_2d_3()
 #test_bilinear_form_2d_4()
+
+test_linearize_form_2d_4()
