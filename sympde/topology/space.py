@@ -6,8 +6,10 @@ from sympy.core import Basic
 from sympy.tensor import Indexed, IndexedBase
 from sympy.core import Symbol
 from sympy.core import Expr
+from sympy.core.expr import AtomicExpr
 from sympy.core.containers import Tuple
 
+from sympde.core.utils import random_string
 from .basic import BasicDomain
 from .datatype import SpaceType, dtype_space_registry
 from .datatype import RegularityType, dtype_regularity_registry
@@ -421,6 +423,7 @@ class ScalarField(Symbol):
     """
     _space = None
     is_commutative = True
+    _projection_of = None
     def __new__(cls, space, name=None):
         if not isinstance(space, FunctionSpace):
             raise ValueError('Expecting a FunctionSpace')
@@ -437,6 +440,13 @@ class ScalarField(Symbol):
     def ldim(self):
         return self.space.ldim
 
+    @property
+    def projection_of(self):
+        return self._projection_of
+
+    def set_as_projection(self, expr):
+        self._projection_of = expr
+
     def _sympystr(self, printer):
         sstr = printer.doprint
         return sstr(self.name)
@@ -451,6 +461,7 @@ class VectorField(Symbol, IndexedBase):
     """
     is_commutative = True
     _space = None
+    _projection_of = None
     def __new__(cls, space, name=None):
         if not isinstance(space, VectorFunctionSpace):
             raise ValueError('Expecting a VectorFunctionSpace')
@@ -490,6 +501,13 @@ class VectorField(Symbol, IndexedBase):
 
     def duplicate(self, name):
         return VectorField(self.space, name)
+
+    @property
+    def projection_of(self):
+        return self._projection_of
+
+    def set_as_projection(self, expr):
+        self._projection_of = expr
 
 #==============================================================================
 # this class is needed, otherwise sympy will convert VectorTestFunction to
@@ -565,3 +583,76 @@ _is_sympde_atom = lambda a: isinstance(a, (ScalarTestFunction, VectorTestFunctio
 
 _is_test_function = lambda a: isinstance(a, (ScalarTestFunction, VectorTestFunction))
 _is_field         = lambda a: isinstance(a, (ScalarField, VectorField))
+
+
+#==============================================================================
+class Projector(Basic):
+    """
+    Represents a Projector over a function space.
+
+    Examples
+
+    """
+    _kind = None
+    def __new__(cls, space, kind=None):
+
+        if not isinstance(space, BasicFunctionSpace):
+            raise TypeError('> Expecting a BasicFunctionSpace object for space')
+
+        obj = Basic.__new__(cls, space)
+        obj._kind = kind
+
+        return obj
+
+    @property
+    def space(self):
+        return self._args[0]
+
+    @property
+    def kind(self):
+        return self._kind
+
+    def __call__(self, expr):
+        V = self.space
+
+        if isinstance(expr, (ScalarField, VectorField, ScalarTestFunction, VectorTestFunction)):
+            if expr.space is V:
+                return expr
+
+            elif isinstance(expr.projection_of, Projection):
+                if expr.projection_of.projector.space is V:
+                    return expr
+
+        name = 'Proj_' + random_string( 4 )
+        if isinstance(V, FunctionSpace):
+            F = ScalarField(V, name)
+
+        elif isinstance(V, VectorFunctionSpace):
+            F = VectorField(V, name)
+
+        else:
+            raise TypeError('Only scalar and vector space are handled')
+
+        F.set_as_projection(Projection(self, expr))
+        return F
+
+#==============================================================================
+class Projection(AtomicExpr):
+    """
+    Represents a projection
+
+    Examples
+
+    """
+    _kind = None
+    def __new__(cls, projector, expr):
+
+        return Basic.__new__(cls, projector, expr)
+
+    @property
+    def projector(self):
+        return self._args[0]
+
+    @property
+    def expr(self):
+        return self._args[1]

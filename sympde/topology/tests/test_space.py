@@ -5,6 +5,9 @@ from sympde.topology import FunctionSpace, VectorFunctionSpace
 from sympde.topology import ProductSpace
 from sympde.topology import H1Space, HcurlSpace, HdivSpace, L2Space, UndefinedSpace
 from sympde.topology import TestFunction, ScalarTestFunction, VectorTestFunction
+from sympde.topology import Field, ScalarField, VectorField
+from sympde.topology import Projector
+from sympde.calculus import grad, curl, div
 
 #==============================================================================
 def test_space_1d_1():
@@ -131,6 +134,43 @@ def test_space_2d_2():
     assert(H1.regularity    > Hcurl.regularity)
     assert(Hcurl.regularity > L2.regularity)
 
+#==============================================================================
+def test_projector_2d_1():
+
+    DIM = 2
+    domain = Domain('Omega', dim=DIM)
+
+    V     =       FunctionSpace('V', domain, kind=None)
+    W     = VectorFunctionSpace('W', domain, kind=None)
+
+    v, w = Field(V*W, ['v', 'w'])
+
+    # ...
+    P_V = Projector(V)
+    assert(P_V.space == V)
+
+    Pv = P_V(v)
+    assert(isinstance(Pv, ScalarField))
+    assert(Pv == v)
+    assert(grad(Pv**2) == 2*v*grad(v))
+
+    Pdiv_w = P_V(div(w))
+    assert(isinstance(Pdiv_w, ScalarField))
+    # ...
+
+    # ...
+    P_W = Projector(W)
+    assert(P_W.space == W)
+
+    Pw = P_W(w)
+    assert(isinstance(Pw, VectorField))
+    assert(Pw == w)
+
+    Pgrad_v = P_W(grad(v))
+    assert(isinstance(Pgrad_v, VectorField))
+    assert(P_W(Pgrad_v) == Pgrad_v)
+    # ...
+
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
@@ -143,3 +183,5 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
+
+test_projector_2d_1()
