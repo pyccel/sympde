@@ -406,6 +406,115 @@ class Inner(BasicOperator):
         return alpha*cls(left, right, evaluate=False)
 
 #==============================================================================
+class Outer(BasicOperator):
+    """
+    Represents a generic outer operator, without knowledge of the dimension.
+
+    This operator implements the properties of addition and multiplication
+
+
+    """
+
+    def __new__(cls, *args, **options):
+        # (Try to) sympify args first
+
+        if options.pop('evaluate', True):
+            r = cls.eval(*args)
+        else:
+            r = None
+
+        if r is None:
+            return Basic.__new__(cls, *args, **options)
+        else:
+            return r
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        if not len(_args) == 2:
+            raise ValueError('Expecting two arguments')
+
+        left,right = _args
+        if (left == 0) or (right == 0):
+            return 0
+
+        if isinstance(left, Add):
+            args = [cls.eval(i, right) for i in left.args]
+            return Add(*args)
+
+        if isinstance(right, Add):
+            args = [cls.eval(left, i) for i in right.args]
+            return Add(*args)
+
+        # ... from now on, we construct left and right with some coeffs
+        #     return is done at the end
+        alpha = S.One
+        if isinstance(left, Mul):
+            coeffs  = [a for a in left.args if isinstance(a, _coeffs_registery)]
+            for a in left.args:
+                if ( isinstance(a, Pow) and
+                     isinstance(a.base, _coeffs_registery) and
+                     isinstance(a.exp, _coeffs_registery) ):
+                    coeffs += [a]
+
+                elif isinstance(a, (ScalarField, ScalarTestFunction)):
+                    coeffs += [a]
+
+            vectors = [a for a in left.args if not(a in coeffs)]
+
+            a = S.One
+            if coeffs:
+                a = Mul(*coeffs)
+
+            b = S.One
+            if vectors:
+                b = Mul(*vectors)
+
+            alpha *= a
+            left   = b
+
+        if isinstance(right, Mul):
+            coeffs  = [a for a in right.args if isinstance(a, _coeffs_registery)]
+            for a in right.args:
+                if ( isinstance(a, Pow) and
+                     isinstance(a.base, _coeffs_registery) and
+                     isinstance(a.exp, _coeffs_registery) ):
+                    coeffs += [a]
+
+                elif isinstance(a, (ScalarField, ScalarTestFunction)):
+                    coeffs += [a]
+
+            vectors = [a for a in right.args if not(a in coeffs)]
+
+            a = S.One
+            if coeffs:
+                a = Mul(*coeffs)
+
+            b = S.One
+            if vectors:
+                b = Mul(*vectors)
+
+            alpha *= a
+            right  = b
+        # ...
+
+        # ... this is a hack to ensure commutativity
+        #     TODO to be improved
+        try:
+            if str(right) < str(left):
+                return alpha*cls(right, left, evaluate=False)
+
+        except:
+            pass
+        # ...
+
+        return alpha*cls(left, right, evaluate=False)
+
+#==============================================================================
 # TODO add it to evaluation
 # Convect(F, G) = dot(F, nabla) G
 class Convect(BasicOperator):
@@ -1120,10 +1229,6 @@ class StrainTensor(Grad):
     def _sympystr(self, printer):
         sstr = printer.doprint
         return '{D}({arg})'.format(D=sstr('D'), arg=sstr(self.args[0]))
-
-
-
-Outer = Dot # TODO add the Outer class Function
 
 # ...
 _generic_ops  = (Dot, Cross, Inner, Outer,
