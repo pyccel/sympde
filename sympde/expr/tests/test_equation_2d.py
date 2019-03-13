@@ -29,7 +29,6 @@ from sympde.topology import ElementDomain
 from sympde.topology import Area
 
 from sympde.expr import BilinearForm, LinearForm
-from sympde.expr import Projection
 from sympde.expr import TerminalExpr
 
 from sympde.expr.errors import UnconsistentLhsError
@@ -155,18 +154,6 @@ def test_equation_2d_1():
 #        l = LinearForm(v, l1(v) + alpha*l_B2(v))
 #        equation = Equation(a1(v,u), l(v), bc=EssentialBC(u,0,B2))
 #    # ...
-
-
-##==============================================================================
-## TODO
-#def test_projection_2d():
-#
-#    V = FunctionSpace('V', domain)
-#    x,y = domain.coordinates
-#
-#    alpha = Constant('alpha')
-#
-#    u = Projection(x**2+alpha*y, V)
 
 
 #==============================================================================

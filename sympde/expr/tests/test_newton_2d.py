@@ -29,7 +29,6 @@ from sympde.topology import ElementDomain
 from sympde.topology import Area
 
 from sympde.expr import BilinearForm, LinearForm
-from sympde.expr import Projection
 from sympde.expr import TerminalExpr
 
 from sympde.expr.errors import UnconsistentLhsError
