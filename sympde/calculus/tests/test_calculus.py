@@ -11,11 +11,12 @@ from sympy import Function
 from sympy import pi, cos, sin
 from sympy import srepr
 from sympy import expand
+from sympy import Function
 from sympy.physics.quantum import TensorProduct
 
 from sympde.core import Constant
 from sympde.calculus import grad, dot, inner, outer, cross, rot, curl, div
-from sympde.calculus import laplace, hessian, bracket, convect, D
+from sympde.calculus import laplace, hessian, bracket, convect, D, conv
 from sympde.calculus import ArgumentTypeError
 from sympde.topology import Domain
 from sympde.topology import FunctionSpace, VectorFunctionSpace
@@ -102,6 +103,24 @@ def test_calculus_2d_2():
     assert( convect(F+G, H) == convect(F,H) + convect(G,H) )
     assert( convect(alpha*F,H) == alpha*convect(F,H) )
     assert( convect(F,alpha*H) == alpha*convect(F,H) )
+    # ...
+
+#==============================================================================
+def test_calculus_2d_3():
+    domain = Domain('Omega', dim=2)
+    x,y = domain.coordinates
+
+    V = FunctionSpace('V', domain)
+
+    alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
+
+    f,g,h = [ScalarField(V, name=i) for i in ['f','g','h']]
+    K = Function('K')(x,y)
+    S = Function('S')(x,y)
+
+    # ... scalar gradient properties
+    assert(conv(K, alpha*f+beta*g) == alpha*conv(K,f) + beta*conv(K,g))
+    assert(conv(alpha*K+beta*S, f) == alpha*conv(K,f) + beta*conv(S,f))
     # ...
 
 #==============================================================================
@@ -283,6 +302,7 @@ def teardown_function():
 
 #test_calculus_2d_1()
 #test_calculus_2d_2()
+#test_calculus_2d_3()
 #test_calculus_3d()
 
 #test_calculus_3d_3()
