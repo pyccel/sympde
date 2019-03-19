@@ -454,11 +454,11 @@ class BilinearForm(BasicForm):
 
     @property
     def test_functions(self):
-        return self.variables[0]
+        return self.variables[1]
 
     @property
     def trial_functions(self):
-        return self.variables[1]
+        return self.variables[0]
 
     @property
     def test_spaces(self):
