@@ -54,6 +54,7 @@ from sympde.topology.space import FunctionSpace
 from sympde.topology.space import ProductSpace
 from sympde.topology.space import ScalarTestFunction
 from sympde.topology.space import VectorTestFunction
+from sympde.topology.space import Element,IndexedElement
 from sympde.topology.space import IndexedTestTrial
 from sympde.topology.space import Unknown, VectorUnknown
 from sympde.topology.space import Trace
@@ -68,7 +69,8 @@ from sympde.topology import LogicalExpr
 
 from .basic  import BasicExpr, BasicForm
 from .expr   import LinearExpr, BilinearExpr
-from .expr   import LinearForm, BilinearForm
+from .expr   import LinearForm, BilinearForm, Norm
+from .equation import Equation
 from .expr import BasicIntegral, DomainIntegral, BoundaryIntegral
 from .expr import Functional
 from .expr import _get_domain
@@ -295,10 +297,8 @@ class TerminalExpr(CalculusFunction):
             return Mul(*args)
 
         elif isinstance(expr, BasicForm):
-            # ...
+            # ...z
             dim = expr.ldim
-            is_bilinear = expr.is_bilinear
-
             domain = expr.domain
             if isinstance(domain, Union):
                 domain = list(domain._args)
@@ -314,6 +314,36 @@ class TerminalExpr(CalculusFunction):
             # ...
 
             # ...
+            if isinstance(expr, (Equation, BilinearForm)):
+            
+                test_functions  = expr.test_functions
+                trial_functions = expr.trial_functions
+                new_test_functions  = [f.space.element(f.name) for f in test_functions]
+                new_trial_functions = [f.space.element(f.name) for f in trial_functions]
+                expr = expr.subs(zip(test_functions, new_test_functions))
+                expr = expr.subs(zip(trial_functions, new_trial_functions))
+            elif isinstance(expr, LinearForm):
+            
+                test_functions  = expr.test_functions
+                new_test_functions  = [f.space.element(f.name) for f in test_functions]
+                expr = expr.subs(zip(test_functions, new_test_functions))
+            elif isinstance(expr, Functional):
+            
+                indexed_fields = list(expr.expr.atoms(IndexedElement))
+                new_indexed_fields = [VectorField(F.base.space,F.base.name) for F in indexed_fields]
+                new_indexed_fields = [new_F[F.indices[0]] for new_F,F in zip(new_indexed_fields, indexed_fields)]
+                expr = expr.subs(zip(indexed_fields, new_indexed_fields))
+                fields = list(expr.expr.atoms(Element).difference(indexed_fields))
+                new_fields = [f.space.field(f.name) for f in fields]
+                expr = expr.subs(zip(fields, new_fields))
+            else:
+                raise NotImplementedError('TODO')
+
+            
+            # ...
+            
+            # ...
+            
             if isinstance(expr.expr, Add):
                 for a in expr.expr.args:
                     newexpr = cls.eval(a, dim=dim)
@@ -384,7 +414,6 @@ class TerminalExpr(CalculusFunction):
                 else:
                     raise TypeError('')
             # ...
-
             return ls
 
         elif isinstance(expr, BasicIntegral):

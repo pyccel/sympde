@@ -51,6 +51,7 @@ from sympde.topology.space import FunctionSpace
 from sympde.topology.space import ProductSpace
 from sympde.topology.space import ScalarTestFunction
 from sympde.topology.space import VectorTestFunction
+from sympde.topology.space import Element
 from sympde.topology.space import IndexedTestTrial
 from sympde.topology.space import Unknown, VectorUnknown
 from sympde.topology.space import Trace
@@ -72,11 +73,11 @@ def _sanitize_arguments(arguments, is_bilinear=False, is_linear=False):
         elif is_linear:
             test_functions = arguments
 
-        if isinstance(test_functions, (ScalarTestFunction, VectorTestFunction)):
+        if isinstance(test_functions, (ScalarTestFunction, VectorTestFunction, Element)):
             test_functions = [test_functions]
 
         elif isinstance(test_functions, (tuple, list, Tuple)):
-            are_valid = [isinstance(i, (ScalarTestFunction, VectorTestFunction)) for i in test_functions]
+            are_valid = [isinstance(i, (ScalarTestFunction, VectorTestFunction, Element)) for i in test_functions]
             if not all(are_valid):
                 raise TypeError('> Wrong arguments for test functions')
 
@@ -91,11 +92,11 @@ def _sanitize_arguments(arguments, is_bilinear=False, is_linear=False):
     if is_bilinear:
 
         trial_functions = arguments[1]
-        if isinstance(trial_functions, (ScalarTestFunction, VectorTestFunction)):
+        if isinstance(trial_functions, (ScalarTestFunction, VectorTestFunction, Element)):
             trial_functions = [trial_functions]
 
         elif isinstance(trial_functions, (tuple, list, Tuple)):
-            are_valid = [isinstance(i, (ScalarTestFunction, VectorTestFunction)) for i in trial_functions]
+            are_valid = [isinstance(i, (ScalarTestFunction, VectorTestFunction, Element)) for i in trial_functions]
             if not all(are_valid):
                 raise TypeError('> Wrong arguments for trial functions')
 
