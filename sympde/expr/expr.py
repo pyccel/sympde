@@ -522,6 +522,8 @@ class BilinearForm(BasicForm):
 
 #==============================================================================
 class Norm(Functional):
+    is_norm = True
+
     def __new__(cls, expr, domain, kind='l2', eval=True):
 #        # ...
 #        tests = expr.atoms((ScalarTestFunction, VectorTestFunction))

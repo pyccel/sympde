@@ -172,6 +172,7 @@ class BasicForm(Expr):
     is_bilinear = False
     is_functional = False
     is_annotated  = False
+    is_norm       = False
     _domain     = None
     _ldim        = None
     _body       = None
@@ -270,7 +271,8 @@ class BasicForm(Expr):
             new_fields = [f.space.field(f.name) for f in fields]
             expr = expr.subs(zip(fields, new_fields))
             expr = self.func(expr, self.domain, eval=False)
-            expr._exponent = self._exponent
+            if self.is_norm:
+                expr._exponent = self._exponent
             
         else:
             raise NotImplementedError('TODO')
