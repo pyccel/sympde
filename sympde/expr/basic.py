@@ -56,9 +56,11 @@ from sympde.topology.space import IndexedTestTrial
 from sympde.topology.space import Unknown, VectorUnknown
 from sympde.topology.space import Trace
 from sympde.topology.space import ScalarField, VectorField, IndexedVectorField
+from sympde.topology.space import Element, IndexedElement
 from sympde.topology.measure import CanonicalMeasure
 from sympde.topology.measure import CartesianMeasure
 from sympde.topology.measure import Measure
+
 
 
 #==============================================================================
@@ -169,17 +171,25 @@ class BasicForm(Expr):
     is_linear   = False
     is_bilinear = False
     is_functional = False
+    is_annotated  = False
     _domain     = None
     _ldim        = None
     _body       = None
     _kwargs     = None
 
-    # TODO use .atoms
     @property
     def fields(self):
-        ls = [a for a in self.expr.free_symbols if isinstance(a, (ScalarField, VectorField))]
+        atoms  = self.expr.atoms(Element,ScalarField, VectorField)
+        
+        if self.is_bilinear or self.is_linear:
+            args = self.variables
+            if self.is_bilinear:
+                args = args[0]+args[1]
+            fields = list(atoms.difference(args))
+        else:
+            fields = list(atoms)
         # no redanduncy
-        return sorted(list(set(ls)))
+        return fields
 
     # TODO use .atoms
     @property
@@ -227,4 +237,42 @@ class BasicForm(Expr):
             expr = expr.xreplace({var: v})
         # ...
 
+        return expr
+        
+    def _annotate(self):
+    
+        if self.is_annotated:
+            return self
+
+        if self.is_bilinear:
+            test_functions  = self.test_functions
+            trial_functions = self.trial_functions
+            fields          = self.fields
+            new_test_functions  = [f.space.element(f.name) for f in test_functions]
+            new_trial_functions = [f.space.element(f.name) for f in trial_functions]
+            new_fields          = [f.space.field(f.name) for f in fields]
+            expr = self.subs(zip(test_functions, new_test_functions))
+            expr = expr.subs(zip(trial_functions, new_trial_functions))
+            expr = expr.subs(zip(fields, new_fields))
+            
+        elif self.is_linear:
+            test_functions  = self.test_functions
+            fields          = self.fields
+            new_test_functions  = [f.space.element(f.name) for f in test_functions]
+            new_fields          = [f.space.field(f.name) for f in fields]
+            expr = self.subs(zip(test_functions, new_test_functions))
+            expr = expr.subs(zip(fields, new_fields))
+            
+        elif self.is_functional:
+            domain = self.domain
+            expr   = self.expr
+            fields = self.fields
+            new_fields = [f.space.field(f.name) for f in fields]
+            expr = expr.subs(zip(fields, new_fields))
+            expr = self.func(expr, self.domain, eval=False)
+            expr._exponent = self._exponent
+            
+        else:
+            raise NotImplementedError('TODO')
+        expr.is_annotated = True
         return expr

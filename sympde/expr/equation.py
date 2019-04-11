@@ -74,7 +74,6 @@ class EssentialBC(BasicBoundaryCondition):
         nn               = list(lhs.atoms(NormalVector))
         normal_component = isinstance(u, VectorTestFunction) and (len(nn) > 0)
         # ...
-        print(nn)
         # ...
         if nn:
             assert(len(nn) == 1)
@@ -87,8 +86,6 @@ class EssentialBC(BasicBoundaryCondition):
         # ...
 
         # ...
-        print(lhs,order_0_expr)
-        print(lhs in order_0_expr)
         if lhs in order_0_expr:
             order = 0
             if isinstance(u, (IndexedTestTrial,IndexedElement)):
@@ -176,6 +173,7 @@ class EssentialBC(BasicBoundaryCondition):
 #        check that the same boundary is not used in the weak
 #        formulation and strong condition
 class Equation(Basic):
+
     def __new__(cls, lhs, rhs, tests, trials, bc=None):
         # ...
         if not isinstance(lhs, BilinearForm):
@@ -320,7 +318,6 @@ class Equation(Basic):
     @property
     def bc(self):
         return self._args[4]
-
 
 #==============================================================================
 # TODO must subtitute expr by given args => call then create BasicForm

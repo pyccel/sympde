@@ -281,9 +281,10 @@ def _get_domain(a):
 class Functional(BasicForm):
     is_functional = True
 
-    def __new__(cls, expr, domain):
+    def __new__(cls, expr, domain, eval=True):
 
-        expr = BasicIntegral(expr)
+        if eval:
+            expr = BasicIntegral(expr)
         obj = Basic.__new__(cls, expr, domain)
 
         # compute dim from fields if available
@@ -426,7 +427,6 @@ class BilinearForm(BasicForm):
         args = _sanitize_arguments(arguments, is_bilinear=True)
         expr = BasicIntegral(expr)
         obj = Basic.__new__(cls, args, expr)
-
         # ...
         domain = _get_domain(expr)
         obj._domain = domain
@@ -522,7 +522,7 @@ class BilinearForm(BasicForm):
 
 #==============================================================================
 class Norm(Functional):
-    def __new__(cls, expr, domain, kind='l2'):
+    def __new__(cls, expr, domain, kind='l2', eval=True):
 #        # ...
 #        tests = expr.atoms((ScalarTestFunction, VectorTestFunction))
 #        if tests:
@@ -547,7 +547,7 @@ class Norm(Functional):
 
         # ...
         exponent = None
-        if kind == 'l2':
+        if kind == 'l2' and eval:
             exponent = 2
 
             if not is_vector:
@@ -560,7 +560,7 @@ class Norm(Functional):
                 v = Tuple(*expr[:,0])
                 expr = Dot(v, v)
 
-        elif kind == 'h1':
+        elif kind == 'h1'and eval :
             exponent = 2
 
             if not is_vector:
@@ -574,7 +574,7 @@ class Norm(Functional):
                 expr = Inner(Grad(v), Grad(v))
         # ...
 
-        obj = Functional.__new__(cls, expr, domain)
+        obj = Functional.__new__(cls, expr, domain, eval=eval)
         obj._exponent = exponent
 
         return obj

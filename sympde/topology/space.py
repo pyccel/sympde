@@ -471,8 +471,12 @@ class IndexedElement(Indexed):
     is_Atom = True
 
     def __new__(cls, base, *args, **kw_args):
-        assert(isinstance(base, Element))
-
+        if isinstance(base, (VectorTestFunction, VectorField)):
+            # this is a hack when sympy do the substitution 
+            # we return the right object
+            return base.__getitem__(*args)
+            
+        assert(base, Element)
         if not args:
             raise IndexException("Indexed needs at least one index.")
 

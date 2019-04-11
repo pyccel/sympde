@@ -256,6 +256,7 @@ class TerminalExpr(CalculusFunction):
         # (Try to) sympify args first
 
         if options.pop('evaluate', True):
+            args = cls._annotate(*args)
             r = cls.eval(*args, **options)
         else:
             r = None
@@ -272,6 +273,25 @@ class TerminalExpr(CalculusFunction):
         else:
             return Indexed(self, indices, **kw_args)
 
+    def _annotate(*args):
+        args = list(args)
+        expr = args[0]
+        if isinstance(expr, BasicForm):
+            if not expr.is_annotated:
+                expr = expr._annotate()
+        else:
+            if isinstance(expr, (Add, Mul)):
+                indexed_fields = list(expr.atoms(IndexedElement))
+                new_indexed_fields = [VectorField(F.base.space,F.base.name) for F in indexed_fields]
+                new_indexed_fields = [new_F[F.indices[0]] for new_F,F in zip(new_indexed_fields, indexed_fields)]
+                expr = expr.subs(zip(indexed_fields, new_indexed_fields))
+                fields = list(expr.atoms(Element).difference(indexed_fields))
+                new_fields = [f.space.field(f.name) for f in fields]
+                expr = expr.subs(zip(fields, new_fields))
+                
+        args[0] = expr
+        return args
+        
     @classmethod
     def eval(cls, *_args, **kwargs):
         """."""
@@ -287,7 +307,7 @@ class TerminalExpr(CalculusFunction):
         n_rows = kwargs.pop('n_rows', None)
         n_cols = kwargs.pop('n_cols', None)
         dim    = kwargs.pop('dim', None)
-
+        
         if isinstance(expr, Add):
             args = [cls.eval(a, dim=dim) for a in expr.args]
             return Add(*args)
@@ -311,37 +331,6 @@ class TerminalExpr(CalculusFunction):
             d_expr = {}
             for d in domain:
                 d_expr[d] = S.Zero
-            # ...
-
-            # ...
-            if isinstance(expr, (Equation, BilinearForm)):
-            
-                test_functions  = expr.test_functions
-                trial_functions = expr.trial_functions
-                new_test_functions  = [f.space.element(f.name) for f in test_functions]
-                new_trial_functions = [f.space.element(f.name) for f in trial_functions]
-                expr = expr.subs(zip(test_functions, new_test_functions))
-                expr = expr.subs(zip(trial_functions, new_trial_functions))
-            elif isinstance(expr, LinearForm):
-            
-                test_functions  = expr.test_functions
-                new_test_functions  = [f.space.element(f.name) for f in test_functions]
-                expr = expr.subs(zip(test_functions, new_test_functions))
-            elif isinstance(expr, Functional):
-            
-                indexed_fields = list(expr.expr.atoms(IndexedElement))
-                new_indexed_fields = [VectorField(F.base.space,F.base.name) for F in indexed_fields]
-                new_indexed_fields = [new_F[F.indices[0]] for new_F,F in zip(new_indexed_fields, indexed_fields)]
-                expr = expr.subs(zip(indexed_fields, new_indexed_fields))
-                fields = list(expr.expr.atoms(Element).difference(indexed_fields))
-                new_fields = [f.space.field(f.name) for f in fields]
-                expr = expr.subs(zip(fields, new_fields))
-            else:
-                raise NotImplementedError('TODO')
-
-            
-            # ...
-            
             # ...
             
             if isinstance(expr.expr, Add):
