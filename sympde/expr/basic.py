@@ -51,13 +51,16 @@ from sympde.topology.space import FunctionSpace
 from sympde.topology.space import ProductSpace
 from sympde.topology.space import ScalarTestFunction
 from sympde.topology.space import VectorTestFunction
+from sympde.topology.space import Element
 from sympde.topology.space import IndexedTestTrial
 from sympde.topology.space import Unknown, VectorUnknown
 from sympde.topology.space import Trace
 from sympde.topology.space import ScalarField, VectorField, IndexedVectorField
+from sympde.topology.space import Element, IndexedElement
 from sympde.topology.measure import CanonicalMeasure
 from sympde.topology.measure import CartesianMeasure
 from sympde.topology.measure import Measure
+
 
 
 #==============================================================================
@@ -72,11 +75,11 @@ def _sanitize_arguments(arguments, is_bilinear=False, is_linear=False):
         elif is_linear:
             test_functions = arguments
 
-        if isinstance(test_functions, (ScalarTestFunction, VectorTestFunction)):
+        if isinstance(test_functions, (ScalarTestFunction, VectorTestFunction, Element)):
             test_functions = [test_functions]
 
         elif isinstance(test_functions, (tuple, list, Tuple)):
-            are_valid = [isinstance(i, (ScalarTestFunction, VectorTestFunction)) for i in test_functions]
+            are_valid = [isinstance(i, (ScalarTestFunction, VectorTestFunction, Element)) for i in test_functions]
             if not all(are_valid):
                 raise TypeError('> Wrong arguments for test functions')
 
@@ -91,11 +94,11 @@ def _sanitize_arguments(arguments, is_bilinear=False, is_linear=False):
     if is_bilinear:
 
         trial_functions = arguments[1]
-        if isinstance(trial_functions, (ScalarTestFunction, VectorTestFunction)):
+        if isinstance(trial_functions, (ScalarTestFunction, VectorTestFunction, Element)):
             trial_functions = [trial_functions]
 
         elif isinstance(trial_functions, (tuple, list, Tuple)):
-            are_valid = [isinstance(i, (ScalarTestFunction, VectorTestFunction)) for i in trial_functions]
+            are_valid = [isinstance(i, (ScalarTestFunction, VectorTestFunction, Element)) for i in trial_functions]
             if not all(are_valid):
                 raise TypeError('> Wrong arguments for trial functions')
 
@@ -168,17 +171,26 @@ class BasicForm(Expr):
     is_linear   = False
     is_bilinear = False
     is_functional = False
+    is_annotated  = False
+    is_norm       = False
     _domain     = None
     _ldim        = None
     _body       = None
     _kwargs     = None
 
-    # TODO use .atoms
     @property
     def fields(self):
-        ls = [a for a in self.expr.free_symbols if isinstance(a, (ScalarField, VectorField))]
+        atoms  = self.expr.atoms(Element,ScalarField, VectorField)
+        
+        if self.is_bilinear or self.is_linear:
+            args = self.variables
+            if self.is_bilinear:
+                args = args[0]+args[1]
+            fields = list(atoms.difference(args))
+        else:
+            fields = list(atoms)
         # no redanduncy
-        return sorted(list(set(ls)))
+        return fields
 
     # TODO use .atoms
     @property
@@ -226,4 +238,43 @@ class BasicForm(Expr):
             expr = expr.xreplace({var: v})
         # ...
 
+        return expr
+        
+    def _annotate(self):
+    
+        if self.is_annotated:
+            return self
+
+        if self.is_bilinear:
+            test_functions  = self.test_functions
+            trial_functions = self.trial_functions
+            fields          = self.fields
+            new_test_functions  = [f.space.element(f.name) for f in test_functions]
+            new_trial_functions = [f.space.element(f.name) for f in trial_functions]
+            new_fields          = [f.space.field(f.name) for f in fields]
+            expr = self.subs(zip(test_functions, new_test_functions))
+            expr = expr.subs(zip(trial_functions, new_trial_functions))
+            expr = expr.subs(zip(fields, new_fields))
+            
+        elif self.is_linear:
+            test_functions  = self.test_functions
+            fields          = self.fields
+            new_test_functions  = [f.space.element(f.name) for f in test_functions]
+            new_fields          = [f.space.field(f.name) for f in fields]
+            expr = self.subs(zip(test_functions, new_test_functions))
+            expr = expr.subs(zip(fields, new_fields))
+            
+        elif self.is_functional:
+            domain = self.domain
+            expr   = self.expr
+            fields = self.fields
+            new_fields = [f.space.field(f.name) for f in fields]
+            expr = expr.subs(zip(fields, new_fields))
+            expr = self.func(expr, self.domain, eval=False)
+            if self.is_norm:
+                expr._exponent = self._exponent
+            
+        else:
+            raise NotImplementedError('TODO')
+        expr.is_annotated = True
         return expr

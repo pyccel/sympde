@@ -18,6 +18,7 @@ from sympde.calculus import laplace, hessian, bracket
 from sympde.topology import (dx, dy, dz)
 from sympde.topology import FunctionSpace, VectorFunctionSpace
 from sympde.topology import ScalarField, VectorField
+from sympde.topology import element_of_space
 from sympde.topology import ProductSpace
 from sympde.topology import ScalarTestFunction
 from sympde.topology import VectorTestFunction
@@ -29,7 +30,6 @@ from sympde.topology import ElementDomain
 from sympde.topology import Area
 
 from sympde.expr import BilinearForm, LinearForm
-from sympde.expr import Projection
 from sympde.expr import TerminalExpr
 
 from sympde.expr.errors import UnconsistentLhsError
@@ -47,8 +47,8 @@ def test_equation_2d_1():
     V = FunctionSpace('V', domain)
     U = FunctionSpace('U', domain)
 
-    v = ScalarTestFunction(V, name='v')
-    u = ScalarTestFunction(U, name='u')
+    v = element_of_space(V, name='v')
+    u = element_of_space(U, name='u')
 
     x,y = domain.coordinates
 
@@ -157,18 +157,6 @@ def test_equation_2d_1():
 #    # ...
 
 
-##==============================================================================
-## TODO
-#def test_projection_2d():
-#
-#    V = FunctionSpace('V', domain)
-#    x,y = domain.coordinates
-#
-#    alpha = Constant('alpha')
-#
-#    u = Projection(x**2+alpha*y, V)
-
-
 #==============================================================================
 def test_equation_2d_2():
 
@@ -178,12 +166,12 @@ def test_equation_2d_2():
 
     x,y = domain.coordinates
 
-    pn, wn = [ScalarField(V, name=i) for i in ['pn', 'wn']]
+    pn, wn = [element_of_space(V, name=i) for i in ['pn', 'wn']]
 
-    dp    = ScalarTestFunction(V, name='dp')
-    dw    = ScalarTestFunction(V, name='dw')
-    tau   = ScalarTestFunction(V, name='tau')
-    sigma = ScalarTestFunction(V, name='sigma')
+    dp    = element_of_space(V, name='dp')
+    dw    = element_of_space(V, name='dw')
+    tau   = element_of_space(V, name='tau')
+    sigma = element_of_space(V, name='sigma')
 
     Re    = Constant('Re', real=True)
     dt    = Constant('dt', real=True)
@@ -215,8 +203,8 @@ def test_equation_2d_3():
 
     V = FunctionSpace('V', domain)
 
-    v = ScalarTestFunction(V, name='v')
-    u = ScalarTestFunction(V, name='u')
+    v = element_of_space(V, name='v')
+    u = element_of_space(V, name='u')
 
     x,y = domain.coordinates
 
@@ -246,9 +234,8 @@ def test_equation_2d_4():
 
     V = VectorFunctionSpace('V', domain)
 
-    v = VectorTestFunction(V, name='v')
-    u = VectorTestFunction(V, name='u')
-
+    v = element_of_space(V, name='v')
+    u = element_of_space(V, name='u')
     x,y = domain.coordinates
 
     B1 = Boundary(r'\Gamma_1', domain)
@@ -276,7 +263,6 @@ def test_equation_2d_4():
     eq = Equation(a1, l1, tests=v, trials=u, bc=bc)
     # ...
 
-
 #==============================================================================
 def test_equation_2d_5():
     domain = Square()
@@ -291,11 +277,11 @@ def test_equation_2d_5():
     V = FunctionSpace('V', domain)
     X = ProductSpace(W, V)
 
-    F = VectorField(W, name='F')
-    G = ScalarField(V, name='G')
+    F = element_of_space(W, name='F')
+    G = element_of_space(V, name='G')
 
-    u,v = [VectorTestFunction(W, name=i) for i in ['u', 'v']]
-    p,q = [      ScalarTestFunction(V, name=i) for i in ['p', 'q']]
+    u,v = [element_of_space(W, name=i) for i in ['u', 'v']]
+    p,q = [element_of_space(V, name=i) for i in ['p', 'q']]
 
     a0 = BilinearForm((v,u), inner(grad(v), grad(u)))
     print('     a0 done.')
@@ -345,13 +331,12 @@ def test_equation_2d_6():
 
     V = FunctionSpace('V', domain)
 
-    u,v = [ScalarTestFunction(V, name=i) for i in ['u', 'v']]
+    u,v = [element_of_space(V, name=i) for i in ['u', 'v']]
 
     # ...
     expr = kappa * dot(grad(u), grad(v)) + dot(b, grad(u)) * v
     a = BilinearForm((v,u), expr)
     # ...
-
     # ...
     expr = f * v
     l0 = LinearForm(v, expr)
@@ -427,3 +412,4 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
+

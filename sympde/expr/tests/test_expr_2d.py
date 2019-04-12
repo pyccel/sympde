@@ -19,10 +19,8 @@ from sympde.calculus import grad, dot, inner, cross, rot, curl, div
 from sympde.calculus import laplace, hessian, bracket, convect
 from sympde.topology import (dx, dy, dz)
 from sympde.topology import FunctionSpace, VectorFunctionSpace
-from sympde.topology import ScalarField, VectorField
 from sympde.topology import ProductSpace
-from sympde.topology import ScalarTestFunction
-from sympde.topology import VectorTestFunction
+from sympde.topology import element_of_space
 from sympde.topology import Unknown
 from sympde.topology import InteriorDomain, Union
 from sympde.topology import Boundary, NormalVector, TangentVector
@@ -61,8 +59,8 @@ def test_linear_expr_2d_1():
 
     V = FunctionSpace('V', domain)
 
-    u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    u,u1,u2 = [element_of_space(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [element_of_space(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
     l = LinearExpr(v, x*y*v)
@@ -95,8 +93,8 @@ def test_linear_expr_2d_2():
 
     V = VectorFunctionSpace('V', domain)
 
-    u,u1,u2 = [VectorTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [VectorTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    u,u1,u2 = [element_of_space(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [element_of_space(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
     g = Tuple(x,y)
@@ -132,8 +130,8 @@ def test_bilinear_expr_2d_1():
 
     V = FunctionSpace('V', domain)
 
-    u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    u,u1,u2 = [element_of_space(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [element_of_space(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
     a = BilinearExpr((u,v), u*v)
@@ -163,8 +161,8 @@ def test_bilinear_expr_2d_2():
 
     V = VectorFunctionSpace('V', domain)
 
-    u,u1,u2 = [VectorTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [VectorTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    u,u1,u2 = [element_of_space(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [element_of_space(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
     a = BilinearExpr((u,v), dot(u,v))
@@ -196,8 +194,8 @@ def test_linear_form_2d_1():
 
     V = FunctionSpace('V', domain)
 
-    u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    u,u1,u2 = [element_of_space(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [element_of_space(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
     l = LinearForm(v, x*y*v)
@@ -246,10 +244,10 @@ def test_linear_form_2d_1():
     # ...
 
     # ...
-    pn, wn = [ScalarField(V, name=i) for i in ['pn', 'wn']]
+    pn, wn = [element_of_space(V, name=i) for i in ['pn', 'wn']]
 
-    tau   = ScalarTestFunction(V, name='tau')
-    sigma = ScalarTestFunction(V, name='sigma')
+    tau   = element_of_space(V, name='tau')
+    sigma = element_of_space(V, name='sigma')
 
     Re    = Constant('Re', real=True)
     dt    = Constant('dt', real=True)
@@ -276,8 +274,8 @@ def test_linear_form_2d_2():
 
     V = VectorFunctionSpace('V', domain)
 
-    u,u1,u2 = [VectorTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [VectorTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    u,u1,u2 = [element_of_space(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [element_of_space(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
     g = Tuple(x,y)
@@ -321,8 +319,8 @@ def test_bilinear_form_2d_1():
 
     V = FunctionSpace('V', domain)
 
-    u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    u,u1,u2 = [element_of_space(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [element_of_space(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
     a = BilinearForm((u,v), u*v)
@@ -386,8 +384,8 @@ def test_bilinear_form_2d_2():
 
     V = VectorFunctionSpace('V', domain)
 
-    u,u1,u2 = [VectorTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [VectorTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    u,u1,u2 = [element_of_space(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [element_of_space(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
     a = BilinearForm((u,v), dot(u,v))
@@ -433,8 +431,8 @@ def test_terminal_expr_linear_2d_1():
 
     V = FunctionSpace('V', domain)
 
-    u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    u,u1,u2 = [element_of_space(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [element_of_space(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
     l = LinearForm(v, x*y*v)
@@ -510,8 +508,8 @@ def test_terminal_expr_linear_2d_2():
 
     V = VectorFunctionSpace('V', domain)
 
-    u,u1,u2 = [VectorTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [VectorTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    u,u1,u2 = [element_of_space(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [element_of_space(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
     g = Tuple(x,y)
@@ -589,8 +587,8 @@ def test_terminal_expr_linear_2d_3():
 
     V = FunctionSpace('V', domain)
 
-    u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    u,u1,u2 = [element_of_space(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [element_of_space(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
     l = LinearForm(v, trace_1(grad(v), domain.boundary))
@@ -612,8 +610,8 @@ def test_terminal_expr_linear_2d_4():
 
     V = FunctionSpace('V', domain)
 
-    u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    u,u1,u2 = [element_of_space(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [element_of_space(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
     l = LinearForm(v, x*y*v)
@@ -638,10 +636,10 @@ def test_terminal_expr_linear_2d_5(boundary=['Gamma_1', 'Gamma_3']):
 
     x,y = domain.coordinates
 
-    F = ScalarField(V, name='F')
+    F = element_of_space(V, name='F')
 
-    v = ScalarTestFunction(V, name='v')
-    u = ScalarTestFunction(V, name='u')
+    v = element_of_space(V, name='v')
+    u = element_of_space(V, name='u')
 
     expr = dot(grad(v), grad(u))
     a = BilinearForm((v,u), expr)
@@ -676,8 +674,8 @@ def test_terminal_expr_bilinear_2d_1():
 
     V = FunctionSpace('V', domain)
 
-    u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    u,u1,u2 = [element_of_space(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [element_of_space(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
     a = BilinearForm((u,v), u*v)
@@ -764,15 +762,14 @@ def test_terminal_expr_bilinear_2d_2():
 
     V = VectorFunctionSpace('V', domain)
 
-    u,u1,u2 = [VectorTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [VectorTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    u,u1,u2 = [element_of_space(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [element_of_space(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
     a = BilinearForm((u,v), dot(u,v))
     print(TerminalExpr(a))
     print('')
-    # ...
-
+    
     # ...
     a = BilinearForm((u,v), inner(grad(u),grad(v)))
     print(TerminalExpr(a))
@@ -841,10 +838,10 @@ def test_terminal_expr_bilinear_2d_3():
     V = VectorFunctionSpace('V', domain)
     W = FunctionSpace('W', domain)
 
-    v = VectorTestFunction(V, name='v')
-    u = VectorTestFunction(V, name='u')
-    p = ScalarTestFunction(W, name='p')
-    q = ScalarTestFunction(W, name='q')
+    v = element_of_space(V, name='v')
+    u = element_of_space(V, name='u')
+    p = element_of_space(W, name='p')
+    q = element_of_space(W, name='q')
 
     a = BilinearForm((u,v), inner(grad(v), grad(u)))
     b = BilinearForm((v,p), div(v)*p)
@@ -862,13 +859,13 @@ def test_linearize_expr_2d_1():
     V1 = FunctionSpace('V1', domain)
     W1 = VectorFunctionSpace('W1', domain)
 
-    v1 = ScalarTestFunction(V1, name='v1')
-    w1 = VectorTestFunction(W1, name='w1')
+    v1 = element_of_space(V1, name='v1')
+    w1 = element_of_space(W1, name='w1')
 
     alpha = Constant('alpha')
 
-    F = ScalarField(V1, name='F')
-    G = VectorField(W1, 'G')
+    F = element_of_space(V1, name='F')
+    G = element_of_space(W1, 'G')
 
     # ...
     l = LinearExpr(v1, F**2*v1)
@@ -919,12 +916,12 @@ def test_linearize_expr_2d_2():
 
     V1 = FunctionSpace('V1', domain)
 
-    v1 = ScalarTestFunction(V1, name='v1')
+    v1 = element_of_space(V1, name='v1')
 
     alpha = Constant('alpha')
 
-    F = ScalarField(V1, name='F')
-    G = ScalarField(V1, name='G')
+    F = element_of_space(V1, name='F')
+    G = element_of_space(V1, name='G')
 
     # ...
     l1 = LinearExpr(v1, F**2*v1)
@@ -945,13 +942,13 @@ def test_linearize_form_2d_1():
     V1 = FunctionSpace('V1', domain)
     W1 = VectorFunctionSpace('W1', domain)
 
-    v1 = ScalarTestFunction(V1, name='v1')
-    w1 = VectorTestFunction(W1, name='w1')
+    v1 = element_of_space(V1, name='v1')
+    w1 = element_of_space(W1, name='w1')
 
     alpha = Constant('alpha')
 
-    F = ScalarField(V1, name='F')
-    G = VectorField(W1, 'G')
+    F = element_of_space(V1, name='F')
+    G = element_of_space(W1, 'G')
 
     # ...
     l = LinearForm(v1, F**2*v1)
@@ -1002,12 +999,12 @@ def test_linearize_form_2d_2():
 
     V1 = FunctionSpace('V1', domain)
 
-    v1 = ScalarTestFunction(V1, name='v1')
+    v1 = element_of_space(V1, name='v1')
 
     alpha = Constant('alpha')
 
-    F = ScalarField(V1, name='F')
-    G = ScalarField(V1, name='G')
+    F = element_of_space(V1, name='F')
+    G = element_of_space(V1, name='G')
 
     # ...
     l1 = LinearForm(v1, F**2*v1)
@@ -1029,13 +1026,13 @@ def test_linearize_form_2d_3():
     U = VectorFunctionSpace('U', domain)
     W =       FunctionSpace('W', domain)
 
-    v   = VectorTestFunction(U, name='v')
-    phi =       ScalarTestFunction(W, name='phi')
-    q   =       ScalarTestFunction(W, name='q')
+    v   = element_of_space(U, name='v')
+    phi =       element_of_space(W, name='phi')
+    q   =       element_of_space(W, name='q')
 
-    U_0   = VectorField(U, name='U_0')
-    Rho_0 = ScalarField(W, name='Rho_0')
-    P_0   = ScalarField(W, name='P_0')
+    U_0   = element_of_space(U, name='U_0')
+    Rho_0 = element_of_space(W, name='Rho_0')
+    P_0   = element_of_space(W, name='P_0')
 
     # ...
     expr = div(Rho_0*U_0) * phi
@@ -1065,6 +1062,33 @@ def test_linearize_form_2d_3():
     print(a)
 
 #==============================================================================
+def test_linearize_form_2d_4():
+    domain = Domain('Omega', dim=DIM)
+    Gamma_N = Boundary(r'\Gamma_N', domain)
+
+    x,y = domain.coordinates
+
+    V = FunctionSpace('V', domain)
+
+    v  = element_of_space(V, name='v')
+    du = element_of_space(V, name='du')
+
+    u = element_of_space(V, name='u')
+
+    g = Tuple(cos(pi*x)*sin(pi*y),
+              sin(pi*x)*cos(pi*y))
+
+    expr = dot(grad(v), grad(u)) - 4.*exp(-u)*v # + v*trace_1(g, Gamma_N)
+
+    l = LinearForm(v, expr )
+
+    # linearising l around u, using du
+    a = linearize(l, u, trials=du)
+    # ...
+    print(a)
+    # ...
+
+#==============================================================================
 def test_area_2d_1():
 
     domain = Domain('Omega', dim=2)
@@ -1077,7 +1101,7 @@ def test_area_2d_1():
 
     V = FunctionSpace('V', domain)
 
-    u,v = [ScalarTestFunction(V, name=i) for i in ['u', 'v']]
+    u,v = [element_of_space(V, name=i) for i in ['u', 'v']]
 
     # ...
     a = BilinearForm((v,u), area * u * v)
@@ -1105,7 +1129,7 @@ def test_stabilization_2d_1():
 
     V = FunctionSpace('V', domain)
 
-    u,v = [ScalarTestFunction(V, name=i) for i in ['u', 'v']]
+    u,v = [element_of_space(V, name=i) for i in ['u', 'v']]
 
     # ...
     expr = kappa * dot(grad(u), grad(v)) + dot(b, grad(u)) * v
@@ -1182,7 +1206,7 @@ def test_user_function_2d_1():
 
     V = FunctionSpace('V', domain)
 
-    u,v = [ScalarTestFunction(V, name=i) for i in ['u', 'v']]
+    u,v = [element_of_space(V, name=i) for i in ['u', 'v']]
 
     # ...
     expr = dot(grad(u), grad(v)) + f(x,y) * u * v
@@ -1212,7 +1236,7 @@ def test_functional_2d_1():
     mu    = Constant('mu'   , is_real=True)
 
     V = FunctionSpace('V', domain)
-    F = ScalarField(V, name='F')
+    F = element_of_space(V, name='F')
 
     # ...
     expr = x*y
@@ -1240,7 +1264,7 @@ def test_norm_2d_1():
     x,y = domain.coordinates
 
     V = FunctionSpace('V', domain)
-    F = ScalarField(V, name='F')
+    F = element_of_space(V, name='F')
 
     # ...
     expr = x*y
@@ -1309,7 +1333,7 @@ def test_norm_2d_2():
     x,y = domain.coordinates
 
     V = VectorFunctionSpace('V', domain)
-    F = VectorField(V, 'F')
+    F = element_of_space(V, 'F')
 
     # ...
     f = Tuple(sin(pi*x)*sin(pi*y), sin(pi*x)*sin(pi*y))
@@ -1336,8 +1360,8 @@ def test_bilinear_form_2d_3():
 
     V = FunctionSpace('V', domain)
 
-    u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    u,u1,u2 = [element_of_space(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [element_of_space(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
     a = BilinearForm((u,v), u*v)
@@ -1363,8 +1387,8 @@ def test_bilinear_form_2d_4():
 
     V = VectorFunctionSpace('V', domain)
 
-    u,u1,u2 = [VectorTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [VectorTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    u,u1,u2 = [element_of_space(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [element_of_space(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
     a = BilinearForm((u,v), dot(u,v))
@@ -1391,3 +1415,5 @@ def teardown_function():
 
 #test_bilinear_form_2d_3()
 #test_bilinear_form_2d_4()
+
+#test_linearize_form_2d_4()

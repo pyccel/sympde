@@ -5,8 +5,10 @@ from sympy.core.containers import Tuple
 from sympy.core import Expr
 
 from sympde.topology.basic import Boundary, Union
+from sympde.topology.space  import VectorFunctionSpace, FunctionSpace
 from sympde.topology.space import ScalarTestFunction
 from sympde.topology.space import VectorTestFunction, IndexedTestTrial
+from sympde.topology.space import Element, IndexedElement
 from sympde.topology.space import FunctionSpace
 from sympde.topology import Boundary, NormalVector, TangentVector
 from sympde.topology import Trace, trace_0, trace_1
@@ -35,22 +37,22 @@ class EssentialBC(BasicBoundaryCondition):
         if not( rhs == 0 ):
             raise NotImplementedError('Only homogeneous case is available')
         # ...
-
         # ...
         normal_component = False
         index_component = None
         # ...
 
         # ...
-        indexed = list(lhs.atoms(IndexedTestTrial))
+        indexed = list(lhs.atoms(IndexedTestTrial,IndexedElement))
 
         u  = list(lhs.atoms(ScalarTestFunction))
+
         if not indexed:
-            u += list(lhs.atoms(VectorTestFunction))
+            u += list(lhs.atoms(VectorTestFunction, Element))
 
         else:
             u += indexed
-
+        
         if not( len(u) == 1 ):
             raise ValueError('Expecting one test function')
 
@@ -72,13 +74,12 @@ class EssentialBC(BasicBoundaryCondition):
         nn               = list(lhs.atoms(NormalVector))
         normal_component = isinstance(u, VectorTestFunction) and (len(nn) > 0)
         # ...
-
         # ...
         if nn:
             assert(len(nn) == 1)
 
             nn = nn[0]
-            if isinstance(u, VectorTestFunction):
+            if isinstance(u.space, VectorFunctionSpace):
                 order_0_expr += [dot(u, nn)]
 
             order_1_expr += [dot(grad(u), nn)]
@@ -87,28 +88,26 @@ class EssentialBC(BasicBoundaryCondition):
         # ...
         if lhs in order_0_expr:
             order = 0
-            if isinstance(u, IndexedTestTrial):
+            if isinstance(u, (IndexedTestTrial,IndexedElement)):
                 variable = u.base
                 index_component = list(u.indices)
 
-            elif isinstance(u, VectorTestFunction) and not normal_component:
+            elif isinstance(u, VectorTestFunction) and not normal_component or \
+                 isinstance(u, Element) and isinstance(u.space, VectorFunctionSpace)\
+                 and not normal_component:
                 variable = u
                 index_component = list(range(u.ldim))
 
             else:
                 variable = u
-
         elif lhs in order_1_expr:
             order = 1
             variable = u
 
             if isinstance(u, IndexedTestTrial):
                 raise NotImplementedError('Indexed case')
-
         else:
             # TODO change error to unconsistent error
-            print(order_1_expr)
-            print(lhs)
             raise ValueError('Wrong lhs')
         # ...
 
@@ -174,6 +173,7 @@ class EssentialBC(BasicBoundaryCondition):
 #        check that the same boundary is not used in the weak
 #        formulation and strong condition
 class Equation(Basic):
+
     def __new__(cls, lhs, rhs, tests, trials, bc=None):
         # ...
         if not isinstance(lhs, BilinearForm):
@@ -184,11 +184,11 @@ class Equation(Basic):
         # ...
 
         # ...
-        _is_test_function = lambda u: isinstance(u, (ScalarTestFunction, VectorTestFunction))
+        _is_test_function = lambda u: isinstance(u, (ScalarTestFunction, VectorTestFunction, Element))
         # ...
 
         # ...
-        if isinstance(tests, (ScalarTestFunction, VectorTestFunction)):
+        if isinstance(tests, (ScalarTestFunction, VectorTestFunction,Element)):
             tests = [tests]
 
         else:
@@ -199,7 +199,7 @@ class Equation(Basic):
         # ...
 
         # ...
-        if isinstance(trials, (ScalarTestFunction, VectorTestFunction)):
+        if isinstance(trials, (ScalarTestFunction, VectorTestFunction, Element)):
             trials = [trials]
 
         else:
@@ -319,7 +319,6 @@ class Equation(Basic):
     def bc(self):
         return self._args[4]
 
-
 #==============================================================================
 # TODO must subtitute expr by given args => call then create BasicForm
 class NewtonIteration(Equation):
@@ -330,103 +329,14 @@ class NewtonIteration(Equation):
 
         a = linearize(form, fields, trials=trials)
 
-        tests, trials  = a.variables
-        test_trial = a.variables
+        trials, tests  = a.variables
 
-#        lhs = a(*test_trial)
         lhs = a
 
         form = LinearForm(tests, -form.expr)
-#        rhs = form(*tests)
         rhs = form
 
         return Equation.__new__(cls, lhs, rhs, tests, trials, bc=bc)
-
-
-#==============================================================================
-# TODO finish implementation
-class LambdaEquation(Equation):
-
-    @property
-    def variables(self):
-        return self.trial_functions
-
-#==============================================================================
-# TODO finish implementation
-class Projection(LambdaEquation):
-    def __new__(cls, expr, space, kind='l2', bc=None):
-        # ...
-        tests = expr.atoms((ScalarTestFunction, VectorTestFunction))
-        if tests or not isinstance(expr, Expr):
-            msg = '> Expecting an Expression without test functions'
-            raise UnconsistentArgumentsError(msg)
-        # ...
-
-        # ...
-        if not isinstance(space, FunctionSpace):
-            raise UnconsistentArgumentsError('> Expecting a FunctionSpace')
-        # ...
-
-        # ...
-        if not(kind in ['l2']):
-            raise ValueError('> Only L2 projector is available')
-        # ...
-
-        # ... defining the lhs and rhs
-        V = space
-        if kind == 'l2':
-            tag = random_string( 3 )
-            v_name = 'v_{}'.format(tag)
-            u_name = 'u_{}'.format(tag)
-            lhs_name = 'lhs_{}'.format(tag)
-            rhs_name = 'rhs_{}'.format(tag)
-            if V.shape == 1:
-                v = ScalarTestFunction(V, name=v_name)
-                u = ScalarTestFunction(V, name=u_name)
-
-                expr_lhs = v*u
-                expr_rhs = expr*v
-
-            else:
-                v = VectorTestFunction(V, name=v_name)
-                u = VectorTestFunction(V, name=u_name)
-
-                expr_lhs = Dot(v,u)
-                expr_rhs = Dot(expr, v)
-
-            lhs = BilinearForm((v,u), expr_lhs)
-            rhs = LinearForm(v, expr_rhs)
-        # ...
-
-        obj = Equation.__new__(cls, lhs(v,u), rhs(v), bc=bc)
-
-#==============================================================================
-# TODO finish implementation
-class Interpolation(LambdaEquation):
-    def __new__(cls, expr, space, kind='nodal'):
-        raise NotImplementedError('TODO')
-
-        # ...
-        tests = expr.atoms((ScalarTestFunction, VectorTestFunction))
-        if tests or not isinstance(expr, Expr):
-            msg = '> Expecting an Expression without test functions'
-            raise UnconsistentArgumentsError(msg)
-        # ...
-
-        # ...
-        if not isinstance(space, FunctionSpace):
-            raise UnconsistentArgumentsError('> Expecting a FunctionSpace')
-        # ...
-
-        # ...
-        if not(kind in ['nodal']):
-            raise ValueError('> Only nodal interpolation is available')
-        # ...
-
-        # ... defining the lhs and rhs
-        V = space
-        # ...
-
 
 #==============================================================================
 # user friendly function to create Equation objects
@@ -435,7 +345,7 @@ def find(trials, *, forall, lhs, rhs, **kwargs):
     bc = kwargs.pop('bc', None)
 
     lhs = BilinearForm((trials, forall), lhs)
-    rhs =   LinearForm(          forall, rhs)
+    rhs = LinearForm( forall, rhs)
 
     return Equation(lhs, rhs, forall, trials, bc=bc)
 

@@ -55,6 +55,7 @@ from sympde.topology.space import IndexedTestTrial
 from sympde.topology.space import Unknown, VectorUnknown
 from sympde.topology.space import Trace
 from sympde.topology.space import ScalarField, VectorField, IndexedVectorField
+from sympde.topology.space import Element
 from sympde.topology.measure import CanonicalMeasure
 from sympde.topology.measure import CartesianMeasure
 from sympde.topology.measure import Measure
@@ -261,6 +262,7 @@ def _get_domain(a):
     atoms += list(expr.atoms(VectorTestFunction))
     atoms += list(expr.atoms(ScalarField))
     atoms += list(expr.atoms(VectorField))
+    atoms += list(expr.atoms(Element))
 
     if len(atoms) == 0:
         raise ValueError('could not find any test function or field')
@@ -279,13 +281,14 @@ def _get_domain(a):
 class Functional(BasicForm):
     is_functional = True
 
-    def __new__(cls, expr, domain):
+    def __new__(cls, expr, domain, eval=True):
 
-        expr = BasicIntegral(expr)
+        if eval:
+            expr = BasicIntegral(expr)
         obj = Basic.__new__(cls, expr, domain)
 
         # compute dim from fields if available
-        ls = list(expr.atoms((ScalarField, VectorField)))
+        ls = list(expr.atoms((ScalarField, VectorField, Element)))
         if ls:
             F = ls[0]
             space = F.space
@@ -424,7 +427,6 @@ class BilinearForm(BasicForm):
         args = _sanitize_arguments(arguments, is_bilinear=True)
         expr = BasicIntegral(expr)
         obj = Basic.__new__(cls, args, expr)
-
         # ...
         domain = _get_domain(expr)
         obj._domain = domain
@@ -454,11 +456,11 @@ class BilinearForm(BasicForm):
 
     @property
     def test_functions(self):
-        return self.variables[0]
+        return self.variables[1]
 
     @property
     def trial_functions(self):
-        return self.variables[1]
+        return self.variables[0]
 
     @property
     def test_spaces(self):
@@ -504,7 +506,7 @@ class BilinearForm(BasicForm):
         new_args = []
         
         for arg in args:
-        
+            
             if is_sequence(arg):
                 new_args += list(arg)
             else:
@@ -520,7 +522,9 @@ class BilinearForm(BasicForm):
 
 #==============================================================================
 class Norm(Functional):
-    def __new__(cls, expr, domain, kind='l2'):
+    is_norm = True
+
+    def __new__(cls, expr, domain, kind='l2', eval=True):
 #        # ...
 #        tests = expr.atoms((ScalarTestFunction, VectorTestFunction))
 #        if tests:
@@ -545,7 +549,7 @@ class Norm(Functional):
 
         # ...
         exponent = None
-        if kind == 'l2':
+        if kind == 'l2' and eval:
             exponent = 2
 
             if not is_vector:
@@ -558,7 +562,7 @@ class Norm(Functional):
                 v = Tuple(*expr[:,0])
                 expr = Dot(v, v)
 
-        elif kind == 'h1':
+        elif kind == 'h1'and eval :
             exponent = 2
 
             if not is_vector:
@@ -572,7 +576,7 @@ class Norm(Functional):
                 expr = Inner(Grad(v), Grad(v))
         # ...
 
-        obj = Functional.__new__(cls, expr, domain)
+        obj = Functional.__new__(cls, expr, domain, eval=eval)
         obj._exponent = exponent
 
         return obj
@@ -593,19 +597,19 @@ def linearize(form, fields, trials=None):
         fields = [fields]
 
     for f in fields:
-        if not isinstance(f, (ScalarField, VectorField)):
+        if not isinstance(f, (ScalarField, VectorField, Element)):
             raise TypeError('{} is not ScalarField/VectorField'.format(f))
 
     if not(trials is None):
         if not isinstance(trials, (list, tuple, Tuple)):
             trials = [trials]
 
-        assert( all([isinstance(i, (str, ScalarTestFunction, VectorTestFunction)) for i in trials]) )
+        assert( all([isinstance(i, (str, ScalarTestFunction, VectorTestFunction, Element)) for i in trials]) )
         assert( len(fields) == len(trials) )
 
         newtrials = []
         for i in trials:
-            if isinstance(i, (ScalarTestFunction, VectorTestFunction)):
+            if isinstance(i, (ScalarTestFunction, VectorTestFunction, Element)):
                 newtrials += [i.name]
 
             else:
@@ -642,9 +646,12 @@ def linearize(form, fields, trials=None):
 
         elif isinstance(x, VectorField):
             trial  = VectorTestFunction(x.space, name=name)
+            
+        elif isinstance(x, Element):
+            trial  = Element(x.space, name=name)
 
         else:
-            raise TypeError('Only ScalarTestFunction and VectorTestFunction are available')
+            raise TypeError('Only ScalarTestFunction , VectorTestFunction and Element are available')
 
         newargs         += [x + eps*trial]
         trial_functions += [trial]
@@ -665,7 +672,7 @@ def linearize(form, fields, trials=None):
 #    print('> linearize = ', expr)
 #    import sys; sys.exit(0)
 
-    test_trial = (test_functions, trial_functions)
+    test_trial = (trial_functions, test_functions)
 
     if is_form:
         return BilinearForm(test_trial, expr)

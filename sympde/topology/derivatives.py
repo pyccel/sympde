@@ -51,8 +51,9 @@ from sympde.core.basic import BasicMapping
 from sympde.core.algebra import LinearOperator
 from sympde.core.utils import random_string
 from .space import ScalarTestFunction, VectorTestFunction, IndexedTestTrial
+from .space import IndexedElement
 from .space import Unknown
-from .space import ScalarField, VectorField, IndexedVectorField
+from .space import ScalarField, VectorField, IndexedVectorField, Element
 from .domain import Domain
 
 # ...
@@ -74,10 +75,10 @@ class DifferentialOperator(LinearOperator):
 
         expr = _args[0]
 
-        if isinstance(expr, (IndexedTestTrial, IndexedVectorField, DifferentialOperator)):
+        if isinstance(expr, (IndexedTestTrial, IndexedVectorField, IndexedElement, DifferentialOperator)):
             return cls(expr, evaluate=False)
 
-        elif isinstance(expr, (ScalarField, ScalarTestFunction)):
+        elif isinstance(expr, (ScalarField, ScalarTestFunction, Element)):
             return cls(expr, evaluate=False)
 
         elif isinstance(expr, (VectorTestFunction, VectorField)):
