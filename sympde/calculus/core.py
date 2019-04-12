@@ -102,6 +102,7 @@ from sympde.core.basic import _coeffs_registery
 
 from sympde.topology.space import ScalarTestFunction, VectorTestFunction, IndexedTestTrial
 from sympde.topology.space import ScalarField, VectorField, IndexedVectorField
+from sympde.topology.space import Element
 from sympde.topology.space import _is_sympde_atom
 from sympde.topology.datatype import H1SpaceType, HcurlSpaceType
 from sympde.topology.datatype import HdivSpaceType, L2SpaceType, UndefinedSpaceType
@@ -1005,11 +1006,11 @@ class Div(BasicOperator):
                     a,b = vectors
                     # TODO remove try/except using regularity from space
                     try:
-                        if isinstance(a, (Tuple, VectorTestFunction, VectorField)):
+                        if isinstance(a, (Tuple, VectorTestFunction, VectorField, Element)):
                             f = b ; F = a
                             return f*Div(F) + Dot(F, grad(f))
 
-                        elif isinstance(b, (Tuple, VectorTestFunction, VectorField)):
+                        elif isinstance(b, (Tuple, VectorTestFunction, VectorField, Element)):
                             f = a ; F = b
                             return f*Div(F) + Dot(F, grad(f))
 

@@ -140,7 +140,7 @@ class Dot_2d(DotBasic):
     @classmethod
     def eval(cls, *_args):
         """."""
-
+        
         if not _args:
             return
 
@@ -159,8 +159,10 @@ class Dot_2d(DotBasic):
 
         if isinstance(u, (Add, Mul)):
             ls = u.atoms(Tuple)
+
             for i in ls:
                 u = u.subs(i, Matrix(i))
+
             u = simplify(u)
 
         if isinstance(v, (Add, Mul)):
