@@ -476,7 +476,8 @@ class IndexedElement(Indexed):
             # we return the right object
             return base.__getitem__(*args)
             
-        assert(base, Element)
+        assert isinstance(base, Element)
+
         if not args:
             raise IndexException("Indexed needs at least one index.")
 
