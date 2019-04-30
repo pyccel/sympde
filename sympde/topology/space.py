@@ -130,6 +130,81 @@ class VectorFunctionSpace(BasicFunctionSpace):
     def field(self, name):
         return VectorField(self, name)
 
+#=============================================================================
+class Derham:
+    """."""
+    def __init__(self, name, domain, sequence=None):
+        shape = domain.dim
+        self._V0  = None
+        self._V1  = None
+        self._V2  = None
+        self._V3  = None
+        
+        if shape == 1:
+            spaces = [FunctionSpace('H1', domain, kind='H1'),
+                        FunctionSpace('L2', domain, kind='L2')]
+            
+            self._V0  = spaces[0]
+            self._V1  = spaces[1]
+
+        elif shape == 2:
+            assert sequence is not None
+            
+            space = sequence[1]
+            spaces = [FunctionSpace('H1', domain, kind='H1'),
+                        VectorFunctionSpace(space, domain, kind=space),
+                        FunctionSpace('L2', domain, kind='L2')]
+
+            self._V0  = spaces[0]
+            self._V1  = spaces[1]
+            self._V2  = spaces[2]
+                        
+        elif shape == 3:
+            spaces = [FunctionSpace('H1', domain, kind='H1'),
+                        VectorFunctionSpace('Hcurl', domain, kind='Hcurl'),
+                        VectorFunctionSpace('Hdiv', domain, kind='Hcurl'),
+                        FunctionSpace('L2', domain, kind='L2')]
+                   
+            self._V0  = spaces[0]
+            self._V1  = spaces[1]
+            self._V2  = spaces[2]
+            self._V3  = spaces[3]
+            
+                        
+        self._spaces = spaces
+        self._domain = domain
+        self._shape  = shape
+
+      
+    # ...
+    @property
+    def spaces(self):
+        return self._spaces
+        
+    @property
+    def domain(self):
+        return self._domain
+        
+    @property
+    def shape(self):
+        return self._shape
+        
+    @property
+    def V0(self):
+        return self._V0
+
+    @property
+    def V1(self):
+        return self._V1        
+
+    @property
+    def V2(self):
+        return self._V2
+        
+    @property
+    def V3(self):
+        return self._V3  
+
 #==============================================================================
 # TODO must check that all spaces have the same domain
 #     for the moment this class is not used
