@@ -33,7 +33,7 @@ class BasicFunctionSpace(Basic):
     _shape      = None
     _kind       = None
     _regularity = None # TODO pass it as arg to __new__
-    def __new__(cls, name, domain, shape, kind):
+    def __new__(cls, name, domain, shape, kind, normalize):
 
         if not isinstance(domain, BasicDomain):
             raise TypeError('> Expecting a BasicDomain object for domain')
@@ -62,7 +62,9 @@ class BasicFunctionSpace(Basic):
         if not(kind_str == 'undefined'):
             obj._regularity = dtype_regularity_registry[kind_str]
         # ...
-
+        
+        obj._normalize= normalize
+        
         return obj
 
     @property
@@ -84,6 +86,10 @@ class BasicFunctionSpace(Basic):
     @property
     def kind(self):
         return self._kind
+        
+    @property
+    def normalize(self):
+        return self._normalize
 
     @property
     def regularity(self):
@@ -105,9 +111,9 @@ class FunctionSpace(BasicFunctionSpace):
     """
     Represents a basic continuous scalar Function space.
     """
-    def __new__(cls, name, domain, kind=None):
+    def __new__(cls, name, domain, kind=None, normalize=False):
         shape = 1
-        return BasicFunctionSpace.__new__(cls, name, domain, shape, kind)
+        return BasicFunctionSpace.__new__(cls, name, domain, shape, kind, normalize)
 
     def element(self, name):
         return ScalarTestFunction(self, name)
@@ -120,9 +126,9 @@ class VectorFunctionSpace(BasicFunctionSpace):
     """
     Represents a basic continuous vector Function space.
     """
-    def __new__(cls, name, domain, kind=None):
+    def __new__(cls, name, domain, kind=None, normalize=False):
         shape = domain.dim
-        return BasicFunctionSpace.__new__(cls, name, domain, shape, kind)
+        return BasicFunctionSpace.__new__(cls, name, domain, shape, kind, normalize)
 
     def element(self, name):
         return VectorTestFunction(self, name)
@@ -133,7 +139,7 @@ class VectorFunctionSpace(BasicFunctionSpace):
 #=============================================================================
 class Derham:
     """."""
-    def __init__(self, name, domain, sequence=None):
+    def __init__(self, domain, sequence=None, normalize=False):
         shape = domain.dim
         self._V0  = None
         self._V1  = None
@@ -141,8 +147,8 @@ class Derham:
         self._V3  = None
         
         if shape == 1:
-            spaces = [FunctionSpace('H1', domain, kind='H1'),
-                        FunctionSpace('L2', domain, kind='L2')]
+            spaces = [FunctionSpace('H1', domain, kind='H1', normalize=normalize),
+                        FunctionSpace('L2', domain, kind='L2', normalize=normalize)]
             
             self._V0  = spaces[0]
             self._V1  = spaces[1]
@@ -151,19 +157,19 @@ class Derham:
             assert sequence is not None
             
             space = sequence[1]
-            spaces = [FunctionSpace('H1', domain, kind='H1'),
-                        VectorFunctionSpace(space, domain, kind=space),
-                        FunctionSpace('L2', domain, kind='L2')]
+            spaces = [FunctionSpace('H1', domain, kind='H1', normalize=normalize),
+                        VectorFunctionSpace(space, domain, kind=space, normalize=normalize),
+                        FunctionSpace('L2', domain, kind='L2',normalize=normalize)]
 
             self._V0  = spaces[0]
             self._V1  = spaces[1]
             self._V2  = spaces[2]
                         
         elif shape == 3:
-            spaces = [FunctionSpace('H1', domain, kind='H1'),
-                        VectorFunctionSpace('Hcurl', domain, kind='Hcurl'),
-                        VectorFunctionSpace('Hdiv', domain, kind='Hcurl'),
-                        FunctionSpace('L2', domain, kind='L2')]
+            spaces = [FunctionSpace('H1', domain, kind='H1', normalize=normalize),
+                        VectorFunctionSpace('Hcurl', domain, kind='Hcurl', normalize=normalize),
+                        VectorFunctionSpace('Hdiv', domain, kind='Hcurl', normalize=normalize),
+                        FunctionSpace('L2', domain, kind='L2', normalize=normalize)]
                    
             self._V0  = spaces[0]
             self._V1  = spaces[1]
