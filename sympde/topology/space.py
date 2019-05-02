@@ -133,7 +133,7 @@ class VectorFunctionSpace(BasicFunctionSpace):
 #=============================================================================
 class Derham:
     """."""
-    def __init__(self, name, domain, sequence=None):
+    def __init__(self, domain, sequence=None):
         shape = domain.dim
         self._V0  = None
         self._V1  = None
