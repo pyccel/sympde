@@ -175,7 +175,7 @@ class Derham:
         self._domain = domain
         self._shape  = shape
 
-      
+
     # ...
     @property
     def spaces(self):
@@ -203,7 +203,18 @@ class Derham:
         
     @property
     def V3(self):
-        return self._V3  
+        return self._V3
+
+    @property
+    def spaces(self):
+        if self.shape == 1:
+            return (self._V0, self._V1)
+
+        elif self.shape == 2:
+            return (self._V0, self._V1, self._V2)
+
+        elif self.shape == 3:
+            return (self._V0, self._V1, self._V2, self._V3)
 
 #==============================================================================
 # TODO must check that all spaces have the same domain
