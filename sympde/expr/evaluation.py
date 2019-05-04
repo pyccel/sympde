@@ -98,10 +98,10 @@ def _init_matrix(expr):
     if expr.is_bilinear:
 
         trials = list(expr.variables[0])
-        n_rows, trial_indices = _get_size_and_starts(trials)
+        n_cols, trial_indices = _get_size_and_starts(trials)
 
         tests = list(expr.variables[1])
-        n_cols, test_indices = _get_size_and_starts(tests)
+        n_rows, test_indices = _get_size_and_starts(tests)
 
         # ...
         lines = []
