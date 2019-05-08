@@ -162,7 +162,7 @@ class Derham:
         elif shape == 3:
             spaces = [FunctionSpace('H1', domain, kind='H1'),
                         VectorFunctionSpace('Hcurl', domain, kind='Hcurl'),
-                        VectorFunctionSpace('Hdiv', domain, kind='Hcurl'),
+                        VectorFunctionSpace('Hdiv', domain, kind='Hdiv'),
                         FunctionSpace('L2', domain, kind='L2')]
                    
             self._V0  = spaces[0]
