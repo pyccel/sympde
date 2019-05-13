@@ -306,8 +306,51 @@ class Domain(BasicDomain):
                               boundaries=boundary,
                               connectivity=connectivity)
 
+#==============================================================================
+class PeriodicDomain(BasicDomain):
 
+    def __init__(self, domain, periods):
+    
+        assert isinstance(domain, Domain)
+        self._domain = domain
+        self._periods = tuple(periods)
+        boundary_dict = domain.boundary.todict()
 
+        names = []
+        for bd in boundary_dict:
+            if periods[int(bd['axis'])] == True:
+                names += [bd['name']]
+
+        boundary = [bd for bd in domain.boundary.args if bd.name not in names]
+        
+        if len(boundary)>1:
+            self._boundary = Union(*boundary)
+        else:
+            self._boundary = None
+    
+    @property
+    def domain(self):
+        return self._domain
+        
+    @property
+    def periods(self):
+        return self._periods
+        
+    @property
+    def boundary(self):
+        return self._boundary
+        
+    @property
+    def dim(self):
+        return self.domain.dim
+        
+    @property
+    def coordinates(self):
+        return self.domain.coordinates
+        
+    def __hash__(self):
+        return self.domain.__hash__() + self._periods.__hash__()
+ 
 #==============================================================================
 class Line(Domain):
     def __new__(cls, name=None):
