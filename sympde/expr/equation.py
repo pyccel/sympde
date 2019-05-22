@@ -25,6 +25,9 @@ from .errors import ( UnconsistentLhsError, UnconsistentRhsError,
 class BasicBoundaryCondition(Basic):
     pass
 
+class BasicConstraint(Basic):
+    pass
+    
 #==============================================================================
 class EssentialBC(BasicBoundaryCondition):
     _order = None
@@ -168,13 +171,30 @@ class EssentialBC(BasicBoundaryCondition):
         self._position = value
 
 #==============================================================================
+class Mean(BasicConstraint):
+
+    def __new__(cls, lhs, rhs):
+        assert isinstance(lhs,  (ScalarTestFunction, VectorTestFunction, Element))
+        assert not isinstance(rhs, (ScalarTestFunction, VectorTestFunction, Element))
+
+        return Basic.__new__(cls, lhs, rhs)
+
+    @property
+    def lhs(self):
+        return self._args[0]
+
+    @property
+    def rhs(self):
+        return self._args[1]
+
+#==============================================================================
 # TODO - add check on test/trial functions between lhs/rhs
 #      - must be improved: use the bc wrt the variable
 #        check that the same boundary is not used in the weak
 #        formulation and strong condition
 class Equation(Basic):
 
-    def __new__(cls, lhs, rhs, tests, trials, bc=None):
+    def __new__(cls, lhs, rhs, tests, trials, bc=None, constraint=None):
         # ...
         if not isinstance(lhs, BilinearForm):
             raise UnconsistentLhsError('> lhs must be a bilinear')
@@ -253,6 +273,24 @@ class Equation(Basic):
 #        # ...
 
         # ...
+        if constraint:
+            if isinstance(constraint, BasicConstraint):
+                constraint = [constraint]
+            elif isinstance(constraint, (list, tuple, Tuple)):
+                for i in bc:
+                    if not isinstance(i, BasicConstraint):
+                        msg = '> Expecting a list of BasicConstraint'
+                        raise TypeError(msg)
+
+            else:
+                raise TypeError('> Wrong type for bc')
+
+            for i in constraint:
+                if not isinstance(i, Mean):
+                    raise NotImplementedError('TODO')
+
+            constraint = Tuple(*constraint)
+
         if bc:
             if isinstance(bc, BasicBoundaryCondition):
                 bc = [bc]
@@ -297,7 +335,7 @@ class Equation(Basic):
         trials = Tuple(*trials)
         # ...
 
-        return Basic.__new__(cls, lhs, rhs, tests, trials, bc)
+        return Basic.__new__(cls, lhs, rhs, tests, trials, bc, constraint)
 
     @property
     def lhs(self):
@@ -318,6 +356,10 @@ class Equation(Basic):
     @property
     def bc(self):
         return self._args[4]
+
+    @property
+    def constraint(self):
+        return self._args[5]
 
 #==============================================================================
 # TODO must subtitute expr by given args => call then create BasicForm
@@ -343,11 +385,12 @@ class NewtonIteration(Equation):
 def find(trials, *, forall, lhs, rhs, **kwargs):
 
     bc = kwargs.pop('bc', None)
+    constraint = kwargs.pop('constraint', None)
 
     lhs = BilinearForm((trials, forall), lhs)
     rhs = LinearForm( forall, rhs)
 
-    return Equation(lhs, rhs, forall, trials, bc=bc)
+    return Equation(lhs, rhs, forall, trials, bc=bc, constraint=constraint)
 
 #    elif isinstance(lhs, LinearForm):
 #        fields = kwargs.pop('fields', None)

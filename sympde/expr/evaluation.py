@@ -173,6 +173,8 @@ def _to_matrix_bilinear_form(expr, M, test_indices, trial_indices):
     elif isinstance(expr, Mul):
         M = treat_form(expr, M)
 
+    elif isinstance(expr, (ScalarTestFunction, VectorTestFunction, IndexedTestTrial)):
+        M = treat_form(expr, M)
     else:
         raise TypeError('> wrong type, given {}'.format(type(expr)))
     # ...
@@ -204,6 +206,9 @@ def _to_matrix_linear_form(expr, M, test_indices):
             M = treat_form(arg, M)
 
     elif isinstance(expr, Mul):
+        M = treat_form(expr, M)
+
+    elif isinstance(expr, (ScalarTestFunction, VectorTestFunction, IndexedTestTrial)):
         M = treat_form(expr, M)
 
     else:
@@ -315,6 +320,8 @@ class TerminalExpr(CalculusFunction):
         elif isinstance(expr, Mul):
             args = [cls.eval(a, dim=dim) for a in expr.args]
             return Mul(*args)
+        elif isinstance(expr, (ScalarTestFunction, VectorTestFunction, Element)):
+            return expr
 
         elif isinstance(expr, BasicForm):
             # ...z
