@@ -51,7 +51,6 @@ class LinearOperator(CalculusFunction):
 
     def __new__(cls, *args, **options):
         # (Try to) sympify args first
-
         if options.pop('evaluate', True):
             r = cls.eval(*args)
         else:
@@ -95,7 +94,6 @@ class LinearOperator(CalculusFunction):
                 b = cls(Mul(*vectors), evaluate=False)
 
             return Mul(a, b)
-
         return cls(expr, evaluate=False)
 # ...
 

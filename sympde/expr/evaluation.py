@@ -263,6 +263,7 @@ class TerminalExpr(CalculusFunction):
         if options.pop('evaluate', True):
             args = cls._annotate(*args)
             r = cls.eval(*args, **options)
+
         else:
             r = None
 
@@ -426,7 +427,6 @@ class TerminalExpr(CalculusFunction):
             # if i = Dot(...) then type(i) is Grad
             op = type(expr)
             new  = eval('{0}_{1}d'.format(op, dim))
-
             args = [cls.eval(i, dim=dim) for i in expr.args]
             return new(*args)
 

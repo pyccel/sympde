@@ -795,6 +795,7 @@ class Curl(BasicOperator):
             raise ValueError('Expecting one argument')
 
         expr = _args[0]
+
         if isinstance(expr, Add):
             args = expr.args
             args = [cls.eval(a) for a in expr.args]
@@ -838,6 +839,7 @@ class Curl(BasicOperator):
             return 0
 
         elif isinstance(expr, Curl):
+
             f = expr._args[0]
             return Grad(Div(f)) - Laplace(f)
 
@@ -849,7 +851,6 @@ class Curl(BasicOperator):
                 msg = '> Wrong space kind, given {}'.format(expr.space.kind)
                 raise ArgumentTypeError(msg)
         # ...
-
         return cls(expr, evaluate=False)
 
 #==============================================================================

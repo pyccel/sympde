@@ -732,8 +732,7 @@ class Curl_2d(CurlBasic):
 
         u = _args[0]
 
-        return Tuple( dy(u),
-                     -dx(u))
+        return dx(u[1])-dy(u[0])
 
 class Curl_3d(CurlBasic):
 
@@ -786,7 +785,7 @@ class Rot_2d(CalculusFunction):
 
         u = _args[0]
 
-        return dy(u[0]) - dx(u[1])
+        return Tuple(dy(u),-dx(u))
 # ...
 
 # ...
