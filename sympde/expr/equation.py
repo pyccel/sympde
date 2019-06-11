@@ -46,7 +46,7 @@ class EssentialBC(BasicBoundaryCondition):
         # ...
 
         # ...
-        indexed = list(lhs.atoms(IndexedTestTrial,IndexedElement))
+        indexed = list(lhs.atoms(IndexedTestTrial, IndexedElement))
 
         u  = list(lhs.atoms(ScalarTestFunction))
 

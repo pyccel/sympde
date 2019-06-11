@@ -928,7 +928,7 @@ class Rot(BasicOperator):
         # ... check consistency between space type and the operator
         # TODO add appropriate space types
         if _is_sympde_atom(expr):
-            if not isinstance(expr.space.kind, UndefinedSpaceType):
+            if not isinstance(expr.space.kind, (UndefinedSpaceType, H1SpaceType)):
                 msg = '> Wrong space kind, given {}'.format(expr.space.kind)
                 raise ArgumentTypeError(msg)
         # ...
