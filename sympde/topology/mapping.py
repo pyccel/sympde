@@ -33,6 +33,7 @@ from .derivatives import get_atom_logical_derivatives, get_index_logical_derivat
 
 from .space import ScalarTestFunction, VectorTestFunction, IndexedTestTrial
 from .space import ScalarField, VectorField, IndexedVectorField
+from .datatype import H1SpaceType, HcurlSpaceType, HdivSpaceType, L2SpaceType, UndefinedSpaceType
 
 #==============================================================================
 class Mapping(BasicMapping):
@@ -471,7 +472,12 @@ class LogicalExpr(CalculusFunction):
             elif dim == 3:
                 lgrad_arg = LogicalGrad_3d(arg)
 
+                
             grad_arg = Covariant(M, lgrad_arg)
+            
+            if isinstance(arg, (ScalarField, ScalarTestFunction)):
+                if isinstance(arg.space.kind, HcurlSpaceType):
+                    grad_arg = Contravariant(M, lgrad_arg)
             # ...
 
             return grad_arg[0]
@@ -492,6 +498,9 @@ class LogicalExpr(CalculusFunction):
 
             grad_arg = Covariant(M, lgrad_arg)
             # ...
+            if isinstance(arg, (ScalarField, ScalarTestFunction)):
+                if isinstance(arg.space.kind, HcurlSpaceType):
+                    grad_arg = Contravariant(M, lgrad_arg)
 
             return grad_arg[1]
 
@@ -511,7 +520,10 @@ class LogicalExpr(CalculusFunction):
 
             grad_arg = Covariant(M, lgrad_arg)
             # ...
-
+            if isinstance(arg, (ScalarField, ScalarTestFunction)):
+                if isinstance(arg.space.kind, HcurlSpaceType):
+                    grad_arg = Contravariant(M, lgrad_arg)
+            
             return grad_arg[2]
 
         return cls(M, expr, evaluate=False)
