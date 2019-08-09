@@ -16,7 +16,7 @@ from .datatype import SpaceType, dtype_space_registry
 from .datatype import RegularityType, dtype_regularity_registry
 
 
-def element_of_space(space, name):
+def element_of(space, name):
     assert isinstance(space, BasicFunctionSpace)
     if isinstance(name, (list,tuple,Tuple)):
         return [Element(space,nm) for nm in name]
@@ -102,7 +102,7 @@ class BasicFunctionSpace(Basic):
         return ProductSpace(self, other)
 
 #==============================================================================
-class FunctionSpace(BasicFunctionSpace):
+class ScalarFunctionSpace(BasicFunctionSpace):
     """
     Represents a basic continuous scalar Function space.
     """
@@ -142,8 +142,8 @@ class Derham:
         self._V3  = None
         
         if shape == 1:
-            spaces = [FunctionSpace('H1', domain, kind='H1'),
-                        FunctionSpace('L2', domain, kind='L2')]
+            spaces = [ScalarFunctionSpace('H1', domain, kind='H1'),
+                      ScalarFunctionSpace('L2', domain, kind='L2')]
             
             self._V0  = spaces[0]
             self._V1  = spaces[1]
@@ -152,19 +152,19 @@ class Derham:
             assert sequence is not None
             
             space = sequence[1]
-            spaces = [FunctionSpace('H1', domain, kind='H1'),
-                        VectorFunctionSpace(space, domain, kind=space),
-                        FunctionSpace('L2', domain, kind='L2')]
+            spaces = [ScalarFunctionSpace('H1', domain, kind='H1'),
+                      VectorFunctionSpace(space, domain, kind=space),
+                      ScalarFunctionSpace('L2', domain, kind='L2')]
 
             self._V0  = spaces[0]
             self._V1  = spaces[1]
             self._V2  = spaces[2]
                         
         elif shape == 3:
-            spaces = [FunctionSpace('H1', domain, kind='H1'),
-                        VectorFunctionSpace('Hcurl', domain, kind='Hcurl'),
-                        VectorFunctionSpace('Hdiv', domain, kind='Hdiv'),
-                        FunctionSpace('L2', domain, kind='L2')]
+            spaces = [ScalarFunctionSpace('H1', domain, kind='H1'),
+                      VectorFunctionSpace('Hcurl', domain, kind='Hcurl'),
+                      VectorFunctionSpace('Hdiv', domain, kind='Hdiv'),
+                      ScalarFunctionSpace('L2', domain, kind='L2')]
                    
             self._V0  = spaces[0]
             self._V1  = spaces[1]
@@ -450,7 +450,7 @@ class VectorTestFunction(Symbol, IndexedBase):
 # this is implemented as a function, it would be better to have it as a class
 def TestFunction(space, name=None):
 
-    if isinstance(space, FunctionSpace):
+    if isinstance(space,ScalarFunctionSpace):
         return ScalarTestFunction(space, name=name)
 
     elif isinstance(space, VectorFunctionSpace):
@@ -479,7 +479,7 @@ def TestFunction(space, name=None):
 # this is implemented as a function, it would be better to have it as a class
 def Field(space, name=None):
 
-    if isinstance(space, FunctionSpace):
+    if isinstance(space, ScalarFunctionSpace):
         return ScalarField(space, name=name)
 
     elif isinstance(space, VectorFunctionSpace):
@@ -605,7 +605,7 @@ class Unknown(ScalarTestFunction):
     """
     def __new__(cls, name, domain):
         space_name = 'space_{}'.format(abs(hash(name)))
-        V = FunctionSpace(space_name, domain)
+        V = ScalarFunctionSpace(space_name, domain)
         return ScalarTestFunction.__new__(cls, V, name)
 
 
@@ -633,8 +633,8 @@ class ScalarField(Symbol):
     is_commutative = True
     _projection_of = None
     def __new__(cls, space, name=None):
-        if not isinstance(space, FunctionSpace):
-            raise ValueError('Expecting a FunctionSpace')
+        if not isinstance(space, ScalarFunctionSpace):
+            raise ValueError('Expecting a ScalarFunctionSpace')
 
         obj = Symbol.__new__(cls, name)
         obj._space = space
@@ -837,7 +837,7 @@ class Projector(Basic):
                     return expr
 
         name = 'Proj_' + random_string( 4 )
-        if isinstance(V, FunctionSpace):
+        if isinstance(V, ScalarFunctionSpace):
             F = ScalarField(V, name)
 
         elif isinstance(V, VectorFunctionSpace):

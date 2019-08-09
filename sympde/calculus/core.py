@@ -6,11 +6,11 @@ naturally give 0
 
 >>> from sympde.calculus import grad, curl
 >>> from sympde.topology import Domain
->>> from sympde.topology import FunctionSpace
+>>> from sympde.topology import ScalarFunctionSpace
 >>> from sympde.topology import ScalarTestFunction
 
 >>> domain = Domain('Omega', dim=2)
->>> V = FunctionSpace('V', domain)
+>>> V = ScalarFunctionSpace('V', domain)
 >>> u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
 
 >>> curl(grad(u))
@@ -19,7 +19,7 @@ naturally give 0
 
 >>> domain = Domain('Omega', dim=2)
 
->>> V = FunctionSpace('V', domain)
+>>> V = ScalarFunctionSpace('V', domain)
 >>> W = VectorFunctionSpace('W', domain)
 
 >>> alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
@@ -528,7 +528,7 @@ class Convect(BasicOperator):
     Examples
 
     >>> domain = Domain('Omega', dim=2)
-    >>> V = FunctionSpace('V', domain)
+    >>> V = ScalarFunctionSpace('V', domain)
     >>> W = VectorFunctionSpace('W', domain)
     >>> alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
     >>> f,g,h = [ScalarField(V, name=i) for i in ['f','g','h']]
@@ -643,7 +643,7 @@ class Grad(BasicOperator):
     >>> from sympde.topology import VectorTestFunction
 
     >>> domain = Domain('Omega', dim=2)
-    >>> V = FunctionSpace('V', domain)
+    >>> V = ScalarFunctionSpace('V', domain)
     >>> u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
     >>> v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
@@ -869,7 +869,7 @@ class Rot(BasicOperator):
     >>> from sympde.topology import VectorTestFunction
 
     >>> domain = Domain('Omega', dim=2)
-    >>> V = FunctionSpace('V', domain)
+    >>> V = ScalarFunctionSpace('V', domain)
     >>> u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
     >>> v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
@@ -1056,7 +1056,7 @@ class Laplace(BasicOperator):
     >>> from sympde.topology import VectorTestFunction
 
     >>> domain = Domain('Omega', dim=2)
-    >>> V = FunctionSpace('V', domain)
+    >>> V = ScalarFunctionSpace('V', domain)
     >>> u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
     >>> v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
@@ -1147,7 +1147,7 @@ class Hessian(BasicOperator):
     >>> from sympde.topology import VectorTestFunction
 
     >>> domain = Domain('Omega', dim=2)
-    >>> V = FunctionSpace('V', domain)
+    >>> V = ScalarFunctionSpace('V', domain)
     >>> u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
     >>> v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 

@@ -16,9 +16,9 @@ from sympde.core import Constant
 from sympde.calculus import grad, dot, inner, cross, rot, curl, div
 from sympde.calculus import laplace, hessian, bracket
 from sympde.topology import (dx, dy, dz)
-from sympde.topology import FunctionSpace, VectorFunctionSpace
+from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
 from sympde.topology import ScalarField, VectorField
-from sympde.topology import element_of_space
+from sympde.topology import element_of
 from sympde.topology import ProductSpace
 from sympde.topology import ScalarTestFunction
 from sympde.topology import VectorTestFunction
@@ -44,11 +44,11 @@ domain = Domain('Omega', dim=DIM)
 #==============================================================================
 def test_equation_2d_1():
 
-    V = FunctionSpace('V', domain)
-    U = FunctionSpace('U', domain)
+    V = ScalarFunctionSpace('V', domain)
+    U = ScalarFunctionSpace('U', domain)
 
-    v = element_of_space(V, name='v')
-    u = element_of_space(U, name='u')
+    v = element_of(V, name='v')
+    u = element_of(U, name='u')
 
     x,y = domain.coordinates
 
@@ -162,16 +162,16 @@ def test_equation_2d_2():
 
     domain = Square()
 
-    V = FunctionSpace('V', domain)
+    V = ScalarFunctionSpace('V', domain)
 
     x,y = domain.coordinates
 
-    pn, wn = [element_of_space(V, name=i) for i in ['pn', 'wn']]
+    pn, wn = [element_of(V, name=i) for i in ['pn', 'wn']]
 
-    dp    = element_of_space(V, name='dp')
-    dw    = element_of_space(V, name='dw')
-    tau   = element_of_space(V, name='tau')
-    sigma = element_of_space(V, name='sigma')
+    dp    = element_of(V, name='dp')
+    dw    = element_of(V, name='dw')
+    tau   = element_of(V, name='tau')
+    sigma = element_of(V, name='sigma')
 
     Re    = Constant('Re', real=True)
     dt    = Constant('dt', real=True)
@@ -201,10 +201,10 @@ def test_equation_2d_2():
 #==============================================================================
 def test_equation_2d_3():
 
-    V = FunctionSpace('V', domain)
+    V = ScalarFunctionSpace('V', domain)
 
-    v = element_of_space(V, name='v')
-    u = element_of_space(V, name='u')
+    v = element_of(V, name='v')
+    u = element_of(V, name='u')
 
     x,y = domain.coordinates
 
@@ -234,8 +234,8 @@ def test_equation_2d_4():
 
     V = VectorFunctionSpace('V', domain)
 
-    v = element_of_space(V, name='v')
-    u = element_of_space(V, name='u')
+    v = element_of(V, name='v')
+    u = element_of(V, name='u')
     x,y = domain.coordinates
 
     B1 = Boundary(r'\Gamma_1', domain)
@@ -274,14 +274,14 @@ def test_equation_2d_5():
     f1 = cos(pi*x)*cos(pi*y)
 
     W = VectorFunctionSpace('W', domain)
-    V = FunctionSpace('V', domain)
+    V = ScalarFunctionSpace('V', domain)
     X = ProductSpace(W, V)
 
-    F = element_of_space(W, name='F')
-    G = element_of_space(V, name='G')
+    F = element_of(W, name='F')
+    G = element_of(V, name='G')
 
-    u,v = [element_of_space(W, name=i) for i in ['u', 'v']]
-    p,q = [element_of_space(V, name=i) for i in ['p', 'q']]
+    u,v = [element_of(W, name=i) for i in ['u', 'v']]
+    p,q = [element_of(V, name=i) for i in ['p', 'q']]
 
     a0 = BilinearForm((v,u), inner(grad(v), grad(u)))
     print('     a0 done.')
@@ -329,9 +329,9 @@ def test_equation_2d_6():
     e = ElementDomain()
     area = Area(e)
 
-    V = FunctionSpace('V', domain)
+    V = ScalarFunctionSpace('V', domain)
 
-    u,v = [element_of_space(V, name=i) for i in ['u', 'v']]
+    u,v = [element_of(V, name=i) for i in ['u', 'v']]
 
     # ...
     expr = kappa * dot(grad(u), grad(v)) + dot(b, grad(u)) * v

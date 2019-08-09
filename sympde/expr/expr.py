@@ -48,7 +48,7 @@ from sympde.topology.derivatives import Bracket_2d
 from sympde.topology.derivatives import Laplace_1d, Laplace_2d, Laplace_3d
 from sympde.topology.derivatives import Hessian_1d, Hessian_2d, Hessian_3d
 from sympde.topology.space import BasicFunctionSpace
-from sympde.topology.space import FunctionSpace
+from sympde.topology.space import ScalarFunctionSpace
 from sympde.topology.space import ProductSpace
 from sympde.topology.space import ScalarTestFunction
 from sympde.topology.space import VectorTestFunction
@@ -301,7 +301,7 @@ class Functional(BasicForm):
         else:
             tag = random_string( 3 )
             space_name = 'space_{}'.format(tag)
-            space = FunctionSpace(space_name, domain)
+            space = ScalarFunctionSpace(space_name, domain)
             # TODO vector case
 
         obj._ldim = domain.dim

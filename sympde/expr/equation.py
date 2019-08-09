@@ -5,11 +5,10 @@ from sympy.core.containers import Tuple
 from sympy.core import Expr
 
 from sympde.topology.basic import Boundary, Union
-from sympde.topology.space  import VectorFunctionSpace, FunctionSpace
+from sympde.topology.space  import VectorFunctionSpace, ScalarFunctionSpace
 from sympde.topology.space import ScalarTestFunction
 from sympde.topology.space import VectorTestFunction, IndexedTestTrial
 from sympde.topology.space import Element, IndexedElement
-from sympde.topology.space import FunctionSpace
 from sympde.topology import Boundary, NormalVector, TangentVector
 from sympde.topology import Trace, trace_0, trace_1
 from sympde.calculus import grad, dot

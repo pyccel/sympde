@@ -50,7 +50,7 @@ from sympde.topology.derivatives import Bracket_2d
 from sympde.topology.derivatives import Laplace_1d, Laplace_2d, Laplace_3d
 from sympde.topology.derivatives import Hessian_1d, Hessian_2d, Hessian_3d
 from sympde.topology.space import BasicFunctionSpace
-from sympde.topology.space import FunctionSpace
+from sympde.topology.space import ScalarFunctionSpace
 from sympde.topology.space import ProductSpace
 from sympde.topology.space import ScalarTestFunction
 from sympde.topology.space import VectorTestFunction
@@ -491,7 +491,7 @@ def _split_test_function(expr):
         ls = []
         for i in range(0, dim):
             Di = Interval()
-            Vi = FunctionSpace('tmp_V_{}'.format(i), domain=Di)
+            Vi = ScalarFunctionSpace('tmp_V_{}'.format(i), domain=Di)
 
             ai = ScalarTestFunction(Vi, '{name}{i}'.format(name=name, i=i))
             ls += [ai]
@@ -505,7 +505,7 @@ def _split_test_function(expr):
         i = i[0]
 
         V = expr.base.space
-        Vi = FunctionSpace('tmpV_{}'.format(i), V.domain)
+        Vi = ScalarFunctionSpace('tmpV_{}'.format(i), V.domain)
         vi = ScalarTestFunction(Vi, '{test}{i}'.format(test=expr.base.name, i=i))
 
         return _split_test_function(vi)

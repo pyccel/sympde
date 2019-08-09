@@ -11,7 +11,7 @@ from sympy import srepr
 from sympde import Constant
 
 from sympde.topology import Domain
-from sympde.topology import FunctionSpace, VectorFunctionSpace
+from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
 from sympde.topology import ProductSpace
 from sympde.topology import H1Space, HcurlSpace, HdivSpace, L2Space, UndefinedSpace
 from sympde.topology import TestFunction
@@ -29,10 +29,10 @@ def test_compiler_3d_1():
 
     domain = Domain('Omega', dim=3)
 
-    H1    =       FunctionSpace('V0', domain, kind='H1')
+    H1    = ScalarFunctionSpace('V0', domain, kind='H1')
     Hcurl = VectorFunctionSpace('V1', domain, kind='Hcurl')
     Hdiv  = VectorFunctionSpace('V2', domain, kind='Hdiv')
-    L2    =       FunctionSpace('V3', domain, kind='L2')
+    L2    = ScalarFunctionSpace('V3', domain, kind='L2')
     V     = VectorFunctionSpace('V', domain)
 
     X = H1 * Hcurl * Hdiv * L2
@@ -174,10 +174,10 @@ def test_compiler_3d_2():
 
     domain = Domain('Omega', dim=3)
 
-    H1    =       FunctionSpace('V0', domain, kind='H1')
+    H1    = ScalarFunctionSpace('V0', domain, kind='H1')
     Hcurl = VectorFunctionSpace('V1', domain, kind='Hcurl')
     Hdiv  = VectorFunctionSpace('V2', domain, kind='Hdiv')
-    L2    =       FunctionSpace('V3', domain, kind='L2')
+    L2    = ScalarFunctionSpace('V3', domain, kind='L2')
     V     = VectorFunctionSpace('V', domain)
 
     X = H1 * Hcurl * Hdiv * L2
@@ -235,10 +235,10 @@ def test_compiler_3d_poisson():
 
     domain = Domain('Omega', dim=3)
 
-    H1    =       FunctionSpace('V0', domain, kind='H1')
+    H1    = ScalarFunctionSpace('V0', domain, kind='H1')
     Hcurl = VectorFunctionSpace('V1', domain, kind='Hcurl')
     Hdiv  = VectorFunctionSpace('V2', domain, kind='Hdiv')
-    L2    =       FunctionSpace('V3', domain, kind='L2')
+    L2    = ScalarFunctionSpace('V3', domain, kind='L2')
     V     = VectorFunctionSpace('V', domain)
 
     X = Hdiv * L2
@@ -260,7 +260,7 @@ def test_compiler_3d_stokes():
     #    In order to avoid this problem, we need first to declare our space as an
     #    undefined type.
     Hdiv  = VectorFunctionSpace('V2', domain, kind='Hdiv')
-    L2    =       FunctionSpace('V3', domain, kind='L2')
+    L2    = ScalarFunctionSpace('V3', domain, kind='L2')
 
     X = Hdiv * L2
 
@@ -273,7 +273,7 @@ def test_compiler_3d_stokes():
 
     # ...
     Hdiv  = VectorFunctionSpace('V2', domain)
-    L2    =       FunctionSpace('V3', domain)
+    L2    = ScalarFunctionSpace('V3', domain)
 
     X = Hdiv * L2
 

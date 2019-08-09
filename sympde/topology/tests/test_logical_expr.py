@@ -14,7 +14,7 @@ from sympde.calculus import grad, dot, inner, cross, rot, curl, div
 from sympde.calculus import laplace, hessian, bracket, convect
 from sympde.topology import (dx, dy, dz)
 from sympde.topology import (dx1, dx2, dx3)
-from sympde.topology import FunctionSpace, VectorFunctionSpace
+from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
 from sympde.topology import ScalarTestFunction
 from sympde.topology import VectorTestFunction
 from sympde.topology import LogicalExpr
@@ -32,7 +32,7 @@ def test_logical_expr_1d_1():
 
     alpha = Constant('alpha')
 
-    V = FunctionSpace('V', domain)
+    V = ScalarFunctionSpace('V', domain)
 
     u,v = [ScalarTestFunction(V, name=i) for i in ['u', 'v']]
 
@@ -81,7 +81,7 @@ def test_symbolic_expr_1d_1():
 
     alpha = Constant('alpha')
 
-    V = FunctionSpace('V', domain)
+    V = ScalarFunctionSpace('V', domain)
 
     u,v = [ScalarTestFunction(V, name=i) for i in ['u', 'v']]
 
@@ -156,7 +156,7 @@ def test_logical_expr_2d_1():
 
     alpha = Constant('alpha')
 
-    V = FunctionSpace('V', domain)
+    V = ScalarFunctionSpace('V', domain)
     W = VectorFunctionSpace('V', domain)
 
     u,v = [ScalarTestFunction(V, name=i) for i in ['u', 'v']]
@@ -221,7 +221,7 @@ def test_symbolic_expr_2d_1():
 
     alpha = Constant('alpha')
 
-    V = FunctionSpace('V', domain)
+    V = ScalarFunctionSpace('V', domain)
 
     u,v = [ScalarTestFunction(V, name=i) for i in ['u', 'v']]
 
@@ -301,7 +301,7 @@ def test_logical_expr_3d_1():
 
     alpha = Constant('alpha')
 
-    V = FunctionSpace('V', domain)
+    V = ScalarFunctionSpace('V', domain)
 
     u,v = [ScalarTestFunction(V, name=i) for i in ['u', 'v']]
 
@@ -357,7 +357,7 @@ def test_symbolic_expr_3d_1():
 
     alpha = Constant('alpha')
 
-    V = FunctionSpace('V', domain)
+    V = ScalarFunctionSpace('V', domain)
 
     u,v = [ScalarTestFunction(V, name=i) for i in ['u', 'v']]
 
@@ -424,7 +424,6 @@ def test_symbolic_expr_3d_1():
     expr = SymbolicExpr(expr)
     expr = expr.subs(det_M, det)
     #print(expand(expr))
-    raise
     
     # ...
 

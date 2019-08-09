@@ -19,7 +19,7 @@ from sympde.core import Constant
 from sympde.calculus import grad, dot, inner, cross, rot, curl, div
 from sympde.calculus import laplace, hessian, bracket, convect
 from sympde.topology import (dx, dy, dz)
-from sympde.topology import FunctionSpace, VectorFunctionSpace
+from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
 from sympde.topology import Field, TestFunction
 from sympde.topology import ProductSpace
 from sympde.topology import InteriorDomain, Union
@@ -50,7 +50,7 @@ def test_tensorize_2d_1():
     kappa = Constant('kappa', is_real=True)
     mu    = Constant('mu'   , is_real=True)
 
-    V = FunctionSpace('V', domain)
+    V = ScalarFunctionSpace('V', domain)
 
     u,v = [TestFunction(V, name=i) for i in ['u', 'v']]
 
@@ -103,7 +103,7 @@ def test_tensorize_2d_1_mapping():
     kappa = Constant('kappa', is_real=True)
     mu    = Constant('mu'   , is_real=True)
 
-    V = FunctionSpace('V', domain)
+    V = ScalarFunctionSpace('V', domain)
 
     u,v = [TestFunction(V, name=i) for i in ['u', 'v']]
 
