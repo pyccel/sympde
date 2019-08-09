@@ -6,11 +6,11 @@ naturally give 0
 
 >>> from sympde.calculus import grad, curl
 >>> from sympde.topology import Domain
->>> from sympde.topology import FunctionSpace
+>>> from sympde.topology import ScalarFunctionSpace
 >>> from sympde.topology import ScalarTestFunction
 
 >>> domain = Domain('Omega', dim=2)
->>> V = FunctionSpace('V', domain)
+>>> V = ScalarFunctionSpace('V', domain)
 >>> u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
 
 >>> curl(grad(u))
@@ -19,7 +19,7 @@ naturally give 0
 
 >>> domain = Domain('Omega', dim=2)
 
->>> V = FunctionSpace('V', domain)
+>>> V = ScalarFunctionSpace('V', domain)
 >>> W = VectorFunctionSpace('W', domain)
 
 >>> alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
@@ -528,7 +528,7 @@ class Convect(BasicOperator):
     Examples
 
     >>> domain = Domain('Omega', dim=2)
-    >>> V = FunctionSpace('V', domain)
+    >>> V = ScalarFunctionSpace('V', domain)
     >>> W = VectorFunctionSpace('W', domain)
     >>> alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
     >>> f,g,h = [ScalarField(V, name=i) for i in ['f','g','h']]
@@ -643,7 +643,7 @@ class Grad(BasicOperator):
     >>> from sympde.topology import VectorTestFunction
 
     >>> domain = Domain('Omega', dim=2)
-    >>> V = FunctionSpace('V', domain)
+    >>> V = ScalarFunctionSpace('V', domain)
     >>> u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
     >>> v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
@@ -795,6 +795,7 @@ class Curl(BasicOperator):
             raise ValueError('Expecting one argument')
 
         expr = _args[0]
+
         if isinstance(expr, Add):
             args = expr.args
             args = [cls.eval(a) for a in expr.args]
@@ -838,6 +839,7 @@ class Curl(BasicOperator):
             return 0
 
         elif isinstance(expr, Curl):
+
             f = expr._args[0]
             return Grad(Div(f)) - Laplace(f)
 
@@ -849,7 +851,6 @@ class Curl(BasicOperator):
                 msg = '> Wrong space kind, given {}'.format(expr.space.kind)
                 raise ArgumentTypeError(msg)
         # ...
-
         return cls(expr, evaluate=False)
 
 #==============================================================================
@@ -868,7 +869,7 @@ class Rot(BasicOperator):
     >>> from sympde.topology import VectorTestFunction
 
     >>> domain = Domain('Omega', dim=2)
-    >>> V = FunctionSpace('V', domain)
+    >>> V = ScalarFunctionSpace('V', domain)
     >>> u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
     >>> v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
@@ -927,7 +928,7 @@ class Rot(BasicOperator):
         # ... check consistency between space type and the operator
         # TODO add appropriate space types
         if _is_sympde_atom(expr):
-            if not isinstance(expr.space.kind, UndefinedSpaceType):
+            if not isinstance(expr.space.kind, (UndefinedSpaceType, H1SpaceType)):
                 msg = '> Wrong space kind, given {}'.format(expr.space.kind)
                 raise ArgumentTypeError(msg)
         # ...
@@ -1055,7 +1056,7 @@ class Laplace(BasicOperator):
     >>> from sympde.topology import VectorTestFunction
 
     >>> domain = Domain('Omega', dim=2)
-    >>> V = FunctionSpace('V', domain)
+    >>> V = ScalarFunctionSpace('V', domain)
     >>> u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
     >>> v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
@@ -1146,7 +1147,7 @@ class Hessian(BasicOperator):
     >>> from sympde.topology import VectorTestFunction
 
     >>> domain = Domain('Omega', dim=2)
-    >>> V = FunctionSpace('V', domain)
+    >>> V = ScalarFunctionSpace('V', domain)
     >>> u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
     >>> v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 

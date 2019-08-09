@@ -19,7 +19,7 @@ from sympde.calculus import grad, dot, inner, outer, cross, rot, curl, div
 from sympde.calculus import laplace, hessian, bracket, convect, D, conv
 from sympde.calculus import ArgumentTypeError
 from sympde.topology import Domain
-from sympde.topology import FunctionSpace, VectorFunctionSpace
+from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
 from sympde.topology import ProductSpace
 from sympde.topology import H1Space, HcurlSpace, HdivSpace, L2Space, UndefinedSpace
 from sympde.topology import TestFunction, ScalarTestFunction, VectorTestFunction
@@ -31,7 +31,7 @@ from sympde.topology import ScalarField, VectorField
 def test_calculus_2d_1():
     domain = Domain('Omega', dim=2)
 
-    V = FunctionSpace('V', domain)
+    V = ScalarFunctionSpace('V', domain)
     W = VectorFunctionSpace('W', domain)
 
     alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
@@ -91,7 +91,7 @@ def test_calculus_2d_1():
 def test_calculus_2d_2():
     domain = Domain('Omega', dim=2)
 
-    V = FunctionSpace('V', domain)
+    V = ScalarFunctionSpace('V', domain)
     W = VectorFunctionSpace('W', domain)
 
     alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
@@ -110,7 +110,7 @@ def test_calculus_2d_3():
     domain = Domain('Omega', dim=2)
     x,y = domain.coordinates
 
-    V = FunctionSpace('V', domain)
+    V = ScalarFunctionSpace('V', domain)
 
     alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
 
@@ -127,7 +127,7 @@ def test_calculus_2d_3():
 def test_calculus_3d():
     domain = Domain('Omega', dim=3)
 
-    V = FunctionSpace('V', domain)
+    V = ScalarFunctionSpace('V', domain)
     W = VectorFunctionSpace('W', domain)
 
     alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
@@ -184,11 +184,11 @@ def test_calculus_3d():
 def test_calculus_3d_3():
     domain = Domain('Omega', dim=3)
 
-    H1    =       FunctionSpace('V0', domain, kind='H1')
+    H1    = ScalarFunctionSpace('V0', domain, kind='H1')
     Hcurl = VectorFunctionSpace('V1', domain, kind='Hcurl')
     Hdiv  = VectorFunctionSpace('V2', domain, kind='Hdiv')
-    L2    =       FunctionSpace('V3', domain, kind='L2')
-    V     =       FunctionSpace('V', domain, kind=None)
+    L2    = ScalarFunctionSpace('V3', domain, kind='L2')
+    V     = ScalarFunctionSpace('V', domain, kind=None)
     W     = VectorFunctionSpace('W', domain, kind=None)
 
     f,g,h = [ScalarField(V, name=i) for i in ['f','g','h']]

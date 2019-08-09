@@ -95,7 +95,7 @@ class Domain(BasicDomain):
         if not dim is None:
             assert(isinstance( dim, int ))
 
-            interiors = [InteriorDomain(name, dim=dim)]
+            interiors = [InteriorDomain(name, dtype=dtype, dim=dim)]
         # ...
 
         # ...
@@ -259,7 +259,7 @@ class Domain(BasicDomain):
             return constructor(domain_name, **dtype['parameters'])
 
         # ... create sympde InteriorDomain (s)
-        interior = [InteriorDomain(i['name'], dim=dim) for i in d_interior]
+        interior = [InteriorDomain(i['name'], dim=dim, dtype=dtype) for i in d_interior]
 
         # create a dict of interiors accessed by name => needed for boundaries
         d_interior = {}
@@ -368,8 +368,10 @@ class Line(Domain):
 
         dtype = {'type': 'Line', 'parameters': {}}
 
+        interior   = InteriorDomain(interior, dtype=dtype)
+        
         return Domain(name, interiors=[interior],
-                      boundaries=boundaries, dtype=dtype)
+                      boundaries=boundaries, dim=1, dtype=dtype)
 
 
 #==============================================================================
@@ -396,10 +398,10 @@ class Square(Domain):
 
                 i += 1
 
-        interior = InteriorDomain(interior)
-
         dtype = {'type': 'Square', 'parameters': {}}
 
+        interior = InteriorDomain(name, target=interior, dim=2, dtype=dtype)
+        
         return Domain(name, interiors=[interior],
                       boundaries=boundaries, dtype=dtype)
 
@@ -431,12 +433,12 @@ class Cube(Domain):
 
                 i += 1
 
-        interior = InteriorDomain(interior)
-
         dtype = {'type': 'Cube', 'parameters': {}}
+        
+        interior = InteriorDomain(interior, dtype=dtype)
 
         return Domain(name, interiors=[interior],
-                      boundaries=boundaries, dtype=dtype)
+                      boundaries=boundaries, dim=3, dtype=dtype)
 
 
 #==============================================================================

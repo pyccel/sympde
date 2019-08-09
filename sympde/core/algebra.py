@@ -51,7 +51,6 @@ class LinearOperator(CalculusFunction):
 
     def __new__(cls, *args, **options):
         # (Try to) sympify args first
-
         if options.pop('evaluate', True):
             r = cls.eval(*args)
         else:
@@ -95,7 +94,6 @@ class LinearOperator(CalculusFunction):
                 b = cls(Mul(*vectors), evaluate=False)
 
             return Mul(a, b)
-
         return cls(expr, evaluate=False)
 # ...
 
@@ -242,7 +240,6 @@ class Cross_2d(CrossBasic):
 
         u = _args[0]
         v = _args[1]
-
         return u[0]*v[1] - u[1]*v[0]
 
 class Cross_3d(CrossBasic):

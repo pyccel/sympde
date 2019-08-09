@@ -14,7 +14,7 @@ from sympde.topology import ScalarField
 from sympde.topology import get_index_derivatives_atom
 from sympde.topology import partial_derivative_as_str
 from sympde.topology import get_max_partial_derivatives
-from sympde.topology import FunctionSpace
+from sympde.topology import ScalarFunctionSpace
 from sympde.topology import (dx, dy, dz)
 
 
@@ -35,7 +35,7 @@ def test_partial_derivatives_1():
     domain = Domain('Omega', dim=2)
     x,y = domain.coordinates
 
-    V = FunctionSpace('V', domain)
+    V = ScalarFunctionSpace('V', domain)
 
     F,u,v,w = [ScalarField(V, name=i) for i in ['F', 'u', 'v', 'w']]
     uvw = Tuple(u,v,w)
@@ -76,7 +76,7 @@ def test_partial_derivatives_2():
     domain = Domain('Omega', dim=2)
     x,y = domain.coordinates
 
-    V = FunctionSpace('V', domain)
+    V = ScalarFunctionSpace('V', domain)
     F = ScalarField(V, name='F')
 
     alpha = Constant('alpha')

@@ -19,7 +19,7 @@ from sympy.core.singleton import S
 
 from sympde.core.basic import _coeffs_registery
 from sympde.core.basic import CalculusFunction
-from sympde.topology import FunctionSpace, VectorFunctionSpace
+from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
 from sympde.topology import H1SpaceType, HcurlSpaceType, HdivSpaceType
 from sympde.topology import L2SpaceType, UndefinedSpaceType
 from sympde.topology import TestFunction, ScalarTestFunction, VectorTestFunction

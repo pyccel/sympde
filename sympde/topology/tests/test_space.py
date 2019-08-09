@@ -1,7 +1,7 @@
 # coding: utf-8
 
 from sympde.topology import Domain
-from sympde.topology import FunctionSpace, VectorFunctionSpace
+from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
 from sympde.topology import ProductSpace
 from sympde.topology import H1Space, HcurlSpace, HdivSpace, L2Space, UndefinedSpace
 from sympde.topology import TestFunction, ScalarTestFunction, VectorTestFunction
@@ -15,13 +15,13 @@ def test_space_1d_1():
     DIM = 1
     domain = Domain('Omega', dim=DIM)
 
-    V1 = FunctionSpace('V1', domain)
-    V2 = FunctionSpace('V2', domain)
-    V3 = FunctionSpace('V3', domain)
+    V1 = ScalarFunctionSpace('V1', domain)
+    V2 = ScalarFunctionSpace('V2', domain)
+    V3 = ScalarFunctionSpace('V3', domain)
 
-    U1 = FunctionSpace('U1', domain)
-    U2 = FunctionSpace('U2', domain)
-#    U3 = FunctionSpace('U3', domain, shape=2)
+    U1 = ScalarFunctionSpace('U1', domain)
+    U2 = ScalarFunctionSpace('U2', domain)
+#    U3 = ScalarFunctionSpace('U3', domain, shape=2)
 #
 #    V = ProductSpace(V1, V2, V3)
 #    assert(V.ldim == DIM)
@@ -39,12 +39,12 @@ def test_space_2d_1():
     DIM = 2
     domain = Domain('Omega', dim=DIM)
 
-    V1 = FunctionSpace('V1', domain)
-    V2 = FunctionSpace('V2', domain)
-    V3 = FunctionSpace('V3', domain)
+    V1 = ScalarFunctionSpace('V1', domain)
+    V2 = ScalarFunctionSpace('V2', domain)
+    V3 = ScalarFunctionSpace('V3', domain)
 
-    U1 = FunctionSpace('U1', domain)
-    U2 = FunctionSpace('U2', domain)
+    U1 = ScalarFunctionSpace('U1', domain)
+    U2 = ScalarFunctionSpace('U2', domain)
     U3 = VectorFunctionSpace('U3', domain)
 
     # ...
@@ -92,13 +92,13 @@ def test_space_3d_1():
     DIM = 3
     domain = Domain('Omega', dim=DIM)
 
-    V1 = FunctionSpace('V1', domain)
-    V2 = FunctionSpace('V2', domain)
-    V3 = FunctionSpace('V3', domain)
+    V1 = ScalarFunctionSpace('V1', domain)
+    V2 = ScalarFunctionSpace('V2', domain)
+    V3 = ScalarFunctionSpace('V3', domain)
 
-    U1 = FunctionSpace('U1', domain)
-    U2 = FunctionSpace('U2', domain)
-#    U3 = FunctionSpace('U3', domain, shape=2)
+    U1 = ScalarFunctionSpace('U1', domain)
+    U2 = ScalarFunctionSpace('U2', domain)
+#    U3 = ScalarFunctionSpace('U3', domain, shape=2)
 #
 #    V = ProductSpace(V1, V2, V3)
 #    assert(V.ldim == DIM)
@@ -116,11 +116,11 @@ def test_space_2d_2():
     DIM = 2
     domain = Domain('Omega', dim=DIM)
 
-    H1    =       FunctionSpace('V0', domain, kind='H1')
+    H1    =       ScalarFunctionSpace('V0', domain, kind='H1')
     Hcurl = VectorFunctionSpace('V1', domain, kind='Hcurl')
     Hdiv  = VectorFunctionSpace('V2', domain, kind='Hdiv')
-    L2    =       FunctionSpace('V3', domain, kind='L2')
-    V     =       FunctionSpace('V', domain, kind=None)
+    L2    =       ScalarFunctionSpace('V3', domain, kind='L2')
+    V     =       ScalarFunctionSpace('V', domain, kind=None)
     W     = VectorFunctionSpace('W', domain, kind=None)
 
     assert(H1.kind    == H1Space)
@@ -140,7 +140,7 @@ def test_projector_2d_1():
     DIM = 2
     domain = Domain('Omega', dim=DIM)
 
-    V     =       FunctionSpace('V', domain, kind=None)
+    V     =       ScalarFunctionSpace('V', domain, kind=None)
     W     = VectorFunctionSpace('W', domain, kind=None)
 
     v, w = Field(V*W, ['v', 'w'])

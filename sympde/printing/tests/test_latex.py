@@ -6,7 +6,7 @@ from sympde.core import Constant
 from sympde.calculus import grad, dot, inner, cross, rot, curl, div
 
 from sympde.topology import (dx, dy, dz)
-from sympde.topology import FunctionSpace, VectorFunctionSpace
+from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
 from sympde.topology import ScalarField, VectorField
 from sympde.topology import ProductSpace
 from sympde.topology import ScalarTestFunction
@@ -30,7 +30,7 @@ def test_latex_1d():
     DIM = 1
     domain = Domain('Omega', dim=DIM)
 
-    V = FunctionSpace('V', domain)
+    V = ScalarFunctionSpace('V', domain)
 
     x = V.coordinates
 
@@ -60,7 +60,7 @@ def test_latex_2d_1():
     DIM = 2
     domain = Domain('Omega', dim=DIM)
 
-    V = FunctionSpace('V', domain)
+    V = ScalarFunctionSpace('V', domain)
 
     x,y = V.coordinates
 
@@ -117,7 +117,7 @@ def test_latex_3d_1():
     DIM = 3
     domain = Domain('Omega', dim=DIM)
 
-    V = FunctionSpace('V', domain)
+    V = ScalarFunctionSpace('V', domain)
 
     x,y,z = V.coordinates
 
@@ -179,7 +179,7 @@ def test_latex_2d_3():
     B2 = Boundary(r'\Gamma_2', domain)
     B3 = Boundary(r'\Gamma_3', domain)
 
-    V = FunctionSpace('V', domain)
+    V = ScalarFunctionSpace('V', domain)
 
     x = V.coordinates
 
@@ -210,7 +210,7 @@ def test_latex_2d_4():
 
     # ... abstract model
     V = VectorFunctionSpace('V', domain)
-    W = FunctionSpace('W', domain)
+    W = ScalarFunctionSpace('W', domain)
 
     v = VectorTestFunction(V, name='v')
     u = VectorTestFunction(V, name='u')

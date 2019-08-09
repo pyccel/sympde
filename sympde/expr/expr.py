@@ -10,6 +10,7 @@ from sympy import collect
 from sympy.series.order import Order
 from sympy.core import Expr, Add, Mul, Pow
 from sympy import S
+from sympy.core.numbers import Zero as sy_Zero
 from sympy.core.containers import Tuple
 from sympy import Indexed, IndexedBase, Matrix, ImmutableDenseMatrix
 from sympy import expand
@@ -34,7 +35,7 @@ from sympde.calculus import Laplace
 from sympde.calculus.core import _generic_ops
 
 from sympde.topology import BasicDomain, Domain, MappedDomain, Union, Interval
-from sympde.topology import BoundaryVector, NormalVector, TangentVector, Boundary
+from sympde.topology import BoundaryVector, NormalVector, TangentVector, Boundary, Connectivity
 from sympde.topology.derivatives import _partial_derivatives
 from sympde.topology.derivatives import partial_derivative_as_symbol
 from sympde.topology.derivatives import sort_partial_derivatives
@@ -47,7 +48,7 @@ from sympde.topology.derivatives import Bracket_2d
 from sympde.topology.derivatives import Laplace_1d, Laplace_2d, Laplace_3d
 from sympde.topology.derivatives import Hessian_1d, Hessian_2d, Hessian_3d
 from sympde.topology.space import BasicFunctionSpace
-from sympde.topology.space import FunctionSpace
+from sympde.topology.space import ScalarFunctionSpace
 from sympde.topology.space import ProductSpace
 from sympde.topology.space import ScalarTestFunction
 from sympde.topology.space import VectorTestFunction
@@ -199,7 +200,10 @@ class BasicIntegral(CalculusFunction):
             args = [cls.eval(a) for a in expr.args]
             return Add(*args)
 
-        boundary = list(expr.atoms(Boundary))
+        if isinstance(expr, sy_Zero):
+            return sy_Zero
+            
+        boundary = list(expr.atoms(Boundary, Connectivity))
         if boundary:
             return BoundaryIntegral(expr)
 
@@ -244,7 +248,7 @@ class BoundaryIntegral(BasicIntegral):
 def _get_domain(a):
     # expr is an integral of BasicExpr or Add of Integral of BasicExpr
     if isinstance(a, BoundaryIntegral):
-        domains = list(a.atoms(Boundary))
+        domains = list(a.atoms(Boundary, Connectivity))
         if len(domains) == 1:
             return domains[0]
 
@@ -267,9 +271,10 @@ def _get_domain(a):
     if len(atoms) == 0:
         raise ValueError('could not find any test function or field')
 
-    space = atoms[0].space
+    domains = {atom.space.domain for atom in atoms}
+    
 
-    domains = list(expr.atoms(Boundary)) + [space.domain]
+    domains = list(expr.atoms(Boundary, Connectivity)) + list(domains)
     if len(domains) == 1:
         return domains[0]
 
@@ -296,7 +301,7 @@ class Functional(BasicForm):
         else:
             tag = random_string( 3 )
             space_name = 'space_{}'.format(tag)
-            space = FunctionSpace(space_name, domain)
+            space = ScalarFunctionSpace(space_name, domain)
             # TODO vector case
 
         obj._ldim = domain.dim
@@ -341,7 +346,9 @@ class LinearForm(BasicForm):
         # ...
         expr = expand(expr)
         # ...
-
+        if expr == 0:
+            return sy_Zero
+        
         args = _sanitize_arguments(arguments, is_linear=True)
         expr = BasicIntegral(expr)
         obj = Basic.__new__(cls, args, expr)
@@ -423,7 +430,9 @@ class BilinearForm(BasicForm):
         # ...
         expr = expand(expr)
         # ...
-
+        if expr == 0:
+            return sy_Zero
+            
         args = _sanitize_arguments(arguments, is_bilinear=True)
         expr = BasicIntegral(expr)
         obj = Basic.__new__(cls, args, expr)

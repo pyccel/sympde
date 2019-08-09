@@ -5,11 +5,10 @@ from sympy.core.containers import Tuple
 from sympy.core import Expr
 
 from sympde.topology.basic import Boundary, Union
-from sympde.topology.space  import VectorFunctionSpace, FunctionSpace
+from sympde.topology.space  import VectorFunctionSpace, ScalarFunctionSpace
 from sympde.topology.space import ScalarTestFunction
 from sympde.topology.space import VectorTestFunction, IndexedTestTrial
 from sympde.topology.space import Element, IndexedElement
-from sympde.topology.space import FunctionSpace
 from sympde.topology import Boundary, NormalVector, TangentVector
 from sympde.topology import Trace, trace_0, trace_1
 from sympde.calculus import grad, dot
@@ -35,18 +34,17 @@ class EssentialBC(BasicBoundaryCondition):
     _normal_component = None
     _position = None
 
-    def __new__(cls, lhs, rhs, boundary, position=None):
+    def __new__(cls, lhs, rhs, boundary, position=None, index_component=None):
         # ...
         if not( rhs == 0 ):
             raise NotImplementedError('Only homogeneous case is available')
         # ...
         # ...
         normal_component = False
-        index_component = None
         # ...
 
         # ...
-        indexed = list(lhs.atoms(IndexedTestTrial,IndexedElement))
+        indexed = list(lhs.atoms(IndexedTestTrial, IndexedElement))
 
         u  = list(lhs.atoms(ScalarTestFunction))
 
@@ -321,7 +319,8 @@ class Equation(Basic):
 
                 if isinstance(i.boundary, Union):
                     if isinstance(i, EssentialBC):
-                        newbc += [EssentialBC(i.lhs, i.rhs, j, position=i.position)
+                        newbc += [EssentialBC(i.lhs, i.rhs, j, position=i.position,
+                                              index_component=i.index_component)
                                   for j in i.boundary._args]
 
                 else:

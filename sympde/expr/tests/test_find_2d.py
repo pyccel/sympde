@@ -16,7 +16,7 @@ from sympde.core import Constant
 from sympde.calculus import grad, dot, inner, cross, rot, curl, div
 from sympde.calculus import laplace, hessian, bracket
 from sympde.topology import (dx, dy, dz)
-from sympde.topology import FunctionSpace, VectorFunctionSpace
+from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
 from sympde.topology import ScalarField, VectorField
 from sympde.topology import ProductSpace
 from sympde.topology import ScalarTestFunction
@@ -44,8 +44,8 @@ domain = Domain('Omega', dim=DIM)
 #==============================================================================
 def test_find_2d_1():
 
-    V = FunctionSpace('V', domain)
-    U = FunctionSpace('U', domain)
+    V = ScalarFunctionSpace('V', domain)
+    U = ScalarFunctionSpace('U', domain)
 
     v = ScalarTestFunction(V, name='v')
     u = ScalarTestFunction(U, name='u')
@@ -117,7 +117,7 @@ def test_find_2d_1():
 #    # ... abstract model
 #    B1 = Boundary(r'\Gamma_1', domain)
 #
-#    V = FunctionSpace('V', domain)
+#    V = ScalarFunctionSpace('V', domain)
 #
 #    x,y = domain.coordinates
 #
