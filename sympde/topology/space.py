@@ -8,6 +8,7 @@ from sympy.core import Symbol
 from sympy.core import Expr
 from sympy.core.expr import AtomicExpr
 from sympy.core.containers import Tuple
+from sympy import Integer
 
 from sympde.core.utils import random_string
 from .basic import BasicDomain
@@ -247,9 +248,11 @@ class ProductSpace(BasicFunctionSpace):
 
         # ... all spaces must have the same domain
         domain = spaces[0].domain
-        for space in spaces:
-            if not(space.domain is domain):
-                raise ValueError('> all spaces must have the same domain')
+        
+        #TODO uncomment
+        #for space in spaces:
+        #    if not(space.domain is domain):
+        #        raise ValueError('> all spaces must have the same domain')
 
         ldim = domain.dim
         # ...
@@ -430,6 +433,11 @@ class VectorTestFunction(Symbol, IndexedBase):
         if not(len(args) == 1):
             raise ValueError('expecting exactly one argument')
 
+        args = list(args)
+        for i in range(len(args)):
+            if isinstance(args[i], int):
+                args[i] = Integer(args[i])
+
         assumptions ={}
         obj = IndexedTestTrial(self, *args)
         return obj
@@ -538,6 +546,11 @@ class Element(Symbol):
 
         if not(len(args) == 1):
             raise ValueError('expecting exactly one argument')
+
+        args = list(args)
+        for i in range(len(args)):
+            if isinstance(args[i], int):
+                args[i] = Integer(args[i])
 
         assumptions ={}
         obj = IndexedElement(self, *args)
@@ -689,7 +702,12 @@ class VectorField(Symbol, IndexedBase):
 
         if not(len(args) == 1):
             raise ValueError('expecting exactly one argument')
-
+ 
+        args = list(args)
+        for i in range(len(args)):
+            if isinstance(args[i], int):
+                args[i] = Integer(args[i])
+                       
         assumptions ={}
         obj = IndexedVectorField(self, *args)
         return obj

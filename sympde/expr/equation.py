@@ -35,14 +35,13 @@ class EssentialBC(BasicBoundaryCondition):
     _normal_component = None
     _position = None
 
-    def __new__(cls, lhs, rhs, boundary, position=None):
+    def __new__(cls, lhs, rhs, boundary, position=None, index_component=None):
         # ...
         if not( rhs == 0 ):
             raise NotImplementedError('Only homogeneous case is available')
         # ...
         # ...
         normal_component = False
-        index_component = None
         # ...
 
         # ...
@@ -321,7 +320,8 @@ class Equation(Basic):
 
                 if isinstance(i.boundary, Union):
                     if isinstance(i, EssentialBC):
-                        newbc += [EssentialBC(i.lhs, i.rhs, j, position=i.position)
+                        newbc += [EssentialBC(i.lhs, i.rhs, j, position=i.position,
+                                              index_component=i.index_component)
                                   for j in i.boundary._args]
 
                 else:

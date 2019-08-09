@@ -471,7 +471,6 @@ class LogicalExpr(CalculusFunction):
 
             elif dim == 3:
                 lgrad_arg = LogicalGrad_3d(arg)
-
                 
             grad_arg = Covariant(M, lgrad_arg)
             

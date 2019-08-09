@@ -82,7 +82,7 @@ def test_tensorize_2d_2():
 
     # ...
 #    a = BilinearForm((u,v), dot(u,v))
-    a = BilinearForm((u,v), rot(u)*rot(v) + div(u)*div(v))
+    a = BilinearForm((u,v), curl(u)*curl(v) + div(u)*div(v))
 
     expr = TensorExpr(a)
     print(expr)
@@ -132,7 +132,7 @@ def test_tensorize_2d_2_mapping():
 
     c = Constant('c')
 
-    a = BilinearForm((u,v), c * div(v) * div(u) + rot(v) * rot(u))
+    a = BilinearForm((u,v), c * div(v) * div(u) + curl(v) * curl(u))
     expr = TensorExpr(a, mapping=M)
     print(expr)
 

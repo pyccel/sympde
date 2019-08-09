@@ -17,7 +17,6 @@ from sympy import Integer, Float
 from sympy.core.expr import AtomicExpr
 from sympy.physics.quantum import TensorProduct
 from sympy.series.series import series
-from sympy.core.compatibility import is_sequence
 
 from sympde.core.basic import _coeffs_registery
 from sympde.core.basic import CalculusFunction
@@ -34,7 +33,7 @@ from sympde.calculus import Laplace
 from sympde.calculus.core import _generic_ops
 
 from sympde.topology import BasicDomain, Domain, MappedDomain, Union, Interval
-from sympde.topology import BoundaryVector, NormalVector, TangentVector, Boundary
+from sympde.topology import BoundaryVector, NormalVector, TangentVector, Boundary, Connectivity
 from sympde.topology.derivatives import _partial_derivatives
 from sympde.topology.derivatives import _logical_partial_derivatives
 from sympde.topology.derivatives import partial_derivative_as_symbol
@@ -46,6 +45,7 @@ from sympde.topology.derivatives import dx1, dx2, dx3
 from sympde.topology.derivatives import (Grad_1d, Div_1d,
                                          Grad_2d, Curl_2d, Rot_2d, Div_2d,
                                          Grad_3d, Curl_3d, Div_3d)
+
 from sympde.topology.derivatives import Bracket_2d
 from sympde.topology.derivatives import Laplace_1d, Laplace_2d, Laplace_3d
 from sympde.topology.derivatives import Hessian_1d, Hessian_2d, Hessian_3d
@@ -74,8 +74,11 @@ from .equation import Equation
 from .expr import BasicIntegral, DomainIntegral, BoundaryIntegral
 from .expr import Functional
 from .expr import _get_domain
-
+    
 #==============================================================================
+def is_sequence(a):
+    return isinstance(a, (list,tuple,Tuple))
+
 def _get_size_and_starts(ls):
     n = 0
     d_indices = {}
@@ -261,6 +264,7 @@ class TerminalExpr(CalculusFunction):
         # (Try to) sympify args first
 
         if options.pop('evaluate', True):
+        
             args = cls._annotate(*args)
             r = cls.eval(*args, **options)
 
@@ -309,17 +313,18 @@ class TerminalExpr(CalculusFunction):
             raise ValueError('Expecting one argument')
 
         expr = _args[0]
-
         n_rows = kwargs.pop('n_rows', None)
         n_cols = kwargs.pop('n_cols', None)
         dim    = kwargs.pop('dim', None)
-        
+
         if isinstance(expr, Add):
             args = [cls.eval(a, dim=dim) for a in expr.args]
             return Add(*args)
 
         elif isinstance(expr, Mul):
             args = [cls.eval(a, dim=dim) for a in expr.args]
+            if args[0] == -1 and isinstance(args[1],Tuple):
+                return Tuple(*[-a for a in args[1]])
             return Mul(*args)
         elif isinstance(expr, (ScalarTestFunction, VectorTestFunction, Element)):
             return expr
@@ -391,24 +396,26 @@ class TerminalExpr(CalculusFunction):
             d_new = {}
             for domain, newexpr in d_expr.items():
 
-                M, test_indices, trial_indices = _init_matrix(expr)
-                M = _to_matrix_form(newexpr, M, test_indices, trial_indices)
+                if newexpr != 0:
+                    M, test_indices, trial_indices = _init_matrix(expr)
+                    M = _to_matrix_form(newexpr, M, test_indices, trial_indices)
 
-                n,m = M.shape
-                if n*m == 1: M = M[0,0]
+                    n,m = M.shape
+                    if n*m == 1: M = M[0,0]
 
-                d_new[domain] = M
+                    d_new[domain] = M
             # ...
 
             # ...
             ls = []
             for domain, newexpr in d_new.items():
-                if isinstance(domain, Boundary):
+                if isinstance(domain, (Boundary, Connectivity)):
                     ls += [BoundaryExpression(domain, newexpr)]
 
                 elif isinstance(domain, BasicDomain):
                     ls += [DomainExpression(domain, newexpr)]
                 else:
+                    print(type(domain))
                     raise TypeError('')
             # ...
             return ls
@@ -440,15 +447,16 @@ class TerminalExpr(CalculusFunction):
                 normal_vector_name = 'n'
                 n = NormalVector(normal_vector_name)
                 M = cls.eval(expr.expr, dim=dim)
+                
                 if dim == 1:
                     return M
                 else:
                     if isinstance(M, (Add, Mul)):
                         ls = M.atoms(Tuple)
+                        
                         for i in ls:
                             M = M.subs(i, Matrix(i))
                         M = simplify(M)
-
                     e = 0
                     for i in range(0, dim):
                         e += M[i] * n[i]
@@ -532,7 +540,6 @@ def _tensorize_atomic_expr(expr, d_atoms):
         return Mul(*atoms)
 
     else:
-        print(expr)
         raise TypeError('{}'.format(type(expr)))
 
 #==============================================================================

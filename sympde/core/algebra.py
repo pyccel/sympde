@@ -240,7 +240,6 @@ class Cross_2d(CrossBasic):
 
         u = _args[0]
         v = _args[1]
-
         return u[0]*v[1] - u[1]*v[0]
 
 class Cross_3d(CrossBasic):
