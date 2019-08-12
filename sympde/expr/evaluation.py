@@ -325,7 +325,10 @@ class TerminalExpr(CalculusFunction):
             args = [cls.eval(a, dim=dim) for a in expr.args]
             if args[0] == -1 and isinstance(args[1],Tuple):
                 return Tuple(*[-a for a in args[1]])
-            return Mul(*args)
+            #print(cls)
+            #print(args,'###')
+            #print(expr)
+            return Mul(*args).simplify()
         elif isinstance(expr, (ScalarTestFunction, VectorTestFunction, Element)):
             return expr
 
@@ -415,7 +418,6 @@ class TerminalExpr(CalculusFunction):
                 elif isinstance(domain, BasicDomain):
                     ls += [DomainExpression(domain, newexpr)]
                 else:
-                    print(type(domain))
                     raise TypeError('')
             # ...
             return ls

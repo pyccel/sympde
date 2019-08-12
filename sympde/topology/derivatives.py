@@ -31,6 +31,7 @@ from sympy.matrices.dense import MutableDenseMatrix
 from sympy import Mul, Add, Pow
 from sympy import postorder_traversal
 from sympy import preorder_traversal
+from sympy import Matrix
 
 from sympy.core.expr import Expr
 from sympy.core.containers import Tuple
@@ -664,7 +665,7 @@ class Grad_2d(GradBasic):
             v = Matrix(lines)
 
         else:
-            v = Tuple(dx(u), dy(u))
+            v = Matrix((dx(u), dy(u)))
 
         return v
 
@@ -689,7 +690,7 @@ class Grad_3d(GradBasic):
             v = Matrix(lines)
 
         else:
-            v = Tuple(dx(u), dy(u), dz(u))
+            v = Matrix((dx(u), dy(u), dz(u)))
 
         return v
 # ...
@@ -745,9 +746,9 @@ class Curl_3d(CurlBasic):
 
         u = _args[0]
 
-        return Tuple(dy(u[2]) - dz(u[1]),
+        return Matrix((dy(u[2]) - dz(u[1]),
                      dz(u[0]) - dx(u[2]),
-                     dx(u[1]) - dy(u[0]))
+                     dx(u[1]) - dy(u[0])))
 # ...
 
 # ...
@@ -785,7 +786,7 @@ class Rot_2d(CalculusFunction):
 
         u = _args[0]
 
-        return Tuple(dy(u),-dx(u))
+        return Matrix((dy(u),-dx(u)))
 # ...
 
 # ...
