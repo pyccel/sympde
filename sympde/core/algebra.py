@@ -52,7 +52,6 @@ class LinearOperator(CalculusFunction):
     def __new__(cls, *args, **options):
         # (Try to) sympify args first
         if options.pop('evaluate', True):
-            print(cls, args)
             r = cls.eval(*args)
         else:
             r = None
