@@ -1047,7 +1047,6 @@ def partial_derivative_as_symbol(expr, name=None, dim=None):
     var = get_atom_derivatives(expr)
 
     if not isinstance(var, (Symbol, Indexed)):
-        print(type(var))
         raise TypeError('Expecting a Symbol, Indexed')
 
     code = ''
@@ -1083,7 +1082,6 @@ def partial_derivative_as_str(expr):
     var = get_atom_derivatives(expr)
 
     if not isinstance(var, (Symbol, Indexed)):
-        print(type(var))
         raise TypeError('Expecting a Symbol, Indexed')
 
     code = ''
