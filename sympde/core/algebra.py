@@ -150,7 +150,7 @@ class Dot_2d(DotBasic):
 
         if isinstance(u, (Matrix, ImmutableDenseMatrix)):
             if isinstance(v, (Matrix, ImmutableDenseMatrix)):
-                raise NotImplementedError('TODO')
+                return u[0]*v[0] + u[1]*v[1]
 
             else:
                 return Tuple(u[0,0]*v[0] + u[0,1]*v[1], u[1,0]*v[0] + u[1,1]*v[1])
@@ -188,7 +188,7 @@ class Dot_3d(DotBasic):
 
         if isinstance(u, (Matrix, ImmutableDenseMatrix)):
             if isinstance(v, (Matrix, ImmutableDenseMatrix)):
-                raise NotImplementedError('TODO')
+                return u[0]*v[0] + u[1]*v[1] + u[2]*v[2]
 
             else:
                 return Tuple(u[0,0]*v[0] + u[0,1]*v[1] + u[0,2]*v[2],

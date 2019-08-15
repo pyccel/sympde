@@ -29,7 +29,7 @@ from sympde.core.algebra import (Dot_1d,
 from sympde.core.utils import random_string
 
 from sympde.calculus import Dot, Inner, Cross
-from sympde.calculus import Grad, Rot, Curl, Div
+from sympde.calculus import Grad, Rot, Curl, Div, Hessian
 from sympde.calculus import Bracket
 from sympde.calculus import Laplace
 from sympde.calculus.core import _generic_ops
@@ -546,8 +546,8 @@ class Norm(Functional):
 #        # ...
 
         # ...
-        if not(kind in ['l2', 'h1']):
-            raise ValueError('> Only L2, H1 norms are available')
+        if not(kind in ['l2', 'h1', 'h2']):
+            raise ValueError('> Only L2, H1, H2 norms are available')
         # ...
 
         # ...
@@ -583,6 +583,15 @@ class Norm(Functional):
 
                 v = Tuple(*expr[:,0])
                 expr = Inner(Grad(v), Grad(v))
+                
+        elif kind == 'h2'and eval :
+            exponent = 2
+
+            if not is_vector:
+                expr = Dot(Hessian(expr), Hessian(expr))
+                
+            else:
+                raise NotImplementedError('TODO')
         # ...
 
         obj = Functional.__new__(cls, expr, domain, eval=eval)
