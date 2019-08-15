@@ -56,7 +56,6 @@ from sympde.topology.space import IndexedTestTrial
 from sympde.topology.space import Unknown, VectorUnknown
 from sympde.topology.space import Trace
 from sympde.topology.space import ScalarField, VectorField, IndexedVectorField
-from sympde.topology.space import Element
 from sympde.topology.measure import CanonicalMeasure
 from sympde.topology.measure import CartesianMeasure
 from sympde.topology.measure import Measure
@@ -117,10 +116,10 @@ class BilinearExpr(BasicExpr):
 
         # ...
         if not isinstance(arguments, (tuple, list, Tuple)):
-            raise TypeError('(test, trial) must be a tuple, list or Tuple')
+            raise TypeError('(trial, test) must be a tuple, list or Tuple')
 
         if not(len(arguments) == 2):
-            raise ValueError('Expecting a couple (test, trial)')
+            raise ValueError('Expecting a couple (trial, test)')
         # ...
 
         # ...
@@ -266,7 +265,6 @@ def _get_domain(a):
     atoms += list(expr.atoms(VectorTestFunction))
     atoms += list(expr.atoms(ScalarField))
     atoms += list(expr.atoms(VectorField))
-    atoms += list(expr.atoms(Element))
 
     if len(atoms) == 0:
         raise ValueError('could not find any test function or field')
@@ -293,7 +291,7 @@ class Functional(BasicForm):
         obj = Basic.__new__(cls, expr, domain)
 
         # compute dim from fields if available
-        ls = list(expr.atoms((ScalarField, VectorField, Element)))
+        ls = list(expr.atoms((ScalarField, VectorField)))
         if ls:
             F = ls[0]
             space = F.space
@@ -357,7 +355,6 @@ class LinearForm(BasicForm):
         domain = _get_domain(expr)
         obj._domain = domain
         # ...
-
         return obj
 
     @property
@@ -608,26 +605,31 @@ class Norm(Functional):
 def linearize(form, fields, trials=None):
     """linearize a LinearForm around the fields."""
     # ...
-    if not isinstance(form, (LinearExpr, LinearForm)):
-        raise TypeError('> Expecting a LinearExpr or LinearForm')
+    #TODO add LinearForm
+    if not isinstance(form, (LinearForm, LinearExpr)):
+        raise TypeError('> Expecting a LinearForm')
 
     if not isinstance(fields, (list, tuple, Tuple)):
         fields = [fields]
+        
+    fields = [f.space.field(str(f.name)) for f in fields]
+    form   = form.annotate()
 
     for f in fields:
-        if not isinstance(f, (ScalarField, VectorField, Element)):
+        
+        if not isinstance(f, (ScalarField, VectorField)):
             raise TypeError('{} is not ScalarField/VectorField'.format(f))
 
     if not(trials is None):
         if not isinstance(trials, (list, tuple, Tuple)):
             trials = [trials]
 
-        assert( all([isinstance(i, (str, ScalarTestFunction, VectorTestFunction, Element)) for i in trials]) )
+        assert( all([isinstance(i, (str, ScalarTestFunction, VectorTestFunction)) for i in trials]) )
         assert( len(fields) == len(trials) )
 
         newtrials = []
         for i in trials:
-            if isinstance(i, (ScalarTestFunction, VectorTestFunction, Element)):
+            if isinstance(i, (ScalarTestFunction, VectorTestFunction)):
                 newtrials += [i.name]
 
             else:
@@ -664,12 +666,9 @@ def linearize(form, fields, trials=None):
 
         elif isinstance(x, VectorField):
             trial  = VectorTestFunction(x.space, name=name)
-            
-        elif isinstance(x, Element):
-            trial  = Element(x.space, name=name)
 
         else:
-            raise TypeError('Only ScalarTestFunction , VectorTestFunction and Element are available')
+            raise TypeError('Only ScalarTestFunction , VectorTestFunction  are available')
 
         newargs         += [x + eps*trial]
         trial_functions += [trial]
@@ -685,6 +684,7 @@ def linearize(form, fields, trials=None):
 
     e = newexpr.series(eps, 0, 2)
     d = collect(e, eps, evaluate=False)
+    print(e,eps,type(e),type(eps),d)
     expr = d[eps]
 
 #    print('> linearize = ', expr)

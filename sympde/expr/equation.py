@@ -8,7 +8,6 @@ from sympde.topology.basic import Boundary, Union
 from sympde.topology.space  import VectorFunctionSpace, ScalarFunctionSpace
 from sympde.topology.space import ScalarTestFunction
 from sympde.topology.space import VectorTestFunction, IndexedTestTrial
-from sympde.topology.space import Element, IndexedElement
 from sympde.topology import Boundary, NormalVector, TangentVector
 from sympde.topology import Trace, trace_0, trace_1
 from sympde.calculus import grad, dot
@@ -44,12 +43,12 @@ class EssentialBC(BasicBoundaryCondition):
         # ...
 
         # ...
-        indexed = list(lhs.atoms(IndexedTestTrial, IndexedElement))
+        indexed = list(lhs.atoms(IndexedTestTrial))
 
         u  = list(lhs.atoms(ScalarTestFunction))
 
         if not indexed:
-            u += list(lhs.atoms(VectorTestFunction, Element))
+            u += list(lhs.atoms(VectorTestFunction))
 
         else:
             u += indexed
@@ -89,12 +88,12 @@ class EssentialBC(BasicBoundaryCondition):
         # ...
         if lhs in order_0_expr:
             order = 0
-            if isinstance(u, (IndexedTestTrial,IndexedElement)):
+            if isinstance(u, (IndexedTestTrial)):
                 variable = u.base
                 index_component = list(u.indices)
 
-            elif isinstance(u, VectorTestFunction) and not normal_component or \
-                 isinstance(u, Element) and isinstance(u.space, VectorFunctionSpace)\
+            elif isinstance(u, VectorTestFunction) and not normal_component \
+                 and isinstance(u.space, VectorFunctionSpace)\
                  and not normal_component:
                 variable = u
                 index_component = list(range(u.ldim))
@@ -172,8 +171,8 @@ class EssentialBC(BasicBoundaryCondition):
 class Mean(BasicConstraint):
 
     def __new__(cls, lhs, rhs):
-        assert isinstance(lhs,  (ScalarTestFunction, VectorTestFunction, Element))
-        assert not isinstance(rhs, (ScalarTestFunction, VectorTestFunction, Element))
+        assert isinstance(lhs,  (ScalarTestFunction, VectorTestFunction))
+        assert not isinstance(rhs, (ScalarTestFunction, VectorTestFunction))
 
         return Basic.__new__(cls, lhs, rhs)
 
@@ -202,11 +201,11 @@ class Equation(Basic):
         # ...
 
         # ...
-        _is_test_function = lambda u: isinstance(u, (ScalarTestFunction, VectorTestFunction, Element))
+        _is_test_function = lambda u: isinstance(u, (ScalarTestFunction, VectorTestFunction))
         # ...
 
         # ...
-        if isinstance(tests, (ScalarTestFunction, VectorTestFunction,Element)):
+        if isinstance(tests, (ScalarTestFunction, VectorTestFunction)):
             tests = [tests]
 
         else:
@@ -217,7 +216,7 @@ class Equation(Basic):
         # ...
 
         # ...
-        if isinstance(trials, (ScalarTestFunction, VectorTestFunction, Element)):
+        if isinstance(trials, (ScalarTestFunction, VectorTestFunction)):
             trials = [trials]
 
         else:

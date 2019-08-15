@@ -19,8 +19,8 @@ from .datatype import RegularityType, dtype_regularity_registry
 def element_of(space, name):
     assert isinstance(space, BasicFunctionSpace)
     if isinstance(name, (list,tuple,Tuple)):
-        return [Element(space,nm) for nm in name]
-    return Element(space, name)
+        return [space.element(nm) for nm in name]
+    return space.element(name)
 
 #==============================================================================
 class BasicFunctionSpace(Basic):
@@ -503,99 +503,6 @@ def Field(space, name=None):
     else:
         raise TypeError('Wrong space type. given {}'.format(type(space)))
 
-
-class Element(Symbol):
-    """
-    Represents an element of a fem space.
-
-    Examples
-
-    >>> from sympde.codegen.core import SplineFemSpace
-    >>> from sympde.codegen.core import ScalarTestFunction
-    >>> V = SplineFemSpace('V')
-    >>> phi = Element(V, 'phi')
-    """
-    _space = None
-    is_commutative = True
-    def __new__(cls, space, name=None):
-        obj = Symbol.__new__(cls, name)
-        obj._space = space
-        obj._iterable = False
-        return obj
-
-    @property
-    def space(self):
-        return self._space
-
-    @property
-    def ldim(self):
-        return self.space.ldim
-        
-    @property
-    def shape(self):
-        # we return a list to make it compatible with IndexedBase sympy object
-        return [self.space.shape]
-
-
-    def duplicate(self, name):
-        return Element(self.space, name)
-        
-    def __getitem__(self, *args):
-        if self.shape and len(self.shape) != len(args):
-            raise IndexException("Rank mismatch.")
-
-        if not(len(args) == 1):
-            raise ValueError('expecting exactly one argument')
-
-        args = list(args)
-        for i in range(len(args)):
-            if isinstance(args[i], int):
-                args[i] = Integer(args[i])
-
-        assumptions ={}
-        obj = IndexedElement(self, *args)
-        return obj
-
-    def _sympystr(self, printer):
-        sstr = printer.doprint
-        return sstr(self.name)
-    
-class IndexedElement(Indexed):
-    """Represents a mathematical object with indices.
-
-    """
-    is_commutative = True
-    is_Indexed = True
-    is_symbol = True
-    is_Atom = True
-
-    def __new__(cls, base, *args, **kw_args):
-        if isinstance(base, (VectorTestFunction, VectorField)):
-            # this is a hack when sympy do the substitution 
-            # we return the right object
-            return base.__getitem__(*args)
-            
-        assert isinstance(base, Element)
-
-        if not args:
-            raise IndexException("Indexed needs at least one index.")
-
-        return Expr.__new__(cls, base, *args, **kw_args)
-
-    # free_symbols is redefined otherwise an expression u[0].free_symbols will
-    # give the error:  AttributeError: 'int' object has no attribute 'free_symbols'
-    @property
-    def free_symbols(self):
-        base_free_symbols = self.base.free_symbols
-        symbolic_indices = [i for i in self.indices if isinstance(i, Basic)]
-        if len(symbolic_indices) > 0:
-            raise ValueError('symbolic indices not yet available')
-
-        return base_free_symbols
-
-    @property
-    def ldim(self):
-        return self.base.space.ldim
 #==============================================================================
 # TODO to be removed
 class Unknown(ScalarTestFunction):
