@@ -11,8 +11,24 @@ An example of use can be found in spl_ or symgp_.
 .. _symgp: https://github.com/pyccel/symgp
 .. _fenics: https://fenicsproject.org/
 
-Installation
-************
+Install
+*******
+
+From PyPi
+^^^^^^^^^
+
+Simply run, for a local installation::
+
+  pip3 install --user sympde 
+
+or::
+
+  pip3 install sympde 
+
+for a global installation.
+
+From sources
+^^^^^^^^^^^^
 
 * **Standard mode**::
 
