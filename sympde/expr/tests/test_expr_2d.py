@@ -782,54 +782,79 @@ def test_terminal_expr_bilinear_2d_2():
     print('')
     # ...
 
-    # TODO
-#    # ...
-#    a = BilinearForm((u,v), u*v + dot(grad(u),grad(v)) + v*trace_1(grad(u), B1) )
-#    print(TerminalExpr(a))
-#    print('')
-#    # ...
-#
-#    # ...
-#    a = BilinearForm(((u1,u2),(v1,v2)), u1*v1 + u2*v2)
-#    print(TerminalExpr(a))
-#    print('')
-#    # ...
-#
-#    # ...
-#    a1 = BilinearForm((u1,v1), u1*v1)
-#    a = BilinearForm((u,v), a1(u,v))
-#    print(TerminalExpr(a))
-#    print('')
-#    # ...
-#
-#    # ...
-#    a1 = BilinearForm((u1,v1), u1*v1)
-#    a2 = BilinearForm((u2,v2), dot(grad(u2), grad(v2)))
-#    a = BilinearForm((u,v), a1(u,v) + a2(u,v))
-#    print(TerminalExpr(a))
-#    print('')
-#    # ...
-#
-#    # ...
-#    a1 = BilinearForm((u1,v1), u1*v1)
-#    a2 = BilinearForm((u2,v2), dot(grad(u2), grad(v2)))
-#    a = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v))
-#    print(TerminalExpr(a))
-#    print('')
-#    # ...
-#
-#    # ...
-#    a1 = BilinearForm((u1,v1), u1*v1)
-#    a2 = BilinearForm((u2,v2), dot(grad(u2), grad(v2)))
-#    a3 = BilinearForm((u,v), v*trace_1(grad(u), B1))
-#    a = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v) + mu*a3(u,v))
-#    print(TerminalExpr(a))
-#    print('')
+ 
+def test_terminal_expr_bilinear_2d_3():
+
+    domain = Square()
+
+    V = ScalarFunctionSpace('V', domain)
+
+    B = domain.boundary
+
+    v = element_of(V, name='v')
+    u = element_of(V, name='u')
+    
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+
+    # nitsche
+    a0  = BilinearForm((u,v), dot(grad(v),grad(u)))
+
+    a_B = BilinearForm((u,v), -trace_0(u, B)*trace_1(grad(v), B) \
+                              -trace_0(v, B)*trace_1(grad(u), B) \
+                              +kappa*trace_0(u, B) * trace_0(v, B))
+
+    a = BilinearForm((u,v), a0(u,v) + a_B(u,v))
+    
+    print(TerminalExpr(a))
+    print('')
+
+    a = BilinearForm((u,v), u*v + dot(grad(u),grad(v)) + v*trace_1(grad(u), B) )
+    print(TerminalExpr(a))
+    print('')
+    # ...
+
+    # ...
+    a = BilinearForm((u,v), u*v)
+    print(TerminalExpr(a))
+    print('')
+    # ...
+
+    # ...
+    a1 = BilinearForm((u,v), u*v)
+    a = BilinearForm((u,v), a1(u,v))
+    print(TerminalExpr(a))
+    print('')
+    # ...
+
+    # ...
+    a1 = BilinearForm((u,v), u*v)
+    a2 = BilinearForm((u,v), dot(grad(u), grad(v)))
+    a = BilinearForm((u,v), a1(u,v) + a2(u,v))
+    print(TerminalExpr(a))
+    print('')
+    # ...
+
+    # ...
+    a1 = BilinearForm((u,v), u*v)
+    a2 = BilinearForm((u,v), dot(grad(u), grad(v)))
+    a = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v))
+    print(TerminalExpr(a))
+    print('')
+    # ...
+
+    # ...
+    a1 = BilinearForm((u,v), u*v)
+    a2 = BilinearForm((u,v), dot(grad(u), grad(v)))
+    a3 = BilinearForm((u,v), v*trace_1(grad(u), B))
+    a = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v) + mu*a3(u,v))
+    print(TerminalExpr(a))
+    print('')
 #    # ...
 
 #==============================================================================
 # stokes
-def test_terminal_expr_bilinear_2d_3():
+def test_terminal_expr_bilinear_2d_4():
 
     domain = Domain('Omega', dim=2)
 
@@ -849,7 +874,6 @@ def test_terminal_expr_bilinear_2d_3():
 
     print(TerminalExpr(A))
     print('')
-
 
 #==============================================================================
 def test_linearize_expr_2d_1():
@@ -1413,7 +1437,4 @@ def teardown_function():
     from sympy import cache
     cache.clear_cache()
 
-#test_bilinear_form_2d_3()
-#test_bilinear_form_2d_4()
-
-#test_linearize_form_2d_4()
+test_terminal_expr_bilinear_2d_3()
