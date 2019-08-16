@@ -289,7 +289,6 @@ class TerminalExpr(CalculusFunction):
             if not expr.is_annotated:
                 expr = expr.annotate()
         else:
-            raise
             if isinstance(expr, (Add, Mul)):
                 indexed_fields = list(expr.atoms(IndexedTestTrial))
                 new_indexed_fields = [VectorField(F.base.space,F.base.name) for F in indexed_fields]
@@ -298,6 +297,7 @@ class TerminalExpr(CalculusFunction):
                 fields = list(expr.atoms(ScalarTestFunction,VectorTestFunction).difference(indexed_fields))
                 new_fields = [f.space.field(f.name) for f in fields]
                 expr = expr.subs(zip(fields, new_fields))
+                
                 
         args[0] = expr
         return args
