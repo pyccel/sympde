@@ -5,4 +5,3 @@ from .domain       import *
 from .mapping      import *
 from .measure      import *
 from .space        import *
-from .settings     import *

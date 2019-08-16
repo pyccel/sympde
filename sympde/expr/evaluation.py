@@ -54,7 +54,6 @@ from sympde.topology.space import ScalarFunctionSpace
 from sympde.topology.space import ProductSpace
 from sympde.topology.space import ScalarTestFunction
 from sympde.topology.space import VectorTestFunction
-from sympde.topology.space import Element,IndexedElement
 from sympde.topology.space import IndexedTestTrial
 from sympde.topology.space import Unknown, VectorUnknown
 from sympde.topology.space import Trace
@@ -288,14 +287,15 @@ class TerminalExpr(CalculusFunction):
         expr = args[0]
         if isinstance(expr, BasicForm):
             if not expr.is_annotated:
-                expr = expr._annotate()
+                expr = expr.annotate()
         else:
+            raise
             if isinstance(expr, (Add, Mul)):
-                indexed_fields = list(expr.atoms(IndexedElement))
+                indexed_fields = list(expr.atoms(IndexedTestTrial))
                 new_indexed_fields = [VectorField(F.base.space,F.base.name) for F in indexed_fields]
                 new_indexed_fields = [new_F[F.indices[0]] for new_F,F in zip(new_indexed_fields, indexed_fields)]
                 expr = expr.subs(zip(indexed_fields, new_indexed_fields))
-                fields = list(expr.atoms(Element).difference(indexed_fields))
+                fields = list(expr.atoms(ScalarTestFunction,VectorTestFunction).difference(indexed_fields))
                 new_fields = [f.space.field(f.name) for f in fields]
                 expr = expr.subs(zip(fields, new_fields))
                 
@@ -331,7 +331,7 @@ class TerminalExpr(CalculusFunction):
                 o = o * arg
             return o
 
-        elif isinstance(expr, (ScalarTestFunction, VectorTestFunction, Element)):
+        elif isinstance(expr, (ScalarTestFunction, VectorTestFunction)):
             return expr
 
         elif isinstance(expr, BasicForm):
