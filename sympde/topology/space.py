@@ -5,13 +5,16 @@ from numpy import unique
 from sympy.core import Basic
 from sympy.tensor import Indexed, IndexedBase
 from sympy.core import Symbol
-from sympy.core import Expr
+from sympy.core import Expr,Mul, Add
 from sympy.core.expr import AtomicExpr
 from sympy.core.containers import Tuple
-from sympy import Integer
+from sympy import Integer, Float, expand
+from sympy import Function
+from sympy.core.numbers import Zero as sy_Zero
 
+from sympde.core.basic import _coeffs_registery, CalculusFunction
 from sympde.core.utils import random_string
-from .basic import BasicDomain
+from .basic import BasicDomain, Union
 from .datatype import SpaceType, dtype_space_registry
 from .datatype import RegularityType, dtype_regularity_registry
 
@@ -666,20 +669,22 @@ class IndexedVectorField(Indexed):
 
 #==============================================================================
 # TODO Expr or AtomicExpr?
-class Trace(Expr):
+class Trace(AtomicExpr):
     """
     Represents the trace over a boundary and a space function
 
     """
     is_commutative = True
-    def __new__(cls, expr, boundary, order=0):
+    def __new__(cls, expr, boundary, order=0, **options):
 #        # TODO these tests are not working for the moment for Grad(u)
 #        if not expr.atoms((ScalarTestFunction, VectorTestFunction, ScalarField)):
 #            raise TypeError('> Wrong type for expr')
 #
 #        if not(expr.space.domain is boundary.domain):
 #            raise ValueError('> Space and boundary domains must be the same')
-
+        evaluate = options.pop('evaluate',True)
+        if evaluate:
+            return cls.eval(expr, boundary, order)
         return Basic.__new__(cls, expr, boundary, order)
 
     @property
@@ -693,6 +698,42 @@ class Trace(Expr):
     @property
     def order(self):
         return self._args[2]
+        
+    @classmethod
+    def eval(cls, expr, boundary, order):
+
+        if not isinstance(expr, Tuple):
+            expr = expand(expr)
+
+        if not isinstance(expr, (Expr, Tuple)):
+            raise TypeError('only Expr are accepted')
+
+        if isinstance(expr, sy_Zero):
+            return sy_Zero
+
+        if isinstance(expr, Add):
+            args = [cls.eval(a, boundary, order) for a in expr.args]
+            return expr._new_rawargs(*args)
+            
+        if isinstance(expr, Mul):
+            args = expr.args
+            coeffs = [a for a in args if isinstance(a, _coeffs_registery)]
+            a      = Mul(*coeffs)
+            args   = [a for a in args if not(a in coeffs)]
+            
+            funcs  = [a for a in args if isinstance(a, Function) and not isinstance(a, CalculusFunction)]
+            a      = a*Mul(*funcs)
+            args   = [a for a in args if not(a in funcs)]
+            
+            b      = cls(Mul(*args), boundary, order, evaluate=False)
+           
+            return a*b
+                        
+        if isinstance(boundary, Union):
+            expr = [Integral.eval(expr, d, order) for d in boundary.args]
+            return Add(*expr)
+            
+        return cls(expr, boundary, order, evaluate=False)
 
 #==============================================================================
 # ... user friendly functions
