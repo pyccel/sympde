@@ -785,7 +785,7 @@ class Rot_2d(CalculusFunction):
 
         u = _args[0]
 
-        return Matrix((dy(u),-dx(u)))
+        return Matrix([[dy(u),-dx(u)]]).T
 # ...
 
 # ...
