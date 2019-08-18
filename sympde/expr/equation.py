@@ -3,6 +3,7 @@
 from sympy.core import Basic
 from sympy.core.containers import Tuple
 from sympy.core import Expr
+from sympy.parsing.sympy_parser import parse_expr
 
 from sympde.topology.basic import Boundary, Union
 from sympde.topology.space  import VectorFunctionSpace, ScalarFunctionSpace
@@ -35,8 +36,9 @@ class EssentialBC(BasicBoundaryCondition):
 
     def __new__(cls, lhs, rhs, boundary, position=None, index_component=None):
         # ...
-        if not( rhs == 0 ):
-            raise NotImplementedError('Only homogeneous case is available')
+        rhs = parse_expr(str(rhs))
+        if not isinstance(rhs, Expr):
+            raise ValueError('only sympy Expr are accepted')
         # ...
         # ...
         normal_component = False
@@ -172,7 +174,9 @@ class Mean(BasicConstraint):
 
     def __new__(cls, lhs, rhs):
         assert isinstance(lhs,  (ScalarTestFunction, VectorTestFunction))
-        assert not isinstance(rhs, (ScalarTestFunction, VectorTestFunction))
+        rhs = parse_expr(str(rhs))
+        if not isinstance(rhs, Expr):
+            raise ValueError('only sympy Expr are accepted')
 
         return Basic.__new__(cls, lhs, rhs)
 

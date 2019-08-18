@@ -29,7 +29,7 @@ from sympde.topology import Square
 from sympde.topology import ElementDomain
 from sympde.topology import Area
 
-from sympde.expr import BilinearForm, LinearForm
+from sympde.expr import BilinearForm, LinearForm, integral
 from sympde.expr import TerminalExpr
 
 from sympde.expr.errors import UnconsistentLhsError
@@ -55,29 +55,34 @@ def test_equation_2d_1():
     alpha = Constant('alpha')
     kappa = Constant('kappa', real=True)
     eps   = Constant('eps', real=True)
+    nn    = NormalVector('nn')
 
     B1 = Boundary(r'\Gamma_1', domain)
     B2 = Boundary(r'\Gamma_2', domain)
     B3 = Boundary(r'\Gamma_3', domain)
 
+    int_0 = lambda expr: integral(domain , expr)
+    int_1 = lambda expr: integral(B1, expr)
+    int_2 = lambda expr: integral(B2, expr)
+    
     # ... bilinear/linear forms
     expr = dot(grad(v), grad(u))
-    a1 = BilinearForm((v,u), expr)
+    a1 = BilinearForm((v,u), int_0(expr))
 
     expr = v*u
-    a2 = BilinearForm((v,u), expr)
+    a2 = BilinearForm((v,u),int_0(expr))
 
-    expr = v*trace_0(u, B1)
-    a_B1 = BilinearForm((v, u), expr)
+    expr = v*u
+    a_B1 = BilinearForm((v, u), int_1(expr))
 
     expr = x*y*v
-    l1 = LinearForm(v, expr)
+    l1 = LinearForm(v, int_0(expr))
 
     expr = cos(x+y)*v
-    l2 = LinearForm(v, expr)
+    l2 = LinearForm(v, int_0(expr))
 
-    expr = x*y*trace_0(v, B2)
-    l_B2 = LinearForm(v, expr)
+    expr = x*y*v
+    l_B2 = LinearForm(v, int_2(expr))
     # ...
 
 #    # ...
@@ -134,12 +139,14 @@ def test_equation_2d_1():
 
     # ... Poisson with Nitsch method
     g = cos(pi*x)*cos(pi*y)
-    a0 = BilinearForm((u,v), dot(grad(u),grad(v)))
-    a_B1 = BilinearForm((u,v), - kappa * u*trace_1(grad(v), B1)
-                               - v*trace_1(grad(u), B1)
-                               + trace_0(u, B1) * trace_0(v, B1) / eps)
+    a0 = BilinearForm((u,v), int_0(dot(grad(u),grad(v))))
+    a_B1 = BilinearForm((u,v), - int_1(kappa * u*dot(grad(v), nn)
+                               - v*dot(grad(u), nn)
+                               + u*v/eps))
+
+
     a = BilinearForm((u,v), a0(u,v) + a_B1(u,v))
-    l = LinearForm(v, g*v/eps - kappa * trace_1(v, B1) * g)
+    l = LinearForm(v, int_0(g*v/eps) - int_1(kappa*v*g))
     equation = Equation(a, l, tests=v, trials=u)
     # ...
 
@@ -177,15 +184,17 @@ def test_equation_2d_2():
     dt    = Constant('dt', real=True)
     alpha = Constant('alpha', real=True)
 
-    s  = BilinearForm((tau,sigma), dot(grad(tau), grad(sigma)))
-    m  = BilinearForm((tau,sigma), tau*sigma)
-    b1 = BilinearForm((tau,dw), bracket(pn, dw) * tau)
-    b2 = BilinearForm((tau,dp), bracket(dp, wn) * tau)
+    int_0 = lambda expr: integral(domain , expr)
+    
+    s  = BilinearForm((tau,sigma), int_0(dot(grad(tau), grad(sigma))))
+    m  = BilinearForm((tau,sigma), int_0(tau*sigma))
+    b1 = BilinearForm((tau,dw), int_0(bracket(pn, dw) * tau))
+    b2 = BilinearForm((tau,dp), int_0(bracket(dp, wn) * tau))
 
-    l1 = LinearForm(tau, bracket(pn, wn)*tau - 1./Re * dot(grad(tau), grad(wn)))
+    l1 = LinearForm(tau, int_0(bracket(pn, wn)*tau - 1./Re * dot(grad(tau), grad(wn))))
 
     expr =  m(tau,dw) - alpha*dt*b1(tau,dw) - dt*b2(tau,dp) - (alpha*dt/Re)*s(tau,dw)
-    a = BilinearForm(((tau, sigma),(dp,dw)), expr)
+    a = BilinearForm(((tau, sigma),(dp,dw)), int_0(expr))
 
     l = LinearForm((tau, sigma), dt*l1(tau))
 
@@ -209,13 +218,16 @@ def test_equation_2d_3():
     x,y = domain.coordinates
 
     B1 = Boundary(r'\Gamma_1', domain)
+    
+    int_0 = lambda expr: integral(domain , expr)
+    int_1 = lambda expr: integral(B1, expr)
 
     # ... bilinear/linear forms
-    a1 = BilinearForm((v,u), dot(grad(v), grad(u)))
-    a2 = BilinearForm((v,u), v*u)
+    a1 = BilinearForm((v,u), int_0(dot(grad(v), grad(u))))
+    a2 = BilinearForm((v,u), int_0(v*u))
 
-    l1 = LinearForm(v, x*y*v)
-    l2 = LinearForm(v, cos(x+y)*v)
+    l1 = LinearForm(v, int_0(x*y*v))
+    l2 = LinearForm(v, int_0(cos(x+y)*v))
     # ...
 
     # ...
@@ -239,12 +251,15 @@ def test_equation_2d_4():
     x,y = domain.coordinates
 
     B1 = Boundary(r'\Gamma_1', domain)
+    
+    int_0 = lambda expr: integral(domain , expr)
+    int_1 = lambda expr: integral(B1, expr)
 
     # ... bilinear/linear forms
-    a1 = BilinearForm((v,u), inner(grad(v), grad(u)))
+    a1 = BilinearForm((v,u), int_0(inner(grad(v), grad(u))))
 
     f = Tuple(x*y, sin(pi*x)*sin(pi*y))
-    l1 = LinearForm(v, dot(f,v))
+    l1 = LinearForm(v, int_0(dot(f,v)))
     # ...
 
     # ...
@@ -283,15 +298,17 @@ def test_equation_2d_5():
     u,v = [element_of(W, name=i) for i in ['u', 'v']]
     p,q = [element_of(V, name=i) for i in ['p', 'q']]
 
-    a0 = BilinearForm((v,u), inner(grad(v), grad(u)))
+    int_0 = lambda expr: integral(domain , expr)
+    
+    a0 = BilinearForm((v,u), int_0(inner(grad(v), grad(u))))
     print('     a0 done.')
-    a1 = BilinearForm((q,p), p*q)
+    a1 = BilinearForm((q,p), int_0(p*q))
     print('     a1 done.')
     a  = BilinearForm(((v,q),(u,p)), a0(v,u) + a1(q,p))
     print('     a  done.')
 
-    l0 = LinearForm(v, dot(f0, v))
-    l1 = LinearForm(q, f1*q)
+    l0 = LinearForm(v, int_0(dot(f0, v)))
+    l1 = LinearForm(q, int_0(f1*q))
     l  = LinearForm((v,q), l0(v) + l1(q))
 
     print('****************************')
@@ -333,37 +350,39 @@ def test_equation_2d_6():
 
     u,v = [element_of(V, name=i) for i in ['u', 'v']]
 
+    int_0 = lambda expr: integral(domain , expr)
+    
     # ...
     expr = kappa * dot(grad(u), grad(v)) + dot(b, grad(u)) * v
-    a = BilinearForm((v,u), expr)
+    a = BilinearForm((v,u), int_0(expr))
     # ...
     # ...
     expr = f * v
-    l0 = LinearForm(v, expr)
+    l0 = LinearForm(v, int_0(expr))
     # ...
 
     # ...
     expr = (- kappa * laplace(u) + dot(b, grad(u))) * dot(b, grad(v))
-    s1 = BilinearForm((v,u), expr)
+    s1 = BilinearForm((v,u), int_0(expr))
 
     expr = - f * dot(b, grad(v))
-    l1 = LinearForm(v, expr)
+    l1 = LinearForm(v, int_0(expr))
     # ...
 
     # ...
     expr = (- kappa * laplace(u) + dot(b, grad(u))) * ( dot(b, grad(v)) - kappa * laplace(v))
-    s2 = BilinearForm((v,u), expr)
+    s2 = BilinearForm((v,u), int_0(expr))
 
     expr = - f * ( dot(b, grad(v)) - kappa * laplace(v))
-    l2 = LinearForm(v, expr)
+    l2 = LinearForm(v, int_0(expr))
     # ...
 
     # ...
     expr = (- kappa * laplace(u) + dot(b, grad(u))) * ( dot(b, grad(v)) + kappa * laplace(v))
-    s3 = BilinearForm((v,u), expr)
+    s3 = BilinearForm((v,u), int_0(expr))
 
     expr = - f * ( dot(b, grad(v)) + kappa * laplace(v))
-    l3 = LinearForm(v, expr)
+    l3 = LinearForm(v, int_0(expr))
     # ...
 
     # ...

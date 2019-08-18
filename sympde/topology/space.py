@@ -671,6 +671,7 @@ class Trace(Expr):
     Represents the trace over a boundary and a space function
 
     """
+    is_commutative = True
     def __new__(cls, expr, boundary, order=0):
 #        # TODO these tests are not working for the moment for Grad(u)
 #        if not expr.atoms((ScalarTestFunction, VectorTestFunction, ScalarField)):
