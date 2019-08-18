@@ -95,8 +95,9 @@ class Union(BasicDomain):
 
         dim = args[0].dim
         dims = [a.dim for a in args[1:]]
-        if not all( [d == dim for d in dims]):
-            raise ValueError('arguments must have the same dimension')
+        #TODO
+     #   if not all( [d == dim for d in dims]):
+     #       raise ValueError('arguments must have the same dimension')
 
         # sort domains by name
         args = sorted(args, key=lambda x: x.name)

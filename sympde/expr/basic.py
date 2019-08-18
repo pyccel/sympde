@@ -163,9 +163,9 @@ class BasicExpr(Expr):
     # TODO use .atoms
     @property
     def constants(self):
-        ls = [a for a in self.expr.free_symbols if isinstance(a, Constant)]
+        ls = self.expr.atoms(Constant)
         # no redanduncy
-        return list(set(ls))
+        return list(ls)
 
     def annotate(self):
     
@@ -242,9 +242,9 @@ class BasicForm(Expr):
     # TODO use .atoms
     @property
     def constants(self):
-        ls = [a for a in self.expr.free_symbols if isinstance(a, Constant)]
+        ls = self.expr.atoms(Constant)
         # no redanduncy
-        return list(set(ls))
+        return list(ls)
 
     @property
     def domain(self):
