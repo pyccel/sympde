@@ -70,7 +70,7 @@ from .basic  import BasicExpr, BasicForm
 from .expr   import LinearExpr, BilinearExpr
 from .expr   import LinearForm, BilinearForm, Norm
 from .equation import Equation
-from .expr import BasicIntegral, DomainIntegral, BoundaryIntegral
+from .expr import DomainIntegral, BoundaryIntegral
 from .expr import Functional
 from .expr import _get_domain
     
@@ -424,9 +424,9 @@ class TerminalExpr(CalculusFunction):
             # ...
             return ls
 
-        elif isinstance(expr, BasicIntegral):
+        elif isinstance(expr, (DomainIntegral,BoundaryIntegral)):
             if dim is None:
-                domain = _get_domain(expr)
+                domain = expr.domain
                 dim = domain.dim
 
             return cls.eval(expr._args[0], dim=dim)

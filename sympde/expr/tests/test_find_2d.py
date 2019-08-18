@@ -28,7 +28,7 @@ from sympde.topology import Square
 from sympde.topology import ElementDomain
 from sympde.topology import Area
 
-from sympde.expr import BilinearForm, LinearForm
+from sympde.expr import BilinearForm, LinearForm,integral
 from sympde.expr import TerminalExpr
 from sympde.expr import find
 
@@ -59,25 +59,28 @@ def test_find_2d_1():
     B1 = Boundary(r'\Gamma_1', domain)
     B2 = Boundary(r'\Gamma_2', domain)
     B3 = Boundary(r'\Gamma_3', domain)
-
+    
+    int_0 = lambda expr: integral(domain , expr)
+    int_1 = lambda expr: integral(B1, expr)
+    int_2 = lambda expr: integral(B2, expr)
     # ... bilinear/linear forms
     expr = dot(grad(v), grad(u))
-    a1 = BilinearForm((v,u), expr)
+    a1 = BilinearForm((v,u), int_0(expr))
 
     expr = v*u
-    a2 = BilinearForm((v,u), expr)
+    a2 = BilinearForm((v,u), int_0(expr))
 
-    expr = v*trace_0(u, B1)
-    a_B1 = BilinearForm((v, u), expr)
+    expr = v*u
+    a_B1 = BilinearForm((v, u), int_1(expr))
 
     expr = x*y*v
-    l1 = LinearForm(v, expr)
+    l1 = LinearForm(v, int_0(expr))
 
     expr = cos(x+y)*v
-    l2 = LinearForm(v, expr)
+    l2 = LinearForm(v, int_0(expr))
 
-    expr = x*y*trace_0(v, B2)
-    l_B2 = LinearForm(v, expr)
+    expr = x*y*v
+    l_B2 = LinearForm(v, int_1(expr))
     # ...
 
     # ...

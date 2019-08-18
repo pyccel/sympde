@@ -28,7 +28,7 @@ from sympde.topology import Square
 from sympde.topology import ElementDomain
 from sympde.topology import Area
 
-from sympde.expr import BilinearForm, LinearForm
+from sympde.expr import BilinearForm, LinearForm,integral
 from sympde.expr import TerminalExpr
 
 from sympde.expr.errors import UnconsistentLhsError
@@ -53,9 +53,11 @@ def test_newton_2d_1():
     Un = ScalarField(V, name='Un')
 
     v = ScalarTestFunction(V, name='v')
+    
+    int_0 = lambda expr: integral(domain , expr)
 
     f  = -4.*exp(-Un)
-    l = LinearForm(v, dot(grad(v), grad(Un)) - f*v )
+    l = LinearForm(v, int_0(dot(grad(v), grad(Un)) - f*v) )
 
     eq = NewtonIteration(l, Un, trials='u')
     # ...

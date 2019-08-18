@@ -32,7 +32,7 @@ from sympde.topology import ElementDomain
 from sympde.topology import Area
 
 from sympde.expr.expr import LinearExpr, BilinearExpr
-from sympde.expr.expr import LinearForm, BilinearForm
+from sympde.expr.expr import LinearForm, BilinearForm, integral
 from sympde.expr.expr import DomainIntegral, BoundaryIntegral
 from sympde.expr.expr import Functional, Norm
 from sympde.expr.expr import linearize
@@ -53,10 +53,12 @@ def test_tensorize_2d_1():
     V = ScalarFunctionSpace('V', domain)
 
     u,v = [TestFunction(V, name=i) for i in ['u', 'v']]
+    
+    int_0 = lambda expr: integral(domain , expr)
 
     # ...
 #    a = BilinearForm((u,v), u*v)
-    a = BilinearForm((u,v), mu*u*v + dot(grad(u),grad(v)))
+    a = BilinearForm((u,v), int_0(mu*u*v + dot(grad(u),grad(v))))
 #    a = BilinearForm((u,v), dot(grad(u),grad(v)))
 #    a = BilinearForm((u,v), dx(u)*v)
 #    a = BilinearForm((u,v), laplace(u)*laplace(v))
@@ -80,9 +82,10 @@ def test_tensorize_2d_2():
 
     u,v = [TestFunction(V, name=i) for i in ['u', 'v']]
 
+    int_0 = lambda expr: integral(domain , expr)
     # ...
 #    a = BilinearForm((u,v), dot(u,v))
-    a = BilinearForm((u,v), curl(u)*curl(v) + div(u)*div(v))
+    a = BilinearForm((u,v), int_0(curl(u)*curl(v) + div(u)*div(v)))
 
     expr = TensorExpr(a)
     print(expr)
@@ -107,10 +110,11 @@ def test_tensorize_2d_1_mapping():
 
     u,v = [TestFunction(V, name=i) for i in ['u', 'v']]
 
+    int_0 = lambda expr: integral(domain , expr)
     # ...
 #    a = BilinearForm((u,v), u*v)
 #    a = BilinearForm((u,v), mu*u*v + dot(grad(u),grad(v)))
-    a = BilinearForm((u,v), dot(grad(u),grad(v)))
+    a = BilinearForm((u,v), int_0(dot(grad(u),grad(v))))
 #    a = BilinearForm((u,v), dx(u)*v)
 #    a = BilinearForm((u,v), laplace(u)*laplace(v))
 
@@ -132,7 +136,9 @@ def test_tensorize_2d_2_mapping():
 
     c = Constant('c')
 
-    a = BilinearForm((u,v), c * div(v) * div(u) + curl(v) * curl(u))
+    int_0 = lambda expr: integral(domain , expr)
+    
+    a = BilinearForm((u,v), int_0(c * div(v) * div(u) + curl(v) * curl(u)))
     expr = TensorExpr(a, mapping=M)
     print(expr)
 
@@ -149,7 +155,3 @@ def teardown_function():
     from sympy import cache
     cache.clear_cache()
 
-#test_tensorize_2d_1()
-#test_tensorize_2d_2()
-#test_tensorize_2d_1_mapping()
-#test_tensorize_2d_2_mapping()

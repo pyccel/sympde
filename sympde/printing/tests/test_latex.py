@@ -15,9 +15,8 @@ from sympde.topology import TestFunction
 from sympde.topology import Field
 from sympde.topology import Unknown
 from sympde.topology import Domain, Boundary, NormalVector, TangentVector
-from sympde.topology import Trace, trace_0, trace_1
 #from sympde.expr import tensorize
-from sympde.expr import BilinearForm, LinearForm#, Integral
+from sympde.expr import BilinearForm, LinearForm, integral
 from sympde.exterior import d, wedge, ip, jp, delta, hodge
 from sympde.exterior import DifferentialForm
 
@@ -39,14 +38,16 @@ def test_latex_1d():
 
     F = ScalarField(V, name='F')
 
+    int_0 = lambda expr: integral(domain , expr)
+    
     assert(latex(grad(v)) == r'\nabla{v}')
     assert(latex(dot(grad(v), grad(u))) == r'\nabla{u} \cdot \nabla{v}')
 
-    a = BilinearForm((v,u), dot(grad(v), grad(u)))
+    a = BilinearForm((v,u), int_0(dot(grad(v), grad(u))))
     print(latex(a))
 #    assert(latex(a) == r'\int_{0}^{1} \nabla{v} \cdot \nabla{u} dx')
 
-    b = LinearForm(v, sin(pi*x)*v)
+    b = LinearForm(v, int_0(sin(pi*x)*v))
     print(latex(b))
 #    assert(latex(b) == r'\int_{0}^{1} v \sin{\left (\pi x \right )} dx')
 
@@ -68,15 +69,17 @@ def test_latex_2d_1():
     u = ScalarTestFunction(V, name='u')
 
     F = ScalarField(V, name='F')
+    
+    int_0 = lambda expr: integral(domain , expr)
 
     assert(latex(grad(v)) == r'\nabla{v}')
     assert(latex(dot(grad(v), grad(u))) == r'\nabla{u} \cdot \nabla{v}')
 
-    a = BilinearForm((v,u), dot(grad(v), grad(u)))
+    a = BilinearForm((v,u), int_0(dot(grad(v), grad(u))))
     print(latex(a))
 #    assert(latex(a) == r'\int_{0}^{1}\int_{0}^{1} \nabla{v} \cdot \nabla{u} dxdy')
 
-    b = LinearForm(v, sin(pi*x)*cos(pi*y)*v)
+    b = LinearForm(v, int_0(sin(pi*x)*cos(pi*y)*v))
     print(latex(b))
 #    assert(latex(b) == r'\int_{0}^{1}\int_{0}^{1} v \sin{\left (\pi x \right )} \cos{\left (\pi y \right )} dxdy')
 
@@ -98,15 +101,16 @@ def test_latex_2d_2():
     u = VectorTestFunction(V, name='u')
 
     F = VectorField(V, name='F')
+    int_0 = lambda expr: integral(domain , expr)
 
     assert(latex(v) == r'\mathbf{v}')
     assert(latex(inner(grad(v), grad(u))) == r'\nabla{\mathbf{u}} : \nabla{\mathbf{v}}')
 
-    a = BilinearForm((v,u), inner(grad(v), grad(u)))
+    a = BilinearForm((v,u), int_0(inner(grad(v), grad(u))))
     print(latex(a))
 #    assert(latex(a) == r'\int_{0}^{1}\int_{0}^{1} \nabla{\mathbf{v}} : \nabla{\mathbf{u}} dxdy')
 
-    b = LinearForm(v, sin(pi*x)*cos(pi*y)*div(v))
+    b = LinearForm(v, int_0(sin(pi*x)*cos(pi*y)*div(v)))
     print(latex(b))
 #    assert(latex(b) == r'\int_{0}^{1}\int_{0}^{1} \nabla \cdot \mathbf{v} \sin{\left (\pi x \right )} \cos{\left (\pi y \right )} dxdy')
 
@@ -126,14 +130,16 @@ def test_latex_3d_1():
 
     F = ScalarField(V, name='F')
 
+    int_0 = lambda expr: integral(domain , expr)
+    
     assert(latex(grad(v)) == r'\nabla{v}')
     assert(latex(dot(grad(v), grad(u))) == r'\nabla{u} \cdot \nabla{v}')
 
-    a = BilinearForm((v,u), dot(grad(v), grad(u)))
+    a = BilinearForm((v,u), int_0(dot(grad(v), grad(u))))
     print(latex(a))
 #    assert(latex(a) == r'\int_{0}^{1}\int_{0}^{1}\int_{0}^{1} \nabla{v} \cdot \nabla{u} dxdydz')
 
-    b = LinearForm(v, sin(pi*x)*cos(pi*y)*cos(2*pi*z)*v)
+    b = LinearForm(v, int_0(sin(pi*x)*cos(pi*y)*cos(2*pi*z)*v))
     print(latex(b))
 #    assert(latex(b) == r'\int_{0}^{1}\int_{0}^{1}\int_{0}^{1} v \sin{\left (\pi x \right )} \cos{\left (\pi y \right )} \cos{\left (2 \pi z \right )} dxdydz')
 
@@ -156,14 +162,16 @@ def test_latex_3d_2():
 
     F = VectorField(V, name='F')
 
+    int_0 = lambda expr: integral(domain , expr)
+    
     assert(latex(v) == r'\mathbf{v}')
     assert(latex(inner(grad(v), grad(u))) == r'\nabla{\mathbf{u}} : \nabla{\mathbf{v}}')
 
-    a = BilinearForm((v,u), inner(grad(v), grad(u)))
+    a = BilinearForm((v,u), int_0(inner(grad(v), grad(u))))
     print(latex(a))
 #    assert(latex(a) == r'\int_{0}^{1}\int_{0}^{1}\int_{0}^{1} \nabla{\mathbf{v}} : \nabla{\mathbf{u}} dxdydz')
 
-    b = LinearForm(v, sin(pi*x)*cos(pi*y)*div(v))
+    b = LinearForm(v, int_0(sin(pi*x)*cos(pi*y)*div(v)))
     print(latex(b))
 #    assert(latex(b) == r'\int_{0}^{1}\int_{0}^{1}\int_{0}^{1} \nabla \cdot \mathbf{v} \sin{\left (\pi x \right )} \cos{\left (\pi y \right )} dxdydz')
 
@@ -186,12 +194,15 @@ def test_latex_2d_3():
     v = ScalarTestFunction(V, name='v')
     u = ScalarTestFunction(V, name='u')
 
+    int_0 = lambda expr: integral(domain , expr)
+    int_1 = lambda expr: integral(B1, expr)
+    
     # ...
     expr = dot(grad(v), grad(u))
-    a_0 = BilinearForm((v,u), expr)
+    a_0 = BilinearForm((v,u), int_0(expr))
 
-    expr = v*trace_0(u, B1)
-    a_bnd = BilinearForm((v, u), expr)
+    expr = v*u
+    a_bnd = BilinearForm((v, u), int_1(expr))
 
     expr = a_0(v,u) + a_bnd(v,u)
     a = BilinearForm((v,u), expr)
@@ -217,8 +228,10 @@ def test_latex_2d_4():
     p = ScalarTestFunction(W, name='p')
     q = ScalarTestFunction(W, name='q')
 
-    a = BilinearForm((v,u), inner(grad(v), grad(u)))
-    b = BilinearForm((v,p), div(v)*p)
+    int_0 = lambda expr: integral(domain , expr)
+
+    a = BilinearForm((v,u), int_0(inner(grad(v), grad(u))))
+    b = BilinearForm((v,p), int_0(div(v)*p))
     A = BilinearForm(((v,q),(u,p)), a(v,u) - b(v,p) + b(u,q))
     # ...
 
@@ -240,15 +253,17 @@ def test_latex_2d_5():
 
     F = VectorField(W1, 'F')
 
+    int_0 = lambda expr: integral(domain , expr)
+    
     # ...
-    l1 = LinearForm(w1, dot(w1, F))
+    l1 = LinearForm(w1, int_0(dot(w1, F)))
 
     print(latex(l1))
     print('')
     # ...
 
     # ...
-    l2 = LinearForm(w1, rot(w1)*rot(F) + div(w1)*div(F))
+    l2 = LinearForm(w1, int_0(rot(w1)*rot(F) + div(w1)*div(F)))
 
     print(latex(l2))
     print('')
@@ -302,5 +317,3 @@ def teardown_function():
     from sympy import cache
     cache.clear_cache()
 
-
-test_latex_ec_3d_1()

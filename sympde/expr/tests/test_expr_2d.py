@@ -33,7 +33,7 @@ from sympde.topology import Area
 
 from sympde.expr.expr import LinearExpr, BilinearExpr
 from sympde.expr.expr import LinearForm, BilinearForm
-from sympde.expr.expr import DomainIntegral, BoundaryIntegral
+from sympde.expr.expr import integral
 from sympde.expr.expr import Functional, Norm
 from sympde.expr.expr import linearize
 from sympde.expr.evaluation import TerminalExpr
@@ -95,8 +95,7 @@ def test_linear_expr_2d_2():
 
     u,u1,u2 = [element_of(V, name=i) for i in ['u', 'u1', 'u2']]
     v,v1,v2 = [element_of(V, name=i) for i in ['v', 'v1', 'v2']]
-
-    # ...
+    
     g = Tuple(x,y)
     l = LinearExpr(v, dot(g, v))
     print(l)
@@ -134,6 +133,7 @@ def test_bilinear_expr_2d_1():
     v,v1,v2 = [element_of(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
+
     a = BilinearExpr((u,v), u*v)
     print(a)
     print(a.expr)
@@ -163,7 +163,7 @@ def test_bilinear_expr_2d_2():
 
     u,u1,u2 = [element_of(V, name=i) for i in ['u', 'u1', 'u2']]
     v,v1,v2 = [element_of(V, name=i) for i in ['v', 'v1', 'v2']]
-
+    
     # ...
     a = BilinearExpr((u,v), dot(u,v))
     print(a)
@@ -191,56 +191,60 @@ def test_linear_form_2d_1():
 
     kappa = Constant('kappa', is_real=True)
     mu    = Constant('mu'   , is_real=True)
+    nn    = NormalVector('nn')
 
     V = ScalarFunctionSpace('V', domain)
+    W = VectorFunctionSpace('W', domain)
 
     u,u1,u2 = [element_of(V, name=i) for i in ['u', 'u1', 'u2']]
     v,v1,v2 = [element_of(V, name=i) for i in ['v', 'v1', 'v2']]
-
     # ...
-    l = LinearForm(v, x*y*v)
+    int_0 = lambda expr: integral(domain , expr)
+    int_1 = lambda expr: integral(B1, expr)
+
+    l = LinearForm(v, int_0(x*y*v))
 
     assert(l.domain == domain)
-    assert(l(v1) == DomainIntegral(x*y*v1))
+    assert(l(v1) == int_0(x*y*v1))
     # ...
 
     # ...
-    g = Tuple(x**2, y**2)
-    l = LinearForm(v, v*trace_1(g, B1))
+    g  = Tuple(x**2, y**2)
+    l  = LinearForm(v, int_1(v*dot(g, nn)))
+    print(l)
 
     assert(l.domain == B1)
-    assert(l(v1) == BoundaryIntegral(v1*trace_1(g, B1)))
+    assert(l(v1) == int_1(v1*trace_1(g, B1)))
     # ...
 
     # ...
     g = Tuple(x**2, y**2)
-    l = LinearForm(v, v*trace_1(g, B1) + x*y*v)
+    l = LinearForm(v, int_1(v*dot(g, nn)) + int_0(x*y*v))
 
-    # TODO l.domain are not ordered
-    assert(len(l.domain) == 2)
-    for i in l.domain:
+    assert(len(l.domain.args) == 2)
+    for i in l.domain.args:
         assert(i in [domain, B1])
 
-    assert(l(v1) == BoundaryIntegral(v1*trace_1(g, B1)) + DomainIntegral(x*y*v1))
+    assert(l(v1) == int_1(v1*trace_1(g, B1)) + int_0(x*y*v1))
     # ...
 
     # ...
-    l1 = LinearForm(v1, x*y*v1)
+    l1 = LinearForm(v1, int_0(x*y*v1))
     l = LinearForm(v, l1(v))
 
     assert(l.domain == domain)
-    assert(l(u1) == DomainIntegral(x*y*u1))
+    assert(l(u1) == int_0(x*y*u1))
     # ...
 
     # ...
     g = Tuple(x,y)
-    l1 = LinearForm(u1, x*y*u1)
-    l2 = LinearForm(u2, dot(grad(u2), g))
+    l1 = LinearForm(u1, int_0(x*y*u1))
+    l2 = LinearForm(u2, int_0(dot(grad(u2), g)))
 
     l = LinearForm(v, l1(v) + l2(v))
 
     assert(l.domain == domain)
-    assert(l(v1) == DomainIntegral(x*y*v1) + DomainIntegral(dot(grad(v1), g)))
+    assert(l(v1) == int_0(x*y*v1) + int_0(dot(grad(v1), g)))
     # ...
 
     # ...
@@ -253,12 +257,15 @@ def test_linear_form_2d_1():
     dt    = Constant('dt', real=True)
     alpha = Constant('alpha', real=True)
 
-    l1 = LinearForm(tau, bracket(pn, wn)*tau - 1./Re * dot(grad(tau), grad(wn)))
+    l1 = LinearForm(tau, int_0(bracket(pn, wn)*tau - 1./Re * dot(grad(tau), grad(wn))))
 
+
+    
     l = LinearForm((tau, sigma), dt*l1(tau))
+
     assert(l.domain == domain)
-    assert(l(u1,u2) == DomainIntegral(-1.0*dt*dot(grad(u1), grad(wn))/Re) +
-                       DomainIntegral(dt*u1*bracket(pn, wn)))
+    assert(l(u1,u2) == int_0(-1.0*dt*dot(grad(u1), grad(wn))/Re) +
+                       int_0(dt*u1*bracket(pn, wn)))
     # ...
 
 #==============================================================================
@@ -278,32 +285,35 @@ def test_linear_form_2d_2():
     v,v1,v2 = [element_of(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
+    int_0 = lambda expr: integral(domain , expr)
+    int_1 = lambda expr: integral(B1, expr)
+    
     g = Tuple(x,y)
-    l = LinearForm(v, dot(g, v))
+    l = LinearForm(v, int_0(dot(g, v)))
 
     assert(l.domain == domain)
-    assert(l(v1) == DomainIntegral(dot(g, v1)))
+    assert(l(v1) == int_0(dot(g, v1)))
     # ...
 
     # ...
     g = Tuple(x,y)
-    l1 = LinearForm(v1, dot(g, v1))
+    l1 = LinearForm(v1, int_0(dot(g, v1)))
     l = LinearForm(v, l1(v))
 
     assert(l.domain == domain)
-    assert(l(u1) == DomainIntegral(dot(g, u1)))
+    assert(l(u1) == int_0(dot(g, u1)))
     # ...
 
     # ...
     g1 = Tuple(x,0)
     g2 = Tuple(0,y)
-    l1 = LinearForm(v1, dot(v1, g1))
-    l2 = LinearForm(v2, dot(v2, g2))
+    l1 = LinearForm(v1, int_0(dot(v1, g1)))
+    l2 = LinearForm(v2, int_0(dot(v2, g2)))
 
     l = LinearForm(v, l1(v) + l2(v))
 
     assert(l.domain == domain)
-    assert(l(u) == DomainIntegral(dot(u, g1)) + DomainIntegral(dot(u, g2)))
+    assert(l(u) == int_0(dot(u, g1)) + int_0(dot(u, g2)))
     # ...
 
 #==============================================================================
@@ -316,6 +326,7 @@ def test_bilinear_form_2d_1():
 
     kappa = Constant('kappa', is_real=True)
     mu    = Constant('mu'   , is_real=True)
+    nn    = NormalVector('nn')
 
     V = ScalarFunctionSpace('V', domain)
 
@@ -323,52 +334,55 @@ def test_bilinear_form_2d_1():
     v,v1,v2 = [element_of(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
-    a = BilinearForm((u,v), u*v)
+    int_0 = lambda expr: integral(domain , expr)
+    int_1 = lambda expr: integral(B1, expr)
+    
+    a = BilinearForm((u,v), int_0(u*v))
 
     assert(a.domain == domain)
-    assert(a(u1,v1) == DomainIntegral(u1*v1))
+    assert(a(u1,v1) == int_0(u1*v1))
     # ...
 
     # ...
-    a = BilinearForm((u,v), u*v + dot(grad(u), grad(v)))
+    a = BilinearForm((u,v), int_0(u*v + dot(grad(u), grad(v))))
 
     assert(a.domain == domain)
-    assert(a(u1,v1) == DomainIntegral(u1*v1) + DomainIntegral(dot(grad(u1), grad(v1))))
+    assert(a(u1,v1) == int_0(u1*v1) + int_0(dot(grad(u1), grad(v1))))
     # ...
 
     # ...
-    a = BilinearForm((u,v), v*trace_1(grad(u), B1))
+    a = BilinearForm((u,v), int_1(v*dot(grad(u), nn)))
 
     assert(a.domain == B1)
-    assert(a(u1,v1) == BoundaryIntegral(v1*trace_1(grad(u1), B1)))
+    assert(a(u1,v1) == int_1(v1*trace_1(grad(u1), B1)))
     # ...
 
     # ...
-    a = BilinearForm((u,v), u*v + v*trace_1(grad(u), B1))
+    a = BilinearForm((u,v), int_0(u*v) + int_1(v*dot(grad(u), nn)))
 
     # TODO a.domain are not ordered
-    assert(len(a.domain) == 2)
-    for i in a.domain:
+    assert(len(a.domain.args) == 2)
+    for i in a.domain.args:
         assert(i in [domain, B1])
 
-    assert(a(u1,v1) == DomainIntegral(u1*v1) + BoundaryIntegral(v1*trace_1(grad(u1), B1)))
+    assert(a(u1,v1) == int_0(u1*v1) + int_1(v1*trace_1(grad(u1), B1)))
     # ...
 
     # ...
-    a1 = BilinearForm((u1,v1), u1*v1)
+    a1 = BilinearForm((u1,v1), int_0(u1*v1))
     a = BilinearForm((u,v), a1(u,v))
 
     assert(a.domain == domain)
-    assert(a(u2,v2) == DomainIntegral(u2*v2))
+    assert(a(u2,v2) == int_0(u2*v2))
     # ...
 
     # ...
-    a1 = BilinearForm((u1,v1), u1*v1)
-    a2 = BilinearForm((u2,v2), dot(grad(u2), grad(v2)))
+    a1 = BilinearForm((u1,v1), int_0(u1*v1))
+    a2 = BilinearForm((u2,v2), int_0(dot(grad(u2), grad(v2))))
     a = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v))
 
     assert(a.domain == domain)
-    assert(a(u,v) == DomainIntegral(u*v) + DomainIntegral(kappa*dot(grad(u), grad(v))))
+    assert(a(u,v) == int_0(u*v) + int_0(kappa*dot(grad(u), grad(v))))
     # ...
 
 #==============================================================================
@@ -388,34 +402,37 @@ def test_bilinear_form_2d_2():
     v,v1,v2 = [element_of(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
-    a = BilinearForm((u,v), dot(u,v))
+    int_0 = lambda expr: integral(domain , expr)
+    int_1 = lambda expr: integral(B1, expr)
+    
+    a = BilinearForm((u,v), int_0(dot(u,v)))
 
     assert(a.domain == domain)
-    assert(a(u1,v1) == DomainIntegral(dot(u1,v1)))
+    assert(a(u1,v1) == int_0(dot(u1,v1)))
     # ...
 
     # ...
-    a = BilinearForm((u,v), dot(u,v) + inner(grad(u), grad(v)))
+    a = BilinearForm((u,v), int_0(dot(u,v) + inner(grad(u), grad(v))))
 
     assert(a.domain == domain)
-    assert(a(u1,v1) == DomainIntegral(dot(u1,v1)) + DomainIntegral(inner(grad(u1), grad(v1))))
+    assert(a(u1,v1) == int_0(dot(u1,v1)) + int_0(inner(grad(u1), grad(v1))))
     # ...
 
     # ...
-    a1 = BilinearForm((u1,v1), dot(u1,v1))
+    a1 = BilinearForm((u1,v1), int_0(dot(u1,v1)))
     a = BilinearForm((u,v), a1(u,v))
 
     assert(a.domain == domain)
-    assert(a(u2,v2) == DomainIntegral(dot(u2,v2)))
+    assert(a(u2,v2) == int_0(dot(u2,v2)))
     # ...
 
     # ...
-    a1 = BilinearForm((u1,v1), dot(u1,v1))
-    a2 = BilinearForm((u2,v2), inner(grad(u2), grad(v2)))
+    a1 = BilinearForm((u1,v1), int_0(dot(u1,v1)))
+    a2 = BilinearForm((u2,v2), int_0(inner(grad(u2), grad(v2))))
     a = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v))
 
     assert(a.domain == domain)
-    assert(a(u,v) == DomainIntegral(dot(u,v)) + DomainIntegral(kappa*inner(grad(u), grad(v))))
+    assert(a(u,v) == int_0(dot(u,v)) + int_0(kappa*inner(grad(u), grad(v))))
     # ...
 
 #==============================================================================
@@ -428,6 +445,7 @@ def test_terminal_expr_linear_2d_1():
 
     kappa = Constant('kappa', is_real=True)
     mu    = Constant('mu'   , is_real=True)
+    nn    = NormalVector('nn')
 
     V = ScalarFunctionSpace('V', domain)
 
@@ -435,33 +453,37 @@ def test_terminal_expr_linear_2d_1():
     v,v1,v2 = [element_of(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
-    l = LinearForm(v, x*y*v)
+    int_0 = lambda expr: integral(domain , expr)
+    int_1 = lambda expr: integral(B1, expr)
+
+    l = LinearForm(v, int_0(x*y*v))
+    
     print(TerminalExpr(l))
     print('')
     # ...
 
     # ...
-    l = LinearForm(v, x*y*v + v)
+    l = LinearForm(v, int_0(x*y*v + v))
     print(TerminalExpr(l))
     print('')
     # ...
 
     # ...
     g = Tuple(x**2, y**2)
-    l = LinearForm(v, v*trace_1(g, B1))
+    l = LinearForm(v, int_1(v*dot(g, nn)))
     print(TerminalExpr(l))
     print('')
     # ...
 
     # ...
     g = Tuple(x**2, y**2)
-    l = LinearForm(v, v*trace_1(g, B1) + x*y*v)
+    l = LinearForm(v, int_1(v*dot(g, nn)) + int_0(x*y*v))
     print(TerminalExpr(l))
     print('')
     # ...
 
     # ...
-    l1 = LinearForm(v1, x*y*v1)
+    l1 = LinearForm(v1, int_0(x*y*v1))
     l = LinearForm(v, l1(v))
     print(TerminalExpr(l))
     print('')
@@ -469,8 +491,8 @@ def test_terminal_expr_linear_2d_1():
 
     # ...
     g = Tuple(x,y)
-    l1 = LinearForm(v1, x*y*v1)
-    l2 = LinearForm(v2, dot(grad(v2), g))
+    l1 = LinearForm(v1, int_0(x*y*v1))
+    l2 = LinearForm(v2, int_0(dot(grad(v2), g)))
 
     l = LinearForm(v, l1(v) + l2(v))
     print(TerminalExpr(l))
@@ -478,8 +500,8 @@ def test_terminal_expr_linear_2d_1():
     # ...
 
     # ...
-    l1 = LinearForm(v1, x*y*v1)
-    l2 = LinearForm(v1, v1)
+    l1 = LinearForm(v1, int_0(x*y*v1))
+    l2 = LinearForm(v1, int_0(v1))
     l = LinearForm(v, l1(v) + kappa*l2(v))
     print(TerminalExpr(l))
     print('')
@@ -487,9 +509,9 @@ def test_terminal_expr_linear_2d_1():
 
     # ...
     g = Tuple(x**2, y**2)
-    l1 = LinearForm(v1, x*y*v1)
-    l2 = LinearForm(v1, v1)
-    l3 = LinearForm(v, v*trace_1(g, B1))
+    l1 = LinearForm(v1, int_0(x*y*v1))
+    l2 = LinearForm(v1, int_0(v1))
+    l3 = LinearForm(v, int_1(v*dot(g, nn)))
     l = LinearForm(v, l1(v) + kappa*l2(v) + mu*l3(v))
     print(TerminalExpr(l))
     print('')
@@ -512,15 +534,18 @@ def test_terminal_expr_linear_2d_2():
     v,v1,v2 = [element_of(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
+    int_0 = lambda expr: integral(domain , expr)
+    int_1 = lambda expr: integral(B1, expr)
+    
     g = Tuple(x,y)
-    l = LinearForm(v, dot(g, v))
+    l = LinearForm(v, int_0(dot(g, v)))
     print(TerminalExpr(l))
     print('')
     # ...
 
     # ...
     g = Tuple(x,y)
-    l = LinearForm(v, dot(g, v) + div(v))
+    l = LinearForm(v, int_0(dot(g, v) + div(v)))
     print(TerminalExpr(l))
     print('')
     # ...
@@ -579,11 +604,13 @@ def test_terminal_expr_linear_2d_2():
 def test_terminal_expr_linear_2d_3():
 
     domain = Square()
+    B      = domain.boundary
 
     x,y = domain.coordinates
 
     kappa = Constant('kappa', is_real=True)
     mu    = Constant('mu'   , is_real=True)
+    nn    = NormalVector('nn')
 
     V = ScalarFunctionSpace('V', domain)
 
@@ -591,7 +618,10 @@ def test_terminal_expr_linear_2d_3():
     v,v1,v2 = [element_of(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
-    l = LinearForm(v, trace_1(grad(v), domain.boundary))
+    int_0 = lambda expr: integral(domain , expr)
+    int_1 = lambda expr: integral(B, expr)
+
+    l = LinearForm(v, int_1(dot(grad(v), nn)))
     print(TerminalExpr(l))
     print('')
     # ...
@@ -614,11 +644,12 @@ def test_terminal_expr_linear_2d_4():
     v,v1,v2 = [element_of(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
-    l = LinearForm(v, x*y*v)
+    int_0 = lambda expr: integral(domain , expr)
+    
+    l = LinearForm(v, int_0(x*y*v))
     print(TerminalExpr(l))
     print('')
     # ...
-
 #==============================================================================
 def test_terminal_expr_linear_2d_5(boundary=['Gamma_1', 'Gamma_3']):
 
@@ -635,23 +666,27 @@ def test_terminal_expr_linear_2d_5(boundary=['Gamma_1', 'Gamma_3']):
         B_neumann = Union(*B_neumann)
 
     x,y = domain.coordinates
+    nn    = NormalVector('nn')
 
     F = element_of(V, name='F')
 
     v = element_of(V, name='v')
     u = element_of(V, name='u')
 
+    int_0 = lambda expr: integral(domain , expr)
+    int_1 = lambda expr: integral(B_neumann , expr)
+    
     expr = dot(grad(v), grad(u))
-    a = BilinearForm((v,u), expr)
+    a = BilinearForm((v,u), int_0(expr))
 
     solution = cos(0.5*pi*x)*cos(0.5*pi*y)
     f        = (1./2.)*pi**2*solution
 
     expr = f*v
-    l0 = LinearForm(v, expr)
+    l0 = LinearForm(v, int_0(expr))
 
-    expr = v*trace_1(grad(solution), B_neumann)
-    l_B_neumann = LinearForm(v, expr)
+    expr = v*dot(grad(solution), nn)
+    l_B_neumann = LinearForm(v, int_1(expr))
 
     expr = l0(v) + l_B_neumann(v)
     l = LinearForm(v, expr)
@@ -671,6 +706,7 @@ def test_terminal_expr_bilinear_2d_1():
     kappa = Constant('kappa', is_real=True)
     mu    = Constant('mu'   , is_real=True)
     eps   = Constant('eps', real=True)
+    nn    = NormalVector('nn')
 
     V = ScalarFunctionSpace('V', domain)
 
@@ -678,73 +714,87 @@ def test_terminal_expr_bilinear_2d_1():
     v,v1,v2 = [element_of(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
-    a = BilinearForm((u,v), u*v)
+    
+    int_0 = lambda expr: integral(domain , expr)
+    int_1 = lambda expr: integral(B1, expr)
+    
+    a = BilinearForm((u,v), int_0(u*v))
+    print(a)
     print(TerminalExpr(a))
     print('')
     # ...
 
     # ...
-    a = BilinearForm((u,v), dot(grad(u),grad(v)))
+    a = BilinearForm((u,v), int_0(dot(grad(u),grad(v))))
+    print(a)
     print(TerminalExpr(a))
     print('')
     # ...
 
     # ...
-    a = BilinearForm((u,v), u*v + dot(grad(u),grad(v)))
+    a = BilinearForm((u,v), int_0(u*v + dot(grad(u),grad(v))))
+    print(a)
     print(TerminalExpr(a))
     print('')
     # ...
 
     # ...
-    a = BilinearForm((u,v), u*v + dot(grad(u),grad(v)) + v*trace_1(grad(u), B1) )
+    a = BilinearForm((u,v), int_0(u*v + dot(grad(u),grad(v))) + int_1(v*dot(grad(u), nn)) )
+    print(a)
     print(TerminalExpr(a))
     print('')
     # ...
 
     # ...
-    a = BilinearForm(((u1,u2),(v1,v2)), u1*v1 + u2*v2)
+    a = BilinearForm(((u1,u2),(v1,v2)), int_0(u1*v1 + u2*v2))
+    print(a)
     print(TerminalExpr(a))
     print('')
     # ...
 
     # ...
-    a1 = BilinearForm((u1,v1), u1*v1)
+    a1 = BilinearForm((u1,v1), int_0(u1*v1))
     a = BilinearForm((u,v), a1(u,v))
+    print(a)
     print(TerminalExpr(a))
     print('')
     # ...
 
     # ...
-    a1 = BilinearForm((u1,v1), u1*v1)
-    a2 = BilinearForm((u2,v2), dot(grad(u2), grad(v2)))
+    a1 = BilinearForm((u1,v1), int_0(u1*v1))
+    a2 = BilinearForm((u2,v2), int_0(dot(grad(u2), grad(v2))))
     a = BilinearForm((u,v), a1(u,v) + a2(u,v))
+    print(a)
     print(TerminalExpr(a))
     print('')
     # ...
 
     # ...
-    a1 = BilinearForm((u1,v1), u1*v1)
-    a2 = BilinearForm((u2,v2), dot(grad(u2), grad(v2)))
+    a1 = BilinearForm((u1,v1), int_0(u1*v1))
+    a2 = BilinearForm((u2,v2), int_0(dot(grad(u2), grad(v2))))
     a = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v))
+    print(a)
     print(TerminalExpr(a))
     print('')
     # ...
 
     # ...
-    a1 = BilinearForm((u1,v1), u1*v1)
-    a2 = BilinearForm((u2,v2), dot(grad(u2), grad(v2)))
-    a3 = BilinearForm((u,v), v*trace_1(grad(u), B1))
+    a1 = BilinearForm((u1,v1), int_0(u1*v1))
+    a2 = BilinearForm((u2,v2), int_0(dot(grad(u2), grad(v2))))
+    a3 = BilinearForm((u,v), int_1(v*dot(grad(u), nn)))
     a = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v) + mu*a3(u,v))
+    print(a)
     print(TerminalExpr(a))
     print('')
     # ...
 
     # ... Poisson with Nitsch method
-    a0 = BilinearForm((u,v), dot(grad(u),grad(v)))
-    a_B1 = BilinearForm((u,v), - kappa * u*trace_1(grad(v), B1)
-                               - v*trace_1(grad(u), B1)
-                               + trace_0(u, B1) * trace_0(v, B1) / eps)
+    a0 = BilinearForm((u,v), int_0(dot(grad(u),grad(v))))
+    a_B1 = BilinearForm((u,v), int_1(- kappa * u*dot(grad(v), nn)
+                               - v*dot(grad(u), nn)
+                               + u*v / eps))
     a = BilinearForm((u,v), a0(u,v) + a_B1(u,v))
+    print(a)
     print(TerminalExpr(a))
     print('')
     # ...
@@ -759,6 +809,7 @@ def test_terminal_expr_bilinear_2d_2():
 
     kappa = Constant('kappa', is_real=True)
     mu    = Constant('mu'   , is_real=True)
+    nn    = NormalVector('nn')
 
     V = VectorFunctionSpace('V', domain)
 
@@ -766,22 +817,24 @@ def test_terminal_expr_bilinear_2d_2():
     v,v1,v2 = [element_of(V, name=i) for i in ['v', 'v1', 'v2']]
 
     # ...
-    a = BilinearForm((u,v), dot(u,v))
+    int_0 = lambda expr: integral(domain , expr)
+    int_1 = lambda expr: integral(B1, expr)
+        
+    a = BilinearForm((u,v), int_0(dot(u,v)))
     print(TerminalExpr(a))
     print('')
     
     # ...
-    a = BilinearForm((u,v), inner(grad(u),grad(v)))
+    a = BilinearForm((u,v), int_0(inner(grad(u),grad(v))))
     print(TerminalExpr(a))
     print('')
     # ...
 
     # ...
-    a = BilinearForm((u,v), dot(u,v) + inner(grad(u),grad(v)))
+    a = BilinearForm((u,v), int_0(dot(u,v) + inner(grad(u),grad(v))))
     print(TerminalExpr(a))
     print('')
     # ...
-
  
 def test_terminal_expr_bilinear_2d_3():
 
@@ -796,64 +849,69 @@ def test_terminal_expr_bilinear_2d_3():
     
     kappa = Constant('kappa', is_real=True)
     mu    = Constant('mu'   , is_real=True)
+    nn    = NormalVector('nn')
 
+    int_0 = lambda expr: integral(domain , expr)
+    int_1 = lambda expr: integral(B, expr)
+    
     # nitsche
-    a0  = BilinearForm((u,v), dot(grad(v),grad(u)))
+    a0  = BilinearForm((u,v), int_0(dot(grad(v),grad(u))))
 
-    a_B = BilinearForm((u,v), -trace_0(u, B)*trace_1(grad(v), B) \
-                              -trace_0(v, B)*trace_1(grad(u), B) \
-                              +kappa*trace_0(u, B) * trace_0(v, B))
+    a_B = BilinearForm((u,v), int_1(-u*dot(grad(v), nn) \
+                              -v*dot(grad(u), nn) \
+                              +kappa*u*v))
 
     a = BilinearForm((u,v), a0(u,v) + a_B(u,v))
     
     print(TerminalExpr(a))
     print('')
 
-    a = BilinearForm((u,v), u*v + dot(grad(u),grad(v)) + v*trace_1(grad(u), B) )
+    a = BilinearForm((u,v), int_0(u*v + dot(grad(u),grad(v))) + int_1(v*dot(grad(u), nn)) )
     print(TerminalExpr(a))
     print('')
     # ...
 
     # ...
-    a = BilinearForm((u,v), u*v)
+    a = BilinearForm((u,v), int_0(u*v))
     print(TerminalExpr(a))
     print('')
     # ...
 
     # ...
-    a1 = BilinearForm((u,v), u*v)
+    a1 = BilinearForm((u,v), int_0(u*v))
     a = BilinearForm((u,v), a1(u,v))
     print(TerminalExpr(a))
     print('')
     # ...
 
     # ...
-    a1 = BilinearForm((u,v), u*v)
-    a2 = BilinearForm((u,v), dot(grad(u), grad(v)))
+    a1 = BilinearForm((u,v), int_0(u*v))
+    a2 = BilinearForm((u,v), int_0(dot(grad(u), grad(v))))
     a = BilinearForm((u,v), a1(u,v) + a2(u,v))
     print(TerminalExpr(a))
     print('')
     # ...
 
     # ...
-    a1 = BilinearForm((u,v), u*v)
-    a2 = BilinearForm((u,v), dot(grad(u), grad(v)))
+    a1 = BilinearForm((u,v), int_0(u*v))
+    a2 = BilinearForm((u,v), int_0(dot(grad(u), grad(v))))
     a = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v))
     print(TerminalExpr(a))
     print('')
     # ...
 
     # ...
-    a1 = BilinearForm((u,v), u*v)
-    a2 = BilinearForm((u,v), dot(grad(u), grad(v)))
-    a3 = BilinearForm((u,v), v*trace_1(grad(u), B))
+    a1 = BilinearForm((u,v), int_0(u*v))
+    a2 = BilinearForm((u,v), int_0(dot(grad(u), grad(v))))
+    a3 = BilinearForm((u,v), int_1(v*dot(grad(u), nn)))
     a = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v) + mu*a3(u,v))
     print(TerminalExpr(a))
     print('')
 #    # ...
 
 #==============================================================================
-# stokes
+
+
 def test_terminal_expr_bilinear_2d_4():
 
     domain = Domain('Omega', dim=2)
@@ -868,11 +926,14 @@ def test_terminal_expr_bilinear_2d_4():
     p = element_of(W, name='p')
     q = element_of(W, name='q')
 
-    a = BilinearForm((u,v), inner(grad(v), grad(u)))
-    b = BilinearForm((v,p), div(v)*p)
-    A = BilinearForm(((u,p),(v,q)), a(v,u) - b(v,p) + b(u,q))
+    int_0 = lambda expr: integral(domain , expr)
+    
+    # stokes
+    a = BilinearForm((u,v), int_0(inner(grad(v), grad(u))))
+    b = BilinearForm((v,p), int_0(div(v)*p))
+    a = BilinearForm(((u,p),(v,q)), a(v,u) - b(v,p) + b(u,q))
 
-    print(TerminalExpr(A))
+    print(TerminalExpr(a))
     print('')
 
 #==============================================================================
@@ -891,6 +952,7 @@ def test_linearize_expr_2d_1():
     F = element_of(V1, name='F')
     G = element_of(W1, 'G')
 
+    
     # ...
     l = LinearExpr(v1, F**2*v1)
     a = linearize(l, F, trials='u1')
@@ -974,44 +1036,46 @@ def test_linearize_form_2d_1():
     F = element_of(V1, name='F')
     G = element_of(W1, 'G')
 
+    int_0 = lambda expr: integral(domain , expr)
+    
     # ...
-    l = LinearForm(v1, F**2*v1)
+    l = LinearForm(v1, int_0(F**2*v1))
     a = linearize(l, F, trials='u1')
     print(a)
     # ...
 
     # ...
-    l = LinearForm(v1, dot(grad(F), grad(F))*v1)
+    l = LinearForm(v1, int_0(dot(grad(F), grad(F))*v1))
     a = linearize(l, F, trials='u1')
     print(a)
     # ...
 
     # ...
-    l = LinearForm(v1, exp(-F)*v1)
+    l = LinearForm(v1, int_0(exp(-F)*v1))
     a = linearize(l, F, trials='u1')
     print(a)
     # ...
 
     # ...
-    l = LinearForm(v1, cos(F)*v1)
+    l = LinearForm(v1, int_0(cos(F)*v1))
     a = linearize(l, F, trials='u1')
     print(a)
     # ...
 
     # ...
-    l = LinearForm(v1, cos(F**2)*v1)
+    l = LinearForm(v1, int_0(cos(F**2)*v1))
     a = linearize(l, F, trials='u1')
     print(a)
     # ...
 
     # ...
-    l = LinearForm(v1, F**2*dot(grad(F), grad(v1)))
+    l = LinearForm(v1, int_0(F**2*dot(grad(F), grad(v1))))
     a = linearize(l, F, trials='u1')
     print(a)
     # ...
 
     # ...
-    l = LinearForm(w1, dot(rot(G), grad(G))*w1)
+    l = LinearForm(w1, int_0(dot(rot(G), grad(G))*w1))
     a = linearize(l, G, trials='u1')
     print(a)
     # ...
@@ -1030,8 +1094,10 @@ def test_linearize_form_2d_2():
     F = element_of(V1, name='F')
     G = element_of(V1, name='G')
 
+    int_0 = lambda expr: integral(domain , expr)
+    
     # ...
-    l1 = LinearForm(v1, F**2*v1)
+    l1 = LinearForm(v1, int_0(F**2*v1))
     l  = LinearForm(v1, l1(v1))
 
     a = linearize(l, F, trials='u1')
@@ -1058,15 +1124,17 @@ def test_linearize_form_2d_3():
     Rho_0 = element_of(W, name='Rho_0')
     P_0   = element_of(W, name='P_0')
 
+    int_0 = lambda expr: integral(domain , expr)
+    
     # ...
     expr = div(Rho_0*U_0) * phi
-    l1 = LinearForm(phi, expr)
+    l1 = LinearForm(phi, int_0(expr))
 
     expr = Rho_0*dot(convect(U_0, grad(U_0)), v) + dot(grad(P_0), v)
-    l2 = LinearForm(v, expr)
+    l2 = LinearForm(v, int_0(expr))
 
     expr = dot(U_0, grad(P_0)) * q + P_0 * div(U_0) * q
-    l3 = LinearForm(q, expr)
+    l3 = LinearForm(q, int_0(expr))
     # ...
 
     a1 = linearize(l1, [Rho_0, U_0], trials=['d_rho', 'd_u'])
@@ -1099,12 +1167,15 @@ def test_linearize_form_2d_4():
 
     u = element_of(V, name='u')
 
+    int_0 = lambda expr: integral(domain , expr)
+    int_1 = lambda expr: integral(Gamma_N, expr)
+    
     g = Tuple(cos(pi*x)*sin(pi*y),
               sin(pi*x)*cos(pi*y))
 
     expr = dot(grad(v), grad(u)) - 4.*exp(-u)*v # + v*trace_1(g, Gamma_N)
 
-    l = LinearForm(v, expr )
+    l = LinearForm(v, int_0(expr) )
 
     # linearising l around u, using du
     a = linearize(l, u, trials=du)
@@ -1127,8 +1198,10 @@ def test_area_2d_1():
 
     u,v = [element_of(V, name=i) for i in ['u', 'v']]
 
+    int_0 = lambda expr: integral(domain , expr)
+    
     # ...
-    a = BilinearForm((v,u), area * u * v)
+    a = BilinearForm((v,u), int_0(area * u * v))
     print(TerminalExpr(a))
     # ...
 
@@ -1155,53 +1228,55 @@ def test_stabilization_2d_1():
 
     u,v = [element_of(V, name=i) for i in ['u', 'v']]
 
+    int_0 = lambda expr: integral(domain , expr)
+    
     # ...
     expr = kappa * dot(grad(u), grad(v)) + dot(b, grad(u)) * v
-    a = BilinearForm((v,u), expr)
+    a = BilinearForm((v,u), int_0(expr))
     # ...
 
     # ...
     expr = f * v
-    l = LinearForm(v, expr)
+    l = LinearForm(v, int_0(expr))
     # ...
 
     # ...
     expr = (- kappa * laplace(u) + dot(b, grad(u))) * dot(b, grad(v))
-    s1 = BilinearForm((v,u), expr)
+    s1 = BilinearForm((v,u), int_0(expr))
 
     expr = - f * dot(b, grad(v))
-    l1 = LinearForm(v, expr)
+    l1 = LinearForm(v, int_0(expr))
     # ...
 
     # ...
     expr = (- kappa * laplace(u) + dot(b, grad(u))) * ( dot(b, grad(v)) - kappa * laplace(v))
-    s2 = BilinearForm((v,u), expr)
+    s2 = BilinearForm((v,u), int_0(expr))
 
     expr = - f * ( dot(b, grad(v)) - kappa * laplace(v))
-    l2 = LinearForm(v, expr)
+    l2 = LinearForm(v, int_0(expr))
     # ...
 
     # ...
     expr = (- kappa * laplace(u) + dot(b, grad(u))) * ( dot(b, grad(v)) + kappa * laplace(v))
-    s3 = BilinearForm((v,u), expr)
+    s3 = BilinearForm((v,u), int_0(expr))
 
     expr = - f * ( dot(b, grad(v)) + kappa * laplace(v))
-    l3 = LinearForm(v, expr)
+    l3 = LinearForm(v, int_0(expr))
     # ...
 
     # ...
     expr = a(v,u) + mu*area*s1(v,u)
-    a1 = BilinearForm((v,u), expr)
+    a1 = BilinearForm((v,u), int_0(expr))
     # ...
 
     # ...
     expr = a(v,u) + mu*area*s2(v,u)
-    a2 = BilinearForm((v,u), expr)
+    a2 = BilinearForm((v,u), int_0(expr))
     # ...
 
     # ...
     expr = a(v,u) + mu*area*s3(v,u)
-    a3 = BilinearForm((v,u), expr)
+    a3 = BilinearForm((v,u), int_0(expr))
     # ...
 
     print(a1)
@@ -1232,9 +1307,11 @@ def test_user_function_2d_1():
 
     u,v = [element_of(V, name=i) for i in ['u', 'v']]
 
+    int_0 = lambda expr: integral(domain , expr)
+    
     # ...
     expr = dot(grad(u), grad(v)) + f(x,y) * u * v
-    a = BilinearForm((v,u), expr)
+    a = BilinearForm((v,u), int_0(expr))
 
     print(a)
     print(TerminalExpr(a))
@@ -1243,7 +1320,7 @@ def test_user_function_2d_1():
 
     # ...
     expr = f(x,y) * v
-    l = LinearForm(v, expr)
+    l = LinearForm(v, int_0(expr))
 
     print(l)
     print(TerminalExpr(l))
@@ -1262,9 +1339,11 @@ def test_functional_2d_1():
     V = ScalarFunctionSpace('V', domain)
     F = element_of(V, name='F')
 
+    int_0 = lambda expr: integral(domain , expr)
+    
     # ...
     expr = x*y
-    a = Functional(expr, domain)
+    a = Functional(int_0(expr), domain)
 
     print(a)
     print(TerminalExpr(a))
@@ -1274,7 +1353,7 @@ def test_functional_2d_1():
     # ...
     expr = F - cos(2*pi*x)*cos(3*pi*y)
     expr = dot(grad(expr), grad(expr))
-    a = Functional(expr, domain)
+    a = Functional(int_0(expr), domain)
 
     print(a)
     print(TerminalExpr(a))
@@ -1289,7 +1368,7 @@ def test_norm_2d_1():
 
     V = ScalarFunctionSpace('V', domain)
     F = element_of(V, name='F')
-
+    
     # ...
     expr = x*y
     l2_norm_u = Norm(expr, domain, kind='l2')
@@ -1358,7 +1437,7 @@ def test_norm_2d_2():
 
     V = VectorFunctionSpace('V', domain)
     F = element_of(V, 'F')
-
+    
     # ...
     f = Tuple(sin(pi*x)*sin(pi*y), sin(pi*x)*sin(pi*y))
     expr = Matrix([F[0]-f[0], F[1]-f[1]])
@@ -1387,13 +1466,16 @@ def test_bilinear_form_2d_3():
     u,u1,u2 = [element_of(V, name=i) for i in ['u', 'u1', 'u2']]
     v,v1,v2 = [element_of(V, name=i) for i in ['v', 'v1', 'v2']]
 
+    int_0 = lambda expr: integral(domain , expr)
+    int_1 = lambda expr: integral(B1, expr)
+    
     # ...
-    a = BilinearForm((u,v), u*v)
+    a = BilinearForm((u,v), int_0(u*v))
     assert(a.is_symmetric)
     # ...
 
     # ...
-    a = BilinearForm((u,v), dot(grad(u), grad(v)))
+    a = BilinearForm((u,v), int_0(dot(grad(u), grad(v))))
     assert(a.is_symmetric)
     # ...
 
@@ -1414,13 +1496,15 @@ def test_bilinear_form_2d_4():
     u,u1,u2 = [element_of(V, name=i) for i in ['u', 'u1', 'u2']]
     v,v1,v2 = [element_of(V, name=i) for i in ['v', 'v1', 'v2']]
 
+    int_0 = lambda expr: integral(domain , expr)
+    int_1 = lambda expr: integral(B1, expr)
     # ...
-    a = BilinearForm((u,v), dot(u,v))
+    a = BilinearForm((u,v), int_0(dot(u,v)))
     assert(a.is_symmetric)
     # ...
 
     # ...
-    a = BilinearForm((u,v), inner(grad(u), grad(v)))
+    a = BilinearForm((u,v), int_0(inner(grad(u), grad(v))))
     assert(a.is_symmetric)
     # ...
 
@@ -1437,4 +1521,3 @@ def teardown_function():
     from sympy import cache
     cache.clear_cache()
 
-test_terminal_expr_bilinear_2d_3()

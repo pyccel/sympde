@@ -10,10 +10,10 @@ from sympy import collect
 from sympy.series.order import Order
 from sympy.core import Expr, Add, Mul, Pow
 from sympy import S
+from sympy import Dummy
 from sympy.core.numbers import Zero as sy_Zero
 from sympy.core.containers import Tuple
 from sympy import Indexed, IndexedBase, Matrix, ImmutableDenseMatrix
-from sympy import expand
 from sympy import Integer, Float
 from sympy.core.expr import AtomicExpr
 from sympy.physics.quantum import TensorProduct
@@ -54,7 +54,7 @@ from sympde.topology.space import ScalarTestFunction
 from sympde.topology.space import VectorTestFunction
 from sympde.topology.space import IndexedTestTrial
 from sympde.topology.space import Unknown, VectorUnknown
-from sympde.topology.space import Trace
+from sympde.topology.space import Trace, trace_0, trace_1
 from sympde.topology.space import ScalarField, VectorField, IndexedVectorField
 from sympde.topology.measure import CanonicalMeasure
 from sympde.topology.measure import CartesianMeasure
@@ -65,7 +65,33 @@ from .basic import BasicForm
 from .basic  import BasicExpr
 from .basic  import is_linear_form, _sanitize_arguments
 
-
+def expand(expr):
+    from sympy import expand
+    expr = expand(expr)
+    _, args = expr.as_coeff_add()
+    args = list(args)
+    for i in range(len(args)):
+        c,m = args[i].as_coeff_mul()
+        for o in m:
+            c = c*o
+        args[i] = c
+    return Add(*args)
+#==============================================================================
+def _get_domain(expr):
+    # expr is an integral of BasicExpr or Add of Integral of BasicExpr
+    if isinstance(expr, (DomainIntegral,BoundaryIntegral)):
+        return expr.domain
+    elif isinstance(expr, (Add,Mul)):
+        domains = set()
+        for a in expr.args:
+            a = _get_domain(a)
+            if isinstance(a, Union):
+                domains = domains.union(a.args)
+            elif isinstance(a, BasicDomain):
+                domains = domains.union([a])
+        if len(domains) == 1:
+            return list(domains)[0]
+        return Union(*domains)
 
 #==============================================================================
 class LinearExpr(BasicExpr):
@@ -74,7 +100,7 @@ class LinearExpr(BasicExpr):
     def __new__(cls, arguments, expr, check=False):
 
         # ...
-        if expr.atoms(BasicIntegral):
+        if expr.atoms(DomainIntegral, BoundaryIntegral):
             raise TypeError('')
         # ...
 
@@ -98,7 +124,8 @@ class LinearExpr(BasicExpr):
     def __call__(self, *args):
         args = _sanitize_arguments(args, is_linear=True)
         args = Tuple(*args)
-        return self.expr.xreplace(dict(list(zip(self.variables, args))))
+        expr, _ =  self.expr._xreplace(dict(list(zip(self.variables, args))))
+        return expr
 
     def _eval_nseries(self, x, n, logx):
         return self.expr._eval_nseries(x, n, logx)
@@ -110,7 +137,7 @@ class BilinearExpr(BasicExpr):
     def __new__(cls, arguments, expr, check=False):
 
         # ...
-        if expr.atoms(BasicIntegral):
+        if expr.atoms(DomainIntegral, BoundaryIntegral):
             raise TypeError('')
         # ...
 
@@ -155,131 +182,134 @@ class BilinearExpr(BasicExpr):
 
 
 #==============================================================================
-class BasicIntegral(CalculusFunction):
+class Integral(CalculusFunction):
 
-    def __new__(cls, *args, **options):
+    def __new__(cls, expr, domain, **options):
         # (Try to) sympify args first
 
-        if options.pop('evaluate', True):
-            r = cls.eval(*args)
-        else:
-            r = None
+        assert isinstance(domain, BasicDomain)
+        return Integral.eval(expr, domain)
 
-        if r is None:
-            return Basic.__new__(cls, *args, **options)
-        else:
-            return r
-
-    def __getitem__(self, indices, **kw_args):
-        if is_sequence(indices):
-            # Special case needed because M[*my_tuple] is a syntax error.
-            return Indexed(self, *indices, **kw_args)
-        else:
-            return Indexed(self, indices, **kw_args)
-
-    @classmethod
-    def eval(cls, *_args):
+    @staticmethod
+    def eval(expr, domain):
         """."""
-
-        if not _args:
-            return
-
-        if not len(_args) == 1:
-            raise ValueError('Expecting one argument')
-
-        expr = _args[0]
 
         if not isinstance(expr, (BasicExpr, Expr)):
             raise TypeError('')
 
-        if isinstance(expr, BasicExpr):
-            expr = expr.expr
-
-        if isinstance(expr, Add):
-            args = [cls.eval(a) for a in expr.args]
-            return Add(*args)
-
         if isinstance(expr, sy_Zero):
             return sy_Zero
             
-        boundary = list(expr.atoms(Boundary, Connectivity))
-        if boundary:
-            return BoundaryIntegral(expr)
+        if isinstance(expr, BasicExpr):
+            expr = expr.expr
+            
+        if isinstance(expr, Add):
+            args = [Integral.eval(a, domain) for a in expr.args]
+            return Add(*args)
+            
+        if isinstance(domain, Union):
+            expr = [Integral.eval(expr, d) for d in domain.args]
+            return Add(*expr)
+                
+        if isinstance(domain, (Boundary, Connectivity)):
+            return BoundaryIntegral(expr, domain)
 
         else:
-            return DomainIntegral(expr)
+            return DomainIntegral(expr, domain)
+            
+            
 
 #==============================================================================
-class DomainIntegral(BasicIntegral):
 
-    @classmethod
-    def eval(cls, *_args):
-        """."""
+class DomainIntegral(AtomicExpr):
+    _op_priority = 20
+    @property
+    def expr(self):
+        return self._args[0]
+    @property
+    def domain(self):
+        return self._args[1]       
 
-        if not _args:
-            return
+    def __mul__(self, o):
+        return DomainIntegral(self.expr*o, self.domain)
+        
+    def __rmul__(self, o):
+        return DomainIntegral(self.expr*o, self.domain)
 
-        if not len(_args) == 1:
-            raise ValueError('Expecting one argument')
-
-        expr = _args[0]
-
-        return cls(expr, evaluate=False)
-
+    def __eq__(self, a):
+        if isinstance(a, DomainIntegral):
+            eq = self.domain == a.domain
+            eq = eq and self.expr == a.expr
+            return eq
+        return False
+        
+    def __hash__(self):
+        return hash(self.expr) + hash(self.domain)
 #==============================================================================
-class BoundaryIntegral(BasicIntegral):
-
-    @classmethod
-    def eval(cls, *_args):
-        """."""
-
-        if not _args:
-            return
-
-        if not len(_args) == 1:
-            raise ValueError('Expecting one argument')
-
-        expr = _args[0]
-
-        return cls(expr, evaluate=False)
-
-#==============================================================================
-def _get_domain(a):
-    # expr is an integral of BasicExpr or Add of Integral of BasicExpr
-    if isinstance(a, BoundaryIntegral):
-        domains = list(a.atoms(Boundary, Connectivity))
-        if len(domains) == 1:
-            return domains[0]
-
-        else:
-            return domains
-
-    elif isinstance(a, DomainIntegral):
-        expr = a._args[0]
-
-    else:
-        expr = a
-
-    atoms  = []
-    atoms += list(expr.atoms(ScalarTestFunction))
-    atoms += list(expr.atoms(VectorTestFunction))
-    atoms += list(expr.atoms(ScalarField))
-    atoms += list(expr.atoms(VectorField))
-
-    if len(atoms) == 0:
-        raise ValueError('could not find any test function or field')
-
-    domains = {atom.space.domain for atom in atoms}
+class BoundaryIntegral(AtomicExpr):
+    _op_priority = 20
     
+    def __new__(cls, expr, domain):
+    
+        atoms_1 = list(expr.atoms(Dot,Trace))
+        
+        for i in range(len(atoms_1)):
+            a = atoms_1[i]
+            if isinstance(a, Dot):
+                if not isinstance(a.args[0], NormalVector):
+                    if not isinstance(a.args[1], NormalVector):
+                        atoms_1.remove(a)
+                
+        subs_1  = {a:Dummy() for a in atoms_1}
+        expr, _ = expr._xreplace(subs_1)
 
-    domains = list(expr.atoms(Boundary, Connectivity)) + list(domains)
-    if len(domains) == 1:
-        return domains[0]
+        atoms_2 = expr.atoms(ScalarTestFunction, VectorTestFunction)
+        subs_2  = {a:trace_0(a, domain) for a in atoms_2}
+        expr, _ = expr._xreplace(subs_2)
+        
+        subs_3 = {}
+        
+        for key,val in subs_1.items():
+            
+            if isinstance(key, Dot):
+                args = key.args
+                if isinstance(args[0], NormalVector):
+                    v = args[1]
+                elif isinstance(args[1], NormalVector):
+                    v = args[0]
+                subs_3[val] = trace_1(v, domain)
+            else:
+                subs_3[val] = key
+         
+        expr, _ = expr._xreplace(subs_3)
+        
+        
+        return Basic.__new__(cls, expr, domain)
+        
 
-    else:
-        return domains
-
-
+    @property
+    def expr(self):
+        return self._args[0]
+    @property
+    def domain(self):
+        return self._args[1]
+        
+    def __mul__(self, o):
+        return BoundaryIntegral(self.expr*o, self.domain)
+        
+    def __rmul__(self, o):
+        return BoundaryIntegral(self.expr*o, self.domain)
+        
+    def __eq__(self, a):
+        if isinstance(a, BoundaryIntegral):
+            eq = self.domain == a.domain
+            eq = eq and self.expr == a.expr
+            return eq
+        return False
+        
+    def __hash__(self):
+        return hash(self.expr) + hash(self.domain)
+        
 #==============================================================================
 class Functional(BasicForm):
     is_functional = True
@@ -287,7 +317,7 @@ class Functional(BasicForm):
     def __new__(cls, expr, domain, eval=True):
 
         if eval:
-            expr = BasicIntegral(expr)
+            expr = Integral(expr, domain)
         obj = Basic.__new__(cls, expr, domain)
 
         # compute dim from fields if available
@@ -335,24 +365,22 @@ class LinearForm(BasicForm):
     def __new__(cls, arguments, expr):
 
         # ...
-        integrals = expr.atoms(BasicIntegral)
-        if integrals:
-            for integral in integrals:
-                expr = expr.subs(integral, integral._args[0])
+        integrals = expr.atoms(DomainIntegral, BoundaryIntegral)
+        if not integrals:
+            raise ValueError('Expecting integral Expression')
         # ...
 
-        # ...
-        expr = expand(expr)
-        # ...
         if expr == 0:
             return sy_Zero
         
+        expr = expand(expr)
+            
+
+        domain = _get_domain(expr)
         args = _sanitize_arguments(arguments, is_linear=True)
-        expr = BasicIntegral(expr)
         obj = Basic.__new__(cls, args, expr)
 
         # ...
-        domain = _get_domain(expr)
         obj._domain = domain
         # ...
         return obj
@@ -369,10 +397,10 @@ class LinearForm(BasicForm):
     def body(self):
         if self._body is None:
             expr = self.expr
-            integrals = expr.atoms(BasicIntegral)
+            integrals = expr.atoms(DomainIntegral)
             if integrals:
                 for integral in integrals:
-                    expr = expr.subs(integral, integral._args[0])
+                    expr = expr.subs(integral, integral.expr)
 
             self._body = expr
 
@@ -402,11 +430,11 @@ class LinearForm(BasicForm):
 
         # ...
         args = Tuple(*args)
-
         variables = self.variables
-        expr = expr.xreplace(dict(list(zip(variables, args))))
-        # ...
 
+        subs    = dict(zip(variables, args))
+        expr, _ = expr._xreplace(subs)
+        # ...
         return expr
 
 
@@ -418,23 +446,22 @@ class BilinearForm(BasicForm):
     def __new__(cls, arguments, expr):
 
         # ...
-        integrals = expr.atoms(BasicIntegral)
-        if integrals:
-            for integral in integrals:
-                expr = expr.subs(integral, integral._args[0])
-        # ...
+        integrals = expr.atoms(DomainIntegral,BoundaryIntegral)
+        if not integrals:
+            raise ValueError('Expecting integral Expression')
+            
+        domain = _get_domain(expr)
 
-        # ...
-        expr = expand(expr)
         # ...
         if expr == 0:
             return sy_Zero
             
+        expr = expand(expr)
+        
         args = _sanitize_arguments(arguments, is_bilinear=True)
-        expr = BasicIntegral(expr)
         obj = Basic.__new__(cls, args, expr)
         # ...
-        domain = _get_domain(expr)
+        
         obj._domain = domain
         # ...
         return obj
@@ -451,7 +478,7 @@ class BilinearForm(BasicForm):
     def body(self):
         if self._body is None:
             expr = self.expr
-            integrals = expr.atoms(BasicIntegral)
+            integrals = expr.atoms(DomainIntegral)
             if integrals:
                 for integral in integrals:
                     expr = expr.subs(integral, integral._args[0])
@@ -521,7 +548,8 @@ class BilinearForm(BasicForm):
         args = Tuple(*new_args)
 
         variables = Tuple(*self.variables[0], *self.variables[1])
-        expr = expr.xreplace(dict(list(zip(variables, args))))
+        subs      = dict(zip(variables, args))
+        expr, _   = expr._xreplace(subs)
         # ...
 
         return expr
@@ -641,6 +669,7 @@ def linearize(form, fields, trials=None):
     if isinstance(form, LinearForm):
         is_form = True
         expr = form.body
+        domain = form.domain
 
     else:
         is_form = False
@@ -684,7 +713,6 @@ def linearize(form, fields, trials=None):
 
     e = newexpr.series(eps, 0, 2)
     d = collect(e, eps, evaluate=False)
-    print(e,eps,type(e),type(eps),d)
     expr = d[eps]
 
 #    print('> linearize = ', expr)
@@ -693,7 +721,11 @@ def linearize(form, fields, trials=None):
     test_trial = (trial_functions, test_functions)
 
     if is_form:
-        return BilinearForm(test_trial, expr)
+        return BilinearForm(test_trial, integral(domain, expr))
 
     else:
         return BilinearExpr(test_trial, expr)
+        
+def integral(domain, expr):
+    """."""
+    return Integral(expr, domain)
