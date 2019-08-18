@@ -698,7 +698,7 @@ class Trace(AtomicExpr):
     @property
     def order(self):
         return self._args[2]
-        
+
     @classmethod
     def eval(cls, expr, boundary, order):
 
@@ -714,21 +714,21 @@ class Trace(AtomicExpr):
         if isinstance(expr, Add):
             args = [cls.eval(a, boundary, order) for a in expr.args]
             return expr._new_rawargs(*args)
-            
+
         if isinstance(expr, Mul):
             args = expr.args
             coeffs = [a for a in args if isinstance(a, _coeffs_registery)]
             a      = Mul(*coeffs)
             args   = [a for a in args if not(a in coeffs)]
-            
+
             funcs  = [a for a in args if isinstance(a, Function) and not isinstance(a, CalculusFunction)]
             a      = a*Mul(*funcs)
             args   = [a for a in args if not(a in funcs)]
-            
+
             b      = cls(Mul(*args), boundary, order, evaluate=False)
-           
+
             return a*b
-                        
+
         if isinstance(boundary, Union):
             expr = [Integral.eval(expr, d, order) for d in boundary.args]
             return Add(*expr)
