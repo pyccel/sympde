@@ -237,7 +237,7 @@ class Boundary(BasicDomain):
         return 0
 
 #==============================================================================
-class Interface(Basic):
+class Interface(BasicDomain):
     """
     Represents an interface between two subdomains through two boundaries.
 
@@ -297,7 +297,10 @@ class Connectivity(abc.Mapping):
         for k, (minus, plus) in data.items():
             ls.append(Interface(k, minus, plus))
 
-        return ls
+        if len(ls) == 1:
+            return ls[0]
+        else:
+            return ls
 
     def todict(self):
         # ... create the connectivity
