@@ -56,6 +56,9 @@ def test_topology_1():
                    boundaries=[bnd_A_2, bnd_A_3, bnd_B_1, bnd_B_3],
                    connectivity=connectivity)
 
+    interfaces = Omega.interfaces
+    assert(len(interfaces) == 1)
+
     # export
     Omega.export('omega.h5')
     # ...
