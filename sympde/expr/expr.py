@@ -35,7 +35,8 @@ from sympde.calculus import Laplace
 from sympde.calculus.core import _generic_ops
 
 from sympde.topology import BasicDomain, Domain, MappedDomain, Union, Interval
-from sympde.topology import BoundaryVector, NormalVector, TangentVector, Boundary, Connectivity
+from sympde.topology import BoundaryVector, NormalVector, TangentVector
+from sympde.topology import Boundary, Connectivity, Interface
 from sympde.topology.derivatives import _partial_derivatives
 from sympde.topology.derivatives import partial_derivative_as_symbol
 from sympde.topology.derivatives import sort_partial_derivatives
@@ -206,18 +207,21 @@ class Integral(CalculusFunction):
         if isinstance(expr, Add):
             args = [Integral.eval(a, domain) for a in expr.args]
             return expr._new_rawargs(*args)
-            
+
         if isinstance(domain, Union):
             expr = [Integral.eval(expr, d) for d in domain.args]
             return Add(*expr)
-                
-        if isinstance(domain, (Boundary, Connectivity)):
+
+        if isinstance(domain, Boundary):
             return BoundaryIntegral(expr, domain)
+
+        elif isinstance(domain, Interface):
+            return InterfaceIntegral(expr, domain)
 
         else:
             return DomainIntegral(expr, domain)
-            
-            
+
+
 
 #==============================================================================
 
@@ -228,11 +232,11 @@ class DomainIntegral(AtomicExpr):
         return self._args[0]
     @property
     def domain(self):
-        return self._args[1]       
+        return self._args[1]
 
     def __mul__(self, o):
         return DomainIntegral(self.expr*o, self.domain)
-        
+
     def __rmul__(self, o):
         return DomainIntegral(self.expr*o, self.domain)
 
@@ -242,35 +246,35 @@ class DomainIntegral(AtomicExpr):
             eq = eq and self.expr == a.expr
             return eq
         return False
-        
+
     def __hash__(self):
         return hash(self.expr) + hash(self.domain)
 #==============================================================================
 class BoundaryIntegral(AtomicExpr):
     _op_priority = 20
-    
+
     def __new__(cls, expr, domain):
-    
-        atoms_1 = list(expr.atoms(Dot, Trace))
-        
+
+        atoms_1 = list(expr.atoms(Dot,Trace))
+
         for i in range(len(atoms_1)):
             a = atoms_1[i]
             if isinstance(a, Dot):
                 if not isinstance(a.args[0], NormalVector):
                     if not isinstance(a.args[1], NormalVector):
                         atoms_1.remove(a)
-                
+
         subs_1  = {a:Dummy() for a in atoms_1}
         expr, _ = expr._xreplace(subs_1)
 
         atoms_2 = expr.atoms(ScalarTestFunction, VectorTestFunction)
         subs_2  = {a:trace_0(a, domain) for a in atoms_2}
         expr, _ = expr._xreplace(subs_2)
-        
+
         subs_3 = {}
-        
+
         for key,val in subs_1.items():
-            
+
             if isinstance(key, Dot):
                 args = key.args
                 if isinstance(args[0], NormalVector):
@@ -280,12 +284,12 @@ class BoundaryIntegral(AtomicExpr):
                 subs_3[val] = trace_1(v, domain)
             else:
                 subs_3[val] = key
-         
+
         expr, _ = expr._xreplace(subs_3)
-        
-        
+
+
         return Basic.__new__(cls, expr, domain)
-        
+
 
     @property
     def expr(self):
@@ -293,23 +297,52 @@ class BoundaryIntegral(AtomicExpr):
     @property
     def domain(self):
         return self._args[1]
-        
+
     def __mul__(self, o):
         return BoundaryIntegral(self.expr*o, self.domain)
-        
+
     def __rmul__(self, o):
         return BoundaryIntegral(self.expr*o, self.domain)
-        
+
     def __eq__(self, a):
         if isinstance(a, BoundaryIntegral):
             eq = self.domain == a.domain
             eq = eq and self.expr == a.expr
             return eq
         return False
-        
+
     def __hash__(self):
         return hash(self.expr) + hash(self.domain)
-        
+
+#==============================================================================
+class InterfaceIntegral(AtomicExpr):
+    _op_priority = 20
+
+    @property
+    def expr(self):
+        return self._args[0]
+
+    @property
+    def domain(self):
+        return self._args[1]
+
+    def __mul__(self, o):
+        return InterfaceIntegral(self.expr*o, self.domain)
+
+    def __rmul__(self, o):
+        return InterfaceIntegral(self.expr*o, self.domain)
+
+    def __eq__(self, a):
+        if isinstance(a, DomainIntegral):
+            eq = self.domain == a.domain
+            eq = eq and self.expr == a.expr
+            return eq
+        return False
+
+    def __hash__(self):
+        return hash(self.expr) + hash(self.domain)
+
+
 #==============================================================================
 class Functional(BasicForm):
     is_functional = True
@@ -372,9 +405,9 @@ class LinearForm(BasicForm):
 
         if expr == 0:
             return sy_Zero
-        
+
         expr = expand(expr)
-            
+
 
         domain = _get_domain(expr)
         args = _sanitize_arguments(arguments, is_linear=True)
@@ -449,19 +482,19 @@ class BilinearForm(BasicForm):
         integrals = expr.atoms(DomainIntegral, BoundaryIntegral)
         if not integrals:
             raise ValueError('Expecting integral Expression')
-            
+
         domain = _get_domain(expr)
 
         # ...
         if expr == 0:
             return sy_Zero
-            
+
         expr = expand(expr)
-        
+
         args = _sanitize_arguments(arguments, is_bilinear=True)
         obj = Basic.__new__(cls, args, expr)
         # ...
-        
+
         obj._domain = domain
         # ...
         return obj
@@ -535,16 +568,16 @@ class BilinearForm(BasicForm):
 
         # ...
         assert(len(args) == 2)
-        
+
         new_args = []
-        
+
         for arg in args:
-            
+
             if is_sequence(arg):
                 new_args += list(arg)
             else:
-                new_args.append(arg) 
-            
+                new_args.append(arg)
+
         args = Tuple(*new_args)
 
         variables = Tuple(*self.variables[0], *self.variables[1])
@@ -608,13 +641,13 @@ class Norm(Functional):
 
                 v = Tuple(*expr[:,0])
                 expr = Inner(Grad(v), Grad(v))
-                
+
         elif kind == 'h2'and eval :
             exponent = 2
 
             if not is_vector:
                 expr = Dot(Hessian(expr), Hessian(expr))
-                
+
             else:
                 raise NotImplementedError('TODO')
         # ...
@@ -639,12 +672,12 @@ def linearize(form, fields, trials=None):
 
     if not isinstance(fields, (list, tuple, Tuple)):
         fields = [fields]
-        
+
     fields = [f.space.field(str(f.name)) for f in fields]
     form   = form.annotate()
 
     for f in fields:
-        
+
         if not isinstance(f, (ScalarField, VectorField)):
             raise TypeError('{} is not ScalarField/VectorField'.format(f))
 
