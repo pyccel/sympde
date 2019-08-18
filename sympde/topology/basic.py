@@ -263,6 +263,21 @@ class Interface(BasicDomain):
     def plus(self):
         return self._args[2]
 
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        name  = self.name
+        minus = self.minus
+        plus  = self.plus
+        minus = '{domain}.{bnd}'.format( domain = sstr(minus.domain),
+                                         bnd    = sstr(minus) )
+        plus = '{domain}.{bnd}'.format( domain = sstr(plus.domain),
+                                         bnd    = sstr(plus) )
+        pattern = 'Interface( {name}; {minus}, {plus} )'
+        return pattern.format( name  = sstr(self.name),
+                               minus = minus,
+                               plus = plus )
+
+
 #==============================================================================
 class Edge(object):
     def __init__(self, name):

@@ -30,6 +30,7 @@ from sympde.topology import Mapping
 from sympde.topology import Square
 from sympde.topology import ElementDomain
 from sympde.topology import Area
+from sympde.topology import jump, avg, Dn
 
 from sympde.expr.expr import LinearExpr, BilinearExpr
 from sympde.expr.expr import LinearForm, BilinearForm
@@ -1715,6 +1716,13 @@ def test_interface_2d_1():
     u,v = elements_of(V, names='u, v')
 
     print(integral(interfaces, u*v))
+
+    expr  = integral(domain, dot(grad(v),grad(u)))
+    expr += integral(interfaces, - avg(Dn(u)) * jump(v)
+                                 + avg(Dn(v)) * jump(u))
+    a  = BilinearForm((u,v), expr)
+    print(a)
+
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
