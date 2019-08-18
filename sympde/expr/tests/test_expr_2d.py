@@ -33,7 +33,7 @@ from sympde.topology import Area
 
 from sympde.expr.expr import LinearExpr, BilinearExpr
 from sympde.expr.expr import LinearForm, BilinearForm
-from sympde.expr.expr import integral
+from sympde.expr.expr import integral, is_linear_form, is_bilinear_form
 from sympde.expr.expr import Functional, Norm
 from sympde.expr.expr import linearize
 from sympde.expr.evaluation import TerminalExpr
@@ -1508,6 +1508,165 @@ def test_bilinear_form_2d_4():
     assert(a.is_symmetric)
     # ...
 
+def test_linearity_linear_form_2d_1():
+
+    domain = Domain('Omega', dim=2)
+    B1 = Boundary(r'\Gamma_1', domain)
+
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+    nn    = NormalVector('nn')
+
+    V = ScalarFunctionSpace('V', domain)
+
+    u,u1,u2 = [element_of(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [element_of(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    # ...
+    int_0 = lambda expr: integral(domain , expr)
+    int_1 = lambda expr: integral(B1, expr)
+
+    l = LinearForm(v, int_0(x*y*v))
+    assert is_linear_form(l)
+
+    # ...
+    l = LinearForm(v, int_0(x*y*v + v))
+    assert is_linear_form(l)
+
+    # ...
+
+    # ...
+    g = Tuple(x**2, y**2)
+    l = LinearForm(v, int_1(v*dot(g, nn)))
+    assert is_linear_form(l)
+
+    # ...
+
+    # ...
+    g = Tuple(x**2, y**2)
+    l = LinearForm(v, int_1(v*dot(g, nn)) + int_0(x*y*v))
+    assert is_linear_form(l)
+
+    # ...
+
+    # ...
+    l1 = LinearForm(v1, int_0(x*y*v1))
+    l = LinearForm(v, l1(v))
+    assert is_linear_form(l)
+
+
+    # ...
+    g = Tuple(x,y)
+    l1 = LinearForm(v1, int_0(x*y*v1))
+    l2 = LinearForm(v2, int_0(dot(grad(v2), g)))
+
+    l = LinearForm(v, l1(v) + l2(v))
+    assert is_linear_form(l)
+
+    # ...
+
+    # ...
+    l1 = LinearForm(v1, int_0(x*y*v1))
+    l2 = LinearForm(v1, int_0(v1))
+    l = LinearForm(v, l1(v) + kappa*l2(v))
+    assert is_linear_form(l)
+
+    # ...
+
+    # ...
+    g = Tuple(x**2, y**2)
+    l1 = LinearForm(v1, int_0(x*y*v1))
+    l2 = LinearForm(v1, int_0(v1))
+    l3 = LinearForm(v, int_1(v*dot(g, nn)))
+    l = LinearForm(v, l1(v) + kappa*l2(v) + mu*l3(v))
+    assert is_linear_form(l)
+
+#==============================================================================
+def test_terminal_expr_bilinear_2d_1():
+
+    domain = Domain('Omega', dim=2)
+    B1 = Boundary(r'\Gamma_1', domain)
+
+    x,y = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu'   , is_real=True)
+    eps   = Constant('eps', real=True)
+    nn    = NormalVector('nn')
+
+    V = ScalarFunctionSpace('V', domain)
+
+    u,u1,u2 = [element_of(V, name=i) for i in ['u', 'u1', 'u2']]
+    v,v1,v2 = [element_of(V, name=i) for i in ['v', 'v1', 'v2']]
+
+    # ...
+
+    int_0 = lambda expr: integral(domain , expr)
+    int_1 = lambda expr: integral(B1, expr)
+
+    a = BilinearForm((u,v), int_0(u*v))
+    assert is_bilinear_form(a)
+
+
+    # ...
+    a = BilinearForm((u,v), int_0(dot(grad(u),grad(v))))
+    assert is_bilinear_form(a)
+
+    # ...
+
+    # ...
+    a = BilinearForm((u,v), int_0(u*v + dot(grad(u),grad(v))))
+    assert is_bilinear_form(a)
+
+    # ...
+
+    # ...
+    a = BilinearForm((u,v), int_0(u*v + dot(grad(u),grad(v))) + int_1(v*dot(grad(u), nn)) )
+    assert is_bilinear_form(a)
+
+
+    # ...
+    a = BilinearForm(((u1,u2),(v1,v2)), int_0(u1*v1 + u2*v2))
+    assert is_bilinear_form(a)
+
+    # ...
+    a1 = BilinearForm((u1,v1), int_0(u1*v1))
+    a = BilinearForm((u,v), a1(u,v))
+    assert is_bilinear_form(a)
+
+
+    # ...
+    a1 = BilinearForm((u1,v1), int_0(u1*v1))
+    a2 = BilinearForm((u2,v2), int_0(dot(grad(u2), grad(v2))))
+    a = BilinearForm((u,v), a1(u,v) + a2(u,v))
+    assert is_bilinear_form(a)
+
+
+    # ...
+    a1 = BilinearForm((u1,v1), int_0(u1*v1))
+    a2 = BilinearForm((u2,v2), int_0(dot(grad(u2), grad(v2))))
+    a = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v))
+    assert is_bilinear_form(a)
+
+    # ...
+    a1 = BilinearForm((u1,v1), int_0(u1*v1))
+    a2 = BilinearForm((u2,v2), int_0(dot(grad(u2), grad(v2))))
+    a3 = BilinearForm((u,v), int_1(v*dot(grad(u), nn)))
+    a = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v) + mu*a3(u,v))
+    assert is_bilinear_form(a)
+
+
+    # ... Poisson with Nitsch method
+    a0 = BilinearForm((u,v), int_0(dot(grad(u),grad(v))))
+    a_B1 = BilinearForm((u,v), int_1(- kappa * u*dot(grad(v), nn)
+                               - v*dot(grad(u), nn)
+                               + u*v / eps))
+    a = BilinearForm((u,v), a0(u,v) + a_B1(u,v))
+    assert is_bilinear_form(a)
+
+    # ...
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE

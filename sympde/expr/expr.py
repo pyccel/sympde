@@ -67,6 +67,8 @@ from .basic  import is_linear_form, _sanitize_arguments
 
 def expand(expr):
     from sympy import expand
+    if isinstance(expr, Tuple):
+        return expr
     expr = expand(expr)
     _, args = expr.as_coeff_add()
     args = list(args)
@@ -193,19 +195,17 @@ class Integral(CalculusFunction):
     @staticmethod
     def eval(expr, domain):
         """."""
+        expr = expand(expr)
 
-        if not isinstance(expr, (BasicExpr, Expr)):
-            raise TypeError('')
+        if not isinstance(expr, Expr):
+            raise TypeError('only Expr are accepted')
 
         if isinstance(expr, sy_Zero):
             return sy_Zero
             
-        if isinstance(expr, BasicExpr):
-            expr = expr.expr
-            
         if isinstance(expr, Add):
             args = [Integral.eval(a, domain) for a in expr.args]
-            return Add(*args)
+            return expr._new_rawargs(*args)
             
         if isinstance(domain, Union):
             expr = [Integral.eval(expr, d) for d in domain.args]
@@ -251,7 +251,7 @@ class BoundaryIntegral(AtomicExpr):
     
     def __new__(cls, expr, domain):
     
-        atoms_1 = list(expr.atoms(Dot,Trace))
+        atoms_1 = list(expr.atoms(Dot, Trace))
         
         for i in range(len(atoms_1)):
             a = atoms_1[i]
@@ -446,7 +446,7 @@ class BilinearForm(BasicForm):
     def __new__(cls, arguments, expr):
 
         # ...
-        integrals = expr.atoms(DomainIntegral,BoundaryIntegral)
+        integrals = expr.atoms(DomainIntegral, BoundaryIntegral)
         if not integrals:
             raise ValueError('Expecting integral Expression')
             
@@ -725,7 +725,136 @@ def linearize(form, fields, trials=None):
 
     else:
         return BilinearExpr(test_trial, expr)
+
+#==============================================================================
+def is_bilinear_form(expr):
+    """checks if an expression is bilinear with respect to the given arguments."""
+
+    assert isinstance(expr, BilinearForm)
+
+    test_functions  = expr.test_functions
+    trial_functions = expr.trial_functions
+    expr = expr.expr
+
+    # ...
+    if not is_linear_expression(expr, test_functions):
+        msg = ' Expression is not linear w.r.t [{}]'.format(test_functions)
+        raise UnconsistentLinearExpressionError(msg)
+    # ...
+
+    # ...
+    if not is_linear_expression(expr, trial_functions):
+        msg = ' Expression is not linear w.r.t [{}]'.format(trial_functions)
+        raise UnconsistentLinearExpressionError(msg)
+    # ...
+
+    return True
+
+#==============================================================================
+def is_linear_form(expr):
+    """checks if an expression is linear with respect to the given arguments."""
+    # ...
+    assert isinstance(expr, LinearForm)
+
+    test_functions = expr.test_functions
+    expr           = expr.expr
+
+    if not is_linear_expression(expr, test_functions):
+        msg = ' Expression is not linear w.r.t [{}]'.format(test_functions)
+        raise UnconsistentLinearExpressionError(msg)
+    # ...
+
+    return True
+
+#==============================================================================
+def is_linear_expression(expr, args, debug=True):
+    """checks if an expression is linear with respect to the given arguments."""
+    # ...
+    left_args  = []
+    right_args = []
+
+    for arg in args:
+        tag    = random_string( 4 )
+
+        if isinstance(arg, ScalarTestFunction):
+            left  = ScalarTestFunction(arg.space, name='l_' + tag)
+            right = ScalarTestFunction(arg.space, name='r_' + tag)
+
+        elif isinstance(arg, VectorTestFunction):
+            left  = VectorTestFunction(arg.space, name='l_' + tag)
+            right = VectorTestFunction(arg.space, name='r_' + tag)
+        else:
+            raise TypeError('argument must be a TestFunction')
+
+        left_args  += [left]
+        right_args += [right]
+    # ...
+
+    # ... check addition
+    newexpr = expr
+    for arg, left, right in zip(args, left_args, right_args):
+        newarg  = left + right
+        newexpr = newexpr.subs(arg, newarg)
+
+    integrals = newexpr.atoms(DomainIntegral, BoundaryIntegral)
+
+    for a in integrals:
+        newexpr,_ = newexpr._xreplace({a:integral(a.domain, a.expr)})
+
+    left_expr = expr
+    for arg, left in zip(args, left_args):
+        left_expr = left_expr.subs(arg, left)
+
+    right_expr = expr
+    for arg, right in zip(args, right_args):
+        right_expr = right_expr.subs(arg, right)
+
+    if not( newexpr == left_expr + right_expr ):
+        # TODO use a warning or exception?
+        if debug:
+            print('Failed to assert addition property')
+            print(newexpr , left_expr + right_expr)
+
+#            print('===========')
+#            print(arg, left, right)
+#
+#            print(expand(newexpr))
+#            print(expand(left_expr))
+#            print(expand(right_expr))
+#            print(expand(newexpr) - expand(left_expr) - expand(right_expr))
+#            import sys; sys.exit(0)
+
+
+        return False
         
+    # ...
+
+    # ... check multiplication
+    tag   = random_string( 4 )
+    coeff = Constant('alpha_' + tag)
+
+    newexpr = expr
+    for arg, left in zip(args, left_args):
+        newarg  = coeff * left
+        newexpr = newexpr.subs(arg, newarg)
+
+    left_expr = expr
+    for arg, left in zip(args, left_args):
+        left_expr = left_expr.subs(arg, left)
+
+    left_expr = coeff * left_expr.subs(arg, left)
+
+    if not( expand(newexpr) == expand(left_expr)):
+        # TODO use a warning or exception?
+        if debug:
+            print('Failed to assert multiplication property')
+
+        return False
+    # ...
+
+    return True
+
+
 def integral(domain, expr):
     """."""
     return Integral(expr, domain)
