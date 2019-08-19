@@ -10,6 +10,7 @@ from sympde.topology import Connectivity, Edge
 from sympde.topology import Domain, ElementDomain
 from sympde.topology import Area
 from sympde.topology import Interface
+from sympde.topology import Line, Square
 
 import os
 
@@ -133,6 +134,79 @@ def test_element():
 
     assert(Area(D) ==  Area(D1) + Area(D2))
 
+#==============================================================================
+def test_domain_join_line():
+
+    # ... line
+    A = Line('A')
+    B = Line('B')
+    C = Line('C')
+    # ...
+
+    # ...
+    AB = A.join(B, name = 'AB',
+               bnd_minus = A.get_boundary(axis=0, ext=1),
+               bnd_plus  = B.get_boundary(axis=0, ext=-1))
+
+    print(AB)
+    print(AB.interior)
+    print(AB.interfaces)
+    print(AB.connectivity)
+    print('')
+    # ...
+
+    # ...
+    AB = A.join(B, name = 'AB',
+               bnd_minus = A.get_boundary(axis=0, ext=1),
+               bnd_plus  = B.get_boundary(axis=0, ext=-1))
+    ABC = AB.join(C, name = 'ABC',
+               bnd_minus = B.get_boundary('Gamma_2'),
+               bnd_plus  = C.get_boundary('Gamma_1'))
+
+    print(ABC)
+    print(ABC.interior)
+    print(ABC.interfaces)
+    print(list(ABC.connectivity.items()))
+    print('')
+    # ...
+
+#==============================================================================
+def test_domain_join_square():
+
+    # ... line
+    A = Square('A')
+    B = Square('B')
+    C = Square('C')
+    # ...
+
+    # ...
+    AB = A.join(B, name = 'AB',
+               bnd_minus = A.get_boundary(axis=0, ext=1),
+               bnd_plus  = B.get_boundary(axis=0, ext=-1))
+
+    print(AB)
+    print(AB.interior)
+    print(AB.interfaces)
+    print(AB.connectivity)
+    print('')
+    # ...
+
+    # ...
+    AB = A.join(B, name = 'AB',
+               bnd_minus = A.get_boundary(axis=0, ext=1),
+               bnd_plus  = B.get_boundary(axis=0, ext=-1))
+    ABC = AB.join(C, name = 'ABC',
+               bnd_minus = B.get_boundary('Gamma_2'),
+               bnd_plus  = C.get_boundary('Gamma_1'))
+
+    print(ABC)
+    print(ABC.interior)
+    print(ABC.interfaces)
+    print(list(ABC.connectivity.items()))
+    print('')
+    # ...
+
+
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
@@ -145,3 +219,6 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
+
+#test_domain_join_line()
+test_domain_join_square()

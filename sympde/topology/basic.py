@@ -95,6 +95,13 @@ class Union(BasicDomain):
      #   if not all( [d == dim for d in dims]):
      #       raise ValueError('arguments must have the same dimension')
 
+        # ...
+        unions = [a for a in args if isinstance(a, Union)]
+        args   = [a for a in args if not isinstance(a, Union)]
+        for union in unions:
+            args += list(union.as_tuple())
+        # ...
+
         # sort domains by name
         args = sorted(args, key=lambda x: x.name)
 
@@ -126,6 +133,10 @@ class Union(BasicDomain):
     def todict(self):
         return [i.todict() for i in self._args]
 
+    def as_tuple(self):
+        ls = [i for i in self._args]
+        return tuple(ls)
+
 #==============================================================================
 class ProductDomain(BasicDomain):
     def __new__(cls, *args, name=None):
@@ -153,19 +164,28 @@ class Interval(InteriorDomain):
 
     """
     _dim = 1
-    def __new__(cls, name=None, coordinate=None):
+    def __new__(cls, name=None, coordinate=None, bounds=None):
         if name is None:
             name = 'Interval'
+
+        if bounds is None:
+            bounds = (0, 1)
 
         obj = Basic.__new__(cls, name)
         if coordinate:
             obj._coordinates = [coordinate]
+
+        obj._bounds = bounds
 
         return obj
 
     @property
     def name(self):
         return self._args[0]
+
+    @property
+    def bounds(self):
+        return self._bounds
 
 #==============================================================================
 class Boundary(BasicDomain):
@@ -286,6 +306,9 @@ class Edge(object):
     @property
     def name(self):
         return self._name
+
+    def __lt__(self, other):
+        return self.name.__lt__(other.name)
 
 
 #==============================================================================

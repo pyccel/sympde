@@ -56,6 +56,11 @@ class Domain(BasicDomain):
                 interiors = [interiors]
 
             else:
+                unions    = [i for i in interiors if isinstance(i, Union)]
+                interiors = [i for i in interiors if not isinstance(i, Union)]
+                for union in unions:
+                    interiors += list(union.as_tuple())
+
                 if not all([isinstance(i, InteriorDomain) for i in interiors]):
                     raise TypeError('> all interiors must be of type InteriorDomain')
 
@@ -168,8 +173,38 @@ class Domain(BasicDomain):
         sstr = printer.doprint
         return '{}'.format(sstr(self.name))
 
-    def get_boundary(self, name):
-        """return boundary by name."""
+    def get_boundary(self, name=None, axis=None, ext=None):
+        """return boundary by name or (axis, ext)."""
+        # ...
+        if name is None:
+            assert(not( ext  is None ))
+
+            if axis is None:
+                assert(self.interior.dim == 1)
+                axis = 0
+
+            if axis == 0:
+                if ext == -1:
+                    name = 'Gamma_1'
+
+                if ext == 1:
+                    name = 'Gamma_2'
+
+            if axis == 1:
+                if ext == -1:
+                    name = 'Gamma_3'
+
+                if ext == 1:
+                    name = 'Gamma_4'
+
+            if axis == 2:
+                if ext == -1:
+                    name = 'Gamma_5'
+
+                if ext == 1:
+                    name = 'Gamma_6'
+        # ...
+
         if isinstance(self.boundary, Union):
             x = [i for i in self.boundary._args if i.name == name]
             if len(x) == 0:
@@ -310,6 +345,35 @@ class Domain(BasicDomain):
                               boundaries=boundary,
                               connectivity=connectivity)
 
+    def join(self, other, name, bnd_minus, bnd_plus):
+        # ... interiors
+        interiors = [self.interior, other.interior]
+        # ...
+
+        # ... connectivity
+        connectivity = Connectivity()
+        connectivity['{l}{r}'.format(l=self.name, r=other.name)] = (bnd_minus, bnd_plus)
+
+        for k,v in self.connectivity.items():
+            connectivity[k] = v
+
+        for k,v in other.connectivity.items():
+            connectivity[k] = v
+        # ...
+
+        # ... boundary
+        boundaries_minus = self.boundary.complement(bnd_minus)
+        boundaries_plus  = other.boundary.complement(bnd_plus)
+
+        boundaries = Union(boundaries_minus, boundaries_plus)
+        boundaries = boundaries.as_tuple()
+        # ...
+
+        return Domain(name,
+                      interiors=interiors,
+                      boundaries=boundaries,
+                      connectivity=connectivity)
+
 #==============================================================================
 class PeriodicDomain(BasicDomain):
 
@@ -357,12 +421,12 @@ class PeriodicDomain(BasicDomain):
 
 #==============================================================================
 class Line(Domain):
-    def __new__(cls, name=None):
+    def __new__(cls, name=None, bounds=None):
         if name is None:
             name = 'Line'
 
         x  = Symbol('x')
-        Ix = Interval(name, coordinate=x)
+        Ix = Interval(name, coordinate=x, bounds=bounds)
 
         Gamma_1 = Boundary('Gamma_1', Ix, axis=0, ext=-1)
         Gamma_2 = Boundary('Gamma_2', Ix, axis=0, ext=1)
@@ -525,4 +589,59 @@ class Area(BasicGeometryOperator):
 #            return DomainArea(expr)
 
         return cls(expr, evaluate=False)
+
+
+
+#==============================================================================
+def split(domain, value):
+    if domain.dtype['type'] == 'Line':
+        assert(isinstance(value, (int, float)))
+
+        # TODO assert value <- bounds
+        bounds = domain.interior.bounds
+
+        # ... left
+        bounds = (bounds[0], value)
+        I_left = Line(name='{name}_l'.format(name=domain.name),
+                      bounds=bounds)
+        # ...
+
+        # ... right
+        bounds = (value, bounds[1])
+        I_right = Line(name='{name}_r'.format(name=domain.name),
+                       bounds=bounds)
+        # ...
+
+        # ... interiors
+        interiors = [I_left.interior, I_right.interior]
+        # ...
+
+        # ... external boundaries
+        bnd_left = [b for b in I_left.boundary.as_tuple() if b.ext == -1]
+        bnd_left = bnd_left[0]
+
+        bnd_right = [b for b in I_right.boundary.as_tuple() if b.ext == 1]
+        bnd_right = bnd_right[0]
+
+        boundaries = [bnd_left, bnd_right]
+        # ...
+
+        # ... connectivity: internal interfaces
+        int_left = [b for b in I_left.boundary.as_tuple() if b.ext == 1]
+        int_left = int_left[0]
+
+        int_right = [b for b in I_right.boundary.as_tuple() if b.ext == -1]
+        int_right = int_right[0]
+
+        connectivity = Connectivity()
+        connectivity['I'] = (int_left, int_right)
+        # ...
+
+        return Domain(domain.name,
+                      interiors=interiors,
+                      boundaries=boundaries,
+                      connectivity=connectivity)
+
+    else:
+        raise NotImplementedError('TODO')
 
