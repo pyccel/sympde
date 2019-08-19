@@ -9,6 +9,7 @@ from sympde.topology import Boundary, NormalVector, TangentVector
 from sympde.topology import Connectivity, Edge
 from sympde.topology import Domain, ElementDomain
 from sympde.topology import Area
+from sympde.topology import Interface
 
 import os
 
@@ -55,6 +56,9 @@ def test_topology_1():
                    interiors=[A, B],
                    boundaries=[bnd_A_2, bnd_A_3, bnd_B_1, bnd_B_3],
                    connectivity=connectivity)
+
+    interfaces = Omega.interfaces
+    assert(isinstance(interfaces, Interface))
 
     # export
     Omega.export('omega.h5')

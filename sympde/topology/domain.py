@@ -95,7 +95,7 @@ class Domain(BasicDomain):
         if not dim is None:
             assert(isinstance( dim, int ))
 
-            interiors = [InteriorDomain(name, dtype=dtype, dim=dim)]
+            interiors = [InteriorDomain(name, dim=dim)]
         # ...
 
         # ...
@@ -143,6 +143,10 @@ class Domain(BasicDomain):
     @property
     def dtype(self):
         return self._dtype
+
+    @property
+    def interfaces(self):
+        return self.connectivity.interfaces
 
     def __len__(self):
         if isinstance(self.interior, InteriorDomain):
@@ -259,7 +263,7 @@ class Domain(BasicDomain):
             return constructor(domain_name, **dtype['parameters'])
 
         # ... create sympde InteriorDomain (s)
-        interior = [InteriorDomain(i['name'], dim=dim, dtype=dtype) for i in d_interior]
+        interior = [InteriorDomain(i['name'], dim=dim) for i in d_interior]
 
         # create a dict of interiors accessed by name => needed for boundaries
         d_interior = {}
@@ -310,7 +314,7 @@ class Domain(BasicDomain):
 class PeriodicDomain(BasicDomain):
 
     def __init__(self, domain, periods):
-    
+
         assert isinstance(domain, Domain)
         self._domain = domain
         self._periods = tuple(periods)
@@ -322,35 +326,35 @@ class PeriodicDomain(BasicDomain):
                 names += [bd['name']]
 
         boundary = [bd for bd in domain.boundary.args if bd.name not in names]
-        
+
         if len(boundary)>1:
             self._boundary = Union(*boundary)
         else:
             self._boundary = None
-    
+
     @property
     def domain(self):
         return self._domain
-        
+
     @property
     def periods(self):
         return self._periods
-        
+
     @property
     def boundary(self):
         return self._boundary
-        
+
     @property
     def dim(self):
         return self.domain.dim
-        
+
     @property
     def coordinates(self):
         return self.domain.coordinates
-        
+
     def __hash__(self):
         return self.domain.__hash__() + self._periods.__hash__()
- 
+
 #==============================================================================
 class Line(Domain):
     def __new__(cls, name=None):
@@ -368,10 +372,8 @@ class Line(Domain):
 
         dtype = {'type': 'Line', 'parameters': {}}
 
-        interior   = InteriorDomain(interior, dtype=dtype)
-        
         return Domain(name, interiors=[interior],
-                      boundaries=boundaries, dim=1, dtype=dtype)
+                      boundaries=boundaries, dtype=dtype)
 
 
 #==============================================================================
@@ -398,10 +400,10 @@ class Square(Domain):
 
                 i += 1
 
+        interior = InteriorDomain(interior)
+
         dtype = {'type': 'Square', 'parameters': {}}
 
-        interior = InteriorDomain(name, target=interior, dim=2, dtype=dtype)
-        
         return Domain(name, interiors=[interior],
                       boundaries=boundaries, dtype=dtype)
 
@@ -433,12 +435,12 @@ class Cube(Domain):
 
                 i += 1
 
+        interior = InteriorDomain(interior)
+
         dtype = {'type': 'Cube', 'parameters': {}}
-        
-        interior = InteriorDomain(interior, dtype=dtype)
 
         return Domain(name, interiors=[interior],
-                      boundaries=boundaries, dim=3, dtype=dtype)
+                      boundaries=boundaries, dtype=dtype)
 
 
 #==============================================================================

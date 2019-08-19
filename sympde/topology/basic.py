@@ -43,7 +43,8 @@ class InteriorDomain(BasicDomain):
     Examples
 
     """
-    def __new__(cls, name, target=None ,dtype=None, dim=None):
+    def __new__(cls, name, dim=None):
+        target = None
         if not isinstance(name, str):
             target = name
             name   = name.name
@@ -56,7 +57,6 @@ class InteriorDomain(BasicDomain):
 
         obj._dim    = dim
         obj._target = target
-        obj._dtype  = dtype
 
         return obj
 
@@ -67,10 +67,6 @@ class InteriorDomain(BasicDomain):
     @property
     def target(self):
         return self._target
-        
-    @property
-    def dtype(self):
-        return self._dtype
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -235,10 +231,51 @@ class Boundary(BasicDomain):
              'ext':   ext}
 
         return OrderedDict(sorted(d.items()))
-        
+
     def __lt__(self, other):
         #add this method to avoid sympy error in Basic.compare
         return 0
+
+#==============================================================================
+class Interface(BasicDomain):
+    """
+    Represents an interface between two subdomains through two boundaries.
+
+    Examples
+
+    """
+    def __new__(cls, edge, bnd_minus, bnd_plus):
+        assert(isinstance(edge, Edge))
+        assert(isinstance(bnd_minus, Boundary))
+        assert(isinstance(bnd_plus, Boundary))
+
+        return Basic.__new__(cls, edge.name, bnd_minus, bnd_plus)
+
+    @property
+    def name(self):
+        return self._args[0]
+
+    @property
+    def minus(self):
+        return self._args[1]
+
+    @property
+    def plus(self):
+        return self._args[2]
+
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        name  = self.name
+        minus = self.minus
+        plus  = self.plus
+        minus = '{domain}.{bnd}'.format( domain = sstr(minus.domain),
+                                         bnd    = sstr(minus) )
+        plus = '{domain}.{bnd}'.format( domain = sstr(plus.domain),
+                                         bnd    = sstr(plus) )
+        pattern = 'Interface( {name}; {minus}, {plus} )'
+        return pattern.format( name  = sstr(self.name),
+                               minus = minus,
+                               plus = plus )
 
 
 #==============================================================================
@@ -258,26 +295,27 @@ class Connectivity(abc.Mapping):
     def __init__(self, data=None):
         if data is None:
             data = {}
-            axis = None
 
         else:
             assert( isinstance( data, (dict, OrderedDict)) )
-            
-            for val in data.values():
-                axis = val[0].axis
-                for bd in val:
-                    assert axis == bd.axis
-                
-        self._axis = axis
+
         self._data = data
 
     @property
     def patches(self):
         return self._patches
-        
+
     @property
-    def axis(self):
-        return self._axis
+    def interfaces(self):
+        ls = []
+        data = OrderedDict(sorted(self._data.items()))
+        for k, (minus, plus) in data.items():
+            ls.append(Interface(k, minus, plus))
+
+        if len(ls) == 1:
+            return ls[0]
+        else:
+            return ls
 
     def todict(self):
         # ... create the connectivity
@@ -299,11 +337,7 @@ class Connectivity(abc.Mapping):
         assert( isinstance( value, (tuple, list)  ) )
         assert( len(value) in [1, 2] )
         assert( all( [isinstance( P, Boundary ) for P in value ] ) )
-        
-        axis = value[0].axis
-        assert ( all( axis == P.axis for P in value ) )
-        
-        self._axis = axis
+
         self._data[key] = value
 
     # ==========================================
@@ -317,12 +351,12 @@ class Connectivity(abc.Mapping):
 
     def __len__(self):
         return len(self._data)
-        
+
     def __hash__(self):
         return hash(tuple(self._data.values()))
-        
+
     def __lt__(self, other):
         #add this method to avoid sympy error in Basic.compare
         return 0
-        
+
     # ==========================================

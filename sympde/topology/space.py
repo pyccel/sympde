@@ -11,9 +11,11 @@ from sympy.core.containers import Tuple
 from sympy import Integer, Float, expand
 from sympy import Function
 from sympy.core.numbers import Zero as sy_Zero
+from sympy.core.singleton import S
 
-from sympde.core.basic import _coeffs_registery, CalculusFunction
 from sympde.core.utils import random_string
+from sympde.core.basic import CalculusFunction
+from sympde.core.basic import _coeffs_registery
 from .basic import BasicDomain, Union
 from .datatype import SpaceType, dtype_space_registry
 from .datatype import RegularityType, dtype_regularity_registry
@@ -24,6 +26,12 @@ def element_of(space, name):
     if isinstance(name, (list,tuple,Tuple)):
         return [space.element(nm) for nm in name]
     return space.element(name)
+
+def elements_of(space, names):
+    assert(isinstance(names, str))
+    names = names.split(',')
+    names = [n.replace(' ', '') for n in names]
+    return [element_of(space, n) for n in names]
 
 #==============================================================================
 class BasicFunctionSpace(Basic):
@@ -115,7 +123,7 @@ class ScalarFunctionSpace(BasicFunctionSpace):
 
     def element(self, name):
         return ScalarTestFunction(self, name)
-        
+
     def field(self, name):
         return ScalarField(self, name)
 
@@ -130,7 +138,7 @@ class VectorFunctionSpace(BasicFunctionSpace):
 
     def element(self, name):
         return VectorTestFunction(self, name)
-        
+
     def field(self, name):
         return VectorField(self, name)
 
@@ -143,17 +151,17 @@ class Derham:
         self._V1  = None
         self._V2  = None
         self._V3  = None
-        
+
         if shape == 1:
             spaces = [ScalarFunctionSpace('H1', domain, kind='H1'),
                       ScalarFunctionSpace('L2', domain, kind='L2')]
-            
+
             self._V0  = spaces[0]
             self._V1  = spaces[1]
 
         elif shape == 2:
             assert sequence is not None
-            
+
             space = sequence[1]
             spaces = [ScalarFunctionSpace('H1', domain, kind='H1'),
                       VectorFunctionSpace(space, domain, kind=space),
@@ -162,19 +170,19 @@ class Derham:
             self._V0  = spaces[0]
             self._V1  = spaces[1]
             self._V2  = spaces[2]
-                        
+
         elif shape == 3:
             spaces = [ScalarFunctionSpace('H1', domain, kind='H1'),
                       VectorFunctionSpace('Hcurl', domain, kind='Hcurl'),
                       VectorFunctionSpace('Hdiv', domain, kind='Hdiv'),
                       ScalarFunctionSpace('L2', domain, kind='L2')]
-                   
+
             self._V0  = spaces[0]
             self._V1  = spaces[1]
             self._V2  = spaces[2]
             self._V3  = spaces[3]
-            
-                        
+
+
         self._spaces = spaces
         self._domain = domain
         self._shape  = shape
@@ -184,27 +192,27 @@ class Derham:
     @property
     def spaces(self):
         return self._spaces
-        
+
     @property
     def domain(self):
         return self._domain
-        
+
     @property
     def shape(self):
         return self._shape
-        
+
     @property
     def V0(self):
         return self._V0
 
     @property
     def V1(self):
-        return self._V1        
+        return self._V1
 
     @property
     def V2(self):
         return self._V2
-        
+
     @property
     def V3(self):
         return self._V3
@@ -251,7 +259,7 @@ class ProductSpace(BasicFunctionSpace):
 
         # ... all spaces must have the same domain
         domain = spaces[0].domain
-        
+
         #TODO uncomment
         #for space in spaces:
         #    if not(space.domain is domain):
@@ -314,7 +322,7 @@ class ProductSpace(BasicFunctionSpace):
     @property
     def shape(self):
         return self._shape
-        
+
     def element(self, name):
         raise NotImplementedError('TODO')
 
@@ -355,7 +363,6 @@ class ScalarTestFunction(Symbol):
     def _sympystr(self, printer):
         sstr = printer.doprint
         return sstr(self.name)
-
 
 #==============================================================================
 # this class is needed, otherwise sympy will convert VectorTestFunction to
@@ -612,12 +619,12 @@ class VectorField(Symbol, IndexedBase):
 
         if not(len(args) == 1):
             raise ValueError('expecting exactly one argument')
- 
+
         args = list(args)
         for i in range(len(args)):
             if isinstance(args[i], int):
                 args[i] = Integer(args[i])
-                       
+
         assumptions ={}
         obj = IndexedVectorField(self, *args)
         return obj
@@ -818,3 +825,382 @@ class Projection(AtomicExpr):
     @property
     def expr(self):
         return self._args[1]
+
+#==============================================================================
+class BasicOperator(CalculusFunction):
+    """
+    Basic class for calculus operators.
+    """
+
+    def __getitem__(self, indices, **kw_args):
+        if is_sequence(indices):
+            # Special case needed because M[*my_tuple] is a syntax error.
+            return Indexed(self, *indices, **kw_args)
+        else:
+            return Indexed(self, indices, **kw_args)
+
+#==============================================================================
+class NormalDerivative(BasicOperator):
+    """
+    Represents the normal derivative.
+
+    This operator implements the properties of addition and multiplication
+
+    Examples
+
+    """
+
+    def __new__(cls, *args, **options):
+        # (Try to) sympify args first
+
+        if options.pop('evaluate', True):
+            r = cls.eval(*args)
+        else:
+            r = None
+
+        if r is None:
+            return Basic.__new__(cls, *args, **options)
+        else:
+            return r
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        if not len(_args) == 1:
+            raise ValueError('Expecting one argument')
+
+        expr = _args[0]
+        if isinstance(expr, Add):
+            args = [cls.eval(a) for a in expr.args]
+            return Add(*args)
+
+        elif isinstance(expr, Mul):
+            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            vectors = [a for a in expr.args if not(a in coeffs)]
+
+            a = S.One
+            if coeffs:
+                a = Mul(*coeffs)
+
+            b = S.One
+            if vectors:
+                try:
+                    if len(vectors) == 1:
+                        f = vectors[0]
+                        b = cls(f)
+
+                    elif len(vectors) == 2:
+                        f,g = vectors
+                        b = f*cls(g) + g*cls(f)
+
+                    else:
+                        left = vectors[0]
+                        right = Mul(*vectors[1:])
+
+                        f_left  = cls(left, evaluate=True)
+                        f_right = cls(right, evaluate=True)
+
+                        b = left * f_right + f_left * right
+
+                except:
+                    b = cls(Mul(*vectors), evaluate=False)
+
+            return Mul(a, b)
+
+        return cls(expr, evaluate=False)
+
+#==============================================================================
+class Jump(BasicOperator):
+    """
+    Represents the jump of an expression at the interface of two subdomains.
+
+    This operator implements the properties of addition and multiplication
+
+    Examples
+
+    """
+
+    def __new__(cls, *args, **options):
+        # (Try to) sympify args first
+
+        if options.pop('evaluate', True):
+            r = cls.eval(*args)
+        else:
+            r = None
+
+        if r is None:
+            return Basic.__new__(cls, *args, **options)
+        else:
+            return r
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        if not len(_args) == 1:
+            raise ValueError('Expecting one argument')
+
+        expr = _args[0]
+        if isinstance(expr, Add):
+            args = [cls.eval(a) for a in expr.args]
+            return Add(*args)
+
+        elif isinstance(expr, Mul):
+            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            vectors = [a for a in expr.args if not(a in coeffs)]
+
+            a = S.One
+            if coeffs:
+                a = Mul(*coeffs)
+
+            b = S.One
+            if vectors:
+                try:
+                    if len(vectors) == 1:
+                        f = vectors[0]
+                        b = cls(f)
+
+                    elif len(vectors) == 2:
+                        f,g = vectors
+                        b = f*cls(g) + g*cls(f)
+
+                    else:
+                        left = vectors[0]
+                        right = Mul(*vectors[1:])
+
+                        f_left  = cls(left, evaluate=True)
+                        f_right = cls(right, evaluate=True)
+
+                        b = left * f_right + f_left * right
+
+                except:
+                    b = cls(Mul(*vectors), evaluate=False)
+
+            return Mul(a, b)
+
+        return cls(expr, evaluate=False)
+
+#==============================================================================
+class Average(BasicOperator):
+    """
+    Represents the average of an expression at the interface of two subdomains.
+
+    This operator implements the properties of addition and multiplication
+
+    Examples
+
+    """
+
+    def __new__(cls, *args, **options):
+        # (Try to) sympify args first
+
+        if options.pop('evaluate', True):
+            r = cls.eval(*args)
+        else:
+            r = None
+
+        if r is None:
+            return Basic.__new__(cls, *args, **options)
+        else:
+            return r
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        if not len(_args) == 1:
+            raise ValueError('Expecting one argument')
+
+        expr = _args[0]
+        if isinstance(expr, Add):
+            args = [cls.eval(a) for a in expr.args]
+            return Add(*args)
+
+        elif isinstance(expr, Mul):
+            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            vectors = [a for a in expr.args if not(a in coeffs)]
+
+            a = S.One
+            if coeffs:
+                a = Mul(*coeffs)
+
+            b = S.One
+            if vectors:
+                try:
+                    if len(vectors) == 1:
+                        f = vectors[0]
+                        b = cls(f)
+
+                    elif len(vectors) == 2:
+                        f,g = vectors
+                        b = f*cls(g) + g*cls(f)
+
+                    else:
+                        left = vectors[0]
+                        right = Mul(*vectors[1:])
+
+                        f_left  = cls(left, evaluate=True)
+                        f_right = cls(right, evaluate=True)
+
+                        b = left * f_right + f_left * right
+
+                except:
+                    b = cls(Mul(*vectors), evaluate=False)
+
+            return Mul(a, b)
+
+        return cls(expr, evaluate=False)
+
+#==============================================================================
+class MinusInterfaceOperator(BasicOperator):
+    """
+    """
+
+    def __new__(cls, *args, **options):
+        # (Try to) sympify args first
+
+        if options.pop('evaluate', True):
+            r = cls.eval(*args)
+        else:
+            r = None
+
+        if r is None:
+            return Basic.__new__(cls, *args, **options)
+        else:
+            return r
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        if not len(_args) == 1:
+            raise ValueError('Expecting one argument')
+
+        expr = _args[0]
+        if isinstance(expr, Add):
+            args = [cls.eval(a) for a in expr.args]
+            return Add(*args)
+
+        elif isinstance(expr, Mul):
+            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            vectors = [a for a in expr.args if not(a in coeffs)]
+
+            a = S.One
+            if coeffs:
+                a = Mul(*coeffs)
+
+            b = S.One
+            if vectors:
+                try:
+                    if len(vectors) == 1:
+                        f = vectors[0]
+                        b = cls(f)
+
+                    elif len(vectors) == 2:
+                        f,g = vectors
+                        b = f*cls(g) + g*cls(f)
+
+                    else:
+                        left = vectors[0]
+                        right = Mul(*vectors[1:])
+
+                        f_left  = cls(left, evaluate=True)
+                        f_right = cls(right, evaluate=True)
+
+                        b = left * f_right + f_left * right
+
+                except:
+                    b = cls(Mul(*vectors), evaluate=False)
+
+            return Mul(a, b)
+
+        return cls(expr, evaluate=False)
+
+#==============================================================================
+class PlusInterfaceOperator(BasicOperator):
+    """
+    """
+
+    def __new__(cls, *args, **options):
+        # (Try to) sympify args first
+
+        if options.pop('evaluate', True):
+            r = cls.eval(*args)
+        else:
+            r = None
+
+        if r is None:
+            return Basic.__new__(cls, *args, **options)
+        else:
+            return r
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        if not len(_args) == 1:
+            raise ValueError('Expecting one argument')
+
+        expr = _args[0]
+        if isinstance(expr, Add):
+            args = [cls.eval(a) for a in expr.args]
+            return Add(*args)
+
+        elif isinstance(expr, Mul):
+            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            vectors = [a for a in expr.args if not(a in coeffs)]
+
+            a = S.One
+            if coeffs:
+                a = Mul(*coeffs)
+
+            b = S.One
+            if vectors:
+                try:
+                    if len(vectors) == 1:
+                        f = vectors[0]
+                        b = cls(f)
+
+                    elif len(vectors) == 2:
+                        f,g = vectors
+                        b = f*cls(g) + g*cls(f)
+
+                    else:
+                        left = vectors[0]
+                        right = Mul(*vectors[1:])
+
+                        f_left  = cls(left, evaluate=True)
+                        f_right = cls(right, evaluate=True)
+
+                        b = left * f_right + f_left * right
+
+                except:
+                    b = cls(Mul(*vectors), evaluate=False)
+
+            return Mul(a, b)
+
+        return cls(expr, evaluate=False)
+
+#==============================================================================
+# user friendly functions
+jump  = Jump
+avg   = Average
+Dn    = NormalDerivative
+minus = MinusInterfaceOperator
+plus  = PlusInterfaceOperator
