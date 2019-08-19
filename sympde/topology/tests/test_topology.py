@@ -219,6 +219,3 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
-
-#test_domain_join_line()
-test_domain_join_square()
