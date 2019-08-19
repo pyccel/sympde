@@ -16,7 +16,7 @@ from sympy.core.singleton import S
 from sympde.core.utils import random_string
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import _coeffs_registery
-from .basic import BasicDomain, Union
+from .basic import BasicDomain, Union, Interval
 from .datatype import SpaceType, dtype_space_registry
 from .datatype import RegularityType, dtype_regularity_registry
 
@@ -45,6 +45,7 @@ class BasicFunctionSpace(Basic):
     _shape      = None
     _kind       = None
     _regularity = None # TODO pass it as arg to __new__
+    _is_broken  = None
     def __new__(cls, name, domain, shape, kind):
 
         if not isinstance(domain, BasicDomain):
@@ -75,6 +76,17 @@ class BasicFunctionSpace(Basic):
             obj._regularity = dtype_regularity_registry[kind_str]
         # ...
 
+        # ...
+        # TODO remove this if => bug in tensor form
+        if isinstance(domain, Interval):
+            is_broken = False
+
+        else:
+            is_broken = len(domain) > 1
+
+        obj._is_broken = is_broken
+        # ...
+
         return obj
 
     @property
@@ -96,6 +108,10 @@ class BasicFunctionSpace(Basic):
     @property
     def kind(self):
         return self._kind
+
+    @property
+    def is_broken(self):
+        return self._is_broken
 
     @property
     def regularity(self):
@@ -739,7 +755,7 @@ class Trace(AtomicExpr):
         if isinstance(boundary, Union):
             expr = [Integral.eval(expr, d, order) for d in boundary.args]
             return Add(*expr)
-            
+
         return cls(expr, boundary, order, evaluate=False)
 
 #==============================================================================

@@ -1723,6 +1723,36 @@ def test_interface_2d_1():
     a  = BilinearForm((u,v), expr)
     print(a)
 
+#==============================================================================
+def test_interface_integral_1():
+
+    # ...
+    A = Square('A')
+    B = Square('B')
+
+    domain = A.join(B, name = 'domain',
+                bnd_minus = A.get_boundary(axis=0, ext=1),
+                bnd_plus  = B.get_boundary(axis=0, ext=-1))
+    # ...
+
+    x,y = domain.coordinates
+
+    V = ScalarFunctionSpace('V', domain, kind=None)
+    assert(V.is_broken)
+
+    u, v = elements_of(V, names='u, v')
+
+    # ...
+    I = domain.interfaces
+    print(I)
+    print(integral(I, jump(u) * jump(v)))
+
+    a = BilinearForm((v,u), integral(I, jump(u) * jump(v)))
+    print(a)
+    print(a(u,v))
+#    print(TerminalExpr(a))
+    # ...
+
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
@@ -1736,4 +1766,4 @@ def teardown_function():
     from sympy import cache
     cache.clear_cache()
 
-#test_interface_2d_1()
+#test_interface_integral_1()
