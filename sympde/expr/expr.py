@@ -85,8 +85,9 @@ def expand(expr):
 #==============================================================================
 def _get_domain(expr):
     # expr is an integral of BasicExpr or Add of Integral of BasicExpr
-    if isinstance(expr, (DomainIntegral,BoundaryIntegral)):
+    if isinstance(expr, (DomainIntegral, BoundaryIntegral, InterfaceIntegral)):
         return expr.domain
+
     elif isinstance(expr, (Add,Mul)):
         domains = set()
         for a in expr.args:

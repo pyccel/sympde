@@ -33,7 +33,8 @@ from sympde.calculus import Laplace
 from sympde.calculus.core import _generic_ops
 
 from sympde.topology import BasicDomain, Domain, MappedDomain, Union, Interval
-from sympde.topology import BoundaryVector, NormalVector, TangentVector, Boundary, Connectivity
+from sympde.topology import BoundaryVector, NormalVector, TangentVector
+from sympde.topology import Boundary, Connectivity, Interface
 from sympde.topology.derivatives import _partial_derivatives
 from sympde.topology.derivatives import _logical_partial_derivatives
 from sympde.topology.derivatives import partial_derivative_as_symbol
@@ -70,10 +71,10 @@ from .basic  import BasicExpr, BasicForm
 from .expr   import LinearExpr, BilinearExpr
 from .expr   import LinearForm, BilinearForm, Norm
 from .equation import Equation
-from .expr import DomainIntegral, BoundaryIntegral
+from .expr import DomainIntegral, BoundaryIntegral, InterfaceIntegral
 from .expr import Functional
 from .expr import _get_domain
-    
+
 #==============================================================================
 def is_sequence(a):
     return isinstance(a, (list,tuple,Tuple))
@@ -255,6 +256,10 @@ class DomainExpression(KernelExpression):
 class BoundaryExpression(KernelExpression):
     pass
 
+#==============================================================================
+class InterfaceExpression(KernelExpression):
+    pass
+
 
 #==============================================================================
 class TerminalExpr(CalculusFunction):
@@ -263,7 +268,7 @@ class TerminalExpr(CalculusFunction):
         # (Try to) sympify args first
 
         if options.pop('evaluate', True):
-        
+
             args = cls._annotate(*args)
             r = cls.eval(*args, **options)
 
@@ -297,11 +302,11 @@ class TerminalExpr(CalculusFunction):
                 fields = list(expr.atoms(ScalarTestFunction,VectorTestFunction).difference(indexed_fields))
                 new_fields = [f.space.field(f.name) for f in fields]
                 expr = expr.subs(zip(fields, new_fields))
-                
-                
+
+
         args[0] = expr
         return args
-        
+
     @classmethod
     def eval(cls, *_args, **kwargs):
         """."""
@@ -350,7 +355,7 @@ class TerminalExpr(CalculusFunction):
             for d in domain:
                 d_expr[d] = S.Zero
             # ...
-            
+
             if isinstance(expr.expr, Add):
                 for a in expr.expr.args:
                     newexpr = cls.eval(a, dim=dim)
@@ -411,20 +416,27 @@ class TerminalExpr(CalculusFunction):
                     d_new[domain] = M
             # ...
 
+#            print(d_new)
+#            import sys; sys.exit(0)
+
             # ...
             ls = []
             for domain, newexpr in d_new.items():
-                if isinstance(domain, (Boundary, Connectivity)):
+                if isinstance(domain, Boundary):
                     ls += [BoundaryExpression(domain, newexpr)]
+
+                elif isinstance(domain, Interface):
+                    ls += [InterfaceExpression(domain, newexpr)]
 
                 elif isinstance(domain, BasicDomain):
                     ls += [DomainExpression(domain, newexpr)]
+
                 else:
-                    raise TypeError('')
+                    raise TypeError('not implemented for {}'.format(type(domain)))
             # ...
             return ls
 
-        elif isinstance(expr, (DomainIntegral,BoundaryIntegral)):
+        elif isinstance(expr, (DomainIntegral, BoundaryIntegral, InterfaceIntegral)):
             if dim is None:
                 domain = expr.domain
                 dim = domain.dim
@@ -451,13 +463,13 @@ class TerminalExpr(CalculusFunction):
                 normal_vector_name = 'n'
                 n = NormalVector(normal_vector_name)
                 M = cls.eval(expr.expr, dim=dim)
-                
+
                 if dim == 1:
                     return M
                 else:
                     if isinstance(M, (Add, Mul)):
                         ls = M.atoms(Tuple)
-                        
+
                         for i in ls:
                             M = M.subs(i, Matrix(i))
                         M = simplify(M)

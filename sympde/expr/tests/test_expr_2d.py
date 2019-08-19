@@ -1744,13 +1744,17 @@ def test_interface_integral_1():
 
     # ...
     I = domain.interfaces
-    print(I)
-    print(integral(I, jump(u) * jump(v)))
+#    print(I)
+#    print(integral(I, jump(u) * jump(v)))
 
     a = BilinearForm((v,u), integral(I, jump(u) * jump(v)))
-    print(a)
-    print(a(u,v))
+
+#    print(a)
+#    print(a(u,v))
 #    print(TerminalExpr(a))
+
+    expr = TerminalExpr(a)
+    print(expr)
     # ...
 
 
