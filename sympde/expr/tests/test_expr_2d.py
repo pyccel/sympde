@@ -1803,6 +1803,51 @@ def test_interface_integral_2():
     print(TerminalExpr(B))
     # ...
 
+#==============================================================================
+def test_interface_integral_3():
+
+    # ...
+    A = Square('A')
+    B = Square('B')
+    C = Square('C')
+
+    AB = A.join(B, name = 'AB',
+               bnd_minus = A.get_boundary(axis=0, ext=1),
+               bnd_plus  = B.get_boundary(axis=0, ext=-1))
+
+    domain = AB.join(C, name = 'domain',
+               bnd_minus = B.get_boundary(axis=0, ext=1),
+               bnd_plus  = C.get_boundary(axis=0, ext=-1))
+    # ...
+
+    x,y = domain.coordinates
+
+    V = ScalarFunctionSpace('V', domain, kind=None)
+    assert(V.is_broken)
+
+    u, v = elements_of(V, names='u, v')
+
+    # ...
+    I = domain.interfaces
+#    print(I)
+#    print(integral(I, jump(u) * jump(v)))
+
+#    a = BilinearForm((u,v), integral(domain, u*v))
+#    a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v))))
+#    a = BilinearForm((u,v), integral(I, jump(u) * jump(v)))
+
+    a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v)))
+                          + integral(I,      jump(u) * jump(v)))
+    # ...
+
+#    print(a)
+#    print(a(u,v))
+#    print(TerminalExpr(a))
+
+    expr = TerminalExpr(a)
+    print(expr)
+    # ...
+
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
@@ -1818,3 +1863,4 @@ def teardown_function():
 
 #test_interface_integral_1()
 #test_interface_integral_2()
+#test_interface_integral_3()

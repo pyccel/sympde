@@ -372,6 +372,7 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
 
         # ...
         def _nullify(expr, u, v, trials, tests):
+            """nullifies trials and tests except u and v."""
             others  = list(set(trials) - set([u]))
             others += list(set(tests) - set([v]))
             for other in others:
@@ -394,29 +395,33 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                 v_minus = d_tests[v]['-']
                 v_plus  = d_tests[v]['+']
 
-#                newexpr = expr.subs({u_plus: 0, v_plus: 0})
+                # ...
                 newexpr = _nullify(expr, u_minus, v_minus, trials, tests)
                 newexpr = newexpr.subs({u_minus: u, v_minus: v})
                 if _not_zero_matrix(newexpr):
                     bnd_expressions[interface.minus] = newexpr
+                # ...
 
+                # ...
                 # TODO must call InterfaceExpression afterward
-#                newexpr = expr.subs({u_plus: 0, v_minus: 0})
                 newexpr = _nullify(expr, u_minus, v_plus, trials, tests)
                 if _not_zero_matrix(newexpr):
                     int_expressions += [InterfaceExpression(interface, newexpr)]
+                # ...
 
+                # ...
                 # TODO must call InterfaceExpression afterward
-#                newexpr = expr.subs({u_minus: 0, v_plus: 0})
                 newexpr = _nullify(expr, u_plus, v_minus, trials, tests)
                 if _not_zero_matrix(newexpr):
                     int_expressions += [InterfaceExpression(interface, newexpr)]
+                # ...
 
-#                newexpr = expr.subs({u_minus: 0, v_minus: 0})
+                # ...
                 newexpr = _nullify(expr, u_plus, v_plus, trials, tests)
                 newexpr = newexpr.subs({u_plus: u, v_plus: v})
                 if _not_zero_matrix(newexpr):
                     bnd_expressions[interface.plus] = newexpr
+                # ...
         # ...
 
     return int_expressions, bnd_expressions
@@ -669,9 +674,6 @@ class TerminalExpr(CalculusFunction):
             # ...
             d_new = d_all
             # ...
-
-#            print(d_new)
-#            import sys; sys.exit(0)
 
             # ...
             for domain, newexpr in d_new.items():

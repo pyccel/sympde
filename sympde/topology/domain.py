@@ -352,7 +352,8 @@ class Domain(BasicDomain):
 
         # ... connectivity
         connectivity = Connectivity()
-        connectivity['{l}{r}'.format(l=self.name, r=other.name)] = (bnd_minus, bnd_plus)
+        # TODO be careful with '|' in psydac
+        connectivity['{l}|{r}'.format(l=self.name, r=other.name)] = (bnd_minus, bnd_plus)
 
         for k,v in self.connectivity.items():
             connectivity[k] = v

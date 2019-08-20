@@ -341,7 +341,7 @@ class Connectivity(abc.Mapping):
         if len(ls) == 1:
             return ls[0]
         else:
-            return ls
+            return Union(*ls)
 
     def todict(self):
         # ... create the connectivity
