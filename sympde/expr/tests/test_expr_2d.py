@@ -1747,13 +1747,55 @@ def test_interface_integral_1():
 #    print(I)
 #    print(integral(I, jump(u) * jump(v)))
 
-#    a = BilinearForm((v,u), integral(I, jump(u) * jump(v)))
-#    a = BilinearForm((v,u), integral(domain, u*v))
-    a = BilinearForm((v,u), integral(domain, dot(grad(u),grad(v))))
+#    a = BilinearForm((u,v), integral(domain, u*v))
+#    a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v))))
+#    a = BilinearForm((u,v), integral(I, jump(u) * jump(v)))
+
+    a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v)))
+                          + integral(I,      jump(u) * jump(v)))
+
+#    # TODO BUG
+#    bnd_A = A.get_boundary(axis=0, ext=1)
+#
+#    a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v)))
+#                          + integral(I,      jump(u) * jump(v))
+#                          + integral(bnd_A,      dx(u)*v))
+#    # ...
 
 #    print(a)
 #    print(a(u,v))
 #    print(TerminalExpr(a))
+
+    expr = TerminalExpr(a)
+    print(expr)
+    # ...
+
+#==============================================================================
+def test_interface_integral_2():
+
+    # ...
+    A = Square('A')
+    B = Square('B')
+
+    domain = A.join(B, name = 'domain',
+                bnd_minus = A.get_boundary(axis=0, ext=1),
+                bnd_plus  = B.get_boundary(axis=0, ext=-1))
+    # ...
+
+    x,y = domain.coordinates
+
+    V = ScalarFunctionSpace('V', domain, kind=None)
+    assert(V.is_broken)
+
+    u, u1, u2 = elements_of(V, names='u, u1, u2')
+    v, v1, v2 = elements_of(V, names='v, v1, v2')
+
+    # ...
+    I = domain.interfaces
+    a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v)))
+                          + integral(I,      jump(u) * jump(v)))
+
+    a = BilinearForm(((u1,u2),(v1,v2)), a(u1,v1) + a(u2,v2) )
 
     expr = TerminalExpr(a)
     print(expr)
@@ -1772,4 +1814,5 @@ def teardown_function():
     from sympy import cache
     cache.clear_cache()
 
-test_interface_integral_1()
+#test_interface_integral_1()
+test_interface_integral_2()

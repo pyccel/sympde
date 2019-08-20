@@ -59,6 +59,7 @@ from sympde.topology.space import IndexedTestTrial
 from sympde.topology.space import Unknown, VectorUnknown
 from sympde.topology.space import Trace
 from sympde.topology.space import element_of
+from sympde.topology.space import jump
 from sympde.topology.space import ScalarField, VectorField, IndexedVectorField
 from sympde.topology.measure import CanonicalMeasure
 from sympde.topology.measure import CartesianMeasure
@@ -255,19 +256,21 @@ def _to_matrix_form(expr, M, test_indices, trial_indices):
         return _to_matrix_functional_form(expr, M)
 
 #==============================================================================
-def _split_expr_over_subdomains(expr, domain, tests=None, trials=None):
-    is_bilinear = not( trials is None ) and not( tests is None )
+def _split_expr_over_subdomains(expr, interiors, tests=None, trials=None):
+    # ...
+    def _new_atom(v, interior):
+        new = '{v}_{domain}'.format( v      = v.name,
+                                     domain = interior.name )
+        return element_of(v.space, name=new)
+    # ...
 
-    interiors = domain.interior.as_tuple()
+    is_bilinear = not( trials is None ) and not( tests is None )
 
     d_expr = {}
     for interior in interiors:
         d_expr[interior] = 0
 
     if is_bilinear:
-        print(trials)
-        print(tests)
-
         # ... create trial/test functions on each subdomain
         d_trials = {}
         d_tests  = {}
@@ -275,9 +278,7 @@ def _split_expr_over_subdomains(expr, domain, tests=None, trials=None):
             # ...
             news = []
             for v in trials:
-                new = '{v}_{domain}'.format( v      = v.name,
-                                             domain = interior.name )
-                new = element_of(v.space, name=new)
+                new = _new_atom(v, interior)
                 news.append(new)
             d_trials[interior] = news
             # ...
@@ -285,9 +286,7 @@ def _split_expr_over_subdomains(expr, domain, tests=None, trials=None):
             # ...
             news = []
             for v in tests:
-                new = '{v}_{domain}'.format( v      = v.name,
-                                             domain = interior.name )
-                new = element_of(v.space, name=new)
+                new = _new_atom(v, interior)
                 news.append(new)
             d_tests[interior] = news
             # ...
@@ -312,10 +311,85 @@ def _split_expr_over_subdomains(expr, domain, tests=None, trials=None):
 
         return d_expr
 
+#==============================================================================
+def _split_expr_over_interface(expr, interface, tests=None, trials=None):
+    # ...
+    def _new_atom(v, label):
+        new = '{v}_{label}'.format( v     = v.name,
+                                    label = label )
+        return element_of(v.space, name=new)
+    # ...
+
+    is_bilinear = not( trials is None ) and not( tests is None )
+
+    # ...
+    B_minus = interface.minus
+    B_plus  = interface.plus
+    boundaries = (B_minus, B_plus)
+    labels     = ('minus', 'plus')
+    # ...
+
+    int_expressions = []
+    bnd_expressions = {}
+
+    if is_bilinear:
+        # ...
+        d_trials = {}
+        for u in trials:
+            u_minus = _new_atom(u, 'minus')
+            u_plus  = _new_atom(u, 'plus')
+            d_trials[u] = {'-': u_minus, '+': u_plus}
+
+            expr = expr.subs({jump(u): u_plus - u_minus})
+
+        d_tests  = {}
+        for v in tests:
+            v_minus = _new_atom(v, 'minus')
+            v_plus  = _new_atom(v, 'plus')
+            d_tests[v] = {'-': v_minus, '+': v_plus}
+
+            expr = expr.subs({jump(v): v_plus - v_minus})
+
+        expr = expand(expr)
+        # ...
+
+#        print('> expr = ', expr)
+
+        # ...
+        for u in d_trials.keys():
+            u_minus = d_trials[u]['-']
+            u_plus  = d_trials[u]['+']
+            for v in d_tests.keys():
+                v_minus = d_tests[v]['-']
+                v_plus  = d_tests[v]['+']
+
+                newexpr = expr.subs({u_plus: 0, v_plus: 0})
+                newexpr = newexpr.subs({u_minus: u, v_minus: v})
+                bnd_expressions[interface.minus] = newexpr
+
+                # TODO must call InterfaceExpression afterward
+                newexpr = expr.subs({u_plus: 0, v_minus: 0})
+                int_expressions += [InterfaceExpression(interface, newexpr)]
+
+                # TODO must call InterfaceExpression afterward
+                newexpr = expr.subs({u_minus: 0, v_plus: 0})
+                int_expressions += [InterfaceExpression(interface, newexpr)]
+
+                newexpr = expr.subs({u_minus: 0, v_minus: 0})
+                newexpr = newexpr.subs({u_plus: u, v_plus: v})
+                bnd_expressions[interface.plus] = newexpr
+        # ...
+
+    return int_expressions, bnd_expressions
+
 
 #==============================================================================
 class KernelExpression(Basic):
     def __new__(cls, target, expr):
+        assert(isinstance(expr, (Matrix, ImmutableDenseMatrix)))
+        n,m = expr.shape
+        if n*m == 1: expr = expr[0,0]
+
         return Basic.__new__(cls, target, expr)
 
     @property
@@ -419,7 +493,7 @@ class TerminalExpr(CalculusFunction):
             return expr
 
         elif isinstance(expr, BasicForm):
-            # ...z
+            # ...
             dim = expr.ldim
             domain = expr.domain
             if isinstance(domain, Union):
@@ -489,29 +563,78 @@ class TerminalExpr(CalculusFunction):
                     M, test_indices, trial_indices = _init_matrix(expr)
                     M = _to_matrix_form(newexpr, M, test_indices, trial_indices)
 
-                    n,m = M.shape
-                    if n*m == 1: M = M[0,0]
+                    # TODO ARA make sure thre is no problem with psydac
+                    #      we should always take the interior of a domain
+                    if not isinstance(domain, (Boundary, Interface)):
+                        domain = domain.interior
 
                     d_new[domain] = M
             # ...
 
-            # ... treating broken spaces
-            for domain, newexpr in d_new.items():
-                if len(domain) > 1:
-                    if expr.is_bilinear:
-                        trials = list(expr.variables[0])
-                        tests  = list(expr.variables[1])
+            # ...
+            ls = []
+            d_all = {}
+            # ...
 
-                    d = _split_expr_over_subdomains(newexpr, domain,
-                                                    tests=tests, trials=trials)
-                    print(d)
+            # ... treating interfaces
+            keys = [k for k in d_new.keys() if isinstance(k, Interface)]
+            for interface in keys:
+                if expr.is_bilinear:
+                    trials = list(expr.variables[0])
+                    tests  = list(expr.variables[1])
+
+                # ...
+                newexpr = d_new[interface]
+                ls_int, d = _split_expr_over_interface(newexpr, interface,
+                                                       tests=tests,
+                                                       trials=trials)
+                # ...
+
+                # ...
+                ls += ls_int
+                # ...
+
+                # ...
+                for k, v in d.items():
+                    if k in d_all.keys():
+                        d_all[k] += v
+
+                    else:
+                        d_all[k] = v
+                # ...
+            # ...
+
+            # ... treating subdomains
+            keys = [k for k in d_new.keys() if isinstance(k, Union)]
+            for domain in keys:
+                if expr.is_bilinear:
+                    trials = list(expr.variables[0])
+                    tests  = list(expr.variables[1])
+
+                # ...
+                newexpr = d_new[domain]
+                d = _split_expr_over_subdomains(newexpr, domain.as_tuple(),
+                                                tests=tests, trials=trials)
+                # ...
+
+                # ...
+                for k, v in d.items():
+                    if k in d_all.keys():
+                        d_all[k] += v
+
+                    else:
+                        d_all[k] = v
+                # ...
+            # ...
+
+            # ...
+            d_new = d_all
+            # ...
 
 #            print(d_new)
 #            import sys; sys.exit(0)
-            # ...
 
             # ...
-            ls = []
             for domain, newexpr in d_new.items():
                 if isinstance(domain, Boundary):
                     ls += [BoundaryExpression(domain, newexpr)]
