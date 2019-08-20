@@ -18,6 +18,7 @@ from sympy import bspline_basis
 from sympy import lambdify
 from sympy import cos
 from sympy import sin
+from sympy import log
 from sympy import Rational
 from sympy import diff
 from sympy import Matrix, ImmutableDenseMatrix
@@ -133,6 +134,12 @@ class DifferentialOperator(LinearOperator):
                     V = a * fb + fa * b
 
             return Mul(c, V)
+
+        elif isinstance(expr, Pow):
+            b = expr.base
+            e = expr.exp
+
+            return (log(b)*cls.eval(e) + e*cls.eval(b)/b) * b**e
 
         elif isinstance(expr, Derivative):
             x = Symbol(cls.coordinate)
