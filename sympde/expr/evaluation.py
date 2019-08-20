@@ -1,6 +1,7 @@
 # coding: utf-8
 
 from itertools import groupby
+from itertools import product
 
 from sympy.core import Basic
 from sympy.core import Symbol
@@ -356,6 +357,36 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
 #        print('> expr = ', expr)
 
         # ...
+        trials = []
+        for u in d_trials.keys():
+            u_minus = d_trials[u]['-']
+            u_plus  = d_trials[u]['+']
+            trials += [u_minus, u_plus]
+
+        tests = []
+        for u in d_tests.keys():
+            u_minus = d_tests[u]['-']
+            u_plus  = d_tests[u]['+']
+            tests += [u_minus, u_plus]
+        # ...
+
+        # ...
+        def _nullify(expr, u, v, trials, tests):
+            others  = list(set(trials) - set([u]))
+            others += list(set(tests) - set([v]))
+            for other in others:
+                expr = expr.subs({other: 0})
+
+            return expr
+        # ...
+
+        # ...
+        def _not_zero_matrix(M):
+            n,m = expr.shape
+            return any([M[i,j] != 0 for i,j in product(range(n), range(m))])
+        # ...
+
+        # ...
         for u in d_trials.keys():
             u_minus = d_trials[u]['-']
             u_plus  = d_trials[u]['+']
@@ -363,21 +394,29 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                 v_minus = d_tests[v]['-']
                 v_plus  = d_tests[v]['+']
 
-                newexpr = expr.subs({u_plus: 0, v_plus: 0})
+#                newexpr = expr.subs({u_plus: 0, v_plus: 0})
+                newexpr = _nullify(expr, u_minus, v_minus, trials, tests)
                 newexpr = newexpr.subs({u_minus: u, v_minus: v})
-                bnd_expressions[interface.minus] = newexpr
+                if _not_zero_matrix(newexpr):
+                    bnd_expressions[interface.minus] = newexpr
 
                 # TODO must call InterfaceExpression afterward
-                newexpr = expr.subs({u_plus: 0, v_minus: 0})
-                int_expressions += [InterfaceExpression(interface, newexpr)]
+#                newexpr = expr.subs({u_plus: 0, v_minus: 0})
+                newexpr = _nullify(expr, u_minus, v_plus, trials, tests)
+                if _not_zero_matrix(newexpr):
+                    int_expressions += [InterfaceExpression(interface, newexpr)]
 
                 # TODO must call InterfaceExpression afterward
-                newexpr = expr.subs({u_minus: 0, v_plus: 0})
-                int_expressions += [InterfaceExpression(interface, newexpr)]
+#                newexpr = expr.subs({u_minus: 0, v_plus: 0})
+                newexpr = _nullify(expr, u_plus, v_minus, trials, tests)
+                if _not_zero_matrix(newexpr):
+                    int_expressions += [InterfaceExpression(interface, newexpr)]
 
-                newexpr = expr.subs({u_minus: 0, v_minus: 0})
+#                newexpr = expr.subs({u_minus: 0, v_minus: 0})
+                newexpr = _nullify(expr, u_plus, v_plus, trials, tests)
                 newexpr = newexpr.subs({u_plus: u, v_plus: v})
-                bnd_expressions[interface.plus] = newexpr
+                if _not_zero_matrix(newexpr):
+                    bnd_expressions[interface.plus] = newexpr
         # ...
 
     return int_expressions, bnd_expressions

@@ -1787,18 +1787,20 @@ def test_interface_integral_2():
     V = ScalarFunctionSpace('V', domain, kind=None)
     assert(V.is_broken)
 
-    u, u1, u2 = elements_of(V, names='u, u1, u2')
-    v, v1, v2 = elements_of(V, names='v, v1, v2')
+    u, u1, u2, u3 = elements_of(V, names='u, u1, u2, u3')
+    v, v1, v2, v3 = elements_of(V, names='v, v1, v2, v3')
 
     # ...
     I = domain.interfaces
-    a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v)))
-                          + integral(I,      jump(u) * jump(v)))
 
-    a = BilinearForm(((u1,u2),(v1,v2)), a(u1,v1) + a(u2,v2) )
+    a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v))))
+    b = BilinearForm((u,v), integral(I, jump(u) * jump(v)))
 
-    expr = TerminalExpr(a)
-    print(expr)
+    A = BilinearForm(((u1,u2),(v1,v2)), a(u1,v1) + a(u2,v2) + b(u1,v1) + b(u2,v2) + b(u1, v2) )
+    B = BilinearForm(((u1,u2,u3),(v1,v2,v3)), a(u1,v1) + a(u2,v2) + a(u3,v3) + b(u1,v1) + b(u2,v2) + b(u1, v2) )
+
+#    print(TerminalExpr(A))
+    print(TerminalExpr(B))
     # ...
 
 
@@ -1815,4 +1817,4 @@ def teardown_function():
     cache.clear_cache()
 
 #test_interface_integral_1()
-test_interface_integral_2()
+#test_interface_integral_2()
