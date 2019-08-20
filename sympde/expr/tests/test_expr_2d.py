@@ -1747,7 +1747,9 @@ def test_interface_integral_1():
 #    print(I)
 #    print(integral(I, jump(u) * jump(v)))
 
-    a = BilinearForm((v,u), integral(I, jump(u) * jump(v)))
+#    a = BilinearForm((v,u), integral(I, jump(u) * jump(v)))
+#    a = BilinearForm((v,u), integral(domain, u*v))
+    a = BilinearForm((v,u), integral(domain, dot(grad(u),grad(v))))
 
 #    print(a)
 #    print(a(u,v))
@@ -1770,4 +1772,4 @@ def teardown_function():
     from sympy import cache
     cache.clear_cache()
 
-#test_interface_integral_1()
+test_interface_integral_1()

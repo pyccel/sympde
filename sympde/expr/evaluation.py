@@ -58,6 +58,7 @@ from sympde.topology.space import VectorTestFunction
 from sympde.topology.space import IndexedTestTrial
 from sympde.topology.space import Unknown, VectorUnknown
 from sympde.topology.space import Trace
+from sympde.topology.space import element_of
 from sympde.topology.space import ScalarField, VectorField, IndexedVectorField
 from sympde.topology.measure import CanonicalMeasure
 from sympde.topology.measure import CartesianMeasure
@@ -79,6 +80,19 @@ from .expr import _get_domain
 def is_sequence(a):
     return isinstance(a, (list,tuple,Tuple))
 
+#==============================================================================
+# TODO use this function everywhere it is needed
+def zero_matrix(n_rows, n_cols):
+    lines = []
+    for i in range(0, n_rows):
+        line = []
+        for j in range(0, n_cols):
+            line.append(0)
+        lines.append(line)
+
+    return Matrix(lines)
+
+#==============================================================================
 def _get_size_and_starts(ls):
     n = 0
     d_indices = {}
@@ -95,6 +109,7 @@ def _get_size_and_starts(ls):
 
     return n, d_indices
 
+#==============================================================================
 def _init_matrix(expr):
     assert(isinstance(expr, (BasicForm, BasicExpr)))
 
@@ -144,6 +159,7 @@ def _init_matrix(expr):
 
     return M
 
+#==============================================================================
 def _to_matrix_bilinear_form(expr, M, test_indices, trial_indices):
 
     # ...
@@ -184,6 +200,7 @@ def _to_matrix_bilinear_form(expr, M, test_indices, trial_indices):
 
     return M
 
+#==============================================================================
 def _to_matrix_linear_form(expr, M, test_indices):
     # ...
     def treat_form(arg, M):
@@ -220,11 +237,13 @@ def _to_matrix_linear_form(expr, M, test_indices):
 
     return M
 
+#==============================================================================
 def _to_matrix_functional_form(expr, M):
     M[0] += expr
 
     return M
 
+#==============================================================================
 def _to_matrix_form(expr, M, test_indices, trial_indices):
     if not(test_indices is None) and not(trial_indices is None):
         return _to_matrix_bilinear_form(expr, M, test_indices, trial_indices)
@@ -234,6 +253,65 @@ def _to_matrix_form(expr, M, test_indices, trial_indices):
 
     if test_indices is None and trial_indices is None:
         return _to_matrix_functional_form(expr, M)
+
+#==============================================================================
+def _split_expr_over_subdomains(expr, domain, tests=None, trials=None):
+    is_bilinear = not( trials is None ) and not( tests is None )
+
+    interiors = domain.interior.as_tuple()
+
+    d_expr = {}
+    for interior in interiors:
+        d_expr[interior] = 0
+
+    if is_bilinear:
+        print(trials)
+        print(tests)
+
+        # ... create trial/test functions on each subdomain
+        d_trials = {}
+        d_tests  = {}
+        for interior in interiors:
+            # ...
+            news = []
+            for v in trials:
+                new = '{v}_{domain}'.format( v      = v.name,
+                                             domain = interior.name )
+                new = element_of(v.space, name=new)
+                news.append(new)
+            d_trials[interior] = news
+            # ...
+
+            # ...
+            news = []
+            for v in tests:
+                new = '{v}_{domain}'.format( v      = v.name,
+                                             domain = interior.name )
+                new = element_of(v.space, name=new)
+                news.append(new)
+            d_tests[interior] = news
+            # ...
+        # ...
+
+        # ...
+        for interior in interiors:
+            d_expr[interior] = expr
+
+            # use trial functions on each subdomain
+            olds = trials
+            news = d_trials[interior]
+            for old,new in zip(olds, news):
+                d_expr[interior] = d_expr[interior].subs({old: new})
+
+            # use test functions on each subdomain
+            olds = tests
+            news = d_tests[interior]
+            for old,new in zip(olds, news):
+                d_expr[interior] = d_expr[interior].subs({old: new})
+        # ...
+
+        return d_expr
+
 
 #==============================================================================
 class KernelExpression(Basic):
@@ -287,6 +365,7 @@ class TerminalExpr(CalculusFunction):
         else:
             return Indexed(self, indices, **kw_args)
 
+    # TODO should we keep it?
     def _annotate(*args):
         args = list(args)
         expr = args[0]
@@ -416,8 +495,20 @@ class TerminalExpr(CalculusFunction):
                     d_new[domain] = M
             # ...
 
+            # ... treating broken spaces
+            for domain, newexpr in d_new.items():
+                if len(domain) > 1:
+                    if expr.is_bilinear:
+                        trials = list(expr.variables[0])
+                        tests  = list(expr.variables[1])
+
+                    d = _split_expr_over_subdomains(newexpr, domain,
+                                                    tests=tests, trials=trials)
+                    print(d)
+
 #            print(d_new)
 #            import sys; sys.exit(0)
+            # ...
 
             # ...
             ls = []
