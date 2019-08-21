@@ -355,6 +355,11 @@ class LatexPrinter(LatexPrinterSympy):
         raise NotImplementedError('')
     # ........................................
 
+    def _print_KernelExpression(self, expr):
+        target = self._print(expr.target)
+        expr   = self._print(expr.expr)
+        return r'\textbf{target}~' + target + r'\\' + expr
+
 def latex(expr, **settings):
 
     return LatexPrinter(settings).doprint(expr)
