@@ -6,14 +6,13 @@ from sympy import Mul, Tuple
 from sympy.printing.latex import LatexPrinter as LatexPrinterSympy
 from sympy.printing.latex import translate
 
-#from sympde.expr import BilinearForm, LinearForm, Integral, FormCall
-from sympde.calculus import Dot, Inner, Cross
-from sympde.calculus import Grad, Rot, Curl, Div
+from sympde.topology import NormalVector, TangentVector
 from sympde.topology import Line, Square, Cube, Domain
 from sympde.topology.derivatives import sort_partial_derivatives
 from sympde.topology.derivatives import get_index_derivatives
 from sympde.topology.derivatives import get_atom_derivatives
 from sympde.topology.space import ProductSpace
+from sympde.topology.space import ScalarTestFunction, VectorTestFunction
 
 class LatexPrinter(LatexPrinterSympy):
 
@@ -58,6 +57,33 @@ class LatexPrinter(LatexPrinterSympy):
 
     def _print_Trace(self, expr):
         return self._print(expr.expr)
+
+    def _print_MinusInterfaceOperator(self, expr):
+        arg = expr.args[0]
+        if isinstance(arg, (ScalarTestFunction, VectorTestFunction)):
+            return self._print(arg) + '_{-}'
+
+        else:
+            return r'\left( ' + self._print(arg) + r' \right)_{-}'
+
+    def _print_PlusInterfaceOperator(self, expr):
+        arg = expr.args[0]
+        if isinstance(arg, (ScalarTestFunction, VectorTestFunction)):
+            return self._print(arg) + '_{+}'
+
+        else:
+            return r'\left( ' + self._print(arg) + r' \right)_{+}'
+
+    def _print_NormalDerivative(self, expr):
+        nn = self._print(NormalVector('n'))
+        arg = expr.args[0]
+        if isinstance(arg, (ScalarTestFunction, VectorTestFunction)):
+            arg = r'\nabla ' + self._print(arg)
+
+        else:
+            arg = r'\nabla \left( ' + self._print(arg) + r' \right)'
+
+        return arg + r' \cdot ' + nn
     # ...
 
     # ...
@@ -68,6 +94,14 @@ class LatexPrinter(LatexPrinterSympy):
     # ...
     def _print_Average(self, expr):
         return r'\{ ' + self._print(expr.args[0]) + ' \}'
+    # ...
+
+    # ...
+    def _print_NormalVector(self, expr):
+        return r'\mathbf{n}'
+
+    def _print_TangentVector(self, expr):
+        return r'\mathbf{t}'
     # ...
 
     # ...
