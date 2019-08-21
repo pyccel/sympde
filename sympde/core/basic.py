@@ -1,14 +1,10 @@
 # coding: utf-8
 
-from numpy import unique
-
-from sympy.core import Basic
-from sympy.tensor import Indexed, IndexedBase
-from sympy.core import Symbol
-from sympy.core import Expr
-from sympy.core.containers import Tuple
-from sympy import Function
-from sympy import Integer, Float
+from sympy        import Function
+from sympy        import Number
+from sympy.core   import Basic
+from sympy.core   import Symbol
+from sympy.tensor import IndexedBase
 
 #==============================================================================
 class Constant(Symbol):
@@ -48,4 +44,4 @@ class BasicDerivable(Basic):
     pass
 
 #==============================================================================
-_coeffs_registery = (int, complex, Integer, Float, Constant)
+_coeffs_registery = (int, float, complex, Number, Constant)
