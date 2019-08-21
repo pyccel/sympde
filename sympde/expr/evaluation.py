@@ -666,6 +666,8 @@ class TerminalExpr(CalculusFunction):
             ls = []
             d_all = {}
             # ...
+#            print(d_new)
+#            print([type(i) for i in d_new.keys()])
 
             # ... treating interfaces
             keys = [k for k in d_new.keys() if isinstance(k, Interface)]
@@ -736,7 +738,20 @@ class TerminalExpr(CalculusFunction):
             # ...
 
             # ...
-            d_new = d_all
+            d = {}
+
+            for k, v in d_new.items():
+                if not isinstance( k, (Interface, Union) ):
+                    d[k] = d_new[k]
+
+            for k, v in d_all.items():
+                if k in d.keys():
+                    d[k] += v
+
+                else:
+                    d[k] = v
+
+            d_new = d
             # ...
 
             # ...

@@ -1585,7 +1585,7 @@ def test_linearity_linear_form_2d_1():
     assert is_linear_form(l)
 
 #==============================================================================
-def test_terminal_expr_bilinear_2d_1():
+def test_linearity_bilinear_form_2d_1():
 
     domain = Domain('Omega', dim=2)
     B1 = Boundary(r'\Gamma_1', domain)
@@ -1888,7 +1888,3 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
-
-#test_interface_integral_1()
-#test_interface_integral_2()
-#test_interface_integral_3()

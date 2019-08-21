@@ -53,7 +53,7 @@ def test_tensorize_2d_1():
     V = ScalarFunctionSpace('V', domain)
 
     u,v = [TestFunction(V, name=i) for i in ['u', 'v']]
-    
+
     int_0 = lambda expr: integral(domain , expr)
 
     # ...
@@ -137,7 +137,7 @@ def test_tensorize_2d_2_mapping():
     c = Constant('c')
 
     int_0 = lambda expr: integral(domain , expr)
-    
+
     a = BilinearForm((u,v), int_0(c * div(v) * div(u) + curl(v) * curl(u)))
     expr = TensorExpr(a, mapping=M)
     print(expr)
@@ -154,4 +154,3 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
-
