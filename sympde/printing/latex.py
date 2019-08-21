@@ -233,13 +233,15 @@ class LatexPrinter(LatexPrinterSympy):
         return r' \times '.join(spaces)
 
     def _print_Equation(self, expr):
-        lhs = self._print(expr.lhs)
-        rhs = self._print(expr.rhs)
+        lhs = expr.lhs
+        rhs = expr.rhs
+        trials, tests = lhs.variables
+
+        lhs = self._print(lhs(trials, tests))
+        rhs = self._print(rhs(tests))
 
         prelude  = ''
         epilogue = ''
-
-        tests, trials = expr.lhs.arguments
 
         # ... we print tests function here, since sympy printing does not look
         #     nice for a tuple (quad)
@@ -285,19 +287,14 @@ class LatexPrinter(LatexPrinterSympy):
         test_spaces = self._print(test_spaces)
         trial_spaces = self._print(trial_spaces)
 
-        prelude = 'find $' + trials + ' \in ' + trial_spaces + '$' + ' such that'
-        epilogue = r',\quad \forall ' + tests + ' \in ' + test_spaces
+        prelude = ( r'\mbox{find} ~'
+                   + trials + ' \in ' + trial_spaces
+                   + r' ~\mbox{such that}\\')
+        epilogue = r',\quad \forall~ ' + tests + ' \in ' + test_spaces
 
-        if expr.is_undefined:
-            body = ''
-        else:
-            body = '{lhs} &= {rhs}'.format(lhs=lhs, rhs=rhs)
+        body = '{lhs} = {rhs}'.format(lhs=lhs, rhs=rhs)
 
-        code = (prelude + '\n' +
-                r'\begin{align*}' +
-                body +
-                epilogue +
-                r'\end{align*}')
+        code = prelude + body + epilogue
         return code
 
     def _print_dx(self, expr):
