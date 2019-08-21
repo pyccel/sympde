@@ -12,6 +12,7 @@ from sympy import pi, cos, sin
 from sympy import srepr
 from sympy import expand
 from sympy import Function
+from sympy import Integer, Float, Rational
 from sympy.physics.quantum import TensorProduct
 
 from sympde.core import Constant
@@ -26,6 +27,58 @@ from sympde.topology import TestFunction, ScalarTestFunction, VectorTestFunction
 from sympde.topology import ScalarField, VectorField
 
 
+#==============================================================================
+def test_zero_derivative():
+
+    assert grad(1)              == 0  # native int
+    assert grad(2.3)            == 0  # native float
+    assert grad(4+5j)           == 0  # native complex
+    assert grad(Integer(1))     == 0  # sympy Integer
+    assert grad(Float(2.3))     == 0  # sympy Float
+    assert grad(Rational(6, 7)) == 0  # sympy Rational
+    assert grad(Constant('a'))  == 0  # sympde Constant
+
+    assert laplace(1)              == 0  # native int
+    assert laplace(2.3)            == 0  # native float
+    assert laplace(4+5j)           == 0  # native complex
+    assert laplace(Integer(1))     == 0  # sympy Integer
+    assert laplace(Float(2.3))     == 0  # sympy Float
+    assert laplace(Rational(6, 7)) == 0  # sympy Rational
+    assert laplace(Constant('a'))  == 0  # sympde Constant
+
+    assert hessian(1)              == 0  # native int
+    assert hessian(2.3)            == 0  # native float
+    assert hessian(4+5j)           == 0  # native complex
+    assert hessian(Integer(1))     == 0  # sympy Integer
+    assert hessian(Float(2.3))     == 0  # sympy Float
+    assert hessian(Rational(6, 7)) == 0  # sympy Rational
+    assert hessian(Constant('a'))  == 0  # sympde Constant
+
+    # 2D convection of constant scalar field
+    domain = Domain('Omega', dim=2)
+    W = VectorFunctionSpace('W', domain)
+    F = VectorField(W, name='F')
+
+    assert convect(F, 1)              == 0  # native int
+    assert convect(F, 2.3)            == 0  # native float
+    assert convect(F, 4+5j)           == 0  # native complex
+    assert convect(F, Integer(1))     == 0  # sympy Integer
+    assert convect(F, Float(2.3))     == 0  # sympy Float
+    assert convect(F, Rational(6, 7)) == 0  # sympy Rational
+    assert convect(F, Constant('a'))  == 0  # sympde Constant
+
+    # 3D convection of constant scalar field
+    domain = Domain('Omega', dim=3)
+    Z = VectorFunctionSpace('Z', domain)
+    G = VectorField(Z, name='G')
+
+    assert convect(G, 1)              == 0  # native int
+    assert convect(G, 2.3)            == 0  # native float
+    assert convect(G, 4+5j)           == 0  # native complex
+    assert convect(G, Integer(1))     == 0  # sympy Integer
+    assert convect(G, Float(2.3))     == 0  # sympy Float
+    assert convect(G, Rational(6, 7)) == 0  # sympy Rational
+    assert convect(G, Constant('a'))  == 0  # sympde Constant
 
 #==============================================================================
 def test_calculus_2d_1():
