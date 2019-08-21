@@ -55,6 +55,9 @@ class LatexPrinter(LatexPrinterSympy):
         coord = self._print(expr.coordinate)
         arg = self._print(expr.args[0])
         return r'\partial_{' + coord + '}' +  arg
+
+    def _print_Trace(self, expr):
+        return self._print(expr.expr)
     # ...
 
     # ...
@@ -111,14 +114,49 @@ class LatexPrinter(LatexPrinterSympy):
 
     # ...
     def _print_DomainIntegral(self, expr):
+        dim = expr.domain.dim
         domain = self._print(expr.domain)
         expr   = self._print(expr.expr)
 
         integral = r'\int_{' + domain + '}'
 
-        return '{integral} {expr} ~d{domain}'.format(integral=integral,
-                                                     expr=expr,
-                                                     domain=domain)
+        if dim == 1:
+            dx = r'~dx'
+
+        else:
+            dx = r'~d\mathbf{x}'
+
+        return '{integral} {expr} {dx}'.format(integral=integral,
+                                               expr=expr,
+                                               dx=dx)
+    # ...
+
+    # ...
+    def _print_BoundaryIntegral(self, expr):
+        domain = self._print(expr.domain)
+        expr   = self._print(expr.expr)
+
+        integral = r'\int_{' + domain + '}'
+
+        dx = r'~ds'
+
+        return '{integral} {expr} {dx}'.format(integral=integral,
+                                               expr=expr,
+                                               dx=dx)
+    # ...
+
+    # ...
+    def _print_InterfaceIntegral(self, expr):
+        domain = self._print(expr.domain)
+        expr   = self._print(expr.expr)
+
+        integral = r'\int_{' + domain + '}'
+
+        dx = r'~ds'
+
+        return '{integral} {expr} {dx}'.format(integral=integral,
+                                               expr=expr,
+                                               dx=dx)
     # ...
 
     # ... forms
