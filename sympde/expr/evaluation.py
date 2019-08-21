@@ -353,7 +353,8 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
         u_plus  = plus(u)
         d_trials[u] = {'-': u_minus, '+': u_plus}
 
-        expr = expr.subs({jump(u): u_plus - u_minus})
+        # TODO add sub for avg
+        expr = expr.subs({jump(u): u_minus - u_plus})
 
     d_tests  = {}
     for v in tests:
@@ -361,7 +362,8 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
         v_plus  = plus(v)
         d_tests[v] = {'-': v_minus, '+': v_plus}
 
-        expr = expr.subs({jump(v): v_plus - v_minus})
+        # TODO add sub for avg
+        expr = expr.subs({jump(v): v_minus - v_plus})
 
     expr = expand(expr)
     # ...

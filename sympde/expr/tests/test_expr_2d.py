@@ -30,7 +30,7 @@ from sympde.topology import Mapping
 from sympde.topology import Square
 from sympde.topology import ElementDomain
 from sympde.topology import Area
-from sympde.topology import jump, avg, Dn
+from sympde.topology import jump, avg, Dn, minus, plus
 
 from sympde.expr.expr import LinearExpr, BilinearExpr
 from sympde.expr.expr import LinearForm, BilinearForm
@@ -1756,6 +1756,15 @@ def test_interface_integral_1():
     a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v)))
                           + integral(I,      jump(u) * jump(v)))
 
+    # Nitsch
+    kappa = Constant('kappa')
+    expr_I = ( - jump(u) * jump(Dn(v))
+               + kappa * jump(u) * jump(v)
+               + plus(Dn(u)) * minus(v)
+               + minus(Dn(u)) * plus(v) )
+    a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v)))
+                          + integral(I,      expr_I))
+
 #    # TODO BUG
 #    bnd_A = A.get_boundary(axis=0, ext=1)
 #
@@ -1767,13 +1776,13 @@ def test_interface_integral_1():
     print(expr)
     # ...
 
-    # ... linear forms
-    b = LinearForm(v, integral(domain, sin(x+y)*v)
-                    + integral(I, cos(x+y) * jump(v)))
-
-    expr = TerminalExpr(b)
-    print(expr)
-    # ...
+#    # ... linear forms
+#    b = LinearForm(v, integral(domain, sin(x+y)*v)
+#                    + integral(I, cos(x+y) * jump(v)))
+#
+#    expr = TerminalExpr(b)
+#    print(expr)
+#    # ...
 
 #==============================================================================
 def test_interface_integral_2():
