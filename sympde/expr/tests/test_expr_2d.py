@@ -1746,7 +1746,9 @@ def test_interface_integral_1():
     I = domain.interfaces
 #    print(I)
 #    print(integral(I, jump(u) * jump(v)))
+    # ...
 
+    # ... bilinear forms
 #    a = BilinearForm((u,v), integral(domain, u*v))
 #    a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v))))
 #    a = BilinearForm((u,v), integral(I, jump(u) * jump(v)))
@@ -1760,13 +1762,16 @@ def test_interface_integral_1():
 #    a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v)))
 #                          + integral(I,      jump(u) * jump(v))
 #                          + integral(bnd_A,      dx(u)*v))
-#    # ...
-
-#    print(a)
-#    print(a(u,v))
-#    print(TerminalExpr(a))
 
     expr = TerminalExpr(a)
+    print(expr)
+    # ...
+
+    # ... linear forms
+    b = LinearForm(v, integral(domain, sin(x+y)*v)
+                    + integral(I, cos(x+y) * jump(v)))
+
+    expr = TerminalExpr(b)
     print(expr)
     # ...
 
@@ -1799,8 +1804,16 @@ def test_interface_integral_2():
     A = BilinearForm(((u1,u2),(v1,v2)), a(u1,v1) + a(u2,v2) + b(u1,v1) + b(u2,v2) + b(u1, v2) )
     B = BilinearForm(((u1,u2,u3),(v1,v2,v3)), a(u1,v1) + a(u2,v2) + a(u3,v3) + b(u1,v1) + b(u2,v2) + b(u1, v2) )
 
-#    print(TerminalExpr(A))
+    print(TerminalExpr(A))
     print(TerminalExpr(B))
+    # ...
+
+    # ... linear forms
+    b = LinearForm(v, integral(I, jump(v)))
+
+    b = LinearForm((v1,v2), b(v1) + b(v2) )
+    expr = TerminalExpr(b)
+    print(expr)
     # ...
 
 #==============================================================================
@@ -1838,13 +1851,16 @@ def test_interface_integral_3():
 
     a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v)))
                           + integral(I,      jump(u) * jump(v)))
-    # ...
-
-#    print(a)
-#    print(a(u,v))
-#    print(TerminalExpr(a))
 
     expr = TerminalExpr(a)
+    print(expr)
+    # ...
+
+    # ... linear forms
+    b = LinearForm(v, integral(domain, sin(x+y)*v)
+                    + integral(I, cos(x+y) * jump(v)))
+
+    expr = TerminalExpr(b)
     print(expr)
     # ...
 

@@ -265,52 +265,59 @@ def _split_expr_over_subdomains(expr, interiors, tests=None, trials=None):
         return element_of(v.space, name=new)
     # ...
 
+    # ...
     is_bilinear = not( trials is None ) and not( tests is None )
+    is_linear   =    ( trials is None ) and not( tests is None )
 
+    if trials is None: trials = []
+    if tests  is None: tests  = []
+    # ...
+
+    # ...
     d_expr = {}
     for interior in interiors:
         d_expr[interior] = 0
+    # ...
 
-    if is_bilinear:
-        # ... create trial/test functions on each subdomain
-        d_trials = {}
-        d_tests  = {}
-        for interior in interiors:
-            # ...
-            news = []
-            for v in trials:
-                new = _new_atom(v, interior)
-                news.append(new)
-            d_trials[interior] = news
-            # ...
-
-            # ...
-            news = []
-            for v in tests:
-                new = _new_atom(v, interior)
-                news.append(new)
-            d_tests[interior] = news
-            # ...
+    # ... create trial/test functions on each subdomain
+    d_trials = {}
+    d_tests  = {}
+    for interior in interiors:
+        # ...
+        news = []
+        for v in trials:
+            new = _new_atom(v, interior)
+            news.append(new)
+        d_trials[interior] = news
         # ...
 
         # ...
-        for interior in interiors:
-            d_expr[interior] = expr
-
-            # use trial functions on each subdomain
-            olds = trials
-            news = d_trials[interior]
-            for old,new in zip(olds, news):
-                d_expr[interior] = d_expr[interior].subs({old: new})
-
-            # use test functions on each subdomain
-            olds = tests
-            news = d_tests[interior]
-            for old,new in zip(olds, news):
-                d_expr[interior] = d_expr[interior].subs({old: new})
+        news = []
+        for v in tests:
+            new = _new_atom(v, interior)
+            news.append(new)
+        d_tests[interior] = news
         # ...
+    # ...
 
-        return d_expr
+    # ...
+    for interior in interiors:
+        d_expr[interior] = expr
+
+        # use trial functions on each subdomain
+        olds = trials
+        news = d_trials[interior]
+        for old,new in zip(olds, news):
+            d_expr[interior] = d_expr[interior].subs({old: new})
+
+        # use test functions on each subdomain
+        olds = tests
+        news = d_tests[interior]
+        for old,new in zip(olds, news):
+            d_expr[interior] = d_expr[interior].subs({old: new})
+    # ...
+
+    return d_expr
 
 #==============================================================================
 def _split_expr_over_interface(expr, interface, tests=None, trials=None):
@@ -321,7 +328,13 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
         return element_of(v.space, name=new)
     # ...
 
+    # ...
     is_bilinear = not( trials is None ) and not( tests is None )
+    is_linear   =    ( trials is None ) and not( tests is None )
+
+    if trials is None: trials = []
+    if tests  is None: tests  = []
+    # ...
 
     # ...
     B_minus = interface.minus
@@ -333,61 +346,58 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
     int_expressions = []
     bnd_expressions = {}
 
+    # ...
+    d_trials = {}
+    for u in trials:
+        u_minus = _new_atom(u, 'minus')
+        u_plus  = _new_atom(u, 'plus')
+        d_trials[u] = {'-': u_minus, '+': u_plus}
+
+        expr = expr.subs({jump(u): u_plus - u_minus})
+
+    d_tests  = {}
+    for v in tests:
+        v_minus = _new_atom(v, 'minus')
+        v_plus  = _new_atom(v, 'plus')
+        d_tests[v] = {'-': v_minus, '+': v_plus}
+
+        expr = expr.subs({jump(v): v_plus - v_minus})
+
+    expr = expand(expr)
+    # ...
+
+    # ...
+    trials = []
+    for u in d_trials.keys():
+        u_minus = d_trials[u]['-']
+        u_plus  = d_trials[u]['+']
+        trials += [u_minus, u_plus]
+
+    tests = []
+    for u in d_tests.keys():
+        u_minus = d_tests[u]['-']
+        u_plus  = d_tests[u]['+']
+        tests += [u_minus, u_plus]
+    # ...
+
+    # ...
+    def _nullify(expr, u, us):
+        """nullifies all symbols in us except u."""
+        others = list(set(us) - set([u]))
+        for other in others:
+            expr = expr.subs({other: 0})
+
+        return expr
+    # ...
+
+    # ...
+    def _not_zero_matrix(M):
+        n,m = expr.shape
+        return any([M[i,j] != 0 for i,j in product(range(n), range(m))])
+    # ...
+
+    # ...
     if is_bilinear:
-        # ...
-        d_trials = {}
-        for u in trials:
-            u_minus = _new_atom(u, 'minus')
-            u_plus  = _new_atom(u, 'plus')
-            d_trials[u] = {'-': u_minus, '+': u_plus}
-
-            expr = expr.subs({jump(u): u_plus - u_minus})
-
-        d_tests  = {}
-        for v in tests:
-            v_minus = _new_atom(v, 'minus')
-            v_plus  = _new_atom(v, 'plus')
-            d_tests[v] = {'-': v_minus, '+': v_plus}
-
-            expr = expr.subs({jump(v): v_plus - v_minus})
-
-        expr = expand(expr)
-        # ...
-
-#        print('> expr = ', expr)
-
-        # ...
-        trials = []
-        for u in d_trials.keys():
-            u_minus = d_trials[u]['-']
-            u_plus  = d_trials[u]['+']
-            trials += [u_minus, u_plus]
-
-        tests = []
-        for u in d_tests.keys():
-            u_minus = d_tests[u]['-']
-            u_plus  = d_tests[u]['+']
-            tests += [u_minus, u_plus]
-        # ...
-
-        # ...
-        def _nullify(expr, u, v, trials, tests):
-            """nullifies trials and tests except u and v."""
-            others  = list(set(trials) - set([u]))
-            others += list(set(tests) - set([v]))
-            for other in others:
-                expr = expr.subs({other: 0})
-
-            return expr
-        # ...
-
-        # ...
-        def _not_zero_matrix(M):
-            n,m = expr.shape
-            return any([M[i,j] != 0 for i,j in product(range(n), range(m))])
-        # ...
-
-        # ...
         for u in d_trials.keys():
             u_minus = d_trials[u]['-']
             u_plus  = d_trials[u]['+']
@@ -396,7 +406,8 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                 v_plus  = d_tests[v]['+']
 
                 # ...
-                newexpr = _nullify(expr, u_minus, v_minus, trials, tests)
+                newexpr = _nullify(expr, u_minus, trials)
+                newexpr = _nullify(newexpr, v_minus, tests)
                 newexpr = newexpr.subs({u_minus: u, v_minus: v})
                 if _not_zero_matrix(newexpr):
                     bnd_expressions[interface.minus] = newexpr
@@ -404,25 +415,47 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
 
                 # ...
                 # TODO must call InterfaceExpression afterward
-                newexpr = _nullify(expr, u_minus, v_plus, trials, tests)
+                newexpr = _nullify(expr, u_minus, trials)
+                newexpr = _nullify(newexpr, v_plus, tests)
                 if _not_zero_matrix(newexpr):
                     int_expressions += [InterfaceExpression(interface, newexpr)]
                 # ...
 
                 # ...
                 # TODO must call InterfaceExpression afterward
-                newexpr = _nullify(expr, u_plus, v_minus, trials, tests)
+                newexpr = _nullify(expr, u_plus, trials)
+                newexpr = _nullify(newexpr, v_minus, tests)
                 if _not_zero_matrix(newexpr):
                     int_expressions += [InterfaceExpression(interface, newexpr)]
                 # ...
 
                 # ...
-                newexpr = _nullify(expr, u_plus, v_plus, trials, tests)
+                newexpr = _nullify(expr, u_plus, trials)
+                newexpr = _nullify(newexpr, v_plus, tests)
                 newexpr = newexpr.subs({u_plus: u, v_plus: v})
                 if _not_zero_matrix(newexpr):
                     bnd_expressions[interface.plus] = newexpr
                 # ...
-        # ...
+
+    elif is_linear:
+        for v in d_tests.keys():
+            v_minus = d_tests[v]['-']
+            v_plus  = d_tests[v]['+']
+
+            # ...
+            newexpr = _nullify(expr, v_minus, tests)
+            newexpr = newexpr.subs({v_minus: v})
+            if _not_zero_matrix(newexpr):
+                bnd_expressions[interface.minus] = newexpr
+            # ...
+
+            # ...
+            newexpr = _nullify(expr, v_plus, tests)
+            newexpr = newexpr.subs({v_plus: v})
+            if _not_zero_matrix(newexpr):
+                bnd_expressions[interface.plus] = newexpr
+            # ...
+    # ...
 
     return int_expressions, bnd_expressions
 
@@ -623,9 +656,16 @@ class TerminalExpr(CalculusFunction):
             # ... treating interfaces
             keys = [k for k in d_new.keys() if isinstance(k, Interface)]
             for interface in keys:
+                # ...
+                trials = None
+                tests  = None
                 if expr.is_bilinear:
                     trials = list(expr.variables[0])
                     tests  = list(expr.variables[1])
+
+                elif expr.is_linear:
+                    tests  = list(expr.variables)
+                # ...
 
                 # ...
                 newexpr = d_new[interface]
@@ -651,9 +691,19 @@ class TerminalExpr(CalculusFunction):
             # ... treating subdomains
             keys = [k for k in d_new.keys() if isinstance(k, Union)]
             for domain in keys:
+                # ...
+                trials = None
+                tests  = None
                 if expr.is_bilinear:
                     trials = list(expr.variables[0])
                     tests  = list(expr.variables[1])
+
+                elif expr.is_linear:
+                    tests  = list(expr.variables)
+
+                else:
+                    raise NotImplementedError('Only Bilinear and Linear forms are available')
+                # ...
 
                 # ...
                 newexpr = d_new[domain]

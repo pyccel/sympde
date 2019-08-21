@@ -252,9 +252,15 @@ class Boundary(BasicDomain):
 
         return OrderedDict(sorted(d.items()))
 
+    def __hash__(self):
+        return hash(self.name)
+
     def __lt__(self, other):
         #add this method to avoid sympy error in Basic.compare
         return 0
+
+    def __eq__(self, other):
+        return ( self.name == other.name ) and ( self.domain is other.domain )
 
 #==============================================================================
 class Interface(BasicDomain):
