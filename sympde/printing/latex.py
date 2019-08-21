@@ -5,6 +5,7 @@ from sympy.core import Symbol
 from sympy import Mul, Tuple
 from sympy.printing.latex import LatexPrinter as LatexPrinterSympy
 from sympy.printing.latex import translate
+from sympy import Indexed, IndexedBase, Matrix, ImmutableDenseMatrix
 
 from sympde.topology import NormalVector, TangentVector
 from sympde.topology import Line, Square, Cube, Domain
@@ -60,7 +61,8 @@ class LatexPrinter(LatexPrinterSympy):
 
     def _print_MinusInterfaceOperator(self, expr):
         arg = expr.args[0]
-        if isinstance(arg, (ScalarTestFunction, VectorTestFunction)):
+        if isinstance(arg, (ScalarTestFunction, VectorTestFunction,
+                            Symbol, IndexedBase, Indexed)):
             return self._print(arg) + '_{-}'
 
         else:
@@ -68,7 +70,8 @@ class LatexPrinter(LatexPrinterSympy):
 
     def _print_PlusInterfaceOperator(self, expr):
         arg = expr.args[0]
-        if isinstance(arg, (ScalarTestFunction, VectorTestFunction)):
+        if isinstance(arg, (ScalarTestFunction, VectorTestFunction,
+                            Symbol, IndexedBase, Indexed)):
             return self._print(arg) + '_{+}'
 
         else:
@@ -99,6 +102,12 @@ class LatexPrinter(LatexPrinterSympy):
     # ...
     def _print_NormalVector(self, expr):
         return r'\mathbf{n}'
+
+    def _print_MinusNormalVector(self, expr):
+        return r'\mathbf{n}_{-}'
+
+    def _print_PlusNormalVector(self, expr):
+        return r'\mathbf{n}_{+}'
 
     def _print_TangentVector(self, expr):
         return r'\mathbf{t}'

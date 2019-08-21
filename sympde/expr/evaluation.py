@@ -31,11 +31,15 @@ from sympde.calculus import Dot, Inner, Cross
 from sympde.calculus import Grad, Rot, Curl, Div
 from sympde.calculus import Bracket
 from sympde.calculus import Laplace
+from sympde.calculus import jump, avg, minus, plus
+from sympde.calculus import Jump, Average
+from sympde.calculus import NormalDerivative
 from sympde.calculus.core import _generic_ops
 
 from sympde.topology import BasicDomain, Domain, MappedDomain, Union, Interval
 from sympde.topology import BoundaryVector, NormalVector, TangentVector
 from sympde.topology import Boundary, Connectivity, Interface
+from sympde.topology import InteriorDomain
 from sympde.topology.derivatives import _partial_derivatives
 from sympde.topology.derivatives import _logical_partial_derivatives
 from sympde.topology.derivatives import partial_derivative_as_symbol
@@ -60,9 +64,6 @@ from sympde.topology.space import IndexedTestTrial
 from sympde.topology.space import Unknown, VectorUnknown
 from sympde.topology.space import Trace
 from sympde.topology.space import element_of
-from sympde.topology.space import jump, avg, minus, plus
-from sympde.topology.space import Jump, Average
-from sympde.topology.space import NormalDerivative
 from sympde.topology.space import ScalarField, VectorField, IndexedVectorField
 from sympde.topology.measure import CanonicalMeasure
 from sympde.topology.measure import CartesianMeasure
@@ -349,20 +350,12 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
     bnd_expressions = {}
 
     # ...
-#    print('>>> atoms = ', expr.atoms(Jump))
+    # we replace all jumps
     jumps = expr.atoms(Jump)
     args = [j._args[0] for j in jumps]
+
     for a in args:
-        if isinstance(a, NormalDerivative):
-            n = NormalVector('n')
-            u = a._args[0]
-
-            new = Dot(Grad(minus(u)), minus(n)) - Dot(Grad(plus(u)), plus(n))
-
-        else:
-            new = minus(a) - plus(a)
-
-        expr = expr.subs({jump(a): new})
+        expr = expr.subs({jump(a): minus(a) - plus(a)})
     # ...
 
     # ...
@@ -663,7 +656,7 @@ class TerminalExpr(CalculusFunction):
 
                     # TODO ARA make sure thre is no problem with psydac
                     #      we should always take the interior of a domain
-                    if not isinstance(domain, (Boundary, Interface)):
+                    if not isinstance(domain, (Boundary, Interface, InteriorDomain)):
                         domain = domain.interior
 
                     d_new[domain] = M
@@ -768,6 +761,13 @@ class TerminalExpr(CalculusFunction):
                 dim = domain.dim
 
             return cls.eval(expr._args[0], dim=dim)
+
+        elif isinstance(expr, NormalVector):
+            lines = [[expr[i] for i in range(dim)]]
+            return Matrix(lines)
+
+        elif isinstance(expr, TangentVector):
+            raise NotImplementedError('TODO')
 
         elif isinstance(expr, BasicExpr):
             return cls.eval(expr.expr, dim=dim)

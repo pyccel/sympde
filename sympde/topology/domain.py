@@ -515,6 +515,12 @@ class BoundaryVector(IndexedBase):
 class NormalVector(BoundaryVector):
     pass
 
+class MinusNormalVector(NormalVector):
+    pass
+
+class PlusNormalVector(NormalVector):
+    pass
+
 class TangentVector(BoundaryVector):
     pass
 

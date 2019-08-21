@@ -160,8 +160,8 @@ def test_domain_join_line():
                bnd_minus = A.get_boundary(axis=0, ext=1),
                bnd_plus  = B.get_boundary(axis=0, ext=-1))
     ABC = AB.join(C, name = 'ABC',
-               bnd_minus = B.get_boundary('Gamma_2'),
-               bnd_plus  = C.get_boundary('Gamma_1'))
+               bnd_minus = A.get_boundary(axis=0, ext=1),
+               bnd_plus  = B.get_boundary(axis=0, ext=-1))
 
     print(ABC)
     print(ABC.interior)

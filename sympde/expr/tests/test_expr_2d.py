@@ -17,6 +17,7 @@ from sympy.physics.quantum import TensorProduct
 from sympde.core import Constant
 from sympde.calculus import grad, dot, inner, cross, rot, curl, div
 from sympde.calculus import laplace, hessian, bracket, convect
+from sympde.calculus import jump, avg, Dn, minus, plus
 from sympde.topology import (dx, dy, dz)
 from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
 from sympde.topology import ProductSpace
@@ -30,7 +31,6 @@ from sympde.topology import Mapping
 from sympde.topology import Square
 from sympde.topology import ElementDomain
 from sympde.topology import Area
-from sympde.topology import jump, avg, Dn, minus, plus
 
 from sympde.expr.expr import LinearExpr, BilinearExpr
 from sympde.expr.expr import LinearForm, BilinearForm
@@ -652,7 +652,7 @@ def test_terminal_expr_linear_2d_4():
     print('')
     # ...
 #==============================================================================
-def test_terminal_expr_linear_2d_5(boundary=['Gamma_1', 'Gamma_3']):
+def test_terminal_expr_linear_2d_5(boundary=[r'\Gamma_1', r'\Gamma_3']):
 
     # ... abstract model
     domain = Square()
@@ -1686,15 +1686,15 @@ def test_interface_2d_1():
 
         connectivity = Connectivity()
 
-        bnd_A_1 = Boundary('Gamma_1', A, axis=0, ext=-1)
-        bnd_A_2 = Boundary('Gamma_2', A, axis=0, ext=1)
-        bnd_A_3 = Boundary('Gamma_3', A, axis=1, ext=-1)
-        bnd_A_4 = Boundary('Gamma_4', A, axis=1, ext=1)
+        bnd_A_1 = Boundary(r'\Gamma_1', A, axis=0, ext=-1)
+        bnd_A_2 = Boundary(r'\Gamma_2', A, axis=0, ext=1)
+        bnd_A_3 = Boundary(r'\Gamma_3', A, axis=1, ext=-1)
+        bnd_A_4 = Boundary(r'\Gamma_4', A, axis=1, ext=1)
 
-        bnd_B_1 = Boundary('Gamma_1', B, axis=0, ext=-1)
-        bnd_B_2 = Boundary('Gamma_2', B, axis=0, ext=1)
-        bnd_B_3 = Boundary('Gamma_3', B, axis=1, ext=-1)
-        bnd_B_4 = Boundary('Gamma_4', B, axis=1, ext=1)
+        bnd_B_1 = Boundary(r'\Gamma_1', B, axis=0, ext=-1)
+        bnd_B_2 = Boundary(r'\Gamma_2', B, axis=0, ext=1)
+        bnd_B_3 = Boundary(r'\Gamma_3', B, axis=1, ext=-1)
+        bnd_B_4 = Boundary(r'\Gamma_4', B, axis=1, ext=1)
 
         connectivity['I'] = (bnd_A_2, bnd_B_1)
 
@@ -1744,27 +1744,29 @@ def test_interface_integral_1():
 
     # ...
     I = domain.interfaces
-#    print(I)
-#    print(integral(I, jump(u) * jump(v)))
     # ...
+
+#    expr = minus(Dn(u))
+#    print(expr)
+#    import sys; sys.exit(0)
 
     # ... bilinear forms
 #    a = BilinearForm((u,v), integral(domain, u*v))
 #    a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v))))
 #    a = BilinearForm((u,v), integral(I, jump(u) * jump(v)))
-    a = BilinearForm((u,v), integral(I, jump(Dn(u)) * jump(v)))
+#    a = BilinearForm((u,v), integral(I, jump(Dn(u)) * jump(v)))
 
 #    a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v)))
 #                          + integral(I,      jump(u) * jump(v)))
 
-#    # Nitsch
-#    kappa = Constant('kappa')
-#    expr_I = ( - jump(u) * jump(Dn(v))
-#               + kappa * jump(u) * jump(v)
-#               + plus(Dn(u)) * minus(v)
-#               + minus(Dn(u)) * plus(v) )
-#    a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v)))
-#                          + integral(I,      expr_I))
+    # Nitsch
+    kappa = Constant('kappa')
+    expr_I = ( - jump(u) * jump(Dn(v))
+               + kappa * jump(u) * jump(v)
+               + plus(Dn(u)) * minus(v)
+               + minus(Dn(u)) * plus(v) )
+    a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v)))
+                          + integral(I,      expr_I))
 
 #    # TODO BUG
 #    bnd_A = A.get_boundary(axis=0, ext=1)
@@ -1887,6 +1889,6 @@ def teardown_function():
     from sympy import cache
     cache.clear_cache()
 
-test_interface_integral_1()
+#test_interface_integral_1()
 #test_interface_integral_2()
 #test_interface_integral_3()

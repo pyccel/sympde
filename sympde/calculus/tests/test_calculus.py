@@ -19,12 +19,14 @@ from sympde.core import Constant
 from sympde.calculus import grad, dot, inner, outer, cross, rot, curl, div
 from sympde.calculus import laplace, hessian, bracket, convect, D, conv
 from sympde.calculus import ArgumentTypeError
+from sympde.calculus import jump, avg, Dn, minus, plus
 from sympde.topology import Domain
 from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
 from sympde.topology import ProductSpace
 from sympde.topology import H1Space, HcurlSpace, HdivSpace, L2Space, UndefinedSpace
 from sympde.topology import TestFunction, ScalarTestFunction, VectorTestFunction
 from sympde.topology import ScalarField, VectorField
+from sympde.topology import element_of, elements_of
 
 
 #==============================================================================
@@ -342,6 +344,43 @@ def test_calculus_3d_5():
 #    # ...
 
 #==============================================================================
+def test_calculus_2d_4():
+
+    DIM = 2
+    domain = Domain('Omega', dim=DIM)
+
+    V = ScalarFunctionSpace('V', domain, kind=None)
+
+    u, v = elements_of(V, names='u, v')
+
+    a = Constant('a', is_real=True)
+
+    # ... jump operator
+    assert(jump(u+v) == jump(u) + jump(v))
+    assert(jump(a*u) == a*jump(u))
+    # ...
+
+    # ... avg operator
+    assert(avg(u+v) == avg(u) + avg(v))
+    assert(avg(a*u) == a*avg(u))
+    # ...
+
+    # ... Dn operator
+    assert(Dn(u+v) == Dn(u) + Dn(v))
+    assert(Dn(a*u) == a*Dn(u))
+    # ...
+
+    # ... minus operator
+    assert(minus(u+v) == minus(u) + minus(v))
+    assert(minus(a*u) == a*minus(u))
+    # ...
+
+    # ... plus operator
+    assert(plus(u+v) == plus(u) + plus(v))
+    assert(plus(a*u) == a*plus(u))
+    # ...
+
+#==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
 
@@ -356,6 +395,7 @@ def teardown_function():
 #test_calculus_2d_1()
 #test_calculus_2d_2()
 #test_calculus_2d_3()
+#test_calculus_2d_4()
 #test_calculus_3d()
 
 #test_calculus_3d_3()
