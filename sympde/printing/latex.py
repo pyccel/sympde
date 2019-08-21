@@ -88,12 +88,12 @@ class LatexPrinter(LatexPrinterSympy):
 
     # ...
     def _print_Jump(self, expr):
-        return '[\![ ' + self._print(expr.args[0]) + ' ]\!]'
+        return r'[\![ ' + self._print(expr.args[0]) + r' ]\!]'
     # ...
 
     # ...
     def _print_Average(self, expr):
-        return r'\{ ' + self._print(expr.args[0]) + ' \}'
+        return r'\{ ' + self._print(expr.args[0]) + r' \}'
     # ...
 
     # ...
@@ -220,7 +220,7 @@ class LatexPrinter(LatexPrinterSympy):
     # ...
 
     def _print_Nil(self, expr):
-        return '\ldots'
+        return r'\ldots'
 
     def _print_Domain(self, expr):
         return translate(expr.name)
@@ -288,9 +288,9 @@ class LatexPrinter(LatexPrinterSympy):
         trial_spaces = self._print(trial_spaces)
 
         prelude = ( r'\mbox{find} ~'
-                   + trials + ' \in ' + trial_spaces
+                   + trials + r' \in ' + trial_spaces
                    + r' ~\mbox{such that}\\')
-        epilogue = r',\quad \forall~ ' + tests + ' \in ' + test_spaces
+        epilogue = r',\quad \forall~ ' + tests + r' \in ' + test_spaces
 
         body = '{lhs} = {rhs}'.format(lhs=lhs, rhs=rhs)
 
