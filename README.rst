@@ -50,4 +50,4 @@ From sources
     :target: http://sympde.readthedocs.io/en/latest/?badge=latest
 
 .. |binder| image:: https://mybinder.org/badge_logo.svg
- :target: https://mybinder.org/v2/gh/pyccel/sympde/devel
+ :target: https://mybinder.org/v2/gh/pyccel/sympde/master
