@@ -722,7 +722,7 @@ class Grad(BasicOperator):
 
             return Mul(a, b)
 
-        elif isinstance(expr, Pow):
+        elif isinstance(expr, Pow):  # TODO: fix this for the case where e is not a number
             b = expr.base
             e = expr.exp
             return e*cls(b)*Pow(b, e-1)
@@ -836,15 +836,13 @@ class Curl(BasicOperator):
             try:
                 a,b = expr._args
                 return a * Div(b) - b*Div(a) + Convect(b, a) - Convect(a, b)
-
             except:
                 return cls(expr, evaluate=False)
 
         elif isinstance(expr, Grad):
-            return 0
+            return S.Zero
 
         elif isinstance(expr, Curl):
-
             f = expr._args[0]
             return Grad(Div(f)) - Laplace(f)
 
@@ -1032,7 +1030,7 @@ class Div(BasicOperator):
             return Dot(b, Curl(a)) - Dot(a, Curl(b))
 
         elif isinstance(expr, Curl):
-            return 0
+            return S.Zero
 
         # ... check consistency between space type and the operator
         if _is_sympde_atom(expr):
