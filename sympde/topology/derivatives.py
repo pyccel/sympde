@@ -138,7 +138,6 @@ class DifferentialOperator(LinearOperator):
         elif isinstance(expr, Pow):
             b = expr.base
             e = expr.exp
-
             return (log(b)*cls.eval(e) + e*cls.eval(b)/b) * b**e
 
         elif isinstance(expr, Derivative):
@@ -155,6 +154,9 @@ class DifferentialOperator(LinearOperator):
         elif isinstance(expr, AppliedUndef):
             x = Symbol(cls.coordinate)
             return Derivative(expr, x)
+
+        elif isinstance(expr, _coeffs_registery):
+            return S.Zero
 
         elif isinstance(expr, Expr):
             x = Symbol(cls.coordinate)

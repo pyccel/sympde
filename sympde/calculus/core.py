@@ -616,6 +616,9 @@ class Convect(BasicOperator):
             right  = b
         # ...
 
+        if isinstance(right, _coeffs_registery):
+            return S.Zero
+
         # ... check consistency between space type and the operator
         # TODO add appropriate space types
         if _is_sympde_atom(right):
@@ -731,6 +734,9 @@ class Grad(BasicOperator):
 
             except:
                 return cls(expr, evaluate=False)
+
+        elif isinstance(expr, _coeffs_registery):
+            return S.Zero
 
         # ... check consistency between space type and the operator
         if _is_sympde_atom(expr):
@@ -1120,6 +1126,9 @@ class Laplace(BasicOperator):
 
             return Mul(a, b)
 
+        elif isinstance(expr, _coeffs_registery):
+            return S.Zero
+
         # ... check consistency between space type and the operator
         # TODO add appropriate space types
         if _is_sympde_atom(expr):
@@ -1201,6 +1210,9 @@ class Hessian(BasicOperator):
                 b = cls(Mul(*vectors), evaluate=False)
 
             return Mul(a, b)
+
+        elif isinstance(expr, _coeffs_registery):
+            return S.Zero
 
         # ... check consistency between space type and the operator
         # TODO add appropriate space types
