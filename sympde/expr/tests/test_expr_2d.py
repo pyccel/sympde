@@ -1752,18 +1752,19 @@ def test_interface_integral_1():
 #    a = BilinearForm((u,v), integral(domain, u*v))
 #    a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v))))
 #    a = BilinearForm((u,v), integral(I, jump(u) * jump(v)))
+    a = BilinearForm((u,v), integral(I, jump(Dn(u)) * jump(v)))
 
-    a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v)))
-                          + integral(I,      jump(u) * jump(v)))
+#    a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v)))
+#                          + integral(I,      jump(u) * jump(v)))
 
-    # Nitsch
-    kappa = Constant('kappa')
-    expr_I = ( - jump(u) * jump(Dn(v))
-               + kappa * jump(u) * jump(v)
-               + plus(Dn(u)) * minus(v)
-               + minus(Dn(u)) * plus(v) )
-    a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v)))
-                          + integral(I,      expr_I))
+#    # Nitsch
+#    kappa = Constant('kappa')
+#    expr_I = ( - jump(u) * jump(Dn(v))
+#               + kappa * jump(u) * jump(v)
+#               + plus(Dn(u)) * minus(v)
+#               + minus(Dn(u)) * plus(v) )
+#    a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v)))
+#                          + integral(I,      expr_I))
 
 #    # TODO BUG
 #    bnd_A = A.get_boundary(axis=0, ext=1)
@@ -1886,6 +1887,6 @@ def teardown_function():
     from sympy import cache
     cache.clear_cache()
 
-#test_interface_integral_1()
+test_interface_integral_1()
 #test_interface_integral_2()
 #test_interface_integral_3()

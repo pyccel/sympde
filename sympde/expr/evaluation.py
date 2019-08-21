@@ -61,6 +61,8 @@ from sympde.topology.space import Unknown, VectorUnknown
 from sympde.topology.space import Trace
 from sympde.topology.space import element_of
 from sympde.topology.space import jump, avg, minus, plus
+from sympde.topology.space import Jump, Average
+from sympde.topology.space import NormalDerivative
 from sympde.topology.space import ScalarField, VectorField, IndexedVectorField
 from sympde.topology.measure import CanonicalMeasure
 from sympde.topology.measure import CartesianMeasure
@@ -347,14 +349,31 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
     bnd_expressions = {}
 
     # ...
+#    print('>>> atoms = ', expr.atoms(Jump))
+    jumps = expr.atoms(Jump)
+    args = [j._args[0] for j in jumps]
+    for a in args:
+        if isinstance(a, NormalDerivative):
+            n = NormalVector('n')
+            u = a._args[0]
+
+            new = Dot(Grad(minus(u)), minus(n)) - Dot(Grad(plus(u)), plus(n))
+
+        else:
+            new = minus(a) - plus(a)
+
+        expr = expr.subs({jump(a): new})
+    # ...
+
+    # ...
     d_trials = {}
     for u in trials:
         u_minus = minus(u)
         u_plus  = plus(u)
         d_trials[u] = {'-': u_minus, '+': u_plus}
 
-        # TODO add sub for avg
-        expr = expr.subs({jump(u): u_minus - u_plus})
+#        # TODO add sub for avg
+#        expr = expr.subs({jump(u): u_minus - u_plus})
 
     d_tests  = {}
     for v in tests:
@@ -362,8 +381,8 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
         v_plus  = plus(v)
         d_tests[v] = {'-': v_minus, '+': v_plus}
 
-        # TODO add sub for avg
-        expr = expr.subs({jump(v): v_minus - v_plus})
+#        # TODO add sub for avg
+#        expr = expr.subs({jump(v): v_minus - v_plus})
 
     expr = expand(expr)
     # ...

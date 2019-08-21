@@ -1211,8 +1211,6 @@ class PlusInterfaceOperator(BasicOperator):
 
             return Mul(a, b)
 
-        return cls(expr, evaluate=False)
-
 #==============================================================================
 # user friendly functions
 jump  = Jump
