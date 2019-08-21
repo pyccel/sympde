@@ -4,15 +4,15 @@
 from sympy.core import Symbol
 from sympy import Mul, Tuple
 from sympy.printing.latex import LatexPrinter as LatexPrinterSympy
+from sympy.printing.latex import translate
 
-#from sympde.expr import BilinearForm, LinearForm, Integral, FormCall
-from sympde.calculus import Dot, Inner, Cross
-from sympde.calculus import Grad, Rot, Curl, Div
+from sympde.topology import NormalVector, TangentVector
 from sympde.topology import Line, Square, Cube, Domain
 from sympde.topology.derivatives import sort_partial_derivatives
 from sympde.topology.derivatives import get_index_derivatives
 from sympde.topology.derivatives import get_atom_derivatives
 from sympde.topology.space import ProductSpace
+from sympde.topology.space import ScalarTestFunction, VectorTestFunction
 
 class LatexPrinter(LatexPrinterSympy):
 
@@ -33,10 +33,75 @@ class LatexPrinter(LatexPrinterSympy):
         u,v = [self._print(i) for i in expr.args]
         return r'[' + u + ',' + v + ']'
 
+    def _print_Convect(self, expr):
+        raise NotImplementedError('TODO')
+
+    def _print_StrainTensor(self, expr):
+        return r'\mathrm{D}\left( ' + self._print(expr.args[0]) + r' \right)'
+
+    def _print_Convolution(self, expr):
+        left = self._print(expr.args[0])
+        right = self._print(expr.args[1])
+        return left + r' \ast ' + right
+
+    def _print_Laplace(self, expr):
+        return r'\nabla^2' + self._print(expr.args[0])
+
+    def _print_Hessian(self, expr):
+        return r'\mathrm{hess}( ' + self._print(expr.args[0]) + ' )'
+
     def _print_DifferentialOperator(self, expr):
         coord = self._print(expr.coordinate)
         arg = self._print(expr.args[0])
         return r'\partial_{' + coord + '}' +  arg
+
+    def _print_Trace(self, expr):
+        return self._print(expr.expr)
+
+    def _print_MinusInterfaceOperator(self, expr):
+        arg = expr.args[0]
+        if isinstance(arg, (ScalarTestFunction, VectorTestFunction)):
+            return self._print(arg) + '_{-}'
+
+        else:
+            return r'\left( ' + self._print(arg) + r' \right)_{-}'
+
+    def _print_PlusInterfaceOperator(self, expr):
+        arg = expr.args[0]
+        if isinstance(arg, (ScalarTestFunction, VectorTestFunction)):
+            return self._print(arg) + '_{+}'
+
+        else:
+            return r'\left( ' + self._print(arg) + r' \right)_{+}'
+
+    def _print_NormalDerivative(self, expr):
+        nn = self._print(NormalVector('n'))
+        arg = expr.args[0]
+        if isinstance(arg, (ScalarTestFunction, VectorTestFunction)):
+            arg = r'\nabla ' + self._print(arg)
+
+        else:
+            arg = r'\nabla \left( ' + self._print(arg) + r' \right)'
+
+        return arg + r' \cdot ' + nn
+    # ...
+
+    # ...
+    def _print_Jump(self, expr):
+        return r'[\![ ' + self._print(expr.args[0]) + r' ]\!]'
+    # ...
+
+    # ...
+    def _print_Average(self, expr):
+        return r'\{ ' + self._print(expr.args[0]) + r' \}'
+    # ...
+
+    # ...
+    def _print_NormalVector(self, expr):
+        return r'\mathbf{n}'
+
+    def _print_TangentVector(self, expr):
+        return r'\mathbf{t}'
     # ...
 
     # ...
@@ -76,60 +141,89 @@ class LatexPrinter(LatexPrinterSympy):
         right = self._print(right)
 
         return r'{left} \times {right}'.format(left=left, right=right)
+
+    def _print_Outer(self, expr):
+        raise NotImplementedError('TODO')
+    # ...
+
+    # ...
+    def _print_DomainIntegral(self, expr):
+        dim = expr.domain.dim
+        domain = self._print(expr.domain)
+        expr   = self._print(expr.expr)
+
+        integral = r'\int_{' + domain + '}'
+
+        if dim == 1:
+            dx = r'~dx'
+
+        else:
+            dx = r'~d\mathbf{x}'
+
+        return '{integral} {expr} {dx}'.format(integral=integral,
+                                               expr=expr,
+                                               dx=dx)
+    # ...
+
+    # ...
+    def _print_BoundaryIntegral(self, expr):
+        domain = self._print(expr.domain)
+        expr   = self._print(expr.expr)
+
+        integral = r'\int_{' + domain + '}'
+
+        dx = r'~ds'
+
+        return '{integral} {expr} {dx}'.format(integral=integral,
+                                               expr=expr,
+                                               dx=dx)
+    # ...
+
+    # ...
+    def _print_InterfaceIntegral(self, expr):
+        domain = self._print(expr.domain)
+        expr   = self._print(expr.expr)
+
+        integral = r'\int_{' + domain + '}'
+
+        dx = r'~ds'
+
+        return '{integral} {expr} {dx}'.format(integral=integral,
+                                               expr=expr,
+                                               dx=dx)
     # ...
 
     # ... forms
     def _print_BilinearForm(self, expr):
-        domain = expr.domain
-#        if expr.boundary:
-#            domain = expr.boundary
-        return self._write_integral_expr(domain, expr.expr)
+        trials, tests = expr.variables
+        if len(trials) == 1: trials = trials[0]
+        if len(tests) == 1: tests = tests[0]
+        trials = self._print(trials)
+        tests  = self._print(tests)
+        expr = self._print(expr.expr)
+        pattern = r'\left( {trials}, {tests} \right) \mapsto {expr}'
+        return pattern.format(trials=trials, tests=tests, expr=expr)
 
     def _print_LinearForm(self, expr):
-        domain = expr.domain
-#        if expr.boundary:
-#            domain = expr.boundary
-        return self._write_integral_expr(domain, expr.expr)
+        tests = expr.variables
+        if len(tests) == 1: tests = tests[0]
+        tests  = self._print(tests)
+        expr = self._print(expr.expr)
+        pattern = r'{tests} \mapsto {expr}'
+        return pattern.format(tests=tests, expr=expr)
 
-    def _print_Integral(self, expr):
-        domain = expr.domain
-#        if expr.boundary:
-#            domain = expr.boundary
-        return self._write_integral_expr(domain, expr.expr)
+    def _print_Functional(self, expr):
+        raise NotImplementedError('TODO')
 
     def _print_Kron(self, expr):
         raise NotImplementedError('TODO')
-
-    # TODO this implementation works only for the 1D case
-    def _print_BilinearAtomicForm(self, expr):
-        # TODO move this to __new__ of BilinearAtomicForm
-        if not isinstance(expr.expr, Mul):
-            raise TypeError('> BilinearAtomicForm must always be of instance Mul')
-
-        coord = expr.coordinates
-        args = expr.expr.args
-        code = ''
-        for i in args:
-            atom = get_atom_derivatives(i)
-            d = get_index_derivatives(i)
-            n_deriv = d[coord.name]
-            deriv = '\prime'*n_deriv
-
-            if deriv:
-                code = '{code} {atom}^{deriv}'.format(code=code, atom=self._print(atom),
-                                                      deriv=deriv)
-            else:
-                code = '{code} {atom}'.format(code=code, atom=self._print(atom))
-
-        txt = self._write_integral_expr(expr.domain, code, measure=expr.measure)
-        return txt
     # ...
 
     def _print_Nil(self, expr):
-        return '\ldots'
+        return r'\ldots'
 
     def _print_Domain(self, expr):
-        return '{}'.format(self._print(expr.name))
+        return translate(expr.name)
 
     def _print_Interval(self, expr):
         return '{}'.format(self._print(expr.name))
@@ -139,13 +233,15 @@ class LatexPrinter(LatexPrinterSympy):
         return r' \times '.join(spaces)
 
     def _print_Equation(self, expr):
-        lhs = self._print(expr.lhs)
-        rhs = self._print(expr.rhs)
+        lhs = expr.lhs
+        rhs = expr.rhs
+        trials, tests = lhs.variables
+
+        lhs = self._print(lhs(trials, tests))
+        rhs = self._print(rhs(tests))
 
         prelude  = ''
         epilogue = ''
-
-        tests, trials = expr.lhs.arguments
 
         # ... we print tests function here, since sympy printing does not look
         #     nice for a tuple (quad)
@@ -191,19 +287,14 @@ class LatexPrinter(LatexPrinterSympy):
         test_spaces = self._print(test_spaces)
         trial_spaces = self._print(trial_spaces)
 
-        prelude = 'find $' + trials + ' \in ' + trial_spaces + '$' + ' such that'
-        epilogue = r',\quad \forall ' + tests + ' \in ' + test_spaces
+        prelude = ( r'\mbox{find} ~'
+                   + trials + r' \in ' + trial_spaces
+                   + r' ~\mbox{such that}\\')
+        epilogue = r',\quad \forall~ ' + tests + r' \in ' + test_spaces
 
-        if expr.is_undefined:
-            body = ''
-        else:
-            body = '{lhs} &= {rhs}'.format(lhs=lhs, rhs=rhs)
+        body = '{lhs} = {rhs}'.format(lhs=lhs, rhs=rhs)
 
-        code = (prelude + '\n' +
-                r'\begin{align*}' +
-                body +
-                epilogue +
-                r'\end{align*}')
+        code = prelude + body + epilogue
         return code
 
     def _print_dx(self, expr):
@@ -224,21 +315,6 @@ class LatexPrinter(LatexPrinterSympy):
     def _print_BoundaryVector(self, expr):
         name = self._print(expr.name)
         return r'\mathbf{' + name + '}'
-
-    def _write_integral_expr(self, domain, expr, measure=None):
-        measure_str = ''
-        if not(measure is None):
-            measure_str = latex(measure)
-
-        expr_str = latex(expr)
-
-        # TODO improve this using latex for ProductDomain
-        int_str = r'\int_{' + self._print(domain) + '}'
-        measure_str = ''
-
-        return '{integral} {expr} {measure}'.format(integral=int_str,
-                                                    expr=expr_str,
-                                                    measure=measure_str)
 
     # ........................................
     #            EXTERIOR CALCULUS
