@@ -767,7 +767,8 @@ class TerminalExpr(CalculusFunction):
             return Matrix(lines)
 
         elif isinstance(expr, TangentVector):
-            raise NotImplementedError('TODO')
+            lines = [[expr[i] for i in range(dim)]]
+            return Matrix(lines)
 
         elif isinstance(expr, BasicExpr):
             return cls.eval(expr.expr, dim=dim)
