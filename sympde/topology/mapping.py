@@ -672,5 +672,8 @@ class SymbolicExpr(CalculusFunction):
             return expr
         # ...
 
+        elif isinstance(expr, Mapping):
+            return Symbol(expr.name)
+
         return cls(expr, evaluate=False)
 
