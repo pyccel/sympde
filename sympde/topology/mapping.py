@@ -675,5 +675,7 @@ class SymbolicExpr(CalculusFunction):
         elif isinstance(expr, Mapping):
             return Symbol(expr.name)
 
-        return cls(expr, evaluate=False)
-
+        # Expression must always be translated to Sympy!
+        # TODO: check if we should use 'sympy.sympify(expr)' instead
+        else:
+            raise NotImplementedError('Cannot translate to Sympy: {}'.format(expr))
