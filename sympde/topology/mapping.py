@@ -22,14 +22,18 @@ from sympde.core.basic import CalculusFunction
 from sympde.core.basic import _coeffs_registery
 from .basic import BasicDomain
 from .domain import Domain
+
 from .derivatives import dx, dy, dz
-from .derivatives import dx1, dx2, dx3
+from .derivatives import _partial_derivatives
+from .derivatives import get_atom_derivatives, get_index_derivatives_atom
 from .derivatives import (Grad_1d, Div_1d,
                           Grad_2d, Curl_2d, Rot_2d, Div_2d,
                           Grad_3d, Curl_3d, Div_3d)
-from .derivatives import LogicalGrad_1d, LogicalGrad_2d, LogicalGrad_3d
+
+from .derivatives import dx1, dx2, dx3
 from .derivatives import _logical_partial_derivatives
 from .derivatives import get_atom_logical_derivatives, get_index_logical_derivatives_atom
+from .derivatives import LogicalGrad_1d, LogicalGrad_2d, LogicalGrad_3d
 
 from .space import ScalarTestFunction, VectorTestFunction, IndexedTestTrial
 from .space import ScalarField, VectorField, IndexedVectorField
@@ -581,9 +585,6 @@ class SymbolicExpr(CalculusFunction):
         elif isinstance(expr, _coeffs_registery):
             return expr
 
-        elif isinstance(expr, Rational):
-            return expr
-
         elif isinstance(expr, (list, tuple, Tuple)):
             expr = [cls.eval(a, code=code) for a in expr]
             return Tuple(*expr)
@@ -632,11 +633,9 @@ class SymbolicExpr(CalculusFunction):
 
             return Symbol(name)
 
-        elif isinstance(expr, _logical_partial_derivatives):
-
-            atom = get_atom_logical_derivatives(expr)
-            indices = get_index_logical_derivatives_atom(expr, atom)
-
+        elif isinstance(expr, _partial_derivatives):
+            atom = get_atom_derivatives(expr)
+            indices = get_index_derivatives_atom(expr, atom)
             code = None
             if indices:
                 index = indices[0]
@@ -645,7 +644,18 @@ class SymbolicExpr(CalculusFunction):
 
                 for k,n in list(index.items()):
                     code += k*n
+            return cls.eval(atom, code=code)
 
+        elif isinstance(expr, _logical_partial_derivatives):
+            atom = get_atom_logical_derivatives(expr)
+            indices = get_index_logical_derivatives_atom(expr, atom)
+            code = None
+            if indices:
+                index = indices[0]
+                code = ''
+                index = OrderedDict(sorted(index.items()))
+                for k,n in list(index.items()):
+                    code += k*n
             return cls.eval(atom, code=code)
 
         elif isinstance(expr, SymbolicMappingExpr):
