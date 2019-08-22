@@ -260,6 +260,9 @@ class Boundary(BasicDomain):
         return 0
 
     def __eq__(self, other):
+        if not isinstance(other, Boundary):
+            return False
+
         return ( self.name == other.name ) and ( self.domain is other.domain )
 
 #==============================================================================
