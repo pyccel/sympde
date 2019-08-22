@@ -261,6 +261,22 @@ def _to_matrix_form(expr, M, test_indices, trial_indices):
 
 #==============================================================================
 def _split_expr_over_subdomains(expr, interiors, tests=None, trials=None):
+    """
+    Splits an expression defined on a domain, having multiple interiors, into
+    expressions where the test and trial functions are defined on each side of
+    the subdomain.
+
+    Parameters:
+        expr: sympde expression
+
+        interiors: an interior or union of interiors
+
+        tests: tests functions as given from linear or bilinear forms
+
+        trials: trials functions as given from linear or bilinear forms
+
+    Returns: sympde expression
+    """
     # ...
     def _new_atom(v, interior):
         new = '{v}_{domain}'.format( v      = v.name,
@@ -324,6 +340,22 @@ def _split_expr_over_subdomains(expr, interiors, tests=None, trials=None):
 
 #==============================================================================
 def _split_expr_over_interface(expr, interface, tests=None, trials=None):
+    """
+    Splits an expression defined on an interface, into
+    expressions where the test and trial functions are defined on each side of
+    the interface.
+
+    Parameters:
+        expr: sympde expression
+
+        interface: interface of a connectivity
+
+        tests: tests functions as given from linear or bilinear forms
+
+        trials: trials functions as given from linear or bilinear forms
+
+    Returns: sympde expression
+    """
     # ...
     def _new_atom(v, label):
         new = '{v}_{label}'.format( v     = v.name,

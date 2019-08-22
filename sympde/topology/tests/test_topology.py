@@ -118,6 +118,20 @@ def test_boundary_2():
     assert(Omega.boundary - Gamma_1 == Union(Gamma_2, Gamma_3))
 
 #==============================================================================
+def test_boundary_3():
+    Omega_1 = InteriorDomain('Omega_1', dim=2)
+
+    Gamma_1 = Boundary(r'\Gamma_1', Omega_1, axis=0, ext=-1)
+    Gamma_4 = Boundary(r'\Gamma_4', Omega_1, axis=1, ext=1)
+
+    Omega = Domain('Omega',
+                   interiors=[Omega_1],
+                   boundaries=[Gamma_1, Gamma_4])
+
+    assert(Omega.get_boundary(axis=0, ext=-1) == Gamma_1)
+    assert(Omega.get_boundary(axis=1, ext=1) == Gamma_4)
+
+#==============================================================================
 def test_element():
     D1 = InteriorDomain('D1', dim=2)
     D2 = InteriorDomain('D2', dim=2)

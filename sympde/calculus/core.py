@@ -1579,6 +1579,8 @@ class Average(BasicOperator):
 #==============================================================================
 class MinusInterfaceOperator(BasicOperator):
     """
+    The minus operator represents the value of an expression on the first side
+    of an interface.
     """
 
     def __new__(cls, *args, **options):
@@ -1656,6 +1658,8 @@ class MinusInterfaceOperator(BasicOperator):
 #==============================================================================
 class PlusInterfaceOperator(BasicOperator):
     """
+    The plus operator represents the value of an expression on the second side
+    of an interface.
     """
 
     def __new__(cls, *args, **options):
