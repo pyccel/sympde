@@ -9,7 +9,6 @@ from sympde.topology import Mapping, MappedDomain
 from sympde.topology import Jacobian, DetJacobian, Covariant, Contravariant
 from sympde.topology import dx, dy, dz
 from sympde.topology import dx1, dx2, dx3
-from sympde.topology import print_expression
 from sympde.topology import Domain
 
 # ...
@@ -21,12 +20,6 @@ def test_mapping_1d():
     F = Mapping('F', rdim)
 
     assert(F.name == 'F')
-
-    # ...
-    assert(print_expression(F) == 'F')
-    assert(print_expression(F[0]) == 'Fx')
-    assert(print_expression(dx(F[0])) == 'Fx_x1')
-    # ...
 
     # ...
     expected = Matrix([[dx1(F[0])]])
