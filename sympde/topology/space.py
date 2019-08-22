@@ -16,7 +16,7 @@ from sympy.core.singleton import S
 from sympde.core.utils import random_string
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import _coeffs_registery
-from .basic import BasicDomain, Union
+from .basic import BasicDomain, Union, Interval
 from .datatype import SpaceType, dtype_space_registry
 from .datatype import RegularityType, dtype_regularity_registry
 
@@ -45,6 +45,7 @@ class BasicFunctionSpace(Basic):
     _shape      = None
     _kind       = None
     _regularity = None # TODO pass it as arg to __new__
+    _is_broken  = None
     def __new__(cls, name, domain, shape, kind):
 
         if not isinstance(domain, BasicDomain):
@@ -75,6 +76,17 @@ class BasicFunctionSpace(Basic):
             obj._regularity = dtype_regularity_registry[kind_str]
         # ...
 
+        # ...
+        # TODO remove this if => bug in tensor form
+        if isinstance(domain, Interval):
+            is_broken = False
+
+        else:
+            is_broken = len(domain) > 1
+
+        obj._is_broken = is_broken
+        # ...
+
         return obj
 
     @property
@@ -96,6 +108,10 @@ class BasicFunctionSpace(Basic):
     @property
     def kind(self):
         return self._kind
+
+    @property
+    def is_broken(self):
+        return self._is_broken
 
     @property
     def regularity(self):
@@ -739,7 +755,7 @@ class Trace(AtomicExpr):
         if isinstance(boundary, Union):
             expr = [Integral.eval(expr, d, order) for d in boundary.args]
             return Add(*expr)
-            
+
         return cls(expr, boundary, order, evaluate=False)
 
 #==============================================================================
@@ -825,382 +841,3 @@ class Projection(AtomicExpr):
     @property
     def expr(self):
         return self._args[1]
-
-#==============================================================================
-class BasicOperator(CalculusFunction):
-    """
-    Basic class for calculus operators.
-    """
-
-    def __getitem__(self, indices, **kw_args):
-        if is_sequence(indices):
-            # Special case needed because M[*my_tuple] is a syntax error.
-            return Indexed(self, *indices, **kw_args)
-        else:
-            return Indexed(self, indices, **kw_args)
-
-#==============================================================================
-class NormalDerivative(BasicOperator):
-    """
-    Represents the normal derivative.
-
-    This operator implements the properties of addition and multiplication
-
-    Examples
-
-    """
-
-    def __new__(cls, *args, **options):
-        # (Try to) sympify args first
-
-        if options.pop('evaluate', True):
-            r = cls.eval(*args)
-        else:
-            r = None
-
-        if r is None:
-            return Basic.__new__(cls, *args, **options)
-        else:
-            return r
-
-    @classmethod
-    def eval(cls, *_args):
-        """."""
-
-        if not _args:
-            return
-
-        if not len(_args) == 1:
-            raise ValueError('Expecting one argument')
-
-        expr = _args[0]
-        if isinstance(expr, Add):
-            args = [cls.eval(a) for a in expr.args]
-            return Add(*args)
-
-        elif isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
-            vectors = [a for a in expr.args if not(a in coeffs)]
-
-            a = S.One
-            if coeffs:
-                a = Mul(*coeffs)
-
-            b = S.One
-            if vectors:
-                try:
-                    if len(vectors) == 1:
-                        f = vectors[0]
-                        b = cls(f)
-
-                    elif len(vectors) == 2:
-                        f,g = vectors
-                        b = f*cls(g) + g*cls(f)
-
-                    else:
-                        left = vectors[0]
-                        right = Mul(*vectors[1:])
-
-                        f_left  = cls(left, evaluate=True)
-                        f_right = cls(right, evaluate=True)
-
-                        b = left * f_right + f_left * right
-
-                except:
-                    b = cls(Mul(*vectors), evaluate=False)
-
-            return Mul(a, b)
-
-        return cls(expr, evaluate=False)
-
-#==============================================================================
-class Jump(BasicOperator):
-    """
-    Represents the jump of an expression at the interface of two subdomains.
-
-    This operator implements the properties of addition and multiplication
-
-    Examples
-
-    """
-
-    def __new__(cls, *args, **options):
-        # (Try to) sympify args first
-
-        if options.pop('evaluate', True):
-            r = cls.eval(*args)
-        else:
-            r = None
-
-        if r is None:
-            return Basic.__new__(cls, *args, **options)
-        else:
-            return r
-
-    @classmethod
-    def eval(cls, *_args):
-        """."""
-
-        if not _args:
-            return
-
-        if not len(_args) == 1:
-            raise ValueError('Expecting one argument')
-
-        expr = _args[0]
-        if isinstance(expr, Add):
-            args = [cls.eval(a) for a in expr.args]
-            return Add(*args)
-
-        elif isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
-            vectors = [a for a in expr.args if not(a in coeffs)]
-
-            a = S.One
-            if coeffs:
-                a = Mul(*coeffs)
-
-            b = S.One
-            if vectors:
-                try:
-                    if len(vectors) == 1:
-                        f = vectors[0]
-                        b = cls(f)
-
-                    elif len(vectors) == 2:
-                        f,g = vectors
-                        b = f*cls(g) + g*cls(f)
-
-                    else:
-                        left = vectors[0]
-                        right = Mul(*vectors[1:])
-
-                        f_left  = cls(left, evaluate=True)
-                        f_right = cls(right, evaluate=True)
-
-                        b = left * f_right + f_left * right
-
-                except:
-                    b = cls(Mul(*vectors), evaluate=False)
-
-            return Mul(a, b)
-
-        return cls(expr, evaluate=False)
-
-#==============================================================================
-class Average(BasicOperator):
-    """
-    Represents the average of an expression at the interface of two subdomains.
-
-    This operator implements the properties of addition and multiplication
-
-    Examples
-
-    """
-
-    def __new__(cls, *args, **options):
-        # (Try to) sympify args first
-
-        if options.pop('evaluate', True):
-            r = cls.eval(*args)
-        else:
-            r = None
-
-        if r is None:
-            return Basic.__new__(cls, *args, **options)
-        else:
-            return r
-
-    @classmethod
-    def eval(cls, *_args):
-        """."""
-
-        if not _args:
-            return
-
-        if not len(_args) == 1:
-            raise ValueError('Expecting one argument')
-
-        expr = _args[0]
-        if isinstance(expr, Add):
-            args = [cls.eval(a) for a in expr.args]
-            return Add(*args)
-
-        elif isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
-            vectors = [a for a in expr.args if not(a in coeffs)]
-
-            a = S.One
-            if coeffs:
-                a = Mul(*coeffs)
-
-            b = S.One
-            if vectors:
-                try:
-                    if len(vectors) == 1:
-                        f = vectors[0]
-                        b = cls(f)
-
-                    elif len(vectors) == 2:
-                        f,g = vectors
-                        b = f*cls(g) + g*cls(f)
-
-                    else:
-                        left = vectors[0]
-                        right = Mul(*vectors[1:])
-
-                        f_left  = cls(left, evaluate=True)
-                        f_right = cls(right, evaluate=True)
-
-                        b = left * f_right + f_left * right
-
-                except:
-                    b = cls(Mul(*vectors), evaluate=False)
-
-            return Mul(a, b)
-
-        return cls(expr, evaluate=False)
-
-#==============================================================================
-class MinusInterfaceOperator(BasicOperator):
-    """
-    """
-
-    def __new__(cls, *args, **options):
-        # (Try to) sympify args first
-
-        if options.pop('evaluate', True):
-            r = cls.eval(*args)
-        else:
-            r = None
-
-        if r is None:
-            return Basic.__new__(cls, *args, **options)
-        else:
-            return r
-
-    @classmethod
-    def eval(cls, *_args):
-        """."""
-
-        if not _args:
-            return
-
-        if not len(_args) == 1:
-            raise ValueError('Expecting one argument')
-
-        expr = _args[0]
-        if isinstance(expr, Add):
-            args = [cls.eval(a) for a in expr.args]
-            return Add(*args)
-
-        elif isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
-            vectors = [a for a in expr.args if not(a in coeffs)]
-
-            a = S.One
-            if coeffs:
-                a = Mul(*coeffs)
-
-            b = S.One
-            if vectors:
-                try:
-                    if len(vectors) == 1:
-                        f = vectors[0]
-                        b = cls(f)
-
-                    elif len(vectors) == 2:
-                        f,g = vectors
-                        b = f*cls(g) + g*cls(f)
-
-                    else:
-                        left = vectors[0]
-                        right = Mul(*vectors[1:])
-
-                        f_left  = cls(left, evaluate=True)
-                        f_right = cls(right, evaluate=True)
-
-                        b = left * f_right + f_left * right
-
-                except:
-                    b = cls(Mul(*vectors), evaluate=False)
-
-            return Mul(a, b)
-
-        return cls(expr, evaluate=False)
-
-#==============================================================================
-class PlusInterfaceOperator(BasicOperator):
-    """
-    """
-
-    def __new__(cls, *args, **options):
-        # (Try to) sympify args first
-
-        if options.pop('evaluate', True):
-            r = cls.eval(*args)
-        else:
-            r = None
-
-        if r is None:
-            return Basic.__new__(cls, *args, **options)
-        else:
-            return r
-
-    @classmethod
-    def eval(cls, *_args):
-        """."""
-
-        if not _args:
-            return
-
-        if not len(_args) == 1:
-            raise ValueError('Expecting one argument')
-
-        expr = _args[0]
-        if isinstance(expr, Add):
-            args = [cls.eval(a) for a in expr.args]
-            return Add(*args)
-
-        elif isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
-            vectors = [a for a in expr.args if not(a in coeffs)]
-
-            a = S.One
-            if coeffs:
-                a = Mul(*coeffs)
-
-            b = S.One
-            if vectors:
-                try:
-                    if len(vectors) == 1:
-                        f = vectors[0]
-                        b = cls(f)
-
-                    elif len(vectors) == 2:
-                        f,g = vectors
-                        b = f*cls(g) + g*cls(f)
-
-                    else:
-                        left = vectors[0]
-                        right = Mul(*vectors[1:])
-
-                        f_left  = cls(left, evaluate=True)
-                        f_right = cls(right, evaluate=True)
-
-                        b = left * f_right + f_left * right
-
-                except:
-                    b = cls(Mul(*vectors), evaluate=False)
-
-            return Mul(a, b)
-
-        return cls(expr, evaluate=False)
-
-#==============================================================================
-# user friendly functions
-jump  = Jump
-avg   = Average
-Dn    = NormalDerivative
-minus = MinusInterfaceOperator
-plus  = PlusInterfaceOperator

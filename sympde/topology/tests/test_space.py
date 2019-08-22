@@ -9,8 +9,6 @@ from sympde.topology import H1Space, HcurlSpace, HdivSpace, L2Space, UndefinedSp
 from sympde.topology import TestFunction, ScalarTestFunction, VectorTestFunction
 from sympde.topology import Field, ScalarField, VectorField
 from sympde.topology import Projector
-from sympde.topology import element_of, elements_of
-from sympde.topology import jump, avg, Dn, minus, plus
 
 #==============================================================================
 def test_space_1d_1():
@@ -172,44 +170,6 @@ def test_projector_2d_1():
     Pgrad_v = P_W(grad(v))
     assert(isinstance(Pgrad_v, VectorField))
     assert(P_W(Pgrad_v) == Pgrad_v)
-    # ...
-
-#==============================================================================
-def test_space_operators_2d_1():
-    """expressions that involve objects from space.py"""
-
-    DIM = 2
-    domain = Domain('Omega', dim=DIM)
-
-    V = ScalarFunctionSpace('V', domain, kind=None)
-
-    u, v = elements_of(V, names='u, v')
-
-    a = Constant('a', is_real=True)
-
-    # ... jump operator
-    assert(jump(u+v) == jump(u) + jump(v))
-    assert(jump(a*u) == a*jump(u))
-    # ...
-
-    # ... avg operator
-    assert(avg(u+v) == avg(u) + avg(v))
-    assert(avg(a*u) == a*avg(u))
-    # ...
-
-    # ... Dn operator
-    assert(Dn(u+v) == Dn(u) + Dn(v))
-    assert(Dn(a*u) == a*Dn(u))
-    # ...
-
-    # ... minus operator
-    assert(minus(u+v) == minus(u) + minus(v))
-    assert(minus(a*u) == a*minus(u))
-    # ...
-
-    # ... plus operator
-    assert(plus(u+v) == plus(u) + plus(v))
-    assert(plus(a*u) == a*plus(u))
     # ...
 
 

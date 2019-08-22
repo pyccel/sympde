@@ -67,10 +67,12 @@ from .basic  import BasicExpr
 from .basic  import is_linear_form, _sanitize_arguments
 
 def expand(expr):
-    from sympy import expand
+    from sympy import expand as _expand
+
     if isinstance(expr, Tuple):
         return expr
-    expr = expand(expr)
+
+    expr = _expand(expr)
     _, args = expr.as_coeff_add()
     args = list(args)
     for i in range(len(args)):
@@ -78,12 +80,14 @@ def expand(expr):
         for o in m:
             c = c*o
         args[i] = c
+
     return Add(*args)
 #==============================================================================
 def _get_domain(expr):
     # expr is an integral of BasicExpr or Add of Integral of BasicExpr
-    if isinstance(expr, (DomainIntegral,BoundaryIntegral)):
+    if isinstance(expr, (DomainIntegral, BoundaryIntegral, InterfaceIntegral)):
         return expr.domain
+
     elif isinstance(expr, (Add,Mul)):
         domains = set()
         for a in expr.args:
@@ -203,7 +207,7 @@ class Integral(CalculusFunction):
 
         if isinstance(expr, sy_Zero):
             return sy_Zero
-            
+
         if isinstance(expr, Add):
             args = [Integral.eval(a, domain) for a in expr.args]
             return expr._new_rawargs(*args)
@@ -333,7 +337,7 @@ class InterfaceIntegral(AtomicExpr):
         return InterfaceIntegral(self.expr*o, self.domain)
 
     def __eq__(self, a):
-        if isinstance(a, DomainIntegral):
+        if isinstance(a, InterfaceIntegral):
             eq = self.domain == a.domain
             eq = eq and self.expr == a.expr
             return eq
@@ -398,7 +402,9 @@ class LinearForm(BasicForm):
     def __new__(cls, arguments, expr):
 
         # ...
-        integrals = expr.atoms(DomainIntegral, BoundaryIntegral)
+        integrals  = list(expr.atoms(DomainIntegral))
+        integrals += list(expr.atoms(BoundaryIntegral))
+        integrals += list(expr.atoms(InterfaceIntegral))
         if not integrals:
             raise ValueError('Expecting integral Expression')
         # ...
@@ -479,7 +485,9 @@ class BilinearForm(BasicForm):
     def __new__(cls, arguments, expr):
 
         # ...
-        integrals = expr.atoms(DomainIntegral, BoundaryIntegral)
+        integrals  = list(expr.atoms(DomainIntegral))
+        integrals += list(expr.atoms(BoundaryIntegral))
+        integrals += list(expr.atoms(InterfaceIntegral))
         if not integrals:
             raise ValueError('Expecting integral Expression')
 
@@ -859,7 +867,7 @@ def is_linear_expression(expr, args, debug=True):
 
 
         return False
-        
+
     # ...
 
     # ... check multiplication

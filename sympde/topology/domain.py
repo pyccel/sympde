@@ -185,24 +185,24 @@ class Domain(BasicDomain):
 
             if axis == 0:
                 if ext == -1:
-                    name = 'Gamma_1'
+                    name = r'\Gamma_1'
 
                 if ext == 1:
-                    name = 'Gamma_2'
+                    name = r'\Gamma_2'
 
             if axis == 1:
                 if ext == -1:
-                    name = 'Gamma_3'
+                    name = r'\Gamma_3'
 
                 if ext == 1:
-                    name = 'Gamma_4'
+                    name = r'\Gamma_4'
 
             if axis == 2:
                 if ext == -1:
-                    name = 'Gamma_5'
+                    name = r'\Gamma_5'
 
                 if ext == 1:
-                    name = 'Gamma_6'
+                    name = r'\Gamma_6'
         # ...
 
         if isinstance(self.boundary, Union):
@@ -352,7 +352,8 @@ class Domain(BasicDomain):
 
         # ... connectivity
         connectivity = Connectivity()
-        connectivity['{l}{r}'.format(l=self.name, r=other.name)] = (bnd_minus, bnd_plus)
+        # TODO be careful with '|' in psydac
+        connectivity['{l}|{r}'.format(l=self.name, r=other.name)] = (bnd_minus, bnd_plus)
 
         for k,v in self.connectivity.items():
             connectivity[k] = v
@@ -428,8 +429,8 @@ class Line(Domain):
         x  = Symbol('x')
         Ix = Interval(name, coordinate=x, bounds=bounds)
 
-        Gamma_1 = Boundary('Gamma_1', Ix, axis=0, ext=-1)
-        Gamma_2 = Boundary('Gamma_2', Ix, axis=0, ext=1)
+        Gamma_1 = Boundary(r'\Gamma_1', Ix, axis=0, ext=-1)
+        Gamma_2 = Boundary(r'\Gamma_2', Ix, axis=0, ext=1)
 
         interior   = Ix
         boundaries = [Gamma_1, Gamma_2]
@@ -458,7 +459,7 @@ class Square(Domain):
         i = 1
         for axis in range(interior.dim):
             for ext in [-1, 1]:
-                bnd_name = 'Gamma_{}'.format(i)
+                bnd_name = r'\Gamma_{}'.format(i)
                 Gamma = Boundary(bnd_name, interior, axis=axis, ext=ext)
                 boundaries += [Gamma]
 
@@ -492,7 +493,7 @@ class Cube(Domain):
         i = 1
         for axis in range(interior.dim):
             for ext in [-1, 1]:
-                bnd_name = 'Gamma_{}'.format(i)
+                bnd_name = r'\Gamma_{}'.format(i)
                 I = interior.domains[axis]
                 Gamma = Boundary(bnd_name, I, axis=axis, ext=ext)
                 boundaries += [Gamma]
@@ -512,6 +513,12 @@ class BoundaryVector(IndexedBase):
     pass
 
 class NormalVector(BoundaryVector):
+    pass
+
+class MinusNormalVector(NormalVector):
+    pass
+
+class PlusNormalVector(NormalVector):
     pass
 
 class TangentVector(BoundaryVector):

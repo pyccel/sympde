@@ -17,6 +17,7 @@ from sympy.physics.quantum import TensorProduct
 from sympde.core import Constant
 from sympde.calculus import grad, dot, inner, cross, rot, curl, div
 from sympde.calculus import laplace, hessian, bracket, convect
+from sympde.calculus import jump, avg, Dn, minus, plus
 from sympde.topology import (dx, dy, dz)
 from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
 from sympde.topology import ProductSpace
@@ -30,7 +31,6 @@ from sympde.topology import Mapping
 from sympde.topology import Square
 from sympde.topology import ElementDomain
 from sympde.topology import Area
-from sympde.topology import jump, avg, Dn
 
 from sympde.expr.expr import LinearExpr, BilinearExpr
 from sympde.expr.expr import LinearForm, BilinearForm
@@ -652,7 +652,7 @@ def test_terminal_expr_linear_2d_4():
     print('')
     # ...
 #==============================================================================
-def test_terminal_expr_linear_2d_5(boundary=['Gamma_1', 'Gamma_3']):
+def test_terminal_expr_linear_2d_5(boundary=[r'\Gamma_1', r'\Gamma_3']):
 
     # ... abstract model
     domain = Square()
@@ -1585,7 +1585,7 @@ def test_linearity_linear_form_2d_1():
     assert is_linear_form(l)
 
 #==============================================================================
-def test_terminal_expr_bilinear_2d_1():
+def test_linearity_bilinear_form_2d_1():
 
     domain = Domain('Omega', dim=2)
     B1 = Boundary(r'\Gamma_1', domain)
@@ -1686,15 +1686,15 @@ def test_interface_2d_1():
 
         connectivity = Connectivity()
 
-        bnd_A_1 = Boundary('Gamma_1', A, axis=0, ext=-1)
-        bnd_A_2 = Boundary('Gamma_2', A, axis=0, ext=1)
-        bnd_A_3 = Boundary('Gamma_3', A, axis=1, ext=-1)
-        bnd_A_4 = Boundary('Gamma_4', A, axis=1, ext=1)
+        bnd_A_1 = Boundary(r'\Gamma_1', A, axis=0, ext=-1)
+        bnd_A_2 = Boundary(r'\Gamma_2', A, axis=0, ext=1)
+        bnd_A_3 = Boundary(r'\Gamma_3', A, axis=1, ext=-1)
+        bnd_A_4 = Boundary(r'\Gamma_4', A, axis=1, ext=1)
 
-        bnd_B_1 = Boundary('Gamma_1', B, axis=0, ext=-1)
-        bnd_B_2 = Boundary('Gamma_2', B, axis=0, ext=1)
-        bnd_B_3 = Boundary('Gamma_3', B, axis=1, ext=-1)
-        bnd_B_4 = Boundary('Gamma_4', B, axis=1, ext=1)
+        bnd_B_1 = Boundary(r'\Gamma_1', B, axis=0, ext=-1)
+        bnd_B_2 = Boundary(r'\Gamma_2', B, axis=0, ext=1)
+        bnd_B_3 = Boundary(r'\Gamma_3', B, axis=1, ext=-1)
+        bnd_B_4 = Boundary(r'\Gamma_4', B, axis=1, ext=1)
 
         connectivity['I'] = (bnd_A_2, bnd_B_1)
 
@@ -1723,6 +1723,159 @@ def test_interface_2d_1():
     a  = BilinearForm((u,v), expr)
     print(a)
 
+#==============================================================================
+def test_interface_integral_1():
+
+    # ...
+    A = Square('A')
+    B = Square('B')
+
+    domain = A.join(B, name = 'domain',
+                bnd_minus = A.get_boundary(axis=0, ext=1),
+                bnd_plus  = B.get_boundary(axis=0, ext=-1))
+    # ...
+
+    x,y = domain.coordinates
+
+    V = ScalarFunctionSpace('V', domain, kind=None)
+    assert(V.is_broken)
+
+    u, v = elements_of(V, names='u, v')
+
+    # ...
+    I = domain.interfaces
+    # ...
+
+#    expr = minus(Dn(u))
+#    print(expr)
+#    import sys; sys.exit(0)
+
+    # ... bilinear forms
+#    a = BilinearForm((u,v), integral(domain, u*v))
+#    a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v))))
+#    a = BilinearForm((u,v), integral(I, jump(u) * jump(v)))
+#    a = BilinearForm((u,v), integral(I, jump(Dn(u)) * jump(v)))
+
+#    a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v)))
+#                          + integral(I,      jump(u) * jump(v)))
+
+    # Nitsch
+    kappa = Constant('kappa')
+    expr_I = ( - jump(u) * jump(Dn(v))
+               + kappa * jump(u) * jump(v)
+               + plus(Dn(u)) * minus(v)
+               + minus(Dn(u)) * plus(v) )
+    a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v)))
+                          + integral(I,      expr_I))
+
+#    # TODO BUG
+#    bnd_A = A.get_boundary(axis=0, ext=1)
+#
+#    a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v)))
+#                          + integral(I,      jump(u) * jump(v))
+#                          + integral(bnd_A,      dx(u)*v))
+
+    expr = TerminalExpr(a)
+    print(expr)
+    # ...
+
+#    # ... linear forms
+#    b = LinearForm(v, integral(domain, sin(x+y)*v)
+#                    + integral(I, cos(x+y) * jump(v)))
+#
+#    expr = TerminalExpr(b)
+#    print(expr)
+#    # ...
+
+#==============================================================================
+def test_interface_integral_2():
+
+    # ...
+    A = Square('A')
+    B = Square('B')
+
+    domain = A.join(B, name = 'domain',
+                bnd_minus = A.get_boundary(axis=0, ext=1),
+                bnd_plus  = B.get_boundary(axis=0, ext=-1))
+    # ...
+
+    x,y = domain.coordinates
+
+    V = ScalarFunctionSpace('V', domain, kind=None)
+    assert(V.is_broken)
+
+    u, u1, u2, u3 = elements_of(V, names='u, u1, u2, u3')
+    v, v1, v2, v3 = elements_of(V, names='v, v1, v2, v3')
+
+    # ...
+    I = domain.interfaces
+
+    a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v))))
+    b = BilinearForm((u,v), integral(I, jump(u) * jump(v)))
+
+    A = BilinearForm(((u1,u2),(v1,v2)), a(u1,v1) + a(u2,v2) + b(u1,v1) + b(u2,v2) + b(u1, v2) )
+    B = BilinearForm(((u1,u2,u3),(v1,v2,v3)), a(u1,v1) + a(u2,v2) + a(u3,v3) + b(u1,v1) + b(u2,v2) + b(u1, v2) )
+
+    print(TerminalExpr(A))
+    print(TerminalExpr(B))
+    # ...
+
+    # ... linear forms
+    b = LinearForm(v, integral(I, jump(v)))
+
+    b = LinearForm((v1,v2), b(v1) + b(v2) )
+    expr = TerminalExpr(b)
+    print(expr)
+    # ...
+
+#==============================================================================
+def test_interface_integral_3():
+
+    # ...
+    A = Square('A')
+    B = Square('B')
+    C = Square('C')
+
+    AB = A.join(B, name = 'AB',
+               bnd_minus = A.get_boundary(axis=0, ext=1),
+               bnd_plus  = B.get_boundary(axis=0, ext=-1))
+
+    domain = AB.join(C, name = 'domain',
+               bnd_minus = B.get_boundary(axis=0, ext=1),
+               bnd_plus  = C.get_boundary(axis=0, ext=-1))
+    # ...
+
+    x,y = domain.coordinates
+
+    V = ScalarFunctionSpace('V', domain, kind=None)
+    assert(V.is_broken)
+
+    u, v = elements_of(V, names='u, v')
+
+    # ...
+    I = domain.interfaces
+#    print(I)
+#    print(integral(I, jump(u) * jump(v)))
+
+#    a = BilinearForm((u,v), integral(domain, u*v))
+#    a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v))))
+#    a = BilinearForm((u,v), integral(I, jump(u) * jump(v)))
+
+    a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v)))
+                          + integral(I,      jump(u) * jump(v)))
+
+    expr = TerminalExpr(a)
+    print(expr)
+    # ...
+
+    # ... linear forms
+    b = LinearForm(v, integral(domain, sin(x+y)*v)
+                    + integral(I, cos(x+y) * jump(v)))
+
+    expr = TerminalExpr(b)
+    print(expr)
+    # ...
+
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
@@ -1735,5 +1888,3 @@ def teardown_module():
 def teardown_function():
     from sympy import cache
     cache.clear_cache()
-
-#test_interface_2d_1()

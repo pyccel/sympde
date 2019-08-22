@@ -118,6 +118,20 @@ def test_boundary_2():
     assert(Omega.boundary - Gamma_1 == Union(Gamma_2, Gamma_3))
 
 #==============================================================================
+def test_boundary_3():
+    Omega_1 = InteriorDomain('Omega_1', dim=2)
+
+    Gamma_1 = Boundary(r'\Gamma_1', Omega_1, axis=0, ext=-1)
+    Gamma_4 = Boundary(r'\Gamma_4', Omega_1, axis=1, ext=1)
+
+    Omega = Domain('Omega',
+                   interiors=[Omega_1],
+                   boundaries=[Gamma_1, Gamma_4])
+
+    assert(Omega.get_boundary(axis=0, ext=-1) == Gamma_1)
+    assert(Omega.get_boundary(axis=1, ext=1) == Gamma_4)
+
+#==============================================================================
 def test_element():
     D1 = InteriorDomain('D1', dim=2)
     D2 = InteriorDomain('D2', dim=2)
@@ -160,8 +174,8 @@ def test_domain_join_line():
                bnd_minus = A.get_boundary(axis=0, ext=1),
                bnd_plus  = B.get_boundary(axis=0, ext=-1))
     ABC = AB.join(C, name = 'ABC',
-               bnd_minus = B.get_boundary('Gamma_2'),
-               bnd_plus  = C.get_boundary('Gamma_1'))
+               bnd_minus = A.get_boundary(axis=0, ext=1),
+               bnd_plus  = B.get_boundary(axis=0, ext=-1))
 
     print(ABC)
     print(ABC.interior)
@@ -196,8 +210,8 @@ def test_domain_join_square():
                bnd_minus = A.get_boundary(axis=0, ext=1),
                bnd_plus  = B.get_boundary(axis=0, ext=-1))
     ABC = AB.join(C, name = 'ABC',
-               bnd_minus = B.get_boundary('Gamma_2'),
-               bnd_plus  = C.get_boundary('Gamma_1'))
+               bnd_minus = B.get_boundary(axis=0, ext=1),
+               bnd_plus  = C.get_boundary(axis=0, ext=-1))
 
     print(ABC)
     print(ABC.interior)

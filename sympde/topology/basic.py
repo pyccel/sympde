@@ -252,9 +252,18 @@ class Boundary(BasicDomain):
 
         return OrderedDict(sorted(d.items()))
 
+    def __hash__(self):
+        return hash(self.name)
+
     def __lt__(self, other):
         #add this method to avoid sympy error in Basic.compare
         return 0
+
+    def __eq__(self, other):
+        if not isinstance(other, Boundary):
+            return False
+
+        return ( self.name == other.name ) and ( self.domain is other.domain )
 
 #==============================================================================
 class Interface(BasicDomain):
@@ -285,17 +294,20 @@ class Interface(BasicDomain):
 
     def _sympystr(self, printer):
         sstr = printer.doprint
-        name  = self.name
-        minus = self.minus
-        plus  = self.plus
-        minus = '{domain}.{bnd}'.format( domain = sstr(minus.domain),
-                                         bnd    = sstr(minus) )
-        plus = '{domain}.{bnd}'.format( domain = sstr(plus.domain),
-                                         bnd    = sstr(plus) )
-        pattern = 'Interface( {name}; {minus}, {plus} )'
-        return pattern.format( name  = sstr(self.name),
-                               minus = minus,
-                               plus = plus )
+
+#        name  = self.name
+#        minus = self.minus
+#        plus  = self.plus
+#        minus = '{domain}.{bnd}'.format( domain = sstr(minus.domain),
+#                                         bnd    = sstr(minus) )
+#        plus = '{domain}.{bnd}'.format( domain = sstr(plus.domain),
+#                                         bnd    = sstr(plus) )
+#        pattern = 'Interface( {name}; {minus}, {plus} )'
+#        return pattern.format( name  = sstr(self.name),
+#                               minus = minus,
+#                               plus = plus )
+
+        return '{}'.format(sstr(self.name))
 
 
 #==============================================================================
@@ -338,7 +350,7 @@ class Connectivity(abc.Mapping):
         if len(ls) == 1:
             return ls[0]
         else:
-            return ls
+            return Union(*ls)
 
     def todict(self):
         # ... create the connectivity
