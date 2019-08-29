@@ -5,7 +5,7 @@ import sys
 from setuptools import setup, find_packages
 
 NAME    = 'sympde'
-VERSION = '0.9.2'
+VERSION = '0.9.3'
 AUTHOR  = 'Ahmed Ratnani'
 EMAIL   = 'ratnaniahmed@gmail.com'
 URL     = 'https://github.com/pyccel/sympde'
