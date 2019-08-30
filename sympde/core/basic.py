@@ -2,6 +2,7 @@
 
 from sympy        import Function
 from sympy        import Number
+from sympy        import NumberSymbol
 from sympy.core   import Basic
 from sympy.core   import Symbol
 from sympy.tensor import IndexedBase
@@ -44,4 +45,4 @@ class BasicDerivable(Basic):
     pass
 
 #==============================================================================
-_coeffs_registery = (int, float, complex, Number, Constant)
+_coeffs_registery = (int, float, complex, Number, NumberSymbol, Constant)
