@@ -15,13 +15,12 @@ matrix:
 # Cache directory $HOME/.cache/pip
 cache: pip
 
-# command before installation: upgrade pip, install dependencies, remove old sympde installation
+# command before installation: upgrade pip, remove old sympde installation
 before_install:
   - python -m pip install --upgrade pip
-  - python -m pip install -r requirements.txt
   - python -m pip uninstall -y sympde
   
-# command to install project
+# command to install project and its dependencies
 install:
   - python -m pip install .
 

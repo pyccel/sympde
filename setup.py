@@ -30,8 +30,14 @@ setup_args = dict(
 packages = find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"])
 # ...
 
-# Requirements from local "requirements.txt" file
-install_requires = []
+# Dependencies
+install_requires = [
+    'sympy>=1.2',
+    'h5py',
+    'pytest',
+    'pyyaml',
+    'yamlloader'
+]
 
 def setup_package():
     if 'setuptools' in sys.modules:
