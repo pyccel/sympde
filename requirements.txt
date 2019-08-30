@@ -1,5 +1,0 @@
-sympy==1.2
-h5py
-pytest
-pyyaml
-yamlloader

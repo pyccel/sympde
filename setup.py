@@ -1,11 +1,17 @@
 # -*- coding: UTF-8 -*-
 #! /usr/bin/python
 
-import sys
+from pathlib import Path
 from setuptools import setup, find_packages
 
+# ...
+# Read library version into '__version__' variable
+path = Path(__file__).parent / 'sympde' / 'version.py'
+exec(path.read_text())
+# ...
+
 NAME    = 'sympde'
-VERSION = '0.9.3'
+VERSION = __version__
 AUTHOR  = 'Ahmed Ratnani'
 EMAIL   = 'ratnaniahmed@gmail.com'
 URL     = 'https://github.com/pyccel/sympde'
@@ -30,16 +36,21 @@ setup_args = dict(
 packages = find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"])
 # ...
 
-# Requirements from local "requirements.txt" file
-install_requires = []
+# Dependencies
+install_requires = [
+    'sympy>=1.2',
+    'h5py',
+    'pytest',
+    'pyyaml',
+    'yamlloader'
+]
 
 def setup_package():
-    if 'setuptools' in sys.modules:
-        setup_args['install_requires'] = install_requires
 
-    setup(packages = packages, \
-          include_package_data = True, \
-          zip_safe=True, \
+    setup(packages = packages,
+          include_package_data = True,
+          install_requires = install_requires,
+          zip_safe = True,
           **setup_args)
 
 
