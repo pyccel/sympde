@@ -12,6 +12,7 @@ from sympy.core import Add, Mul, Pow
 from sympy.core.singleton import S
 from sympy.core.expr import AtomicExpr
 from sympy import Rational
+from sympy import symbols
 
 from sympde.core.basic import BasicMapping
 from sympde.core.algebra import (Dot_1d,
@@ -47,6 +48,9 @@ class Mapping(BasicMapping):
     Examples
 
     """
+    _is_analytical = False
+    _expressions = None # used for analytical mapping
+
     # TODO shall we keep rdim ?
     def __new__(cls, name, rdim, coordinates=None):
         if isinstance(rdim, (tuple, list, Tuple)):
@@ -136,6 +140,14 @@ class Mapping(BasicMapping):
 
         return self._hessian
 
+    @property
+    def is_analytical(self):
+        return self._is_analytical
+
+    @property
+    def expressions(self):
+        return self._expressions
+
     def _sympystr(self, printer):
         sstr = printer.doprint
         return sstr(self.name)
@@ -209,6 +221,16 @@ class Mapping(BasicMapping):
     def _compute_hessian(self):
         raise NotImplementedError('TODO')
 
+#==============================================================================
+class IdentityMapping(Mapping):
+    """
+    Represents an identity Mapping object.
+
+    Examples
+
+    """
+    _expressions = symbols('x1, x2, x3')
+    _is_analytical = True
 
 #==============================================================================
 class MappedDomain(BasicDomain):
@@ -424,6 +446,14 @@ class LogicalExpr(CalculusFunction):
         expr = _args[1]
         dim  = M.rdim # TODO this is not the dim of the domain
 
+        if isinstance(expr, Indexed) and isinstance(expr.base, Mapping):
+            if M.is_analytical:
+                index = expr.indices[0]
+                return M.expressions[index]
+
+            else:
+                return expr
+
         if isinstance(expr, Add):
             args = [cls.eval(M, a) for a in expr.args]
             return Add(*args)
@@ -436,7 +466,13 @@ class LogicalExpr(CalculusFunction):
             return expr
 
         elif isinstance(expr, _logical_partial_derivatives):
-            return expr
+            if M.is_analytical:
+                arg = expr._args[0]
+                op  = expr
+                return op.eval(cls.eval(M, arg))
+
+            else:
+                return expr
 
         elif isinstance(expr, (ScalarField, ScalarTestFunction, IndexedTestTrial, IndexedVectorField)):
             return expr
@@ -475,9 +511,9 @@ class LogicalExpr(CalculusFunction):
 
             elif dim == 3:
                 lgrad_arg = LogicalGrad_3d(arg)
-                
+
             grad_arg = Covariant(M, lgrad_arg)
-            
+
             if isinstance(arg, (ScalarField, ScalarTestFunction)):
                 if isinstance(arg.space.kind, HcurlSpaceType):
                     grad_arg = Contravariant(M, lgrad_arg)
@@ -526,7 +562,7 @@ class LogicalExpr(CalculusFunction):
             if isinstance(arg, (ScalarField, ScalarTestFunction)):
                 if isinstance(arg.space.kind, HcurlSpaceType):
                     grad_arg = Contravariant(M, lgrad_arg)
-            
+
             return grad_arg[2]
 
         return cls(M, expr, evaluate=False)
