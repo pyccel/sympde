@@ -20,6 +20,7 @@ from sympde.topology import VectorTestFunction
 from sympde.topology import LogicalExpr
 from sympde.topology import SymbolicExpr
 from sympde.topology import IdentityMapping
+from sympde.topology import element_of
 
 
 # ...
@@ -429,28 +430,46 @@ def test_symbolic_expr_3d_1():
     # ...
 
 #==============================================================================
-def test_identity_mapping_2d():
+def test_identity_mapping_2d_1():
     rdim = 2
 
     x1, x2 = symbols('x1, x2')
 
-    F = IdentityMapping('F', rdim)
+    M = IdentityMapping('M', rdim)
 
-    assert(not( F[0] == x1 ))
-    assert(not( F[1] == x2 ))
+    assert(not( M[0] == x1 ))
+    assert(not( M[1] == x2 ))
 
-    assert(LogicalExpr(F, F[0]) == x1)
-    assert(LogicalExpr(F, F[1]) == x2)
+    assert(LogicalExpr(M, M[0]) == x1)
+    assert(LogicalExpr(M, M[1]) == x2)
 
-    assert(LogicalExpr(F, dx1(F[0])) == 1)
-    assert(LogicalExpr(F, dx1(F[1])) == 0)
+    assert(LogicalExpr(M, dx1(M[0])) == 1)
+    assert(LogicalExpr(M, dx1(M[1])) == 0)
 
-    assert(LogicalExpr(F, dx2(F[0])) == 0)
-    assert(LogicalExpr(F, dx2(F[1])) == 1)
+    assert(LogicalExpr(M, dx2(M[0])) == 0)
+    assert(LogicalExpr(M, dx2(M[1])) == 1)
 
     expected = Matrix([[1, 0], [0, 1]])
-    assert(not( F.jacobian == expected))
-    assert(LogicalExpr(F, F.jacobian) == expected)
+    assert(not( M.jacobian == expected))
+    assert(LogicalExpr(M, M.jacobian) == expected)
+
+
+#==============================================================================
+def test_identity_mapping_2d_2():
+    rdim = 2
+
+    x1, x2 = symbols('x1, x2')
+
+    domain = Domain('Omega', dim=rdim)
+    M = IdentityMapping('F', rdim)
+
+    V = ScalarFunctionSpace('V', domain)
+    u = element_of(V, name='u')
+
+    # ...
+    assert(LogicalExpr(M, dx(u)) == dx1(u))
+    assert(LogicalExpr(M, dy(u)) == dx2(u))
+    # ...
 
 
 #==============================================================================

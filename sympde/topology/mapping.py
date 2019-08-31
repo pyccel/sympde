@@ -445,14 +445,14 @@ class LogicalExpr(CalculusFunction):
         M    = _args[0]
         expr = _args[1]
         dim  = M.rdim # TODO this is not the dim of the domain
+        l_coords = ['x1', 'x2', 'x3'][:dim]
 
-        if isinstance(expr, Indexed) and isinstance(expr.base, Mapping):
-            if M.is_analytical:
-                index = expr.indices[0]
-                return M.expressions[index]
+        if M.is_analytical:
+            for i in range(dim):
+                expr = expr.subs(M[i], M.expressions[i])
 
-            else:
-                return expr
+        if isinstance(expr, Symbol) and expr.name in l_coords:
+            return expr
 
         if isinstance(expr, Add):
             args = [cls.eval(M, a) for a in expr.args]
@@ -467,9 +467,9 @@ class LogicalExpr(CalculusFunction):
 
         elif isinstance(expr, _logical_partial_derivatives):
             if M.is_analytical:
-                arg = expr._args[0]
+                arg = cls.eval(M, expr._args[0])
                 op  = expr
-                return op.eval(cls.eval(M, arg))
+                return op.eval(arg)
 
             else:
                 return expr
@@ -519,7 +519,14 @@ class LogicalExpr(CalculusFunction):
                     grad_arg = Contravariant(M, lgrad_arg)
             # ...
 
-            return grad_arg[0]
+            # TODO ARA improve: we should be able to avoid the previous symbolic
+            # computations here
+            expr = grad_arg[0]
+            if M.is_analytical:
+                for i in range(dim):
+                    expr = expr.subs(M[i], M.expressions[i])
+
+            return expr
 
         elif isinstance(expr, dy):
             arg = expr.args[0]
@@ -541,7 +548,14 @@ class LogicalExpr(CalculusFunction):
                 if isinstance(arg.space.kind, HcurlSpaceType):
                     grad_arg = Contravariant(M, lgrad_arg)
 
-            return grad_arg[1]
+            # TODO ARA improve: we should be able to avoid the previous symbolic
+            # computations here
+            expr = grad_arg[1]
+            if M.is_analytical:
+                for i in range(dim):
+                    expr = expr.subs(M[i], M.expressions[i])
+
+            return expr
 
         elif isinstance(expr, dz):
             arg = expr.args[0]
@@ -563,7 +577,14 @@ class LogicalExpr(CalculusFunction):
                 if isinstance(arg.space.kind, HcurlSpaceType):
                     grad_arg = Contravariant(M, lgrad_arg)
 
-            return grad_arg[2]
+            # TODO ARA improve: we should be able to avoid the previous symbolic
+            # computations here
+            expr = grad_arg[2]
+            if M.is_analytical:
+                for i in range(dim):
+                    expr = expr.subs(M[i], M.expressions[i])
+
+            return expr
 
         return cls(M, expr, evaluate=False)
 
