@@ -725,6 +725,12 @@ class SymbolicExpr(CalculusFunction):
         elif isinstance(expr, Symbol):
             return expr
 
+        elif isinstance(expr, IndexedBase):
+            return expr
+
+        elif isinstance(expr, Indexed):
+            return expr
+
         elif isinstance(expr, Function):
             return expr
         # ...
