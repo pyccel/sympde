@@ -13,6 +13,7 @@ from sympy.core.singleton import S
 from sympy.core.expr import AtomicExpr
 from sympy import Rational
 from sympy import symbols
+from sympy.core.numbers import ImaginaryUnit
 
 from sympde.core.basic import BasicMapping
 from sympde.core.algebra import (Dot_1d,
@@ -732,6 +733,9 @@ class SymbolicExpr(CalculusFunction):
             return expr
 
         elif isinstance(expr, Function):
+            return expr
+
+        elif isinstance(expr, ImaginaryUnit):
             return expr
         # ...
 
