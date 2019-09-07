@@ -1141,6 +1141,11 @@ class TensorExpr(CalculusFunction):
         elif isinstance(expr, _coeffs_registery):
             return expr
 
+        elif isinstance(expr, Pow):
+            b = expr.base
+            e = expr.exp
+            return Pow(cls.eval(b), e)
+
         elif isinstance(expr, (Matrix, ImmutableDenseMatrix)):
 
             n_rows, n_cols = expr.shape
