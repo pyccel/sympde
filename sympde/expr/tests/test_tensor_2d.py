@@ -37,6 +37,7 @@ from sympde.expr.expr import DomainIntegral, BoundaryIntegral
 from sympde.expr.expr import Functional, Norm
 from sympde.expr.expr import linearize
 from sympde.expr.evaluation import TensorExpr
+from sympde.topology import element_of, elements_of
 
 
 #==============================================================================
@@ -141,6 +142,24 @@ def test_tensorize_2d_2_mapping():
     a = BilinearForm((u,v), int_0(c * div(v) * div(u) + curl(v) * curl(u)))
     expr = TensorExpr(a, mapping=M)
     print(expr)
+
+#==============================================================================
+def test_tensorize_2d_3():
+
+    domain = Domain('Omega', dim=2)
+
+    V = ScalarFunctionSpace('V', domain)
+    u,v = elements_of(V, names='u,v')
+
+    bx = Constant('bx')
+    by = Constant('by')
+    b  = Tuple(bx, by)
+
+    expr = integral(domain, dot(b, grad(v)) * dot(b, grad(u)))
+    a = BilinearForm((u,v), expr)
+
+    print(TensorExpr(a))
+    print('')
 
 
 #==============================================================================
