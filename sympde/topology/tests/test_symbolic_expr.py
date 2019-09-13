@@ -72,3 +72,14 @@ def test_derivatives_2d_with_mapping():
     expected   = '(u_x1 * y_x2 - u_x2 * y_x1)/J'
     difference = SymbolicExpr(expr) - sympify(expected)
     assert difference.simplify() == 0
+
+#==============================================================================
+# CLEAN UP SYMPY NAMESPACE
+#==============================================================================
+def teardown_module():
+    from sympy import cache
+    cache.clear_cache()
+
+def teardown_function():
+    from sympy import cache
+    cache.clear_cache()
