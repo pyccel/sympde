@@ -883,7 +883,7 @@ def _split_test_function(expr):
             Di = Interval()
             Vi = ScalarFunctionSpace('tmp_V_{}'.format(i), domain=Di)
 
-            ai = ScalarTestFunction(Vi, '{name}{i}'.format(name=name, i=i))
+            ai = ScalarTestFunction(Vi, '{name}{i}'.format(name=name, i=i+1))
             ls += [ai]
 
         return ls
