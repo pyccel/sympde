@@ -393,6 +393,14 @@ class SymbolicContravariant(SymbolicMappingExpr):
         mapping = sstr(self.mapping)
         return 'contravariant({})'.format(mapping)
 
+class SymbolicInverseDeterminant(SymbolicMappingExpr):
+    _name = 'inv_det'
+
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        mapping = sstr(self.mapping)
+        return 'inv_det({})'.format(mapping)
+
 #==============================================================================
 class MappingApplication(Function):
     nargs = None
