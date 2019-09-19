@@ -1,33 +1,11 @@
 # coding: utf-8
 
-import pytest
-
-from sympy import Symbol
-from sympy.core.containers import Tuple
-from sympy import symbols
-from sympy import IndexedBase
-from sympy import Matrix
-from sympy import Function
-from sympy import pi, cos, sin
-from sympy import srepr
-from sympy.physics.quantum import TensorProduct
-
-from sympde.core import Constant
-from sympde.calculus import grad, dot, inner, cross, rot, curl, div
-from sympde.calculus import laplace, hessian, bracket
-from sympde.topology import (dx, dy, dz)
+from sympde.core     import Constant
+from sympde.calculus import grad, dot
 from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
-from sympde.topology import ScalarField, VectorField
-from sympde.topology import ProductSpace
-from sympde.topology import ScalarTestFunction
-from sympde.topology import VectorTestFunction
-from sympde.topology import Unknown
-from sympde.topology import Domain, Boundary, NormalVector, TangentVector
-from sympde.topology import Trace, trace_0, trace_1
-from sympde.topology import Square
-
-from sympde.expr import Equation, EssentialBC
-
+from sympde.topology import element_of
+from sympde.topology import Domain, Boundary, NormalVector
+from sympde.expr     import EssentialBC
 
 #==============================================================================
 def test_essential_bc_1():
@@ -36,8 +14,8 @@ def test_essential_bc_1():
     V = ScalarFunctionSpace('V', domain)
     W = VectorFunctionSpace('W', domain)
 
-    v = ScalarTestFunction(V, name='v')
-    w = VectorTestFunction(W, name='w')
+    v = element_of(V, name='v')
+    w = element_of(W, name='w')
 
     B1 = Boundary(r'\Gamma_1', domain)
     nn = NormalVector('nn')

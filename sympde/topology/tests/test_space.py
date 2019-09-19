@@ -5,6 +5,7 @@ from sympde.calculus import grad, curl, div
 from sympde.topology import Domain
 from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
 from sympde.topology import ProductSpace
+from sympde.topology import element_of
 from sympde.topology import H1Space, HcurlSpace, HdivSpace, L2Space, UndefinedSpace
 from sympde.topology import TestFunction, ScalarTestFunction, VectorTestFunction
 from sympde.topology import Field, ScalarField, VectorField
@@ -65,11 +66,14 @@ def test_space_2d_1():
     # ...
 
     # ...
-    v1, v2, v3 = TestFunction(V, ['v1', 'v2', 'v3'])
+    v1, v2, v3 = element_of(V, 'v1, v2, v3')
 
     assert(isinstance(v1, ScalarTestFunction))
     assert(isinstance(v2, ScalarTestFunction))
     assert(isinstance(v3, ScalarTestFunction))
+    assert(v1.space is V1)
+    assert(v2.space is V2)
+    assert(v3.space is V3)
     assert(v1.name == 'v1')
     assert(v2.name == 'v2')
     assert(v3.name == 'v3')

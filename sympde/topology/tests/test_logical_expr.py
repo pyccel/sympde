@@ -1,23 +1,16 @@
 # coding: utf-8
 
-from sympy.core.containers import Tuple
+from sympy import Symbol, symbols
 from sympy import Matrix
-from sympy.tensor import IndexedBase
-from sympy import symbols, simplify, Symbol
 from sympy import expand
 from sympy import cos, sin, sqrt, pi
 
-from sympde.topology import Mapping, DetJacobian
-from sympde.topology import Domain
-
-from sympde.core import Constant
-from sympde.calculus import grad, dot, inner, cross, rot, curl, div
-from sympde.calculus import laplace, hessian, bracket, convect
-from sympde.topology import (dx, dy, dz)
-from sympde.topology import (dx1, dx2, dx3)
+from sympde.core     import Constant
+from sympde.topology import Domain, Mapping, DetJacobian
+from sympde.topology import dx, dy
+from sympde.topology import dx1, dx2, dx3
 from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
-from sympde.topology import ScalarTestFunction
-from sympde.topology import VectorTestFunction
+from sympde.topology import element_of
 from sympde.topology import LogicalExpr
 from sympde.topology import SymbolicExpr
 from sympde.topology import element_of
@@ -40,7 +33,7 @@ def test_logical_expr_1d_1():
 
     V = ScalarFunctionSpace('V', domain)
 
-    u,v = [ScalarTestFunction(V, name=i) for i in ['u', 'v']]
+    u,v = [element_of(V, name=i) for i in ['u', 'v']]
 
     det_M = DetJacobian(M)
     #print('det = ', det_M)
@@ -87,7 +80,7 @@ def test_symbolic_expr_1d_1():
 
     V = ScalarFunctionSpace('V', domain)
 
-    u,v = [ScalarTestFunction(V, name=i) for i in ['u', 'v']]
+    u,v = [element_of(V, name=i) for i in ['u', 'v']]
 
     det_M = DetJacobian(M)
     det_M = SymbolicExpr(det_M)
@@ -159,8 +152,8 @@ def test_logical_expr_2d_1():
     V = ScalarFunctionSpace('V', domain)
     W = VectorFunctionSpace('V', domain)
 
-    u,v = [ScalarTestFunction(V, name=i) for i in ['u', 'v']]
-    w = VectorTestFunction(W, name='w')
+    u,v = [element_of(V, name=i) for i in ['u', 'v']]
+    w = element_of(W, name='w')
 
     det_M = DetJacobian(M)
     #print('det = ', det_M)
@@ -221,7 +214,7 @@ def test_symbolic_expr_2d_1():
 
     V = ScalarFunctionSpace('V', domain)
 
-    u,v = [ScalarTestFunction(V, name=i) for i in ['u', 'v']]
+    u,v = [element_of(V, name=i) for i in ['u', 'v']]
 
     det_M = DetJacobian(M)
     det_M = SymbolicExpr(det_M)
@@ -299,7 +292,7 @@ def test_logical_expr_3d_1():
 
     V = ScalarFunctionSpace('V', domain)
 
-    u,v = [ScalarTestFunction(V, name=i) for i in ['u', 'v']]
+    u,v = [element_of(V, name=i) for i in ['u', 'v']]
 
     det_M = DetJacobian(M)
     #print('det = ', det_M)
@@ -353,7 +346,7 @@ def test_symbolic_expr_3d_1():
 
     V = ScalarFunctionSpace('V', domain)
 
-    u,v = [ScalarTestFunction(V, name=i) for i in ['u', 'v']]
+    u,v = [element_of(V, name=i) for i in ['u', 'v']]
 
     det_M = DetJacobian(M)
     det_M = SymbolicExpr(det_M)
