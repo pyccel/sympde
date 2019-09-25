@@ -672,100 +672,69 @@ class Norm(Functional):
 
 #==============================================================================
 def linearize(form, fields, trials=None):
-    """linearize a LinearForm around the fields."""
-    # ...
-    #TODO add LinearForm
-    if not isinstance(form, (LinearForm, LinearExpr)):
+    """
+    Parameters
+    ----------
+    form : LinearForm
+        Linear form F(v; u) to be linearized. F is nonlinear in the parameter u
+
+    fields : [Scalar|Vector]TestFunction or tuple
+        Function u with respect to which F should be differentiated.
+        Tuple if element of ProductSpace.
+
+    trials : [Scalar|Vector]TestFunction or tuple
+        Trial function to be used in resulting bilinear form.
+
+    Results
+    -------
+    a : BilinearForm
+        a(u, v) is bilinear form obtained from linearization of F(v; u).
+
+    """
+    if not isinstance(form, LinearForm):
         raise TypeError('> Expecting a LinearForm')
 
+    # ...
     if not isinstance(fields, (list, tuple, Tuple)):
         fields = [fields]
 
-    fields = [f.space.field(str(f.name)) for f in fields]
-    form   = form.annotate()
+    for field in fields:
+        if not isinstance(field, (ScalarTestFunction, VectorTestFunction)):
+            raise TypeError('> Expecting a TestFunction', field)
 
-    for f in fields:
-
-        if not isinstance(f, (ScalarField, VectorField)):
-            raise TypeError('{} is not ScalarField/VectorField'.format(f))
-
-    if not(trials is None):
+    # ...
+    if trials:
         if not isinstance(trials, (list, tuple, Tuple)):
             trials = [trials]
 
-        assert( all([isinstance(i, (str, ScalarTestFunction, VectorTestFunction)) for i in trials]) )
-        assert( len(fields) == len(trials) )
-
-        newtrials = []
-        for i in trials:
-            if isinstance(i, (ScalarTestFunction, VectorTestFunction)):
-                newtrials += [i.name]
-
-            else:
-                newtrials += [i]
-
-        trials = newtrials
-    # ...
-
-    if isinstance(form, LinearForm):
-        is_form = True
-        expr = form.body
-        domain = form.domain
-
+        for trial in trials:
+            if not isinstance(trial, (ScalarTestFunction, VectorTestFunction)):
+                raise TypeError('> Expecting a TestFunction', trial)
     else:
-        is_form = False
-        expr = form.expr
-
-    test_functions = form.variables
-    fields         = Tuple(*fields)
+        trials = [x.space.element(x.name + '_trial_' + random_string(4)) for x in fields]
 
     # ...
-    trial_functions = []
-    newargs         = []
-    eps  = Constant('eps_' + random_string( 4 ))
-    for i,x in enumerate(fields):
-        tag  = random_string( 4 )
 
-        if trials is None:
-            name = x.name + '_' + tag
-        else:
-            name = trials[i]
+    eps        = Constant('eps_' + random_string(4))
+    new_fields = [field + eps*trial for field, trial in zip(fields, trials)]
 
-        if isinstance(x, ScalarField):
-            trial  = ScalarTestFunction(x.space, name=name)
+    integrals     = form.expr.args if isinstance(form.expr, Add) else [form.expr]
+    new_integrals = []
 
-        elif isinstance(x, VectorField):
-            trial  = VectorTestFunction(x.space, name=name)
+    for I in integrals:
 
-        else:
-            raise TypeError('Only ScalarTestFunction , VectorTestFunction  are available')
+        g0 = I.expr
+        g1 = expand(I.expr.subs(zip(fields, new_fields)))
+        dg_du = (g1 - g0).as_leading_term(eps).as_coefficient(eps)
 
-        newargs         += [x + eps*trial]
-        trial_functions += [trial]
-    # ...
+        if dg_du:
+            new_I = integral(I.domain, dg_du)
+            new_integrals.append(new_I)
 
-    # ...
-    newexpr = expr
-    for k,v in zip(fields, newargs):
-        newexpr = newexpr.subs(k,v)
-    # ...
+    bilinear_expr = Add(*new_integrals)
+    tests = form.variables
 
-    newexpr = expand(newexpr)
-
-    e = newexpr.series(eps, 0, 2)
-    d = collect(e, eps, evaluate=False)
-    expr = d[eps]
-
-#    print('> linearize = ', expr)
-#    import sys; sys.exit(0)
-
-    test_trial = (trial_functions, test_functions)
-
-    if is_form:
-        return BilinearForm(test_trial, integral(domain, expr))
-
-    else:
-        return BilinearExpr(test_trial, expr)
+    return BilinearForm((trials, tests), bilinear_expr)
 
 #==============================================================================
 def is_bilinear_form(expr):
