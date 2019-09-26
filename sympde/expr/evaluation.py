@@ -883,7 +883,7 @@ def _split_test_function(expr):
             Di = Interval()
             Vi = ScalarFunctionSpace('tmp_V_{}'.format(i), domain=Di)
 
-            ai = ScalarTestFunction(Vi, '{name}{i}'.format(name=name, i=i))
+            ai = ScalarTestFunction(Vi, '{name}{i}'.format(name=name, i=i+1))
             ls += [ai]
 
         return ls
@@ -1140,6 +1140,11 @@ class TensorExpr(CalculusFunction):
 
         elif isinstance(expr, _coeffs_registery):
             return expr
+
+        elif isinstance(expr, Pow):
+            b = expr.base
+            e = expr.exp
+            return Pow(cls.eval(b), e)
 
         elif isinstance(expr, (Matrix, ImmutableDenseMatrix)):
 

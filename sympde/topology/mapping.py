@@ -7,13 +7,16 @@ from sympy import Indexed, IndexedBase, Matrix, ImmutableDenseMatrix
 from sympy.core import Symbol
 from sympy.core.containers import Tuple
 from sympy import Function
-from sympy import Matrix
 from sympy.core import Add, Mul, Pow
 from sympy.core.singleton import S
 from sympy.core.expr import AtomicExpr
 from sympy import Rational
+from sympy.core.numbers import ImaginaryUnit
+from sympy import sympify
+from sympy.core.function import AppliedUndef
 
 from sympde.core.basic import BasicMapping
+from sympde.core import Constant
 from sympde.core.algebra import (Dot_1d,
                                  Dot_2d, Inner_2d, Cross_2d,
                                  Dot_3d, Inner_3d, Cross_3d)
@@ -47,6 +50,8 @@ class Mapping(BasicMapping):
     Examples
 
     """
+    _expressions = None # used for analytical mapping
+
     # TODO shall we keep rdim ?
     def __new__(cls, name, rdim, coordinates=None):
         if isinstance(rdim, (tuple, list, Tuple)):
@@ -78,6 +83,37 @@ class Mapping(BasicMapping):
         obj._covariant = None
         obj._contravariant = None
         obj._hessian = None
+
+        # ...
+        if not( obj._expressions is None ):
+            coords = ['x', 'y', 'z'][:rdim]
+
+            # ...
+            args = []
+            for i in coords:
+                x = obj._expressions[i]
+                x = sympify(x)
+                args.append(x)
+
+            args = Tuple(*args)
+            # ...
+
+            # ...
+            lcoords = ['x1', 'x2', 'x3'][:rdim]
+            lcoords = [Symbol(i) for i in lcoords]
+            constants = list(set(args.free_symbols) - set(lcoords))
+            # subs constants as Constant objects instead of Symbol
+            d = {}
+            for i in constants:
+                # TODO shall we add the type?
+                # by default it is real
+                d[i] = Constant(i.name)
+
+            args = args.subs(d)
+            # ...
+
+            obj._expressions = args
+        # ...
 
         return obj
 
@@ -135,6 +171,14 @@ class Mapping(BasicMapping):
             self._compute_hessian()
 
         return self._hessian
+
+    @property
+    def is_analytical(self):
+        return not( self._expressions is None )
+
+    @property
+    def expressions(self):
+        return self._expressions
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -209,6 +253,86 @@ class Mapping(BasicMapping):
     def _compute_hessian(self):
         raise NotImplementedError('TODO')
 
+#==============================================================================
+class IdentityMapping(Mapping):
+    """
+    Represents an identity 1D/2D/3D Mapping object.
+
+    Examples
+
+    """
+    _expressions = {'x': 'x1',
+                    'y': 'x2',
+                    'z': 'x3'}
+
+#==============================================================================
+class PolarMapping(Mapping):
+    """
+    Represents a Polar 2D Mapping object (Annulus).
+
+    Examples
+
+    """
+    _expressions = {'x': 'c1 + (rmin*(1-x1)+rmax*x1)*cos(x2)',
+                    'y': 'c2 + (rmin*(1-x1)+rmax*x1)*sin(x2)'}
+
+#==============================================================================
+class TargetMapping(Mapping):
+    """
+    Represents a Target 2D Mapping object.
+
+    Examples
+
+    """
+    _expressions = {'x': 'c1 + (1-k)*x1*cos(x2) - D*x1**2',
+                    'y': 'c2 + (1+k)*x1*sin(x2)'}
+
+#==============================================================================
+class CzarnyMapping(Mapping):
+    """
+    Represents a Czarny 2D Mapping object.
+
+    Examples
+
+    """
+    _expressions = {'x': '(1 - sqrt( 1 + eps*(eps + 2*x1*cos(x2)) )) / eps',
+                    'y': 'c2 + (b / sqrt(1-eps**2/4) * x1 * sin(x2)) /'
+                        '(2 - sqrt( 1 + eps*(eps + 2*x1*cos(x2)) ))'}
+
+#==============================================================================
+class CollelaMapping(Mapping):
+    """
+    Represents a Collela 2D Mapping object.
+
+    Examples
+
+    """
+    _expressions = {'x': '2.*(x1 + eps*sin(2.*pi*k1*x1)*sin(2.*pi*k2*x2)) - 1.',
+                    'y': '2.*(x2 + eps*sin(2.*pi*k1*x1)*sin(2.*pi*k2*x2)) - 1.'}
+
+#==============================================================================
+class TorusMapping(Mapping):
+    """
+    Represents a Torus 3D Mapping object.
+
+    Examples
+
+    """
+    _expressions = {'x': '(R0+x1*cos(x2))*cos(x3)',
+                    'y': '(R0+x1*cos(x2))*sin(x3)',
+                    'z': 'x1*sin(x2)'}
+
+#==============================================================================
+class TwistedTargetMapping(Mapping):
+    """
+    Represents a Twisted Target 3D Mapping object.
+
+    Examples
+
+    """
+    _expressions = {'x': 'c1 + (1-k)*x1*cos(x2) - D*x1**2',
+                    'y': 'c2 + (1+k)*x1*sin(x2)',
+                    'z': 'c3 + x3*x1**2*sin(2*x2)'}
 
 #==============================================================================
 class MappedDomain(BasicDomain):
@@ -265,6 +389,14 @@ class SymbolicContravariant(SymbolicMappingExpr):
         sstr = printer.doprint
         mapping = sstr(self.mapping)
         return 'contravariant({})'.format(mapping)
+
+class SymbolicInverseDeterminant(SymbolicMappingExpr):
+    _name = 'inv_det'
+
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        mapping = sstr(self.mapping)
+        return 'inv_det({})'.format(mapping)
 
 #==============================================================================
 class MappingApplication(Function):
@@ -423,6 +555,14 @@ class LogicalExpr(CalculusFunction):
         M    = _args[0]
         expr = _args[1]
         dim  = M.rdim # TODO this is not the dim of the domain
+        l_coords = ['x1', 'x2', 'x3'][:dim]
+
+        if M.is_analytical:
+            for i in range(dim):
+                expr = expr.subs(M[i], M.expressions[i])
+
+        if isinstance(expr, Symbol) and expr.name in l_coords:
+            return expr
 
         if isinstance(expr, Add):
             args = [cls.eval(M, a) for a in expr.args]
@@ -436,7 +576,13 @@ class LogicalExpr(CalculusFunction):
             return expr
 
         elif isinstance(expr, _logical_partial_derivatives):
-            return expr
+            if M.is_analytical:
+                arg = cls.eval(M, expr._args[0])
+                op  = expr
+                return op.eval(arg)
+
+            else:
+                return expr
 
         elif isinstance(expr, (ScalarField, ScalarTestFunction, IndexedTestTrial, IndexedVectorField)):
             return expr
@@ -475,15 +621,22 @@ class LogicalExpr(CalculusFunction):
 
             elif dim == 3:
                 lgrad_arg = LogicalGrad_3d(arg)
-                
+
             grad_arg = Covariant(M, lgrad_arg)
-            
+
             if isinstance(arg, (ScalarField, ScalarTestFunction)):
                 if isinstance(arg.space.kind, HcurlSpaceType):
                     grad_arg = Contravariant(M, lgrad_arg)
             # ...
 
-            return grad_arg[0]
+            # TODO ARA improve: we should be able to avoid the previous symbolic
+            # computations here
+            expr = grad_arg[0]
+            if M.is_analytical:
+                for i in range(dim):
+                    expr = expr.subs(M[i], M.expressions[i])
+
+            return expr
 
         elif isinstance(expr, dy):
             arg = expr.args[0]
@@ -505,7 +658,14 @@ class LogicalExpr(CalculusFunction):
                 if isinstance(arg.space.kind, HcurlSpaceType):
                     grad_arg = Contravariant(M, lgrad_arg)
 
-            return grad_arg[1]
+            # TODO ARA improve: we should be able to avoid the previous symbolic
+            # computations here
+            expr = grad_arg[1]
+            if M.is_analytical:
+                for i in range(dim):
+                    expr = expr.subs(M[i], M.expressions[i])
+
+            return expr
 
         elif isinstance(expr, dz):
             arg = expr.args[0]
@@ -526,8 +686,29 @@ class LogicalExpr(CalculusFunction):
             if isinstance(arg, (ScalarField, ScalarTestFunction)):
                 if isinstance(arg.space.kind, HcurlSpaceType):
                     grad_arg = Contravariant(M, lgrad_arg)
-            
-            return grad_arg[2]
+
+            # TODO ARA improve: we should be able to avoid the previous symbolic
+            # computations here
+            expr = grad_arg[2]
+            if M.is_analytical:
+                for i in range(dim):
+                    expr = expr.subs(M[i], M.expressions[i])
+
+            return expr
+
+        elif isinstance(expr, Symbol):
+            return expr
+
+        elif isinstance(expr, Function):
+            func = expr.func
+            args = expr.args
+            args = [cls(M, a) for a in args]
+            return func(*args)
+
+        elif isinstance(expr, Pow):
+            b = expr.base
+            e = expr.exp
+            return Pow(cls(M, b), cls(M, e))
 
         return cls(M, expr, evaluate=False)
 
@@ -664,16 +845,25 @@ class SymbolicExpr(CalculusFunction):
 
             return Symbol(name)
 
+        elif isinstance(expr, Mapping):
+            return Symbol(expr.name)
+
         # ... this must be done here, otherwise codegen for FEM will not work
         elif isinstance(expr, Symbol):
             return expr
 
+        elif isinstance(expr, IndexedBase):
+            return expr
+
+        elif isinstance(expr, Indexed):
+            return expr
+
         elif isinstance(expr, Function):
             return expr
-        # ...
 
-        elif isinstance(expr, Mapping):
-            return Symbol(expr.name)
+        elif isinstance(expr, ImaginaryUnit):
+            return expr
+        # ...
 
         # Expression must always be translated to Sympy!
         # TODO: check if we should use 'sympy.sympify(expr)' instead
