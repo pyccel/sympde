@@ -7,16 +7,13 @@ from sympy import Indexed, IndexedBase, Matrix, ImmutableDenseMatrix
 from sympy.core import Symbol
 from sympy.core.containers import Tuple
 from sympy import Function
-from sympy import Matrix
 from sympy.core import Add, Mul, Pow
 from sympy.core.singleton import S
 from sympy.core.expr import AtomicExpr
 from sympy import Rational
-from sympy import symbols
 from sympy.core.numbers import ImaginaryUnit
 from sympy import sympify
 from sympy.core.function import AppliedUndef
-from sympy.core.function import UndefinedFunction
 
 from sympde.core.basic import BasicMapping
 from sympde.core import Constant

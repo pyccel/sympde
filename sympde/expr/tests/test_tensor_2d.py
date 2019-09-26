@@ -37,7 +37,7 @@ from sympde.expr.expr import DomainIntegral, BoundaryIntegral
 from sympde.expr.expr import Functional, Norm
 from sympde.expr.expr import linearize
 from sympde.expr.evaluation import TensorExpr
-from sympde.topology import element_of, elements_of
+from sympde.topology import elements_of
 
 
 #==============================================================================
