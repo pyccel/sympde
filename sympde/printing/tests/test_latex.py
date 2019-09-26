@@ -25,7 +25,7 @@ def test_latex_1d():
 
     v = element_of(V, name='v')
     u = element_of(V, name='u')
-    F = element_of(V, name='F')
+#    F = element_of(V, name='F')
 
     int_0 = lambda expr: integral(domain , expr)
     
@@ -56,7 +56,7 @@ def test_latex_2d_1():
 
     v = element_of(V, name='v')
     u = element_of(V, name='u')
-    F = element_of(V, name='F')
+#    F = element_of(V, name='F')
     
     int_0 = lambda expr: integral(domain , expr)
 
@@ -87,7 +87,7 @@ def test_latex_2d_2():
 
     v = element_of(V, name='v')
     u = element_of(V, name='u')
-    F = element_of(V, name='F')
+#    F = element_of(V, name='F')
 
     int_0 = lambda expr: integral(domain , expr)
 
@@ -115,7 +115,7 @@ def test_latex_3d_1():
 
     v = element_of(V, name='v')
     u = element_of(V, name='u')
-    F = element_of(V, name='F')
+#    F = element_of(V, name='F')
 
     int_0 = lambda expr: integral(domain , expr)
     
@@ -146,7 +146,6 @@ def test_latex_3d_2():
 
     v = element_of(V, name='v')
     u = element_of(V, name='u')
-    F = element_of(V, name='F')
 
     int_0 = lambda expr: integral(domain , expr)
     

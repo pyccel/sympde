@@ -1,71 +1,35 @@
 # coding: utf-8
 
-from itertools import groupby
-
-from sympy.core import Basic
-from sympy.core import Symbol
-from sympy.core import Function
-from sympy.simplify.simplify import simplify
-from sympy import collect
-from sympy.series.order import Order
-from sympy.core import Expr, Add, Mul, Pow
-from sympy import S
 from sympy import Dummy
+from sympy import Matrix
+from sympy.core import Basic
+from sympy.core import Expr, Add, Mul
+from sympy.core.expr import AtomicExpr
 from sympy.core.numbers import Zero as sy_Zero
 from sympy.core.containers import Tuple
-from sympy import Indexed, IndexedBase, Matrix, ImmutableDenseMatrix
-from sympy import Integer, Float
-from sympy.core.expr import AtomicExpr
-from sympy.physics.quantum import TensorProduct
-from sympy.series.series import series
 from sympy.core.compatibility import is_sequence
 
-from sympde.core.basic import _coeffs_registery
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import Constant
-from sympde.core.algebra import (Dot_1d,
-                 Dot_2d, Inner_2d, Cross_2d,
-                 Dot_3d, Inner_3d, Cross_3d)
 from sympde.core.utils import random_string
-
-from sympde.calculus import Dot, Inner, Cross
-from sympde.calculus import Grad, Rot, Curl, Div, Hessian
-from sympde.calculus import Bracket
-from sympde.calculus import Laplace
-from sympde.calculus.core import _generic_ops
-
-from sympde.topology import BasicDomain, Domain, MappedDomain, Union, Interval
-from sympde.topology import BoundaryVector, NormalVector, TangentVector
-from sympde.topology import Boundary, Connectivity, Interface
-from sympde.topology.derivatives import _partial_derivatives
-from sympde.topology.derivatives import partial_derivative_as_symbol
-from sympde.topology.derivatives import sort_partial_derivatives
-from sympde.topology.derivatives import get_atom_derivatives
-from sympde.topology.derivatives import dx, dy, dz
-from sympde.topology.derivatives import (Grad_1d, Div_1d,
-                                         Grad_2d, Curl_2d, Rot_2d, Div_2d,
-                                         Grad_3d, Curl_3d, Div_3d)
-from sympde.topology.derivatives import Bracket_2d
-from sympde.topology.derivatives import Laplace_1d, Laplace_2d, Laplace_3d
-from sympde.topology.derivatives import Hessian_1d, Hessian_2d, Hessian_3d
-from sympde.topology.space import BasicFunctionSpace
+from sympde.calculus import Dot, Inner
+from sympde.calculus import Grad, Hessian
+from sympde.topology import BasicDomain, Union
+from sympde.topology import NormalVector
+from sympde.topology import Boundary, Interface
 from sympde.topology.space import ScalarFunctionSpace
 from sympde.topology.space import ProductSpace
 from sympde.topology.space import ScalarTestFunction
 from sympde.topology.space import VectorTestFunction
-from sympde.topology.space import IndexedTestTrial
-from sympde.topology.space import Unknown, VectorUnknown
 from sympde.topology.space import Trace, trace_0, trace_1
-from sympde.topology.space import ScalarField, VectorField, IndexedVectorField
-from sympde.topology.measure import CanonicalMeasure
-from sympde.topology.measure import CartesianMeasure
-from sympde.topology.measure import Measure
+from sympde.topology.space import ScalarField, VectorField
 
 from .errors import UnconsistentLinearExpressionError
-from .basic import BasicForm
+from .basic  import BasicForm
 from .basic  import BasicExpr
 from .basic  import is_linear_form, _sanitize_arguments
 
+#==============================================================================
 def expand(expr):
     from sympy import expand as _expand
 
@@ -82,6 +46,7 @@ def expand(expr):
         args[i] = c
 
     return Add(*args)
+
 #==============================================================================
 def _get_domain(expr):
     # expr is an integral of BasicExpr or Add of Integral of BasicExpr
@@ -187,7 +152,6 @@ class BilinearExpr(BasicExpr):
         variables = Tuple(*self.variables[0], *self.variables[1])
         return self.expr.xreplace(dict(list(zip(self.variables, args))))
 
-
 #==============================================================================
 class Integral(CalculusFunction):
 
@@ -225,10 +189,7 @@ class Integral(CalculusFunction):
         else:
             return DomainIntegral(expr, domain)
 
-
-
 #==============================================================================
-
 class DomainIntegral(AtomicExpr):
     _op_priority = 20
     @property
@@ -253,6 +214,7 @@ class DomainIntegral(AtomicExpr):
 
     def __hash__(self):
         return hash(self.expr) + hash(self.domain)
+
 #==============================================================================
 class BoundaryIntegral(AtomicExpr):
     _op_priority = 20
@@ -293,7 +255,6 @@ class BoundaryIntegral(AtomicExpr):
 
 
         return Basic.__new__(cls, expr, domain)
-
 
     @property
     def expr(self):
@@ -346,7 +307,6 @@ class InterfaceIntegral(AtomicExpr):
     def __hash__(self):
         return hash(self.expr) + hash(self.domain)
 
-
 #==============================================================================
 class Functional(BasicForm):
     is_functional = True
@@ -393,7 +353,6 @@ class Functional(BasicForm):
     # TODO do we need it?
 #    def _eval_nseries(self, x, n, logx):
 #        return self.expr._eval_nseries(x, n, logx)
-
 
 #==============================================================================
 class LinearForm(BasicForm):
@@ -475,7 +434,6 @@ class LinearForm(BasicForm):
         expr, _ = expr._xreplace(subs)
         # ...
         return expr
-
 
 #==============================================================================
 class BilinearForm(BasicForm):
@@ -668,7 +626,6 @@ class Norm(Functional):
     @property
     def exponent(self):
         return self._exponent
-
 
 #==============================================================================
 def linearize(form, fields, trials=None):
@@ -864,7 +821,7 @@ def is_linear_expression(expr, args, debug=True):
 
     return True
 
-
+#==============================================================================
 def integral(domain, expr):
     """."""
     return Integral(expr, domain)

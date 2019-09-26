@@ -4,30 +4,22 @@
 
 import pytest
 
-from sympy import Symbol
 from sympy.core.containers import Tuple
-from sympy import symbols
-from sympy import IndexedBase
 from sympy import Matrix
 from sympy import Function
 from sympy import pi, cos, sin, exp
-from sympy import srepr
-from sympy.physics.quantum import TensorProduct
 
 from sympde.core import Constant
-from sympde.calculus import grad, dot, inner, cross, rot, curl, div
-from sympde.calculus import laplace, hessian, bracket, convect
+from sympde.calculus import grad, dot, inner, rot, div
+from sympde.calculus import laplace, bracket, convect
 from sympde.calculus import jump, avg, Dn, minus, plus
-from sympde.topology import (dx, dy, dz)
+#from sympde.topology import dx
 from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
-from sympde.topology import ProductSpace
 from sympde.topology import element_of, elements_of
-from sympde.topology import Unknown
 from sympde.topology import InteriorDomain, Union
-from sympde.topology import Boundary, NormalVector, TangentVector
+from sympde.topology import Boundary, NormalVector
 from sympde.topology import Domain
-from sympde.topology import Trace, trace_0, trace_1
-from sympde.topology import Mapping
+from sympde.topology import trace_1
 from sympde.topology import Square
 from sympde.topology import ElementDomain
 from sympde.topology import Area
@@ -38,16 +30,6 @@ from sympde.expr.expr import integral, is_linear_form, is_bilinear_form
 from sympde.expr.expr import Functional, Norm
 from sympde.expr.expr import linearize
 from sympde.expr.evaluation import TerminalExpr
-
-from sympde.expr.errors import UnconsistentError
-from sympde.expr.errors import UnconsistentLinearExpressionError
-from sympde.expr.errors import UnconsistentLhsError
-from sympde.expr.errors import UnconsistentRhsError
-from sympde.expr.errors import UnconsistentBCError
-
-DIM = 2
-VERBOSE = False
-VERBOSE = True
 
 #==============================================================================
 def test_linear_expr_2d_1():
@@ -940,7 +922,7 @@ def test_terminal_expr_bilinear_2d_4():
 #==============================================================================
 @pytest.mark.skip(reason="New linearize() function does not accept 'LinearExpr' objects")
 def test_linearize_expr_2d_1():
-    domain = Domain('Omega', dim=DIM)
+    domain = Domain('Omega', dim=2)
     x,y = domain.coordinates
 
     V1 = ScalarFunctionSpace('V1', domain)
@@ -1000,7 +982,7 @@ def test_linearize_expr_2d_1():
 #==============================================================================
 @pytest.mark.skip(reason="New linearize() function does not accept 'LinearExpr' objects")
 def test_linearize_expr_2d_2():
-    domain = Domain('Omega', dim=DIM)
+    domain = Domain('Omega', dim=2)
     x,y = domain.coordinates
 
     V1 = ScalarFunctionSpace('V1', domain)
@@ -1025,7 +1007,7 @@ def test_linearize_expr_2d_2():
 
 #==============================================================================
 def test_linearize_form_2d_1():
-    domain = Domain('Omega', dim=DIM)
+    domain = Domain('Omega', dim=2)
 
     V = ScalarFunctionSpace('V', domain)
     W = VectorFunctionSpace('W', domain)
@@ -1079,7 +1061,7 @@ def test_linearize_form_2d_1():
 
 #==============================================================================
 def test_linearize_form_2d_2():
-    domain = Domain('Omega', dim=DIM)
+    domain = Domain('Omega', dim=2)
 
     V = ScalarFunctionSpace('V', domain)
 
@@ -1094,13 +1076,13 @@ def test_linearize_form_2d_2():
     a = linearize(l, F, trials=u)
 
     expected = linearize(l1, F, trials=u)
-    assert linearize(l, F, trials=u) == expected
+    assert a == expected
     # ...
 
 #==============================================================================
 def test_linearize_form_2d_3():
     """steady Euler equation."""
-    domain = Domain('Omega', dim=DIM)
+    domain = Domain('Omega', dim=2)
 
     U = VectorFunctionSpace('U', domain)
     W = ScalarFunctionSpace('W', domain)
@@ -1161,7 +1143,7 @@ def test_linearize_form_2d_3():
 
 #==============================================================================
 def test_linearize_form_2d_4():
-    domain  = Domain('Omega', dim=DIM)
+    domain  = Domain('Omega', dim=2)
     Gamma_N = Boundary(r'\Gamma_N', domain)
 
     x,y = domain.coordinates

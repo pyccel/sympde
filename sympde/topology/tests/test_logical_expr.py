@@ -13,7 +13,6 @@ from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
 from sympde.topology import element_of
 from sympde.topology import LogicalExpr
 from sympde.topology import SymbolicExpr
-from sympde.topology import element_of
 from sympde.topology import IdentityMapping
 from sympde.topology import PolarMapping
 from sympde.topology import TargetMapping
@@ -80,7 +79,7 @@ def test_symbolic_expr_1d_1():
 
     V = ScalarFunctionSpace('V', domain)
 
-    u,v = [element_of(V, name=i) for i in ['u', 'v']]
+    u = element_of(V, name='u')
 
     det_M = DetJacobian(M)
     det_M = SymbolicExpr(det_M)
@@ -214,7 +213,7 @@ def test_symbolic_expr_2d_1():
 
     V = ScalarFunctionSpace('V', domain)
 
-    u,v = [element_of(V, name=i) for i in ['u', 'v']]
+    u = element_of(V, name='u')
 
     det_M = DetJacobian(M)
     det_M = SymbolicExpr(det_M)
@@ -345,8 +344,7 @@ def test_symbolic_expr_3d_1():
     alpha = Constant('alpha')
 
     V = ScalarFunctionSpace('V', domain)
-
-    u,v = [element_of(V, name=i) for i in ['u', 'v']]
+    u = element_of(V, 'u')
 
     det_M = DetJacobian(M)
     det_M = SymbolicExpr(det_M)

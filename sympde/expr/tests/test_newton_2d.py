@@ -3,13 +3,10 @@
 from sympy import exp
 
 from sympde.calculus import grad, dot
-from sympde.topology import dx, dy
 from sympde.topology import ScalarFunctionSpace
-from sympde.topology import ScalarField
 from sympde.topology import element_of
 from sympde.topology import Domain, Boundary
 from sympde.expr     import LinearForm, integral
-from sympde.expr     import TerminalExpr
 from sympde.expr     import EssentialBC, NewtonIteration
 
 DIM = 2

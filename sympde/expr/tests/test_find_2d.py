@@ -1,6 +1,7 @@
 # coding: utf-8
 
-from sympy import cos, exp
+from sympy import cos
+#from sympy import exp
 
 from sympde.core     import Constant
 from sympde.calculus import grad, dot
