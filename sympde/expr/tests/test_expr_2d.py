@@ -26,7 +26,7 @@ from sympde.topology import Area
 
 from sympde.expr.expr import LinearExpr, BilinearExpr
 from sympde.expr.expr import LinearForm, BilinearForm
-from sympde.expr.expr import integral, is_linear_form, is_bilinear_form
+from sympde.expr.expr import integral, is_bilinear_form
 from sympde.expr.expr import Functional, Norm
 from sympde.expr.expr import linearize
 from sympde.expr.evaluation import TerminalExpr

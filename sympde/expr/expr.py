@@ -27,7 +27,7 @@ from sympde.topology.space import ScalarField, VectorField
 from .errors import UnconsistentLinearExpressionError
 from .basic  import BasicForm
 from .basic  import BasicExpr
-from .basic  import is_linear_form, _sanitize_arguments
+from .basic  import _sanitize_arguments
 
 #==============================================================================
 def expand(expr):
@@ -70,20 +70,17 @@ def _get_domain(expr):
 class LinearExpr(BasicExpr):
     is_linear = True
 
-    def __new__(cls, arguments, expr, check=False):
+    def __new__(cls, arguments, expr):
 
-        # ...
-        if expr.atoms(DomainIntegral, BoundaryIntegral):
+        if expr.atoms(DomainIntegral, BoundaryIntegral, InterfaceIntegral):
             raise TypeError('')
-        # ...
-
-        # ...
-        if check and not is_linear_form(expr, arguments):
-            msg = '> Expression is not linear'
-            raise UnconsistentLinearExpressionError(msg)
-        # ...
 
         args = _sanitize_arguments(arguments, is_linear=True)
+
+        if not is_linear_expression(expr, args):
+            msg = '> Expression is not linear'
+            raise UnconsistentLinearExpressionError(msg)
+
         return Basic.__new__(cls, args, expr)
 
     @property

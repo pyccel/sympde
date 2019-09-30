@@ -117,30 +117,6 @@ def _sanitize_arguments(arguments, is_bilinear=False, is_linear=False):
     return args
 
 #==============================================================================
-def is_linear_form(expr, args):
-    """checks if an expression is linear with respect to the given arguments."""
-    # ...
-    test_functions = _sanitize_arguments(args, expr, is_linear=True)
-    # TODO is it ok to do this?
-    test_functions = test_functions[0]
-
-    if isinstance(test_functions, (ScalarTestFunction, VectorTestFunction)):
-        test_functions = [test_functions]
-
-    elif isinstance(test_functions, (tuple, list, Tuple)):
-        test_functions = list(*test_functions)
-    # ...
-
-    # ...
-    if not is_linear_expression(expr, test_functions):
-        msg = ' Expression is not linear w.r.t [{}]'.format(test_functions)
-        raise UnconsistentLinearExpressionError(msg)
-    # ...
-
-    return True
-
-
-#==============================================================================
 class BasicExpr(Expr):
     is_Function   = True
     is_linear     = False
