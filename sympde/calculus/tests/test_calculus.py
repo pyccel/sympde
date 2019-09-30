@@ -69,6 +69,27 @@ def test_zero_derivative():
     assert convect(G, Rational(6, 7)) == 0  # sympy Rational
     assert convect(G, Constant('a'))  == 0  # sympde Constant
 
+    # Poisson's bracket in 2D
+    domain = Domain('Omega', dim=2)
+    V = ScalarFunctionSpace('V', domain)
+    u = element_of(V, name='V')
+
+    assert bracket(u, 1)              == 0  # native int
+    assert bracket(u, 2.3)            == 0  # native float
+    assert bracket(u, 4+5j)           == 0  # native complex
+    assert bracket(u, Integer(1))     == 0  # sympy Integer
+    assert bracket(u, Float(2.3))     == 0  # sympy Float
+    assert bracket(u, Rational(6, 7)) == 0  # sympy Rational
+    assert bracket(u, Constant('a'))  == 0  # sympde Constant
+
+    assert bracket(1             , u) == 0  # native int
+    assert bracket(2.3           , u) == 0  # native float
+    assert bracket(4+5j          , u) == 0  # native complex
+    assert bracket(Integer(1)    , u) == 0  # sympy Integer
+    assert bracket(Float(2.3)    , u) == 0  # sympy Float
+    assert bracket(Rational(6, 7), u) == 0  # sympy Rational
+    assert bracket(Constant('a') , u) == 0  # sympde Constant
+
 #==============================================================================
 def test_calculus_2d_1():
     domain = Domain('Omega', dim=2)
@@ -124,6 +145,13 @@ def test_calculus_2d_1():
     assert( rot(F+G) == rot(F) + rot(G) )
     assert( rot(alpha*H) == alpha*rot(H) )
     assert( rot(alpha*F + beta*G) == alpha*rot(F) + beta*rot(G)  )
+    # ...
+
+    # ... Poisson's bracket properties
+    assert bracket(alpha * f, g) == alpha * bracket(f, g)
+    assert bracket(f, alpha * g) == alpha * bracket(f, g)
+    assert bracket(f + h, g) == bracket(f, g) + bracket(h, g)
+    assert bracket(f, g + h) == bracket(f, g) + bracket(f, h)
     # ...
 
 #==============================================================================

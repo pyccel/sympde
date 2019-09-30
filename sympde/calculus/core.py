@@ -1229,7 +1229,46 @@ class Bracket(BasicOperator):
     """
     This operator represents the Poisson bracket between two expressions.
     """
-    pass
+
+    def __new__(cls, *args, **options):
+        if options.pop('evaluate', True):
+            return cls.eval(*args)
+        else:
+            return Basic.__new__(cls, *args, **options)
+
+    @classmethod
+    def eval(cls, arg1, arg2):
+
+        # Recursive application of differentiation rules to both arguments
+        for expr, args in (arg1, lambda a: (a, arg2)), \
+                          (arg2, lambda a: (arg1, a)):
+
+            # Derivative of sum: d(a+b+c) = da + db + dc
+            if isinstance(expr, Add):
+                return Add(*[cls.eval(*args(a)) for a in expr.args])
+
+            # Derivative of product: d(a*b*c) = da * (b*c) + a * d(b*c)
+            elif isinstance(expr, Mul):
+                coeffs = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+                fields = [a for a in expr.args if a not in coeffs]
+
+                terms  = []
+                for i in range(len(fields)):
+                    factors = [(cls.eval(*args(f)) if i == j else f)
+                               for j, f in enumerate(fields)]
+                    terms.append(Mul(*factors))
+
+                a = Mul(*coeffs)
+                b = Add(*terms )
+
+                return Mul(a, b)
+
+            # Derivative of constant: d(const) = 0
+            elif isinstance(expr, _coeffs_registery):
+                return S.Zero
+
+        # Stop recursion
+        return cls(arg1, arg2, evaluate=False)
 
 #==============================================================================
 # TODO improve
