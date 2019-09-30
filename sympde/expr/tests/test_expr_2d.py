@@ -1496,6 +1496,10 @@ def test_bilinear_form_2d_4():
 
 def test_linearity_linear_form_2d_1():
 
+    from sympde.expr.expr   import DomainIntegral, BoundaryIntegral, InterfaceIntegral
+    from sympde.expr.expr   import is_linear_expression
+    from sympde.expr.errors import UnconsistentLinearExpressionError
+
     domain = Domain('Omega', dim=2)
     B1 = Boundary(r'\Gamma_1', domain)
 
@@ -1514,60 +1518,48 @@ def test_linearity_linear_form_2d_1():
     int_0 = lambda expr: integral(domain , expr)
     int_1 = lambda expr: integral(B1, expr)
 
-    l = LinearForm(v, int_0(x*y*v))
-    assert is_linear_form(l)
+    # The following integral expressions are linear, hence it must be possible
+    # to create LinearForm objects from them
 
-    # ...
-    l = LinearForm(v, int_0(x*y*v + v))
-    assert is_linear_form(l)
+    l = LinearForm(v, int_0(x * y * v))
 
-    # ...
+    l = LinearForm(v, int_0(x * y * v + v))
 
-    # ...
     g = Tuple(x**2, y**2)
-    l = LinearForm(v, int_1(v*dot(g, nn)))
-    assert is_linear_form(l)
+    l = LinearForm(v, int_0(v * dot(g, nn)))
 
-    # ...
-
-    # ...
     g = Tuple(x**2, y**2)
     l = LinearForm(v, int_1(v*dot(g, nn)) + int_0(x*y*v))
-    assert is_linear_form(l)
 
-    # ...
+    l1 = LinearForm(v1, int_0(x * y * v1))
+    l  = LinearForm(v, l1(v))
 
-    # ...
-    l1 = LinearForm(v1, int_0(x*y*v1))
-    l = LinearForm(v, l1(v))
-    assert is_linear_form(l)
-
-
-    # ...
-    g = Tuple(x,y)
+    g  = Tuple(x,y)
     l1 = LinearForm(v1, int_0(x*y*v1))
     l2 = LinearForm(v2, int_0(dot(grad(v2), g)))
+    l  = LinearForm(v, l1(v) + l2(v))
 
-    l = LinearForm(v, l1(v) + l2(v))
-    assert is_linear_form(l)
-
-    # ...
-
-    # ...
     l1 = LinearForm(v1, int_0(x*y*v1))
     l2 = LinearForm(v1, int_0(v1))
-    l = LinearForm(v, l1(v) + kappa*l2(v))
-    assert is_linear_form(l)
+    l  = LinearForm(v, l1(v) + kappa*l2(v))
 
-    # ...
-
-    # ...
-    g = Tuple(x**2, y**2)
+    g  = Tuple(x**2, y**2)
     l1 = LinearForm(v1, int_0(x*y*v1))
     l2 = LinearForm(v1, int_0(v1))
     l3 = LinearForm(v, int_1(v*dot(g, nn)))
-    l = LinearForm(v, l1(v) + kappa*l2(v) + mu*l3(v))
-    assert is_linear_form(l)
+    l  = LinearForm(v, l1(v) + kappa*l2(v) + mu*l3(v))
+
+    # The following integral expressions are not linear, hence LinearForm must
+    # raise an exception
+
+    with pytest.raises(UnconsistentLinearExpressionError):
+        l = LinearForm(v, int_0(x * y * v + 1))
+
+    with pytest.raises(UnconsistentLinearExpressionError):
+        l = LinearForm(v, int_0(x * v**2))
+
+    with pytest.raises(UnconsistentLinearExpressionError):
+        l = LinearForm(v, int_0(x * y * v) + int_1(v * exp(v)))
 
 #==============================================================================
 def test_linearity_bilinear_form_2d_1():
