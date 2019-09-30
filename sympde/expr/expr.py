@@ -764,7 +764,7 @@ def is_linear_expression(expr, args, debug=True):
         newarg  = left + right
         newexpr = newexpr.subs(arg, newarg)
 
-    integrals = newexpr.atoms(DomainIntegral, BoundaryIntegral)
+    integrals = newexpr.atoms(DomainIntegral, BoundaryIntegral, InterfaceIntegral)
 
     for a in integrals:
         newexpr,_ = newexpr._xreplace({a:integral(a.domain, a.expr)})
@@ -777,21 +777,11 @@ def is_linear_expression(expr, args, debug=True):
     for arg, right in zip(args, right_args):
         right_expr = right_expr.subs(arg, right)
 
-    if not( newexpr == left_expr + right_expr ):
+    if not( expand(newexpr) == expand(left_expr + right_expr) ):
         # TODO use a warning or exception?
         if debug:
             print('Failed to assert addition property')
-            print(newexpr , left_expr + right_expr)
-
-#            print('===========')
-#            print(arg, left, right)
-#
-#            print(expand(newexpr))
-#            print(expand(left_expr))
-#            print(expand(right_expr))
-#            print(expand(newexpr) - expand(left_expr) - expand(right_expr))
-#            import sys; sys.exit(0)
-
+            print('{} != {}'.format(newexpr, left_expr + right_expr))
 
         return False
 
@@ -816,6 +806,7 @@ def is_linear_expression(expr, args, debug=True):
         # TODO use a warning or exception?
         if debug:
             print('Failed to assert multiplication property')
+            print('{} != {}'.format(newexpr, left_expr))
 
         return False
     # ...
