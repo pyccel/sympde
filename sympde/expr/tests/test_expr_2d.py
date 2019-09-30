@@ -1252,17 +1252,17 @@ def test_stabilization_2d_1():
 
     # ...
     expr = a(v,u) + mu*area*s1(v,u)
-    a1 = BilinearForm((v,u), int_0(expr))
+    a1 = BilinearForm((v,u), expr)
     # ...
 
     # ...
     expr = a(v,u) + mu*area*s2(v,u)
-    a2 = BilinearForm((v,u), int_0(expr))
+    a2 = BilinearForm((v,u), expr)
     # ...
 
     # ...
     expr = a(v,u) + mu*area*s3(v,u)
-    a3 = BilinearForm((v,u), int_0(expr))
+    a3 = BilinearForm((v,u), expr)
     # ...
 
     print(a1)

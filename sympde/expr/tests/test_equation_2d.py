@@ -177,7 +177,7 @@ def test_equation_2d_2():
     l1 = LinearForm(tau, int_0(bracket(pn, wn)*tau - 1./Re * dot(grad(tau), grad(wn))))
 
     expr =  m(tau,dw) - alpha*dt*b1(tau,dw) - dt*b2(tau,dp) - (alpha*dt/Re)*s(tau,dw)
-    a = BilinearForm(((tau, sigma),(dp,dw)), int_0(expr))
+    a = BilinearForm(((tau, sigma),(dp,dw)), expr)
 
     l = LinearForm((tau, sigma), dt*l1(tau))
 
