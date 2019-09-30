@@ -31,21 +31,22 @@ from .basic  import is_linear_form, _sanitize_arguments
 
 #==============================================================================
 def expand(expr):
+    """
+    Expand an expression by making sure that Mul objects are evaluated by using
+    the * operator (which might be overloaded by the types in the expression).
+
+    """
     from sympy import expand as _expand
+    from operator  import mul
+    from functools import reduce
 
     if isinstance(expr, Tuple):
         return expr
 
-    expr = _expand(expr)
-    _, args = expr.as_coeff_add()
-    args = list(args)
-    for i in range(len(args)):
-        c,m = args[i].as_coeff_mul()
-        for o in m:
-            c = c*o
-        args[i] = c
+    coeff, args = _expand(expr).as_coeff_add()
+    newargs = [c * reduce(mul, m) for a in args for c, m in [a.as_coeff_mul()]]
 
-    return Add(*args)
+    return Add(coeff, *newargs)
 
 #==============================================================================
 def _get_domain(expr):
