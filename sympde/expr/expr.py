@@ -104,7 +104,7 @@ class LinearExpr(BasicExpr):
 class BilinearExpr(BasicExpr):
     is_bilinear = True
 
-    def __new__(cls, arguments, expr, check=False):
+    def __new__(cls, arguments, expr):
 
         # ...
         if expr.atoms(DomainIntegral, BoundaryIntegral):
@@ -119,13 +119,21 @@ class BilinearExpr(BasicExpr):
             raise ValueError('Expecting a couple (trial, test)')
         # ...
 
+        args = _sanitize_arguments(arguments, is_bilinear=True)
+        trial_functions, test_functions = args
+
         # ...
-        if check and not is_bilinear_form(expr, arguments):
-            msg = '> Expression is not bilinear'
+        if not is_linear_expression(expr, trial_functions):
+            msg = '> Expression is not bilinear w.r.t trial functions {}'\
+                    .format(trial_functions)
+            raise UnconsistentLinearExpressionError(msg)
+
+        if not is_linear_expression(expr, test_functions):
+            msg = '> Expression is not bilinear w.r.t test functions {}'\
+                    .format(test_functions)
             raise UnconsistentLinearExpressionError(msg)
         # ...
 
-        args = _sanitize_arguments(arguments, is_bilinear=True)
         return Basic.__new__(cls, args, expr)
 
     @property
@@ -445,27 +453,42 @@ class BilinearForm(BasicForm):
 
     def __new__(cls, arguments, expr):
 
-        # ...
-        integrals  = list(expr.atoms(DomainIntegral))
-        integrals += list(expr.atoms(BoundaryIntegral))
-        integrals += list(expr.atoms(InterfaceIntegral))
-        if not integrals:
-            raise ValueError('Expecting integral Expression')
-
-        domain = _get_domain(expr)
-
-        # ...
+        # Trivial case: null expression
         if expr == 0:
             return sy_Zero
 
+        # Check that integral expression is given
+        integral_types = DomainIntegral, BoundaryIntegral, InterfaceIntegral
+        if not expr.atoms(*integral_types):
+            raise ValueError('Expecting integral Expression')
+
+        # Expand integral expression and sanitize arguments
+        # TODO: why do we 'sanitize' here?
         expr = expand(expr)
-
         args = _sanitize_arguments(arguments, is_bilinear=True)
-        obj = Basic.__new__(cls, args, expr)
-        # ...
 
-        obj._domain = domain
-        # ...
+        # Distinguish between trial and test functions
+        trial_functions, test_functions = args
+
+        # Check linearity with respect to trial functions
+        if not is_linear_expression(expr, trial_functions):
+            msg = ' Expression is not linear w.r.t trial functions {}'\
+                    .format(trial_functions)
+            raise UnconsistentLinearExpressionError(msg)
+
+        # Check linearity with respect to test functions
+        if not is_linear_expression(expr, test_functions):
+            msg = ' Expression is not linear w.r.t test functions {}'\
+                    .format(test_functions)
+            raise UnconsistentLinearExpressionError(msg)
+
+        # Create new object of type BilinearForm
+        obj = Basic.__new__(cls, args, expr)
+
+        # Compute 'domain' property (scalar or tuple)
+        # TODO: is this is useful?
+        obj._domain = _get_domain(expr)
+
         return obj
 
     @property
@@ -695,30 +718,6 @@ def linearize(form, fields, trials=None):
     tests = form.variables
 
     return BilinearForm((trials, tests), bilinear_expr)
-
-#==============================================================================
-def is_bilinear_form(expr):
-    """checks if an expression is bilinear with respect to the given arguments."""
-
-    assert isinstance(expr, BilinearForm)
-
-    test_functions  = expr.test_functions
-    trial_functions = expr.trial_functions
-    expr = expr.expr
-
-    # ...
-    if not is_linear_expression(expr, test_functions):
-        msg = ' Expression is not linear w.r.t [{}]'.format(test_functions)
-        raise UnconsistentLinearExpressionError(msg)
-    # ...
-
-    # ...
-    if not is_linear_expression(expr, trial_functions):
-        msg = ' Expression is not linear w.r.t [{}]'.format(trial_functions)
-        raise UnconsistentLinearExpressionError(msg)
-    # ...
-
-    return True
 
 #==============================================================================
 def is_linear_expression(expr, args, debug=True):
