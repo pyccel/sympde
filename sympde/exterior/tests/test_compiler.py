@@ -172,8 +172,8 @@ def test_compiler_3d_2():
 
     X = H1 * Hcurl * Hdiv * L2
 
-    v0, v1, v2, v3 = element_of(X, name='v0, v1, v2, v3')
-    u0, u1, u2, u3 = element_of(X, name='u0, u1, u2, u3')
+    v = element_of(X, name='v0, v1, v2, v3')
+    u = element_of(X, name='u0, u1, u2, u3')
 
     beta = Field(V, 'beta')
 
@@ -198,14 +198,14 @@ def test_compiler_3d_2():
 #    # ...
 
     # ... Mul operator
-    expr = u0*v0
-    print(ExteriorCalculusExpr(expr, tests=[v0]))
+    expr = u[0] * v[0]
+    print(ExteriorCalculusExpr(expr, tests=[v[0]]))
 
-    expr = u0*div(v2)
-    print(ExteriorCalculusExpr(expr, tests=[v2]))
+    expr = u[0] * div(v[2])
+    print(ExteriorCalculusExpr(expr, tests=[v[2]]))
 
-    expr = v0*div(u2)
-    print(ExteriorCalculusExpr(expr, tests=[v0]))
+    expr = v[0] * div(u[2])
+    print(ExteriorCalculusExpr(expr, tests=[v[0]]))
     # ...
 
 #    # ... Add operator

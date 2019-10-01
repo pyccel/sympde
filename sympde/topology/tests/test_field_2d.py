@@ -17,7 +17,7 @@ domain = Domain('Omega', dim=DIM)
 def test_field_2d_1():
     print('============ test_field_2d_1 =============')
 
-    x, y = domain.coordinates
+#    x, y = domain.coordinates
 
     W = VectorFunctionSpace('W', domain)
     F = element_of(W, 'F')

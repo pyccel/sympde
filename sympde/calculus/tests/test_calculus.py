@@ -83,7 +83,7 @@ def test_calculus_2d_1():
 
     # ... scalar gradient properties
     assert( grad(f+g) == grad(f) + grad(g) )
-    assert( grad(alpha*f) == alpha*grad(f) )
+    assert( grad(alpha*h) == alpha*grad(h) )
     assert( grad(alpha*f + beta*g) == alpha*grad(f) + beta*grad(g)  )
 
     assert( grad(f*g) == f*grad(g) + g*grad(f) )
@@ -94,7 +94,7 @@ def test_calculus_2d_1():
 
     # ... vector gradient properties
     assert( grad(F+G) == grad(F) + grad(G) )
-    assert( grad(alpha*F) == alpha*grad(F) )
+    assert( grad(alpha*H) == alpha*grad(H) )
     assert( grad(alpha*F + beta*G) == alpha*grad(F) + beta*grad(G)  )
 
     assert( grad(dot(F,G)) == convect(F, G) + convect(G, F) + cross(F, curl(G)) - cross(curl(F), G) )
@@ -102,19 +102,19 @@ def test_calculus_2d_1():
 
     # ... curl properties
     assert( curl(f+g) == curl(f) + curl(g) )
-    assert( curl(alpha*f) == alpha*curl(f) )
+    assert( curl(alpha*h) == alpha*curl(h) )
     assert( curl(alpha*f + beta*g) == alpha*curl(f) + beta*curl(g)  )
     # ...
 
     # ... laplace properties
     assert( laplace(f+g) == laplace(f) + laplace(g) )
-    assert( laplace(alpha*f) == alpha*laplace(f) )
+    assert( laplace(alpha*h) == alpha*laplace(h) )
     assert( laplace(alpha*f + beta*g) == alpha*laplace(f) + beta*laplace(g)  )
     # ...
 
     # ... divergence properties
     assert( div(F+G) == div(F) + div(G) )
-    assert( div(alpha*F) == alpha*div(F) )
+    assert( div(alpha*H) == alpha*div(H) )
     assert( div(alpha*F + beta*G) == alpha*div(F) + beta*div(G)  )
 
     assert( div(cross(F,G)) == -dot(F, curl(G)) + dot(G, curl(F)) )
@@ -122,23 +122,18 @@ def test_calculus_2d_1():
 
     # ... rot properties
     assert( rot(F+G) == rot(F) + rot(G) )
-    assert( rot(alpha*F) == alpha*rot(F) )
+    assert( rot(alpha*H) == alpha*rot(H) )
     assert( rot(alpha*F + beta*G) == alpha*rot(F) + beta*rot(G)  )
     # ...
-
-    expr = grad(dot(F,G))
-    print(expr)
 
 #==============================================================================
 def test_calculus_2d_2():
     domain = Domain('Omega', dim=2)
 
-    V = ScalarFunctionSpace('V', domain)
     W = VectorFunctionSpace('W', domain)
 
     alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
 
-    f, g, h = elements_of(V, names='f, g, h')
     F, G, H = elements_of(W, names='F, G, H')
 
     # ... vector gradient properties
@@ -156,7 +151,7 @@ def test_calculus_2d_3():
 
     alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
 
-    f, g, h = elements_of(V, names='f, g, h')
+    f, g = elements_of(V, names='f, g')
     K = Function('K')(x,y)
     S = Function('S')(x,y)
 
@@ -179,7 +174,7 @@ def test_calculus_3d():
 
     # ... gradient properties
     assert( grad(f+g) == grad(f) + grad(g) )
-    assert( grad(alpha*f) == alpha*grad(f) )
+    assert( grad(alpha*h) == alpha*grad(h) )
     assert( grad(alpha*f + beta*g) == alpha*grad(f) + beta*grad(g)  )
 
     assert( grad(f*g) == f*grad(g) + g*grad(f) )
@@ -190,7 +185,7 @@ def test_calculus_3d():
 
     # ... curl properties
     assert( curl(F+G) == curl(F) + curl(G) )
-    assert( curl(alpha*F) == alpha*curl(F) )
+    assert( curl(alpha*H) == alpha*curl(H) )
     assert( curl(alpha*F + beta*G) == alpha*curl(F) + beta*curl(G)  )
 
     assert( curl(cross(F,G)) == F*div(G) - G*div(F) - convect(F, G) + convect(G, F) )
@@ -199,14 +194,14 @@ def test_calculus_3d():
 
     # ... laplace properties
     assert( laplace(f+g) == laplace(f) + laplace(g) )
-    assert( laplace(alpha*f) == alpha*laplace(f) )
+    assert( laplace(alpha*h) == alpha*laplace(h) )
     assert( laplace(alpha*f + beta*g) == alpha*laplace(f) + beta*laplace(g)  )
     assert( laplace(f*g) == f*laplace(g) + g*laplace(f) + 2*dot(grad(f), grad(g)) )
     # ...
 
     # ... divergence properties
     assert( div(F+G) == div(F) + div(G) )
-    assert( div(alpha*F) == alpha*div(F) )
+    assert( div(alpha*H) == alpha*div(H) )
     assert( div(alpha*F + beta*G) == alpha*div(F) + beta*div(G)  )
 
     assert( div(cross(F,G)) == -dot(F, curl(G)) + dot(G, curl(F)) )
@@ -214,8 +209,8 @@ def test_calculus_3d():
     # ...
 
     # ...
-    assert( curl(grad(f)) == 0 )
-    assert( div(curl(F)) == 0 )
+    assert( curl(grad(h)) == 0 )
+    assert( div(curl(H)) == 0 )
     assert( div(cross(grad(f), grad(g))) == 0 )
     assert( curl(curl(F)) == grad(div(F)) - laplace(F))
     assert( curl(f*grad(g)) == cross(grad(f), grad(g)) )
@@ -232,9 +227,6 @@ def test_calculus_3d_3():
     L2    = ScalarFunctionSpace('V3', domain, kind='L2')
     V     = ScalarFunctionSpace('V', domain, kind=None)
     W     = VectorFunctionSpace('W', domain, kind=None)
-
-    f, g, h = elements_of(V, names='f, g, h')
-    F, G, H = elements_of(W, names='F, G, H')
 
     X = ProductSpace(H1, Hcurl, Hdiv, L2)
     v0, v1, v2, v3 = element_of(X, ['v0', 'v1', 'v2', 'v3'])
@@ -297,11 +289,6 @@ def test_calculus_3d_4():
     F, G, H = elements_of(W, names='F, G, H')
 
     # ...
-    expr = inner(D(F), D(G))
-    print(expr)
-    # ...
-
-    # ...
     expected = alpha*inner(D(F), D(G)) + beta*inner(D(F), D(H))
     assert(inner(D(F), D(alpha*G+beta*H)) == expected)
     # ...
@@ -314,11 +301,7 @@ def test_calculus_3d_5():
 
     alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
 
-    E, F, G, H = elements_of(W, names='E, F, G, H')
-
-    # ...
-    expr = outer(F, G)
-    # ...
+    F, G, H = elements_of(W, names='F, G, H')
 
     # ...
     expected = alpha*outer(F, G) + beta*outer(F, H)

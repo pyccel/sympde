@@ -6,7 +6,7 @@ from sympy.core.containers import Tuple
 
 from sympde.core     import Constant
 from sympde.calculus import grad, dot, curl, div
-from sympde.calculus import laplace
+#from sympde.calculus import laplace
 #from sympde.topology import dx
 from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
 from sympde.topology import elements_of
