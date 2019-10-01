@@ -519,7 +519,7 @@ class Outer(BasicOperator):
 # TODO add it to evaluation
 # Convect(F, G) = dot(F, nabla) G
 class Convect(BasicOperator):
-    """
+    r"""
     This operator represents the convection operator defined as
     :math:`convect(F, G) := (F \cdot \\nabla) G`.
 
@@ -1224,7 +1224,6 @@ class Hessian(BasicOperator):
         return cls(expr, evaluate=False)
 
 #==============================================================================
-# TODO add properties
 class Bracket(BasicOperator):
     """
     This operator represents the Poisson bracket between two expressions.
@@ -1238,6 +1237,10 @@ class Bracket(BasicOperator):
 
     @classmethod
     def eval(cls, arg1, arg2):
+
+        # Operator is anti-commutative, hence [u, u] = 0
+        if arg1 == arg2:
+            return S.Zero
 
         # Recursive application of differentiation rules to both arguments
         for expr, args in (arg1, lambda a: (a, arg2)), \
@@ -1266,6 +1269,11 @@ class Bracket(BasicOperator):
             # Derivative of constant: d(const) = 0
             elif isinstance(expr, _coeffs_registery):
                 return S.Zero
+
+        # Automatic evaluation to canonical form: reorder arguments by using
+        # anti-commutativity property [v, u] = -[u, v] and stop recursion.
+        if hash(arg1) > hash(arg2):
+            return -cls(arg2, arg1, evaluate=False)
 
         # Stop recursion
         return cls(arg1, arg2, evaluate=False)

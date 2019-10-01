@@ -152,6 +152,9 @@ def test_calculus_2d_1():
     assert bracket(f, alpha * g) == alpha * bracket(f, g)
     assert bracket(f + h, g) == bracket(f, g) + bracket(h, g)
     assert bracket(f, g + h) == bracket(f, g) + bracket(f, h)
+    assert bracket(f, f) == 0
+    assert bracket(f, g) == -bracket(g, f)
+    assert bracket(f, g * h) == g * bracket(f, h) + bracket(f, g) * h
     # ...
 
 #==============================================================================
