@@ -2,20 +2,11 @@
 
 import pytest
 
-from sympy import Symbol
-from sympy.core.containers import Tuple
-from sympy import symbols
-from sympy import IndexedBase
-from sympy import Matrix
-from sympy import Function
-from sympy import pi, cos, sin
-from sympy import srepr
-from sympy import expand
 from sympy import Function
 from sympy import Integer, Float, Rational
-from sympy.physics.quantum import TensorProduct
+from sympy import expand
 
-from sympde.core import Constant
+from sympde.core     import Constant
 from sympde.calculus import grad, dot, inner, outer, cross, rot, curl, div
 from sympde.calculus import laplace, hessian, bracket, convect, D, conv
 from sympde.calculus import ArgumentTypeError
@@ -23,11 +14,7 @@ from sympde.calculus import jump, avg, Dn, minus, plus
 from sympde.topology import Domain
 from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
 from sympde.topology import ProductSpace
-from sympde.topology import H1Space, HcurlSpace, HdivSpace, L2Space, UndefinedSpace
-from sympde.topology import TestFunction, ScalarTestFunction, VectorTestFunction
-from sympde.topology import ScalarField, VectorField
 from sympde.topology import element_of, elements_of
-
 
 #==============================================================================
 def test_zero_derivative():
@@ -59,7 +46,7 @@ def test_zero_derivative():
     # 2D convection of constant scalar field
     domain = Domain('Omega', dim=2)
     W = VectorFunctionSpace('W', domain)
-    F = VectorField(W, name='F')
+    F = element_of(W, name='F')
 
     assert convect(F, 1)              == 0  # native int
     assert convect(F, 2.3)            == 0  # native float
@@ -72,7 +59,7 @@ def test_zero_derivative():
     # 3D convection of constant scalar field
     domain = Domain('Omega', dim=3)
     Z = VectorFunctionSpace('Z', domain)
-    G = VectorField(Z, name='G')
+    G = element_of(Z, name='G')
 
     assert convect(G, 1)              == 0  # native int
     assert convect(G, 2.3)            == 0  # native float
@@ -91,8 +78,8 @@ def test_calculus_2d_1():
 
     alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
 
-    f,g,h = [ScalarField(V, name=i) for i in ['f','g','h']]
-    F,G,H = [VectorField(W, i) for i in ['F','G','H']]
+    f, g, h = elements_of(V, names='f, g, h')
+    F, G, H = elements_of(W, names='F, G, H')
 
     # ... scalar gradient properties
     assert( grad(f+g) == grad(f) + grad(g) )
@@ -151,8 +138,8 @@ def test_calculus_2d_2():
 
     alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
 
-    f,g,h = [ScalarField(V, name=i) for i in ['f','g','h']]
-    F,G,H = [VectorField(W, i) for i in ['F','G','H']]
+    f, g, h = elements_of(V, names='f, g, h')
+    F, G, H = elements_of(W, names='F, G, H')
 
     # ... vector gradient properties
     assert( convect(F+G, H) == convect(F,H) + convect(G,H) )
@@ -169,7 +156,7 @@ def test_calculus_2d_3():
 
     alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
 
-    f,g,h = [ScalarField(V, name=i) for i in ['f','g','h']]
+    f, g, h = elements_of(V, names='f, g, h')
     K = Function('K')(x,y)
     S = Function('S')(x,y)
 
@@ -187,8 +174,8 @@ def test_calculus_3d():
 
     alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
 
-    f,g,h = [ScalarField(V, name=i) for i in ['f','g','h']]
-    F,G,H = [VectorField(W, i) for i in ['F','G','H']]
+    f, g, h = elements_of(V, names='f, g, h')
+    F, G, H = elements_of(W, names='F, G, H')
 
     # ... gradient properties
     assert( grad(f+g) == grad(f) + grad(g) )
@@ -246,14 +233,14 @@ def test_calculus_3d_3():
     V     = ScalarFunctionSpace('V', domain, kind=None)
     W     = VectorFunctionSpace('W', domain, kind=None)
 
-    f,g,h = [ScalarField(V, name=i) for i in ['f','g','h']]
-    F,G,H = [VectorField(W, i) for i in ['F','G','H']]
+    f, g, h = elements_of(V, names='f, g, h')
+    F, G, H = elements_of(W, names='F, G, H')
 
     X = ProductSpace(H1, Hcurl, Hdiv, L2)
-    v0, v1, v2, v3 = TestFunction(X, ['v0', 'v1', 'v2', 'v3'])
+    v0, v1, v2, v3 = element_of(X, ['v0', 'v1', 'v2', 'v3'])
 
-    v = TestFunction(V, 'v')
-    w = TestFunction(W, 'w')
+    v = element_of(V, 'v')
+    w = element_of(W, 'w')
 
     # ... consistency of grad operator
     # we can apply grad on an undefined space type or H1
@@ -307,7 +294,7 @@ def test_calculus_3d_4():
 
     alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
 
-    F,G,H = [VectorField(W, i) for i in ['F','G','H']]
+    F, G, H = elements_of(W, names='F, G, H')
 
     # ...
     expr = inner(D(F), D(G))
@@ -327,7 +314,7 @@ def test_calculus_3d_5():
 
     alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
 
-    E,F,G,H = [VectorField(W, i) for i in ['E','F','G','H']]
+    E, F, G, H = elements_of(W, names='E, F, G, H')
 
     # ...
     expr = outer(F, G)

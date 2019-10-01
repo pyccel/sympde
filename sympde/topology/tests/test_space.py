@@ -1,13 +1,12 @@
 # coding: utf-8
 
-from sympde.core     import Constant
-from sympde.calculus import grad, curl, div
+from sympde.calculus import grad, div
 from sympde.topology import Domain
 from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
-from sympde.topology import ProductSpace
+#from sympde.topology import ProductSpace
 from sympde.topology import element_of
 from sympde.topology import H1Space, HcurlSpace, HdivSpace, L2Space, UndefinedSpace
-from sympde.topology import TestFunction, ScalarTestFunction, VectorTestFunction
+from sympde.topology import ScalarTestFunction, VectorTestFunction
 from sympde.topology import Field, ScalarField, VectorField
 from sympde.topology import Projector
 
@@ -80,7 +79,7 @@ def test_space_2d_1():
     # ...
 
     # ...
-    u1, u2, u3 = TestFunction(U, ['u1', 'u2', 'u3'])
+    u1, u2, u3 = element_of(U, 'u1, u2, u3')
 
     assert(isinstance(u1, ScalarTestFunction))
     assert(isinstance(u2, ScalarTestFunction))
