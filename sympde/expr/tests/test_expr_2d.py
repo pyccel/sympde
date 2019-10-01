@@ -4,30 +4,22 @@
 
 import pytest
 
-from sympy import Symbol
 from sympy.core.containers import Tuple
-from sympy import symbols
-from sympy import IndexedBase
 from sympy import Matrix
 from sympy import Function
 from sympy import pi, cos, sin, exp
-from sympy import srepr
-from sympy.physics.quantum import TensorProduct
 
 from sympde.core import Constant
-from sympde.calculus import grad, dot, inner, cross, rot, curl, div
-from sympde.calculus import laplace, hessian, bracket, convect
+from sympde.calculus import grad, dot, inner, rot, div
+from sympde.calculus import laplace, bracket, convect
 from sympde.calculus import jump, avg, Dn, minus, plus
-from sympde.topology import (dx, dy, dz)
+#from sympde.topology import dx
 from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
-from sympde.topology import ProductSpace
 from sympde.topology import element_of, elements_of
-from sympde.topology import Unknown
 from sympde.topology import InteriorDomain, Union
-from sympde.topology import Boundary, NormalVector, TangentVector
+from sympde.topology import Boundary, NormalVector
 from sympde.topology import Domain
-from sympde.topology import Trace, trace_0, trace_1
-from sympde.topology import Mapping
+from sympde.topology import trace_1
 from sympde.topology import Square
 from sympde.topology import ElementDomain
 from sympde.topology import Area
@@ -38,16 +30,6 @@ from sympde.expr.expr import integral, is_linear_form, is_bilinear_form
 from sympde.expr.expr import Functional, Norm
 from sympde.expr.expr import linearize
 from sympde.expr.evaluation import TerminalExpr
-
-from sympde.expr.errors import UnconsistentError
-from sympde.expr.errors import UnconsistentLinearExpressionError
-from sympde.expr.errors import UnconsistentLhsError
-from sympde.expr.errors import UnconsistentRhsError
-from sympde.expr.errors import UnconsistentBCError
-
-DIM = 2
-VERBOSE = False
-VERBOSE = True
 
 #==============================================================================
 def test_linear_expr_2d_1():
@@ -938,8 +920,9 @@ def test_terminal_expr_bilinear_2d_4():
     print('')
 
 #==============================================================================
+@pytest.mark.skip(reason="New linearize() function does not accept 'LinearExpr' objects")
 def test_linearize_expr_2d_1():
-    domain = Domain('Omega', dim=DIM)
+    domain = Domain('Omega', dim=2)
     x,y = domain.coordinates
 
     V1 = ScalarFunctionSpace('V1', domain)
@@ -997,8 +980,9 @@ def test_linearize_expr_2d_1():
     # ...
 
 #==============================================================================
+@pytest.mark.skip(reason="New linearize() function does not accept 'LinearExpr' objects")
 def test_linearize_expr_2d_2():
-    domain = Domain('Omega', dim=DIM)
+    domain = Domain('Omega', dim=2)
     x,y = domain.coordinates
 
     V1 = ScalarFunctionSpace('V1', domain)
@@ -1023,140 +1007,143 @@ def test_linearize_expr_2d_2():
 
 #==============================================================================
 def test_linearize_form_2d_1():
-    domain = Domain('Omega', dim=DIM)
-    x,y = domain.coordinates
+    domain = Domain('Omega', dim=2)
 
-    V1 = ScalarFunctionSpace('V1', domain)
-    W1 = VectorFunctionSpace('W1', domain)
+    V = ScalarFunctionSpace('V', domain)
+    W = VectorFunctionSpace('W', domain)
 
-    v1 = element_of(V1, name='v1')
-    w1 = element_of(W1, name='w1')
-
-    alpha = Constant('alpha')
-
-    F = element_of(V1, name='F')
-    G = element_of(W1, 'G')
+    v, F, u = elements_of(V, names='v, F, u')
+    w, G, m = elements_of(W, names='w, G, m')
 
     int_0 = lambda expr: integral(domain , expr)
 
     # ...
-    l = LinearForm(v1, int_0(F**2*v1))
-    a = linearize(l, F, trials='u1')
-    print(a)
+    l  = LinearForm(v, int_0(F**2*v))
+    a  = linearize(l, F, trials=u)
+    assert a(u, v) == int_0(2 * F * u * v)
     # ...
 
     # ...
-    l = LinearForm(v1, int_0(dot(grad(F), grad(F))*v1))
-    a = linearize(l, F, trials='u1')
-    print(a)
+    l = LinearForm(v, int_0(dot(grad(F), grad(F))*v))
+    a = linearize(l, F, trials=u)
+    assert a(u, v) == int_0(2 * dot(grad(F), grad(u)) * v)
     # ...
 
     # ...
-    l = LinearForm(v1, int_0(exp(-F)*v1))
-    a = linearize(l, F, trials='u1')
-    print(a)
+    l = LinearForm(v, int_0(exp(-F)*v))
+    a = linearize(l, F, trials=u)
+    assert a(u, v) == int_0(-exp(-F) * u * v)
     # ...
 
     # ...
-    l = LinearForm(v1, int_0(cos(F)*v1))
-    a = linearize(l, F, trials='u1')
-    print(a)
+    l = LinearForm(v, int_0(cos(F)*v))
+    a = linearize(l, F, trials=u)
+    assert a(u, v) == int_0(-sin(F) * u * v)
     # ...
 
     # ...
-    l = LinearForm(v1, int_0(cos(F**2)*v1))
-    a = linearize(l, F, trials='u1')
-    print(a)
+    l = LinearForm(v, int_0(cos(F**2)*v))
+    a = linearize(l, F, trials=u)
+    assert a(u, v) == int_0(-2 * F *sin(F**2) * u * v)
     # ...
 
     # ...
-    l = LinearForm(v1, int_0(F**2*dot(grad(F), grad(v1))))
-    a = linearize(l, F, trials='u1')
-    print(a)
+    l = LinearForm(v, int_0(F**2*dot(grad(F), grad(v))))
+    a = linearize(l, F, trials=u)
+    assert a(u, v) == int_0(2 * F * u * dot(grad(F), grad(v)) + F**2 * dot(grad(u), grad(v)))
     # ...
 
     # ...
-    l = LinearForm(w1, int_0(dot(rot(G), grad(G))*w1))
-    a = linearize(l, G, trials='u1')
-    print(a)
+    l = LinearForm(w, int_0(dot(rot(G), grad(G))*w))
+    a = linearize(l, G, trials=m)
+    assert a(m, w) == int_0((dot(rot(m), grad(G)) + dot(rot(G), grad(m))) * w)
     # ...
 
 #==============================================================================
 def test_linearize_form_2d_2():
-    domain = Domain('Omega', dim=DIM)
-    x,y = domain.coordinates
+    domain = Domain('Omega', dim=2)
 
-    V1 = ScalarFunctionSpace('V1', domain)
+    V = ScalarFunctionSpace('V', domain)
 
-    v1 = element_of(V1, name='v1')
-
-    alpha = Constant('alpha')
-
-    F = element_of(V1, name='F')
-    G = element_of(V1, name='G')
+    v, F, u = elements_of(V, names='v, F, u')
 
     int_0 = lambda expr: integral(domain , expr)
 
     # ...
-    l1 = LinearForm(v1, int_0(F**2*v1))
-    l  = LinearForm(v1, l1(v1))
+    l1 = LinearForm(v, int_0(F**2*v))
+    l  = LinearForm(v, l1(v))
 
-    a = linearize(l, F, trials='u1')
-    print(a)
+    a = linearize(l, F, trials=u)
 
-    expected = linearize(l1, F, trials='u1')
-    assert( linearize(l, F, trials='u1') == expected )
+    expected = linearize(l1, F, trials=u)
+    assert a == expected
     # ...
 
 #==============================================================================
 def test_linearize_form_2d_3():
     """steady Euler equation."""
-    domain = Domain('Omega', dim=DIM)
-    x,y = domain.coordinates
+    domain = Domain('Omega', dim=2)
 
     U = VectorFunctionSpace('U', domain)
     W = ScalarFunctionSpace('W', domain)
 
+    # Test functions
     v   = element_of(U, name='v')
-    phi =       element_of(W, name='phi')
-    q   =       element_of(W, name='q')
+    phi = element_of(W, name='phi')
+    q   = element_of(W, name='q')
 
+    # Steady-state fields
     U_0   = element_of(U, name='U_0')
     Rho_0 = element_of(W, name='Rho_0')
     P_0   = element_of(W, name='P_0')
 
+    # Trial functions (displacements from steady-state)
+    d_u   = element_of(U, name='d_u')
+    d_rho = element_of(W, name='d_rho')
+    d_p   = element_of(W, name='d_p')
+
+    # Shortcut
     int_0 = lambda expr: integral(domain , expr)
 
+    # The Euler equations are a system of three non-linear equations; for each of
+    # them we create a linear form in the test functions (phi, v, q) respectively.
+    e1 = div(Rho_0 * U_0)
+    l1 = LinearForm(phi, int_0(e1 * phi))
+
+    e2 = Rho_0 * convect(U_0, U_0) + grad(P_0)
+    l2 = LinearForm(v, int_0(dot(e2, v)))
+
+    e3 = div(P_0 * U_0)
+    l3 = LinearForm(q, int_0(e3 * q))
     # ...
-    expr = div(Rho_0*U_0) * phi
-    l1 = LinearForm(phi, int_0(expr))
 
-    expr = Rho_0*dot(convect(U_0, grad(U_0)), v) + dot(grad(P_0), v)
-    l2 = LinearForm(v, int_0(expr))
+    # Linearize l1, l2 and l3 separately
+    a1 = linearize(l1, fields=[Rho_0, U_0     ], trials=[d_rho, d_u     ])
+    a2 = linearize(l2, fields=[Rho_0, U_0, P_0], trials=[d_rho, d_u, d_p])
+    a3 = linearize(l3, fields=[       U_0, P_0], trials=[       d_u, d_p])
 
-    expr = dot(U_0, grad(P_0)) * q + P_0 * div(U_0) * q
-    l3 = LinearForm(q, int_0(expr))
-    # ...
+    # Check individual bilinear forms
+    d_e1 = div(U_0 * d_rho + Rho_0 * d_u)
+    d_e2 = d_rho * convect(U_0, U_0) + \
+           Rho_0 * convect(d_u, U_0) + \
+           Rho_0 * convect(U_0, d_u) + grad(d_p)
+    d_e3 = div(d_p * U_0 + P_0 * d_u)
 
-    a1 = linearize(l1, [Rho_0, U_0], trials=['d_rho', 'd_u'])
-    print(a1)
-    print('')
+    assert a1([d_rho, d_u     ], phi) == int_0(d_e1 * phi)
+    assert a2([d_rho, d_u, d_p], v  ) == int_0(dot(d_e2, v))
+    assert a3([       d_u, d_p], q  ) == int_0(d_e3 * q)
 
-    a2 = linearize(l2, [Rho_0, U_0, P_0], trials=['d_rho', 'd_u', 'd_p'])
-    print(a2)
-    print('')
-
-    a3 = linearize(l3, [P_0, U_0], trials=['d_p', 'd_u'])
-    print(a3)
-    print('')
-
+    # Linearize linear form of system: l = l1 + l2 + l3
     l = LinearForm((phi, v, q), l1(phi) + l2(v) + l3(q))
-    a = linearize(l, [Rho_0, U_0, P_0], trials=['d_rho', 'd_u', 'd_p'])
-    print(a)
+    a = linearize(l, fields=[Rho_0, U_0, P_0], trials=[d_rho, d_u, d_p])
+
+    # Check composite linear form
+    assert a([d_rho, d_u, d_p], [phi, v, q]) == \
+            int_0(d_e1 * phi + dot(d_e2, v) + d_e3 * q)
 
 #==============================================================================
 def test_linearize_form_2d_4():
-    domain = Domain('Omega', dim=DIM)
+    domain  = Domain('Omega', dim=2)
     Gamma_N = Boundary(r'\Gamma_N', domain)
 
     x,y = domain.coordinates
@@ -1164,9 +1151,8 @@ def test_linearize_form_2d_4():
     V = ScalarFunctionSpace('V', domain)
 
     v  = element_of(V, name='v')
+    u  = element_of(V, name='u')
     du = element_of(V, name='du')
-
-    u = element_of(V, name='u')
 
     int_0 = lambda expr: integral(domain , expr)
     int_1 = lambda expr: integral(Gamma_N, expr)
@@ -1180,9 +1166,8 @@ def test_linearize_form_2d_4():
 
     # linearising l around u, using du
     a = linearize(l, u, trials=du)
-    # ...
-    print(a)
-    # ...
+
+    assert a(du, v) == int_0(dot(grad(v), grad(du)) + 4.*exp(-u) * du * v)
 
 #==============================================================================
 def test_area_2d_1():

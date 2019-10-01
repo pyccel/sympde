@@ -2,45 +2,31 @@
 
 from collections  import OrderedDict
 
-from sympy.core import Basic
 from sympy import Indexed, IndexedBase, Matrix, ImmutableDenseMatrix
-from sympy.core import Symbol
-from sympy.core.containers import Tuple
 from sympy import Function
-from sympy.core import Add, Mul, Pow
-from sympy.core.singleton import S
-from sympy.core.expr import AtomicExpr
-from sympy import Rational
-from sympy.core.numbers import ImaginaryUnit
 from sympy import sympify
-from sympy.core.function import AppliedUndef
+from sympy.core import Basic
+from sympy.core import Symbol
+from sympy.core import Add, Mul, Pow
+from sympy.core.expr       import AtomicExpr
+from sympy.core.numbers    import ImaginaryUnit
+from sympy.core.containers import Tuple
 
+from sympde.core       import Constant
 from sympde.core.basic import BasicMapping
-from sympde.core import Constant
-from sympde.core.algebra import (Dot_1d,
-                                 Dot_2d, Inner_2d, Cross_2d,
-                                 Dot_3d, Inner_3d, Cross_3d)
-
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import _coeffs_registery
-from .basic import BasicDomain
-from .domain import Domain
 
+from .basic       import BasicDomain
+from .space       import ScalarTestFunction, VectorTestFunction, IndexedTestTrial
+from .space       import ScalarField, VectorField, IndexedVectorField
+from .datatype    import HcurlSpaceType
 from .derivatives import dx, dy, dz
 from .derivatives import _partial_derivatives
 from .derivatives import get_atom_derivatives, get_index_derivatives_atom
-from .derivatives import (Grad_1d, Div_1d,
-                          Grad_2d, Curl_2d, Rot_2d, Div_2d,
-                          Grad_3d, Curl_3d, Div_3d)
-
-from .derivatives import dx1, dx2, dx3
 from .derivatives import _logical_partial_derivatives
 from .derivatives import get_atom_logical_derivatives, get_index_logical_derivatives_atom
 from .derivatives import LogicalGrad_1d, LogicalGrad_2d, LogicalGrad_3d
-
-from .space import ScalarTestFunction, VectorTestFunction, IndexedTestTrial
-from .space import ScalarField, VectorField, IndexedVectorField
-from .datatype import H1SpaceType, HcurlSpaceType, HdivSpaceType, L2SpaceType, UndefinedSpaceType
 
 #==============================================================================
 class Mapping(BasicMapping):

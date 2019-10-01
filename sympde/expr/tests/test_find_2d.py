@@ -1,42 +1,19 @@
 # coding: utf-8
 
-import pytest
+from sympy import cos
+#from sympy import exp
 
-from sympy import Symbol
-from sympy.core.containers import Tuple
-from sympy import symbols
-from sympy import IndexedBase
-from sympy import Matrix
-from sympy import Function
-from sympy import pi, cos, sin, exp
-from sympy import srepr
-from sympy.physics.quantum import TensorProduct
-
-from sympde.core import Constant
-from sympde.calculus import grad, dot, inner, cross, rot, curl, div
-from sympde.calculus import laplace, hessian, bracket
-from sympde.topology import (dx, dy, dz)
-from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
-from sympde.topology import ScalarField, VectorField
-from sympde.topology import ProductSpace
-from sympde.topology import ScalarTestFunction
-from sympde.topology import VectorTestFunction
-from sympde.topology import Unknown
-from sympde.topology import Domain, Boundary, NormalVector, TangentVector
-from sympde.topology import Trace, trace_0, trace_1
-from sympde.topology import Square
-from sympde.topology import ElementDomain
-from sympde.topology import Area
-
-from sympde.expr import BilinearForm, LinearForm,integral
-from sympde.expr import TerminalExpr
-from sympde.expr import find
-
-from sympde.expr.errors import UnconsistentLhsError
-from sympde.expr.errors import UnconsistentRhsError
-from sympde.expr.errors import UnconsistentBCError
-
-from sympde.expr import Equation, EssentialBC, NewtonIteration
+from sympde.core     import Constant
+from sympde.calculus import grad, dot
+#from sympde.topology import dx, dy
+from sympde.topology import ScalarFunctionSpace
+from sympde.topology import element_of
+from sympde.topology import Domain, Boundary
+from sympde.expr     import BilinearForm, LinearForm, integral
+from sympde.expr     import TerminalExpr
+from sympde.expr     import find
+from sympde.expr     import EssentialBC
+#from sympde.expr     import NewtonIteration
 
 DIM = 2
 domain = Domain('Omega', dim=DIM)
@@ -47,8 +24,8 @@ def test_find_2d_1():
     V = ScalarFunctionSpace('V', domain)
     U = ScalarFunctionSpace('U', domain)
 
-    v = ScalarTestFunction(V, name='v')
-    u = ScalarTestFunction(U, name='u')
+    v = element_of(V, name='v')
+    u = element_of(U, name='u')
 
     x,y = domain.coordinates
 
@@ -124,9 +101,9 @@ def test_find_2d_1():
 #
 #    x,y = domain.coordinates
 #
-#    Un = ScalarField(V, name='Un')
+#    Un = element_of(V, name='Un')
 #
-#    v = ScalarTestFunction(V, name='v')
+#    v = element_of(V, name='v')
 #
 #    f  = -4.*exp(-Un)
 #    l = LinearForm(v, dot(grad(v), grad(Un)) - f*v )
@@ -134,7 +111,7 @@ def test_find_2d_1():
 #    eq = NewtonIteration(l, Un, trials='u')
 #    # ...
 #
-#    u = ScalarTestFunction(V, name='u')
+#    u = element_of(V, name='u')
 #
 #    # ...
 #    expected =  -4.0*u*v*exp(-Un) + dx(u)*dx(v) + dy(u)*dy(v)

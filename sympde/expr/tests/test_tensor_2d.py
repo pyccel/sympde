@@ -2,42 +2,20 @@
 
 # TODO: - add assert to every test
 
-import pytest
-
-from sympy import Symbol
 from sympy.core.containers import Tuple
-from sympy import symbols
-from sympy import IndexedBase
-from sympy import Matrix
-from sympy import Function
-from sympy import pi, cos, sin, exp
-from sympy import srepr
-from sympy import expand
-from sympy.physics.quantum import TensorProduct
 
-from sympde.core import Constant
-from sympde.calculus import grad, dot, inner, cross, rot, curl, div
-from sympde.calculus import laplace, hessian, bracket, convect
-from sympde.topology import (dx, dy, dz)
+from sympde.core     import Constant
+from sympde.calculus import grad, dot, curl, div
+#from sympde.calculus import laplace
+#from sympde.topology import dx
 from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
-from sympde.topology import Field, TestFunction
-from sympde.topology import ProductSpace
-from sympde.topology import InteriorDomain, Union
-from sympde.topology import Boundary, NormalVector, TangentVector
-from sympde.topology import Domain
-from sympde.topology import Trace, trace_0, trace_1
-from sympde.topology import Mapping
-from sympde.topology import Square
-from sympde.topology import ElementDomain
-from sympde.topology import Area
-
-from sympde.expr.expr import LinearExpr, BilinearExpr
-from sympde.expr.expr import LinearForm, BilinearForm, integral
-from sympde.expr.expr import DomainIntegral, BoundaryIntegral
-from sympde.expr.expr import Functional, Norm
-from sympde.expr.expr import linearize
-from sympde.expr.evaluation import TensorExpr
 from sympde.topology import elements_of
+from sympde.topology import Boundary
+from sympde.topology import Domain
+from sympde.topology import Mapping
+
+from sympde.expr.expr import BilinearForm, integral
+from sympde.expr.evaluation import TensorExpr
 
 
 #==============================================================================
@@ -52,8 +30,7 @@ def test_tensorize_2d_1():
     mu    = Constant('mu'   , is_real=True)
 
     V = ScalarFunctionSpace('V', domain)
-
-    u,v = [TestFunction(V, name=i) for i in ['u', 'v']]
+    u, v = elements_of(V, names='u, v')
 
     int_0 = lambda expr: integral(domain , expr)
 
@@ -80,8 +57,7 @@ def test_tensorize_2d_2():
     mu    = Constant('mu'   , is_real=True)
 
     V = VectorFunctionSpace('V', domain)
-
-    u,v = [TestFunction(V, name=i) for i in ['u', 'v']]
+    u, v = elements_of(V, names='u, v')
 
     int_0 = lambda expr: integral(domain , expr)
     # ...
@@ -108,8 +84,7 @@ def test_tensorize_2d_1_mapping():
     mu    = Constant('mu'   , is_real=True)
 
     V = ScalarFunctionSpace('V', domain)
-
-    u,v = [TestFunction(V, name=i) for i in ['u', 'v']]
+    u, v = elements_of(V, names='u, v')
 
     int_0 = lambda expr: integral(domain , expr)
     # ...
@@ -131,9 +106,7 @@ def test_tensorize_2d_2_mapping():
     domain = Domain('Omega', dim=DIM)
 
     V = VectorFunctionSpace('V', domain)
-
-    v = TestFunction(V, name='v')
-    u = TestFunction(V, name='u')
+    u, v = elements_of(V, names='u, v')
 
     c = Constant('c')
 
@@ -149,7 +122,7 @@ def test_tensorize_2d_3():
     domain = Domain('Omega', dim=2)
 
     V = ScalarFunctionSpace('V', domain)
-    u,v = elements_of(V, names='u,v')
+    u, v = elements_of(V, names='u,v')
 
     bx = Constant('bx')
     by = Constant('by')

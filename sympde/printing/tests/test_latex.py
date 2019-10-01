@@ -2,24 +2,14 @@
 
 from sympy import sin, cos, pi
 
-from sympde.core import Constant
-from sympde.calculus import grad, dot, inner, cross, rot, curl, div
-
-from sympde.topology import (dx, dy, dz)
+from sympde.calculus import grad, dot, inner, rot, div
+#from sympde.topology import (dx, dy, dz)
+from sympde.topology import Domain, Boundary
 from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
-from sympde.topology import ScalarField, VectorField
-from sympde.topology import ProductSpace
-from sympde.topology import ScalarTestFunction
-from sympde.topology import VectorTestFunction
-from sympde.topology import TestFunction
-from sympde.topology import Field
-from sympde.topology import Unknown
-from sympde.topology import Domain, Boundary, NormalVector, TangentVector
-#from sympde.expr import tensorize
-from sympde.expr import BilinearForm, LinearForm, integral
+from sympde.topology import element_of
+from sympde.expr     import BilinearForm, LinearForm, integral
 from sympde.exterior import d, wedge, ip, jp, delta, hodge
 from sympde.exterior import DifferentialForm
-
 from sympde.printing.latex import latex
 
 
@@ -33,10 +23,9 @@ def test_latex_1d():
 
     x = V.coordinates
 
-    v = ScalarTestFunction(V, name='v')
-    u = ScalarTestFunction(V, name='u')
-
-    F = ScalarField(V, name='F')
+    v = element_of(V, name='v')
+    u = element_of(V, name='u')
+#    F = element_of(V, name='F')
 
     int_0 = lambda expr: integral(domain , expr)
     
@@ -65,10 +54,9 @@ def test_latex_2d_1():
 
     x,y = V.coordinates
 
-    v = ScalarTestFunction(V, name='v')
-    u = ScalarTestFunction(V, name='u')
-
-    F = ScalarField(V, name='F')
+    v = element_of(V, name='v')
+    u = element_of(V, name='u')
+#    F = element_of(V, name='F')
     
     int_0 = lambda expr: integral(domain , expr)
 
@@ -97,10 +85,10 @@ def test_latex_2d_2():
 
     x,y = V.coordinates
 
-    v = VectorTestFunction(V, name='v')
-    u = VectorTestFunction(V, name='u')
+    v = element_of(V, name='v')
+    u = element_of(V, name='u')
+#    F = element_of(V, name='F')
 
-    F = VectorField(V, name='F')
     int_0 = lambda expr: integral(domain , expr)
 
     assert(latex(v) == r'\mathbf{v}')
@@ -125,10 +113,9 @@ def test_latex_3d_1():
 
     x,y,z = V.coordinates
 
-    v = ScalarTestFunction(V, name='v')
-    u = ScalarTestFunction(V, name='u')
-
-    F = ScalarField(V, name='F')
+    v = element_of(V, name='v')
+    u = element_of(V, name='u')
+#    F = element_of(V, name='F')
 
     int_0 = lambda expr: integral(domain , expr)
     
@@ -157,10 +144,8 @@ def test_latex_3d_2():
 
     x,y,z = V.coordinates
 
-    v = VectorTestFunction(V, name='v')
-    u = VectorTestFunction(V, name='u')
-
-    F = VectorField(V, name='F')
+    v = element_of(V, name='v')
+    u = element_of(V, name='u')
 
     int_0 = lambda expr: integral(domain , expr)
     
@@ -191,8 +176,8 @@ def test_latex_2d_3():
 
     x = V.coordinates
 
-    v = ScalarTestFunction(V, name='v')
-    u = ScalarTestFunction(V, name='u')
+    v = element_of(V, name='v')
+    u = element_of(V, name='u')
 
     int_0 = lambda expr: integral(domain , expr)
     int_1 = lambda expr: integral(B1, expr)
@@ -223,10 +208,10 @@ def test_latex_2d_4():
     V = VectorFunctionSpace('V', domain)
     W = ScalarFunctionSpace('W', domain)
 
-    v = VectorTestFunction(V, name='v')
-    u = VectorTestFunction(V, name='u')
-    p = ScalarTestFunction(W, name='p')
-    q = ScalarTestFunction(W, name='q')
+    v = element_of(V, name='v')
+    u = element_of(V, name='u')
+    p = element_of(W, name='p')
+    q = element_of(W, name='q')
 
     int_0 = lambda expr: integral(domain , expr)
 
@@ -249,9 +234,8 @@ def test_latex_2d_5():
     # ... abstract model
     W1 = VectorFunctionSpace('W1', domain)
 
-    w1 = VectorTestFunction(W1, name='w1')
-
-    F = VectorField(W1, 'F')
+    w1 = element_of(W1, name='w1')
+    F  = element_of(W1, 'F')
 
     int_0 = lambda expr: integral(domain , expr)
     
@@ -292,7 +276,7 @@ def test_latex_ec_3d_1():
     domain = Domain('Omega', dim=3)
     V = VectorFunctionSpace('V', domain)
 
-    beta = Field(V, 'beta')
+    beta = element_of(V, 'beta')
     # ...
 
     print(latex(u_0))

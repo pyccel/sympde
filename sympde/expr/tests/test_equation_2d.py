@@ -1,42 +1,25 @@
 # coding: utf-8
 
-import pytest
+#import pytest
 
-from sympy import Symbol
 from sympy.core.containers import Tuple
-from sympy import symbols
-from sympy import IndexedBase
-from sympy import Matrix
-from sympy import Function
-from sympy import pi, cos, sin, exp
-from sympy import srepr
-from sympy.physics.quantum import TensorProduct
+from sympy import pi, cos, sin
 
-from sympde.core import Constant
-from sympde.calculus import grad, dot, inner, cross, rot, curl, div
-from sympde.calculus import laplace, hessian, bracket
-from sympde.topology import (dx, dy, dz)
-from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
-from sympde.topology import ScalarField, VectorField
-from sympde.topology import element_of
-from sympde.topology import ProductSpace
-from sympde.topology import ScalarTestFunction
-from sympde.topology import VectorTestFunction
-from sympde.topology import Unknown
-from sympde.topology import Domain, Boundary, NormalVector, TangentVector
-from sympde.topology import Trace, trace_0, trace_1
-from sympde.topology import Square
-from sympde.topology import ElementDomain
-from sympde.topology import Area
-
-from sympde.expr import BilinearForm, LinearForm, integral
-from sympde.expr import TerminalExpr
-
+from sympde.core        import Constant
+from sympde.calculus    import grad, dot, inner
+from sympde.calculus    import laplace, bracket
+from sympde.topology    import ScalarFunctionSpace, VectorFunctionSpace
+from sympde.topology    import element_of
+from sympde.topology    import ProductSpace
+from sympde.topology    import Domain, Boundary, NormalVector
+from sympde.topology    import Square
+from sympde.topology    import ElementDomain
+from sympde.topology    import Area
+from sympde.expr        import BilinearForm, LinearForm, integral
+from sympde.expr        import Equation, EssentialBC
 from sympde.expr.errors import UnconsistentLhsError
 from sympde.expr.errors import UnconsistentRhsError
 from sympde.expr.errors import UnconsistentBCError
-
-from sympde.expr import Equation, EssentialBC, NewtonIteration
 
 DIM = 2
 domain = Domain('Omega', dim=DIM)

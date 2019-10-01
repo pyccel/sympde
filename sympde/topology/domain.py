@@ -282,7 +282,7 @@ class Domain(BasicDomain):
         # ...
 
         h5  = h5py.File( filename, mode='r' )
-        yml = yaml.load( h5['topology.yml'][()] )
+        yml = yaml.load( h5['topology.yml'][()], Loader=yaml.SafeLoader )
 
         domain_name    = yml['name']
         dim            = yml['dim']

@@ -13,6 +13,7 @@ from sympy import Function
 from sympy.core.numbers import Zero as sy_Zero
 from sympy.core.singleton import S
 
+from sympde.core.utils import expand_name_patterns
 from sympde.core.utils import random_string
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import _coeffs_registery
@@ -20,18 +21,88 @@ from .basic import BasicDomain, Union, Interval
 from .datatype import SpaceType, dtype_space_registry
 from .datatype import RegularityType, dtype_regularity_registry
 
-
+#==============================================================================
 def element_of(space, name):
-    assert isinstance(space, BasicFunctionSpace)
-    if isinstance(name, (list,tuple,Tuple)):
-        return [space.element(nm) for nm in name]
-    return space.element(name)
+    """ Create a single element of a given space (possibly a ProductSpace).
 
+    Parameters
+    ----------
+    space : ScalarFunctionSpace | VectorFunctionSpace | ProductSpace
+        Function space from which a single element should be created.
+
+    name : str | iterable
+        If space is ProductSpace, 'name' must either be an explicit list of
+        function names, or a single pattern string that will be expanded into
+        such a list. Otherwise, 'name' must be a simple string.
+
+    Results
+    -------
+    res : ScalarTestFunction | VectorTestFunction | iterable
+        Single element taken from the given space. If space is ProductSpace,
+        an element is a list of functions; otherwise, it is a single function.
+
+    """
+    if not isinstance(space, BasicFunctionSpace):
+        raise TypeError(space)
+    names = expand_name_patterns(name)
+    return _recursive_element_of(space, names)
+
+#----------------------------------------
+def _recursive_element_of(space, names):
+
+    if isinstance(names, str):
+        name = names
+        return space.element(name)
+
+    elif isinstance(space, ProductSpace):
+        spaces = space.spaces
+        result = [_recursive_element_of(s, n) for s, n in zip(spaces, names)]
+        return type(names)(result)
+
+    else:
+        msg = "To create multiple elements of same space, use 'elements_of'."
+        raise ValueError(msg)
+
+#==============================================================================
 def elements_of(space, names):
-    assert(isinstance(names, str))
-    names = names.split(',')
-    names = [n.replace(' ', '') for n in names]
-    return [element_of(space, n) for n in names]
+    """ Create multiple elements of same space (possibly a ProductSpace).
+
+    Parameters
+    ----------
+    space : ScalarFunctionSpace | VectorFunctionSpace | ProductSpace
+
+    names : str | iterable
+        Pattern or list of patterns from which a list of function names is
+        produced.
+
+    Results
+    -------
+    res : iterable
+        Multiple elements taken from the given space. If space is ProductSpace,
+        each element is a list of functions; otherwise, each element is a
+        single function.
+
+    """
+    if not isinstance(space, BasicFunctionSpace):
+        raise TypeError(space)
+    names = expand_name_patterns(names, seq=True)
+    return _recursive_elements_of(space, names)
+
+#----------------------------------------
+def _recursive_elements_of(space, names):
+
+    if isinstance(names, str):
+        name = names
+        return space.element(name)
+
+    elif isinstance(space, ProductSpace):
+        spaces = space.spaces
+        result = [_recursive_elements_of(s, n) for s, n in zip(spaces, names)]
+        return type(names)(result)
+
+    else:
+        result = [_recursive_elements_of(space, n) for n in names]
+        return type(names)(result)
 
 #==============================================================================
 class BasicFunctionSpace(Basic):
