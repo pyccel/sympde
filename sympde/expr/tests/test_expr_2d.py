@@ -24,7 +24,7 @@ from sympde.topology import Square
 from sympde.topology import ElementDomain
 from sympde.topology import Area
 
-from sympde.expr.expr import LinearExpr, BilinearExpr
+from sympde.expr.expr import LinearExpr
 from sympde.expr.expr import LinearForm, BilinearForm
 from sympde.expr.expr import integral
 from sympde.expr.expr import Functional, Norm
@@ -98,69 +98,6 @@ def test_linear_expr_2d_2():
     print(l(u1, u2))
     # TODO
 #    print(l(u1+v1, u2+v2))
-    print('')
-    # ...
-
-#==============================================================================
-def test_bilinear_expr_2d_1():
-
-    domain = Domain('Omega', dim=2)
-    x,y = domain.coordinates
-
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
-
-    V = ScalarFunctionSpace('V', domain)
-
-    u,u1,u2 = [element_of(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [element_of(V, name=i) for i in ['v', 'v1', 'v2']]
-
-    # ...
-
-    a = BilinearExpr((u,v), u*v)
-    print(a)
-    print(a.expr)
-    print(a(u1,v1))
-    # TODO
-#    print(a(u1+u2,v1+v2))
-    print('')
-    # ...
-
-    # ...
-    a1 = BilinearExpr((u,v), u*v)
-    a2 = BilinearExpr((u,v), dot(grad(u),grad(v)))
-    print(a1(u1,v1) + a2(u2,v2))
-    print('')
-    # ...
-
-#==============================================================================
-def test_bilinear_expr_2d_2():
-
-    domain = Domain('Omega', dim=2)
-    x,y = domain.coordinates
-
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
-
-    V = VectorFunctionSpace('V', domain)
-
-    u,u1,u2 = [element_of(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [element_of(V, name=i) for i in ['v', 'v1', 'v2']]
-
-    # ...
-    a = BilinearExpr((u,v), dot(u,v))
-    print(a)
-    print(a.expr)
-    print(a(u1,v1))
-    # TODO
-#    print(a(u1+u2,v1+v2))
-    print('')
-    # ...
-
-    # ...
-    a1 = BilinearExpr((u,v), dot(u,v))
-    a2 = BilinearExpr((u,v), inner(grad(u),grad(v)))
-    print(a1(u1,v1) + a2(u2,v2))
     print('')
     # ...
 

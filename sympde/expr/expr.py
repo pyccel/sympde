@@ -101,64 +101,6 @@ class LinearExpr(BasicExpr):
         return self.expr._eval_nseries(x, n, logx)
 
 #==============================================================================
-class BilinearExpr(BasicExpr):
-    is_bilinear = True
-
-    def __new__(cls, arguments, expr):
-
-        # ...
-        if expr.atoms(DomainIntegral, BoundaryIntegral):
-            raise TypeError('')
-        # ...
-
-        # ...
-        if not isinstance(arguments, (tuple, list, Tuple)):
-            raise TypeError('(trial, test) must be a tuple, list or Tuple')
-
-        if not(len(arguments) == 2):
-            raise ValueError('Expecting a couple (trial, test)')
-        # ...
-
-        args = _sanitize_arguments(arguments, is_bilinear=True)
-        trial_functions, test_functions = args
-
-        # ...
-        if not is_linear_expression(expr, trial_functions):
-            msg = '> Expression is not bilinear w.r.t trial functions {}'\
-                    .format(trial_functions)
-            raise UnconsistentLinearExpressionError(msg)
-
-        if not is_linear_expression(expr, test_functions):
-            msg = '> Expression is not bilinear w.r.t test functions {}'\
-                    .format(test_functions)
-            raise UnconsistentLinearExpressionError(msg)
-        # ...
-
-        return Basic.__new__(cls, args, expr)
-
-    @property
-    def variables(self):
-        return self._args[0]
-
-    @property
-    def expr(self):
-        return self._args[1]
-
-    def __call__(self, *args):
-        args = _sanitize_arguments(args, is_bilinear=True)
-        left,right = args
-        if not is_sequence(left):
-            left = [left]
-
-        if not is_sequence(right):
-            right = [right]
-
-        args = Tuple(*left, *right)
-
-        variables = Tuple(*self.variables[0], *self.variables[1])
-        return self.expr.xreplace(dict(list(zip(self.variables, args))))
-
-#==============================================================================
 class Integral(CalculusFunction):
 
     def __new__(cls, expr, domain, **options):
