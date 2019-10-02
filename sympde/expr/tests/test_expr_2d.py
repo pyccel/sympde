@@ -1434,8 +1434,6 @@ def test_bilinear_form_2d_4():
 #==============================================================================
 def test_linearity_linear_form_2d_1():
 
-    from sympde.expr.expr   import DomainIntegral, BoundaryIntegral, InterfaceIntegral
-    from sympde.expr.expr   import is_linear_expression
     from sympde.expr.errors import UnconsistentLinearExpressionError
 
     domain = Domain('Omega', dim=2)
