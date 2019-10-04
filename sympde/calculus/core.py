@@ -1279,7 +1279,7 @@ class Bracket(BasicOperator):
 
         # Automatic evaluation to canonical form: reorder arguments by using
         # anti-commutativity property [v, u] = -[u, v] and stop recursion.
-        if hash(arg1) > hash(arg2):
+        if str(arg1) > str(arg2):
             return -cls(arg2, arg1, evaluate=False)
 
         # Stop recursion
