@@ -1447,8 +1447,8 @@ def test_linearity_linear_form_2d_1():
 
     V = ScalarFunctionSpace('V', domain)
 
-    u,u1,u2 = [element_of(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [element_of(V, name=i) for i in ['v', 'v1', 'v2']]
+    u, u1, u2 = elements_of(V, names='u, u1, u2')
+    v, v1, v2 = elements_of(V, names='v, v1, v2')
 
     # ...
     int_0 = lambda expr: integral(domain , expr)
@@ -1457,45 +1457,44 @@ def test_linearity_linear_form_2d_1():
     # The following integral expressions are linear, hence it must be possible
     # to create LinearForm objects from them
 
-    l = LinearForm(v, int_0(x * y * v))
-
-    l = LinearForm(v, int_0(x * y * v + v))
-
-    g = Tuple(x**2, y**2)
-    l = LinearForm(v, int_0(v * dot(g, nn)))
+    _ = LinearForm(v, int_0(x * y * v))
+    _ = LinearForm(v, int_0(x * y * v + v))
 
     g = Tuple(x**2, y**2)
-    l = LinearForm(v, int_1(v*dot(g, nn)) + int_0(x*y*v))
+    _ = LinearForm(v, int_0(v * dot(g, nn)))
+
+    g = Tuple(x**2, y**2)
+    _ = LinearForm(v, int_1(v*dot(g, nn)) + int_0(x*y*v))
 
     l1 = LinearForm(v1, int_0(x * y * v1))
-    l  = LinearForm(v, l1(v))
+    _  = LinearForm(v, l1(v))
 
     g  = Tuple(x,y)
     l1 = LinearForm(v1, int_0(x*y*v1))
     l2 = LinearForm(v2, int_0(dot(grad(v2), g)))
-    l  = LinearForm(v, l1(v) + l2(v))
+    _  = LinearForm(v, l1(v) + l2(v))
 
     l1 = LinearForm(v1, int_0(x*y*v1))
     l2 = LinearForm(v1, int_0(v1))
-    l  = LinearForm(v, l1(v) + kappa*l2(v))
+    _  = LinearForm(v, l1(v) + kappa*l2(v))
 
     g  = Tuple(x**2, y**2)
     l1 = LinearForm(v1, int_0(x*y*v1))
     l2 = LinearForm(v1, int_0(v1))
     l3 = LinearForm(v, int_1(v*dot(g, nn)))
-    l  = LinearForm(v, l1(v) + kappa*l2(v) + mu*l3(v))
+    _  = LinearForm(v, l1(v) + kappa*l2(v) + mu*l3(v))
 
     # The following integral expressions are not linear, hence LinearForm must
     # raise an exception
 
     with pytest.raises(UnconsistentLinearExpressionError):
-        l = LinearForm(v, int_0(x * y * v + 1))
+        _ = LinearForm(v, int_0(x * y * v + 1))
 
     with pytest.raises(UnconsistentLinearExpressionError):
-        l = LinearForm(v, int_0(x * v**2))
+        _ = LinearForm(v, int_0(x * v**2))
 
     with pytest.raises(UnconsistentLinearExpressionError):
-        l = LinearForm(v, int_0(x * y * v) + int_1(v * exp(v)))
+        _ = LinearForm(v, int_0(x * y * v) + int_1(v * exp(v)))
 
 #==============================================================================
 def test_linearity_bilinear_form_2d_1():
@@ -1514,8 +1513,8 @@ def test_linearity_bilinear_form_2d_1():
 
     V = ScalarFunctionSpace('V', domain)
 
-    u,u1,u2 = [element_of(V, name=i) for i in ['u', 'u1', 'u2']]
-    v,v1,v2 = [element_of(V, name=i) for i in ['v', 'v1', 'v2']]
+    u, u1, u2 = elements_of(V, names='u, u1, u2')
+    v, v1, v2 = elements_of(V, names='v, v1, v2')
 
     # ...
 
@@ -1525,48 +1524,48 @@ def test_linearity_bilinear_form_2d_1():
     # The following integral expressions are bilinear, hence it must be possible
     # to create BilinearForm objects from them
 
-    a = BilinearForm((u,v), int_0(u*v))
-    a = BilinearForm((u,v), int_0(dot(grad(u),grad(v))))
-    a = BilinearForm((u,v), int_0(u*v + dot(grad(u),grad(v))))
-    a = BilinearForm((u,v), int_0(u*v + dot(grad(u),grad(v))) + int_1(v*dot(grad(u), nn)) )
-    a = BilinearForm(((u1,u2),(v1,v2)), int_0(u1*v1 + u2*v2))
+    _ = BilinearForm((u,v), int_0(u*v))
+    _ = BilinearForm((u,v), int_0(dot(grad(u),grad(v))))
+    _ = BilinearForm((u,v), int_0(u*v + dot(grad(u),grad(v))))
+    _ = BilinearForm((u,v), int_0(u*v + dot(grad(u),grad(v))) + int_1(v*dot(grad(u), nn)) )
+    _ = BilinearForm(((u1,u2),(v1,v2)), int_0(u1*v1 + u2*v2))
 
     a1 = BilinearForm((u1,v1), int_0(u1*v1))
-    a  = BilinearForm((u,v), a1(u,v))
-
-    a1 = BilinearForm((u1,v1), int_0(u1*v1))
-    a2 = BilinearForm((u2,v2), int_0(dot(grad(u2), grad(v2))))
-    a  = BilinearForm((u,v), a1(u,v) + a2(u,v))
-
+    _  = BilinearForm((u,v), a1(u,v))
 
     a1 = BilinearForm((u1,v1), int_0(u1*v1))
     a2 = BilinearForm((u2,v2), int_0(dot(grad(u2), grad(v2))))
-    a  = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v))
+    _  = BilinearForm((u,v), a1(u,v) + a2(u,v))
+
+
+    a1 = BilinearForm((u1,v1), int_0(u1*v1))
+    a2 = BilinearForm((u2,v2), int_0(dot(grad(u2), grad(v2))))
+    _  = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v))
 
     a1 = BilinearForm((u1,v1), int_0(u1*v1))
     a2 = BilinearForm((u2,v2), int_0(dot(grad(u2), grad(v2))))
     a3 = BilinearForm((u,v), int_1(v*dot(grad(u), nn)))
-    a  = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v) + mu*a3(u,v))
+    _  = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v) + mu*a3(u,v))
 
     # ... Poisson with Nitsch method
     a0  = BilinearForm((u,v), int_0(dot(grad(u),grad(v))))
     a_B1 = BilinearForm((u,v), int_1(- kappa * u*dot(grad(v), nn)
                                - v*dot(grad(u), nn)
                                + u*v / eps))
-    a = BilinearForm((u,v), a0(u,v) + a_B1(u,v))
+    _ = BilinearForm((u,v), a0(u,v) + a_B1(u,v))
     # ...
 
     # The following integral expressions are not bilinear, hence BilinearForm must
     # raise an exception
 
     with pytest.raises(UnconsistentLinearExpressionError):
-        a = BilinearForm((u, v), int_0(x * y * dot(grad(u), grad(v)) + 1))
+        _ = BilinearForm((u, v), int_0(x * y * dot(grad(u), grad(v)) + 1))
 
     with pytest.raises(UnconsistentLinearExpressionError):
-        a = BilinearForm((u, v), int_0(x * dot(grad(u), grad(v**2))))
+        _ = BilinearForm((u, v), int_0(x * dot(grad(u), grad(v**2))))
 
     with pytest.raises(UnconsistentLinearExpressionError):
-        a = BilinearForm((u, v), int_0(u * v) + int_1(v * exp(u)))
+        _ = BilinearForm((u, v), int_0(u * v) + int_1(v * exp(u)))
 
 #==============================================================================
 def test_interface_2d_1():
