@@ -1447,7 +1447,6 @@ def test_linearity_linear_form_2d_1():
 
     V = ScalarFunctionSpace('V', domain)
 
-    u, u1, u2 = elements_of(V, names='u, u1, u2')
     v, v1, v2 = elements_of(V, names='v, v1, v2')
 
     # ...
