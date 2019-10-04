@@ -1230,8 +1230,15 @@ class Bracket(BasicOperator):
     """
 
     def __new__(cls, *args, **options):
+
+        if len(args) != 2:
+            nargs = len(args)
+            msg = 'Bracket takes exactly 2 arguments ({} given)'.format(nargs)
+            raise TypeError(msg)
+
         if options.pop('evaluate', True):
-            return cls.eval(*args)
+            arg1, arg2 = args
+            return cls.eval(arg1, arg2)
         else:
             return Basic.__new__(cls, *args, **options)
 
