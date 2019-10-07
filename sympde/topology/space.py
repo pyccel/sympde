@@ -464,7 +464,27 @@ class IndexedTestTrial(Indexed):
     is_Atom = True
 
     def __new__(cls, base, *args, **kw_args):
-        assert(isinstance(base, VectorTestFunction))
+
+        if isinstance(base, VectorTestFunction):
+            pass
+
+        elif isinstance(base, Add):
+            return Add(*[cls(b, *args, **kw_args) for b in base.args])
+
+        elif isinstance(base, Mul):
+            scalar_types = (*_coeffs_registery, ScalarTestFunction)
+            scalars = [s for s in base.args if isinstance(s, scalar_types)]
+            others  = [s for s in base.args if s not in scalars]
+            return Mul(*scalars) * Mul(*[cls(b, *args, **kw_args) for b in others])
+
+        elif isinstance(base, Trace):
+            expr     = cls(base.expr, *args, **kw_args)
+            boundary = base.boundary
+            order    = base.order
+            return Trace(expr, boundary, order)
+
+        else:
+            raise ValueError('Expecting VectorTestFunction, Trace, or Add/Mul object')
 
         if not args:
             raise IndexException("Indexed needs at least one index.")
