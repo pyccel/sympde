@@ -1446,8 +1446,10 @@ def test_linearity_linear_form_2d_1():
     nn    = NormalVector('nn')
 
     V = ScalarFunctionSpace('V', domain)
+    W = VectorFunctionSpace('W', domain)
 
     v, v1, v2 = elements_of(V, names='v, v1, v2')
+    w = element_of(W, name='w')
 
     # ...
     int_0 = lambda expr: integral(domain , expr)
@@ -1483,6 +1485,16 @@ def test_linearity_linear_form_2d_1():
     l3 = LinearForm(v, int_1(v*dot(g, nn)))
     _  = LinearForm(v, l1(v) + kappa*l2(v) + mu*l3(v))
 
+    l1 = LinearForm(w, int_0(5 * w * x))
+    l2 = LinearForm(w, int_1(w * y))
+    _  = LinearForm(w, l1(w) + kappa*l2(w))
+
+    l0 = LinearForm(v, int_0(x * y * v))
+    l1 = LinearForm(w, int_0(w[0] * y))
+    l2 = LinearForm(w, int_1(w[1] * x))
+    l3 = LinearForm(w, kappa * l1(w) + mu * l2(w))
+    _  = LinearForm((v, w), l0(v) + l3(w))
+
     # The following integral expressions are not linear, hence LinearForm must
     # raise an exception
 
@@ -1494,6 +1506,15 @@ def test_linearity_linear_form_2d_1():
 
     with pytest.raises(UnconsistentLinearExpressionError):
         _ = LinearForm(v, int_0(x * y * v) + int_1(v * exp(v)))
+
+    with pytest.raises(UnconsistentLinearExpressionError):
+        _ = LinearForm(w, int_0(w * w))
+
+    with pytest.raises(UnconsistentLinearExpressionError):
+        _ = LinearForm(w, int_0(w[0] * w[1]))
+
+    with pytest.raises(UnconsistentLinearExpressionError):
+        _ = LinearForm((v, w), int_0(x * w[0]) + int_1(v * w[1]))
 
 #==============================================================================
 def test_linearity_bilinear_form_2d_1():
