@@ -124,6 +124,26 @@ class BasicOperator(CalculusFunction):
             return Indexed(self, indices, **kw_args)
 
 #==============================================================================
+def is_constant(atom):
+    """ Determine whether the given atom represents a constant number.
+    """
+    if isinstance(atom, _coeffs_registery):
+        return True
+
+    if (isinstance(atom, Pow) and
+        isinstance(atom.base, _coeffs_registery) and
+        isinstance(atom.exp , _coeffs_registery)):
+        return True
+
+    return False
+
+#==============================================================================
+def is_scalar(atom):
+    """ Determine whether the given atom represents a scalar quantity.
+    """
+    return is_constant(atom) or isinstance(atom, (ScalarField, ScalarTestFunction))
+
+#==============================================================================
 class Dot(BasicOperator):
     """
     Represents a generic Dot operator, without knowledge of the dimension.
@@ -163,123 +183,136 @@ class Dot(BasicOperator):
     def __new__(cls, *args, **options):
         # (Try to) sympify args first
 
-        if options.pop('evaluate', True):
-            r = cls.eval(*args)
-        else:
-            r = None
+        if len(args) != 2:
+            nargs = len(args)
+            msg = 'Dot takes exactly 2 arguments ({} given)'.format(nargs)
+            raise TypeError(msg)
 
-        if r is None:
-            return Basic.__new__(cls, *args, **options)
+        if options.pop('evaluate', True):
+            arg1, arg2 = args
+            return cls.eval(arg1, arg2)
         else:
-            return r
+            return Basic.__new__(cls, *args, **options)
+
+    def _eval_is_real(self):
+        arg1, arg2 = self.args
+        if arg1 == arg2:
+            return True
+
+    def _eval_is_positive(self):
+        arg1, arg2 = self.args
+        if arg1 == arg2:
+            return True
 
     @classmethod
-    def eval(cls, *_args):
-        """."""
+    def eval(cls, arg1, arg2):
 
-        if not _args:
-            return
+        # If one argument is scalar, convert Dot to Mul
+        # TODO: avoid this hack in the future
+        if is_scalar(arg1) or is_scalar(arg2):
+            return Mul(arg1, arg2)
 
-        if not len(_args) == 2:
-            raise ValueError('Expecting two arguments')
+        # If one argument is the zero vector, return 0
+        if arg1 == 0 or arg2 == 0:
+            return S.Zero
 
-        left,right = _args
-        if (left == 0) or (right == 0):
-            return 0
+        # If both arguments are lists, use explicit formula:
+        #   dot(a, b) = a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + ...
+        indexed_types = (list, tuple, Tuple)
+        if isinstance(arg1, indexed_types) and isinstance(arg2, indexed_types):
+            if len(arg1) != len(arg2):
+                raise TypeError('Dimension mismatch in dot product')
+            else:
+                return Add(*[a1 * a2 for a1, a2 in zip(arg1, arg2)])
 
-        # ...
-        if isinstance(left, (list, tuple, Tuple)) and isinstance(right, (list, tuple, Tuple)):
-            assert( len(left) == len(right) )
-            n = len(left)
-            args = [left[i]*right[i] for i in range(0,n)]
-            return Add(*args)
-        # ...
+        # Recursive application of product rules to both arguments
+        for expr, args in (arg1, lambda a: (a, arg2)), \
+                          (arg2, lambda a: (arg1, a)):
 
-        # ...
-        if isinstance(left, Add):
-            args = [cls.eval(i, right) for i in left.args]
-            return Add(*args)
-        # ...
+            # Sum: dot(a, b + c + d) = dot(a, b) + dot(a, c) + dot(a, d)
+            if isinstance(expr, Add):
+                return Add(*[cls.eval(*args(a)) for a in expr.args])
 
-        # ...
-        if isinstance(right, Add):
-            args = [cls.eval(left, i) for i in right.args]
-            return Add(*args)
-        # ...
+            # Multiplication: dot(a, k*b) = k * dot(a, b) if k is scalar
+            if isinstance(expr, Mul):
+                scalars = [a for a in expr.args if is_scalar(a)]
+                vectors = [a for a in expr.args if a not in scalars]
 
-        # ... from now on, we construct left and right with some coeffs
-        #     return is done at the end
-        alpha = S.One
-        if isinstance(left, Mul):
-            coeffs  = [a for a in left.args if isinstance(a, _coeffs_registery)]
-            for a in left.args:
-                if ( isinstance(a, Pow) and
-                     isinstance(a.base, _coeffs_registery) and
-                     isinstance(a.exp, _coeffs_registery) ):
-                    coeffs += [a]
+                if not vectors:
+                    return Mul(*scalars)
 
-                elif isinstance(a, (ScalarField, ScalarTestFunction)):
-                    coeffs += [a]
+                if scalars:
+                    a = Mul(*scalars)
+                    b = Mul(*vectors)
+                    return Mul(a, cls.eval(*args(b)))
 
-            vectors = [a for a in left.args if not(a in coeffs)]
+        # Automatic evaluation to canonical form: reorder arguments by using
+        # commutativity property dot(v, u) = dot(u, v) and stop recursion.
+        if str(arg1) > str(arg2):
+            return cls(arg2, arg1, evaluate=False)
 
-            a = S.One
-            if coeffs:
-                a = Mul(*coeffs)
-
-            b = S.One
-            if vectors:
-                b = Mul(*vectors)
-
-            alpha *= a
-            left   = b
-
-        if isinstance(right, Mul):
-            coeffs  = [a for a in right.args if isinstance(a, _coeffs_registery)]
-            for a in right.args:
-                if ( isinstance(a, Pow) and
-                     isinstance(a.base, _coeffs_registery) and
-                     isinstance(a.exp, _coeffs_registery) ):
-                    coeffs += [a]
-
-                elif isinstance(a, (ScalarField, ScalarTestFunction)):
-                    coeffs += [a]
-
-            vectors = [a for a in right.args if not(a in coeffs)]
-
-            a = S.One
-            if coeffs:
-                a = Mul(*coeffs)
-
-            b = S.One
-            if vectors:
-                b = Mul(*vectors)
-
-            alpha *= a
-            right  = b
-        # ...
-
-        # ... this is a hack to ensure commutativity
-        #     TODO to be improved
-        try:
-            if str(right) < str(left):
-                return alpha*cls(right, left, evaluate=False)
-
-        except:
-            pass
-        # ...
-
-        return alpha*cls(left, right, evaluate=False)
-
+        # Stop recursion
+        return cls(arg1, arg2, evaluate=False)
 
 #==============================================================================
-# TODO add properties
 class Cross(BasicOperator):
     """
     This operator represents the cross product between two expressions,
     regardless of the dimension.
     """
-    pass
+
+    def __new__(cls, *args, **options):
+
+        if len(args) != 2:
+            nargs = len(args)
+            msg = 'Cross takes exactly 2 arguments ({} given)'.format(nargs)
+            raise TypeError(msg)
+
+        if options.pop('evaluate', True):
+            arg1, arg2 = args
+            return cls.eval(arg1, arg2)
+        else:
+            return Basic.__new__(cls, *args, **options)
+
+    @classmethod
+    def eval(cls, arg1, arg2):
+
+        # Operator is anti-commutative, hence cross(u, u) = 0
+        if arg1 == arg2:
+            return S.Zero
+
+        # If one argument is the zero vector, return 0
+        if arg1 == 0 or arg2 == 0:
+            return S.Zero
+
+        # Recursive application of linearity to both arguments
+        for expr, args in (arg1, lambda a: (a, arg2)), \
+                          (arg2, lambda a: (arg1, a)):
+
+            # Sum: cross(a, b + c + d) = cross(a, b) + cross(a, c) + cross(a, d)
+            if isinstance(expr, Add):
+                return Add(*[cls.eval(*args(a)) for a in expr.args])
+
+            # Multiplication: cross(a, k*b) = k * cross(a, b) if k is scalar
+            if isinstance(expr, Mul):
+                scalars = [a for a in expr.args if is_scalar(a)]
+                vectors = [a for a in expr.args if a not in scalars]
+
+                if not vectors:
+                    return Mul(*scalars)
+
+                if scalars:
+                    a = Mul(*scalars)
+                    b = Mul(*vectors)
+                    return Mul(a, cls.eval(*args(b)))
+
+        # Automatic evaluation to canonical form: reorder arguments by using
+        # anti-commutativity property cross(v, u) = -cross(u, v) and stop recursion.
+        if str(arg1) > str(arg2):
+            return -cls(arg2, arg1, evaluate=False)
+
+        # Stop recursion
+        return cls(arg1, arg2, evaluate=False)
 
 #==============================================================================
 class Inner(BasicOperator):
@@ -310,101 +343,62 @@ class Inner(BasicOperator):
     def __new__(cls, *args, **options):
         # (Try to) sympify args first
 
-        if options.pop('evaluate', True):
-            r = cls.eval(*args)
-        else:
-            r = None
+        if len(args) != 2:
+            nargs = len(args)
+            msg = 'Inner takes exactly 2 arguments ({} given)'.format(nargs)
+            raise TypeError(msg)
 
-        if r is None:
-            return Basic.__new__(cls, *args, **options)
+        if options.pop('evaluate', True):
+            arg1, arg2 = args
+            return cls.eval(arg1, arg2)
         else:
-            return r
+            return Basic.__new__(cls, *args, **options)
+
+    def _eval_is_real(self):
+        arg1, arg2 = self.args
+        if arg1 == arg2:
+            return True
+
+    def _eval_is_positive(self):
+        arg1, arg2 = self.args
+        if arg1 == arg2:
+            return True
 
     @classmethod
-    def eval(cls, *_args):
-        """."""
+    def eval(cls, arg1, arg2):
 
-        if not _args:
-            return
+        # If one argument is the zero vector, return 0
+        if arg1 == 0 or arg2 == 0:
+            return S.Zero
 
-        if not len(_args) == 2:
-            raise ValueError('Expecting two arguments')
+        # Recursive application of product rules to both arguments
+        for expr, args in (arg1, lambda a: (a, arg2)), \
+                          (arg2, lambda a: (arg1, a)):
 
-        left,right = _args
-        if (left == 0) or (right == 0):
-            return 0
+            # Sum: dot(a, b + c + d) = inner(a, b) + inner(a, c) + inner(a, d)
+            if isinstance(expr, Add):
+                return Add(*[cls.eval(*args(a)) for a in expr.args])
 
-        if isinstance(left, Add):
-            args = [cls.eval(i, right) for i in left.args]
-            return Add(*args)
+            # Multiplication: inner(a, k*b) = k * inner(a, b) if k is scalar
+            if isinstance(expr, Mul):
+                scalars = [a for a in expr.args if is_scalar(a)]
+                vectors = [a for a in expr.args if a not in scalars]
 
-        if isinstance(right, Add):
-            args = [cls.eval(left, i) for i in right.args]
-            return Add(*args)
+                if not vectors:
+                    return Mul(*scalars)
 
-        # ... from now on, we construct left and right with some coeffs
-        #     return is done at the end
-        alpha = S.One
-        if isinstance(left, Mul):
-            coeffs  = [a for a in left.args if isinstance(a, _coeffs_registery)]
-            for a in left.args:
-                if ( isinstance(a, Pow) and
-                     isinstance(a.base, _coeffs_registery) and
-                     isinstance(a.exp, _coeffs_registery) ):
-                    coeffs += [a]
+                if scalars:
+                    a = Mul(*scalars)
+                    b = Mul(*vectors)
+                    return Mul(a, cls.eval(*args(b)))
 
-                elif isinstance(a, (ScalarField, ScalarTestFunction)):
-                    coeffs += [a]
+        # Automatic evaluation to canonical form: reorder arguments by using
+        # commutativity property inner(v, u) = inner(u, v) and stop recursion.
+        if str(arg1) > str(arg2):
+            return cls(arg2, arg1, evaluate=False)
 
-            vectors = [a for a in left.args if not(a in coeffs)]
-
-            a = S.One
-            if coeffs:
-                a = Mul(*coeffs)
-
-            b = S.One
-            if vectors:
-                b = Mul(*vectors)
-
-            alpha *= a
-            left   = b
-
-        if isinstance(right, Mul):
-            coeffs  = [a for a in right.args if isinstance(a, _coeffs_registery)]
-            for a in right.args:
-                if ( isinstance(a, Pow) and
-                     isinstance(a.base, _coeffs_registery) and
-                     isinstance(a.exp, _coeffs_registery) ):
-                    coeffs += [a]
-
-                elif isinstance(a, (ScalarField, ScalarTestFunction)):
-                    coeffs += [a]
-
-            vectors = [a for a in right.args if not(a in coeffs)]
-
-            a = S.One
-            if coeffs:
-                a = Mul(*coeffs)
-
-            b = S.One
-            if vectors:
-                b = Mul(*vectors)
-
-            alpha *= a
-            right  = b
-        # ...
-
-        # ... this is a hack to ensure commutativity
-        #     TODO to be improved
-        try:
-            if str(right) < str(left):
-                return alpha*cls(right, left, evaluate=False)
-
-        except:
-            pass
-        # ...
-
-        return alpha*cls(left, right, evaluate=False)
+        # Stop recursion
+        return cls(arg1, arg2, evaluate=False)
 
 #==============================================================================
 class Outer(BasicOperator):
@@ -419,101 +413,47 @@ class Outer(BasicOperator):
     def __new__(cls, *args, **options):
         # (Try to) sympify args first
 
-        if options.pop('evaluate', True):
-            r = cls.eval(*args)
-        else:
-            r = None
+        if len(args) != 2:
+            nargs = len(args)
+            msg = 'Outer takes exactly 2 arguments ({} given)'.format(nargs)
+            raise TypeError(msg)
 
-        if r is None:
-            return Basic.__new__(cls, *args, **options)
+        if options.pop('evaluate', True):
+            arg1, arg2 = args
+            return cls.eval(arg1, arg2)
         else:
-            return r
+            return Basic.__new__(cls, *args, **options)
 
     @classmethod
-    def eval(cls, *_args):
-        """."""
+    def eval(cls, arg1, arg2):
 
-        if not _args:
-            return
+        # If one argument is the zero vector, return 0
+        if arg1 == 0 or arg2 == 0:
+            return S.Zero
 
-        if not len(_args) == 2:
-            raise ValueError('Expecting two arguments')
+        # Recursive application of product rules to both arguments
+        for expr, args in (arg1, lambda a: (a, arg2)), \
+                          (arg2, lambda a: (arg1, a)):
 
-        left,right = _args
-        if (left == 0) or (right == 0):
-            return 0
+            # Sum: outer(a, b + c + d) = outer(a, b) + outer(a, c) + outer(a, d)
+            if isinstance(expr, Add):
+                return Add(*[cls.eval(*args(a)) for a in expr.args])
 
-        if isinstance(left, Add):
-            args = [cls.eval(i, right) for i in left.args]
-            return Add(*args)
+            # Multiplication: outer(a, k*b) = k * outer(a, b) if k is scalar
+            if isinstance(expr, Mul):
+                scalars = [a for a in expr.args if is_scalar(a)]
+                vectors = [a for a in expr.args if a not in scalars]
 
-        if isinstance(right, Add):
-            args = [cls.eval(left, i) for i in right.args]
-            return Add(*args)
+                if not vectors:
+                    return Mul(*scalars)
 
-        # ... from now on, we construct left and right with some coeffs
-        #     return is done at the end
-        alpha = S.One
-        if isinstance(left, Mul):
-            coeffs  = [a for a in left.args if isinstance(a, _coeffs_registery)]
-            for a in left.args:
-                if ( isinstance(a, Pow) and
-                     isinstance(a.base, _coeffs_registery) and
-                     isinstance(a.exp, _coeffs_registery) ):
-                    coeffs += [a]
+                if scalars:
+                    a = Mul(*scalars)
+                    b = Mul(*vectors)
+                    return Mul(a, cls.eval(*args(b)))
 
-                elif isinstance(a, (ScalarField, ScalarTestFunction)):
-                    coeffs += [a]
-
-            vectors = [a for a in left.args if not(a in coeffs)]
-
-            a = S.One
-            if coeffs:
-                a = Mul(*coeffs)
-
-            b = S.One
-            if vectors:
-                b = Mul(*vectors)
-
-            alpha *= a
-            left   = b
-
-        if isinstance(right, Mul):
-            coeffs  = [a for a in right.args if isinstance(a, _coeffs_registery)]
-            for a in right.args:
-                if ( isinstance(a, Pow) and
-                     isinstance(a.base, _coeffs_registery) and
-                     isinstance(a.exp, _coeffs_registery) ):
-                    coeffs += [a]
-
-                elif isinstance(a, (ScalarField, ScalarTestFunction)):
-                    coeffs += [a]
-
-            vectors = [a for a in right.args if not(a in coeffs)]
-
-            a = S.One
-            if coeffs:
-                a = Mul(*coeffs)
-
-            b = S.One
-            if vectors:
-                b = Mul(*vectors)
-
-            alpha *= a
-            right  = b
-        # ...
-
-        # ... this is a hack to ensure commutativity
-        #     TODO to be improved
-        try:
-            if str(right) < str(left):
-                return alpha*cls(right, left, evaluate=False)
-
-        except:
-            pass
-        # ...
-
-        return alpha*cls(left, right, evaluate=False)
+        # Stop recursion
+        return cls(arg1, arg2, evaluate=False)
 
 #==============================================================================
 # TODO add it to evaluation
