@@ -17,6 +17,121 @@ from sympde.topology import ProductSpace
 from sympde.topology import element_of, elements_of
 
 #==============================================================================
+@pytest.mark.parametrize('dim', [1, 2, 3])
+def test_Dot(dim):
+
+    domain  = Domain('Omega', dim=dim)
+    W       = VectorFunctionSpace('W', domain)
+    a, b, c = elements_of(W, names='a, b, c')
+    r       = Constant('r')
+
+    # Commutativity (symmetry)
+    assert dot(a, b) == dot(b, a)
+
+    # Bilinearity: vector addition
+    assert dot(a, b + c) == dot(a, b) + dot(a, c)
+    assert dot(a + b, c) == dot(a, c) + dot(b, c)
+
+    # Bilinearity: scalar multiplication
+    assert dot(a, r * b) == r * dot(a, b)
+    assert dot(r * a, b) == r * dot(a, b)
+
+    # Special case: null vector
+    assert dot(a, 0) == 0
+    assert dot(0, a) == 0
+
+    # Special case: two arguments are the same
+    assert dot(a, a).is_real
+    assert dot(a, a).is_positive
+
+    # TODO: check exceptions
+
+#==============================================================================
+@pytest.mark.parametrize('dim', [1, 2, 3])
+def test_Cross(dim):
+
+    domain  = Domain('Omega', dim=dim)
+    W       = VectorFunctionSpace('W', domain)
+    a, b, c = elements_of(W, names='a, b, c')
+    r       = Constant('r')
+
+    # Anti-commutativity (anti-symmetry)
+    assert cross(a, b) == -cross(b, a)
+
+    # Bilinearity: vector addition
+    assert cross(a, b + c) == cross(a, b) + cross(a, c)
+    assert cross(a + b, c) == cross(a, c) + cross(b, c)
+
+    # Bilinearity: scalar multiplication
+    assert cross(a, r * b) == r * cross(a, b)
+    assert cross(r * a, b) == r * cross(a, b)
+
+    # Special case: null vector
+    assert cross(a, 0) == 0
+    assert cross(0, a) == 0
+
+    # Special case: two arguments are the same
+    assert cross(a, a) == 0
+
+    # TODO: check exceptions
+
+#==============================================================================
+@pytest.mark.parametrize('dim', [1, 2, 3])
+def test_Inner(dim):
+
+    domain  = Domain('Omega', dim=dim)
+    W       = VectorFunctionSpace('W', domain)
+    a, b, c = elements_of(W, names='a, b, c')
+    r       = Constant('r')
+
+    # Commutativity
+    assert inner(a, b) == inner(b, a)
+
+    # Bilinearity: vector addition
+    assert inner(a, b + c) == inner(a, b) + inner(a, c)
+    assert inner(a + b, c) == inner(a, c) + inner(b, c)
+
+    # Bilinearity: scalar multiplication
+    assert inner(a, r * b) == r * inner(a, b)
+    assert inner(r * a, b) == r * inner(a, b)
+
+    # Special case: null vector
+    assert inner(a, 0) == 0
+    assert inner(0, a) == 0
+
+    # Special case: two arguments are the same
+    assert inner(a, a).is_real
+    assert inner(a, a).is_positive
+
+    # TODO: check exceptions
+
+#==============================================================================
+@pytest.mark.parametrize('dim', [1, 2, 3])
+def test_Outer(dim):
+
+    domain  = Domain('Omega', dim=dim)
+    W       = VectorFunctionSpace('W', domain)
+    a, b, c = elements_of(W, names='a, b, c')
+    r       = Constant('r')
+
+    # Not commutative
+    assert outer(a, b) != outer(b, a)
+
+    # Bilinearity: vector addition
+    assert outer(a, b + c) == outer(a, b) + outer(a, c)
+    assert outer(a + b, c) == outer(a, c) + outer(b, c)
+
+    # Bilinearity: scalar multiplication
+    assert outer(a, r * b) == r * outer(a, b)
+    assert outer(r * a, b) == r * outer(a, b)
+
+    # Special case: null vector
+    assert outer(a, 0) == 0
+    assert outer(0, a) == 0
+
+    # TODO: check exceptions
+
+#==============================================================================
 def test_zero_derivative():
 
     assert grad(1)              == 0  # native int
