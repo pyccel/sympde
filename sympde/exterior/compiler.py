@@ -43,6 +43,11 @@ _is_proxy = lambda u: _is_field(u) or isinstance(u, Tuple)
 
 #==============================================================================
 def _decompose_lie_derivative(*args):
+
+    #---------------------------------------
+    # Try to extract Grad and Cross terms
+    #---------------------------------------
+
     # ... 1 form
     grad_term  = [i for i in args if (isinstance(i, Grad) and
                                       isinstance(i._args[0], Dot))]
@@ -53,23 +58,50 @@ def _decompose_lie_derivative(*args):
                                        isinstance(i._args[1], Curl)))]
 
     if grad_term and cross_term:
-        return grad_term, cross_term
-    # ...
+        others = [i for i in args if i not in (grad_term + cross_term)]
+        return grad_term, cross_term, others
 
-    # ... 1 form
-    curl_term  = [i for i in args if (isinstance(i, Curl) and
-                                      isinstance(i._args[0], Cross))]
+    #---------------------------------------
+    # Try to extract Curl and Mul terms
+    #---------------------------------------
+    curl_term = []
+    mul_term  = []
+    others    = []
 
-    # TODO improve
-    mul_term = [i for i in args if (isinstance(i, Mul) and
-                                      (isinstance(i._args[0], Div) or
-                                       isinstance(i._args[1], Div)))]
+    for i in args:
+
+        # ... 1 form
+        if isinstance(i, Curl) and isinstance(i.args[0], Cross):
+            curl_term.append(i)
+
+        # Special case to handle anti-commutativity of Curl operator:
+        # Mul(-1, Curl(Cross(a, b))) --> Curl(Cross(b, a))
+        # TODO avoid this hack
+        elif (isinstance(i, Mul) and len(i.args) == 2 and i.args[0] == -1 and
+              isinstance(i.args[1], Curl) and
+              isinstance(i.args[1].args[0], Cross)
+              ):
+            a, b = i.args[1].args[0].args
+            new_cross = Cross(b, a, evaluate=False)
+            new_curl  = Curl(new_cross)
+            curl_term.append(new_curl)
+
+        # TODO improve
+        elif (isinstance(i, Mul) and (isinstance(i.args[0], Div) or
+                                      isinstance(i.args[1], Div)) ):
+            mul_term.append(i)
+
+        else:
+            others.append(i)
 
     if curl_term and mul_term:
-        return curl_term, mul_term
-    # ...
+        return curl_term, mul_term, others
 
-    return [], []
+    #---------------------------------------
+    # Unsuccessful: return input arguments
+    #---------------------------------------
+
+    return [], [], args
 
 #==============================================================================
 class ExteriorCalculusExpr(CalculusFunction):
@@ -318,7 +350,7 @@ class ExteriorCalculusExpr(CalculusFunction):
 
         if isinstance(expr, Add):
             # looking for Lie derivative terms
-            a, b = _decompose_lie_derivative(*expr.args)
+            a, b, c = _decompose_lie_derivative(*expr.args)
 
             newargs = []
 
@@ -408,9 +440,7 @@ class ExteriorCalculusExpr(CalculusFunction):
                     elif len(test) > 1:
                         raise ValueError('wrong expression')
 
-            args = [i for i in expr.args if not(i in a) and not(i in b)]
-            args = [cls.eval(i, tests=tests, atoms=atoms) for i in args]
-            args += newargs
+            args = [cls.eval(i, tests=tests, atoms=atoms) for i in c] + newargs
             return Add(*args)
 
         if isinstance(expr, Mul):
