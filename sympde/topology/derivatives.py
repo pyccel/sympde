@@ -3,60 +3,34 @@
 # TODO add action of diff operators on sympy known functions
 
 import numpy as np
-from itertools import groupby
+from itertools   import groupby
 from collections import OrderedDict
 
-#from sympy.core.sympify import sympify
-from sympy.simplify.simplify import simplify
-from sympy import Derivative
-from sympy.core.function import AppliedUndef
-from sympy.core.function import UndefinedFunction
-from sympy import Symbol
-from sympy import Lambda
-from sympy import Function
-from sympy import bspline_basis
-from sympy import lambdify
-from sympy import cos
-from sympy import sin
-from sympy import log
-from sympy import Rational
-from sympy import diff
-from sympy import Matrix, ImmutableDenseMatrix
-from sympy import latex
-from sympy import I as sympy_I
-from sympy.core import Basic
-from sympy.core.singleton import S
-from sympy.simplify.simplify import nsimplify
-from sympy.utilities.lambdify import implemented_function
-from sympy.matrices.dense import MutableDenseMatrix
-from sympy import Mul, Add, Pow
-from sympy import postorder_traversal
-from sympy import preorder_traversal
-from sympy import Matrix
-
-from sympy.core.expr import Expr
-from sympy.core.containers import Tuple
-from sympy import Integer, Float
-
-from sympy import Add, Mul
-from sympy import preorder_traversal, Expr
-from sympy import simplify
-from sympy import S
-from sympy.core.compatibility import is_sequence
 from sympy import Basic
+from sympy import Symbol
+from sympy import Expr
+from sympy import Tuple
+from sympy import Matrix, ImmutableDenseMatrix
+from sympy import Mul, Add, Pow
+from sympy import Derivative
+from sympy import S
 from sympy import Indexed, IndexedBase
+from sympy import diff
+from sympy import log
+from sympy import preorder_traversal
+
+from sympy.core.function      import AppliedUndef
+from sympy.core.function      import UndefinedFunction
+from sympy.core.compatibility import is_sequence
 
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import _coeffs_registery
-from sympde.core.basic import Constant
 from sympde.core.basic import BasicMapping
 from sympde.core.algebra import LinearOperator
-from sympde.core.utils import random_string
 from .space import ScalarTestFunction, VectorTestFunction, IndexedTestTrial
 from .space import ScalarField, VectorField, IndexedVectorField
-from .domain import Domain
 
-# ...
+#==============================================================================
 class DifferentialOperator(LinearOperator):
     """
     This class is a linear operator that applies the Leibniz formula
@@ -164,10 +138,8 @@ class DifferentialOperator(LinearOperator):
         else:
             msg = '{expr} of type {type}'.format(expr=expr, type=type(expr))
             raise NotImplementedError(msg)
-# ...
 
-
-# ...
+#==============================================================================
 class dx(DifferentialOperator):
     coordinate = 'x'
     grad_index = 0 # index in grad
@@ -184,9 +156,8 @@ class dz(DifferentialOperator):
     pass
 
 _partial_derivatives = (dx, dy, dz)
-# ...
 
-# ...
+#==============================================================================
 class dx1(DifferentialOperator):
     coordinate = 'x1'
     grad_index = 0 # index in grad
@@ -203,9 +174,8 @@ class dx3(DifferentialOperator):
     pass
 
 _logical_partial_derivatives = (dx1, dx2, dx3)
-# ...
 
-# ...
+#==============================================================================
 def find_partial_derivatives(expr):
     """
     returns all partial derivative expressions
@@ -229,9 +199,8 @@ def find_partial_derivatives(expr):
         return [expr]
 
     return []
-# ...
 
-# ...
+#==============================================================================
 def get_number_derivatives(expr):
     """
     returns the number of partial derivatives in expr.
@@ -244,9 +213,8 @@ def get_number_derivatives(expr):
 
         n += 1 + get_number_derivatives(expr.args[0])
     return n
-# ...
 
-# ...
+#==============================================================================
 def sort_partial_derivatives(expr):
     """returns the partial derivatives of an expression, sorted.
     """
@@ -290,9 +258,8 @@ def sort_partial_derivatives(expr):
     # ...
 
     return ls
-# ...
 
-# ...
+#==============================================================================
 def get_index_derivatives(expr):
     """
     """
@@ -316,9 +283,8 @@ def get_index_derivatives(expr):
             d['z'] += 1
 
     return d
-# ...
 
-# ...
+#==============================================================================
 def get_atom_derivatives(expr):
     """
     """
@@ -330,9 +296,8 @@ def get_atom_derivatives(expr):
 
     else:
         return expr
-# ...
 
-# ...
+#==============================================================================
 def get_index_logical_derivatives(expr):
     """
     """
@@ -356,9 +321,8 @@ def get_index_logical_derivatives(expr):
             d['x3'] += 1
 
     return d
-# ...
 
-# ...
+#==============================================================================
 def get_atom_logical_derivatives(expr):
     """
     """
@@ -370,9 +334,8 @@ def get_atom_logical_derivatives(expr):
 
     else:
         return expr
-# ...
 
-# ...
+#==============================================================================
 class DotBasic(CalculusFunction):
 
     nargs = None
@@ -467,9 +430,8 @@ class Dot_3d(DotBasic):
 
             else:
                 return u[0]*v[0] + u[1]*v[1] + u[2]*v[2]
-# ...
 
-# ...
+#==============================================================================
 class CrossBasic(CalculusFunction):
 
     nargs = None
@@ -524,10 +486,8 @@ class Cross_3d(CrossBasic):
         return Tuple(u[1]*v[2] - u[2]*v[1],
                      u[2]*v[0] - u[0]*v[2],
                      u[0]*v[1] - u[1]*v[0])
-# ...
 
-
-# ...
+#==============================================================================
 class GradBasic(CalculusFunction):
 
     nargs = None
@@ -615,10 +575,8 @@ class Grad_3d(GradBasic):
             v = Matrix((dx(u), dy(u), dz(u)))
 
         return v
-# ...
 
-
-# ...
+#==============================================================================
 class CurlBasic(CalculusFunction):
 
     nargs = None
@@ -671,9 +629,8 @@ class Curl_3d(CurlBasic):
         return Matrix((dy(u[2]) - dz(u[1]),
                      dz(u[0]) - dx(u[2]),
                      dx(u[1]) - dy(u[0])))
-# ...
 
-# ...
+#==============================================================================
 class Rot_2d(CalculusFunction):
 
     nargs = None
@@ -709,9 +666,8 @@ class Rot_2d(CalculusFunction):
         u = _args[0]
 
         return Matrix([[dy(u),-dx(u)]]).T
-# ...
 
-# ...
+#==============================================================================
 class DivBasic(CalculusFunction):
 
     nargs = None
@@ -775,9 +731,8 @@ class Div_3d(DivBasic):
         u = _args[0]
 
         return dx(u[0]) + dy(u[1]) + dz(u[2])
-# ...
 
-# ...
+#==============================================================================
 class LaplaceBasic(CalculusFunction):
 
     nargs = None
@@ -847,9 +802,8 @@ class Laplace_3d(LaplaceBasic):
             raise NotImplementedError('TODO')
 
         return dx(dx(u)) + dy(dy(u)) + dz(dz(u))
-# ...
 
-# ...
+#==============================================================================
 class HessianBasic(CalculusFunction):
 
     nargs = None
@@ -922,9 +876,8 @@ class Hessian_3d(HessianBasic):
         return Matrix([[dx(dx(u)), dx(dy(u)), dx(dz(u))],
                        [dx(dy(u)), dy(dy(u)), dy(dz(u))],
                        [dx(dz(u)), dy(dz(u)), dz(dz(u))]])
-# ...
 
-# ...
+#==============================================================================
 class BracketBasic(CalculusFunction):
     pass
 
@@ -957,8 +910,8 @@ class Bracket_2d(BracketBasic):
         v = _args[1]
 
         return dx(u)*dy(v) - dy(u)*dx(v)
-# ...
 
+#==============================================================================
 # ... TODO to be removed, not used anymore
 def partial_derivative_as_symbol(expr, name=None, dim=None):
     """Returns a Symbol from a partial derivative expression."""
@@ -992,9 +945,8 @@ def partial_derivative_as_symbol(expr, name=None, dim=None):
 
         name = '{name}_{code}'.format(name=name, code=code)
         return Symbol(name)
-# ...
 
-# ...
+#==============================================================================
 def partial_derivative_as_str(expr):
     """Returns a string from a partial derivative expression."""
     if not isinstance(expr, _partial_derivatives):
@@ -1011,9 +963,8 @@ def partial_derivative_as_str(expr):
         code += k*n
 
     return code
-# ...
 
-# ...
+#==============================================================================
 def get_index_derivatives_atom(expr, atom, verbose=False):
     """This function return a dictionary of partial derivative indices for
     a given atom.
@@ -1031,9 +982,8 @@ def get_index_derivatives_atom(expr, atom, verbose=False):
             indices.append(index)
 
     return indices
-# ...
 
-# ...
+#==============================================================================
 def get_index_logical_derivatives_atom(expr, atom, verbose=False):
     """This function return a dictionary of partial derivative indices for
     a given atom.
@@ -1051,8 +1001,8 @@ def get_index_logical_derivatives_atom(expr, atom, verbose=False):
             indices.append(index)
 
     return indices
-# ...
 
+#==============================================================================
 def get_max_partial_derivatives(expr, F=None):
     if F is None:
         Fs = (list(expr.atoms(ScalarTestFunction)) +
@@ -1074,7 +1024,7 @@ def get_max_partial_derivatives(expr, F=None):
             if v > d[k]: d[k] = v
     return d
 
-
+#==============================================================================
 class LogicalGrad_1d(GradBasic):
 
     @classmethod
@@ -1137,5 +1087,3 @@ class LogicalGrad_3d(GradBasic):
             v = Tuple(dx1(u), dx2(u), dx3(u))
 
         return v
-# ...
-

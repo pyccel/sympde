@@ -174,8 +174,6 @@ def test_compiler_3d_2():
     v = element_of(X, name='v0, v1, v2, v3')
     u = element_of(X, name='u0, u1, u2, u3')
 
-    beta = element_of(V, 'beta')
-
 #    # ... Dot operator
 #    expr = dot(u1, v1)
 #    print(ExteriorCalculusExpr(expr, tests=[v1]))

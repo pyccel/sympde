@@ -2,40 +2,26 @@
 
 # TODO - assert the space type is not Undefined
 
-from numpy import unique
 from collections import OrderedDict
 
-from sympy.core import Basic
-from sympy.tensor import Indexed, IndexedBase
-from sympy.core import Symbol
-from sympy.core import Expr
-from sympy.core.containers import Tuple
-from sympy import Function
-from sympy import Integer, Float
-from sympy.core.singleton import Singleton
-from sympy.core.compatibility import with_metaclass
-from sympy.core import Add, Mul
-from sympy.core.singleton import S
+from sympy import Basic
+from sympy import Add, Mul
+from sympy import S
+from sympy import Indexed
+from sympy import Tuple
 
 from sympde.core.basic import _coeffs_registery
 from sympde.core.basic import CalculusFunction
-from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
-from sympde.topology import H1SpaceType, HcurlSpaceType, HdivSpaceType
-from sympde.topology import L2SpaceType, UndefinedSpaceType
-from sympde.topology import TestFunction, ScalarTestFunction, VectorTestFunction
-from sympde.topology import ScalarField, VectorField
-from sympde.topology.space import _is_sympde_atom
-from sympde.topology.space import _is_test_function
-from sympde.topology.space import _is_field
-from sympde.calculus.core import _is_op_test_function
-from sympde.calculus.core import _is_op_field
-from sympde.calculus import Grad, Curl, Div
-from sympde.calculus import Dot, Inner, Cross
+from sympde.topology   import H1SpaceType, HcurlSpaceType, HdivSpaceType
+from sympde.topology   import L2SpaceType, UndefinedSpaceType
+from sympde.topology   import ScalarTestFunction, VectorTestFunction
+from sympde.calculus   import Grad, Curl, Div
+from sympde.calculus   import Dot, Inner, Cross
 #from sympde.calculus import grad, dot, inner, cross, rot, curl, div
 
-from .form import DifferentialForm
+from .form     import DifferentialForm
 from .calculus import d, wedge, ip, ld
-from .calculus import delta, jp, Ld, hodge
+from .calculus import delta, jp, hodge
 from .calculus import AdjointExteriorDerivative
 
 #==============================================================================
