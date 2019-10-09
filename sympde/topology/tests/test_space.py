@@ -7,7 +7,6 @@ from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
 from sympde.topology import element_of
 from sympde.topology import H1Space, HcurlSpace, HdivSpace, L2Space, UndefinedSpace
 from sympde.topology import ScalarTestFunction, VectorTestFunction
-from sympde.topology import Field, ScalarField, VectorField
 from sympde.topology import Projector
 
 #==============================================================================
@@ -144,22 +143,22 @@ def test_projector_2d_1():
     DIM = 2
     domain = Domain('Omega', dim=DIM)
 
-    V     =       ScalarFunctionSpace('V', domain, kind=None)
-    W     = VectorFunctionSpace('W', domain, kind=None)
+    V = ScalarFunctionSpace('V', domain, kind=None)
+    W = VectorFunctionSpace('W', domain, kind=None)
 
-    v, w = Field(V*W, ['v', 'w'])
+    v, w = element_of(V*W, ['v', 'w'])
 
     # ...
     P_V = Projector(V)
     assert(P_V.space == V)
 
     Pv = P_V(v)
-    assert(isinstance(Pv, ScalarField))
+    assert(isinstance(Pv, ScalarTestFunction))
     assert(Pv == v)
     assert(grad(Pv**2) == 2*v*grad(v))
 
     Pdiv_w = P_V(div(w))
-    assert(isinstance(Pdiv_w, ScalarField))
+    assert(isinstance(Pdiv_w, ScalarTestFunction))
     # ...
 
     # ...
@@ -167,11 +166,11 @@ def test_projector_2d_1():
     assert(P_W.space == W)
 
     Pw = P_W(w)
-    assert(isinstance(Pw, VectorField))
+    assert(isinstance(Pw, VectorTestFunction))
     assert(Pw == w)
 
     Pgrad_v = P_W(grad(v))
-    assert(isinstance(Pgrad_v, VectorField))
+    assert(isinstance(Pgrad_v, VectorTestFunction))
     assert(P_W(Pgrad_v) == Pgrad_v)
     # ...
 

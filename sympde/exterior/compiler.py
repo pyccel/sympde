@@ -23,7 +23,7 @@ from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
 from sympde.topology import H1SpaceType, HcurlSpaceType, HdivSpaceType
 from sympde.topology import L2SpaceType, UndefinedSpaceType
 from sympde.topology import TestFunction, ScalarTestFunction, VectorTestFunction
-from sympde.topology import Field, ScalarField, VectorField
+from sympde.topology import ScalarField, VectorField
 from sympde.topology.space import _is_sympde_atom
 from sympde.topology.space import _is_test_function
 from sympde.topology.space import _is_field
@@ -38,8 +38,15 @@ from .calculus import d, wedge, ip, ld
 from .calculus import delta, jp, Ld, hodge
 from .calculus import AdjointExteriorDerivative
 
-_is_proxy = lambda u: _is_field(u) or isinstance(u, Tuple)
+#==============================================================================
 
+_is_function      = lambda u: isinstance(u, (ScalarTestFunction, VectorTestFunction))
+_is_test_function = lambda u: _is_function(u) and not isinstance(u.space.kind, UndefinedSpaceType)
+_is_field         = lambda u: _is_function(u) and     isinstance(u.space.kind, UndefinedSpaceType)
+_is_proxy         = lambda u: _is_field(u) or isinstance(u, Tuple)
+
+_is_op_test_function = lambda op: (isinstance(op, (Grad, Curl, Div)) and
+                                   _is_test_function(op.args[0]))
 
 #==============================================================================
 def _decompose_lie_derivative(*args):
@@ -142,7 +149,7 @@ class ExteriorCalculusExpr(CalculusFunction):
 
         assert(isinstance(atoms, (dict, OrderedDict)))
 
-        if isinstance(expr, (ScalarField, VectorField)):
+        if _is_field(expr):
             return expr
 
         if isinstance(expr, (tuple, list, Tuple)):
@@ -152,6 +159,7 @@ class ExteriorCalculusExpr(CalculusFunction):
             return expr
 
         if _is_test_function(expr):
+
             name = expr.name
             dim  = expr.space.ldim
             kind = expr.space.kind
@@ -320,8 +328,8 @@ class ExteriorCalculusExpr(CalculusFunction):
             left, right = expr._args[:]
 
             if isinstance(left, Grad) and isinstance(right, Grad):
-                if (_is_test_function(left._args[0]) and
-                    _is_test_function(right._args[0])):
+                if (_is_function(left._args[0]) and
+                    _is_function(right._args[0])):
 
                     left  = left._args[0]
                     right = right._args[0]
@@ -343,6 +351,7 @@ class ExteriorCalculusExpr(CalculusFunction):
                     return expr
 
                 else:
+
                     raise NotImplementedError('')
 
             else:
@@ -357,11 +366,8 @@ class ExteriorCalculusExpr(CalculusFunction):
             for ai in a:
                 for bi in b:
 
-                    ai_tests  = list(ai.atoms(ScalarTestFunction))
-                    ai_tests += list(ai.atoms(VectorTestFunction))
-
-                    bi_tests  = list(bi.atoms(ScalarTestFunction))
-                    bi_tests += list(bi.atoms(VectorTestFunction))
+                    ai_tests = [i for i in ai.atoms() if _is_test_function(i)]
+                    bi_tests = [i for i in bi.atoms() if _is_test_function(i)]
 
                     test = set(ai_tests) & set(bi_tests)
                     test = list(test)

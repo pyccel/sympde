@@ -5,7 +5,6 @@ import pytest
 from sympde.topology import Domain
 from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
 from sympde.topology import element_of
-from sympde.topology import Field
 from sympde.calculus import grad, dot, inner, cross, curl, div
 
 #from sympde.exterior import d, wedge, ip, delta, jp
@@ -29,7 +28,7 @@ def test_compiler_3d_1():
 
     v0, v1, v2, v3 = element_of(X, name='v0, v1, v2, v3')
 
-    beta = Field(V, 'beta')
+    beta = element_of(V, 'beta')
 
 #    # ...
 #    expr = grad(v0)
@@ -175,7 +174,7 @@ def test_compiler_3d_2():
     v = element_of(X, name='v0, v1, v2, v3')
     u = element_of(X, name='u0, u1, u2, u3')
 
-    beta = Field(V, 'beta')
+    beta = element_of(V, 'beta')
 
 #    # ... Dot operator
 #    expr = dot(u1, v1)

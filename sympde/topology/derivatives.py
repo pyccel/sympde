@@ -53,7 +53,6 @@ from sympde.core.basic import BasicMapping
 from sympde.core.algebra import LinearOperator
 from sympde.core.utils import random_string
 from .space import ScalarTestFunction, VectorTestFunction, IndexedTestTrial
-from .space import Unknown
 from .space import ScalarField, VectorField, IndexedVectorField
 from .domain import Domain
 

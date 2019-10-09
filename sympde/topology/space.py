@@ -429,9 +429,13 @@ class ScalarTestFunction(Symbol):
     >>> V = SplineFemSpace('V')
     >>> phi = ScalarTestFunction(V, 'phi')
     """
-    _space = None
     is_commutative = True
+    _space         = None
+    _projection_of = None
+
     def __new__(cls, space, name=None):
+        if not isinstance(space, ScalarFunctionSpace):
+            raise ValueError('Expecting a ScalarFunctionSpace')
         obj = Symbol.__new__(cls, name)
         obj._space = space
         return obj
@@ -444,8 +448,15 @@ class ScalarTestFunction(Symbol):
     def ldim(self):
         return self.space.ldim
 
+    @property
+    def projection_of(self):
+        return self._projection_of
+
     def duplicate(self, name):
         return ScalarTestFunction(self.space, name)
+
+    def set_as_projection(self, expr):
+        self._projection_of = expr
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -516,11 +527,12 @@ class VectorTestFunction(Symbol, IndexedBase):
 
     """
     is_commutative = True
-    _space = None
+    _space         = None
+    _projection_of = None
+
     def __new__(cls, space, name=None):
         if not isinstance(space, VectorFunctionSpace):
             raise ValueError('Expecting a VectorFunctionSpace')
-
         obj = Basic.__new__(cls, name)
         obj._space = space
         return obj
@@ -542,6 +554,10 @@ class VectorTestFunction(Symbol, IndexedBase):
     def ldim(self):
         return self.space.ldim
 
+    @property
+    def projection_of(self):
+        return self._projection_of
+
     def __getitem__(self, *args):
 
         if self.shape and len(self.shape) != len(args):
@@ -562,6 +578,8 @@ class VectorTestFunction(Symbol, IndexedBase):
     def duplicate(self, name):
         return VectorTestFunction(self.space, name)
 
+    def set_as_projection(self, expr):
+        self._projection_of = expr
 
 #==============================================================================
 # this is implemented as a function, it would be better to have it as a class
@@ -590,60 +608,6 @@ def TestFunction(space, name=None):
 
     else:
         raise TypeError('Wrong space type. given {}'.format(type(space)))
-
-#==============================================================================
-# TODO not tested yet
-# this is implemented as a function, it would be better to have it as a class
-def Field(space, name=None):
-
-    if isinstance(space, ScalarFunctionSpace):
-        return ScalarField(space, name=name)
-
-    elif isinstance(space, VectorFunctionSpace):
-        return VectorField(space, name=name)
-
-    elif isinstance(space, ProductSpace):
-
-        if not(name is None):
-            assert(isinstance(name, (tuple, list, Tuple)))
-            assert(len(name) == len(space.spaces))
-
-        else:
-            name = [None for V in space.spaces]
-
-        args = []
-        for V, n in zip(space.spaces, name):
-            args += [Field(V, name=n)]
-
-        return Tuple(*args)
-
-    else:
-        raise TypeError('Wrong space type. given {}'.format(type(space)))
-
-#==============================================================================
-# TODO to be removed
-class Unknown(ScalarTestFunction):
-    """
-    Represents an unknown function
-
-    """
-    def __new__(cls, name, domain):
-        space_name = 'space_{}'.format(abs(hash(name)))
-        V = ScalarFunctionSpace(space_name, domain)
-        return ScalarTestFunction.__new__(cls, V, name)
-
-
-#==============================================================================
-# TODO to be removed
-class VectorUnknown(VectorTestFunction):
-    """
-    Represents an unknown function
-
-    """
-    def __new__(cls, name, domain, shape):
-        space_name = 'space_{}'.format(abs(hash(name)))
-        V = VectorFunctionSpace(space_name, domain)
-        return VectorTestFunction.__new__(cls, V, name)
 
 #==============================================================================
 class ScalarField(Symbol):
@@ -899,13 +863,9 @@ class Projector(Basic):
                 if expr.projection_of.projector.space is V:
                     return expr
 
-        name = 'Proj_' + random_string( 4 )
-        if isinstance(V, ScalarFunctionSpace):
-            F = ScalarField(V, name)
-
-        elif isinstance(V, VectorFunctionSpace):
-            F = VectorField(V, name)
-
+        if isinstance(V, (ScalarFunctionSpace, VectorFunctionSpace)):
+            name = 'Proj_' + random_string( 4 )
+            F = element_of(V, name)
         else:
             raise TypeError('Only scalar and vector space are handled')
 

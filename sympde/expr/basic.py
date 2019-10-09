@@ -52,7 +52,6 @@ from sympde.topology.space import ProductSpace
 from sympde.topology.space import ScalarTestFunction
 from sympde.topology.space import VectorTestFunction
 from sympde.topology.space import IndexedTestTrial
-from sympde.topology.space import Unknown, VectorUnknown
 from sympde.topology.space import Trace
 from sympde.topology.space import ScalarField, VectorField, IndexedVectorField
 from sympde.topology.measure import CanonicalMeasure
