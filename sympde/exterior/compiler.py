@@ -2,47 +2,45 @@
 
 # TODO - assert the space type is not Undefined
 
-from numpy import unique
 from collections import OrderedDict
 
-from sympy.core import Basic
-from sympy.tensor import Indexed, IndexedBase
-from sympy.core import Symbol
-from sympy.core import Expr
-from sympy.core.containers import Tuple
-from sympy import Function
-from sympy import Integer, Float
-from sympy.core.singleton import Singleton
-from sympy.core.compatibility import with_metaclass
-from sympy.core import Add, Mul
-from sympy.core.singleton import S
+from sympy import Basic
+from sympy import Add, Mul
+from sympy import S
+from sympy import Indexed
+from sympy import Tuple
 
 from sympde.core.basic import _coeffs_registery
 from sympde.core.basic import CalculusFunction
-from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
-from sympde.topology import H1SpaceType, HcurlSpaceType, HdivSpaceType
-from sympde.topology import L2SpaceType, UndefinedSpaceType
-from sympde.topology import TestFunction, ScalarTestFunction, VectorTestFunction
-from sympde.topology import Field, ScalarField, VectorField
-from sympde.topology.space import _is_sympde_atom
-from sympde.topology.space import _is_test_function
-from sympde.topology.space import _is_field
-from sympde.calculus.core import _is_op_test_function
-from sympde.calculus.core import _is_op_field
-from sympde.calculus import Grad, Curl, Div
-from sympde.calculus import Dot, Inner, Cross
+from sympde.topology   import H1SpaceType, HcurlSpaceType, HdivSpaceType
+from sympde.topology   import L2SpaceType, UndefinedSpaceType
+from sympde.topology   import ScalarTestFunction, VectorTestFunction
+from sympde.calculus   import Grad, Curl, Div
+from sympde.calculus   import Dot, Inner, Cross
 #from sympde.calculus import grad, dot, inner, cross, rot, curl, div
 
-from .form import DifferentialForm
+from .form     import DifferentialForm
 from .calculus import d, wedge, ip, ld
-from .calculus import delta, jp, Ld, hodge
+from .calculus import delta, jp, hodge
 from .calculus import AdjointExteriorDerivative
 
-_is_proxy = lambda u: _is_field(u) or isinstance(u, Tuple)
+#==============================================================================
 
+_is_function      = lambda u: isinstance(u, (ScalarTestFunction, VectorTestFunction))
+_is_test_function = lambda u: _is_function(u) and not isinstance(u.space.kind, UndefinedSpaceType)
+_is_field         = lambda u: _is_function(u) and     isinstance(u.space.kind, UndefinedSpaceType)
+_is_proxy         = lambda u: _is_field(u) or isinstance(u, Tuple)
+
+_is_op_test_function = lambda op: (isinstance(op, (Grad, Curl, Div)) and
+                                   _is_test_function(op.args[0]))
 
 #==============================================================================
 def _decompose_lie_derivative(*args):
+
+    #---------------------------------------
+    # Try to extract Grad and Cross terms
+    #---------------------------------------
+
     # ... 1 form
     grad_term  = [i for i in args if (isinstance(i, Grad) and
                                       isinstance(i._args[0], Dot))]
@@ -53,23 +51,50 @@ def _decompose_lie_derivative(*args):
                                        isinstance(i._args[1], Curl)))]
 
     if grad_term and cross_term:
-        return grad_term, cross_term
-    # ...
+        others = [i for i in args if i not in (grad_term + cross_term)]
+        return grad_term, cross_term, others
 
-    # ... 1 form
-    curl_term  = [i for i in args if (isinstance(i, Curl) and
-                                      isinstance(i._args[0], Cross))]
+    #---------------------------------------
+    # Try to extract Curl and Mul terms
+    #---------------------------------------
+    curl_term = []
+    mul_term  = []
+    others    = []
 
-    # TODO improve
-    mul_term = [i for i in args if (isinstance(i, Mul) and
-                                      (isinstance(i._args[0], Div) or
-                                       isinstance(i._args[1], Div)))]
+    for i in args:
+
+        # ... 1 form
+        if isinstance(i, Curl) and isinstance(i.args[0], Cross):
+            curl_term.append(i)
+
+        # Special case to handle anti-commutativity of Curl operator:
+        # Mul(-1, Curl(Cross(a, b))) --> Curl(Cross(b, a))
+        # TODO avoid this hack
+        elif (isinstance(i, Mul) and len(i.args) == 2 and i.args[0] == -1 and
+              isinstance(i.args[1], Curl) and
+              isinstance(i.args[1].args[0], Cross)
+              ):
+            a, b = i.args[1].args[0].args
+            new_cross = Cross(b, a, evaluate=False)
+            new_curl  = Curl(new_cross)
+            curl_term.append(new_curl)
+
+        # TODO improve
+        elif (isinstance(i, Mul) and (isinstance(i.args[0], Div) or
+                                      isinstance(i.args[1], Div)) ):
+            mul_term.append(i)
+
+        else:
+            others.append(i)
 
     if curl_term and mul_term:
-        return curl_term, mul_term
-    # ...
+        return curl_term, mul_term, others
 
-    return [], []
+    #---------------------------------------
+    # Unsuccessful: return input arguments
+    #---------------------------------------
+
+    return [], [], args
 
 #==============================================================================
 class ExteriorCalculusExpr(CalculusFunction):
@@ -110,7 +135,7 @@ class ExteriorCalculusExpr(CalculusFunction):
 
         assert(isinstance(atoms, (dict, OrderedDict)))
 
-        if isinstance(expr, (ScalarField, VectorField)):
+        if _is_field(expr):
             return expr
 
         if isinstance(expr, (tuple, list, Tuple)):
@@ -120,6 +145,7 @@ class ExteriorCalculusExpr(CalculusFunction):
             return expr
 
         if _is_test_function(expr):
+
             name = expr.name
             dim  = expr.space.ldim
             kind = expr.space.kind
@@ -288,8 +314,8 @@ class ExteriorCalculusExpr(CalculusFunction):
             left, right = expr._args[:]
 
             if isinstance(left, Grad) and isinstance(right, Grad):
-                if (_is_test_function(left._args[0]) and
-                    _is_test_function(right._args[0])):
+                if (_is_function(left._args[0]) and
+                    _is_function(right._args[0])):
 
                     left  = left._args[0]
                     right = right._args[0]
@@ -311,6 +337,7 @@ class ExteriorCalculusExpr(CalculusFunction):
                     return expr
 
                 else:
+
                     raise NotImplementedError('')
 
             else:
@@ -318,18 +345,15 @@ class ExteriorCalculusExpr(CalculusFunction):
 
         if isinstance(expr, Add):
             # looking for Lie derivative terms
-            a, b = _decompose_lie_derivative(*expr.args)
+            a, b, c = _decompose_lie_derivative(*expr.args)
 
             newargs = []
 
             for ai in a:
                 for bi in b:
 
-                    ai_tests  = list(ai.atoms(ScalarTestFunction))
-                    ai_tests += list(ai.atoms(VectorTestFunction))
-
-                    bi_tests  = list(bi.atoms(ScalarTestFunction))
-                    bi_tests += list(bi.atoms(VectorTestFunction))
+                    ai_tests = [i for i in ai.atoms() if _is_test_function(i)]
+                    bi_tests = [i for i in bi.atoms() if _is_test_function(i)]
 
                     test = set(ai_tests) & set(bi_tests)
                     test = list(test)
@@ -408,9 +432,7 @@ class ExteriorCalculusExpr(CalculusFunction):
                     elif len(test) > 1:
                         raise ValueError('wrong expression')
 
-            args = [i for i in expr.args if not(i in a) and not(i in b)]
-            args = [cls.eval(i, tests=tests, atoms=atoms) for i in args]
-            args += newargs
+            args = [cls.eval(i, tests=tests, atoms=atoms) for i in c] + newargs
             return Add(*args)
 
         if isinstance(expr, Mul):
