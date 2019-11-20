@@ -82,21 +82,18 @@ class InteriorDomain(BasicDomain):
 #==============================================================================
 # TODO remove redundancy
 class Union(BasicDomain):
+
     def __new__(cls, *args):
+
         args = Tuple(*args)
-        if not all( [isinstance(i, BasicDomain) for i in args] ):
+        if not all(isinstance(i, BasicDomain) for i in args):
             raise TypeError('arguments must be of BasicDomain type')
 
-        assert(len(args) > 1)
-
-        dim = args[0].dim
-        dims = [a.dim for a in args[1:]]
-        #TODO
-     #   if not all( [d == dim for d in dims]):
-     #       raise ValueError('arguments must have the same dimension')
+        if len({a.dim for a in args if a}) > 1:
+            raise ValueError('arguments must have the same dimension')
 
         # ...
-        unions = [a for a in args if isinstance(a, Union)]
+        unions = [a for a in args if     isinstance(a, Union)]
         args   = [a for a in args if not isinstance(a, Union)]
         for union in unions:
             args += list(union.as_tuple())
@@ -109,7 +106,8 @@ class Union(BasicDomain):
 
     @property
     def dim(self):
-        return self._args[0].dim
+        if self._args:
+            return self._args[0].dim
 
     def __len__(self):
         return len(self._args)
@@ -117,15 +115,14 @@ class Union(BasicDomain):
     def complement(self, arg):
         if isinstance(arg, Union):
             arg = arg._args
-
         elif isinstance(arg, BasicDomain):
             arg = [arg]
-
-        ls = [i for i in self._args if not(i in arg)]
-        if len(ls) > 1:
-            return Union(*ls)
+        elif isinstance(arg, (list, tuple, Tuple)):
+            pass
         else:
-            return ls[0]
+            TypeError('Invalid argument {}'.format(arg))
+
+        return Union(*[i for i in self._args if (i not in arg)])
 
     def __sub__(self, other):
         return self.complement(other)
