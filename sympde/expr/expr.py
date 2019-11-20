@@ -373,19 +373,24 @@ class LinearForm(BasicForm):
     def ldim(self):
         return self.test_spaces[0].ldim
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *tests, **kwargs):
 
-        # ... use free variables if given and available
+        # Use free variables if given and available
         expr = self._update_free_variables(**kwargs)
-        # ...
 
-        # ...
-        args = Tuple(*args)
+        # Make sure that 'values' is always a list
+        if len(tests) == 1:
+            values = tests[0]
+            if not is_sequence(values):
+                values = [values]
+        else:
+            values = tests
+
+        # Substitute variables with given values in linear expression
         variables = self.variables
+        subs      = dict(zip(variables, values))
+        expr, _   = expr._xreplace(subs)
 
-        subs    = dict(zip(variables, args))
-        expr, _ = expr._xreplace(subs)
-        # ...
         return expr
 
 #==============================================================================
@@ -482,42 +487,27 @@ class BilinearForm(BasicForm):
     def is_symmetric(self):
         if self._is_symmetric is None:
             left, right = self.variables
-            a1 = self(left, right)
-            a2 = self(right, left)
-            a1 = expand(a1)
-            a2 = expand(a2)
-#            print(a1)
-#            print(a2)
-            value = a1 == a2
-
-            self._is_symmetric = value
-
+            a1 = expand(self(left, right))
+            a2 = expand(self(right, left))
+            self._is_symmetric = (a1 == a2)
         return self._is_symmetric
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, trials, tests, **kwargs):
 
-        # ... use free variables if given and available
+        # Use free variables if given and available
         expr = self._update_free_variables(**kwargs)
-        # ...
 
-        # ...
-        assert(len(args) == 2)
+        # If needed, convert positional arguments to lists
+        if not is_sequence(trials): trials = [trials]
+        if not is_sequence(tests ): tests  = [tests ]
 
-        new_args = []
+        # Concatenate input values into single list
+        values = [*trials, *tests]
 
-        for arg in args:
-
-            if is_sequence(arg):
-                new_args += list(arg)
-            else:
-                new_args.append(arg)
-
-        args = Tuple(*new_args)
-
-        variables = Tuple(*self.variables[0], *self.variables[1])
-        subs      = dict(zip(variables, args))
+        # Substitute variables with given values in bilinear expression
+        variables = [*self.variables[0], *self.variables[1]]
+        subs      = dict(zip(variables, values))
         expr, _   = expr._xreplace(subs)
-        # ...
 
         return expr
 
