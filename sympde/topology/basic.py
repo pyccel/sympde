@@ -82,30 +82,40 @@ class InteriorDomain(BasicDomain):
 #==============================================================================
 # TODO remove redundancy
 class Union(BasicDomain):
+
     def __new__(cls, *args):
-        args = Tuple(*args)
-        if not all( [isinstance(i, BasicDomain) for i in args] ):
+
+        # Discard empty Unions (represented as None) from args
+        args = Tuple(*[a for a in args if a is not None])
+
+        # Verify types
+        if not all(isinstance(a, BasicDomain) for a in args):
             raise TypeError('arguments must be of BasicDomain type')
 
-        assert(len(args) > 1)
+        # Verify dimensionality
+        if len({a.dim for a in args}) > 1:
+            raise ValueError('arguments must have the same dimension')
 
-        dim = args[0].dim
-        dims = [a.dim for a in args[1:]]
-        #TODO
-     #   if not all( [d == dim for d in dims]):
-     #       raise ValueError('arguments must have the same dimension')
-
-        # ...
-        unions = [a for a in args if isinstance(a, Union)]
+        # Flatten arguments into a single list of domains
+        unions = [a for a in args if     isinstance(a, Union)]
         args   = [a for a in args if not isinstance(a, Union)]
         for union in unions:
             args += list(union.as_tuple())
-        # ...
 
-        # sort domains by name
+        # Sort domains by name
         args = sorted(args, key=lambda x: x.name)
 
-        return Basic.__new__(cls, *args)
+        # a. If the required Union contains no domains, return None;
+        # b. If it contains a single domain, return the domain itself;
+        # c. If it contains multiple domains, create a Union object.
+        if not args:
+            obj = None
+        elif len(args) == 1:
+            obj = args[0]
+        else:
+            obj = Basic.__new__(cls, *args)
+
+        return obj
 
     @property
     def dim(self):
@@ -117,15 +127,14 @@ class Union(BasicDomain):
     def complement(self, arg):
         if isinstance(arg, Union):
             arg = arg._args
-
         elif isinstance(arg, BasicDomain):
             arg = [arg]
-
-        ls = [i for i in self._args if not(i in arg)]
-        if len(ls) > 1:
-            return Union(*ls)
+        elif arg is None:
+            return self
         else:
-            return ls[0]
+            TypeError('Invalid argument {}'.format(arg))
+
+        return Union(*[i for i in self._args if (i not in arg)])
 
     def __sub__(self, other):
         return self.complement(other)
