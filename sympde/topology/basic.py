@@ -274,11 +274,20 @@ class Interface(BasicDomain):
 
     """
     def __new__(cls, edge, bnd_minus, bnd_plus):
-        assert(isinstance(edge, Edge))
-        assert(isinstance(bnd_minus, Boundary))
-        assert(isinstance(bnd_plus, Boundary))
+
+        if not isinstance(edge     , Edge    ): raise TypeError(edge)
+        if not isinstance(bnd_minus, Boundary): raise TypeError(bnd_minus)
+        if not isinstance(bnd_plus , Boundary): raise TypeError(bnd_plus)
+
+        if bnd_minus.dim != bnd_plus.dim:
+            raise TypeError('Dimension mismatch: {} != {}'.format(
+                bnd_minus.dim, bnd_plus.dim))
 
         return Basic.__new__(cls, edge.name, bnd_minus, bnd_plus)
+
+    @property
+    def dim(self):
+        return self.minus.dim
 
     @property
     def name(self):
