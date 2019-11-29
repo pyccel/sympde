@@ -502,7 +502,7 @@ class BilinearForm(BasicForm):
         if not is_sequence(tests ): tests  = [tests ]
 
         # Concatenate input values into single list
-        values = trials + tests
+        values = [*trials, *tests]
 
         # Substitute variables with given values in bilinear expression
         variables = [*self.variables[0], *self.variables[1]]
