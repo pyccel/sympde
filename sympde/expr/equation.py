@@ -373,7 +373,7 @@ class NewtonIteration(Equation):
         lhs = a
         rhs = LinearForm(tests, -form.expr)
 
-        return Equation.__new__(cls, lhs, rhs, trials, tests, bc=bc)
+        return Equation.__new__(cls, lhs, rhs, trials, tests, bc)
 
 #==============================================================================
 # user friendly function to create Equation objects
