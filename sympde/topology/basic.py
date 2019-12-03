@@ -94,7 +94,10 @@ class Union(BasicDomain):
 
         # Verify dimensionality
         if len({a.dim for a in args}) > 1:
-            raise ValueError('arguments must have the same dimension')
+            dims = ', '.join(str(a.dim) for a in args)
+            msg  = 'arguments must have the same dimension, '\
+                   'given [{}] instead'.format(dims)
+            raise ValueError(msg)
 
         # Flatten arguments into a single list of domains
         unions = [a for a in args if     isinstance(a, Union)]

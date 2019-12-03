@@ -442,6 +442,7 @@ class Line(Domain):
 
 
 #==============================================================================
+# TODO: verify is the boundaries' domain should be a 1D Interval instead
 class Square(Domain):
     def __new__(cls, name=None):
         if name is None:
@@ -473,6 +474,7 @@ class Square(Domain):
                       boundaries=boundaries, dtype=dtype)
 
 #==============================================================================
+# TODO: verify is the boundaries' domain should be a 2D ProductDomain instead
 class Cube(Domain):
     def __new__(cls, name=None):
         if name is None:
@@ -494,8 +496,7 @@ class Cube(Domain):
         for axis in range(interior.dim):
             for ext in [-1, 1]:
                 bnd_name = r'\Gamma_{}'.format(i)
-                I = interior.domains[axis]
-                Gamma = Boundary(bnd_name, I, axis=axis, ext=ext)
+                Gamma = Boundary(bnd_name, interior, axis=axis, ext=ext)
                 boundaries += [Gamma]
 
                 i += 1
