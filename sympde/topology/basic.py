@@ -82,30 +82,43 @@ class InteriorDomain(BasicDomain):
 #==============================================================================
 # TODO remove redundancy
 class Union(BasicDomain):
+
     def __new__(cls, *args):
-        args = Tuple(*args)
-        if not all( [isinstance(i, BasicDomain) for i in args] ):
+
+        # Discard empty Unions (represented as None) from args
+        args = Tuple(*[a for a in args if a is not None])
+
+        # Verify types
+        if not all(isinstance(a, BasicDomain) for a in args):
             raise TypeError('arguments must be of BasicDomain type')
 
-        assert(len(args) > 1)
+        # Verify dimensionality
+        if len({a.dim for a in args}) > 1:
+            dims = ', '.join(str(a.dim) for a in args)
+            msg  = 'arguments must have the same dimension, '\
+                   'given [{}] instead'.format(dims)
+            raise ValueError(msg)
 
-        dim = args[0].dim
-        dims = [a.dim for a in args[1:]]
-        #TODO
-     #   if not all( [d == dim for d in dims]):
-     #       raise ValueError('arguments must have the same dimension')
-
-        # ...
-        unions = [a for a in args if isinstance(a, Union)]
+        # Flatten arguments into a single list of domains
+        unions = [a for a in args if     isinstance(a, Union)]
         args   = [a for a in args if not isinstance(a, Union)]
         for union in unions:
             args += list(union.as_tuple())
-        # ...
 
-        # sort domains by name
+        # Sort domains by name
         args = sorted(args, key=lambda x: x.name)
 
-        return Basic.__new__(cls, *args)
+        # a. If the required Union contains no domains, return None;
+        # b. If it contains a single domain, return the domain itself;
+        # c. If it contains multiple domains, create a Union object.
+        if not args:
+            obj = None
+        elif len(args) == 1:
+            obj = args[0]
+        else:
+            obj = Basic.__new__(cls, *args)
+
+        return obj
 
     @property
     def dim(self):
@@ -117,15 +130,14 @@ class Union(BasicDomain):
     def complement(self, arg):
         if isinstance(arg, Union):
             arg = arg._args
-
         elif isinstance(arg, BasicDomain):
             arg = [arg]
-
-        ls = [i for i in self._args if not(i in arg)]
-        if len(ls) > 1:
-            return Union(*ls)
+        elif arg is None:
+            return self
         else:
-            return ls[0]
+            TypeError('Invalid argument {}'.format(arg))
+
+        return Union(*[i for i in self._args if (i not in arg)])
 
     def __sub__(self, other):
         return self.complement(other)
@@ -274,11 +286,20 @@ class Interface(BasicDomain):
 
     """
     def __new__(cls, edge, bnd_minus, bnd_plus):
-        assert(isinstance(edge, Edge))
-        assert(isinstance(bnd_minus, Boundary))
-        assert(isinstance(bnd_plus, Boundary))
+
+        if not isinstance(edge     , Edge    ): raise TypeError(edge)
+        if not isinstance(bnd_minus, Boundary): raise TypeError(bnd_minus)
+        if not isinstance(bnd_plus , Boundary): raise TypeError(bnd_plus)
+
+        if bnd_minus.dim != bnd_plus.dim:
+            raise TypeError('Dimension mismatch: {} != {}'.format(
+                bnd_minus.dim, bnd_plus.dim))
 
         return Basic.__new__(cls, edge.name, bnd_minus, bnd_plus)
+
+    @property
+    def dim(self):
+        return self.minus.dim
 
     @property
     def name(self):

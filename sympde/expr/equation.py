@@ -36,11 +36,6 @@ class EssentialBC(BasicBoundaryCondition):
 
     def __new__(cls, lhs, rhs, boundary, position=None, index_component=None):
         # ...
-        rhs = parse_expr(str(rhs))
-        if not isinstance(rhs, Expr):
-            raise ValueError('only sympy Expr are accepted')
-        # ...
-        # ...
         normal_component = False
         # ...
 
@@ -195,7 +190,7 @@ class Mean(BasicConstraint):
 #        formulation and strong condition
 class Equation(Basic):
 
-    def __new__(cls, lhs, rhs, tests, trials, bc=None, constraint=None):
+    def __new__(cls, lhs, rhs, trials, tests, bc=None, constraint=None):
         # ...
         if not isinstance(lhs, BilinearForm):
             raise UnconsistentLhsError('> lhs must be a bilinear')
@@ -333,11 +328,11 @@ class Equation(Basic):
         # ...
 
         # ... sympify tests/trials
-        tests = Tuple(*tests)
         trials = Tuple(*trials)
+        tests  = Tuple(*tests)
         # ...
 
-        return Basic.__new__(cls, lhs, rhs, tests, trials, bc, constraint)
+        return Basic.__new__(cls, lhs, rhs, trials, tests, bc, constraint)
 
     @property
     def lhs(self):
@@ -373,36 +368,19 @@ class NewtonIteration(Equation):
 
         a = linearize(form, fields, trials=trials)
 
-        trials, tests  = a.variables
+        trials, tests = a.variables
 
         lhs = a
+        rhs = LinearForm(tests, -form.expr)
 
-        form = LinearForm(tests, -form.expr)
-        rhs = form
-
-        return Equation.__new__(cls, lhs, rhs, tests, trials, bc=bc)
+        return Equation.__new__(cls, lhs, rhs, trials, tests, bc)
 
 #==============================================================================
 # user friendly function to create Equation objects
-def find(trials, *, forall, lhs, rhs, **kwargs):
+def find(trials, *, forall, lhs, rhs, bc=None, constraint=None):
 
-    bc = kwargs.pop('bc', None)
-    constraint = kwargs.pop('constraint', None)
+    tests = forall
+    lhs = BilinearForm((trials, tests), lhs)
+    rhs =   LinearForm(         tests , rhs)
 
-    lhs = BilinearForm((trials, forall), lhs)
-    rhs = LinearForm( forall, rhs)
-
-    return Equation(lhs, rhs, forall, trials, bc=bc, constraint=constraint)
-
-#    elif isinstance(lhs, LinearForm):
-#        fields = kwargs.pop('fields', None)
-#        if fields is None:
-#            raise ValueError('Expecting a fields')
-#
-#        rhs = kwargs.pop('rhs', None)
-#        assert((rhs is None) or (rhs == 0))
-#
-#        return NewtonIteration(lhs, fields, bc=bc, trials=trials)
-#
-#    else:
-#        raise NotImplementedError('')
+    return Equation(lhs, rhs, trials, tests, bc=bc, constraint=constraint)
