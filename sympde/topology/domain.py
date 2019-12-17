@@ -11,10 +11,10 @@ from collections import abc
 
 from sympy import Integer
 from sympy.core.singleton import Singleton
-from sympy.core.compatibility import with_metaclass
-from sympy.core import Basic, Symbol, symbols
+from sympy.core.compatibility import with_metaclass, is_sequence
+from sympy.core import Basic, symbols
 from sympy.core.containers import Tuple
-from sympy.tensor import IndexedBase
+from sympy.tensor import IndexedBase, Indexed
 from sympy.core import Add, Mul, Pow
 from sympy.core.expr import AtomicExpr
 
@@ -506,7 +506,7 @@ class NCube(Domain):
                                     'max_coords': [*max_coords]}}
 
         # Create instance of given type
-        obj = Domain.__new__(cls, name, interiors=[interior],
+        obj = super().__new__(cls, name, interiors=[interior],
                 boundaries=boundaries, dtype=dtype)
 
         # Store attributes in object
@@ -534,10 +534,10 @@ class NCube(Domain):
 class Line(NCube):
 
     def __new__(cls, name='Line', bounds=(0, 1)):
-
-        return NCube.__new__(cls, name=name, dim=1,
-                min_coords=(bounds[0],),
-                max_coords=(bounds[1],))
+        dim = 1
+        min_coords = (bounds[0],)
+        max_coords = (bounds[1],)
+        return super().__new__(cls, name, dim, min_coords, max_coords)
 
     @property
     def bounds(self):
@@ -547,10 +547,10 @@ class Line(NCube):
 class Square(NCube):
 
     def __new__(cls, name='Square', bounds1=(0, 1), bounds2=(0, 1)):
-
-        return NCube.__new__(cls, name=name, dim=2,
-                min_coords=(bounds1[0], bounds2[0]),
-                max_coords=(bounds1[1], bounds2[1]))
+        dim = 2
+        min_coords = (bounds1[0], bounds2[0])
+        max_coords = (bounds1[1], bounds2[1])
+        return super().__new__(cls, name, dim, min_coords, max_coords)
 
     @property
     def bounds1(self):
@@ -564,10 +564,10 @@ class Square(NCube):
 class Cube(NCube):
 
     def __new__(cls, name='Cube', bounds1=(0, 1), bounds2=(0, 1), bounds3=(0, 1)):
-
-        return NCube.__new__(cls, name=name, dim=3,
-                min_coords=(bounds1[0], bounds2[0], bounds3[0]),
-                max_coords=(bounds1[1], bounds2[1], bounds3[1]))
+        dim = 3
+        min_coords = (bounds1[0], bounds2[0], bounds3[0])
+        max_coords = (bounds1[1], bounds2[1], bounds3[1])
+        return super().__new__(cls, name, dim, min_coords, max_coords)
 
     @property
     def bounds1(self):
