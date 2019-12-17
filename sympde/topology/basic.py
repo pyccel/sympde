@@ -62,7 +62,7 @@ class InteriorDomain(BasicDomain):
 
     @property
     def name(self):
-        return self._args[0]
+        return self.args[0]
 
     @property
     def target(self):
@@ -122,14 +122,14 @@ class Union(BasicDomain):
 
     @property
     def dim(self):
-        return self._args[0].dim
+        return self.args[0].dim
 
     def __len__(self):
-        return len(self._args)
+        return len(self.args)
 
     def complement(self, arg):
         if isinstance(arg, Union):
-            arg = arg._args
+            arg = arg.args
         elif isinstance(arg, BasicDomain):
             arg = [arg]
         elif arg is None:
@@ -137,16 +137,16 @@ class Union(BasicDomain):
         else:
             TypeError('Invalid argument {}'.format(arg))
 
-        return Union(*[i for i in self._args if (i not in arg)])
+        return Union(*[i for i in self.args if (i not in arg)])
 
     def __sub__(self, other):
         return self.complement(other)
 
     def todict(self):
-        return [i.todict() for i in self._args]
+        return [i.todict() for i in self.args]
 
     def as_tuple(self):
-        ls = [i for i in self._args]
+        ls = [i for i in self.args]
         return tuple(ls)
 
 #==============================================================================
@@ -161,11 +161,12 @@ class ProductDomain(BasicDomain):
         obj = Basic.__new__(cls, *args)
         obj._dim = sum(i.dim for i in args)
         obj._name = name
+
         return obj
 
     @property
     def domains(self):
-        return self._args
+        return self.args
 
 #==============================================================================
 class Interval(InteriorDomain):
@@ -193,7 +194,7 @@ class Interval(InteriorDomain):
 
     @property
     def name(self):
-        return self._args[0]
+        return self.args[0]
 
     @property
     def bounds(self):
@@ -223,7 +224,7 @@ class Boundary(BasicDomain):
 
     @property
     def name(self):
-        return self._args[0]
+        return self.args[0]
 
     @property
     def domain(self):
@@ -303,15 +304,15 @@ class Interface(BasicDomain):
 
     @property
     def name(self):
-        return self._args[0]
+        return self.args[0]
 
     @property
     def minus(self):
-        return self._args[1]
+        return self.args[1]
 
     @property
     def plus(self):
-        return self._args[2]
+        return self.args[2]
 
     def _sympystr(self, printer):
         sstr = printer.doprint

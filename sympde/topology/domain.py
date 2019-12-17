@@ -127,15 +127,15 @@ class Domain(BasicDomain):
 
     @property
     def name(self):
-        return self._args[0]
+        return self.args[0]
 
     @property
     def interior(self):
-        return self._args[1]
+        return self.args[1]
 
     @property
     def boundary(self):
-        return self._args[2]
+        return self.args[2]
 
     @property
     def connectivity(self):
@@ -166,7 +166,7 @@ class Domain(BasicDomain):
             return [self.interior.name]
 
         elif isinstance(self.interior, Union):
-            return [i.name for i in self.interior._args]
+            return [i.name for i in self.interior.args]
 
 
     def _sympystr(self, printer):
@@ -206,7 +206,7 @@ class Domain(BasicDomain):
         # ...
 
         if isinstance(self.boundary, Union):
-            x = [i for i in self.boundary._args if i.name == name]
+            x = [i for i in self.boundary.args if i.name == name]
             if len(x) == 0:
                 raise ValueError('> could not find boundary {}'.format(name))
 
@@ -222,7 +222,7 @@ class Domain(BasicDomain):
     def get_interior(self, name):
         """return interior by name."""
         if isinstance(self.interior, Union):
-            x = [i for i in self.interior._args if i.name == name]
+            x = [i for i in self.interior.args if i.name == name]
             if len(x) == 0:
                 raise ValueError('> could not find interior {}'.format(name))
 
@@ -540,7 +540,7 @@ class BasicArea(AtomicExpr):
 
     @property
     def domain(self):
-        return self._args[0]
+        return self.args[0]
 
 class DomainArea(BasicArea):
     pass
@@ -575,20 +575,18 @@ class Area(BasicGeometryOperator):
             return r
 
     @classmethod
-    def eval(cls, *_args):
+    def eval(cls, *args):
         """."""
 
-        if not _args:
+        if not args:
             return
 
-        if not len(_args) == 1:
+        if not len(args) == 1:
             raise ValueError('Expecting one argument')
 
-        expr = _args[0]
+        expr = args[0]
         if isinstance(expr, Union):
-            args = expr._args
-            args = [cls.eval(a) for a in expr.args]
-            return Add(*args)
+            return Add(*[cls.eval(a) for a in expr.args])
 
         elif isinstance(expr, ElementDomain):
             return ElementArea(expr)
