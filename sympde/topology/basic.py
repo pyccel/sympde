@@ -210,16 +210,14 @@ class Boundary(BasicDomain):
     """
     def __new__(cls, name, domain, axis=None, ext=None):
 
-        if not( axis is None ):
-            assert(isinstance(axis, int))
+        if axis is not None:
+            assert isinstance(axis, int)
 
-        if not( ext is None ):
-            assert(isinstance(ext, int))
+        if ext is not None:
+            assert isinstance(ext, int)
 
-        obj = Basic.__new__(cls, name)
-        obj._domain = domain
-        obj._axis = axis
-        obj._ext = ext
+        obj = Basic.__new__(cls, name, domain, axis, ext)
+
         return obj
 
     @property
@@ -228,19 +226,19 @@ class Boundary(BasicDomain):
 
     @property
     def domain(self):
-        return self._domain
+        return self.args[1]
+
+    @property
+    def axis(self):
+        return self.args[2]
+
+    @property
+    def ext(self):
+        return self.args[3]
 
     @property
     def dim(self):
         return self.domain.dim
-
-    @property
-    def axis(self):
-        return self._axis
-
-    @property
-    def ext(self):
-        return self._ext
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -264,19 +262,6 @@ class Boundary(BasicDomain):
              'ext':   ext}
 
         return OrderedDict(sorted(d.items()))
-
-    def __hash__(self):
-        return hash(self.name)
-
-    def __lt__(self, other):
-        #add this method to avoid sympy error in Basic.compare
-        return 0
-
-    def __eq__(self, other):
-        if not isinstance(other, Boundary):
-            return False
-
-        return ( self.name == other.name ) and ( self.domain is other.domain )
 
 #==============================================================================
 class Interface(BasicDomain):
