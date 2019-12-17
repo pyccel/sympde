@@ -9,9 +9,10 @@ import os
 from collections import OrderedDict
 from collections import abc
 
+from sympy import Integer
 from sympy.core.singleton import Singleton
 from sympy.core.compatibility import with_metaclass
-from sympy.core import Basic, Symbol
+from sympy.core import Basic, Symbol, symbols
 from sympy.core.containers import Tuple
 from sympy.tensor import IndexedBase
 from sympy.core import Add, Mul, Pow
@@ -293,8 +294,8 @@ class Domain(BasicDomain):
 
         if dtype == 'None': dtype = None
 
-        if not( dtype is None ):
-            constructor =  eval(dtype['type'])
+        if dtype is not None:
+            constructor = globals()[dtype['type']]
             return constructor(domain_name, **dtype['parameters'])
 
         # ... create sympde InteriorDomain (s)
@@ -421,75 +422,46 @@ class PeriodicDomain(BasicDomain):
         return self.domain.__hash__() + self._periods.__hash__()
 
 #==============================================================================
-class Line(Domain):
-    def __new__(cls, name=None, bounds=None):
-        if name is None:
-            name = 'Line'
+# Ncube's properties (in addition to Domain's properties):
+#   . min_coords (default value is tuple of zeros)
+#   . max_coords (default value is tuple of ones)
+#
+class NCube(Domain):
 
-        x  = Symbol('x')
-        Ix = Interval(name, coordinate=x, bounds=bounds)
+    def __new__(cls, name, dim, min_coords, max_coords):
 
-        Gamma_1 = Boundary(r'\Gamma_1', Ix, axis=0, ext=-1)
-        Gamma_2 = Boundary(r'\Gamma_2', Ix, axis=0, ext=1)
+        assert isinstance(name, str)
+        assert isinstance(dim, (int, Integer))
+        assert isinstance(min_coords, (tuple, list, Tuple))
+        assert isinstance(max_coords, (tuple, list, Tuple))
 
-        interior   = Ix
-        boundaries = [Gamma_1, Gamma_2]
+        if not name:
+            raise ValueError("Name must be provided")
 
-        dtype = {'type': 'Line', 'parameters': {}}
+        if dim < 1:
+            raise ValueError("Number of dimensions must be at least 1")
 
-        return Domain(name, interiors=[interior],
-                      boundaries=boundaries, dtype=dtype)
+        if not (dim == len(min_coords) == len(max_coords)):
+            raise ValueError("Input arguments must have 'dim' components")
 
+        if not all(xmin < xmax for xmin, xmax in zip(min_coords, max_coords)):
+            raise ValueError("Min coordinates must be smaller than max")
 
-#==============================================================================
-# TODO: verify is the boundaries' domain should be a 1D Interval instead
-class Square(Domain):
-    def __new__(cls, name=None):
-        if name is None:
-            name = 'Square'
+        # Choose coordinate names. TODO: use unique convention
+        if dim <= 3:
+            coord_names = ('x', 'y', 'z')[:dim]
+        else:
+            coord_names = 'x1:{}'.format(dim + 1)
 
-        x  = Symbol('x')
-        Ix = Interval('Ix', coordinate=x)
+        coordinates = symbols(coord_names)
+        intervals   = [Interval('I_{}'.format(c.name), coordinate=c, bounds=(xmin, xmax))
+                       for c, xmin, xmax in zip(coordinates, min_coords, max_coords)]
 
-        y  = Symbol('y')
-        Iy = Interval('Iy', coordinate=y)
-
-        interior = ProductDomain(Ix, Iy, name=name)
-
-        boundaries = []
-        i = 1
-        for axis in range(interior.dim):
-            for ext in [-1, 1]:
-                bnd_name = r'\Gamma_{}'.format(i)
-                Gamma = Boundary(bnd_name, interior, axis=axis, ext=ext)
-                boundaries += [Gamma]
-
-                i += 1
-
-        interior = InteriorDomain(interior)
-
-        dtype = {'type': 'Square', 'parameters': {}}
-
-        return Domain(name, interiors=[interior],
-                      boundaries=boundaries, dtype=dtype)
-
-#==============================================================================
-# TODO: verify is the boundaries' domain should be a 2D ProductDomain instead
-class Cube(Domain):
-    def __new__(cls, name=None):
-        if name is None:
-            name = 'Cube'
-
-        x  = Symbol('x')
-        Ix = Interval('Ix', coordinate=x)
-
-        y  = Symbol('y')
-        Iy = Interval('Iy', coordinate=y)
-
-        z  = Symbol('z')
-        Iz = Interval('Iz', coordinate=z)
-
-        interior = ProductDomain(Ix, Iy, Iz, name=name)
+        if len(intervals) == 1:
+            interior = intervals[0]
+        else:
+            interior = ProductDomain(*intervals, name=name)
+            interior = InteriorDomain(interior)
 
         boundaries = []
         i = 1
@@ -498,16 +470,116 @@ class Cube(Domain):
                 bnd_name = r'\Gamma_{}'.format(i)
                 Gamma = Boundary(bnd_name, interior, axis=axis, ext=ext)
                 boundaries += [Gamma]
-
                 i += 1
 
-        interior = InteriorDomain(interior)
+        # Choose which type to use:
+        #   a) if dim <= 3, use Line, Square or Cube;
+        #   b) if dim <= 4, use a generic 'NCube' type.
+        #
+        # Moreover, store all initialization parameters in a 'dtype' dictionary.
+        # This dictionary will be written to file when exporting the geometry,
+        # and it must contain all information necessary for building a new object
+        # by calling the appropriate constructor:
+        #
+        #   cls = globals()[dtype['type']]
+        #   domain = cls(name, **dtype['parameters'])
+        #
+        if dim == 1:
+            cls = Line
+            dtype = {'type': 'Line',
+                     'parameters': {'bounds': [min_coords[0], max_coords[0]]}}
+        elif dim == 2:
+            cls = Square
+            dtype = {'type': 'Square',
+                     'parameters': {'bounds1': [min_coords[0], max_coords[0]],
+                                    'bounds2': [min_coords[1], max_coords[1]]}}
+        elif dim == 3:
+            cls = Cube
+            dtype = {'type': 'Cube',
+                     'parameters': {'bounds1': [min_coords[0], max_coords[0]],
+                                    'bounds2': [min_coords[1], max_coords[1]],
+                                    'bounds3': [min_coords[2], max_coords[2]]}}
+        else:
+            dtype = {'type': 'NCube',
+                     'parameters': {'dim'       : dim,
+                                    'min_coords': [*min_coords],
+                                    'max_coords': [*max_coords]}}
 
-        dtype = {'type': 'Cube', 'parameters': {}}
+        # Create instance of given type
+        obj = Domain.__new__(cls, name, interiors=[interior],
+                boundaries=boundaries, dtype=dtype)
 
-        return Domain(name, interiors=[interior],
-                      boundaries=boundaries, dtype=dtype)
+        # Store attributes in object
+        obj._coordinates = tuple(coordinates)
+        obj._min_coords  = tuple(min_coords)
+        obj._max_coords  = tuple(max_coords)
 
+        # Return object
+        return obj
+
+    @classmethod
+    def from_file(cls, filename):
+        msg = "Class method 'from_file' must be called on 'Domain' base class"
+        raise TypeError(msg)
+
+    @property
+    def min_coords(self):
+        return self._min_coords
+
+    @property
+    def max_coords(self):
+        return self._max_coords
+
+#==============================================================================
+class Line(NCube):
+
+    def __new__(cls, name='Line', bounds=(0, 1)):
+
+        return NCube.__new__(cls, name=name, dim=1,
+                min_coords=(bounds[0],),
+                max_coords=(bounds[1],))
+
+    @property
+    def bounds(self):
+        return (self.min_coords[0], self.max_coords[0])
+
+#==============================================================================
+class Square(NCube):
+
+    def __new__(cls, name='Square', bounds1=(0, 1), bounds2=(0, 1)):
+
+        return NCube.__new__(cls, name=name, dim=2,
+                min_coords=(bounds1[0], bounds2[0]),
+                max_coords=(bounds1[1], bounds2[1]))
+
+    @property
+    def bounds1(self):
+        return (self.min_coords[0], self.max_coords[0])
+
+    @property
+    def bounds2(self):
+        return (self.min_coords[1], self.max_coords[1])
+
+#==============================================================================
+class Cube(NCube):
+
+    def __new__(cls, name='Cube', bounds1=(0, 1), bounds2=(0, 1), bounds3=(0, 1)):
+
+        return NCube.__new__(cls, name=name, dim=3,
+                min_coords=(bounds1[0], bounds2[0], bounds3[0]),
+                max_coords=(bounds1[1], bounds2[1], bounds3[1]))
+
+    @property
+    def bounds1(self):
+        return (self.min_coords[0], self.max_coords[0])
+
+    @property
+    def bounds2(self):
+        return (self.min_coords[1], self.max_coords[1])
+
+    @property
+    def bounds3(self):
+        return (self.min_coords[2], self.max_coords[2])
 
 #==============================================================================
 class BoundaryVector(IndexedBase):
