@@ -2,7 +2,7 @@
 
 from collections  import OrderedDict
 
-from sympy import Indexed, IndexedBase, Matrix, ImmutableDenseMatrix
+from sympy import Indexed, IndexedBase, Idx, Matrix, ImmutableDenseMatrix
 from sympy import Function
 from sympy import sympify
 from sympy.core import Basic
@@ -849,6 +849,9 @@ class SymbolicExpr(CalculusFunction):
             return expr
 
         elif isinstance(expr, Indexed):
+            return expr
+
+        elif isinstance(expr, Idx):
             return expr
 
         elif isinstance(expr, Function):
