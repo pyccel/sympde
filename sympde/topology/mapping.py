@@ -776,16 +776,13 @@ class SymbolicExpr(CalculusFunction):
 
             return Matrix(lines)
 
-        elif isinstance(expr, (ScalarField, ScalarTestFunction)):
+        elif isinstance(expr, (ScalarField, ScalarTestFunction, VectorField, VectorTestFunction)):
             if code:
                 name = '{name}_{code}'.format(name=expr.name, code=code)
             else:
                 name = str(expr.name)
 
             return Symbol(name)
-
-        elif isinstance(expr, (VectorField, VectorTestFunction)):
-            raise NotImplementedError('')
 
         elif isinstance(expr, Indexed):
             base = expr.base
