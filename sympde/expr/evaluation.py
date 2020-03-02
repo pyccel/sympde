@@ -1170,7 +1170,7 @@ class TensorExpr(CalculusFunction):
             d_atoms = {}
             for a in variables:
                 new = _split_test_function(a)
-                d_atoms[a] = new
+                d_atoms[a] = new[a]
             # ...
 
             # ...
