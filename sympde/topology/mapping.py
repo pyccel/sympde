@@ -12,6 +12,7 @@ from sympy.core.expr       import AtomicExpr
 from sympy.core.numbers    import ImaginaryUnit
 from sympy.core.containers import Tuple
 
+from sympde.topology import NormalVector, TangentVector
 from sympde.core       import Constant
 from sympde.core.basic import BasicMapping
 from sympde.core.basic import CalculusFunction
@@ -566,7 +567,7 @@ class LogicalExpr(CalculusFunction):
             else:
                 return expr
 
-        if isinstance(expr, Add):
+        elif isinstance(expr, Add):
             args = [cls.eval(M, a) for a in expr.args]
             return Add(*args)
 
@@ -586,7 +587,7 @@ class LogicalExpr(CalculusFunction):
             else:
                 return expr
 
-        elif isinstance(expr, (ScalarField, ScalarTestFunction, IndexedTestTrial, IndexedVectorField)):
+        elif isinstance(expr, (ScalarField, ScalarTestFunction, IndexedTestTrial, IndexedVectorField, Indexed)):
             return expr
 
         elif isinstance(expr, (VectorField, VectorTestFunction)):
@@ -700,7 +701,8 @@ class LogicalExpr(CalculusFunction):
 
         elif isinstance(expr, Symbol):
             return expr
-
+        elif isinstance(expr, NormalVector):
+            return expr
         elif isinstance(expr, Function):
             func = expr.func
             args = expr.args

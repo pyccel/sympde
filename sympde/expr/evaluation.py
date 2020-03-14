@@ -870,7 +870,7 @@ def _split_test_function(expr):
         Di = Interval()
         for i in range(dim):
             Vi = ScalarFunctionSpace('tmp_V_{}'.format(i), domain=Di)
-            ls[expr[i]] = tuple(ScalarTestFunction(Vi, '{name}_{j}_{i}'.format(name=name, i=i,j=j+1)) for j in range(dim))
+            ls[expr[i]] = tuple(ScalarTestFunction(Vi, '{name}_{i}_{j}'.format(name=name, i=i,j=j+1)) for j in range(dim))
 
         return ls
 
