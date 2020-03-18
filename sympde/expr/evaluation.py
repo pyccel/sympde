@@ -29,7 +29,6 @@ from sympde.topology import InteriorDomain
 from sympde.topology import DetJacobian
 from sympde.topology import SymbolicDeterminant
 from sympde.topology import LogicalExpr
-from sympde.topology.space import ScalarFunctionSpace, VectorFunctionSpace
 from sympde.topology.space import ScalarTestFunction
 from sympde.topology.space import VectorTestFunction
 from sympde.topology.space import IndexedTestTrial

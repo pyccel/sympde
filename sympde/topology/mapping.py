@@ -12,7 +12,6 @@ from sympy.core.expr       import AtomicExpr
 from sympy.core.numbers    import ImaginaryUnit
 from sympy.core.containers import Tuple
 
-from sympde.topology import NormalVector, TangentVector
 from sympde.core       import Constant
 from sympde.core.basic import BasicMapping
 from sympde.core.basic import CalculusFunction
