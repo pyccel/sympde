@@ -16,6 +16,7 @@ from sympde.core       import Constant
 from sympde.core.basic import BasicMapping
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import _coeffs_registery
+from sympde.topology   import NormalVector
 
 from .basic       import BasicDomain
 from .space       import ScalarTestFunction, VectorTestFunction, IndexedTestTrial
@@ -39,7 +40,7 @@ class Mapping(BasicMapping):
     _expressions = None # used for analytical mapping
 
     # TODO shall we keep rdim ?
-    def __new__(cls, name, rdim, coordinates=None):
+    def __new__(cls, name, rdim, coordinates=None, **kwargs):
         if isinstance(rdim, (tuple, list, Tuple)):
             if not len(rdim) == 1:
                 raise ValueError('> Expecting a tuple, list, Tuple of length 1')
@@ -93,7 +94,10 @@ class Mapping(BasicMapping):
             for i in constants:
                 # TODO shall we add the type?
                 # by default it is real
-                d[i] = Constant(i.name)
+                if i.name in kwargs:
+                    d[i] = kwargs[i.name]
+                else:
+                    d[i] = Constant(i.name)
 
             args = args.subs(d)
             # ...
@@ -549,6 +553,7 @@ class LogicalExpr(CalculusFunction):
         expr = _args[1]
         dim  = M.rdim # TODO this is not the dim of the domain
         l_coords = ['x1', 'x2', 'x3'][:dim]
+        ph_coords = ['x', 'y', 'z']
 
         if M.is_analytical:
             for i in range(dim):
@@ -556,8 +561,13 @@ class LogicalExpr(CalculusFunction):
 
         if isinstance(expr, Symbol) and expr.name in l_coords:
             return expr
+        elif isinstance(expr, Symbol) and expr.name in ph_coords:
+            if M.is_analytical:
+                return M.expressions[ph_coords.index(expr.name)]
+            else:
+                return expr
 
-        if isinstance(expr, Add):
+        elif isinstance(expr, Add):
             args = [cls.eval(M, a) for a in expr.args]
             return Add(*args)
 
@@ -577,7 +587,7 @@ class LogicalExpr(CalculusFunction):
             else:
                 return expr
 
-        elif isinstance(expr, (ScalarField, ScalarTestFunction, IndexedTestTrial, IndexedVectorField)):
+        elif isinstance(expr, (ScalarField, ScalarTestFunction, IndexedTestTrial, IndexedVectorField, Indexed)):
             return expr
 
         elif isinstance(expr, (VectorField, VectorTestFunction)):
@@ -691,7 +701,8 @@ class LogicalExpr(CalculusFunction):
 
         elif isinstance(expr, Symbol):
             return expr
-
+        elif isinstance(expr, NormalVector):
+            return expr
         elif isinstance(expr, Function):
             func = expr.func
             args = expr.args
@@ -776,16 +787,13 @@ class SymbolicExpr(CalculusFunction):
 
             return Matrix(lines)
 
-        elif isinstance(expr, (ScalarField, ScalarTestFunction)):
+        elif isinstance(expr, (ScalarField, ScalarTestFunction, VectorField, VectorTestFunction)):
             if code:
                 name = '{name}_{code}'.format(name=expr.name, code=code)
             else:
                 name = str(expr.name)
 
             return Symbol(name)
-
-        elif isinstance(expr, (VectorField, VectorTestFunction)):
-            raise NotImplementedError('')
 
         elif isinstance(expr, Indexed):
             base = expr.base

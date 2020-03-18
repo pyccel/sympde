@@ -80,9 +80,9 @@ class BasicExpr(Expr):
             args = self.variables
             if self.is_bilinear:
                 args = args[0]+args[1]
-            fields = list(atoms.difference(args))
+            fields = tuple(atoms.difference(args))
         else:
-            fields = list(atoms)
+            fields = tuple(atoms)
         return fields
 
     # TODO use .atoms
@@ -90,7 +90,7 @@ class BasicExpr(Expr):
     def constants(self):
         ls = self.expr.atoms(Constant)
         # no redanduncy
-        return list(ls)
+        return tuple(ls)
 
     def annotate(self):
     
@@ -159,9 +159,9 @@ class BasicForm(Expr):
             args = self.variables
             if self.is_bilinear:
                 args = args[0]+args[1]
-            fields = list(atoms.difference(args))
+            fields = tuple(atoms.difference(args))
         else:
-            fields = list(atoms)
+            fields = tuple(atoms)
         return fields
 
     # TODO use .atoms
@@ -169,7 +169,7 @@ class BasicForm(Expr):
     def constants(self):
         ls = self.expr.atoms(Constant)
         # no redanduncy
-        return list(ls)
+        return tuple(ls)
 
     @property
     def domain(self):

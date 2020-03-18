@@ -63,7 +63,7 @@ def _get_domain(expr):
             elif isinstance(a, BasicDomain):
                 domains = domains.union([a])
         if len(domains) == 1:
-            return list(domains)[0]
+            return tuple(domains)[0]
         return Union(*domains)
 
 #==============================================================================
@@ -93,7 +93,6 @@ class LinearExpr(BasicExpr):
 
     def __call__(self, *args):
         args = _sanitize_arguments(args, is_linear=True)
-        args = Tuple(*args)
         expr, _ =  self.expr._xreplace(dict(list(zip(self.variables, args))))
         return expr
 
@@ -266,7 +265,7 @@ class Functional(BasicForm):
         obj = Basic.__new__(cls, expr, domain)
 
         # compute dim from fields if available
-        ls = list(expr.atoms((ScalarField, VectorField)))
+        ls = tuple(expr.atoms((ScalarField, VectorField)))
         if ls:
             F = ls[0]
             space = F.space

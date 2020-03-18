@@ -1,7 +1,7 @@
 # coding: utf-8
 
 from itertools import product
-
+from collections import OrderedDict
 from sympy import S
 from sympy import Indexed, Matrix, ImmutableDenseMatrix
 from sympy import expand
@@ -29,7 +29,6 @@ from sympde.topology import InteriorDomain
 from sympde.topology import DetJacobian
 from sympde.topology import SymbolicDeterminant
 from sympde.topology import LogicalExpr
-from sympde.topology.space import ScalarFunctionSpace
 from sympde.topology.space import ScalarTestFunction
 from sympde.topology.space import VectorTestFunction
 from sympde.topology.space import IndexedTestTrial
@@ -48,6 +47,7 @@ from sympde.topology.derivatives import (Grad_1d, Div_1d,
 from sympde.topology.derivatives import Bracket_2d
 from sympde.topology.derivatives import Laplace_1d, Laplace_2d, Laplace_3d
 from sympde.topology.derivatives import Hessian_1d, Hessian_2d, Hessian_3d
+from sympde.topology.space       import ScalarFunctionSpace
 
 from .basic import BasicExpr, BasicForm
 from .expr  import BilinearForm
@@ -853,26 +853,41 @@ def _split_test_function(expr):
         name = expr.name
 
         ls = []
-        for i in range(0, dim):
+        for i in range(dim):
             Di = Interval()
             Vi = ScalarFunctionSpace('tmp_V_{}'.format(i), domain=Di)
 
-            ai = ScalarTestFunction(Vi, '{name}{i}'.format(name=name, i=i+1))
+            ai = ScalarTestFunction(Vi, '{name}_{i}'.format(name=name, i=i+1))
             ls += [ai]
+
+        return {expr:tuple(ls)}
+    elif isinstance(expr, VectorTestFunction):
+
+        dim = expr.space.ldim
+        name = expr.name
+
+        ls = OrderedDict()
+        Di = Interval()
+        for i in range(dim):
+            Vi = ScalarFunctionSpace('tmp_V_{}'.format(i), domain=Di)
+            ls[expr[i]] = tuple(ScalarTestFunction(Vi, '{name}_{i}_{j}'.format(name=name, i=i,j=j+1)) for j in range(dim))
 
         return ls
 
     elif isinstance(expr, IndexedTestTrial):
 
-        i = expr.indices
-        assert(len(i) == 1)
-        i = i[0]
+        dim = expr.base.space.ldim
+        index = expr.indices[0]
+        name = expr.base.name
 
-        V = expr.base.space
-        Vi = ScalarFunctionSpace('tmpV_{}'.format(i), V.domain)
-        vi = ScalarTestFunction(Vi, '{test}{i}'.format(test=expr.base.name, i=i))
+        Di = Interval()
 
-        return _split_test_function(vi)
+        ls = []
+        for i in range(dim):
+            Vi = ScalarFunctionSpace('tmp_V_{}'.format(i), domain=Di)
+            ai = ScalarTestFunction(Vi, '{name}_{j}_{i}'.format(name=name, j=index,i=i+1))
+            ls += [ai]
+        return {expr:tuple(ls)}
 
     else:
         msg = 'Expecting ScalarTestFunction or IndexedTestTrial, given {}'.format(type(expr))
@@ -1155,7 +1170,7 @@ class TensorExpr(CalculusFunction):
             d_atoms = {}
             for a in variables:
                 new = _split_test_function(a)
-                d_atoms[a] = new
+                d_atoms[a] = new[a]
             # ...
 
             # ...
