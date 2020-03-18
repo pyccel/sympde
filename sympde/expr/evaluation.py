@@ -47,7 +47,7 @@ from sympde.topology.derivatives import (Grad_1d, Div_1d,
 from sympde.topology.derivatives import Bracket_2d
 from sympde.topology.derivatives import Laplace_1d, Laplace_2d, Laplace_3d
 from sympde.topology.derivatives import Hessian_1d, Hessian_2d, Hessian_3d
-from sympde.topology.space       import ScalarFunctionSpace, VectorFunctionSpace
+from sympde.topology.space       import ScalarFunctionSpace
 
 from .basic import BasicExpr, BasicForm
 from .expr  import BilinearForm
