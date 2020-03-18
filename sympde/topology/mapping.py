@@ -16,6 +16,7 @@ from sympde.core       import Constant
 from sympde.core.basic import BasicMapping
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import _coeffs_registery
+from sympde.topology   import NormalVector
 
 from .basic       import BasicDomain
 from .space       import ScalarTestFunction, VectorTestFunction, IndexedTestTrial
