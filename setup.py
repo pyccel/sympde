@@ -38,7 +38,7 @@ packages = find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"])
 
 # Dependencies
 install_requires = [
-    'sympy>=1.2,<1.5',
+    'sympy>=1.2',
     'h5py',
     'pytest',
     'pyyaml',
