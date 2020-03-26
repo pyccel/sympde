@@ -547,7 +547,12 @@ class Grad_2d(GradBasic):
             v = Matrix(lines)
 
         else:
-            v = Matrix([[dx(u), dy(u)]])
+            a = dx(u)
+            b = dy(u)
+            if isinstance(a, Matrix):
+                v = Matrix((a, b))
+            else:
+                v = Matrix([[a], [b]])
 
         return v
 
