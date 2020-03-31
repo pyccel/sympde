@@ -354,8 +354,7 @@ class Domain(BasicDomain):
         # ... connectivity
         connectivity = Connectivity()
         # TODO be careful with '|' in psydac
-        connectivity['{l}|{r}'.format(l=self.name, r=other.name)] = (bnd_minus, bnd_plus)
-
+        connectivity['{l}|{r}'.format(l=bnd_minus.domain.name, r=bnd_plus.domain.name)] = (bnd_minus, bnd_plus)
         for k,v in self.connectivity.items():
             connectivity[k] = v
 
@@ -370,7 +369,6 @@ class Domain(BasicDomain):
         boundaries = Union(boundaries_minus, boundaries_plus)
         boundaries = boundaries.as_tuple()
         # ...
-
         return Domain(name,
                       interiors=interiors,
                       boundaries=boundaries,

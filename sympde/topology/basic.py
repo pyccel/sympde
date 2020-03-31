@@ -242,7 +242,7 @@ class Boundary(BasicDomain):
 
     def _sympystr(self, printer):
         sstr = printer.doprint
-        return '{}'.format(sstr(self.name))
+        return '{}_{}'.format(sstr(self.domain.name),sstr(self.name))
 
     def __add__(self, other):
         if isinstance(other, ComplementBoundary):

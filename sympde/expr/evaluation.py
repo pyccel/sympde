@@ -694,8 +694,6 @@ class TerminalExpr(CalculusFunction):
 
             d_new = d
             # ...
-            print(d_new)
-            # ...
             for domain, newexpr in d_new.items():
                 if isinstance(domain, Boundary):
                     ls += [BoundaryExpression(domain, newexpr)]
