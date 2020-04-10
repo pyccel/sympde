@@ -12,6 +12,8 @@ from sympy.core.expr       import AtomicExpr
 from sympy.core.numbers    import ImaginaryUnit
 from sympy.core.containers import Tuple
 
+from sympde.calculus.core import PlusInterfaceOperator, MinusInterfaceOperator
+
 from sympde.core       import Constant
 from sympde.core.basic import BasicMapping
 from sympde.core.basic import CalculusFunction
@@ -794,6 +796,9 @@ class SymbolicExpr(CalculusFunction):
                 name = str(expr.name)
 
             return Symbol(name)
+
+        elif isinstance(expr, ( PlusInterfaceOperator, MinusInterfaceOperator)):
+            return cls.eval(expr.args[0], code=code)
 
         elif isinstance(expr, Indexed):
             base = expr.base

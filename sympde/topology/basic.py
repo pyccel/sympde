@@ -43,20 +43,20 @@ class InteriorDomain(BasicDomain):
     Examples
 
     """
-    def __new__(cls, name, dim=None):
+    def __new__(cls, name, dim=None, dtype=None):
         target = None
         if not isinstance(name, str):
             target = name
             name   = name.name
 
         if not( target is None ):
-            if isinstance(target, ProductDomain):
-                dim = target.dim
+            dim = target.dim
 
         obj = Basic.__new__(cls, name)
 
         obj._dim    = dim
         obj._target = target
+        obj._dtype  = dtype
 
         return obj
 
@@ -67,6 +67,10 @@ class InteriorDomain(BasicDomain):
     @property
     def target(self):
         return self._target
+
+    @property
+    def dtype(self):
+        return self._dtype
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -200,6 +204,10 @@ class Interval(InteriorDomain):
     def bounds(self):
         return self._bounds
 
+    @property
+    def dim(self):
+        return 1
+
 #==============================================================================
 class Boundary(BasicDomain):
     """
@@ -280,7 +288,7 @@ class Interface(BasicDomain):
         if bnd_minus.dim != bnd_plus.dim:
             raise TypeError('Dimension mismatch: {} != {}'.format(
                 bnd_minus.dim, bnd_plus.dim))
-
+        assert bnd_minus.axis == bnd_plus.axis
         return Basic.__new__(cls, edge.name, bnd_minus, bnd_plus)
 
     @property
@@ -298,6 +306,10 @@ class Interface(BasicDomain):
     @property
     def plus(self):
         return self.args[2]
+
+    @property
+    def axis(self):
+        return self.plus.axis
 
     def _sympystr(self, printer):
         sstr = printer.doprint

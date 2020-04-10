@@ -377,14 +377,14 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                 newexpr = _nullify(expr, u_minus, trials)
                 newexpr = _nullify(newexpr, v_plus, tests)
                 if not newexpr.is_zero:
-                    int_expressions += [InterfaceExpression(interface, newexpr)]
+                    int_expressions += [InterfaceExpression(interface, u_minus, v_plus, newexpr)]
                 # ...
                 # TODO must call InterfaceExpression afterward
                 newexpr = _nullify(expr, u_plus, trials)
                 newexpr = _nullify(newexpr, v_minus, tests)
 
                 if not newexpr.is_zero:
-                    int_expressions += [InterfaceExpression(interface, newexpr)]
+                    int_expressions += [InterfaceExpression(interface, u_plus, v_minus, newexpr)]
                 # ...
                 newexpr = _nullify(expr, u_plus, trials)
                 newexpr = _nullify(newexpr, v_plus, tests)
@@ -441,8 +441,19 @@ class BoundaryExpression(KernelExpression):
 
 #==============================================================================
 class InterfaceExpression(KernelExpression):
-    pass
+    def __new__(cls, target, u, v, expr):
+        obj = KernelExpression.__new__(cls, target, expr)
+        obj._trial = u
+        obj._test  = v
+        return obj
 
+    @property
+    def test(self):
+        return self._test
+
+    @property
+    def trial(self):
+        return self._trial
 
 #==============================================================================
 class TerminalExpr(CalculusFunction):
@@ -604,9 +615,6 @@ class TerminalExpr(CalculusFunction):
             # ...
             ls = []
             d_all = {}
-            # ...
-#            print(d_new)
-#            print([type(i) for i in d_new.keys()])
 
             # ... treating interfaces
             keys = [k for k in d_new.keys() if isinstance(k, Interface)]
@@ -624,15 +632,43 @@ class TerminalExpr(CalculusFunction):
 
                 # ...
                 newexpr = d_new[interface]
-                ls_int, d = _split_expr_over_interface(newexpr, interface,
+                ls_int, d_bnd = _split_expr_over_interface(newexpr, interface,
                                                        tests=tests,
                                                        trials=trials)
                 # ...
 
-                # ...
                 ls += ls_int
                 # ...
+                for k, v in d_bnd.items():
+                    if k in d_all.keys():
+                        d_all[k] += v
 
+                    else:
+                        d_all[k] = v
+            # ...
+
+            # ... treating subdomains
+            keys = [k for k in d_new.keys() if isinstance(k, Union)]
+            for domain in keys:
+                # ...
+                trials = None
+                tests  = None
+                if expr.is_bilinear:
+                    trials = list(expr.variables[0])
+                    tests  = list(expr.variables[1])
+
+                elif expr.is_linear:
+                    tests  = list(expr.variables)
+
+                else:
+                    raise NotImplementedError('Only Bilinear and Linear forms are available')
+                # ...
+
+                # ...
+                newexpr = d_new[domain]
+                #print(newexpr, domain)
+                d = _split_expr_over_subdomains(newexpr, domain.as_tuple(),
+                                                tests=tests, trials=trials)
                 # ...
                 for k, v in d.items():
                     if k in d_all.keys():
@@ -643,52 +679,16 @@ class TerminalExpr(CalculusFunction):
                 # ...
             # ...
 
-            # ... treating subdomains
-            #keys = [k for k in d_new.keys() if isinstance(k, Union)]
-            #for domain in keys:
-                # ...
-            #    trials = None
-            #    tests  = None
-            #    if expr.is_bilinear:
-            #        trials = list(expr.variables[0])
-            #        tests  = list(expr.variables[1])
-
-            #    elif expr.is_linear:
-            #        tests  = list(expr.variables)
-
-            #    else:
-            #        raise NotImplementedError('Only Bilinear and Linear forms are available')
-                # ...
-
-                # ...
-            #    newexpr = d_new[domain]
-                #print(newexpr, domain)
-                #d = _split_expr_over_subdomains(newexpr, domain.as_tuple(),
-                #                                tests=tests, trials=trials)
-                # ...
-                #print(d)
-                # ...
-            #    d_all[domain] = newexpr
-                #for k, v in d.items():
-                #    if k in d_all.keys():
-                #        d_all[k] += v
-
-                #    else:
-                #        d_all[k] = v
-                # ...
-            # ...
-
             # ...
             d = {}
 
             for k, v in d_new.items():
-                if not isinstance( k, Interface):
+                if not isinstance( k, (Interface, Union)):
                     d[k] = d_new[k]
 
             for k, v in d_all.items():
                 if k in d.keys():
                     d[k] += v
-
                 else:
                     d[k] = v
 
@@ -697,9 +697,6 @@ class TerminalExpr(CalculusFunction):
             for domain, newexpr in d_new.items():
                 if isinstance(domain, Boundary):
                     ls += [BoundaryExpression(domain, newexpr)]
-
-                elif isinstance(domain, Interface):
-                    ls += [InterfaceExpression(domain, newexpr)]
 
                 elif isinstance(domain, BasicDomain):
                     ls += [DomainExpression(domain, newexpr)]
@@ -710,10 +707,7 @@ class TerminalExpr(CalculusFunction):
             return ls
 
         elif isinstance(expr, (DomainIntegral, BoundaryIntegral, InterfaceIntegral)):
-            if dim is None:
-                domain = expr.domain
-                dim = domain.dim
-
+            dim = expr.domain.dim if dim is None else dim
             return cls.eval(expr._args[0], dim=dim)
 
         elif isinstance(expr, NormalVector):
