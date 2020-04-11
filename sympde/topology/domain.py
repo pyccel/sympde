@@ -105,11 +105,13 @@ class Domain(BasicDomain):
 
         elif len(interiors) == 1:
             interiors = interiors[0]
+            dtype = interiors.dtype
+            dim   = interiors.dim
 
         elif len(interiors) > 1:
+            dtype = interiors[0].dtype
+            dim   = interiors[0].dim
             interiors = Union(*interiors)
-
-        # ...
 
         # ...
         if len(boundaries) > 1:
@@ -118,6 +120,8 @@ class Domain(BasicDomain):
 
         obj = Basic.__new__(cls, name, interiors, boundaries)
         obj._connectivity = connectivity
+        obj._dtype        = dtype
+        obj._dim          = dim
 
         return obj
 
@@ -139,11 +143,11 @@ class Domain(BasicDomain):
 
     @property
     def dim(self):
-        return self.interior.dim
+        return self._dim
 
     @property
     def dtype(self):
-        return self.interior.dtype
+        return self._dtype
 
     @property
     def interfaces(self):
@@ -501,7 +505,7 @@ class NCube(Domain):
         else:
             interior = ProductDomain(*intervals, name=name)
 
-        interior = NCubeInterior(interior, dtype=dtype)
+        interior             = NCubeInterior(interior, dtype=dtype)
         interior._min_coords = tuple(min_coords)
         interior._max_coords = tuple(max_coords)
 

@@ -72,6 +72,10 @@ class InteriorDomain(BasicDomain):
     def dtype(self):
         return self._dtype
 
+    @property
+    def dim(self):
+        return self._dim
+
     def _sympystr(self, printer):
         sstr = printer.doprint
         return '{}'.format(sstr(self.name))
