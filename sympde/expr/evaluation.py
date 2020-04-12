@@ -234,7 +234,7 @@ def _to_matrix_form(expr, M, test_indices, trial_indices):
         return _to_matrix_functional_form(expr, M)
 
 #==============================================================================
-def _split_expr_over_subdomains(expr, interiors, tests=None, trials=None):
+def _split_expr_over_subdomains(expr, interiors):
     """
     Splits an expression defined on a domain, having multiple interiors, into
     expressions where the test and trial functions are defined on each side of
@@ -251,25 +251,7 @@ def _split_expr_over_subdomains(expr, interiors, tests=None, trials=None):
 
     Returns: sympde expression
     """
-    # ...
-    def _new_atom(v, interior):
-        new = '{v}'.format( v = v.name,
-                            domain = interior.name )
-        return element_of(v.space, name=new)
-    # ...
-
-    # ...
-    is_bilinear = not( trials is None ) and not( tests is None )
-    is_linear   =    ( trials is None ) and not( tests is None )
-
-    if trials is None: trials = []
-    if tests  is None: tests  = []
-    # ...
-
-    # ...
     d_expr = {}
-    for interior in interiors:
-        d_expr[interior] = 0
 
     for interior in interiors:
         d_expr[interior] = expr
@@ -650,25 +632,9 @@ class TerminalExpr(CalculusFunction):
             # ... treating subdomains
             keys = [k for k in d_new.keys() if isinstance(k, Union)]
             for domain in keys:
-                # ...
-                trials = None
-                tests  = None
-                if expr.is_bilinear:
-                    trials = list(expr.variables[0])
-                    tests  = list(expr.variables[1])
 
-                elif expr.is_linear:
-                    tests  = list(expr.variables)
-
-                else:
-                    raise NotImplementedError('Only Bilinear and Linear forms are available')
-                # ...
-
-                # ...
                 newexpr = d_new[domain]
-                #print(newexpr, domain)
-                d = _split_expr_over_subdomains(newexpr, domain.as_tuple(),
-                                                tests=tests, trials=trials)
+                d = _split_expr_over_subdomains(newexpr, domain.as_tuple())
                 # ...
                 for k, v in d.items():
                     if k in d_all.keys():
@@ -676,10 +642,7 @@ class TerminalExpr(CalculusFunction):
 
                     else:
                         d_all[k] = v
-                # ...
-            # ...
 
-            # ...
             d = {}
 
             for k, v in d_new.items():
