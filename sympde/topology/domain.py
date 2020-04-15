@@ -464,7 +464,7 @@ class NCube(Domain):
             coord_names = 'x1:{}'.format(dim + 1)
 
         coordinates = symbols(coord_names)
-        intervals   = [Interval('I_{}'.format(c.name), coordinate=c, bounds=(xmin, xmax))
+        intervals   = [Interval('{}_{}'.format(name, c.name), coordinate=c, bounds=(xmin, xmax))
                        for c, xmin, xmax in zip(coordinates, min_coords, max_coords)]
 
         # Choose which type to use:
