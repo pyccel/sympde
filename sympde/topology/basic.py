@@ -184,7 +184,9 @@ class Interval(InteriorDomain):
     Examples
 
     """
+
     _dim = 1
+
     def __new__(cls, name=None, coordinate=None, bounds=None):
         if name is None:
             name = 'Interval'
@@ -210,7 +212,7 @@ class Interval(InteriorDomain):
 
     @property
     def dim(self):
-        return 1
+        return self._dim
 
 #==============================================================================
 class Boundary(BasicDomain):

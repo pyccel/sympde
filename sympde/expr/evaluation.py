@@ -234,31 +234,6 @@ def _to_matrix_form(expr, M, test_indices, trial_indices):
         return _to_matrix_functional_form(expr, M)
 
 #==============================================================================
-def _split_expr_over_subdomains(expr, interiors):
-    """
-    Splits an expression defined on a domain, having multiple interiors, into
-    expressions where the test and trial functions are defined on each side of
-    the subdomain.
-
-    Parameters:
-        expr: sympde expression
-
-        interiors: an interior or union of interiors
-
-        tests: tests functions as given from linear or bilinear forms
-
-        trials: trials functions as given from linear or bilinear forms
-
-    Returns: sympde expression
-    """
-    d_expr = {}
-
-    for interior in interiors:
-        d_expr[interior] = expr
-    # ...
-    return d_expr
-
-#==============================================================================
 def _split_expr_over_interface(expr, interface, tests=None, trials=None):
     """
     Splits an expression defined on an interface, into
@@ -634,8 +609,11 @@ class TerminalExpr(CalculusFunction):
             for domain in keys:
 
                 newexpr = d_new[domain]
-                d = _split_expr_over_subdomains(newexpr, domain.as_tuple())
-                # ...
+                d       = {}
+
+                for interior in domain.as_tuple():
+                    d[interior] = newexpr
+                            # ...
                 for k, v in d.items():
                     if k in d_all.keys():
                         d_all[k] += v
