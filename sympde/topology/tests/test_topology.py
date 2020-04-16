@@ -157,29 +157,33 @@ def test_domain_join_line():
     C = Line('C')
     # ...
 
-    # ...
+    AB_bnd_minus = A.get_boundary(axis=0, ext=1)
+    AB_bnd_plus  = B.get_boundary(axis=0, ext=-1)
+
     AB = A.join(B, name = 'AB',
-               bnd_minus = A.get_boundary(axis=0, ext=1),
-               bnd_plus  = B.get_boundary(axis=0, ext=-1))
+               bnd_minus = AB_bnd_minus,
+               bnd_plus  = AB_bnd_plus)
+
 
     print(AB)
-    print(AB.interior)
-    print(AB.interfaces)
+    assert AB.interior   == Union(A.interior, B.interior)
+    assert AB.interfaces == Interface(Edge('A_x|B_x'), AB_bnd_minus, AB_bnd_plus)
     print(AB.connectivity)
     print('')
     # ...
 
     # ...
-    AB = A.join(B, name = 'AB',
-               bnd_minus = A.get_boundary(axis=0, ext=1),
-               bnd_plus  = B.get_boundary(axis=0, ext=-1))
+
+    BC_bnd_minus = B.get_boundary(axis=0, ext=1)
+    BC_bnd_plus  = C.get_boundary(axis=0, ext=-1)
+
     ABC = AB.join(C, name = 'ABC',
-               bnd_minus = A.get_boundary(axis=0, ext=1),
-               bnd_plus  = B.get_boundary(axis=0, ext=-1))
+               bnd_minus = BC_bnd_minus,
+               bnd_plus  = BC_bnd_plus)
 
     print(ABC)
-    print(ABC.interior)
-    print(ABC.interfaces)
+    assert ABC.interior == Union(A.interior, B.interior, C.interior)
+    assert ABC.interfaces == Union(Interface(Edge('A_x|B_x'), AB_bnd_minus, AB_bnd_plus),Interface(Edge('B_x|C_x'), BC_bnd_minus, BC_bnd_plus))
     print(list(ABC.connectivity.items()))
     print('')
     # ...
@@ -194,28 +198,28 @@ def test_domain_join_square():
     # ...
 
     # ...
+    AB_bnd_minus = A.get_boundary(axis=0, ext=1)
+    AB_bnd_plus  = B.get_boundary(axis=0, ext=-1)
+
     AB = A.join(B, name = 'AB',
-               bnd_minus = A.get_boundary(axis=0, ext=1),
-               bnd_plus  = B.get_boundary(axis=0, ext=-1))
+               bnd_minus = AB_bnd_minus,
+               bnd_plus  = AB_bnd_plus)
 
     print(AB)
-    print(AB.interior)
-    print(AB.interfaces)
+    assert AB.interior   == Union(A.interior, B.interior)
+    assert AB.interfaces == Interface(Edge('A|B'), AB_bnd_minus, AB_bnd_plus)
     print(AB.connectivity)
-    print('')
     # ...
+    BC_bnd_minus = B.get_boundary(axis=0, ext=1)
+    BC_bnd_plus  = C.get_boundary(axis=0, ext=-1)
 
-    # ...
-    AB = A.join(B, name = 'AB',
-               bnd_minus = A.get_boundary(axis=0, ext=1),
-               bnd_plus  = B.get_boundary(axis=0, ext=-1))
     ABC = AB.join(C, name = 'ABC',
-               bnd_minus = B.get_boundary(axis=0, ext=1),
-               bnd_plus  = C.get_boundary(axis=0, ext=-1))
+               bnd_minus = BC_bnd_minus,
+               bnd_plus  = BC_bnd_plus)
 
     print(ABC)
-    print(ABC.interior)
-    print(ABC.interfaces)
+    assert ABC.interior == Union(A.interior, B.interior, C.interior)
+    assert ABC.interfaces == Union(Interface(Edge('A|B'), AB_bnd_minus, AB_bnd_plus),Interface(Edge('B|C'), BC_bnd_minus, BC_bnd_plus))
     print(list(ABC.connectivity.items()))
     print('')
     # ...

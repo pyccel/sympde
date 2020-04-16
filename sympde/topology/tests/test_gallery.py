@@ -4,7 +4,7 @@ from sympy.abc import x,y,z
 from sympy import Tuple
 
 from sympde.topology import Interval, ProductDomain, InteriorDomain, Domain
-from sympde.topology import Line, Square, Cube
+from sympde.topology import Line, Square, Cube, NCubeInterior
 
 #==============================================================================
 def test_interval():
@@ -32,7 +32,7 @@ def test_unit_line():
     assert domain.coordinates == x
 
     # Domain's attributes
-    assert isinstance(domain.interior, Interval)
+    assert isinstance(domain.interior, NCubeInterior)
     assert len(domain.boundary) == 2
     assert domain.dtype == {'type': 'Line',
                             'parameters': {'bounds': [0, 1]}}
@@ -63,7 +63,7 @@ def test_generic_line():
     assert domain.coordinates == x
 
     # Domain's attributes
-    assert isinstance(domain.interior, Interval)
+    assert isinstance(domain.interior, NCubeInterior)
     assert len(domain.boundary) == 2
     assert domain.dtype == {'type': 'Line',
                             'parameters': {'bounds': [-3, 4]}}

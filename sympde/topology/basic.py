@@ -43,20 +43,20 @@ class InteriorDomain(BasicDomain):
     Examples
 
     """
-    def __new__(cls, name, dim=None):
+    def __new__(cls, name, dim=None, dtype=None):
         target = None
         if not isinstance(name, str):
             target = name
             name   = name.name
 
         if not( target is None ):
-            if isinstance(target, ProductDomain):
-                dim = target.dim
+            dim = target.dim
 
         obj = Basic.__new__(cls, name)
 
         obj._dim    = dim
         obj._target = target
+        obj._dtype  = dtype
 
         return obj
 
@@ -67,6 +67,14 @@ class InteriorDomain(BasicDomain):
     @property
     def target(self):
         return self._target
+
+    @property
+    def dtype(self):
+        return self._dtype
+
+    @property
+    def dim(self):
+        return self._dim
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -176,7 +184,9 @@ class Interval(InteriorDomain):
     Examples
 
     """
+
     _dim = 1
+
     def __new__(cls, name=None, coordinate=None, bounds=None):
         if name is None:
             name = 'Interval'
@@ -199,6 +209,7 @@ class Interval(InteriorDomain):
     @property
     def bounds(self):
         return self._bounds
+
 
 #==============================================================================
 class Boundary(BasicDomain):
@@ -242,7 +253,7 @@ class Boundary(BasicDomain):
 
     def _sympystr(self, printer):
         sstr = printer.doprint
-        return '{}'.format(sstr(self.name))
+        return '{}_{}'.format(sstr(self.domain.name),sstr(self.name))
 
     def __add__(self, other):
         if isinstance(other, ComplementBoundary):
@@ -280,7 +291,7 @@ class Interface(BasicDomain):
         if bnd_minus.dim != bnd_plus.dim:
             raise TypeError('Dimension mismatch: {} != {}'.format(
                 bnd_minus.dim, bnd_plus.dim))
-
+        assert bnd_minus.axis == bnd_plus.axis
         return Basic.__new__(cls, edge.name, bnd_minus, bnd_plus)
 
     @property
@@ -298,6 +309,10 @@ class Interface(BasicDomain):
     @property
     def plus(self):
         return self.args[2]
+
+    @property
+    def axis(self):
+        return self.plus.axis
 
     def _sympystr(self, printer):
         sstr = printer.doprint

@@ -36,7 +36,7 @@ class Domain(BasicDomain):
     """
 
     def __new__(cls, name, interiors=None, boundaries=None, dim=None,
-                connectivity=None, dtype=None):
+                connectivity=None):
         # ...
         if not isinstance(name, str):
             raise TypeError('> name must be a string')
@@ -95,25 +95,23 @@ class Domain(BasicDomain):
             # TODO check that patches appearing in connectivity are in interiors
         else:
             connectivity = Connectivity()
-        # ...
 
         # ...
-        if not dim is None:
-            assert(isinstance( dim, int ))
-
+        if interiors is None and dim:
             interiors = [InteriorDomain(name, dim=dim)]
-        # ...
 
-        # ...
-        if len(interiors) == 0:
+        if len(interiors) == 0 and dim is None:
             raise TypeError('No interior domain found')
 
         elif len(interiors) == 1:
             interiors = interiors[0]
+            dtype = interiors.dtype
+            dim   = interiors.dim
 
         elif len(interiors) > 1:
+            dtype = interiors[0].dtype
+            dim   = interiors[0].dim
             interiors = Union(*interiors)
-        # ...
 
         # ...
         if len(boundaries) > 1:
@@ -122,7 +120,8 @@ class Domain(BasicDomain):
 
         obj = Basic.__new__(cls, name, interiors, boundaries)
         obj._connectivity = connectivity
-        obj._dtype = dtype
+        obj._dtype        = dtype
+        obj._dim          = dim
 
         return obj
 
@@ -144,7 +143,7 @@ class Domain(BasicDomain):
 
     @property
     def dim(self):
-        return self.interior.dim
+        return self._dim
 
     @property
     def dtype(self):
@@ -354,8 +353,7 @@ class Domain(BasicDomain):
         # ... connectivity
         connectivity = Connectivity()
         # TODO be careful with '|' in psydac
-        connectivity['{l}|{r}'.format(l=self.name, r=other.name)] = (bnd_minus, bnd_plus)
-
+        connectivity['{l}|{r}'.format(l=bnd_minus.domain.name, r=bnd_plus.domain.name)] = (bnd_minus, bnd_plus)
         for k,v in self.connectivity.items():
             connectivity[k] = v
 
@@ -370,7 +368,6 @@ class Domain(BasicDomain):
         boundaries = Union(boundaries_minus, boundaries_plus)
         boundaries = boundaries.as_tuple()
         # ...
-
         return Domain(name,
                       interiors=interiors,
                       boundaries=boundaries,
@@ -421,6 +418,19 @@ class PeriodicDomain(BasicDomain):
     def __hash__(self):
         return self.domain.__hash__() + self._periods.__hash__()
 
+
+#==============================================================================
+class NCubeInterior(InteriorDomain):
+    _min_coords = None
+    _max_coords = None
+    @property
+    def min_coords(self):
+        return self._min_coords
+
+    @property
+    def max_coords(self):
+        return self._max_coords
+
 #==============================================================================
 # Ncube's properties (in addition to Domain's properties):
 #   . min_coords (default value is tuple of zeros)
@@ -454,23 +464,8 @@ class NCube(Domain):
             coord_names = 'x1:{}'.format(dim + 1)
 
         coordinates = symbols(coord_names)
-        intervals   = [Interval('I_{}'.format(c.name), coordinate=c, bounds=(xmin, xmax))
+        intervals   = [Interval('{}_{}'.format(name, c.name), coordinate=c, bounds=(xmin, xmax))
                        for c, xmin, xmax in zip(coordinates, min_coords, max_coords)]
-
-        if len(intervals) == 1:
-            interior = intervals[0]
-        else:
-            interior = ProductDomain(*intervals, name=name)
-            interior = InteriorDomain(interior)
-
-        boundaries = []
-        i = 1
-        for axis in range(interior.dim):
-            for ext in [-1, 1]:
-                bnd_name = r'\Gamma_{}'.format(i)
-                Gamma = Boundary(bnd_name, interior, axis=axis, ext=ext)
-                boundaries += [Gamma]
-                i += 1
 
         # Choose which type to use:
         #   a) if dim <= 3, use Line, Square or Cube;
@@ -505,14 +500,30 @@ class NCube(Domain):
                                     'min_coords': [*min_coords],
                                     'max_coords': [*max_coords]}}
 
+        if len(intervals) == 1:
+            interior = intervals[0]
+        else:
+            interior = ProductDomain(*intervals, name=name)
+
+        interior             = NCubeInterior(interior, dtype=dtype)
+        interior._min_coords = tuple(min_coords)
+        interior._max_coords = tuple(max_coords)
+
+        boundaries = []
+        i = 1
+        for axis in range(dim):
+            for ext in [-1, 1]:
+                bnd_name = r'\Gamma_{}'.format(i)
+                Gamma = Boundary(bnd_name, interior, axis=axis, ext=ext)
+                boundaries += [Gamma]
+                i += 1
+
         # Create instance of given type
         obj = super().__new__(cls, name, interiors=[interior],
-                boundaries=boundaries, dtype=dtype)
+                boundaries=boundaries)
 
         # Store attributes in object
         obj._coordinates = tuple(coordinates)
-        obj._min_coords  = tuple(min_coords)
-        obj._max_coords  = tuple(max_coords)
 
         # Return object
         return obj
@@ -524,12 +535,11 @@ class NCube(Domain):
 
     @property
     def min_coords(self):
-        return self._min_coords
+        return self.interior.min_coords
 
     @property
     def max_coords(self):
-        return self._max_coords
-
+        return self.interior.max_coords
 #==============================================================================
 class Line(NCube):
 

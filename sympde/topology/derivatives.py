@@ -29,6 +29,7 @@ from sympde.core.basic import BasicMapping
 from sympde.core.algebra import LinearOperator
 from .space import ScalarTestFunction, VectorTestFunction, IndexedTestTrial
 from .space import ScalarField, VectorField, IndexedVectorField
+from sympde.calculus.core import minus, plus
 
 #==============================================================================
 class DifferentialOperator(LinearOperator):
@@ -48,11 +49,13 @@ class DifferentialOperator(LinearOperator):
         """."""
 
         expr = _args[0]
-
         if isinstance(expr, (IndexedTestTrial, IndexedVectorField, DifferentialOperator)):
             return cls(expr, evaluate=False)
 
         elif isinstance(expr, (ScalarField, ScalarTestFunction)):
+            return cls(expr, evaluate=False)
+
+        elif isinstance(expr, (minus, plus)):
             return cls(expr, evaluate=False)
 
         elif isinstance(expr, (VectorTestFunction, VectorField)):

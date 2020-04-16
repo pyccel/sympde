@@ -1627,7 +1627,6 @@ def test_interface_2d_1():
     # create a domain with an interface
     domain = two_patches()
     interfaces = domain.interfaces
-#    interfaces = Union(*interfaces) # TODO move to domain.connectivity.interfaces
 
     V = ScalarFunctionSpace('V', domain)
 

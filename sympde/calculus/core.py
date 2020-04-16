@@ -103,7 +103,7 @@ from sympde.core.basic import _coeffs_registery
 from sympde.topology.space import ScalarTestFunction, VectorTestFunction, IndexedTestTrial
 from sympde.topology.space import ScalarField, VectorField, IndexedVectorField
 from sympde.topology.space import _is_sympde_atom
-from sympde.topology import NormalVector, MinusNormalVector, PlusNormalVector
+from sympde.topology.domain import NormalVector, MinusNormalVector, PlusNormalVector
 from sympde.topology.datatype import H1SpaceType, HcurlSpaceType
 from sympde.topology.datatype import HdivSpaceType, L2SpaceType, UndefinedSpaceType
 
