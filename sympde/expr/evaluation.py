@@ -609,10 +609,7 @@ class TerminalExpr(CalculusFunction):
             for domain in keys:
 
                 newexpr = d_new[domain]
-                d       = {}
-
-                for interior in domain.as_tuple():
-                    d[interior] = newexpr
+                d       = {interior : newexpr for interior in domain.as_tuple()}
                             # ...
                 for k, v in d.items():
                     if k in d_all.keys():
