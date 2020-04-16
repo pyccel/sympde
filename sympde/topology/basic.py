@@ -210,9 +210,6 @@ class Interval(InteriorDomain):
     def bounds(self):
         return self._bounds
 
-    @property
-    def dim(self):
-        return self._dim
 
 #==============================================================================
 class Boundary(BasicDomain):
