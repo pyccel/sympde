@@ -415,6 +415,13 @@ class PeriodicDomain(BasicDomain):
     def coordinates(self):
         return self.domain.coordinates
 
+    @property
+    def interior(self):
+        return self.domain.interior
+
+    def __len__(self):
+        return len(self.domain)
+
     def __hash__(self):
         return self.domain.__hash__() + self._periods.__hash__()
 
