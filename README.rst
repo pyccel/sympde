@@ -39,10 +39,10 @@ From sources
     python3 -m pip install --user -e .
 
 
-.. |build-status| image:: https://travis-ci.org/pyccel/sympde.svg?branch=master
+.. |build-status| image:: https://travis-ci.com/pyccel/sympde.svg?branch=master
     :alt: build status
     :scale: 100%
-    :target:  https://travis-ci.org/pyccel/sympde
+    :target:  https://travis-ci.com/pyccel/sympde
 
 .. |docs| image:: https://readthedocs.org/projects/sympde/badge/?version=latest
     :alt: Documentation Status
