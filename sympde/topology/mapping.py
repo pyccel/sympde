@@ -245,6 +245,25 @@ class Mapping(BasicMapping):
     def _compute_hessian(self):
         raise NotImplementedError('TODO')
 
+class InterfaceMapping(Mapping):
+    def __new__(cls, M1, M2):
+        return Basic.__new__(cls, M1, M2)
+    @property
+    def M1(self):
+        return self._args[0]
+
+    @property
+    def M2(self):
+        return self._args[1]
+
+    @property
+    def is_analytical(self):
+        return self.M1.is_analytical
+
+    @property
+    def rdim(self):
+        return self.M1.rdim
+
 #==============================================================================
 class IdentityMapping(Mapping):
     """
@@ -551,13 +570,13 @@ class LogicalExpr(CalculusFunction):
         if not len(_args) == 2:
             raise ValueError('Expecting two arguments')
 
-        M    = _args[0]
-        expr = _args[1]
-        dim  = M.rdim # TODO this is not the dim of the domain
-        l_coords = ['x1', 'x2', 'x3'][:dim]
+        M         = _args[0]
+        expr      = _args[1]
+        dim       = M.rdim # TODO this is not the dim of the domain
+        l_coords  = ['x1', 'x2', 'x3'][:dim]
         ph_coords = ['x', 'y', 'z']
 
-        if M.is_analytical:
+        if M.is_analytical and not isinstance(M, InterfaceMapping):
             for i in range(dim):
                 expr = expr.subs(M[i], M.expressions[i])
 
@@ -611,6 +630,11 @@ class LogicalExpr(CalculusFunction):
             return Matrix(lines)
 
         elif isinstance(expr, dx):
+            if expr.atoms(PlusInterfaceOperator):
+                M = M.M2
+            elif expr.atoms(MinusInterfaceOperator):
+                M = M.M1
+
             arg = expr.args[0]
             arg = cls.eval(M, arg)
 
@@ -644,6 +668,11 @@ class LogicalExpr(CalculusFunction):
             return expr
 
         elif isinstance(expr, dy):
+            if expr.atoms(PlusInterfaceOperator):
+                M = M.M2
+            elif expr.atoms(MinusInterfaceOperator):
+                M = M.M1
+
             arg = expr.args[0]
             arg = cls.eval(M, arg)
 
@@ -673,6 +702,11 @@ class LogicalExpr(CalculusFunction):
             return expr
 
         elif isinstance(expr, dz):
+            if expr.atoms(PlusInterfaceOperator):
+                M = M.M2
+            elif expr.atoms(MinusInterfaceOperator):
+                M = M.M1
+
             arg = expr.args[0]
             arg = cls.eval(M, arg)
 
@@ -846,8 +880,11 @@ class SymbolicExpr(CalculusFunction):
             return cls.eval(atom, code=code)
 
         elif isinstance(expr, SymbolicMappingExpr):
+            mapping = expr.mapping
+            if isinstance(mapping, InterfaceMapping):
+                mapping = mapping.M1
             name = '{name}_{mapping}'.format(name=expr._name,
-                                             mapping=expr.mapping)
+                                             mapping=mapping)
 
             return Symbol(name)
 
