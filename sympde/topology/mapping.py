@@ -246,6 +246,16 @@ class Mapping(BasicMapping):
         raise NotImplementedError('TODO')
 
 class InterfaceMapping(Mapping):
+    """
+    InterfaceMapping is used to represent a mapping in the interface.
+
+    Attributes
+    ----------
+    M1 : Mapping
+        mapping on the negative direction of the interface
+    M2 : Mapping
+        mapping on the positive direction of the interface
+    """
     def __new__(cls, M1, M2):
         return Basic.__new__(cls, M1, M2)
     @property
