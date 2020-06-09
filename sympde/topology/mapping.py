@@ -40,14 +40,16 @@ class Mapping(BasicMapping):
 
     """
     _expressions = None # used for analytical mapping
-
+    _rdim        = None
     # TODO shall we keep rdim ?
-    def __new__(cls, name, rdim, coordinates=None, **kwargs):
+    def __new__(cls, name, rdim=None, coordinates=None, **kwargs):
         if isinstance(rdim, (tuple, list, Tuple)):
             if not len(rdim) == 1:
                 raise ValueError('> Expecting a tuple, list, Tuple of length 1')
 
             rdim = rdim[0]
+        elif rdim is None:
+            rdim = cls._rdim
 
         obj = IndexedBase.__new__(cls, name, shape=(rdim))
 
@@ -63,16 +65,19 @@ class Mapping(BasicMapping):
 
             _coordinates = [Symbol(name) for name in coordinates]
 
-        obj._name = name
-        obj._rdim = rdim
-        obj._coordinates = _coordinates
+        obj._name                = name
+        obj._rdim                = rdim
+        obj._coordinates         = _coordinates
+        obj._logical_coordinates = None
+        obj._jacobian            = None
+        obj._det_jacobian        = None
+        obj._covariant           = None
+        obj._contravariant       = None
+        obj._hessian             = None
 
-        obj._jacobian = None
-        obj._det_jacobian = None
-        obj._covariant = None
-        obj._contravariant = None
-        obj._hessian = None
-
+        lcoords = ['x1', 'x2', 'x3'][:rdim]
+        lcoords = [Symbol(i) for i in lcoords]
+        obj._logical_coordinates = Tuple(*lcoords)
         # ...
         if not( obj._expressions is None ):
             coords = ['x', 'y', 'z'][:rdim]
@@ -86,10 +91,13 @@ class Mapping(BasicMapping):
 
             args = Tuple(*args)
             # ...
+            zero_coords = ['x1', 'x2', 'x3'][rdim:]
 
+            for i in zero_coords:
+                x = sympify(i)
+                args = args.subs(x,0)
             # ...
-            lcoords = ['x1', 'x2', 'x3'][:rdim]
-            lcoords = [Symbol(i) for i in lcoords]
+
             constants = list(set(args.free_symbols) - set(lcoords))
             # subs constants as Constant objects instead of Symbol
             d = {}
@@ -123,6 +131,13 @@ class Mapping(BasicMapping):
             return self._coordinates[0]
         else:
             return self._coordinates
+
+    @property
+    def logical_coordinates(self):
+        if self.rdim == 1:
+            return self._logical_coordinates[0]
+        else:
+            return self._logical_coordinates
 
     def __call__(self, domain):
         assert(isinstance(domain, BasicDomain))
@@ -287,6 +302,18 @@ class IdentityMapping(Mapping):
                     'z': 'x3'}
 
 #==============================================================================
+class AffineMapping(Mapping):
+    """
+    Represents a 1D/2D/3D Affine Mapping object.
+
+    Examples
+
+    """
+    _expressions = {'x': 'c1 + a11*x1 + a12*x2 + a13*x3',
+                    'y': 'c2 + a21*x1 + a22*x2 + a23*x3',
+                    'z': 'c3 + a31*x1 + a32*x2 + a33*x3'}
+
+#==============================================================================
 class PolarMapping(Mapping):
     """
     Represents a Polar 2D Mapping object (Annulus).
@@ -297,6 +324,7 @@ class PolarMapping(Mapping):
     _expressions = {'x': 'c1 + (rmin*(1-x1)+rmax*x1)*cos(x2)',
                     'y': 'c2 + (rmin*(1-x1)+rmax*x1)*sin(x2)'}
 
+    _rdim        = 2
 #==============================================================================
 class TargetMapping(Mapping):
     """
@@ -308,6 +336,7 @@ class TargetMapping(Mapping):
     _expressions = {'x': 'c1 + (1-k)*x1*cos(x2) - D*x1**2',
                     'y': 'c2 + (1+k)*x1*sin(x2)'}
 
+    _rdim        = 2
 #==============================================================================
 class CzarnyMapping(Mapping):
     """
@@ -320,6 +349,7 @@ class CzarnyMapping(Mapping):
                     'y': 'c2 + (b / sqrt(1-eps**2/4) * x1 * sin(x2)) /'
                         '(2 - sqrt( 1 + eps*(eps + 2*x1*cos(x2)) ))'}
 
+    _rdim        = 2
 #==============================================================================
 class CollelaMapping(Mapping):
     """
@@ -331,6 +361,7 @@ class CollelaMapping(Mapping):
     _expressions = {'x': '2.*(x1 + eps*sin(2.*pi*k1*x1)*sin(2.*pi*k2*x2)) - 1.',
                     'y': '2.*(x2 + eps*sin(2.*pi*k1*x1)*sin(2.*pi*k2*x2)) - 1.'}
 
+    _rdim        = 2
 #==============================================================================
 class TorusMapping(Mapping):
     """
@@ -343,6 +374,7 @@ class TorusMapping(Mapping):
                     'y': '(R0+x1*cos(x2))*sin(x3)',
                     'z': 'x1*sin(x2)'}
 
+    _rdim        = 3
 #==============================================================================
 class TwistedTargetMapping(Mapping):
     """
@@ -354,6 +386,8 @@ class TwistedTargetMapping(Mapping):
     _expressions = {'x': 'c1 + (1-k)*x1*cos(x2) - D*x1**2',
                     'y': 'c2 + (1+k)*x1*sin(x2)',
                     'z': 'c3 + x3*x1**2*sin(2*x2)'}
+
+    _rdim        = 3
 
 #==============================================================================
 class MappedDomain(BasicDomain):
