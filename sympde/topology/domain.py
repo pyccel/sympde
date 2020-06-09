@@ -57,10 +57,14 @@ class Domain(BasicDomain):
                 interiors = [interiors]
 
             else:
-                unions    = [i for i in interiors if isinstance(i, Union)]
-                interiors = [i for i in interiors if not isinstance(i, Union)]
-                for union in unions:
-                    interiors += list(union.as_tuple())
+                new_interiors = []
+                for i in interiors:
+                    if isinstance(i , Union):
+                        new_interiors += list(i.as_tuple())
+                    else:
+                        new_interiors.append(i)
+
+                interiors = new_interiors
 
                 if not all([isinstance(i, InteriorDomain) for i in interiors]):
                     raise TypeError('> all interiors must be of type InteriorDomain')
@@ -345,7 +349,7 @@ class Domain(BasicDomain):
                               boundaries=boundary,
                               connectivity=connectivity)
 
-    def join(self, other, name, bnd_minus, bnd_plus):
+    def join(self, other, name, bnd_minus=None, bnd_plus=None):
         # ... interiors
         interiors = [self.interior, other.interior]
         # ...
@@ -353,7 +357,8 @@ class Domain(BasicDomain):
         # ... connectivity
         connectivity = Connectivity()
         # TODO be careful with '|' in psydac
-        connectivity['{l}|{r}'.format(l=bnd_minus.domain.name, r=bnd_plus.domain.name)] = (bnd_minus, bnd_plus)
+        if bnd_minus and bnd_plus:
+            connectivity['{l}|{r}'.format(l=bnd_minus.domain.name, r=bnd_plus.domain.name)] = (bnd_minus, bnd_plus)
         for k,v in self.connectivity.items():
             connectivity[k] = v
 
