@@ -260,6 +260,7 @@ class Mapping(BasicMapping):
     def _compute_hessian(self):
         raise NotImplementedError('TODO')
 
+#==============================================================================
 class InterfaceMapping(Mapping):
     """
     InterfaceMapping is used to represent a mapping in the interface.
@@ -271,23 +272,25 @@ class InterfaceMapping(Mapping):
     M2 : Mapping
         mapping on the positive direction of the interface
     """
+
     def __new__(cls, M1, M2):
         return Basic.__new__(cls, M1, M2)
+
     @property
-    def M1(self):
+    def minus(self):
         return self._args[0]
 
     @property
-    def M2(self):
+    def plus(self):
         return self._args[1]
 
     @property
     def is_analytical(self):
-        return self.M1.is_analytical
+        return self.minus.is_analytical
 
     @property
     def rdim(self):
-        return self.M1.rdim
+        return self.minus.rdim
 
 #==============================================================================
 class IdentityMapping(Mapping):
@@ -675,9 +678,9 @@ class LogicalExpr(CalculusFunction):
 
         elif isinstance(expr, dx):
             if expr.atoms(PlusInterfaceOperator):
-                M = M.M2
+                M = M.plus
             elif expr.atoms(MinusInterfaceOperator):
-                M = M.M1
+                M = M.minus
 
             arg = expr.args[0]
             arg = cls.eval(M, arg)
@@ -713,9 +716,9 @@ class LogicalExpr(CalculusFunction):
 
         elif isinstance(expr, dy):
             if expr.atoms(PlusInterfaceOperator):
-                M = M.M2
+                M = M.plus
             elif expr.atoms(MinusInterfaceOperator):
-                M = M.M1
+                M = M.minus
 
             arg = expr.args[0]
             arg = cls.eval(M, arg)
@@ -747,9 +750,9 @@ class LogicalExpr(CalculusFunction):
 
         elif isinstance(expr, dz):
             if expr.atoms(PlusInterfaceOperator):
-                M = M.M2
+                M = M.plus
             elif expr.atoms(MinusInterfaceOperator):
-                M = M.M1
+                M = M.minus
 
             arg = expr.args[0]
             arg = cls.eval(M, arg)
@@ -926,7 +929,7 @@ class SymbolicExpr(CalculusFunction):
         elif isinstance(expr, SymbolicMappingExpr):
             mapping = expr.mapping
             if isinstance(mapping, InterfaceMapping):
-                mapping = mapping.M1
+                mapping = mapping.minus
             name = '{name}_{mapping}'.format(name=expr._name,
                                              mapping=mapping)
 

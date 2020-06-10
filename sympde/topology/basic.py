@@ -108,14 +108,14 @@ class Union(BasicDomain):
             raise ValueError(msg)
 
         # Flatten arguments into a single list of domains
-        unions = [a for a in args if     isinstance(a, Union)]
-        args   = [a for a in args if not isinstance(a, Union)]
-        for union in unions:
-            args += list(union.as_tuple())
+        new_args = []
+        for i in args:
+            if isinstance(i, Union):
+                new_args += list(i.as_tuple())
+            else:
+                new_args.append(i)
 
-        # Sort domains by name
-        #args = sorted(args, key=lambda x: x.name)
-
+        args = new_args
         # a. If the required Union contains no domains, return None;
         # b. If it contains a single domain, return the domain itself;
         # c. If it contains multiple domains, create a Union object.
@@ -157,6 +157,14 @@ class Union(BasicDomain):
         ls = [i for i in self.args]
         return tuple(ls)
 
+    def __eq__(self, a):
+        if isinstance(a, Union):
+            return set(self.as_tuple()) == set(a.as_tuple())
+        else:
+            return False
+
+    def __hash__(self):
+        return hash(self.as_tuple())
 #==============================================================================
 class ProductDomain(BasicDomain):
     def __new__(cls, *args, name=None):
