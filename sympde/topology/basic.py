@@ -115,7 +115,11 @@ class Union(BasicDomain):
             else:
                 new_args.append(i)
 
-        args = new_args
+        args = []
+        for i in new_args:
+            if i not in args:
+                args.append(i)
+
         # a. If the required Union contains no domains, return None;
         # b. If it contains a single domain, return the domain itself;
         # c. If it contains multiple domains, create a Union object.

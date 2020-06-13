@@ -54,16 +54,17 @@ def _get_domain(expr):
     if isinstance(expr, (DomainIntegral, BoundaryIntegral, InterfaceIntegral)):
         return expr.domain
 
-    elif isinstance(expr, (Add,Mul)):
-        domains = set()
+    elif isinstance(expr, (Add, Mul)):
+        domains = []
         for a in expr.args:
             a = _get_domain(a)
             if isinstance(a, Union):
-                domains = domains.union(a.args)
+                domains.extend(list(a.args))
             elif isinstance(a, BasicDomain):
-                domains = domains.union([a])
+                domains.append(a)
         if len(domains) == 1:
-            return tuple(domains)[0]
+            return domains[0]
+
         return Union(*domains)
 
 #==============================================================================
