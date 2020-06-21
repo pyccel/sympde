@@ -120,6 +120,9 @@ class Union(BasicDomain):
             if i not in args:
                 args.append(i)
 
+        # Sort domains by name
+        args = sorted(args, key=lambda x: x.name)
+
         # a. If the required Union contains no domains, return None;
         # b. If it contains a single domain, return the domain itself;
         # c. If it contains multiple domains, create a Union object.
@@ -161,14 +164,6 @@ class Union(BasicDomain):
         ls = [i for i in self.args]
         return tuple(ls)
 
-    def __eq__(self, a):
-        if isinstance(a, Union):
-            return set(self.as_tuple()) == set(a.as_tuple())
-        else:
-            return False
-
-    def __hash__(self):
-        return hash(self.as_tuple())
 #==============================================================================
 class ProductDomain(BasicDomain):
     def __new__(cls, *args, name=None):
