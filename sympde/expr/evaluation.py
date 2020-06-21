@@ -694,7 +694,6 @@ class TerminalExpr(CalculusFunction):
             else:
                 raise ValueError('> Only traces of order 0 and 1 are available')
 
-
         elif isinstance(expr, Matrix):
             n,m = expr.shape
             lines = []
@@ -704,7 +703,6 @@ class TerminalExpr(CalculusFunction):
                     line.append(cls.eval(expr[i,j], dim=dim))
                 lines.append(line)
             return Matrix(lines)
-
         return expr
 
 
