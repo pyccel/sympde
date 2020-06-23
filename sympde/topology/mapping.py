@@ -423,18 +423,13 @@ class Covariant(MappingApplication):
             raise TypeError('> Expecting a tuple, list, Tuple, Matrix')
 
         M = F.covariant
-#        v = Matrix(v)
         dim = F.rdim
         if dim == 1:
-            v = [M * v[0]]
-            return Tuple(*v)
-
+            b = M[0,0] * v[0]
+            return Tuple(b)
         else:
-#            v = M*v
-#            return Tuple(*v)
-
             n,m = M.shape
-            w = []
+            w   = []
             for i in range(0, n):
                 w.append(0)
 
@@ -544,7 +539,7 @@ class LogicalExpr(CalculusFunction):
         elif isinstance(expr, (IndexedTestTrial, IndexedVectorField)):
             kind = expr.base.space.kind
             index = expr.indices[0]
-            if isinstance(kind, (H1SpaceType,L2SpaceType, UndefinedSpaceType)):
+            if isinstance(kind, (H1SpaceType, L2SpaceType, UndefinedSpaceType)):
                 return expr
             elif isinstance(kind, HdivSpaceType):
                 A     = M.contravariant
@@ -602,7 +597,6 @@ class LogicalExpr(CalculusFunction):
             if M.is_analytical:
                 for i in range(dim):
                     expr = expr.subs(M[i], M.expressions[i])
-
             return expr
 
         elif isinstance(expr, dy):
