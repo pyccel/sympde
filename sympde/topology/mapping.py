@@ -267,14 +267,14 @@ class InterfaceMapping(Mapping):
 
     Attributes
     ----------
-    M1 : Mapping
-        mapping on the negative direction of the interface
-    M2 : Mapping
-        mapping on the positive direction of the interface
+    minus : Mapping
+        the mapping on the negative direction of the interface
+    plus  : Mapping
+        the mapping on the positive direction of the interface
     """
 
-    def __new__(cls, M1, M2):
-        return Basic.__new__(cls, M1, M2)
+    def __new__(cls, minus, plus):
+        return Basic.__new__(cls, minus, plus)
 
     @property
     def minus(self):
@@ -286,7 +286,7 @@ class InterfaceMapping(Mapping):
 
     @property
     def is_analytical(self):
-        return self.minus.is_analytical
+        return self.minus.is_analytical and self.plus.is_analytical
 
     @property
     def rdim(self):
