@@ -23,7 +23,7 @@ from sympde.topology   import NormalVector
 from .basic       import BasicDomain
 from .space       import ScalarTestFunction, VectorTestFunction, IndexedTestTrial
 from .space       import ScalarField, VectorField, IndexedVectorField
-from .datatype    import HcurlSpaceType
+from .datatype    import HcurlSpaceType, H1SpaceType, L2SpaceType, HdivSpaceType, UndefinedSpaceType
 from .derivatives import dx, dy, dz
 from .derivatives import _partial_derivatives
 from .derivatives import get_atom_derivatives, get_index_derivatives_atom
@@ -177,70 +177,19 @@ class Mapping(BasicMapping):
         return sstr(self.name)
 
     def _compute_jacobian(self):
-        M = Matrix(Jacobian(self))
+        M = ImmutableDenseMatrix(Jacobian(self))
         self._jacobian = M
 
     def _compute_det_jacobian(self):
-        J = self.jacobian
-
-        dim = self.rdim
-        if dim == 2:
-            det = J[0,0]* J[1,1] - J[0,1]* J[1,0]
-
-        elif dim == 3:
-            det = (J[0, 0]*J[1, 1]*J[2, 2] -
-                   J[0, 0]*J[1, 2]*J[2, 1] -
-                   J[0, 1]*J[1, 0]*J[2, 2] +
-                   J[0, 1]*J[1, 2]*J[2, 0] +
-                   J[0, 2]*J[1, 0]*J[2, 1] -
-                   J[0, 2]*J[1, 1]*J[2, 0])
-
-        else:
-            det = J.det()
-
-        self._det_jacobian = det
+        self._det_jacobian = self.jacobian.det()
 
     def _compute_covariant(self):
-
-        J = self.jacobian
-        dim = self.rdim
-        if dim == 1:
-            M = 1/J[0,0]
-
-        elif dim == 2:
-            det = J[0,0]* J[1,1] - J[0,1]* J[1,0]
-            J_inv = Matrix([[J[1,1], -J[0,1]], [-J[1,0], J[0,0]]])
-            M = J_inv.transpose() / det
-
-        elif dim == 3:
-            det = (J[0, 0]*J[1, 1]*J[2, 2] -
-                   J[0, 0]*J[1, 2]*J[2, 1] -
-                   J[0, 1]*J[1, 0]*J[2, 2] +
-                   J[0, 1]*J[1, 2]*J[2, 0] +
-                   J[0, 2]*J[1, 0]*J[2, 1] -
-                   J[0, 2]*J[1, 1]*J[2, 0])
-
-            M = Matrix([[J[1, 1]*J[2, 2] - J[1, 2]*J[2, 1], J[0, 2]*J[2, 1] - J[0, 1]*J[2, 2], J[0, 1]*J[1, 2] - J[0, 2]*J[1, 1]],
-                        [J[1, 2]*J[2, 0] - J[1, 0]*J[2, 2], J[0, 0]*J[2, 2] - J[0, 2]*J[2, 0], J[0, 2]*J[1, 0] - J[0, 0]*J[1, 2]],
-                        [J[1, 0]*J[2, 1] - J[1, 1]*J[2, 0], J[0, 1]*J[2, 0] - J[0, 0]*J[2, 1], J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0]]])
-
-            M = 1/det * M.transpose()
-
-        else:
-            M = J.inv().transpose()
-
-        self._covariant = M
+        self._covariant = self.jacobian.inv().transpose()
 
     def _compute_contravariant(self):
-        J = self.jacobian
-        j = self.det_jacobian
-        inv_j = 1/j
-        n_rows, n_cols = J.shape
-        for i_row in range(0, n_rows):
-            for i_col in range(0, n_cols):
-                J[i_row, i_col] *= inv_j
-
-        self._contravariant = J
+        J   = self.jacobian
+        det = self.det_jacobian
+        self._contravariant = J/det
 
     def _compute_hessian(self):
         raise NotImplementedError('TODO')
@@ -589,8 +538,28 @@ class LogicalExpr(CalculusFunction):
             else:
                 return expr
 
-        elif isinstance(expr, (ScalarField, ScalarTestFunction, IndexedTestTrial, IndexedVectorField, Indexed)):
+        elif isinstance(expr, (ScalarField, ScalarTestFunction)):
             return expr
+
+        elif isinstance(expr, (IndexedTestTrial, IndexedVectorField)):
+            kind = expr.base.space.kind
+            index = expr.indices[0]
+            if isinstance(kind, (H1SpaceType,L2SpaceType, UndefinedSpaceType)):
+                return expr
+            elif isinstance(kind, HdivSpaceType):
+                A     = M.contravariant
+                v     = Matrix([[expr.base[i]] for i in range(dim)]) 
+                b     = A*v
+                expr  = b[index]
+                return expr
+            elif isinstance(kind , HcrulSpaceType):
+                A     = M.covariant
+                v     = Matrix([[expr.base[i]] for i in range(dim)]) 
+                b     = A*v
+                expr  = b[index]
+                return expr
+            else:
+                raise NotImplementedError('TODO')
 
         elif isinstance(expr, (VectorField, VectorTestFunction)):
             raise NotImplementedError('')
@@ -629,13 +598,6 @@ class LogicalExpr(CalculusFunction):
 
             grad_arg = Covariant(M, lgrad_arg)
 
-            if isinstance(arg, (ScalarField, ScalarTestFunction)):
-                if isinstance(arg.space.kind, HcurlSpaceType):
-                    grad_arg = Contravariant(M, lgrad_arg)
-            # ...
-
-            # TODO ARA improve: we should be able to avoid the previous symbolic
-            # computations here
             expr = grad_arg[0]
             if M.is_analytical:
                 for i in range(dim):
@@ -658,13 +620,7 @@ class LogicalExpr(CalculusFunction):
                 lgrad_arg = LogicalGrad_3d(arg)
 
             grad_arg = Covariant(M, lgrad_arg)
-            # ...
-            if isinstance(arg, (ScalarField, ScalarTestFunction)):
-                if isinstance(arg.space.kind, HcurlSpaceType):
-                    grad_arg = Contravariant(M, lgrad_arg)
 
-            # TODO ARA improve: we should be able to avoid the previous symbolic
-            # computations here
             expr = grad_arg[1]
             if M.is_analytical:
                 for i in range(dim):
@@ -687,13 +643,7 @@ class LogicalExpr(CalculusFunction):
                 lgrad_arg = LogicalGrad_3d(arg)
 
             grad_arg = Covariant(M, lgrad_arg)
-            # ...
-            if isinstance(arg, (ScalarField, ScalarTestFunction)):
-                if isinstance(arg.space.kind, HcurlSpaceType):
-                    grad_arg = Contravariant(M, lgrad_arg)
 
-            # TODO ARA improve: we should be able to avoid the previous symbolic
-            # computations here
             expr = grad_arg[2]
             if M.is_analytical:
                 for i in range(dim):
@@ -701,7 +651,7 @@ class LogicalExpr(CalculusFunction):
 
             return expr
 
-        elif isinstance(expr, Symbol):
+        elif isinstance(expr, (Symbol, Indexed)):
             return expr
         elif isinstance(expr, NormalVector):
             return expr
