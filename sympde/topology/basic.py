@@ -108,17 +108,10 @@ class Union(BasicDomain):
             raise ValueError(msg)
 
         # Flatten arguments into a single list of domains
-        new_args = []
-        for i in args:
-            if isinstance(i, Union):
-                new_args += list(i.as_tuple())
-            else:
-                new_args.append(i)
-
-        args = []
-        for i in new_args:
-            if i not in args:
-                args.append(i)
+        unions = [a for a in args if     isinstance(a, Union)]
+        args   = [a for a in args if not isinstance(a, Union)]
+        for union in unions:
+            args += list(union.as_tuple())
 
         # Sort domains by name
         args = sorted(args, key=lambda x: x.name)
