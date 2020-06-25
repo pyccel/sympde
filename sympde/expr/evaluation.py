@@ -74,7 +74,7 @@ def zero_matrix(n_rows, n_cols):
 #==============================================================================
 def _get_size_and_starts(ls):
     n = 0
-    d_indices = {}
+    d_indices = OrderedDict()
     for x in ls:
         d_indices[x] = n
         if isinstance(x, ScalarTestFunction):
@@ -260,7 +260,7 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
     # ...
 
     int_expressions = []
-    bnd_expressions = {}
+    bnd_expressions = OrderedDict()
 
     # ...
     # we replace all jumps
@@ -272,7 +272,7 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
     # ...
 
     # ...
-    d_trials = {}
+    d_trials = OrderedDict()
     for u in trials:
         u_minus = minus(u)
         u_plus  = plus(u)
@@ -281,7 +281,7 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
 #        # TODO add sub for avg
 #        expr = expr.subs({jump(u): u_minus - u_plus})
 
-    d_tests  = {}
+    d_tests  = OrderedDict()
     for v in tests:
         v_minus = minus(v)
         v_plus  = plus(v)
@@ -496,14 +496,14 @@ class TerminalExpr(CalculusFunction):
             dim = expr.ldim
             domain = expr.domain
             if isinstance(domain, Union):
-                domain = list(domain._args)
+                domain = domain.as_tuple()
 
             elif not is_sequence(domain):
-                domain = [domain]
+                domain = (domain,)
             # ...
 
             # ...
-            d_expr = {}
+            d_expr = OrderedDict()
             for d in domain:
                 d_expr[d] = S.Zero
             # ...
@@ -528,7 +528,6 @@ class TerminalExpr(CalculusFunction):
                     for d in domain:
                         d_expr[d] += newexpr
                     # ...
-
             else:
                 newexpr = cls.eval(expr.expr, dim=dim)
                 newexpr = expand(newexpr)
@@ -554,7 +553,7 @@ class TerminalExpr(CalculusFunction):
             # ...
 
             # ...
-            d_new = {}
+            d_new = OrderedDict()
             for domain, newexpr in d_expr.items():
 
                 if newexpr != 0:
@@ -571,7 +570,7 @@ class TerminalExpr(CalculusFunction):
 
             # ...
             ls = []
-            d_all = {}
+            d_all = OrderedDict()
 
             # ... treating interfaces
             keys = [k for k in d_new.keys() if isinstance(k, Interface)]
@@ -609,7 +608,7 @@ class TerminalExpr(CalculusFunction):
             for domain in keys:
 
                 newexpr = d_new[domain]
-                d       = {interior : newexpr for interior in domain.as_tuple()}
+                d       = OrderedDict((interior, newexpr) for interior in domain.as_tuple())
                             # ...
                 for k, v in d.items():
                     if k in d_all.keys():
@@ -618,7 +617,7 @@ class TerminalExpr(CalculusFunction):
                     else:
                         d_all[k] = v
 
-            d = {}
+            d = OrderedDict()
 
             for k, v in d_new.items():
                 if not isinstance( k, (Interface, Union)):
@@ -690,7 +689,6 @@ class TerminalExpr(CalculusFunction):
                     for i in range(0, dim):
                         e += M[i] * n[i]
                     return e
-
             else:
                 raise ValueError('> Only traces of order 0 and 1 are available')
 
@@ -953,7 +951,7 @@ class TensorExpr(CalculusFunction):
             raise ValueError('Expecting one argument')
 
         expr = _args[0]
-        d_atoms = kwargs.pop('d_atoms', {})
+        d_atoms = kwargs.pop('d_atoms', OrderedDict())
         mapping = kwargs.pop('mapping', None)
 
         if isinstance(expr, Add):
@@ -1030,7 +1028,7 @@ class TensorExpr(CalculusFunction):
             variables  = list(terminal_expr.atoms(ScalarTestFunction))
             variables += list(terminal_expr.atoms(IndexedTestTrial))
 
-            d_atoms = {}
+            d_atoms = OrderedDict()
             for a in variables:
                 new = _split_test_function(a)
                 d_atoms[a] = new[a]
