@@ -561,6 +561,12 @@ class LogicalExpr(CalculusFunction):
             if M.is_analytical and not isinstance(M, InterfaceMapping):
                 for i in range(M.rdim):
                     r = r.subs(M[i], M.expressions[i])
+            elif isinstance(M, InterfaceMapping):
+                M1 = M.minus
+                M2 = M.plus
+                for i in range(M1.rdim):
+                    r = r.subs(M1[i], M1.expressions[i])
+                    r = r.subs(M2[i], M2.expressions[i])
         else:
             r = None
 
@@ -596,6 +602,8 @@ class LogicalExpr(CalculusFunction):
         if isinstance(expr, Symbol) and expr.name in l_coords:
             return expr
         elif isinstance(expr, Symbol) and expr.name in ph_coords:
+            if M.is_analytical:
+                return M[ph_coords.index(expr.name)]
             return expr
 
         elif isinstance(expr, Add):

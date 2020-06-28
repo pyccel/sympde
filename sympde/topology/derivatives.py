@@ -18,7 +18,7 @@ from sympy import Indexed, IndexedBase
 from sympy import diff
 from sympy import log
 from sympy import preorder_traversal
-from sympy import AtomicExpr
+from sympy import cacheit
 
 from sympy.core.function      import AppliedUndef
 from sympy.core.function      import UndefinedFunction
@@ -31,8 +31,8 @@ from sympde.core.algebra import LinearOperator
 from .space import ScalarTestFunction, VectorTestFunction, IndexedTestTrial
 from .space import ScalarField, VectorField, IndexedVectorField
 from sympde.calculus.core import minus, plus
-from sympy import Poly
-from sympy import cacheit
+
+
 #==============================================================================
 class DifferentialOperator(LinearOperator):
     """
@@ -47,6 +47,7 @@ class DifferentialOperator(LinearOperator):
         return self
 
     @classmethod
+    @cacheit
     def eval(cls, *_args):
         """."""
 
@@ -54,13 +55,12 @@ class DifferentialOperator(LinearOperator):
 
         if isinstance(expr, _logical_partial_derivatives):
             atom    = get_atom_logical_derivatives(expr)
-            atom    = cls(atom)
             indices = get_index_logical_derivatives(expr)
             if cls in _logical_partial_derivatives:
                 indices[cls.coordinate] += 1
             for i,n in enumerate(list(indices.values())[::-1]):
                 d = _logical_partial_derivatives[-i-1]
-                for k in range(n):
+                for _ in range(n):
                     atom = d(atom, evaluate=False)
 
             if cls in _partial_derivatives:
