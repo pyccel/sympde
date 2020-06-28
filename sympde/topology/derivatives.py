@@ -56,11 +56,17 @@ class DifferentialOperator(LinearOperator):
         if isinstance(expr, _logical_partial_derivatives):
             atom    = get_atom_logical_derivatives(expr)
             indices = get_index_logical_derivatives(expr)
-            indices[cls.coordinate] += 1
+            if cls in _logical_partial_derivatives:
+                indices[cls.coordinate] += 1
             for i,n in enumerate(list(indices.values())[::-1]):
                 d = _logical_partial_derivatives[-i-1]
                 for k in range(n):
                     atom = d(atom, evaluate=False)
+
+            if cls in _partial_derivatives:
+                atom = cls(atom, evaluate=False)
+            elif cls not in _logical_partial_derivatives:
+                raise NotImplementedError('TODO')
             return atom
 
         elif isinstance(expr, (IndexedTestTrial, IndexedVectorField, DifferentialOperator)):
