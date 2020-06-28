@@ -54,16 +54,17 @@ def _get_domain(expr):
     if isinstance(expr, (DomainIntegral, BoundaryIntegral, InterfaceIntegral)):
         return expr.domain
 
-    elif isinstance(expr, (Add,Mul)):
-        domains = set()
+    elif isinstance(expr, (Add, Mul)):
+        domains = []
         for a in expr.args:
             a = _get_domain(a)
             if isinstance(a, Union):
-                domains = domains.union(a.args)
+                domains.extend(list(a.args))
             elif isinstance(a, BasicDomain):
-                domains = domains.union([a])
+                domains.append(a)
         if len(domains) == 1:
-            return tuple(domains)[0]
+            return domains[0]
+
         return Union(*domains)
 
 #==============================================================================
@@ -104,6 +105,8 @@ class Integral(CalculusFunction):
 
     def __new__(cls, expr, domain, **options):
         # (Try to) sympify args first
+        if domain is None:
+            return sy_Zero()
 
         assert isinstance(domain, BasicDomain)
         return Integral.eval(expr, domain)
@@ -117,7 +120,7 @@ class Integral(CalculusFunction):
             raise TypeError('only Expr are accepted')
 
         if isinstance(expr, sy_Zero):
-            return sy_Zero
+            return sy_Zero()
 
         if isinstance(expr, Add):
             args = [Integral.eval(a, domain) for a in expr.args]
@@ -151,6 +154,18 @@ class DomainIntegral(AtomicExpr):
 
     def __rmul__(self, o):
         return DomainIntegral(self.expr*o, self.domain)
+
+    def __add__(self, o):
+        if o == 0:
+            return self
+        else:
+            return Add(self, o)
+
+    def __radd__(self, o):
+        if o == 0:
+            return self
+        else:
+            return Add(self, o)
 
     def __eq__(self, a):
         if isinstance(a, DomainIntegral):
@@ -216,6 +231,18 @@ class BoundaryIntegral(AtomicExpr):
     def __rmul__(self, o):
         return BoundaryIntegral(self.expr*o, self.domain)
 
+    def __add__(self, o):
+        if o == 0:
+            return self
+        else:
+            return Add(self, o)
+
+    def __radd__(self, o):
+        if o == 0:
+            return self
+        else:
+            return Add(self, o)
+
     def __eq__(self, a):
         if isinstance(a, BoundaryIntegral):
             eq = self.domain == a.domain
@@ -243,6 +270,18 @@ class InterfaceIntegral(AtomicExpr):
 
     def __rmul__(self, o):
         return InterfaceIntegral(self.expr*o, self.domain)
+
+    def __add__(self, o):
+        if o == 0:
+            return self
+        else:
+            return Add(self, o)
+
+    def __radd__(self, o):
+        if o == 0:
+            return self
+        else:
+            return Add(self, o)
 
     def __eq__(self, a):
         if isinstance(a, InterfaceIntegral):
@@ -309,7 +348,7 @@ class LinearForm(BasicForm):
 
         # Trivial case: null expression
         if expr == 0:
-            return sy_Zero
+            return sy_Zero()
 
         # Check that integral expression is given
         integral_types = DomainIntegral, BoundaryIntegral, InterfaceIntegral
@@ -401,7 +440,7 @@ class BilinearForm(BasicForm):
 
         # Trivial case: null expression
         if expr == 0:
-            return sy_Zero
+            return sy_Zero()
 
         # Check that integral expression is given
         integral_types = DomainIntegral, BoundaryIntegral, InterfaceIntegral
@@ -410,6 +449,7 @@ class BilinearForm(BasicForm):
 
         # Expand integral expression and sanitize arguments
         # TODO: why do we 'sanitize' here?
+
         expr = expand(expr)
         args = _sanitize_arguments(arguments, is_bilinear=True)
 

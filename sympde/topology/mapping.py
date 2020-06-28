@@ -39,8 +39,7 @@ from .derivatives import LogicalGrad_1d, LogicalGrad_2d, LogicalGrad_3d
 #==============================================================================
 from sympy.core.exprtools    import factor_terms
 from sympy.polys.polytools   import parallel_poly_from_expr
-from sympy import cacheit
-from time import time
+from sympy                   import cacheit
 
 @cacheit
 def cancel(f):
@@ -59,14 +58,16 @@ class Mapping(BasicMapping):
 
     """
     _expressions = None # used for analytical mapping
-
+    _rdim        = None
     # TODO shall we keep rdim ?
-    def __new__(cls, name, rdim, coordinates=None, **kwargs):
+    def __new__(cls, name, rdim=None, coordinates=None, **kwargs):
         if isinstance(rdim, (tuple, list, Tuple)):
             if not len(rdim) == 1:
                 raise ValueError('> Expecting a tuple, list, Tuple of length 1')
 
             rdim = rdim[0]
+        elif rdim is None:
+            rdim = cls._rdim
 
         obj = IndexedBase.__new__(cls, name, shape=(rdim))
 
@@ -82,16 +83,19 @@ class Mapping(BasicMapping):
 
             _coordinates = [Symbol(name) for name in coordinates]
 
-        obj._name = name
-        obj._rdim = rdim
-        obj._coordinates = _coordinates
+        obj._name                = name
+        obj._rdim                = rdim
+        obj._coordinates         = _coordinates
+        obj._logical_coordinates = None
+        obj._jacobian            = None
+        obj._det_jacobian        = None
+        obj._covariant           = None
+        obj._contravariant       = None
+        obj._hessian             = None
 
-        obj._jacobian = None
-        obj._det_jacobian = None
-        obj._covariant = None
-        obj._contravariant = None
-        obj._hessian = None
-
+        lcoords = ['x1', 'x2', 'x3'][:rdim]
+        lcoords = [Symbol(i) for i in lcoords]
+        obj._logical_coordinates = Tuple(*lcoords)
         # ...
         if not( obj._expressions is None ):
             coords = ['x', 'y', 'z'][:rdim]
@@ -105,10 +109,13 @@ class Mapping(BasicMapping):
 
             args = Tuple(*args)
             # ...
+            zero_coords = ['x1', 'x2', 'x3'][rdim:]
 
+            for i in zero_coords:
+                x = sympify(i)
+                args = args.subs(x,0)
             # ...
-            lcoords = ['x1', 'x2', 'x3'][:rdim]
-            lcoords = [Symbol(i) for i in lcoords]
+
             constants = list(set(args.free_symbols) - set(lcoords))
             # subs constants as Constant objects instead of Symbol
             d = {}
@@ -142,6 +149,13 @@ class Mapping(BasicMapping):
             return self._coordinates[0]
         else:
             return self._coordinates
+
+    @property
+    def logical_coordinates(self):
+        if self.rdim == 1:
+            return self._logical_coordinates[0]
+        else:
+            return self._logical_coordinates
 
     def __call__(self, domain):
         assert(isinstance(domain, BasicDomain))
@@ -214,6 +228,38 @@ class Mapping(BasicMapping):
         raise NotImplementedError('TODO')
 
 #==============================================================================
+class InterfaceMapping(Mapping):
+    """
+    InterfaceMapping is used to represent a mapping in the interface.
+
+    Attributes
+    ----------
+    minus : Mapping
+        the mapping on the negative direction of the interface
+    plus  : Mapping
+        the mapping on the positive direction of the interface
+    """
+
+    def __new__(cls, minus, plus):
+        return Basic.__new__(cls, minus, plus)
+
+    @property
+    def minus(self):
+        return self._args[0]
+
+    @property
+    def plus(self):
+        return self._args[1]
+
+    @property
+    def is_analytical(self):
+        return self.minus.is_analytical and self.plus.is_analytical
+
+    @property
+    def rdim(self):
+        return self.minus.rdim
+
+#==============================================================================
 class IdentityMapping(Mapping):
     """
     Represents an identity 1D/2D/3D Mapping object.
@@ -226,6 +272,18 @@ class IdentityMapping(Mapping):
                     'z': 'x3'}
 
 #==============================================================================
+class AffineMapping(Mapping):
+    """
+    Represents a 1D/2D/3D Affine Mapping object.
+
+    Examples
+
+    """
+    _expressions = {'x': 'c1 + a11*x1 + a12*x2 + a13*x3',
+                    'y': 'c2 + a21*x1 + a22*x2 + a23*x3',
+                    'z': 'c3 + a31*x1 + a32*x2 + a33*x3'}
+
+#==============================================================================
 class PolarMapping(Mapping):
     """
     Represents a Polar 2D Mapping object (Annulus).
@@ -236,6 +294,7 @@ class PolarMapping(Mapping):
     _expressions = {'x': 'c1 + (rmin*(1-x1)+rmax*x1)*cos(x2)',
                     'y': 'c2 + (rmin*(1-x1)+rmax*x1)*sin(x2)'}
 
+    _rdim        = 2
 #==============================================================================
 class TargetMapping(Mapping):
     """
@@ -247,6 +306,7 @@ class TargetMapping(Mapping):
     _expressions = {'x': 'c1 + (1-k)*x1*cos(x2) - D*x1**2',
                     'y': 'c2 + (1+k)*x1*sin(x2)'}
 
+    _rdim        = 2
 #==============================================================================
 class CzarnyMapping(Mapping):
     """
@@ -259,6 +319,7 @@ class CzarnyMapping(Mapping):
                     'y': 'c2 + (b / sqrt(1-eps**2/4) * x1 * sin(x2)) /'
                         '(2 - sqrt( 1 + eps*(eps + 2*x1*cos(x2)) ))'}
 
+    _rdim        = 2
 #==============================================================================
 class CollelaMapping(Mapping):
     """
@@ -270,6 +331,7 @@ class CollelaMapping(Mapping):
     _expressions = {'x': '2.*(x1 + eps*sin(2.*pi*k1*x1)*sin(2.*pi*k2*x2)) - 1.',
                     'y': '2.*(x2 + eps*sin(2.*pi*k1*x1)*sin(2.*pi*k2*x2)) - 1.'}
 
+    _rdim        = 2
 #==============================================================================
 class TorusMapping(Mapping):
     """
@@ -282,6 +344,7 @@ class TorusMapping(Mapping):
                     'y': '(R0+x1*cos(x2))*sin(x3)',
                     'z': 'x1*sin(x2)'}
 
+    _rdim        = 3
 #==============================================================================
 class TwistedTargetMapping(Mapping):
     """
@@ -293,6 +356,8 @@ class TwistedTargetMapping(Mapping):
     _expressions = {'x': 'c1 + (1-k)*x1*cos(x2) - D*x1**2',
                     'y': 'c2 + (1+k)*x1*sin(x2)',
                     'z': 'c3 + x3*x1**2*sin(2*x2)'}
+
+    _rdim        = 3
 
 #==============================================================================
 class MappedDomain(BasicDomain):
@@ -385,7 +450,6 @@ class MappingApplication(Function):
 #==============================================================================
 class Jacobian(MappingApplication):
     """
-
     Examples
 
     """
@@ -493,7 +557,7 @@ class LogicalExpr(CalculusFunction):
         if options.pop('evaluate', True):
             r = cls.eval(*args)
             M    = args[0]
-            if M.is_analytical:
+            if M.is_analytical and not isinstance(M, InterfaceMapping):
                 for i in range(dim):
                     r = r.subs(M[i], M.expressions[i])
         else:
@@ -522,10 +586,10 @@ class LogicalExpr(CalculusFunction):
         if not len(_args) == 2:
             raise ValueError('Expecting two arguments')
 
-        M    = _args[0]
-        expr = _args[1]
-        dim  = M.rdim # TODO this is not the dim of the domain
-        l_coords = ['x1', 'x2', 'x3'][:dim]
+        M         = _args[0]
+        expr      = _args[1]
+        dim       = M.rdim # TODO this is not the dim of the domain
+        l_coords  = ['x1', 'x2', 'x3'][:dim]
         ph_coords = ['x', 'y', 'z']
 
         if isinstance(expr, Symbol) and expr.name in l_coords:
@@ -595,8 +659,13 @@ class LogicalExpr(CalculusFunction):
             return type(expr)(lines)
 
         elif isinstance(expr, dx):
+            if expr.atoms(PlusInterfaceOperator):
+                M = M.plus
+            elif expr.atoms(MinusInterfaceOperator):
+                M = M.minus
+
             arg = expr.args[0]
-            arg = cls.eval(M, arg)
+            arg = cls(M, arg, evaluate=True)
 
             # ...
             if dim == 1:
@@ -617,8 +686,13 @@ class LogicalExpr(CalculusFunction):
             return expr
 
         elif isinstance(expr, dy):
+            if expr.atoms(PlusInterfaceOperator):
+                M = M.plus
+            elif expr.atoms(MinusInterfaceOperator):
+                M = M.minus
+
             arg = expr.args[0]
-            arg = cls.eval(M, arg)
+            arg = cls(M, arg, evaluate=True)
 
             # ...
             if dim == 1:
@@ -637,8 +711,13 @@ class LogicalExpr(CalculusFunction):
             return expr
 
         elif isinstance(expr, dz):
+            if expr.atoms(PlusInterfaceOperator):
+                M = M.plus
+            elif expr.atoms(MinusInterfaceOperator):
+                M = M.minus
+
             arg = expr.args[0]
-            arg = cls.eval(M, arg)
+            arg = cls(M, arg, evaluate=True)
 
             # ...
             if dim == 1:
@@ -807,8 +886,11 @@ class SymbolicExpr(CalculusFunction):
             return cls.eval(atom, code=code)
 
         elif isinstance(expr, SymbolicMappingExpr):
+            mapping = expr.mapping
+            if isinstance(mapping, InterfaceMapping):
+                mapping = mapping.minus
             name = '{name}_{mapping}'.format(name=expr._name,
-                                             mapping=expr.mapping)
+                                             mapping=mapping)
 
             return Symbol(name)
 
