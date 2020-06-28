@@ -2,17 +2,22 @@
 
 from collections  import OrderedDict
 
-from sympy import Indexed, IndexedBase, Idx, Matrix, ImmutableDenseMatrix
+from sympy import Indexed, IndexedBase, Idx
+from sympy import Matrix, ImmutableDenseMatrix
 from sympy import Function
 from sympy import sympify
+from sympy import cacheit
+
 from sympy.core import Basic
 from sympy.core import Symbol
 from sympy.core import Add, Mul, Pow
+
 from sympy.core.expr       import AtomicExpr
 from sympy.core.numbers    import ImaginaryUnit
 from sympy.core.containers import Tuple
+from sympy                 import S
 
-from sympde.calculus.core import PlusInterfaceOperator, MinusInterfaceOperator
+from sympde.calculus.core  import PlusInterfaceOperator, MinusInterfaceOperator
 
 from sympde.core       import Constant
 from sympde.core.basic import BasicMapping
@@ -31,6 +36,20 @@ from .derivatives import _logical_partial_derivatives
 from .derivatives import get_atom_logical_derivatives, get_index_logical_derivatives_atom
 from .derivatives import LogicalGrad_1d, LogicalGrad_2d, LogicalGrad_3d
 
+#==============================================================================
+from sympy.core.exprtools    import factor_terms
+from sympy.polys.polytools   import parallel_poly_from_expr
+from sympy import cacheit
+from time import time
+
+@cacheit
+def cancel(f):
+    f           = factor_terms(f, radical=True)
+    p, q        = f.as_numer_denom()
+    # TODO accelerate parallel_poly_from_expr
+    (p, q), opt = parallel_poly_from_expr((p,q))
+    c, P, Q     = p.cancel(q)
+    return c*(P.as_expr()/Q.as_expr())
 #==============================================================================
 class Mapping(BasicMapping):
     """
@@ -189,7 +208,7 @@ class Mapping(BasicMapping):
     def _compute_contravariant(self):
         J   = self.jacobian
         det = self.det_jacobian
-        self._contravariant = J/det
+        self._contravariant = (J/det)
 
     def _compute_hessian(self):
         raise NotImplementedError('TODO')
@@ -350,6 +369,7 @@ class SymbolicWeightedVolume(SymbolicMappingExpr):
 class MappingApplication(Function):
     nargs = None
 
+    @cacheit
     def __new__(cls, *args, **options):
 
         if options.pop('evaluate', True):
@@ -417,6 +437,7 @@ class Covariant(MappingApplication):
     """
 
     @classmethod
+    @cacheit
     def eval(cls, F, v):
 
         if not isinstance(v, (tuple, list, Tuple, Matrix)):
@@ -431,12 +452,11 @@ class Covariant(MappingApplication):
             n,m = M.shape
             w   = []
             for i in range(0, n):
-                w.append(0)
+                w.append(S.Zero)
 
             for i in range(0, n):
                 for j in range(0, m):
                     w[i] += M[i,j] * v[j]
-
             return Tuple(*w)
 
 #==============================================================================
@@ -448,6 +468,7 @@ class Contravariant(MappingApplication):
     """
 
     @classmethod
+    @cacheit
     def eval(cls, F, v):
 
         if not isinstance(F, Mapping):
@@ -465,11 +486,16 @@ class Contravariant(MappingApplication):
 #==============================================================================
 class LogicalExpr(CalculusFunction):
 
+    @cacheit
     def __new__(cls, *args, **options):
         # (Try to) sympify args first
 
         if options.pop('evaluate', True):
             r = cls.eval(*args)
+            M    = args[0]
+            if M.is_analytical:
+                for i in range(dim):
+                    r = r.subs(M[i], M.expressions[i])
         else:
             r = None
 
@@ -486,6 +512,7 @@ class LogicalExpr(CalculusFunction):
             return Indexed(self, indices, **kw_args)
 
     @classmethod
+    @cacheit
     def eval(cls, *_args):
         """."""
 
@@ -501,25 +528,21 @@ class LogicalExpr(CalculusFunction):
         l_coords = ['x1', 'x2', 'x3'][:dim]
         ph_coords = ['x', 'y', 'z']
 
-        if M.is_analytical:
-            for i in range(dim):
-                expr = expr.subs(M[i], M.expressions[i])
-
         if isinstance(expr, Symbol) and expr.name in l_coords:
             return expr
         elif isinstance(expr, Symbol) and expr.name in ph_coords:
-            if M.is_analytical:
-                return M.expressions[ph_coords.index(expr.name)]
-            else:
-                return expr
+            return expr
 
         elif isinstance(expr, Add):
             args = [cls.eval(M, a) for a in expr.args]
-            return Add(*args)
+            v    =  Add(*args)
+            n,d = v.as_numer_denom()
+            return cancel(n/d)
 
         elif isinstance(expr, Mul):
             args = [cls.eval(M, a) for a in expr.args]
-            return Mul(*args)
+            v    =  Mul(*args)
+            return v
 
         elif isinstance(expr, _coeffs_registery):
             return expr
@@ -529,7 +552,6 @@ class LogicalExpr(CalculusFunction):
                 arg = cls.eval(M, expr._args[0])
                 op  = expr
                 return op.eval(arg)
-
             else:
                 return expr
 
@@ -542,17 +564,15 @@ class LogicalExpr(CalculusFunction):
             if isinstance(kind, (H1SpaceType, L2SpaceType, UndefinedSpaceType)):
                 return expr
             elif isinstance(kind, HdivSpaceType):
-                A     = M.contravariant
+                A     = M.contravariant[index,:]
                 v     = Matrix([[expr.base[i]] for i in range(dim)]) 
-                b     = A*v
-                expr  = b[index]
-                return expr
-            elif isinstance(kind , HcrulSpaceType):
-                A     = M.covariant
+                b     = (A*v)[0,0]
+                return b
+            elif isinstance(kind , HcurlSpaceType):
+                A     = M.covariant[index, :]
                 v     = Matrix([[expr.base[i]] for i in range(dim)]) 
-                b     = A*v
-                expr  = b[index]
-                return expr
+                b     = (A*v)[0,0]
+                return b
             else:
                 raise NotImplementedError('TODO')
 
@@ -572,7 +592,7 @@ class LogicalExpr(CalculusFunction):
 
                 lines.append(line)
 
-            return Matrix(lines)
+            return type(expr)(lines)
 
         elif isinstance(expr, dx):
             arg = expr.args[0]
@@ -594,9 +614,6 @@ class LogicalExpr(CalculusFunction):
             grad_arg = Covariant(M, lgrad_arg)
 
             expr = grad_arg[0]
-            if M.is_analytical:
-                for i in range(dim):
-                    expr = expr.subs(M[i], M.expressions[i])
             return expr
 
         elif isinstance(expr, dy):
@@ -616,9 +633,6 @@ class LogicalExpr(CalculusFunction):
             grad_arg = Covariant(M, lgrad_arg)
 
             expr = grad_arg[1]
-            if M.is_analytical:
-                for i in range(dim):
-                    expr = expr.subs(M[i], M.expressions[i])
 
             return expr
 
@@ -639,9 +653,6 @@ class LogicalExpr(CalculusFunction):
             grad_arg = Covariant(M, lgrad_arg)
 
             expr = grad_arg[2]
-            if M.is_analytical:
-                for i in range(dim):
-                    expr = expr.subs(M[i], M.expressions[i])
 
             return expr
 
@@ -658,7 +669,8 @@ class LogicalExpr(CalculusFunction):
         elif isinstance(expr, Pow):
             b = expr.base
             e = expr.exp
-            return Pow(cls(M, b), cls(M, e))
+            expr =  Pow(cls(M, b), cls(M, e))
+            return expr
 
         return cls(M, expr, evaluate=False)
 
@@ -667,6 +679,7 @@ class SymbolicExpr(CalculusFunction):
     """returns a sympy expression where partial derivatives are converted into
     sympy Symbols."""
 
+    @cacheit
     def __new__(cls, *args, **options):
         # (Try to) sympify args first
 
@@ -688,6 +701,7 @@ class SymbolicExpr(CalculusFunction):
             return Indexed(self, indices, **kw_args)
 
     @classmethod
+    @cacheit
     def eval(cls, *_args, **kwargs):
         """."""
 
@@ -702,16 +716,19 @@ class SymbolicExpr(CalculusFunction):
 
         if isinstance(expr, Add):
             args = [cls.eval(a, code=code) for a in expr.args]
-            return Add(*args)
+            v = Add(*args)
+            return v
 
         elif isinstance(expr, Mul):
             args = [cls.eval(a, code=code) for a in expr.args]
-            return Mul(*args)
+            v    = Mul(*args)
+            return v
 
         elif isinstance(expr, Pow):
             b = expr.base
             e = expr.exp
-            return Pow(cls(b, code=code), e)
+            v = Pow(cls.eval(b, code=code), e)
+            return v
 
         elif isinstance(expr, _coeffs_registery):
             return expr
@@ -720,7 +737,7 @@ class SymbolicExpr(CalculusFunction):
             expr = [cls.eval(a, code=code) for a in expr]
             return Tuple(*expr)
 
-        elif isinstance(expr, Matrix):
+        elif isinstance(expr, (Matrix, ImmutableDenseMatrix)):
 
             lines = []
             n_row,n_col = expr.shape
@@ -731,7 +748,7 @@ class SymbolicExpr(CalculusFunction):
 
                 lines.append(line)
 
-            return Matrix(lines)
+            return type(expr)(lines)
 
         elif isinstance(expr, (ScalarField, ScalarTestFunction, VectorField, VectorTestFunction)):
             if code:

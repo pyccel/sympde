@@ -18,6 +18,7 @@ from sympy import Indexed, IndexedBase
 from sympy import diff
 from sympy import log
 from sympy import preorder_traversal
+from sympy import AtomicExpr
 
 from sympy.core.function      import AppliedUndef
 from sympy.core.function      import UndefinedFunction
@@ -30,7 +31,8 @@ from sympde.core.algebra import LinearOperator
 from .space import ScalarTestFunction, VectorTestFunction, IndexedTestTrial
 from .space import ScalarField, VectorField, IndexedVectorField
 from sympde.calculus.core import minus, plus
-
+from sympy import Poly
+from sympy import cacheit
 #==============================================================================
 class DifferentialOperator(LinearOperator):
     """
@@ -45,11 +47,23 @@ class DifferentialOperator(LinearOperator):
         return self
 
     @classmethod
+    @cacheit
     def eval(cls, *_args):
         """."""
 
         expr = _args[0]
-        if isinstance(expr, (IndexedTestTrial, IndexedVectorField, DifferentialOperator)):
+
+        if isinstance(expr, _logical_partial_derivatives):
+            atom    = get_atom_logical_derivatives(expr)
+            indices = get_index_logical_derivatives(expr)
+            indices[cls.coordinate] += 1
+            for i,n in enumerate(list(indices.values())[::-1]):
+                d = _logical_partial_derivatives[-i-1]
+                for k in range(n):
+                    atom = d(atom, evaluate=False)
+            return atom
+
+        elif isinstance(expr, (IndexedTestTrial, IndexedVectorField, DifferentialOperator)):
             return cls(expr, evaluate=False)
 
         elif isinstance(expr, (ScalarField, ScalarTestFunction)):
@@ -74,8 +88,9 @@ class DifferentialOperator(LinearOperator):
 
         elif isinstance(expr, Add):
             args = expr.args
-            args = [cls.eval(a) for a in expr.args]
-            return Add(*args)
+            args = [cls(a, evaluate=True) for a in expr.args]
+            v    = Add(*args)
+            return v
 
         elif isinstance(expr, Mul):
             coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
@@ -109,12 +124,14 @@ class DifferentialOperator(LinearOperator):
 
                     V = a * fb + fa * b
 
-            return Mul(c, V)
+                v = Mul(c, V)
+                return v
 
         elif isinstance(expr, Pow):
             b = expr.base
             e = expr.exp
-            return (log(b)*cls.eval(e) + e*cls.eval(b)/b) * b**e
+            v = (log(b)*cls(e, evaluate=True) + e*cls(b, evaluate=True)/b) * b**e
+            return v
 
         elif isinstance(expr, Derivative):
             x = Symbol(cls.coordinate)
@@ -164,7 +181,6 @@ _partial_derivatives = (dx, dy, dz)
 class dx1(DifferentialOperator):
     coordinate = 'x1'
     grad_index = 0 # index in grad
-    pass
 
 class dx2(DifferentialOperator):
     coordinate = 'x2'
@@ -179,6 +195,7 @@ class dx3(DifferentialOperator):
 _logical_partial_derivatives = (dx1, dx2, dx3)
 
 #==============================================================================
+@cacheit
 def find_partial_derivatives(expr):
     """
     returns all partial derivative expressions
@@ -204,6 +221,7 @@ def find_partial_derivatives(expr):
     return []
 
 #==============================================================================
+@cacheit
 def get_number_derivatives(expr):
     """
     returns the number of partial derivatives in expr.
@@ -218,6 +236,7 @@ def get_number_derivatives(expr):
     return n
 
 #==============================================================================
+@cacheit
 def sort_partial_derivatives(expr):
     """returns the partial derivatives of an expression, sorted.
     """
@@ -263,6 +282,7 @@ def sort_partial_derivatives(expr):
     return ls
 
 #==============================================================================
+@cacheit
 def get_index_derivatives(expr):
     """
     """
@@ -288,6 +308,7 @@ def get_index_derivatives(expr):
     return d
 
 #==============================================================================
+@cacheit
 def get_atom_derivatives(expr):
     """
     """
@@ -326,6 +347,7 @@ def get_index_logical_derivatives(expr):
     return d
 
 #==============================================================================
+@cacheit
 def get_atom_logical_derivatives(expr):
     """
     """
@@ -496,6 +518,7 @@ class GradBasic(CalculusFunction):
     nargs = None
     name = 'Grad'
 
+    @cacheit
     def __new__(cls, *args, **options):
         # (Try to) sympify args first
 
@@ -519,6 +542,7 @@ class GradBasic(CalculusFunction):
 class Grad_1d(GradBasic):
 
     @classmethod
+    @cacheit
     def eval(cls, *_args):
         """."""
 
@@ -532,6 +556,7 @@ class Grad_1d(GradBasic):
 class Grad_2d(GradBasic):
 
     @classmethod
+    @cacheit
     def eval(cls, *_args):
         """."""
 
@@ -557,6 +582,7 @@ class Grad_2d(GradBasic):
 class Grad_3d(GradBasic):
 
     @classmethod
+    @cacheit
     def eval(cls, *_args):
         """."""
 
@@ -913,226 +939,10 @@ class Bracket_2d(BracketBasic):
         v = _args[1]
 
         return dx(u)*dy(v) - dy(u)*dx(v)
-#==============================================================================
-
-class LogicalGrad_1d(GradBasic):
-
-    @classmethod
-    def eval(cls, *_args):
-        """."""
-
-        if not _args:
-            return
-
-        u = _args[0]
-
-        return dx1(u)
-
-class LogicalGrad_2d(GradBasic):
-
-    @classmethod
-    def eval(cls, *_args):
-        """."""
-
-        if not _args:
-            return
-
-        u = _args[0]
-
-        if isinstance(u, Tuple):
-            n = len(u)
-            lines = []
-            for i in range(0, n):
-                line = [dx1(u)[0,i], dx2(u)[0,i]]
-                lines.append(line)
-
-            v = Matrix(lines)
-
-        else:
-            v = Matrix((dx1(u), dx2(u)))
-
-        return v
-
-class LogicalGrad_3d(GradBasic):
-
-    @classmethod
-    def eval(cls, *_args):
-        """."""
-
-        if not _args:
-            return
-
-        u = _args[0]
-
-        if isinstance(u, Tuple):
-            n = len(u)
-            lines = []
-            for i in range(0, n):
-                line = [dx1(u)[0,i], dx2(u)[0,i], dx3(u)[0,i]]
-                lines.append(line)
-
-            v = Matrix(lines)
-
-        else:
-            v = Matrix((dx1(u), dx2(u), dx3(u)))
-
-        return v
-
-#==============================================================================
-
-class LogicalCurl_2d(CurlBasic):
-
-    @classmethod
-    def eval(cls, *_args):
-        """."""
-
-        if not _args:
-            return
-
-        u = _args[0]
-
-        return dx1(u[1])-dx2(u[0])
-
-class LogicalCurl_3d(CurlBasic):
-
-    @classmethod
-    def eval(cls, *_args):
-        """."""
-
-        if not _args:
-            return
-
-        u = _args[0]
-
-        return Matrix((dx2(u[2]) - dx3(u[1]),
-                     dx3(u[0]) - dx1(u[2]),
-                     dx1(u[1]) - dx2(u[0])))
-
-#==============================================================================
-class LogicalRot_2d(CalculusFunction):
-
-    nargs = None
-    name = 'Grad'
-
-    def __new__(cls, *args, **options):
-        # (Try to) sympify args first
-
-        if options.pop('evaluate', True):
-            r = cls.eval(*args)
-        else:
-            r = None
-
-        if r is None:
-            return Basic.__new__(cls, *args, **options)
-        else:
-            return r
-
-    def __getitem__(self, indices, **kw_args):
-        if is_sequence(indices):
-            # Special case needed because M[*my_tuple] is a syntax error.
-            return Indexed(self, *indices, **kw_args)
-        else:
-            return Indexed(self, indices, **kw_args)
-
-    @classmethod
-    def eval(cls, *_args):
-        """."""
-
-        if not _args:
-            return
-
-        u = _args[0]
-
-        return Matrix([[dx2(u),-dx1(u)]]).T
-
-#==============================================================================
-class LogicalDiv_1d(DivBasic):
-
-    @classmethod
-    def eval(cls, *_args):
-        """."""
-
-        if not _args:
-            return
-
-        u = _args[0]
-
-        return dx1(u)
-
-class LogicalDiv_2d(DivBasic):
-
-    @classmethod
-    def eval(cls, *_args):
-        """."""
-
-        if not _args:
-            return
-
-        u = _args[0]
-
-        return dx1(u[0]) + dx2(u[1])
-
-class LogicalDiv_3d(DivBasic):
-
-    @classmethod
-    def eval(cls, *_args):
-        """."""
-
-        if not _args:
-            return
-
-        u = _args[0]
-
-        return dx1(u[0]) + dx2(u[1]) + dx3(u[2])
-
-#==============================================================================
-class LogicalLaplace_1d(LaplaceBasic):
-
-    @classmethod
-    def eval(cls, *_args):
-        """."""
-
-        if not _args:
-            return
-
-        u = _args[0]
-        if isinstance(u, (VectorTestFunction, VectorField)):
-            raise NotImplementedError('TODO')
-
-        return dx1(dx1(u))
-
-class LogicalLaplace_2d(LaplaceBasic):
-
-    @classmethod
-    def eval(cls, *_args):
-        """."""
-
-        if not _args:
-            return
-
-        u = _args[0]
-        if isinstance(u, (VectorTestFunction, VectorField)):
-            raise NotImplementedError('TODO')
-
-        return dx1(dx1(u)) + dx2(dx2(u))
-
-class LogicalLaplace_3d(LaplaceBasic):
-
-    @classmethod
-    def eval(cls, *_args):
-        """."""
-
-        if not _args:
-            return
-
-        u = _args[0]
-        if isinstance(u, (VectorTestFunction, VectorField)):
-            raise NotImplementedError('TODO')
-
-        return dx1(dx1(u)) + dx2(dx2(u)) + dx3(dx3(u))
 
 #==============================================================================
 # ... TODO to be removed, not used anymore
+
 def partial_derivative_as_symbol(expr, name=None, dim=None):
     """Returns a Symbol from a partial derivative expression."""
     if not isinstance(expr, _partial_derivatives):
@@ -1167,6 +977,7 @@ def partial_derivative_as_symbol(expr, name=None, dim=None):
         return Symbol(name)
 
 #==============================================================================
+@cacheit
 def partial_derivative_as_str(expr):
     """Returns a string from a partial derivative expression."""
     if not isinstance(expr, _partial_derivatives):
@@ -1185,6 +996,7 @@ def partial_derivative_as_str(expr):
     return code
 
 #==============================================================================
+@cacheit
 def get_index_derivatives_atom(expr, atom, verbose=False):
     """This function return a dictionary of partial derivative indices for
     a given atom.
@@ -1204,6 +1016,7 @@ def get_index_derivatives_atom(expr, atom, verbose=False):
     return indices
 
 #==============================================================================
+@cacheit
 def get_index_logical_derivatives_atom(expr, atom, verbose=False):
     """This function return a dictionary of partial derivative indices for
     a given atom.
@@ -1223,6 +1036,7 @@ def get_index_logical_derivatives_atom(expr, atom, verbose=False):
     return indices
 
 #==============================================================================
+@cacheit
 def get_max_partial_derivatives(expr, F=None):
     if F is None:
         Fs = (list(expr.atoms(ScalarTestFunction)) +
@@ -1248,6 +1062,7 @@ def get_max_partial_derivatives(expr, F=None):
 class LogicalGrad_1d(GradBasic):
 
     @classmethod
+    @cacheit
     def eval(cls, *_args):
         """."""
 
@@ -1261,6 +1076,7 @@ class LogicalGrad_1d(GradBasic):
 class LogicalGrad_2d(GradBasic):
 
     @classmethod
+    @cacheit
     def eval(cls, *_args):
         """."""
 
@@ -1286,6 +1102,7 @@ class LogicalGrad_2d(GradBasic):
 class LogicalGrad_3d(GradBasic):
 
     @classmethod
+    @cacheit
     def eval(cls, *_args):
         """."""
 
