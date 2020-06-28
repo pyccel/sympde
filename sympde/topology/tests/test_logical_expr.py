@@ -499,16 +499,17 @@ def test_target_mapping_2d_1():
     assert(LogicalExpr(M, M[0]) == -D*x1**2 + c1 + x1*(-k + 1)*cos(x2))
     assert(LogicalExpr(M, M[1]) == c2 + x1*(k + 1)*sin(x2))
 
-    assert(LogicalExpr(M, dx1(M[0])) == -2*D*x1 - k*x1*cos(x2) + (-k + 1)*cos(x2))
+    assert(LogicalExpr(M, dx1(M[0])) == -2*D*x1 + (-k + 1)*cos(x2))
     assert(LogicalExpr(M, dx1(M[1])) == (k + 1)*sin(x2))
 
-    assert(LogicalExpr(M, dx2(M[0])) == x1*(-k*cos(x2) - (-k + 1)*sin(x2)))
+    assert(LogicalExpr(M, dx2(M[0])) == -x1*(-k + 1)*sin(x2))
     assert(LogicalExpr(M, dx2(M[1])) == x1*(k + 1)*cos(x2))
 
-    expected = Matrix([[-2*D*x1 - k*x1*cos(x2) + (-k + 1)*cos(x2),
-                        x1*(-k*cos(x2) - (-k + 1)*sin(x2))],
+    expected = Matrix([[-2*D*x1 + (-k + 1)*cos(x2),
+                        -x1*(-k + 1)*sin(x2)],
                        [(k + 1)*sin(x2),
                         x1*(k + 1)*cos(x2)]])
+
     assert(not( M.jacobian == expected))
     assert(expand(LogicalExpr(M, M.jacobian)) == expand(expected))
 
@@ -653,31 +654,30 @@ def test_twisted_target_mapping_3d_1():
     expected = c3 + x1**2*x3*sin(2*x2)
     assert(LogicalExpr(M, M[2]) == expected)
 
-    expected = -2*D*x1 - k*x1*cos(x2) + (-k + 1)*cos(x2)
+    expected = -2*D*x1 + (-k + 1)*cos(x2)
     assert(LogicalExpr(M, dx1(M[0])) == expected)
     expected = (k + 1)*sin(x2)
     assert(LogicalExpr(M, dx1(M[1])) == expected)
     expected = 2*x1*x3*sin(2*x2)
     assert(LogicalExpr(M, dx1(M[2])) == expected)
 
-    expected = x1*(-k*cos(x2) - (-k + 1)*sin(x2))
+    expected = -x1*(-k + 1)*sin(x2)
     assert(LogicalExpr(M, dx2(M[0])) == expected)
     expected = x1*(k + 1)*cos(x2)
     assert(LogicalExpr(M, dx2(M[1])) == expected)
     expected = 2*x1**2*x3*cos(2*x2)
     assert(LogicalExpr(M, dx2(M[2])) == expected)
 
-    expected = -k*x1*cos(x2)
+    expected = 0
     assert(expand(LogicalExpr(M, dx3(M[0]))) == expand(expected))
     expected = 0
     assert(LogicalExpr(M, dx3(M[1])) == expected)
     expected = x1**2*sin(2*x2)
     assert(LogicalExpr(M, dx3(M[2])) == expected)
 
-    expected = Matrix([[-2*D*x1 - k*x1*cos(x2) + (-k + 1)*cos(x2),
-                        x1*(-k*cos(x2) - (-k + 1)*sin(x2)), -k*x1*cos(x2)],
-                       [(k + 1)*sin(x2), x1*(k + 1)*cos(x2), 0],
-                       [2*x1*x3*sin(2*x2), 2*x1**2*x3*cos(2*x2), x1**2*sin(2*x2)]])
+    expected = Matrix([[-2*D*x1 + (-k + 1)*cos(x2), -x1*(-k + 1)*sin(x2), 0],
+                       [(k + 1)*sin(x2),             x1*(k + 1)*cos(x2), 0],
+                       [2*x1*x3*sin(2*x2),           2*x1**2*x3*cos(2*x2), x1**2*sin(2*x2)]])
     assert(not( M.jacobian == expected))
     assert(expand(LogicalExpr(M, M.jacobian)) == expand(expected))
 

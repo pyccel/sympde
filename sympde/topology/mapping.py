@@ -557,8 +557,9 @@ class LogicalExpr(CalculusFunction):
         if options.pop('evaluate', True):
             r = cls.eval(*args)
             M    = args[0]
+
             if M.is_analytical and not isinstance(M, InterfaceMapping):
-                for i in range(dim):
+                for i in range(M.rdim):
                     r = r.subs(M[i], M.expressions[i])
         else:
             r = None

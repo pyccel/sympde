@@ -47,7 +47,6 @@ class DifferentialOperator(LinearOperator):
         return self
 
     @classmethod
-    @cacheit
     def eval(cls, *_args):
         """."""
 
@@ -55,6 +54,7 @@ class DifferentialOperator(LinearOperator):
 
         if isinstance(expr, _logical_partial_derivatives):
             atom    = get_atom_logical_derivatives(expr)
+            atom    = cls(atom)
             indices = get_index_logical_derivatives(expr)
             if cls in _logical_partial_derivatives:
                 indices[cls.coordinate] += 1
@@ -93,7 +93,6 @@ class DifferentialOperator(LinearOperator):
             return Matrix([args])
 
         elif isinstance(expr, Add):
-            args = expr.args
             args = [cls(a, evaluate=True) for a in expr.args]
             v    = Add(*args)
             return v
@@ -106,11 +105,11 @@ class DifferentialOperator(LinearOperator):
             if coeffs:
                 c = Mul(*coeffs)
 
-            V = S.One
+            V = S.Zero
             if vectors:
                 if len(vectors) == 1:
                     # do we need to use Mul?
-                    V = cls(Mul(vectors[0]), evaluate=True)
+                    V = cls(vectors[0], evaluate=True)
 
                 elif len(vectors) == 2:
                     a = vectors[0]
@@ -130,8 +129,8 @@ class DifferentialOperator(LinearOperator):
 
                     V = a * fb + fa * b
 
-                v = Mul(c, V)
-                return v
+            v = Mul(c, V)
+            return v
 
         elif isinstance(expr, Pow):
             b = expr.base
