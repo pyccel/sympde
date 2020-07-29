@@ -26,7 +26,7 @@ def test_logical_expr_1d_1():
     rdim = 1
 
     M = Mapping('M', rdim)
-    domain = Domain('Omega', dim=rdim)
+    domain = M(Domain('Omega', dim=rdim))
 
     alpha = Constant('alpha')
 
@@ -73,7 +73,7 @@ def test_symbolic_expr_1d_1():
     rdim = 1
 
     M = Mapping('M', rdim)
-    domain = Domain('Omega', dim=rdim)
+    domain = M(Domain('Omega', dim=rdim))
 
     alpha = Constant('alpha')
 
@@ -144,7 +144,7 @@ def test_logical_expr_2d_1():
     rdim = 2
 
     M = Mapping('M', rdim)
-    domain = Domain('Omega', dim=rdim)
+    domain = M(Domain('Omega', dim=rdim))
 
     alpha = Constant('alpha')
 
@@ -207,7 +207,7 @@ def test_symbolic_expr_2d_1():
     rdim = 2
 
     M = Mapping('M', rdim)
-    domain = Domain('Omega', dim=rdim)
+    domain = M(Domain('Omega', dim=rdim))
 
     alpha = Constant('alpha')
 
@@ -285,7 +285,7 @@ def test_logical_expr_3d_1():
     rdim = 3
 
     M = Mapping('M', rdim)
-    domain = Domain('Omega', dim=rdim)
+    domain = M(Domain('Omega', dim=rdim))
 
     alpha = Constant('alpha')
 
@@ -339,7 +339,7 @@ def test_symbolic_expr_3d_1():
     rdim = 3
 
     M = Mapping('M', rdim)
-    domain = Domain('Omega', dim=rdim)
+    domain = M(Domain('Omega', dim=rdim))
 
     alpha = Constant('alpha')
 
@@ -443,8 +443,9 @@ def test_identity_mapping_2d_2():
 
     x1, x2 = symbols('x1, x2')
 
-    domain = Domain('Omega', dim=rdim)
-    M = IdentityMapping('F', rdim)
+    M      = IdentityMapping('F', rdim)
+    domain = M(Domain('Omega', dim=rdim))
+
 
     V = ScalarFunctionSpace('V', domain)
     u = element_of(V, name='u')

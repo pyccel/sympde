@@ -946,6 +946,304 @@ class Bracket_2d(BracketBasic):
         return dx(u)*dy(v) - dy(u)*dx(v)
 
 #==============================================================================
+class LogicalGrad_1d(GradBasic):
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        u = _args[0]
+
+        return dx1(u)
+
+class LogicalGrad_2d(GradBasic):
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        u = _args[0]
+
+        if isinstance(u, Tuple):
+            n = len(u)
+            lines = []
+            for i in range(0, n):
+                line = [dx1(u)[0,i], dx2(u)[0,i]]
+                lines.append(line)
+
+            v = Matrix(lines)
+
+        else:
+            v = Matrix((dx1(u), dx2(u)))
+
+        return v
+
+class LogicalGrad_3d(GradBasic):
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        u = _args[0]
+
+        if isinstance(u, Tuple):
+            n = len(u)
+            lines = []
+            for i in range(0, n):
+                line = [dx1(u)[0,i], dx2(u)[0,i], dx3(u)[0,i]]
+                lines.append(line)
+
+            v = Matrix(lines)
+
+        else:
+            v = Matrix((dx1(u), dx2(u), dx3(u)))
+
+        return v
+
+#==============================================================================
+
+class LogicalCurl_2d(CurlBasic):
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        u = _args[0]
+
+        return dx1(u[1])-dx2(u[0])
+
+class LogicalCurl_3d(CurlBasic):
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        u = _args[0]
+
+        return Matrix((dx2(u[2]) - dx3(u[1]),
+                     dx3(u[0]) - dx1(u[2]),
+                     dx1(u[1]) - dx2(u[0])))
+
+#==============================================================================
+class LogicalRot_2d(CalculusFunction):
+
+    nargs = None
+    name = 'Grad'
+
+    def __new__(cls, *args, **options):
+        # (Try to) sympify args first
+
+        if options.pop('evaluate', True):
+            r = cls.eval(*args)
+        else:
+            r = None
+
+        if r is None:
+            return Basic.__new__(cls, *args, **options)
+        else:
+            return r
+
+    def __getitem__(self, indices, **kw_args):
+        if is_sequence(indices):
+            # Special case needed because M[*my_tuple] is a syntax error.
+            return Indexed(self, *indices, **kw_args)
+        else:
+            return Indexed(self, indices, **kw_args)
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        u = _args[0]
+
+        return Matrix([[dx2(u),-dx1(u)]]).T
+
+#==============================================================================
+class LogicalDiv_1d(DivBasic):
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        u = _args[0]
+
+        return dx1(u)
+
+class LogicalDiv_2d(DivBasic):
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        u = _args[0]
+
+        return dx1(u[0]) + dx2(u[1])
+
+class LogicalDiv_3d(DivBasic):
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        u = _args[0]
+
+        return dx1(u[0]) + dx2(u[1]) + dx3(u[2])
+
+#==============================================================================
+class LogicalLaplace_1d(LaplaceBasic):
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        u = _args[0]
+        if isinstance(u, (VectorTestFunction, VectorField)):
+            raise NotImplementedError('TODO')
+
+        return dx1(dx1(u))
+
+class LogicalLaplace_2d(LaplaceBasic):
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        u = _args[0]
+        if isinstance(u, (VectorTestFunction, VectorField)):
+            raise NotImplementedError('TODO')
+
+        return dx1(dx1(u)) + dx2(dx2(u))
+
+class LogicalLaplace_3d(LaplaceBasic):
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        u = _args[0]
+        if isinstance(u, (VectorTestFunction, VectorField)):
+            raise NotImplementedError('TODO')
+
+        return dx1(dx1(u)) + dx2(dx2(u)) + dx3(dx3(u))
+
+#==============================================================================
+class LogicalHessian_1d(HessianBasic):
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        u = _args[0]
+        if isinstance(u, (VectorTestFunction, VectorField)):
+            raise NotImplementedError('TODO')
+
+        return dx1(dx1(u))
+
+class LogicalHessian_2d(HessianBasic):
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        u = _args[0]
+        if isinstance(u, (VectorTestFunction, VectorField)):
+            raise NotImplementedError('TODO')
+
+        return Matrix([[dx1(dx1(u)), dx1(dx2(u))],
+                       [dx1(dx2(u)), dx2(dx2(u))]])
+
+class LogicalHessian_3d(HessianBasic):
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        u = _args[0]
+        if isinstance(u, (VectorTestFunction, VectorField)):
+            raise NotImplementedError('TODO')
+
+        return Matrix([[dx1(dx1(u)), dx1(dx2(u)), dx1(dx3(u))],
+                       [dx1(dx2(u)), dx2(dx2(u)), dx2(dx3(u))],
+                       [dx1(dx3(u)), dx2(dx3(u)), dx3(dx3(u))]])
+
+#==============================================================================
+
+class LogicalBracket_2d(BracketBasic):
+
+    nargs = None
+    name = 'Bracket'
+
+    def __new__(cls, *args, **options):
+        # (Try to) sympify args first
+
+        if options.pop('evaluate', True):
+            r = cls.eval(*args)
+        else:
+            r = None
+
+        if r is None:
+            return Basic.__new__(cls, *args, **options)
+        else:
+            return r
+
+    @classmethod
+    def eval(cls, *_args):
+        """."""
+
+        if not _args:
+            return
+
+        u = _args[0]
+        v = _args[1]
+
+        return dx1(u)*dx2(v) - dx2(u)*dx1(v)
+
+#==============================================================================
 # ... TODO to be removed, not used anymore
 
 def partial_derivative_as_symbol(expr, name=None, dim=None):
@@ -1062,70 +1360,3 @@ def get_max_partial_derivatives(expr, F=None):
         for k,v in dd.items():
             if v > d[k]: d[k] = v
     return d
-
-#==============================================================================
-class LogicalGrad_1d(GradBasic):
-
-    @classmethod
-    @cacheit
-    def eval(cls, *_args):
-        """."""
-
-        if not _args:
-            return
-
-        u = _args[0]
-
-        return dx1(u)
-
-class LogicalGrad_2d(GradBasic):
-
-    @classmethod
-    @cacheit
-    def eval(cls, *_args):
-        """."""
-
-        if not _args:
-            return
-
-        u = _args[0]
-
-        if isinstance(u, Tuple):
-            n = len(u)
-            lines = []
-            for i in range(0, n):
-                line = [dx1(u)[0,i], dx2(u)[0,i]]
-                lines.append(line)
-
-            v = Matrix(lines)
-
-        else:
-            v = Tuple(dx1(u), dx2(u))
-
-        return v
-
-class LogicalGrad_3d(GradBasic):
-
-    @classmethod
-    @cacheit
-    def eval(cls, *_args):
-        """."""
-
-        if not _args:
-            return
-
-        u = _args[0]
-
-        if isinstance(u, Tuple):
-            n = len(u)
-            lines = []
-            for i in range(0, n):
-                line = [dx1(u)[0,i], dx2(u)[0,i], dx3(u)[0,i]]
-                lines.append(line)
-
-            v = Matrix(lines)
-
-        else:
-            v = Tuple(dx1(u), dx2(u), dx3(u))
-
-        return v

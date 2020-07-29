@@ -49,6 +49,7 @@ def cancel(f):
     (p, q), opt = parallel_poly_from_expr((p,q))
     c, P, Q     = p.cancel(q)
     return c*(P.as_expr()/Q.as_expr())
+
 #==============================================================================
 class Mapping(BasicMapping):
     """
@@ -159,7 +160,6 @@ class Mapping(BasicMapping):
 
     def __call__(self, domain):
         assert(isinstance(domain, BasicDomain))
-
         return MappedDomain(self, domain)
 
     @property
@@ -379,6 +379,9 @@ class MappedDomain(BasicDomain):
     def dim(self):
         return self.domain.dim
 
+    def __len__(self):
+        return len(self.domain)
+
 #==============================================================================
 class SymbolicMappingExpr(AtomicExpr):
 
@@ -555,12 +558,17 @@ class LogicalExpr(CalculusFunction):
         # (Try to) sympify args first
 
         if options.pop('evaluate', True):
+            #expr = args[0]
+            #M    = list(expr.atoms(MappedDomain))
+            #assert len(M) == 1
+            #M    = M[0].mapping
+            # TODO remove mapping from args
             r = cls.eval(*args)
-            M    = args[0]
-
+            M = args[0]
             if M.is_analytical and not isinstance(M, InterfaceMapping):
                 for i in range(M.rdim):
                     r = r.subs(M[i], M.expressions[i])
+
             elif isinstance(M, InterfaceMapping):
                 M1 = M.minus
                 M2 = M.plus
@@ -629,21 +637,27 @@ class LogicalExpr(CalculusFunction):
                 return expr
 
         elif isinstance(expr, (ScalarField, ScalarTestFunction)):
-            return expr
+            space   = expr.space
+            domain  = space.domain.domain
+            l_space = type(space)(space.name, domain)
+            return l_space.element(expr.name)
 
         elif isinstance(expr, (IndexedTestTrial, IndexedVectorField)):
-            kind = expr.base.space.kind
-            index = expr.indices[0]
+            space   = expr.base.space
+            kind    = space.kind
+            l_space = type(space)(space.name, space.domain.domain)
+            index   = expr.indices[0]
+            el      = l_space.element(expr.name)
             if isinstance(kind, (H1SpaceType, L2SpaceType, UndefinedSpaceType)):
-                return expr
+                return el[index]
             elif isinstance(kind, HdivSpaceType):
                 A     = M.contravariant[index,:]
-                v     = Matrix([[expr.base[i]] for i in range(dim)]) 
+                v     = Matrix([[el[i]] for i in range(dim)])
                 b     = (A*v)[0,0]
                 return b
             elif isinstance(kind , HcurlSpaceType):
                 A     = M.covariant[index, :]
-                v     = Matrix([[expr.base[i]] for i in range(dim)]) 
+                v     = Matrix([[el[i]] for i in range(dim)])
                 b     = (A*v)[0,0]
                 return b
             else:

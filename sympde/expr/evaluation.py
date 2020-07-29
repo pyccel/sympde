@@ -20,7 +20,9 @@ from sympde.core.utils import random_string
 
 from sympde.calculus import jump, avg, minus, plus
 from sympde.calculus import Jump
-from sympde.calculus.core import _generic_ops
+from sympde.calculus.core import _generic_ops, _diff_ops
+
+from sympde.topology.mapping import MappedDomain
 
 from sympde.topology import BasicDomain, Union, Interval
 from sympde.topology import NormalVector, TangentVector
@@ -47,6 +49,15 @@ from sympde.topology.derivatives import (Grad_1d, Div_1d,
 from sympde.topology.derivatives import Bracket_2d
 from sympde.topology.derivatives import Laplace_1d, Laplace_2d, Laplace_3d
 from sympde.topology.derivatives import Hessian_1d, Hessian_2d, Hessian_3d
+
+from sympde.topology.derivatives import (LogicalGrad_1d, LogicalDiv_1d,
+                                         LogicalGrad_2d, LogicalCurl_2d, LogicalRot_2d, LogicalDiv_2d,
+                                         LogicalGrad_3d, LogicalCurl_3d, LogicalDiv_3d)
+
+from sympde.topology.derivatives import LogicalBracket_2d
+from sympde.topology.derivatives import LogicalLaplace_1d, LogicalLaplace_2d, LogicalLaplace_3d
+from sympde.topology.derivatives import LogicalHessian_1d, LogicalHessian_2d, LogicalHessian_3d
+
 from sympde.topology.space       import ScalarFunctionSpace
 
 from .basic import BasicExpr, BasicForm
@@ -419,10 +430,8 @@ class TerminalExpr(CalculusFunction):
         # (Try to) sympify args first
 
         if options.pop('evaluate', True):
-
             args = cls._annotate(*args)
             r = cls.eval(*args, **options)
-
         else:
             r = None
 
@@ -469,20 +478,21 @@ class TerminalExpr(CalculusFunction):
         if not len(_args) == 1:
             raise ValueError('Expecting one argument')
 
-        expr = _args[0]
-        n_rows = kwargs.pop('n_rows', None)
-        n_cols = kwargs.pop('n_cols', None)
-        dim    = kwargs.pop('dim', None)
+        expr    = _args[0]
+        n_rows  = kwargs.pop('n_rows', None)
+        n_cols  = kwargs.pop('n_cols', None)
+        dim     = kwargs.pop('dim', None)
+        logical = kwargs.pop('logical', None)
 
         if isinstance(expr, Add):
-            args = [cls.eval(a, dim=dim) for a in expr.args]
+            args = [cls.eval(a, dim=dim, logical=logical) for a in expr.args]
             o = args[0]
             for arg in args[1:]:
                 o = o + arg
             return o
 
         elif isinstance(expr, Mul):
-            args = [cls.eval(a, dim=dim) for a in expr.args]
+            args = [cls.eval(a, dim=dim, logical=logical) for a in expr.args]
             o = args[0]
             for arg in args[1:]:
                 o = o * arg
@@ -493,8 +503,9 @@ class TerminalExpr(CalculusFunction):
 
         elif isinstance(expr, BasicForm):
             # ...
-            dim = expr.ldim
-            domain = expr.domain
+            dim     = expr.ldim
+            domain  = expr.domain
+            logical = not isinstance(domain, MappedDomain)
             if isinstance(domain, Union):
                 domain = domain.as_tuple()
 
@@ -509,7 +520,7 @@ class TerminalExpr(CalculusFunction):
             # ...
             if isinstance(expr.expr, Add):
                 for a in expr.expr.args:
-                    newexpr = cls.eval(a, dim=dim)
+                    newexpr = cls.eval(a, dim=dim, logical=logical)
                     newexpr = expand(newexpr)
 
                     # ...
@@ -529,7 +540,7 @@ class TerminalExpr(CalculusFunction):
                         d_expr[d] += newexpr
                     # ...
             else:
-                newexpr = cls.eval(expr.expr, dim=dim)
+                newexpr = cls.eval(expr.expr, dim=dim, logical=logical)
                 newexpr = expand(newexpr)
 
                 # ...
@@ -645,7 +656,7 @@ class TerminalExpr(CalculusFunction):
 
         elif isinstance(expr, (DomainIntegral, BoundaryIntegral, InterfaceIntegral)):
             dim = expr.domain.dim if dim is None else dim
-            return cls.eval(expr._args[0], dim=dim)
+            return cls.eval(expr._args[0], dim=dim, logical=logical)
 
         elif isinstance(expr, NormalVector):
             lines = [[expr[i] for i in range(dim)]]
@@ -656,25 +667,34 @@ class TerminalExpr(CalculusFunction):
             return Matrix(lines)
 
         elif isinstance(expr, BasicExpr):
-            return cls.eval(expr.expr, dim=dim)
+            return cls.eval(expr.expr, dim=dim, logical=logical)
 
+        elif isinstance(expr, _diff_ops):
+            op   = type(expr)
+            if logical:
+                new  = eval('Logical{0}_{1}d'.format(op, dim))
+            else:
+                new  = eval('{0}_{1}d'.format(op, dim))
+
+            args = [cls.eval(i, dim=dim, logical=logical) for i in expr.args]
+            return new(*args)
         elif isinstance(expr, _generic_ops):
             # if i = Dot(...) then type(i) is Grad
             op = type(expr)
             new  = eval('{0}_{1}d'.format(op, dim))
-            args = [cls.eval(i, dim=dim) for i in expr.args]
+            args = [cls.eval(i, dim=dim, logical=logical) for i in expr.args]
             return new(*args)
 
         elif isinstance(expr, Trace):
             # TODO treate different spaces
             if expr.order == 0:
-                return cls.eval(expr.expr, dim=dim)
+                return cls.eval(expr.expr, dim=dim, logical=logical)
 
             elif expr.order == 1:
                 # TODO give a name to normal vector
                 normal_vector_name = 'n'
                 n = NormalVector(normal_vector_name)
-                M = cls.eval(expr.expr, dim=dim)
+                M = cls.eval(expr.expr, dim=dim, logical=logical)
 
                 if dim == 1:
                     return M
@@ -698,7 +718,7 @@ class TerminalExpr(CalculusFunction):
             for i in range(0, n):
                 line = []
                 for j in range(0, m):
-                    line.append(cls.eval(expr[i,j], dim=dim))
+                    line.append(cls.eval(expr[i,j], dim=dim, logical=logical))
                 lines.append(line)
             return Matrix(lines)
         return expr

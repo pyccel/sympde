@@ -140,7 +140,6 @@ class BasicFunctionSpace(Basic):
             raise TypeError('Expecting kind to be of SpaceType')
 
         obj._kind = kind
-        # ...
 
         # ...
         if not(kind_str == 'undefined'):
