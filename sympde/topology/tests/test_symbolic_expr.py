@@ -44,12 +44,12 @@ def test_derivatives_2d_without_mapping():
 def test_derivatives_2d_with_mapping():
 
     rdim = 2
-
-    O = Domain('Omega', dim=rdim)
+    M = Mapping('M', rdim)
+    O = M(Domain('Omega', dim=rdim))
     V = ScalarFunctionSpace('V', O)
     u = element_of(V, 'u')
 
-    M = Mapping('M', rdim)
+
     det_jac = DetJacobian(M)
     J = Symbol('J')
 
