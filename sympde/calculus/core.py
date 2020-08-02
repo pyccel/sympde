@@ -96,6 +96,9 @@ from sympy import Indexed, IndexedBase
 from sympy.core import Add, Mul, Pow
 from sympy.core.containers import Tuple
 from sympy.core.singleton import S
+from sympy import Expr, Abs
+from sympy.core.expr       import AtomicExpr
+from sympy.core.decorators import call_highest_priority
 
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import _coeffs_registery
@@ -115,6 +118,7 @@ class BasicOperator(CalculusFunction):
     """
     Basic class for calculus operators.
     """
+    is_commutative = False
 
     def __getitem__(self, indices, **kw_args):
         if is_sequence(indices):
@@ -190,19 +194,13 @@ class Dot(BasicOperator):
 
         if options.pop('evaluate', True):
             arg1, arg2 = args
-            return cls.eval(arg1, arg2)
+            obj = cls.eval(arg1, arg2)
+            if isinstance(obj, (Inner, Dot)) and obj.args[0] == obj.args[1]:
+                obj.is_real     = True
+                obj.is_positive = True
+            return obj
         else:
             return Basic.__new__(cls, *args, **options)
-
-    def _eval_is_real(self):
-        arg1, arg2 = self.args
-        if arg1 == arg2:
-            return True
-
-    def _eval_is_positive(self):
-        arg1, arg2 = self.args
-        if arg1 == arg2:
-            return True
 
     @classmethod
     def eval(cls, arg1, arg2):
@@ -210,7 +208,7 @@ class Dot(BasicOperator):
         # If one argument is scalar, convert Dot to Mul
         # TODO: avoid this hack in the future
         if is_scalar(arg1) or is_scalar(arg2):
-            return Mul(arg1, arg2)
+            return arg1*arg2
 
         # If one argument is the zero vector, return 0
         if arg1 == 0 or arg2 == 0:
@@ -230,8 +228,12 @@ class Dot(BasicOperator):
                           (arg2, lambda a: (arg1, a)):
 
             # Sum: dot(a, b + c + d) = dot(a, b) + dot(a, c) + dot(a, d)
+
             if isinstance(expr, Add):
-                return Add(*[cls.eval(*args(a)) for a in expr.args])
+                b = 0
+                for a in expr.args:
+                    b += cls.eval(*args(a))
+                return b
 
             # Multiplication: dot(a, k*b) = k * dot(a, b) if k is scalar
             if isinstance(expr, Mul):
@@ -243,8 +245,8 @@ class Dot(BasicOperator):
 
                 if scalars:
                     a = Mul(*scalars)
-                    b = Mul(*vectors)
-                    return Mul(a, cls.eval(*args(b)))
+                    b = expr.func(*vectors)
+                    return a*cls.eval(*args(b))
 
         # Automatic evaluation to canonical form: reorder arguments by using
         # commutativity property dot(v, u) = dot(u, v) and stop recursion.
@@ -350,19 +352,13 @@ class Inner(BasicOperator):
 
         if options.pop('evaluate', True):
             arg1, arg2 = args
-            return cls.eval(arg1, arg2)
+            obj = cls.eval(arg1, arg2)
+            if isinstance(obj, (Inner, Dot)) and obj.args[0] == obj.args[1]:
+                obj.is_real     = True
+                obj.is_positive = True
+            return obj
         else:
             return Basic.__new__(cls, *args, **options)
-
-    def _eval_is_real(self):
-        arg1, arg2 = self.args
-        if arg1 == arg2:
-            return True
-
-    def _eval_is_positive(self):
-        arg1, arg2 = self.args
-        if arg1 == arg2:
-            return True
 
     @classmethod
     def eval(cls, arg1, arg2):
@@ -1766,3 +1762,4 @@ _is_op_test_function = lambda op: (isinstance(op, (Grad, Curl, Div)) and
 
 _is_op_field         = lambda op: (isinstance(op, (Grad, Curl, Div)) and
                                    isinstance(op._args[0], (ScalarField, VectorField)))
+

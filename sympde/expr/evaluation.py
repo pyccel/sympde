@@ -22,15 +22,16 @@ from sympde.calculus import jump, avg, minus, plus
 from sympde.calculus import Jump
 from sympde.calculus.core import _generic_ops, _diff_ops
 
-from sympde.topology.mapping import MappedDomain
+from sympde.calculus.matrices import MatAdd, MatMul, MatPow, MatAbs
+from sympde.calculus.matrices import SymbolicDeterminant, Inverse, Transpose
 
-from sympde.topology import BasicDomain, Union, Interval
-from sympde.topology import NormalVector, TangentVector
-from sympde.topology import Boundary, Interface
-from sympde.topology import InteriorDomain
-from sympde.topology import DetJacobian
-from sympde.topology import SymbolicDeterminant
-from sympde.topology import LogicalExpr
+from sympde.topology.mapping import MappedDomain, Jacobian, JacobianSymbol
+
+from sympde.topology       import BasicDomain, Union, Interval
+from sympde.topology       import NormalVector, TangentVector
+from sympde.topology       import Boundary, Interface
+from sympde.topology       import InteriorDomain
+from sympde.topology       import LogicalExpr
 from sympde.topology.space import ScalarTestFunction
 from sympde.topology.space import VectorTestFunction
 from sympde.topology.space import IndexedTestTrial
@@ -497,7 +498,12 @@ class TerminalExpr(CalculusFunction):
             for arg in args[1:]:
                 o = o * arg
             return o
-
+        elif isinstance(expr, MatPow):
+            raise NotImplementedError
+        elif isinstance(expr, JacobianSymbol):
+            return Jacobian(expr.mapping)
+        elif isinstance(expr, SymbolicDeterminant):
+            return cls.eval(expr.arg).det()
         elif isinstance(expr, (ScalarTestFunction, VectorTestFunction)):
             return expr
 
@@ -505,15 +511,15 @@ class TerminalExpr(CalculusFunction):
             # ...
             dim     = expr.ldim
             domain  = expr.domain
-            logical = not isinstance(domain, MappedDomain)
+            logical = None
+
             if isinstance(domain, Union):
                 domain = domain.as_tuple()
-
-            elif not is_sequence(domain):
-                domain = (domain,)
+            else:
+                logical = domain.mapping is None
+                domain  = (domain,)
             # ...
 
-            # ...
             d_expr = OrderedDict()
             for d in domain:
                 d_expr[d] = S.Zero
@@ -535,7 +541,6 @@ class TerminalExpr(CalculusFunction):
                         pass
                     # ...
 
-                    # ...
                     for d in domain:
                         d_expr[d] += newexpr
                     # ...
@@ -561,9 +566,7 @@ class TerminalExpr(CalculusFunction):
                 for d in domain:
                     d_expr[d] += newexpr
                 # ...
-            # ...
 
-            # ...
             d_new = OrderedDict()
             for domain, newexpr in d_expr.items():
 
@@ -577,7 +580,6 @@ class TerminalExpr(CalculusFunction):
                         domain = domain.interior
 
                     d_new[domain] = M
-            # ...
 
             # ...
             ls = []
@@ -1059,10 +1061,10 @@ class TensorExpr(CalculusFunction):
             if not(mapping is None):
                 logical = True
                 terminal_expr = LogicalExpr(mapping, terminal_expr.expr)
-                det_M         = DetJacobian(mapping)
-                det           = SymbolicDeterminant(mapping)
-                terminal_expr = terminal_expr.subs(det_M, det)
-                terminal_expr = expand(terminal_expr)
+                #det_M         = DetJacobian(mapping)
+                #det           = SymbolicDeterminant(mapping)
+                #terminal_expr = terminal_expr.subs(det_M, det)
+                #terminal_expr = expand(terminal_expr)
             # ...
 
             # ...

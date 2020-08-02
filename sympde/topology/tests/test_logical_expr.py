@@ -6,7 +6,7 @@ from sympy import expand
 from sympy import cos, sin, sqrt, pi
 
 from sympde.core     import Constant
-from sympde.topology import Domain, Mapping, DetJacobian
+from sympde.topology import Domain, Mapping
 from sympde.topology import dx, dy
 from sympde.topology import dx1, dx2, dx3
 from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
@@ -21,6 +21,8 @@ from sympde.topology import CollelaMapping
 from sympde.topology import TorusMapping
 from sympde.topology import TwistedTargetMapping
 
+from sympde.topology.mapping import Jacobian
+
 #==============================================================================
 def test_logical_expr_1d_1():
     rdim = 1
@@ -34,7 +36,7 @@ def test_logical_expr_1d_1():
 
     u,v = [element_of(V, name=i) for i in ['u', 'v']]
 
-    det_M = DetJacobian(M)
+    det_M = Jacobian(M).det()
     #print('det = ', det_M)
     det   = Symbol('det')
 
@@ -81,7 +83,7 @@ def test_symbolic_expr_1d_1():
 
     u = element_of(V, name='u')
 
-    det_M = DetJacobian(M)
+    det_M = Jacobian(M).det()
     det_M = SymbolicExpr(det_M)
     #print('>>> ', det_M)
     det   = Symbol('det')
@@ -116,7 +118,7 @@ def test_symbolic_expr_1d_1():
     # ...
 
     # ...
-    expr = dx(DetJacobian(M))
+    expr = dx(Jacobian(M).det())
     expr = LogicalExpr(M, expr)
     expr = SymbolicExpr(expr)
     expr = expr.subs(det_M, det)
@@ -154,7 +156,7 @@ def test_logical_expr_2d_1():
     u,v = [element_of(V, name=i) for i in ['u', 'v']]
     w = element_of(W, name='w')
 
-    det_M = DetJacobian(M)
+    det_M = Jacobian(M).det()
     #print('det = ', det_M)
     det   = Symbol('det')
 
@@ -215,7 +217,7 @@ def test_symbolic_expr_2d_1():
 
     u = element_of(V, name='u')
 
-    det_M = DetJacobian(M)
+    det_M = Jacobian(M).det()
     det_M = SymbolicExpr(det_M)
     #print('>>> ', det_M)
     det   = Symbol('det')
@@ -257,7 +259,7 @@ def test_symbolic_expr_2d_1():
     # ...
 
     # ...
-    expr = dx(DetJacobian(M))
+    expr = dx(Jacobian(M).det())
     expr = LogicalExpr(M, expr)
     expr = SymbolicExpr(expr)
     expr = expr.subs(det_M, det)
@@ -293,7 +295,7 @@ def test_logical_expr_3d_1():
 
     u,v = [element_of(V, name=i) for i in ['u', 'v']]
 
-    det_M = DetJacobian(M)
+    det_M = Jacobian(M).det()
     #print('det = ', det_M)
     det   = Symbol('det')
 
@@ -346,7 +348,7 @@ def test_symbolic_expr_3d_1():
     V = ScalarFunctionSpace('V', domain)
     u = element_of(V, 'u')
 
-    det_M = DetJacobian(M)
+    det_M = Jacobian(M).det()
     det_M = SymbolicExpr(det_M)
     #print('>>> ', det_M)
     det   = Symbol('det')
@@ -388,7 +390,7 @@ def test_symbolic_expr_3d_1():
     # ...
 
     # ...
-    expr = dx(DetJacobian(M))
+    expr = dx(Jacobian(M).det())
     expr = LogicalExpr(M, expr)
     expr = SymbolicExpr(expr)
     expr = expr.subs(det_M, det)
@@ -434,7 +436,7 @@ def test_identity_mapping_2d_1():
 
     expected = Matrix([[1, 0], [0, 1]])
     assert(not( M.jacobian == expected))
-    assert(LogicalExpr(M, M.jacobian) == expected)
+    assert(LogicalExpr(M, Jacobian(M)) == expected)
 
 
 #==============================================================================
@@ -481,7 +483,7 @@ def test_polar_mapping_2d_1():
 
     expected = Matrix([[(rmax - rmin)*cos(x2), -(rmax*x1 + rmin*(-x1 + 1))*sin(x2)],
                        [(rmax - rmin)*sin(x2), (rmax*x1 + rmin*(-x1 + 1))*cos(x2)]])
-    assert(expand(LogicalExpr(M, M.jacobian)) == expand(expected))
+    assert(expand(LogicalExpr(M, Jacobian(M))) == expand(expected))
 
 #==============================================================================
 def test_target_mapping_2d_1():
@@ -511,8 +513,8 @@ def test_target_mapping_2d_1():
                        [(k + 1)*sin(x2),
                         x1*(k + 1)*cos(x2)]])
 
-    assert(not( M.jacobian == expected))
-    assert(expand(LogicalExpr(M, M.jacobian)) == expand(expected))
+    assert(not( Jacobian(M) == expected))
+    assert(expand(LogicalExpr(M, Jacobian(M))) == expand(expected))
 
 #==============================================================================
 def test_czarny_mapping_2d_1():
@@ -547,8 +549,8 @@ def test_czarny_mapping_2d_1():
                          x1*sin(x2)/sqrt(eps*(eps + 2*x1*cos(x2)) + 1)],
                         [b*(eps*x1*sin(x2)*cos(x2)/(sqrt(-eps**2/4 + 1)*sqrt(eps*(eps + 2*x1*cos(x2)) + 1)*(-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 2)**2) + sin(x2)/(sqrt(-eps**2/4 + 1)*(-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 2))),
                          b*x1*(-eps*x1*sin(x2)**2/(sqrt(eps*(eps + 2*x1*cos(x2)) + 1)*(-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 2)**2) + cos(x2)/(-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 2))/sqrt(-eps**2/4 + 1)]])
-    assert(not( M.jacobian == expected))
-    assert(expand(LogicalExpr(M, M.jacobian)) == expand(expected))
+    assert(not( Jacobian(M) == expected))
+    assert(expand(LogicalExpr(M, Jacobian(M))) == expand(expected))
 
 #==============================================================================
 def test_collela_mapping_2d_1():
@@ -583,8 +585,8 @@ def test_collela_mapping_2d_1():
                         4.0*eps*k2*pi*sin(2.0*k1*pi*x1)*cos(2.0*k2*pi*x2)],
                        [4.0*eps*k1*pi*sin(2.0*k2*pi*x2)*cos(2.0*k1*pi*x1),
                         4.0*eps*k2*pi*sin(2.0*k1*pi*x1)*cos(2.0*k2*pi*x2) + 2.0]])
-    assert(not( M.jacobian == expected))
-    assert(expand(LogicalExpr(M, M.jacobian)) == expand(expected))
+    assert(not( Jacobian(M) == expected))
+    assert(expand(LogicalExpr(M, Jacobian(M))) == expand(expected))
 
 #==============================================================================
 def test_torus_mapping_3d_1():
@@ -630,8 +632,8 @@ def test_torus_mapping_3d_1():
     expected = Matrix([[cos(x2)*cos(x3),-x1*sin(x2)*cos(x3),-(R0+x1*cos(x2))*sin(x3)],
                        [sin(x3)*cos(x2),-x1*sin(x2)*sin(x3),(R0+x1*cos(x2))*cos(x3)],
                        [sin(x2), x1*cos(x2), 0]])
-    assert(not( M.jacobian == expected))
-    assert(expand(LogicalExpr(M, M.jacobian)) == expand(expected))
+    assert(not( Jacobian(M) == expected))
+    assert(expand(LogicalExpr(M, Jacobian(M))) == expand(expected))
 
 #==============================================================================
 def test_twisted_target_mapping_3d_1():
@@ -679,8 +681,8 @@ def test_twisted_target_mapping_3d_1():
     expected = Matrix([[-2*D*x1 + (-k + 1)*cos(x2), -x1*(-k + 1)*sin(x2), 0],
                        [(k + 1)*sin(x2),             x1*(k + 1)*cos(x2), 0],
                        [2*x1*x3*sin(2*x2),           2*x1**2*x3*cos(2*x2), x1**2*sin(2*x2)]])
-    assert(not( M.jacobian == expected))
-    assert(expand(LogicalExpr(M, M.jacobian)) == expand(expected))
+    assert(not( Jacobian(M) == expected))
+    assert(expand(LogicalExpr(M, Jacobian(M))) == expand(expected))
 
 
 #==============================================================================

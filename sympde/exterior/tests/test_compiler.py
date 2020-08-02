@@ -14,6 +14,7 @@ from sympde.exterior import ExteriorCalculusExpr, augmented_expression
 from sympde.calculus.errors import ArgumentTypeError
 
 #==============================================================================
+@pytest.mark.xfail
 def test_compiler_3d_1():
 
     domain = Domain('Omega', dim=3)

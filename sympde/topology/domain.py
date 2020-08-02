@@ -35,8 +35,8 @@ class Domain(BasicDomain):
 
     """
 
-    def __new__(cls, name, interiors=None, boundaries=None, dim=None,
-                connectivity=None):
+    def __new__(cls, name, *, interiors=None, boundaries=None, dim=None,
+                connectivity=None, mapping=None, logical_domain=None):
         # ...
         if not isinstance(name, str):
             raise TypeError('> name must be a string')
@@ -117,16 +117,17 @@ class Domain(BasicDomain):
             dim   = interiors[0].dim
             interiors = Union(*interiors)
 
-        # ...
-        if len(boundaries) > 1:
-            boundaries = Union(*boundaries)
-        # ...
+        assert mapping is None and logical_domain is None or \
+        mapping is not None and logical_domain  is not None
 
-        obj = Basic.__new__(cls, name, interiors, boundaries)
-        obj._connectivity = connectivity
-        obj._dtype        = dtype
-        obj._dim          = dim
+        # ...
+        boundaries = Union(*boundaries)
 
+        obj = Basic.__new__(cls, name, interiors, boundaries, mapping)
+        obj._connectivity   = connectivity
+        obj._dtype          = dtype
+        obj._dim            = dim
+        obj._logical_domain = logical_domain
         return obj
 
     @property
@@ -140,6 +141,14 @@ class Domain(BasicDomain):
     @property
     def boundary(self):
         return self.args[2]
+
+    @property
+    def mapping(self):
+        return self._args[3]
+
+    @property
+    def logical_domain(self):
+        return self._logical_domain
 
     @property
     def connectivity(self):
@@ -175,7 +184,10 @@ class Domain(BasicDomain):
 
     def _sympystr(self, printer):
         sstr = printer.doprint
-        return '{}'.format(sstr(self.name))
+        if self.mapping:
+            return '{}({})'.format(sstr(self.mapping.name), sstr(self.name))
+        else:
+            return '{}'.format(sstr(self.name))
 
     def get_boundary(self, name=None, axis=None, ext=None):
         """return boundary by name or (axis, ext)."""

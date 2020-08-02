@@ -43,7 +43,7 @@ class InteriorDomain(BasicDomain):
     Examples
 
     """
-    def __new__(cls, name, dim=None, dtype=None):
+    def __new__(cls, name, dim=None, dtype=None, mapping=None, logical_domain=None):
         target = None
         if not isinstance(name, str):
             target = name
@@ -52,11 +52,16 @@ class InteriorDomain(BasicDomain):
         if not( target is None ):
             dim = target.dim
 
+        assert mapping is None and logical_domain is None or \
+        mapping is not None and logical_domain  is not None
+
         obj = Basic.__new__(cls, name)
 
-        obj._dim    = dim
-        obj._target = target
-        obj._dtype  = dtype
+        obj._dim            = dim
+        obj._target         = target
+        obj._dtype          = dtype
+        obj._mapping        = mapping
+        obj._logical_domain = logical_domain
 
         return obj
 
@@ -69,6 +74,14 @@ class InteriorDomain(BasicDomain):
         return self._target
 
     @property
+    def mapping(self):
+        return self._mapping
+
+    @property
+    def logical_domain(self):
+        return self._logical_domain
+
+    @property
     def dtype(self):
         return self._dtype
 
@@ -78,7 +91,10 @@ class InteriorDomain(BasicDomain):
 
     def _sympystr(self, printer):
         sstr = printer.doprint
-        return '{}'.format(sstr(self.name))
+        if self.mapping:
+            return '{}({})'.format(sstr(self.mapping.name), sstr(self.name))
+        else:
+            return '{}'.format(sstr(self.name))
 
     def todict(self):
         name   = str(self.name)
@@ -228,6 +244,8 @@ class Boundary(BasicDomain):
             assert isinstance(ext, int)
 
         obj = Basic.__new__(cls, name, domain, axis, ext)
+        obj._mapping        = domain.mapping
+        obj._logical_domain = domain.logical_domain
 
         return obj
 
@@ -246,6 +264,14 @@ class Boundary(BasicDomain):
     @property
     def ext(self):
         return self.args[3]
+
+    @property
+    def mapping(self):
+        return self._mapping
+
+    @property
+    def logical_domain(self):
+        return self._logical_domain
 
     @property
     def dim(self):
@@ -291,8 +317,20 @@ class Interface(BasicDomain):
         if bnd_minus.dim != bnd_plus.dim:
             raise TypeError('Dimension mismatch: {} != {}'.format(
                 bnd_minus.dim, bnd_plus.dim))
+
+        mapping        = None
+        logical_domain = None
+
+        if bnd_minus.mapping or bnd_plus.mapping:
+            from sympde.topology.mapping import InterfaceMapping
+            mapping        = InterfaceMapping(bnd_minus.mapping , bnd_plus.mapping)
+            logical_domain = (bnd_minus.logical_domain, bnd_plus.logical_domain)
+
         assert bnd_minus.axis == bnd_plus.axis
-        return Basic.__new__(cls, edge.name, bnd_minus, bnd_plus)
+        obj = Basic.__new__(cls, edge.name, bnd_minus, bnd_plus)
+        obj._mapping        = mapping
+        obj._logical_domain = logical_domain
+        return obj
 
     @property
     def dim(self):
@@ -313,6 +351,14 @@ class Interface(BasicDomain):
     @property
     def axis(self):
         return self.plus.axis
+
+    @property
+    def mapping(self):
+        return self._mapping
+
+    @property
+    def logical_domain(self):
+        return self._logical_domain
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -368,11 +414,7 @@ class Connectivity(abc.Mapping):
         data = OrderedDict(sorted(self._data.items()))
         for k, (minus, plus) in data.items():
             ls.append(Interface(k, minus, plus))
-
-        if len(ls) == 1:
-            return ls[0]
-        else:
-            return Union(*ls)
+        return Union(*ls)
 
     def todict(self):
         # ... create the connectivity
@@ -417,3 +459,5 @@ class Connectivity(abc.Mapping):
         return 0
 
     # ==========================================
+
+

@@ -4,8 +4,7 @@ from sympy import sympify
 from sympde.topology import Domain, ScalarFunctionSpace, element_of
 from sympde.topology import dx, dy, dz
 from sympde.topology import dx1, dx2, dx3
-from sympde.topology import Mapping
-from sympde.topology import DetJacobian
+from sympde.topology import Mapping, Jacobian
 from sympde.topology import LogicalExpr
 from sympde.topology import SymbolicExpr
 
@@ -50,7 +49,7 @@ def test_derivatives_2d_with_mapping():
     u = element_of(V, 'u')
 
 
-    det_jac = DetJacobian(M)
+    det_jac = Jacobian(M).det()
     J = Symbol('J')
 
     expr = M

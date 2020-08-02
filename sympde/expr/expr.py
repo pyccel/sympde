@@ -42,11 +42,12 @@ def expand(expr):
 
     if isinstance(expr, Tuple):
         return expr
-
-    coeff, args = _expand(expr).as_coeff_add()
+    coeff, args = _expand(expr, MatMul=True).as_coeff_add()
     newargs = [c * reduce(mul, m) for a in args for c, m in [a.as_coeff_mul()]]
-
-    return Add(coeff, *newargs)
+    expr    = coeff
+    for e in newargs:
+        expr += e
+    return expr
 
 #==============================================================================
 def _get_domain(expr):
