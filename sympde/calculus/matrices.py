@@ -176,7 +176,7 @@ class SymbolicDeterminant(Expr):
     @property
     def arg(self):
         return self._args[0]
-       
+
     def _sympystr(self, printer):
         sstr = printer.doprint
         arg = sstr(self.arg)
