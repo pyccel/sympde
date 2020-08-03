@@ -2,7 +2,7 @@
 
 from itertools import product
 from collections import OrderedDict
-from sympy import S
+from sympy import Abs, S
 from sympy import Indexed, Matrix, ImmutableDenseMatrix
 from sympy import expand
 from sympy.core import Basic
@@ -22,8 +22,8 @@ from sympde.calculus import jump, avg, minus, plus
 from sympde.calculus import Jump
 from sympde.calculus.core import _generic_ops, _diff_ops
 
-from sympde.calculus.matrices import MatAdd, MatMul, MatPow, MatAbs
 from sympde.calculus.matrices import SymbolicDeterminant, Inverse, Transpose
+from sympde.calculus.matrices import MatPow
 
 from sympde.topology.mapping import MappedDomain, Jacobian, JacobianSymbol
 
@@ -498,12 +498,18 @@ class TerminalExpr(CalculusFunction):
             for arg in args[1:]:
                 o = o * arg
             return o
+        elif isinstance(expr, Abs):
+            return Abs(cls.eval(expr.args[0], dim=dim, logical=logical))
         elif isinstance(expr, MatPow):
             raise NotImplementedError
         elif isinstance(expr, JacobianSymbol):
             return Jacobian(expr.mapping)
         elif isinstance(expr, SymbolicDeterminant):
-            return cls.eval(expr.arg).det()
+            return cls.eval(expr.arg, dim=dim, logical=logical).det()
+        elif isinstance(expr, Transpose):
+            return cls.eval(expr.arg, dim=dim, logical=logical).T
+        elif isinstance(expr, Inverse):
+            return cls.eval(expr.arg, dim=dim, logical=logical).inv()
         elif isinstance(expr, (ScalarTestFunction, VectorTestFunction)):
             return expr
 

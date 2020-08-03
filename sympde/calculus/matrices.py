@@ -1,8 +1,7 @@
-from sympy                 import Expr, Abs, S
+from sympy                 import Expr, S
 from sympy                 import Add, Mul, Pow
-from sympy.core.expr       import AtomicExpr
 from sympy.core.decorators import call_highest_priority
-from sympy import Basic
+from sympy                 import Basic, IndexedBase
 
 
 class MatrixSymbolicExpr(Expr):
@@ -32,6 +31,9 @@ class MatrixSymbolicExpr(Expr):
 
     def __abs__(self):
         return MatAbs(self)
+
+    def __getitem__(self, key):
+        return IndexedBase(self)[key]
 
     @call_highest_priority('__radd__')
     def __add__(self, other):
@@ -71,10 +73,11 @@ class MatrixSymbolicExpr(Expr):
 
 class Inverse(MatrixSymbolicExpr):
     is_commutative = False
-    def __new__(cls, arg):
-        if isinstance(arg, Inverse):
-            return arg.arg
-        return Expr.__new__(cls, arg)
+    def __new__(cls, *args):
+        assert len(args) == 1
+        if isinstance(args[0], Inverse):
+            return args[0].arg
+        return Expr.__new__(cls, *args)
 
     @property
     def arg(self):
@@ -83,13 +86,14 @@ class Inverse(MatrixSymbolicExpr):
     def _sympystr(self, printer):
         sstr = printer.doprint
         return 'Inverse({})'.format(sstr(self.arg))
-        
+
 class Transpose(MatrixSymbolicExpr):
     is_commutative = False
-    def __new__(cls, arg):
-        if isinstance(arg, Transpose):
-            return arg.arg
-        return Expr.__new__(cls, arg)
+    def __new__(cls, *args):
+        assert len(args) == 1
+        if isinstance(args[0], Transpose):
+            return args[0].arg
+        return Expr.__new__(cls, *args)
 
     @property
     def arg(self):
@@ -139,7 +143,6 @@ class MatMul(MatrixSymbolicExpr, Mul):
         added = MatAdd(*terms)
         return Add.make_args(added) # it may have collapsed down to one term
 
-
 class MatAdd(MatrixSymbolicExpr, Add):
     is_MatAdd = True
     def __new__(cls, *args):
@@ -159,24 +162,24 @@ class MatPow(MatrixSymbolicExpr, Pow):
         sstr = printer.doprint
         return 'MatPow({})'.format(','.join((sstr(i) for i in self.args)))
 
-class MatAbs(MatrixSymbolicExpr, Mul):
+class MatAbs(MatrixSymbolicExpr):
     def _sympystr(self, printer):
         sstr = printer.doprint
         return 'Abs({})'.format(sstr(self.args[0]))
 
 class SymbolicDeterminant(Expr):
 
-    def __new__(cls, arg):
-        assert(isinstance(arg, MatrixSymbolicExpr))
-        return Basic.__new__(cls, arg)
+    def __new__(cls, *args):
+        assert len(args) == 1
+        assert(isinstance(args[0], MatrixSymbolicExpr))
+        return Basic.__new__(cls, *args)
 
     @property
     def arg(self):
-        return self._args[0]       
+        return self._args[0]
        
     def _sympystr(self, printer):
         sstr = printer.doprint
         arg = sstr(self.arg)
         return 'det({})'.format(arg)
-
 

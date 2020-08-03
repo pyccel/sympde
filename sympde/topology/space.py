@@ -131,14 +131,15 @@ class BasicFunctionSpace(Basic):
 
         assert(isinstance(kind, (str, SpaceType)))
 
-        kind_str = kind.lower()
-        assert(kind_str in ['h1', 'hcurl', 'hdiv', 'l2', 'undefined'])
+        if isinstance(kind, str):
+            kind_str = kind.lower()
+            assert(kind_str in ['h1', 'hcurl', 'hdiv', 'l2', 'undefined'])
 
-        kind = dtype_space_registry[kind_str]
-
-        if not isinstance(kind, SpaceType):
+            kind = dtype_space_registry[kind_str]
+        elif not isinstance(kind, SpaceType):
             raise TypeError('Expecting kind to be of SpaceType')
 
+        kind_str  = kind.name
         obj._kind = kind
 
         # ...

@@ -6,7 +6,6 @@ from sympy.tensor import IndexedBase
 from sympy import symbols, simplify
 
 from sympde.topology import Mapping, MappedDomain
-from sympde.topology import Jacobian
 from sympde.topology import dx, dy, dz
 from sympde.topology import dx1, dx2, dx3
 from sympde.topology import Domain

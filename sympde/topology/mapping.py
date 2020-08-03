@@ -18,6 +18,7 @@ from sympy.core.containers import Tuple
 from sympy                 import S
 
 from sympde.calculus.core  import PlusInterfaceOperator, MinusInterfaceOperator
+from sympde.calculus.core  import grad, div, rot, curl, dot, inner, outer
 from sympde.calculus.matrices import MatrixSymbolicExpr
 from sympy                 import Determinant
 from sympde.core       import Constant
@@ -530,6 +531,8 @@ class LogicalExpr(CalculusFunction):
         if not len(_args) == 2:
             raise ValueError('Expecting two arguments')
 
+        from sympde.expr.evaluation import TerminalExpr
+
         M         = _args[0]
         expr      = _args[1]
         dim       = M.rdim # TODO this is not the dim of the domain
@@ -566,41 +569,77 @@ class LogicalExpr(CalculusFunction):
                 return expr
 
         elif isinstance(expr, (ScalarField, ScalarTestFunction)):
-            space   = expr.space
+            space           = expr.space
+            kind            = space.kind
             logical_domain  = space.domain.logical_domain
-            l_space = type(space)(space.name, logical_domain)
+            l_space         = type(space)(space.name, logical_domain, kind=kind)
             return l_space.element(expr.name)
 
         elif isinstance(expr, (IndexedTestTrial, IndexedVectorField)):
-            space   = expr.base.space
-            kind    = space.kind
-            l_space = type(space)(space.name, space.domain.logical_domain)
-            index   = expr.indices[0]
-            el      = l_space.element(expr.name)
+            el = cls.eval(M, expr.base)
+            return el[expr.indices[0]]
+        elif isinstance(expr, (VectorField, VectorTestFunction)):
+            space           = expr.space
+            kind            = space.kind
+            logical_domain  = space.domain.logical_domain
+            l_space         = type(space)(space.name, logical_domain, kind=kind)
+            el              = l_space.element(expr.name)
+
             if isinstance(kind, (H1SpaceType, L2SpaceType, UndefinedSpaceType)):
-                return el[index]
+                return el
             elif isinstance(kind, HdivSpaceType):
-                A     = M.contravariant[index,:]
-                v     = Matrix([[el[i]] for i in range(dim)])
-                b     = (A*v)[0,0]
-                return b
+                J     = M.jacobian
+                A     = J/J.det()
+                return A*el
             elif isinstance(kind , HcurlSpaceType):
-                A     = M.covariant[index, :]
-                v     = Matrix([[el[i]] for i in range(dim)])
-                b     = (A*v)[0,0]
-                return b
+                A     = M.jacobian.inv().T
+                return A*el
             else:
                 raise NotImplementedError('TODO')
 
-        elif isinstance(expr, (VectorField, VectorTestFunction)):
-            raise NotImplementedError('')
+        elif isinstance(expr, grad):
+            arg = cls.eval(M, arg)
+            return M.jacobian.inv().T*grad(arg)
+        elif isinstance(expr, curl):
+            arg = expr.args[0]
+            if isinstance(arg, (ScalarField, ScalarTestFunction, VectorField, VectorTestFunction)):
+                kind = arg.space.kind
+                if isinstance(kind, HcurlSpaceType):
+                    space           = arg.space
+                    logical_domain  = space.domain.logical_domain
+                    l_space         = type(space)(space.name, logical_domain, kind=kind)
+                    el              = l_space.element(expr.name)
+                    J               = M.jacobian
+                    return (J/J.det())*curl(el)
+
+            arg = cls.eval(M, arg)
+            return M.jacobian.inv().T*arg
+
+        elif isinstance(expr, div):
+            arg = expr.args[0]
+            if isinstance(arg, (ScalarField, ScalarTestFunction, VectorField, VectorTestFunction)):
+                kind = arg.space.kind
+                if isinstance(kind, HcurlSpaceType):
+                    space           = arg.space
+                    logical_domain  = space.domain.logical_domain
+                    l_space         = type(space)(space.name, logical_domain, kind=kind)
+                    el              = l_space.element(expr.name)
+                    J               = M.jacobian
+                    return (1/J.det())*div(el)
+            arg = cls.eval(M, arg)
+            return M.jacobian.inv().T*arg
+        elif isinstance(expr, rot):
+            arg = expr.args[0]
+            arg = cls.eval(M, arg)
+            return M.jacobian.inv().T*arg
+        elif isinstance(expr, (dot, inner, outer)):
+            args = [cls.eval(M, arg) for arg in expr.args]
+            return type(expr)(*args)
 
         # TODO MUST BE MOVED AFTER TREATING THE CASES OF GRAD, CURL, DIV IN FEEC
         elif isinstance(expr, (Matrix, ImmutableDenseMatrix)):
-
             n_rows, n_cols = expr.shape
-
-            lines = []
+            lines          = []
             for i_row in range(0, n_rows):
                 line = []
                 for i_col in range(0, n_cols):
@@ -618,7 +657,8 @@ class LogicalExpr(CalculusFunction):
 
             arg = expr.args[0]
             arg = cls(M, arg, evaluate=True)
-
+            if isinstance(arg, MatrixSymbolicExpr):
+                arg = TerminalExpr(arg, dim=dim)
             # ...
             if dim == 1:
                 lgrad_arg = LogicalGrad_1d(arg)
@@ -645,7 +685,8 @@ class LogicalExpr(CalculusFunction):
 
             arg = expr.args[0]
             arg = cls(M, arg, evaluate=True)
-
+            if isinstance(arg, MatrixSymbolicExpr):
+                arg = TerminalExpr(arg, dim=dim)
             # ...
             if dim == 1:
                 lgrad_arg = LogicalGrad_1d(arg)
@@ -670,7 +711,8 @@ class LogicalExpr(CalculusFunction):
 
             arg = expr.args[0]
             arg = cls(M, arg, evaluate=True)
-
+            if isinstance(arg, MatrixSymbolicExpr):
+                arg = TerminalExpr(arg, dim=dim)
             # ...
             if dim == 1:
                 lgrad_arg = LogicalGrad_1d(arg)
@@ -864,3 +906,4 @@ class SymbolicExpr(CalculusFunction):
         # TODO: check if we should use 'sympy.sympify(expr)' instead
         else:
             raise NotImplementedError('Cannot translate to Sympy: {}'.format(expr))
+
