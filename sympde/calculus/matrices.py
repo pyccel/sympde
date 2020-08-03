@@ -138,7 +138,6 @@ class MatMul(MatrixSymbolicExpr, Mul):
         terms = []
         left = MatMul._expandsums(sums[:L//2])
         right = MatMul._expandsums(sums[L//2:])
-        
         terms = [MatMul(a, b) for a in left for b in right]
         added = MatAdd(*terms)
         return Add.make_args(added) # it may have collapsed down to one term

@@ -25,7 +25,7 @@ from sympde.calculus.core import _generic_ops, _diff_ops
 from sympde.calculus.matrices import SymbolicDeterminant, Inverse, Transpose
 from sympde.calculus.matrices import MatPow
 
-from sympde.topology.mapping import MappedDomain, Jacobian, JacobianSymbol
+from sympde.topology.mapping import Jacobian, JacobianSymbol
 
 from sympde.topology       import BasicDomain, Union, Interval
 from sympde.topology       import NormalVector, TangentVector

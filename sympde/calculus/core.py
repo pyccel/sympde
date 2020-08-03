@@ -96,7 +96,6 @@ from sympy import Indexed, IndexedBase
 from sympy.core import Add, Mul, Pow
 from sympy.core.containers import Tuple
 from sympy.core.singleton  import S
-from sympy                 import Abs
 
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import _coeffs_registery
