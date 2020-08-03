@@ -608,12 +608,12 @@ class LogicalExpr(CalculusFunction):
                     space           = arg.space
                     logical_domain  = space.domain.logical_domain
                     l_space         = type(space)(space.name, logical_domain, kind=kind)
-                    el              = l_space.element(expr.name)
+                    el              = l_space.element(arg.name)
                     J               = M.jacobian
                     return (J/J.det())*curl(el)
 
             arg = cls.eval(M, arg)
-            return M.jacobian.inv().T*arg
+            return M.jacobian.inv().T*curl(arg)
 
         elif isinstance(expr, div):
             arg = expr.args[0]
@@ -623,7 +623,7 @@ class LogicalExpr(CalculusFunction):
                     space           = arg.space
                     logical_domain  = space.domain.logical_domain
                     l_space         = type(space)(space.name, logical_domain, kind=kind)
-                    el              = l_space.element(expr.name)
+                    el              = l_space.element(arg.name)
                     J               = M.jacobian
                     return (1/J.det())*div(el)
             arg = cls.eval(M, arg)

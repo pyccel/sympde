@@ -517,7 +517,6 @@ class IndexedTestTrial(Indexed):
     def ldim(self):
         return self.base.space.ldim
 
-
 #==============================================================================
 class VectorTestFunction(Symbol, IndexedBase):
     """
@@ -526,24 +525,23 @@ class VectorTestFunction(Symbol, IndexedBase):
     Examples
 
     """
-    is_commutative = True
+    is_commutative = False
     _space         = None
     _projection_of = None
 
-    def __new__(cls, space, name=None):
+    def __new__(cls, space, name):
         if not isinstance(space, VectorFunctionSpace):
             raise ValueError('Expecting a VectorFunctionSpace')
-        obj = Basic.__new__(cls, name)
-        obj._space = space
+        obj        = Basic.__new__(cls, space, name)
         return obj
 
     @property
     def space(self):
-        return self._space
+        return self._args[0]
 
     @property
     def name(self):
-        return self._args[0]
+        return self._args[1]
 
     @property
     def shape(self):
@@ -571,7 +569,6 @@ class VectorTestFunction(Symbol, IndexedBase):
             if isinstance(args[i], int):
                 args[i] = Integer(args[i])
 
-        assumptions ={}
         obj = IndexedTestTrial(self, *args)
         return obj
 
@@ -581,6 +578,9 @@ class VectorTestFunction(Symbol, IndexedBase):
     def set_as_projection(self, expr):
         self._projection_of = expr
 
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        return sstr(self.name)
 #==============================================================================
 # this is implemented as a function, it would be better to have it as a class
 def TestFunction(space, name=None):
