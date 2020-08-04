@@ -870,7 +870,7 @@ def test_terminal_expr_bilinear_3d_1():
 
     u,v   = elements_of(V, names='u,v')
     um,vm = elements_of(VM, names='u,v')
-    
+
     int_0 = lambda expr: integral(domain , expr)
     int_1 = lambda expr: integral(mapped_domain , expr)
 

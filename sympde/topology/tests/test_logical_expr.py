@@ -356,7 +356,6 @@ def test_logical_expr_3d_2():
     a = dot(grad(um),grad(vm))
     e = LogicalExpr(M, a)
 
-    
     assert e == dot(J.inv().T*grad(u), J.inv().T*grad(v))
 
 
