@@ -13,7 +13,10 @@ from sympde.core import Constant
 from sympde.calculus import grad, dot, inner, rot, div
 from sympde.calculus import laplace, bracket, convect
 from sympde.calculus import jump, avg, Dn, minus, plus
-#from sympde.topology import dx
+
+from sympde.topology import dx1, dx2, dx3
+from sympde.topology import dx, dy, dz
+from sympde.topology import Mapping
 from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
 from sympde.topology import element_of, elements_of
 from sympde.topology import InteriorDomain, Union
@@ -576,7 +579,7 @@ def test_terminal_expr_linear_2d_5(boundary=[r'\Gamma_1', r'\Gamma_3']):
     # ... abstract model
     domain = Square()
 
-    V = ScalarFunctionSpace('V', domain)
+    V      = ScalarFunctionSpace('V', domain)
 
     B_neumann = [domain.get_boundary(i) for i in boundary]
     if len(B_neumann) == 1:
@@ -619,7 +622,7 @@ def test_terminal_expr_linear_2d_5(boundary=[r'\Gamma_1', r'\Gamma_3']):
 def test_terminal_expr_bilinear_2d_1():
 
     domain = Domain('Omega', dim=2)
-    B1 = Boundary(r'\Gamma_1', domain)
+    B1     = Boundary(r'\Gamma_1', domain)
 
     x,y = domain.coordinates
 
@@ -723,7 +726,7 @@ def test_terminal_expr_bilinear_2d_1():
 def test_terminal_expr_bilinear_2d_2():
 
     domain = Domain('Omega', dim=2)
-    B1 = Boundary(r'\Gamma_1', domain)
+    B1     = Boundary(r'\Gamma_1', domain)
 
     x,y = domain.coordinates
 
@@ -830,8 +833,6 @@ def test_terminal_expr_bilinear_2d_3():
 #    # ...
 
 #==============================================================================
-
-
 def test_terminal_expr_bilinear_2d_4():
 
     domain = Domain('Omega', dim=2)
@@ -855,6 +856,39 @@ def test_terminal_expr_bilinear_2d_4():
 
     print(TerminalExpr(a))
     print('')
+
+#==============================================================================
+def test_terminal_expr_bilinear_3d_1():
+
+    domain = Domain('Omega', dim=3)
+    M      = Mapping('M', 3)
+
+    mapped_domain = M(domain)
+
+    V  = ScalarFunctionSpace('V', domain)
+    VM = ScalarFunctionSpace('VM', mapped_domain)
+
+    u,v   = elements_of(V, names='u,v')
+    um,vm = elements_of(VM, names='u,v')
+    
+    int_0 = lambda expr: integral(domain , expr)
+    int_1 = lambda expr: integral(mapped_domain , expr)
+
+    J   = M.det_jacobian
+    det = dx1(M[0])*dx2(M[1])*dx3(M[2]) - dx1(M[0])*dx2(M[2])*dx3(M[1]) - dx1(M[1])*dx2(M[0])*dx3(M[2])\
+        + dx1(M[1])*dx2(M[2])*dx3(M[0]) + dx1(M[2])*dx2(M[0])*dx3(M[1]) - dx1(M[2])*dx2(M[1])*dx3(M[0])
+
+    a1 = BilinearForm((u,v), int_0(dot(grad(u),grad(v))))
+    a2 = BilinearForm((u,v), int_1(dot(grad(um),grad(vm))))
+    a3 = BilinearForm((u,v), int_0(J*dot(grad(u),grad(v))))
+
+    e1 = TerminalExpr(a1)
+    e2 = TerminalExpr(a2)
+    e3 = TerminalExpr(a3)
+    
+    assert e1[0].expr          == dx1(u)*dx1(v) + dx2(u)*dx2(v) + dx3(u)*dx3(v)
+    assert e2[0].expr          == dx(um)*dx(vm) + dy(um)*dy(vm) + dz(um)*dz(vm)      
+    assert e3[0].expr.factor() == (dx1(u)*dx1(v) + dx2(u)*dx2(v) + dx3(u)*dx3(v))*det
 
 #==============================================================================
 @pytest.mark.skip(reason="New linearize() function does not accept 'LinearExpr' objects")

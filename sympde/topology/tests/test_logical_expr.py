@@ -10,7 +10,7 @@ from sympde.topology import Domain, Mapping
 from sympde.topology import dx, dy
 from sympde.topology import dx1, dx2, dx3
 from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
-from sympde.topology import element_of
+from sympde.topology import element_of, elements_of
 from sympde.topology import LogicalExpr
 from sympde.topology import SymbolicExpr
 from sympde.topology import IdentityMapping
@@ -20,6 +20,8 @@ from sympde.topology import CzarnyMapping
 from sympde.topology import CollelaMapping
 from sympde.topology import TorusMapping
 from sympde.topology import TwistedTargetMapping
+
+from sympde.calculus import grad, div, curl, dot
 
 from sympde.topology.mapping import Jacobian
 
@@ -335,6 +337,68 @@ def test_logical_expr_3d_1():
     #print(expr.subs(det_M, det))
     #print('')
     # ...
+
+def test_logical_expr_3d_2():
+
+    domain = Domain('Omega', dim=3)
+    M      = Mapping('M', 3)
+
+    mapped_domain = M(domain)
+
+    V  = ScalarFunctionSpace('V' , domain)
+    VM = ScalarFunctionSpace('VM', mapped_domain)
+
+    u,v   = elements_of(V, names='u,v')
+    um,vm = elements_of(VM, names='u,v')
+
+    J   = M.jacobian
+
+    a = dot(grad(um),grad(vm))
+    e = LogicalExpr(M, a)
+
+    
+    assert e == dot(J.inv().T*grad(u), J.inv().T*grad(v))
+
+
+def test_logical_expr_3d_3():
+
+    domain = Domain('Omega', dim=3)
+    M      = Mapping('M', 3)
+
+    mapped_domain = M(domain)
+
+    V  = VectorFunctionSpace('V' , domain, kind='hcurl')
+    VM = VectorFunctionSpace('VM', mapped_domain, kind='hcurl')
+
+    u,v   = elements_of(V, names='u,v')
+    um,vm = elements_of(VM, names='u,v')
+
+    J   = M.jacobian
+
+    a = dot(curl(um), curl(vm))
+    e = LogicalExpr(M, a)
+
+    assert e == dot(J/J.det()*curl(u), J/J.det()*curl(v))
+
+def test_logical_expr_3d_4():
+
+    domain = Domain('Omega', dim=3)
+    M      = Mapping('M', 3)
+
+    mapped_domain = M(domain)
+
+    V  = VectorFunctionSpace('V' , domain, kind='hdiv')
+    VM = VectorFunctionSpace('VM', mapped_domain, kind='hdiv')
+
+    u,v   = elements_of(V, names='u,v')
+    um,vm = elements_of(VM, names='u,v')
+
+    J   = M.jacobian
+
+    a = div(um)*div(vm)
+    e = LogicalExpr(M, a)
+
+    assert e == J.det()**-2*div(u)*div(v)
 
 #==============================================================================
 def test_symbolic_expr_3d_1():

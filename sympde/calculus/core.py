@@ -900,7 +900,7 @@ class Div(BasicOperator):
     >>> div(alpha*u1)
     alpha*Div(u1)
     """
-
+    is_commutative = True
     def __new__(cls, *args, **options):
         # (Try to) sympify args first
 

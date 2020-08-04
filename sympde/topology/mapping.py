@@ -598,7 +598,7 @@ class LogicalExpr(CalculusFunction):
                 raise NotImplementedError('TODO')
 
         elif isinstance(expr, grad):
-            arg = cls.eval(M, arg)
+            arg = cls.eval(M, expr.args[0])
             return M.jacobian.inv().T*grad(arg)
         elif isinstance(expr, curl):
             arg = expr.args[0]
@@ -620,7 +620,7 @@ class LogicalExpr(CalculusFunction):
             arg = expr.args[0]
             if isinstance(arg, (ScalarField, ScalarTestFunction, VectorField, VectorTestFunction)):
                 kind = arg.space.kind
-                if isinstance(kind, HcurlSpaceType):
+                if isinstance(kind, HdivSpaceType):
                     space           = arg.space
                     logical_domain  = space.domain.logical_domain
                     l_space         = type(space)(space.name, logical_domain, kind=kind)
