@@ -23,7 +23,7 @@ from sympde.calculus import Jump
 from sympde.calculus.core import _generic_ops, _diff_ops
 
 from sympde.calculus.matrices import SymbolicDeterminant, Inverse, Transpose
-from sympde.calculus.matrices import MatPow
+from sympde.calculus.matrices import MatPow, MatrixElement
 
 from sympde.topology.mapping import Jacobian, JacobianSymbol
 
@@ -435,7 +435,6 @@ class TerminalExpr(CalculusFunction):
             r = cls.eval(*args, **options)
         else:
             r = None
-
         if r is None:
             return Basic.__new__(cls, *args, **options)
         else:
@@ -500,8 +499,10 @@ class TerminalExpr(CalculusFunction):
             return o
         elif isinstance(expr, Abs):
             return Abs(cls.eval(expr.args[0], dim=dim, logical=logical))
-        elif isinstance(expr, MatPow):
-            raise NotImplementedError
+        elif isinstance(expr, Pow):
+            base = cls.eval(expr.base, dim=dim, logical=logical)
+            exp  = cls.eval(expr.exp, dim=dim, logical=logical)
+            return base**exp
         elif isinstance(expr, JacobianSymbol):
             return Jacobian(expr.mapping)
         elif isinstance(expr, SymbolicDeterminant):
@@ -513,6 +514,9 @@ class TerminalExpr(CalculusFunction):
         elif isinstance(expr, (ScalarTestFunction, VectorTestFunction)):
             return expr
 
+        elif isinstance(expr, MatrixElement):
+            base = cls.eval(expr.base, dim=dim, logical=logical)
+            return base[expr.indices]
         elif isinstance(expr, BasicForm):
             # ...
             dim     = expr.ldim

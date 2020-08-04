@@ -19,7 +19,7 @@ from sympy                 import S
 
 from sympde.calculus.core  import PlusInterfaceOperator, MinusInterfaceOperator
 from sympde.calculus.core  import grad, div, rot, curl, dot, inner, outer
-from sympde.calculus.matrices import MatrixSymbolicExpr
+from sympde.calculus.matrices import MatrixSymbolicExpr, MatrixElement
 from sympy                 import Determinant
 from sympde.core       import Constant
 from sympde.core.basic import BasicMapping
@@ -590,10 +590,10 @@ class LogicalExpr(CalculusFunction):
             elif isinstance(kind, HdivSpaceType):
                 J     = M.jacobian
                 A     = J/J.det()
-                return A*el
+                return A*ImmutableDenseMatrix(tuple(el[i] for i in range(dim)))
             elif isinstance(kind , HcurlSpaceType):
                 A     = M.jacobian.inv().T
-                return A*el
+                return A*ImmutableDenseMatrix(tuple(el[i] for i in range(dim)))
             else:
                 raise NotImplementedError('TODO')
 
@@ -611,7 +611,8 @@ class LogicalExpr(CalculusFunction):
                     el              = l_space.element(arg.name)
                     J               = M.jacobian
                     return (J/J.det())*curl(el)
-
+            else:
+                raise NotImplementedError('TODO')
             arg = cls.eval(M, arg)
             return M.jacobian.inv().T*curl(arg)
 
@@ -626,6 +627,8 @@ class LogicalExpr(CalculusFunction):
                     el              = l_space.element(arg.name)
                     J               = M.jacobian
                     return (1/J.det())*div(el)
+            else:
+                raise NotImplementedError('TODO')
             arg = cls.eval(M, arg)
             return M.jacobian.inv().T*arg
         elif isinstance(expr, rot):
@@ -657,8 +660,8 @@ class LogicalExpr(CalculusFunction):
 
             arg = expr.args[0]
             arg = cls(M, arg, evaluate=True)
-            if isinstance(arg, MatrixSymbolicExpr):
-                arg = TerminalExpr(arg, dim=dim)
+            if isinstance(arg, MatrixSymbolicExpr) or isinstance(arg, MatrixElement):
+                arg = TerminalExpr(arg, dim=dim, logical=True)
             # ...
             if dim == 1:
                 lgrad_arg = LogicalGrad_1d(arg)
@@ -685,9 +688,10 @@ class LogicalExpr(CalculusFunction):
 
             arg = expr.args[0]
             arg = cls(M, arg, evaluate=True)
-            if isinstance(arg, MatrixSymbolicExpr):
-                arg = TerminalExpr(arg, dim=dim)
-            # ...
+            if isinstance(arg, MatrixSymbolicExpr) or isinstance(arg, MatrixElement):
+                arg = TerminalExpr(arg, dim=dim, logical=True)
+
+            # ..p
             if dim == 1:
                 lgrad_arg = LogicalGrad_1d(arg)
 
@@ -700,7 +704,6 @@ class LogicalExpr(CalculusFunction):
             grad_arg = Covariant(M, lgrad_arg)
 
             expr = grad_arg[1]
-
             return expr
 
         elif isinstance(expr, dz):
@@ -711,8 +714,8 @@ class LogicalExpr(CalculusFunction):
 
             arg = expr.args[0]
             arg = cls(M, arg, evaluate=True)
-            if isinstance(arg, MatrixSymbolicExpr):
-                arg = TerminalExpr(arg, dim=dim)
+            if isinstance(arg, MatrixSymbolicExpr) or isinstance(arg, MatrixElement):
+                arg = TerminalExpr(arg, dim=dim, logical=True)
             # ...
             if dim == 1:
                 lgrad_arg = LogicalGrad_1d(arg)

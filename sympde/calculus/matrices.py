@@ -1,7 +1,7 @@
 from sympy                 import Expr, S
 from sympy                 import Add, Mul, Pow
 from sympy.core.decorators import call_highest_priority
-from sympy                 import Basic, IndexedBase
+from sympy                 import Basic
 
 
 class MatrixSymbolicExpr(Expr):
@@ -33,7 +33,7 @@ class MatrixSymbolicExpr(Expr):
         return MatAbs(self)
 
     def __getitem__(self, key):
-        return IndexedBase(self)[key]
+        return MatrixElement(self, key)
 
     @call_highest_priority('__radd__')
     def __add__(self, other):
@@ -182,3 +182,18 @@ class SymbolicDeterminant(Expr):
         arg = sstr(self.arg)
         return 'det({})'.format(arg)
 
+class MatrixElement(Expr):
+    def __new__(cls, base, indices):
+        return Expr.__new__(cls, base, indices)
+
+    @property
+    def base(self):
+        return self._args[0]
+
+    @property
+    def indices(self):
+        return self._args[1]
+
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        return '{}[{}]'.format(sstr(self.args[0]),sstr(self.args[1]))
