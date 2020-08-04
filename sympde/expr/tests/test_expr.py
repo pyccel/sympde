@@ -885,9 +885,9 @@ def test_terminal_expr_bilinear_3d_1():
     e1 = TerminalExpr(a1)
     e2 = TerminalExpr(a2)
     e3 = TerminalExpr(a3)
-    
+
     assert e1[0].expr          == dx1(u)*dx1(v) + dx2(u)*dx2(v) + dx3(u)*dx3(v)
-    assert e2[0].expr          == dx(um)*dx(vm) + dy(um)*dy(vm) + dz(um)*dz(vm)      
+    assert e2[0].expr          == dx(um)*dx(vm) + dy(um)*dy(vm) + dz(um)*dz(vm)
     assert e3[0].expr.factor() == (dx1(u)*dx1(v) + dx2(u)*dx2(v) + dx3(u)*dx3(v))*det
 
 #==============================================================================
