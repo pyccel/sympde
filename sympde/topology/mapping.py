@@ -18,7 +18,7 @@ from sympy.core.containers import Tuple
 from sympy                 import S
 
 from sympde.calculus.core  import PlusInterfaceOperator, MinusInterfaceOperator
-from sympde.calculus.core  import grad, div, rot, curl, dot, inner, outer
+from sympde.calculus.core  import grad, div, rot, curl, dot, inner, outer, _diff_ops
 from sympde.calculus.matrices import MatrixSymbolicExpr, MatrixElement
 from sympy                 import Determinant
 from sympde.core       import Constant
@@ -394,6 +394,47 @@ class MappingApplication(Function):
         else:
             return r
 
+class PullBack(Expr):
+    is_commutative = False
+
+    def __new__(cls, u):
+        if not isinstance(u, (VectorTestFunction, ScalarTestFunction)):
+            raise TypeError('{} must be of type ScalarTestFunction or VectorTestFunction'.format(str(u)))
+
+        space           = u.space
+        kind            = space.kind
+        dim             = space.ldim
+        logical_domain  = space.domain.logical_domain
+        l_space         = type(space)(space.name, logical_domain, kind=kind)
+        el              = l_space.element(u.name)
+        J               = space.domain.mapping.jacobian
+        if isinstance(kind, H1SpaceType):
+            expr =  el
+        elif isinstance(kind, HdivSpaceType):
+            A     = J/J.det()
+            expr  =  A*ImmutableDenseMatrix(tuple(el[i] for i in range(dim)))
+        elif isinstance(kind , HcurlSpaceType):
+            expr  = J.inv().T*ImmutableDenseMatrix(tuple(el[i] for i in range(dim)))
+        elif isinstance(kind, L2SpaceType):
+            expr = J.det()*el
+        elif isinstance(kind, UndefinedSpaceType):
+            raise ValueError('kind must be specified in order to perform the pull-back transformation')
+        else:
+            raise NotImplementedError('TODO')
+
+        return Expr.__new__(cls, expr, kind, el)
+
+    @property
+    def expr(self):
+        return self._args[0]
+
+    @property
+    def kind(self):
+        return self._args[1]
+
+    @property
+    def test(self):
+        return self._args[2]
 #==============================================================================
 class Jacobian(MappingApplication):
     """
@@ -478,7 +519,6 @@ class Contravariant(MappingApplication):
         v = Matrix(v)
         v = M*v
         return Tuple(*v)
-
 
 #==============================================================================
 class LogicalExpr(CalculusFunction):
@@ -567,77 +607,40 @@ class LogicalExpr(CalculusFunction):
                 return op.eval(arg)
             else:
                 return expr
-
-        elif isinstance(expr, (ScalarField, ScalarTestFunction)):
-            space           = expr.space
-            kind            = space.kind
-            logical_domain  = space.domain.logical_domain
-            l_space         = type(space)(space.name, logical_domain, kind=kind)
-            return l_space.element(expr.name)
-
         elif isinstance(expr, (IndexedTestTrial, IndexedVectorField)):
             el = cls.eval(M, expr.base)
+            if isinstance(el, PullBack):
+                el = el.expr
             return el[expr.indices[0]]
-        elif isinstance(expr, (VectorField, VectorTestFunction)):
-            space           = expr.space
-            kind            = space.kind
-            logical_domain  = space.domain.logical_domain
-            l_space         = type(space)(space.name, logical_domain, kind=kind)
-            el              = l_space.element(expr.name)
-
-            if isinstance(kind, (H1SpaceType, L2SpaceType, UndefinedSpaceType)):
-                return el
-            elif isinstance(kind, HdivSpaceType):
-                J     = M.jacobian
-                A     = J/J.det()
-                return A*ImmutableDenseMatrix(tuple(el[i] for i in range(dim)))
-            elif isinstance(kind , HcurlSpaceType):
-                A     = M.jacobian.inv().T
-                return A*ImmutableDenseMatrix(tuple(el[i] for i in range(dim)))
-            else:
-                raise NotImplementedError('TODO')
-
+        elif isinstance(expr, (VectorField, VectorTestFunction, ScalarField, ScalarTestFunction)):
+            return PullBack(expr)
         elif isinstance(expr, grad):
             arg = cls.eval(M, expr.args[0])
+            if isinstance(arg, PullBack):
+                arg = arg.expr
             return M.jacobian.inv().T*grad(arg)
+
         elif isinstance(expr, curl):
-            arg = expr.args[0]
-            if isinstance(arg, (ScalarField, ScalarTestFunction, VectorField, VectorTestFunction)):
-                kind = arg.space.kind
-                if isinstance(kind, HcurlSpaceType):
-                    space           = arg.space
-                    logical_domain  = space.domain.logical_domain
-                    l_space         = type(space)(space.name, logical_domain, kind=kind)
-                    el              = l_space.element(arg.name)
-                    J               = M.jacobian
-                    return (J/J.det())*curl(el)
+            arg = cls.eval(M, expr.args[0])
+            if isinstance(arg, PullBack) and isinstance(arg.kind, HcurlSpaceType):
+                J   = M.jacobian
+                return (J/J.det())*curl(arg.test)
             else:
                 raise NotImplementedError('TODO')
-            arg = cls.eval(M, arg)
-            return M.jacobian.inv().T*curl(arg)
 
         elif isinstance(expr, div):
             arg = expr.args[0]
-            if isinstance(arg, (ScalarField, ScalarTestFunction, VectorField, VectorTestFunction)):
-                kind = arg.space.kind
-                if isinstance(kind, HdivSpaceType):
-                    space           = arg.space
-                    logical_domain  = space.domain.logical_domain
-                    l_space         = type(space)(space.name, logical_domain, kind=kind)
-                    el              = l_space.element(arg.name)
-                    J               = M.jacobian
-                    return (1/J.det())*div(el)
+            arg = cls.eval(M, expr.args[0])
+            if isinstance(arg, PullBack) and isinstance(arg.kind, HdivSpaceType):
+                J   = M.jacobian
+                return (1/J.det())*div(arg.test)
             else:
                 raise NotImplementedError('TODO')
-            arg = cls.eval(M, arg)
-            return M.jacobian.inv().T*arg
-        elif isinstance(expr, rot):
-            arg = expr.args[0]
-            arg = cls.eval(M, arg)
-            return M.jacobian.inv().T*arg
         elif isinstance(expr, (dot, inner, outer)):
             args = [cls.eval(M, arg) for arg in expr.args]
             return type(expr)(*args)
+        elif isinstance(expr, _diff_ops):
+            raise NotImplementedError('TODO')
 
         # TODO MUST BE MOVED AFTER TREATING THE CASES OF GRAD, CURL, DIV IN FEEC
         elif isinstance(expr, (Matrix, ImmutableDenseMatrix)):
