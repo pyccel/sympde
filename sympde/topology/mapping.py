@@ -46,12 +46,15 @@ from sympy                   import cacheit
 
 @cacheit
 def cancel(f):
-    f           = factor_terms(f, radical=True)
-    p, q        = f.as_numer_denom()
-    # TODO accelerate parallel_poly_from_expr
-    (p, q), opt = parallel_poly_from_expr((p,q))
-    c, P, Q     = p.cancel(q)
-    return c*(P.as_expr()/Q.as_expr())
+    try:
+        f           = factor_terms(f, radical=True)
+        p, q        = f.as_numer_denom()
+        # TODO accelerate parallel_poly_from_expr
+        (p, q), opt = parallel_poly_from_expr((p,q))
+        c, P, Q     = p.cancel(q)
+        return c*(P.as_expr()/Q.as_expr())
+    except:
+        return f
 
 #==============================================================================
 class Mapping(BasicMapping):
@@ -401,6 +404,9 @@ class PullBack(Expr):
         if not isinstance(u, (VectorTestFunction, ScalarTestFunction)):
             raise TypeError('{} must be of type ScalarTestFunction or VectorTestFunction'.format(str(u)))
 
+        if u.space.domain.mapping is None:
+            raise ValueError('The pull-back can be performed only to mapped domains')
+
         space           = u.space
         kind            = space.kind
         dim             = space.ldim
@@ -422,19 +428,23 @@ class PullBack(Expr):
         else:
             raise NotImplementedError('TODO')
 
-        return Expr.__new__(cls, expr, kind, el)
+        obj       = Expr.__new__(cls, u)
+        obj._expr = expr
+        obj._kind = kind
+        obj._test = el
+        return obj
 
     @property
     def expr(self):
-        return self._args[0]
+        return self._expr
 
     @property
     def kind(self):
-        return self._args[1]
+        return self._kind
 
     @property
     def test(self):
-        return self._args[2]
+        return self._test
 #==============================================================================
 class Jacobian(MappingApplication):
     """
@@ -663,7 +673,9 @@ class LogicalExpr(CalculusFunction):
 
             arg = expr.args[0]
             arg = cls(M, arg, evaluate=True)
-            if isinstance(arg, MatrixSymbolicExpr) or isinstance(arg, MatrixElement):
+            if isinstance(arg, PullBack):
+                arg = TerminalExpr(arg.expr, dim=dim, logical=True)
+            elif isinstance(arg, MatrixElement):
                 arg = TerminalExpr(arg, dim=dim, logical=True)
             # ...
             if dim == 1:
@@ -691,7 +703,9 @@ class LogicalExpr(CalculusFunction):
 
             arg = expr.args[0]
             arg = cls(M, arg, evaluate=True)
-            if isinstance(arg, MatrixSymbolicExpr) or isinstance(arg, MatrixElement):
+            if isinstance(arg, PullBack):
+                arg = TerminalExpr(arg.expr, dim=dim, logical=True)
+            elif isinstance(arg, MatrixElement):
                 arg = TerminalExpr(arg, dim=dim, logical=True)
 
             # ..p
@@ -717,7 +731,9 @@ class LogicalExpr(CalculusFunction):
 
             arg = expr.args[0]
             arg = cls(M, arg, evaluate=True)
-            if isinstance(arg, MatrixSymbolicExpr) or isinstance(arg, MatrixElement):
+            if isinstance(arg, PullBack):
+                arg = TerminalExpr(arg.expr, dim=dim, logical=True)
+            elif isinstance(arg, MatrixElement):
                 arg = TerminalExpr(arg, dim=dim, logical=True)
             # ...
             if dim == 1:
@@ -907,6 +923,8 @@ class SymbolicExpr(CalculusFunction):
         elif isinstance(expr, ImaginaryUnit):
             return expr
         # ...
+        elif isinstance(expr, PullBack):
+            return cls.eval(expr.expr, code=code)
 
         # Expression must always be translated to Sympy!
         # TODO: check if we should use 'sympy.sympify(expr)' instead

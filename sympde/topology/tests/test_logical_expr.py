@@ -34,7 +34,7 @@ def test_logical_expr_1d_1():
 
     alpha = Constant('alpha')
 
-    V = ScalarFunctionSpace('V', domain)
+    V = ScalarFunctionSpace('V', domain, kind='h1')
 
     u,v = [element_of(V, name=i) for i in ['u', 'v']]
 
@@ -81,7 +81,7 @@ def test_symbolic_expr_1d_1():
 
     alpha = Constant('alpha')
 
-    V = ScalarFunctionSpace('V', domain)
+    V = ScalarFunctionSpace('V', domain, kind='h1')
 
     u = element_of(V, name='u')
 
@@ -152,8 +152,8 @@ def test_logical_expr_2d_1():
 
     alpha = Constant('alpha')
 
-    V = ScalarFunctionSpace('V', domain)
-    W = VectorFunctionSpace('V', domain)
+    V = ScalarFunctionSpace('V', domain, kind='h1')
+    W = VectorFunctionSpace('V', domain, kind='h1')
 
     u,v = [element_of(V, name=i) for i in ['u', 'v']]
     w = element_of(W, name='w')
@@ -215,7 +215,7 @@ def test_symbolic_expr_2d_1():
 
     alpha = Constant('alpha')
 
-    V = ScalarFunctionSpace('V', domain)
+    V = ScalarFunctionSpace('V', domain, kind='h1')
 
     u = element_of(V, name='u')
 
@@ -293,7 +293,7 @@ def test_logical_expr_3d_1():
 
     alpha = Constant('alpha')
 
-    V = ScalarFunctionSpace('V', domain)
+    V = ScalarFunctionSpace('V', domain, kind='h1')
 
     u,v = [element_of(V, name=i) for i in ['u', 'v']]
 
@@ -345,8 +345,8 @@ def test_logical_expr_3d_2():
 
     mapped_domain = M(domain)
 
-    V  = ScalarFunctionSpace('V' , domain)
-    VM = ScalarFunctionSpace('VM', mapped_domain)
+    V  = ScalarFunctionSpace('V' , domain, kind='h1')
+    VM = ScalarFunctionSpace('VM', mapped_domain, kind='h1')
 
     u,v   = elements_of(V, names='u,v')
     um,vm = elements_of(VM, names='u,v')
@@ -408,7 +408,7 @@ def test_symbolic_expr_3d_1():
 
     alpha = Constant('alpha')
 
-    V = ScalarFunctionSpace('V', domain)
+    V = ScalarFunctionSpace('V', domain, kind='h1')
     u = element_of(V, 'u')
 
     det_M = Jacobian(M).det()
@@ -512,7 +512,7 @@ def test_identity_mapping_2d_2():
     domain = M(Domain('Omega', dim=rdim))
 
 
-    V = ScalarFunctionSpace('V', domain)
+    V = ScalarFunctionSpace('V', domain, kind='h1')
     u = element_of(V, name='u')
 
     # ...
