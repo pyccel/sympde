@@ -674,7 +674,7 @@ class LogicalExpr(CalculusFunction):
             arg = expr.args[0]
             arg = cls(M, arg, evaluate=True)
             if isinstance(arg, PullBack):
-                arg = TerminalExpr(arg.expr, dim=dim, logical=True)
+                arg = TerminalExpr(arg, dim=dim)
             elif isinstance(arg, MatrixElement):
                 arg = TerminalExpr(arg, dim=dim, logical=True)
             # ...
@@ -704,7 +704,7 @@ class LogicalExpr(CalculusFunction):
             arg = expr.args[0]
             arg = cls(M, arg, evaluate=True)
             if isinstance(arg, PullBack):
-                arg = TerminalExpr(arg.expr, dim=dim, logical=True)
+                arg = TerminalExpr(arg, dim=dim)
             elif isinstance(arg, MatrixElement):
                 arg = TerminalExpr(arg, dim=dim, logical=True)
 
@@ -732,7 +732,7 @@ class LogicalExpr(CalculusFunction):
             arg = expr.args[0]
             arg = cls(M, arg, evaluate=True)
             if isinstance(arg, PullBack):
-                arg = TerminalExpr(arg.expr, dim=dim, logical=True)
+                arg = TerminalExpr(arg, dim=dim)
             elif isinstance(arg, MatrixElement):
                 arg = TerminalExpr(arg, dim=dim, logical=True)
             # ...

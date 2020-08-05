@@ -45,7 +45,7 @@ def test_derivatives_2d_with_mapping():
     rdim = 2
     M = Mapping('M', rdim)
     O = M(Domain('Omega', dim=rdim))
-    V = ScalarFunctionSpace('V', O)
+    V = ScalarFunctionSpace('V', O, kind='h1')
     u = element_of(V, 'u')
 
 

@@ -31,7 +31,7 @@ from sympde.topology       import BasicDomain, Union, Interval
 from sympde.topology       import NormalVector, TangentVector
 from sympde.topology       import Boundary, Interface
 from sympde.topology       import InteriorDomain
-from sympde.topology       import LogicalExpr
+from sympde.topology       import LogicalExpr, PullBack
 from sympde.topology.space import ScalarTestFunction
 from sympde.topology.space import VectorTestFunction
 from sympde.topology.space import IndexedTestTrial
@@ -513,7 +513,8 @@ class TerminalExpr(CalculusFunction):
             return cls.eval(expr.arg, dim=dim, logical=logical).inv()
         elif isinstance(expr, (ScalarTestFunction, VectorTestFunction)):
             return expr
-
+        elif isinstance(expr, PullBack):
+            return cls.eval(expr.expr, dim=dim, logical=True)
         elif isinstance(expr, MatrixElement):
             base = cls.eval(expr.base, dim=dim, logical=logical)
             return base[expr.indices]
