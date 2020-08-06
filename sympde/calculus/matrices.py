@@ -111,10 +111,7 @@ class MatMul(MatrixSymbolicExpr, Mul):
     is_MatMul = True
     def __new__(cls, *args):
         args = [sympify(a) for a in args if a != 1]
-        if len(args) == 0:
-            return S.One
-        elif len(args) == 1:
-            return args[0]
+
         newargs = []
         for a in args:
             if isinstance(a, Mul):
@@ -122,10 +119,19 @@ class MatMul(MatrixSymbolicExpr, Mul):
             else:
                 newargs.append(a)
 
-        mats   = [a for a in newargs if not a.is_commutative]
+        args   = [a for a in newargs if not a.is_commutative]
         coeffs = [a for a in newargs if a.is_commutative]
-        newargs = coeffs + mats
-        return Expr.__new__(cls, *newargs)
+        if coeffs:
+            c = Mul(*coeffs)
+            if c != 1:
+                args = [c] + args
+
+        if len(args) == 0:
+            return S.One
+        elif len(args) == 1:
+            return args[0]
+
+        return Expr.__new__(cls, *args)
 
     def _sympystr(self, printer):
         sstr = printer.doprint
