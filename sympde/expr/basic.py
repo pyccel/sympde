@@ -17,7 +17,7 @@ def _sanitize_arguments(arguments, is_bilinear=False, is_linear=False):
     if is_bilinear or is_linear:
 
         if is_bilinear:
-            test_functions = arguments[0]
+            test_functions = arguments[1]
 
         elif is_linear:
             test_functions = arguments
@@ -37,10 +37,9 @@ def _sanitize_arguments(arguments, is_bilinear=False, is_linear=False):
         test_functions = Tuple(*test_functions)
     # ...
 
-    # ...
     if is_bilinear:
 
-        trial_functions = arguments[1]
+        trial_functions = arguments[0]
         if isinstance(trial_functions, (ScalarTestFunction, VectorTestFunction)):
             trial_functions = [trial_functions]
 
@@ -48,7 +47,6 @@ def _sanitize_arguments(arguments, is_bilinear=False, is_linear=False):
             are_valid = [isinstance(i, (ScalarTestFunction, VectorTestFunction)) for i in trial_functions]
             if not all(are_valid):
                 raise TypeError('> Wrong arguments for trial functions')
-
         else:
             msg = 'Wrong type for trial function(s). given {}'.format(type(trial_functions))
             raise TypeError(msg)
@@ -56,13 +54,7 @@ def _sanitize_arguments(arguments, is_bilinear=False, is_linear=False):
         trial_functions = Tuple(*trial_functions)
     # ...
 
-    if is_bilinear:
-        args = [test_functions, trial_functions]
-        args = Tuple(*args)
-
-    else:
-        args = Tuple(*test_functions)
-
+    args = Tuple(trial_functions, test_functions) if is_bilinear else Tuple(*test_functions)
     return args
 
 #==============================================================================

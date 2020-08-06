@@ -196,7 +196,7 @@ class JacobianSymbol(MatrixSymbolicExpr):
 
     def __new__(cls, mapping):
         assert isinstance(mapping, Mapping)
-        return Expr.__new__(cls, mapping)
+        return MatrixSymbolicExpr.__new__(cls, mapping)
 
     @property
     def mapping(self):
@@ -582,6 +582,8 @@ class LogicalExpr(CalculusFunction):
             raise ValueError('Expecting two arguments')
 
         from sympde.expr.evaluation import TerminalExpr
+        from sympde.expr.expr import BilinearForm, LinearForm, BasicForm
+        from sympde.expr.expr import DomainIntegral, BoundaryIntegral, InterfaceIntegral
 
         M         = _args[0]
         expr      = _args[1]
@@ -766,6 +768,29 @@ class LogicalExpr(CalculusFunction):
             e = expr.exp
             expr =  Pow(cls(M, b), cls(M, e))
             return expr
+
+        elif isinstance(expr, (DomainIntegral, BoundaryIntegral, InterfaceIntegral)):
+            domain = expr.domain
+            domain = domain.logical_domain
+            assert domain is not None
+            body   = cls.eval(M, expr.expr)
+            return type(expr)(body, domain)
+
+        elif isinstance(expr, BilinearForm):
+            tests  = [cls.eval(M, a) for a in expr.test_functions]
+            trials = [cls.eval(M, a) for a in expr.trial_functions]
+            body   = cls.eval(M, expr.expr)
+            tests  = [a.test for a in tests]
+            trials = [a.test for a in trials]
+            return BilinearForm((tests, trials), body)
+
+        elif isinstance(expr, LinearForm):
+            tests  = [cls.eval(M, a) for a in expr.test_functions]
+            body   = cls.eval(M, expr.expr)
+            tests  = [a.test for a in tests]
+            return LinearForm(tests, body)
+        elif isinstance(expr, BasicForm):
+            raise NotImplementedError('TODO')
 
         return cls(M, expr, evaluate=False)
 

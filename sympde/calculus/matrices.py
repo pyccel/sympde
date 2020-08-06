@@ -2,6 +2,7 @@ from sympy                 import Expr, S
 from sympy                 import Add, Mul, Pow
 from sympy.core.decorators import call_highest_priority
 from sympy                 import Basic
+from sympy                 import sympify
 
 
 class MatrixSymbolicExpr(Expr):
@@ -63,13 +64,16 @@ class MatrixSymbolicExpr(Expr):
     def __pow__(self, other):
         return MatPow(self, other)
 
-    @call_highest_priority('__rdiv__')
-    def __div__(self, other):
-        return self * other**S.NegativeOne
-
     @call_highest_priority('__div__')
+    def __div__(self, other):
+        return MatMul(self , other**S.NegativeOne)
+
+    @call_highest_priority('__rdiv__')
     def __rdiv__(self, other):
         return MatMul(other, Pow(self, S.NegativeOne))
+
+    __truediv__ = __div__
+    __rtruediv__ = __rdiv__
 
 class Inverse(MatrixSymbolicExpr):
     is_commutative = False
@@ -106,6 +110,7 @@ class Transpose(MatrixSymbolicExpr):
 class MatMul(MatrixSymbolicExpr, Mul):
     is_MatMul = True
     def __new__(cls, *args):
+        args = [sympify(a) for a in args if a != 1]
         if len(args) == 0:
             return S.One
         elif len(args) == 1:
@@ -116,6 +121,7 @@ class MatMul(MatrixSymbolicExpr, Mul):
                 newargs += list(a.args)
             else:
                 newargs.append(a)
+
         mats   = [a for a in newargs if not a.is_commutative]
         coeffs = [a for a in newargs if a.is_commutative]
         newargs = coeffs + mats
@@ -167,7 +173,7 @@ class MatAbs(MatrixSymbolicExpr):
         return 'Abs({})'.format(sstr(self.args[0]))
 
 class SymbolicDeterminant(Expr):
-
+    is_commutative = True
     def __new__(cls, *args):
         assert len(args) == 1
         assert(isinstance(args[0], MatrixSymbolicExpr))
