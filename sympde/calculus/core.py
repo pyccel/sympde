@@ -652,14 +652,14 @@ class Grad(BasicOperator):
                         b = left * f_right + f_left * right
 
                 except:
-                    b = cls(Mul(*vectors), evaluate=False)
+                    b = cls(expr.func(*vectors), evaluate=False)
 
-            return Mul(a, b)
+            return expr.func(a, b)
 
         elif isinstance(expr, Pow):  # TODO: fix this for the case where e is not a number
             b = expr.base
             e = expr.exp
-            return e*cls(b)*Pow(b, e-1)
+            return e*cls(b)*expr.func(b, e-1)
 
         elif isinstance(expr, Dot):
             try:
@@ -741,6 +741,7 @@ class Curl(BasicOperator):
             return Add(*args)
 
         elif isinstance(expr, Mul):
+
             coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
             vectors = [a for a in expr.args if not(a in coeffs)]
 
@@ -762,9 +763,9 @@ class Curl(BasicOperator):
                         f = a ; F = b
                         return f*Curl(F) + Cross(grad(f), F)
 
-                b = cls(Mul(*vectors), evaluate=False)
+                b = cls(expr.func(*vectors), evaluate=False)
 
-            return Mul(a, b)
+            return a*b
 
         elif isinstance(expr, Cross):
             try:
@@ -846,7 +847,7 @@ class Rot(BasicOperator):
         if isinstance(expr, Add):
             args = expr.args
             args = [cls.eval(a) for a in expr.args]
-            return Add(*args)
+            return expr.func(*args)
 
         elif isinstance(expr, Mul):
             coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
@@ -858,9 +859,9 @@ class Rot(BasicOperator):
 
             b = S.One
             if vectors:
-                b = cls(Mul(*vectors), evaluate=False)
+                b = cls(expr.func(*vectors), evaluate=False)
 
-            return Mul(a, b)
+            return expr.func(a, b)
 
         # ... check consistency between space type and the operator
         # TODO add appropriate space types
@@ -928,7 +929,7 @@ class Div(BasicOperator):
         if isinstance(expr, Add):
             args = expr.args
             args = [cls.eval(a) for a in expr.args]
-            return Add(*args)
+            return expr.func(*args)
 
         elif isinstance(expr, Mul):
             coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
@@ -953,11 +954,11 @@ class Div(BasicOperator):
                             return f*Div(F) + Dot(F, grad(f))
 
                     except:
-                        return cls(Mul(*vectors), evaluate=False)
+                        return cls(expr.func(*vectors), evaluate=False)
 
-                b = cls(Mul(*vectors), evaluate=False)
+                b = cls(expr.func(*vectors), evaluate=False)
 
-            return Mul(a, b)
+            return expr.func(a, b)
 
         elif isinstance(expr, Cross):
             a,b = expr._args

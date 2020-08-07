@@ -123,7 +123,9 @@ class MatMul(MatrixSymbolicExpr, Mul):
         coeffs = [a for a in newargs if a.is_commutative]
         if coeffs:
             c = Mul(*coeffs)
-            if c != 1:
+            if isinstance(c, Mul):
+                args = list(c.args) + args
+            elif c != 1:
                 args = [c] + args
 
         if len(args) == 0:
@@ -157,6 +159,7 @@ class MatMul(MatrixSymbolicExpr, Mul):
 class MatAdd(MatrixSymbolicExpr, Add):
     is_MatAdd = True
     def __new__(cls, *args):
+        args = [sympify(a) for a in args if a != 0]
         if len(args) == 0:
             return S.Zero
         elif len(args) == 1:

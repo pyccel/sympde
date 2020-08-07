@@ -43,7 +43,7 @@ def expand(expr):
     if isinstance(expr, Tuple):
         return expr
     coeff, args = _expand(expr, MatMul=True).as_coeff_add()
-    newargs = [c * reduce(mul, m) for a in args for c, m in [a.as_coeff_mul()]]
+    newargs = [c * reduce(mul, m, 1) for a in args for c, m in [a.as_coeff_mul()]]
     expr    = coeff
     for e in newargs:
         expr += e

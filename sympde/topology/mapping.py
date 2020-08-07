@@ -39,6 +39,7 @@ from .derivatives import _logical_partial_derivatives
 from .derivatives import get_atom_logical_derivatives, get_index_logical_derivatives_atom
 from .derivatives import LogicalGrad_1d, LogicalGrad_2d, LogicalGrad_3d
 
+from sympy import sqrt
 #==============================================================================
 from sympy.core.exprtools    import factor_terms
 from sympy.polys.polytools   import parallel_poly_from_expr
@@ -773,7 +774,7 @@ class LogicalExpr(CalculusFunction):
             domain = expr.domain
             domain = domain.logical_domain
             assert domain is not None
-            body   = cls.eval(M, expr.expr)
+            body   = cls.eval(M, expr.expr)*abs(M.jacobian).det()
             return type(expr)(body, domain)
 
         elif isinstance(expr, BilinearForm):

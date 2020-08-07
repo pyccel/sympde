@@ -67,6 +67,7 @@ from .expr  import DomainIntegral, BoundaryIntegral, InterfaceIntegral
 from .expr  import Functional
 from .expr  import _get_domain
 
+import numpy as np
 #==============================================================================
 def is_sequence(a):
     return isinstance(a, (list,tuple,Tuple))
@@ -222,6 +223,8 @@ def _to_matrix_linear_form(expr, M, test_indices):
     elif isinstance(expr, (ScalarTestFunction, VectorTestFunction, IndexedTestTrial)):
         M = treat_form(expr, M)
 
+    elif isinstance(expr, (Matrix, ImmutableDenseMatrix)):
+        M = M + expr
     else:
         raise TypeError('> wrong type, given {}'.format(type(expr)))
     # ...
@@ -575,7 +578,7 @@ class TerminalExpr(CalculusFunction):
 
                 # ...
                 for d in domain:
-                    d_expr[d] += newexpr
+                    d_expr[d] = newexpr
                 # ...
 
             d_new = OrderedDict()
