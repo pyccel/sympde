@@ -402,7 +402,6 @@ def test_logical_expr_3d_4():
 
 def test_logical_expr_3d_5():
 
-    from sympy import sqrt
     domain = Domain('Omega', dim=3)
     M      = Mapping('M', 3)
 

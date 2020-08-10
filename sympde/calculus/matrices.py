@@ -89,7 +89,7 @@ class Inverse(MatrixSymbolicExpr):
 
     def _sympystr(self, printer):
         sstr = printer.doprint
-        return 'Inverse({})'.format(sstr(self.arg))
+        return '{}**(-1)'.format(sstr(self.arg))
 
 class Transpose(MatrixSymbolicExpr):
     is_commutative = False
@@ -105,7 +105,7 @@ class Transpose(MatrixSymbolicExpr):
 
     def _sympystr(self, printer):
         sstr = printer.doprint
-        return 'Transpose({})'.format(sstr(self.arg))
+        return '{}.T'.format(sstr(self.arg))
 
 class MatMul(MatrixSymbolicExpr, Mul):
     is_MatMul = True
@@ -137,7 +137,8 @@ class MatMul(MatrixSymbolicExpr, Mul):
 
     def _sympystr(self, printer):
         sstr = printer.doprint
-        return 'MatMul({})'.format(','.join((sstr(i) for i in self.args)))
+        return ' * '.join((sstr(i) for i in self.args))
+        #return 'MatMul({})'.format(','.join((sstr(i) for i in self.args)))
 
     @staticmethod
     def _expandsums(sums):
@@ -169,12 +170,14 @@ class MatAdd(MatrixSymbolicExpr, Add):
 
     def _sympystr(self, printer):
         sstr = printer.doprint
-        return 'MatAdd({})'.format(','.join((sstr(i) for i in self.args)))
+        return ' + '.join((sstr(i) for i in self.args))
+        #return 'MatAdd({})'.format(','.join((sstr(i) for i in self.args)))
 
 class MatPow(MatrixSymbolicExpr, Pow):
     def _sympystr(self, printer):
         sstr = printer.doprint
-        return 'MatPow({})'.format(','.join((sstr(i) for i in self.args)))
+        return '**'.join((sstr(i) for i in self.args))
+        #return 'MatPow({})'.format(','.join((sstr(i) for i in self.args)))
 
 class MatAbs(MatrixSymbolicExpr):
     def _sympystr(self, printer):
