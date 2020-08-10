@@ -89,8 +89,8 @@ def _get_size_and_starts(ls):
     n = 0
     d_indices = OrderedDict()
     for x in ls:
-        d_indices[x] = n
         if isinstance(x, ScalarTestFunction):
+            d_indices[x] = n
             n += 1
 
         elif isinstance(x, VectorTestFunction):
@@ -154,81 +154,27 @@ def _init_matrix(expr):
 #==============================================================================
 def _to_matrix_bilinear_form(expr, M, test_indices, trial_indices):
 
-    # ...
-    def treat_form(arg, M):
-        atoms  = list(arg.atoms(ScalarTestFunction))
-        atoms += list(arg.atoms(VectorTestFunction))
-        atoms += list(arg.atoms(IndexedTestTrial))
-
-        for atom in atoms:
-            if atom in test_indices:
-                i_row = test_indices[atom]
-
-            elif atom in trial_indices:
-                i_col = trial_indices[atom]
-
-            else:
-                raise ValueError('> Could not find {}'.format(atom))
-
-        M[i_row, i_col] += arg
-        return M
-    # ...
-
-    # ...
-    if isinstance(expr, Add):
-        args = expr.args
-        for arg in args:
-            if isinstance(arg, Mul):
-                M = treat_form(arg, M)
-
-    elif isinstance(expr, Mul):
-        M = treat_form(expr, M)
-
-    elif isinstance(expr, (ScalarTestFunction, VectorTestFunction, IndexedTestTrial)):
-        M = treat_form(expr, M)
-    else:
-        raise TypeError('> wrong type, given {}'.format(type(expr)))
-    # ...
-
+    subs_tests  = {u:0 for u in test_indices.keys()}
+    subs_trials = {u:0 for u in trial_indices.keys()}
+    for u in trial_indices:
+        subs_tr_c = subs_trials.copy()
+        subs_tr_c.pop(u)
+        expr_v = expr.subs(subs_tr_c)
+        for v in test_indices:
+            subs_t_c = subs_tests.copy()
+            subs_t_c.pop(v)
+            M[test_indices[v], trial_indices[u]] = expr_v.subs(subs_t_c)
     return M
 
 #==============================================================================
 def _to_matrix_linear_form(expr, M, test_indices):
     # ...
-    def treat_form(arg, M):
-        atoms  = list(arg.atoms(ScalarTestFunction))
-        atoms += list(arg.atoms(VectorTestFunction))
-        atoms += list(arg.atoms(IndexedTestTrial))
+    subs = {v:0 for v in test_indices.keys()}
 
-        for atom in atoms:
-            if atom in test_indices:
-                i_row = test_indices[atom]
-
-            else:
-                raise ValueError('> Could not find {}'.format(atom))
-
-        M[i_row] += arg
-        return M
-    # ...
-
-    # ...
-    if isinstance(expr, Add):
-        args = expr.args
-        for arg in args:
-            M = treat_form(arg, M)
-
-    elif isinstance(expr, Mul):
-        M = treat_form(expr, M)
-
-    elif isinstance(expr, (ScalarTestFunction, VectorTestFunction, IndexedTestTrial)):
-        M = treat_form(expr, M)
-
-    elif isinstance(expr, (Matrix, ImmutableDenseMatrix)):
-        M = M + expr
-    else:
-        raise TypeError('> wrong type, given {}'.format(type(expr)))
-    # ...
-
+    for v in test_indices:
+        subs_c = subs.copy()
+        subs_c.pop(v)
+        M[test_indices[v]] = expr.subs(subs_c)
     return M
 
 #==============================================================================
@@ -521,6 +467,7 @@ class TerminalExpr(CalculusFunction):
         elif isinstance(expr, MatrixElement):
             base = cls.eval(expr.base, dim=dim, logical=logical)
             return base[expr.indices]
+
         elif isinstance(expr, BasicForm):
             # ...
             dim     = expr.ldim
@@ -560,8 +507,7 @@ class TerminalExpr(CalculusFunction):
                     # ...
             else:
                 newexpr = cls.eval(expr.expr, dim=dim, logical=logical)
-                newexpr = expand(newexpr)
-
+                #newexpr = expand(newexpr)
                 # ...
                 if isinstance(expr, Functional):
                     domain = expr.domain

@@ -28,6 +28,7 @@ from .errors import UnconsistentLinearExpressionError
 from .basic  import BasicForm
 from .basic  import BasicExpr
 from .basic  import _sanitize_arguments
+from sympy   import cacheit
 
 #==============================================================================
 def expand(expr):
@@ -469,12 +470,12 @@ class BilinearForm(BasicForm):
                     .format(test_functions)
             raise UnconsistentLinearExpressionError(msg)
 
+        domain = _get_domain(expr)
         # Create new object of type BilinearForm
-        obj = Basic.__new__(cls, args, expr)
+        obj = Basic.__new__(cls, args, expr, domain)
 
         # Compute 'domain' property (scalar or tuple)
         # TODO: is this is useful?
-        obj._domain = _get_domain(expr)
 
         return obj
 
@@ -485,6 +486,10 @@ class BilinearForm(BasicForm):
     @property
     def expr(self):
         return self._args[1]
+
+    @property
+    def domain(self):
+        return self._args[2]
 
     @property
     def body(self):

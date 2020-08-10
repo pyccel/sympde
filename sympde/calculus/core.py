@@ -124,6 +124,8 @@ class BasicOperator(CalculusFunction):
         else:
             return Indexed(self, indices, **kw_args)
 
+    def hash(self):
+        return hash(self.args)
 #==============================================================================
 def is_constant(atom):
     """ Determine whether the given atom represents a constant number.

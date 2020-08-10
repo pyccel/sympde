@@ -21,6 +21,7 @@ from sympde.topology import CollelaMapping
 from sympde.topology import TorusMapping
 from sympde.topology import TwistedTargetMapping
 
+from sympde.expr     import BilinearForm, integral
 from sympde.calculus import grad, div, curl, dot
 
 from sympde.topology.mapping import Jacobian
@@ -398,6 +399,31 @@ def test_logical_expr_3d_4():
     e = LogicalExpr(M, a)
 
     assert e == J.det()**-2*div(u)*div(v)
+
+def test_logical_expr_3d_5():
+
+    from sympy import sqrt
+    domain = Domain('Omega', dim=3)
+    M      = Mapping('M', 3)
+
+    mapped_domain = M(domain)
+
+    V  = VectorFunctionSpace('V' , domain, kind='hcurl')
+    VM = VectorFunctionSpace('VM', mapped_domain, kind='hcurl')
+
+    J   = M.jacobian
+    u,v   = elements_of(V,  names='u,v')
+    um,vm = elements_of(VM, names='u,v')
+
+    int_md = lambda expr: integral(mapped_domain , expr)
+    int_ld = lambda expr: integral(domain , expr)
+
+    am  = BilinearForm((um,vm), int_md(dot(curl(vm),curl(um))))
+    a   = LogicalExpr(M, am)
+
+    assert a == BilinearForm((u,v), int_ld(sqrt((J.T*J).det())*dot(J/J.det()*curl(u), J/J.det()*curl(v))))
+
+
 
 #==============================================================================
 def test_symbolic_expr_3d_1():

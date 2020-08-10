@@ -195,17 +195,27 @@ class InverseMapping(Mapping):
 
 class JacobianSymbol(MatrixSymbolicExpr):
 
-    def __new__(cls, mapping):
+    def __new__(cls, mapping, axis=None):
         assert isinstance(mapping, Mapping)
-        return MatrixSymbolicExpr.__new__(cls, mapping)
+        if axis is not None:
+            assert isinstance(axis, int)
+        return MatrixSymbolicExpr.__new__(cls, mapping, axis)
 
     @property
     def mapping(self):
         return self._args[0]
 
+    @property
+    def axis(self):
+        return self._args[1]
+
     def _sympystr(self, printer):
         sstr = printer.doprint
-        return 'Jacobian({})'.format(sstr(self.mapping.name))
+        if self.axis:
+            return 'Jacobian({},{})'.format(sstr(self.mapping.name), self.axis)
+        else:
+            return 'Jacobian({})'.format(sstr(self.mapping.name))
+
 #==============================================================================
 class InterfaceMapping(Mapping):
     """
@@ -774,7 +784,15 @@ class LogicalExpr(CalculusFunction):
             domain = expr.domain
             domain = domain.logical_domain
             assert domain is not None
-            body   = cls.eval(M, expr.expr)*abs(M.jacobian).det()
+
+            if isinstance(expr, DomainIntegral):
+                J   = M.jacobian
+                det = sqrt((J.T*J).det())
+            else:
+                J   = JacobianSymbol(M, axis)
+                det = sqrt((J*J.T).det())
+
+            body   = cls.eval(M, expr.expr)*det
             return type(expr)(body, domain)
 
         elif isinstance(expr, BilinearForm):
@@ -783,7 +801,7 @@ class LogicalExpr(CalculusFunction):
             body   = cls.eval(M, expr.expr)
             tests  = [a.test for a in tests]
             trials = [a.test for a in trials]
-            return BilinearForm((tests, trials), body)
+            return BilinearForm((trials, tests), body)
 
         elif isinstance(expr, LinearForm):
             tests  = [cls.eval(M, a) for a in expr.test_functions]

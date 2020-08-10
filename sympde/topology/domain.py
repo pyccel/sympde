@@ -433,7 +433,7 @@ class PeriodicDomain(BasicDomain):
         return self.domain.coordinates
 
     def __hash__(self):
-        return self.domain.__hash__() + self._periods.__hash__()
+        return hash((self._domain, self._periods))
 
 
 #==============================================================================

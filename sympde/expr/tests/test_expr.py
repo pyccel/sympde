@@ -878,8 +878,9 @@ def test_terminal_expr_bilinear_3d_1():
     det = dx1(M[0])*dx2(M[1])*dx3(M[2]) - dx1(M[0])*dx2(M[2])*dx3(M[1]) - dx1(M[1])*dx2(M[0])*dx3(M[2])\
         + dx1(M[1])*dx2(M[2])*dx3(M[0]) + dx1(M[2])*dx2(M[0])*dx3(M[1]) - dx1(M[2])*dx2(M[1])*dx3(M[0])
 
+
     a1 = BilinearForm((u,v), int_0(dot(grad(u),grad(v))))
-    a2 = BilinearForm((u,v), int_1(dot(grad(um),grad(vm))))
+    a2 = BilinearForm((um,vm), int_1(dot(grad(um),grad(vm))))
     a3 = BilinearForm((u,v), int_0(J*dot(grad(u),grad(v))))
 
     e1 = TerminalExpr(a1)

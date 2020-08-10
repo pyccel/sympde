@@ -195,6 +195,7 @@ class Dot_3d(DotBasic):
                              u[1,0]*v[0] + u[1,1]*v[1] + u[1,2]*v[2],
                              u[2,0]*v[0] + u[2,1]*v[1] + u[2,2]*v[2])
 
+
         if isinstance(u, (Add, Mul)):
             ls = u.atoms(Tuple)
             for i in ls:
