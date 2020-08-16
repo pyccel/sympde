@@ -299,9 +299,9 @@ class InterfaceIntegral(AtomicExpr):
 class Functional(BasicForm):
     is_functional = True
 
-    def __new__(cls, expr, domain, eval=True):
+    def __new__(cls, expr, domain, evaluate=True):
 
-        if eval:
+        if evaluate:
             expr = Integral(expr, domain)
         obj = Basic.__new__(cls, expr, domain)
 
@@ -560,7 +560,7 @@ class BilinearForm(BasicForm):
 class Norm(Functional):
     is_norm = True
 
-    def __new__(cls, expr, domain, kind='l2', eval=True):
+    def __new__(cls, expr, domain, kind='l2', evaluate=True):
 #        # ...
 #        tests = expr.atoms((ScalarTestFunction, VectorTestFunction))
 #        if tests:
@@ -573,6 +573,7 @@ class Norm(Functional):
 #        # ...
 
         # ...
+        kind = kind.lower()
         if not(kind in ['l2', 'h1', 'h2']):
             raise ValueError('> Only L2, H1, H2 norms are available')
         # ...
@@ -585,7 +586,7 @@ class Norm(Functional):
 
         # ...
         exponent = None
-        if kind == 'l2' and eval:
+        if kind == 'l2' and evaluate:
             exponent = 2
 
             if not is_vector:
@@ -598,7 +599,7 @@ class Norm(Functional):
                 v = Tuple(*expr[:,0])
                 expr = Dot(v, v)
 
-        elif kind == 'h1'and eval :
+        elif kind == 'h1'and evaluate :
             exponent = 2
 
             if not is_vector:
@@ -611,7 +612,7 @@ class Norm(Functional):
                 v = Tuple(*expr[:,0])
                 expr = Inner(Grad(v), Grad(v))
 
-        elif kind == 'h2'and eval :
+        elif kind == 'h2'and evaluate :
             exponent = 2
 
             if not is_vector:
@@ -621,14 +622,19 @@ class Norm(Functional):
                 raise NotImplementedError('TODO')
         # ...
 
-        obj = Functional.__new__(cls, expr, domain, eval=eval)
+        obj = Functional.__new__(cls, expr, domain, evaluate=evaluate)
         obj._exponent = exponent
+        obj._kind     = kind
 
         return obj
 
     @property
     def exponent(self):
         return self._exponent
+
+    @property
+    def kind(self):
+        return self._kind
 
 #==============================================================================
 def linearize(form, fields, trials=None):
@@ -738,6 +744,7 @@ def is_linear_expression(expr, args, debug=True):
     right_expr = expr
     for arg, right in zip(args, right_args):
         right_expr = right_expr.subs(arg, right)
+
 
     if not( expand(newexpr) == expand(left_expr + right_expr) ):
         # TODO use a warning or exception?

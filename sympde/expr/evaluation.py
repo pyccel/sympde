@@ -453,9 +453,15 @@ class TerminalExpr(CalculusFunction):
             exp  = cls.eval(expr.exp, dim=dim, logical=logical)
             return base**exp
         elif isinstance(expr, JacobianSymbol):
-            return Jacobian(expr.mapping)
+            axis = expr.axis
+            J    = Jacobian(expr.mapping)
+
+            if axis is None:
+                return J
+            else:
+                return J.col_del(axis)
         elif isinstance(expr, SymbolicDeterminant):
-            return cls.eval(expr.arg, dim=dim, logical=logical).det()
+            return cls.eval(expr.arg, dim=dim, logical=logical).det().factor()
         elif isinstance(expr, Transpose):
             return cls.eval(expr.arg, dim=dim, logical=logical).T
         elif isinstance(expr, Inverse):
@@ -472,7 +478,6 @@ class TerminalExpr(CalculusFunction):
             # ...
             dim     = expr.ldim
             domain  = expr.domain
-            logical = None
 
             if isinstance(domain, Union):
                 domain = domain.as_tuple()
@@ -485,10 +490,10 @@ class TerminalExpr(CalculusFunction):
             for d in domain:
                 d_expr[d] = S.Zero
             # ...
+
             if isinstance(expr.expr, Add):
                 for a in expr.expr.args:
-                    newexpr = cls.eval(a, dim=dim, logical=logical)
-                    newexpr = expand(newexpr)
+                    newexpr = cls.eval(a, dim=dim, logical=True)
 
                     # ...
                     try:
@@ -617,7 +622,8 @@ class TerminalExpr(CalculusFunction):
             return ls
 
         elif isinstance(expr, (DomainIntegral, BoundaryIntegral, InterfaceIntegral)):
-            dim = expr.domain.dim if dim is None else dim
+            dim     = expr.domain.dim if dim is None else dim
+            logical = expr.domain.mapping is None
             return cls.eval(expr._args[0], dim=dim, logical=logical)
 
         elif isinstance(expr, NormalVector):

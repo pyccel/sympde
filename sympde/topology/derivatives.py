@@ -40,6 +40,7 @@ class DifferentialOperator(LinearOperator):
 
     """
     coordinate = None
+    logical    = None
 
     # this is a hack since sometimes we use Matrix in the eval of abstract
     # operators
@@ -52,6 +53,7 @@ class DifferentialOperator(LinearOperator):
         """."""
 
         expr = _args[0]
+        from sympde.topology.mapping import Mapping, Jacobian
 
         if isinstance(expr, _logical_partial_derivatives):
             atom    = get_atom_logical_derivatives(expr)
@@ -158,27 +160,39 @@ class DifferentialOperator(LinearOperator):
 
         elif isinstance(expr, Expr):
             x = Symbol(cls.coordinate)
+            if cls.logical:
+                M = expr.atoms(Mapping)
+                if len(M)>0:
+                    M = list(M)[0]
+                    expr_primes = [diff(expr, M[i]) for i in range(M.rdim)]
+                    Jj = Jacobian(M)[:,cls.grad_index]
+                    expr_prime = sum([ei*Jji for ei,Jji in zip(expr_primes, Jj)]).simplify()
+                    return expr_prime + diff(expr, x)
             return diff(expr, x)
 
         else:
             msg = '{expr} of type {type}'.format(expr=expr, type=type(expr))
             raise NotImplementedError(msg)
 
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        args = ','.join(sstr(i) for i in self.args)
+        return 'd{}({})'.format(sstr(self.coordinate), args)
 #==============================================================================
 class dx(DifferentialOperator):
     coordinate = 'x'
     grad_index = 0 # index in grad
-    pass
+
 
 class dy(DifferentialOperator):
     coordinate = 'y'
     grad_index = 1 # index in grad
-    pass
+
 
 class dz(DifferentialOperator):
     coordinate = 'z'
     grad_index = 2 # index in grad
-    pass
+
 
 _partial_derivatives = (dx, dy, dz)
 
@@ -186,16 +200,17 @@ _partial_derivatives = (dx, dy, dz)
 class dx1(DifferentialOperator):
     coordinate = 'x1'
     grad_index = 0 # index in grad
+    logical    = True
 
 class dx2(DifferentialOperator):
     coordinate = 'x2'
     grad_index = 1 # index in grad
-    pass
+    logical    = True
 
 class dx3(DifferentialOperator):
     coordinate = 'x3'
     grad_index = 2 # index in grad
-    pass
+    logical    = True
 
 _logical_partial_derivatives = (dx1, dx2, dx3)
 
@@ -977,10 +992,10 @@ class LogicalGrad_2d(GradBasic):
                 line = [dx1(u)[0,i], dx2(u)[0,i]]
                 lines.append(line)
 
-            v = Matrix(lines)
+            v = ImmutableDenseMatrix(lines)
 
         else:
-            v = Matrix((dx1(u), dx2(u)))
+            v = ImmutableDenseMatrix((dx1(u), dx2(u)))
 
         return v
 
@@ -1002,10 +1017,10 @@ class LogicalGrad_3d(GradBasic):
                 line = [dx1(u)[0,i], dx2(u)[0,i], dx3(u)[0,i]]
                 lines.append(line)
 
-            v = Matrix(lines)
+            v = ImmutableDenseMatrix(lines)
 
         else:
-            v = Matrix((dx1(u), dx2(u), dx3(u)))
+            v = ImmutableDenseMatrix((dx1(u), dx2(u), dx3(u)))
 
         return v
 
@@ -1035,7 +1050,7 @@ class LogicalCurl_3d(CurlBasic):
 
         u = _args[0]
 
-        return Matrix((dx2(u[2]) - dx3(u[1]),
+        return ImmutableDenseMatrix((dx2(u[2]) - dx3(u[1]),
                      dx3(u[0]) - dx1(u[2]),
                      dx1(u[1]) - dx2(u[0])))
 
@@ -1074,7 +1089,7 @@ class LogicalRot_2d(CalculusFunction):
 
         u = _args[0]
 
-        return Matrix([[dx2(u),-dx1(u)]]).T
+        return ImmutableDenseMatrix([[dx2(u),-dx1(u)]]).T
 
 #==============================================================================
 class LogicalDiv_1d(DivBasic):
@@ -1191,7 +1206,7 @@ class LogicalHessian_2d(HessianBasic):
         if isinstance(u, (VectorTestFunction, VectorField)):
             raise NotImplementedError('TODO')
 
-        return Matrix([[dx1(dx1(u)), dx1(dx2(u))],
+        return ImmutableDenseMatrix([[dx1(dx1(u)), dx1(dx2(u))],
                        [dx1(dx2(u)), dx2(dx2(u))]])
 
 class LogicalHessian_3d(HessianBasic):
@@ -1207,7 +1222,7 @@ class LogicalHessian_3d(HessianBasic):
         if isinstance(u, (VectorTestFunction, VectorField)):
             raise NotImplementedError('TODO')
 
-        return Matrix([[dx1(dx1(u)), dx1(dx2(u)), dx1(dx3(u))],
+        return ImmutableDenseMatrix([[dx1(dx1(u)), dx1(dx2(u)), dx1(dx3(u))],
                        [dx1(dx2(u)), dx2(dx2(u)), dx2(dx3(u))],
                        [dx1(dx3(u)), dx2(dx3(u)), dx3(dx3(u))]])
 
@@ -1299,7 +1314,6 @@ def partial_derivative_as_str(expr):
     return code
 
 #==============================================================================
-@cacheit
 def get_index_derivatives_atom(expr, atom, verbose=False):
     """This function return a dictionary of partial derivative indices for
     a given atom.
@@ -1319,7 +1333,6 @@ def get_index_derivatives_atom(expr, atom, verbose=False):
     return indices
 
 #==============================================================================
-@cacheit
 def get_index_logical_derivatives_atom(expr, atom, verbose=False):
     """This function return a dictionary of partial derivative indices for
     a given atom.
@@ -1339,7 +1352,6 @@ def get_index_logical_derivatives_atom(expr, atom, verbose=False):
     return indices
 
 #==============================================================================
-@cacheit
 def get_max_partial_derivatives(expr, F=None):
     if F is None:
         Fs = (list(expr.atoms(ScalarTestFunction)) +
@@ -1356,6 +1368,28 @@ def get_max_partial_derivatives(expr, F=None):
         indices = get_index_derivatives_atom(expr, F)
 
     d = {'x':0, 'y':0, 'z':0}
+    for dd in indices:
+        for k,v in dd.items():
+            if v > d[k]: d[k] = v
+    return d
+
+
+def get_max_logical_partial_derivatives(expr, F=None):
+    if F is None:
+        Fs = (list(expr.atoms(ScalarTestFunction)) +
+              list(expr.atoms(VectorTestFunction)) +
+              list(expr.atoms(IndexedTestTrial)) +
+              list(expr.atoms(VectorField)) +
+              list(expr.atoms(IndexedVectorField)) +
+              list(expr.atoms(ScalarField)))
+
+        indices = []
+        for F in Fs:
+            indices += get_index_logical_derivatives_atom(expr, F)
+    else:
+        indices = get_index_logical_derivatives_atom(expr, F)
+
+    d = {'x1':0, 'x2':0, 'x3':0}
     for dd in indices:
         for k,v in dd.items():
             if v > d[k]: d[k] = v

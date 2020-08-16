@@ -235,7 +235,7 @@ class Boundary(BasicDomain):
     Examples
 
     """
-    def __new__(cls, name, domain, axis=None, ext=None):
+    def __new__(cls, name, domain, axis, ext, mapping=None, logical_domain=None):
 
         if axis is not None:
             assert isinstance(axis, int)
@@ -243,9 +243,9 @@ class Boundary(BasicDomain):
         if ext is not None:
             assert isinstance(ext, int)
 
-        obj = Basic.__new__(cls, name, domain, axis, ext)
-        obj._mapping        = domain.mapping
-        obj._logical_domain = domain.logical_domain
+        obj                 = Basic.__new__(cls, name, domain, axis, ext)
+        obj._mapping        = mapping
+        obj._logical_domain = logical_domain
 
         return obj
 

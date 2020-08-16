@@ -291,6 +291,7 @@ class Domain(BasicDomain):
     @classmethod
     def from_file( cls, filename ):
 
+        from sympde.topology.mapping import Mapping
         # ... check extension of the file
         basename, ext = os.path.splitext(filename)
         if not(ext == '.h5'):
@@ -306,12 +307,13 @@ class Domain(BasicDomain):
         d_interior     = yml['interior']
         d_boundary     = yml['boundary']
         d_connectivity = yml['connectivity']
+        mapping        = Mapping('{}_mapping'.format(domain_name), int(dim))
 
         if dtype == 'None': dtype = None
 
         if dtype is not None:
             constructor = globals()[dtype['type']]
-            return constructor(domain_name, **dtype['parameters'])
+            return mapping(constructor(domain_name, **dtype['parameters']))
 
         # ... create sympde InteriorDomain (s)
         interior = [InteriorDomain(i['name'], dim=dim) for i in d_interior]
@@ -356,10 +358,11 @@ class Domain(BasicDomain):
             connectivity[edge] = bnds
         # ...
 
-        return Domain.__new__(cls, domain_name,
+        obj = Domain.__new__(cls, domain_name,
                               interiors=interior,
                               boundaries=boundary,
                               connectivity=connectivity)
+        return mapping(obj)
 
     def join(self, other, name, bnd_minus=None, bnd_plus=None):
         # ... interiors
@@ -474,11 +477,7 @@ class NCube(Domain):
         if not all(xmin < xmax for xmin, xmax in zip(min_coords, max_coords)):
             raise ValueError("Min coordinates must be smaller than max")
 
-        # Choose coordinate names. TODO: use unique convention
-        if dim <= 3:
-            coord_names = ('x', 'y', 'z')[:dim]
-        else:
-            coord_names = 'x1:{}'.format(dim + 1)
+        coord_names = 'x1:{}'.format(dim + 1)
 
         coordinates = symbols(coord_names)
         intervals   = [Interval('{}_{}'.format(name, c.name), coordinate=c, bounds=(xmin, xmax))

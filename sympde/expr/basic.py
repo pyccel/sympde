@@ -27,6 +27,7 @@ def _sanitize_arguments(arguments, is_bilinear=False, is_linear=False):
 
         elif isinstance(test_functions, (tuple, list, Tuple)):
             are_valid = [isinstance(i, (ScalarTestFunction, VectorTestFunction)) for i in test_functions]
+
             if not all(are_valid):
                 raise TypeError('> Wrong arguments for test functions')
 
@@ -123,7 +124,7 @@ class BasicExpr(Expr):
             expr = expr.subs(zip(indexed, new_indexed))
             expr = expr.subs(zip(vector_fields, new_vector_fields))
             expr = expr.subs(zip(scalar_fields, new_scalar_fields))
-            expr = self.func(expr, self.domain, eval=False)
+            expr = self.func(expr, self.domain, evaluate=False)
             if self.is_norm:
                 expr._exponent = self._exponent
 
@@ -151,7 +152,7 @@ class BasicForm(Expr):
             args = self.variables
             if self.is_bilinear:
                 args = args[0]+args[1]
-            fields = tuple(atoms.difference(args))
+            fields = tuple(i for i in atoms if i not in args)
         else:
             fields = tuple(atoms)
         return fields
@@ -210,7 +211,6 @@ class BasicForm(Expr):
             return self
 
         if self.is_bilinear or self.is_linear:
-
             fields          = self.fields
             scalar_fields   = [f for f in fields if isinstance(f.space, ScalarFunctionSpace)]
             vector_fields   = [f for f in fields if isinstance(f.space, VectorFunctionSpace)]
@@ -243,7 +243,7 @@ class BasicForm(Expr):
             expr = expr.subs(zip(indexed, new_indexed))
             expr = expr.subs(zip(vector_fields, new_vector_fields))
             expr = expr.subs(zip(scalar_fields, new_scalar_fields))
-            expr = self.func(expr, self.domain, eval=False)
+            expr = self.func(expr, self.domain, evaluate=False)
             if self.is_norm:
                 expr._exponent = self._exponent
 
