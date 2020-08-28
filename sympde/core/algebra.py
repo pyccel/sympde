@@ -148,12 +148,6 @@ class Dot_2d(DotBasic):
         u = _args[0]
         v = _args[1]
 
-        if isinstance(u, (Matrix, ImmutableDenseMatrix)):
-            if isinstance(v, (Matrix, ImmutableDenseMatrix)):
-                return u[0]*v[0] + u[1]*v[1]
-
-            else:
-                return Tuple(u[0,0]*v[0] + u[0,1]*v[1], u[1,0]*v[0] + u[1,1]*v[1])
 
         if isinstance(u, (Add, Mul)):
             ls = u.atoms(Tuple)

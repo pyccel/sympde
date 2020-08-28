@@ -5,14 +5,14 @@
 import pytest
 
 from sympy.core.containers import Tuple
-from sympy import Matrix
 from sympy import Function
 from sympy import pi, cos, sin, exp
 
-from sympde.core import Constant
+from sympde.core     import Constant
 from sympde.calculus import grad, dot, inner, rot, div
 from sympde.calculus import laplace, bracket, convect
 from sympde.calculus import jump, avg, Dn, minus, plus
+from sympde.calculus import Matrix
 
 from sympde.topology import dx1, dx2, dx3
 from sympde.topology import dx, dy, dz
@@ -187,7 +187,7 @@ def test_linear_form_2d_1():
     l = LinearForm((tau, sigma), dt*l1(tau))
 
     assert(l.domain == domain)
-    assert(l(u1,u2) == int_0(-1.0*dt*dot(grad(u1), grad(wn))/Re) +
+    assert(l(u1,u2).expand() == int_0(-1.0*dt*dot(grad(u1), grad(wn))/Re) +
                        int_0(dt*u1*bracket(pn, wn)))
     # ...
 
@@ -211,7 +211,7 @@ def test_linear_form_2d_2():
     int_0 = lambda expr: integral(domain , expr)
     int_1 = lambda expr: integral(B1, expr)
 
-    g = Tuple(x,y)
+    g = Matrix((x,y))
     l = LinearForm(v, int_0(dot(g, v)))
 
     assert(l.domain == domain)
@@ -219,7 +219,7 @@ def test_linear_form_2d_2():
     # ...
 
     # ...
-    g = Tuple(x,y)
+    g = Matrix((x,y))
     l1 = LinearForm(v1, int_0(dot(g, v1)))
     l = LinearForm(v, l1(v))
 
@@ -228,8 +228,8 @@ def test_linear_form_2d_2():
     # ...
 
     # ...
-    g1 = Tuple(x,0)
-    g2 = Tuple(0,y)
+    g1 = Matrix((x,0))
+    g2 = Matrix((0,y))
     l1 = LinearForm(v1, int_0(dot(v1, g1)))
     l2 = LinearForm(v2, int_0(dot(v2, g2)))
 
@@ -392,14 +392,14 @@ def test_terminal_expr_linear_2d_1():
     # ...
 
     # ...
-    g = Tuple(x**2, y**2)
+    g = Matrix((x**2, y**2))
     l = LinearForm(v, int_1(v*dot(g, nn)))
     print(TerminalExpr(l))
     print('')
     # ...
 
     # ...
-    g = Tuple(x**2, y**2)
+    g = Matrix((x**2, y**2))
     l = LinearForm(v, int_1(v*dot(g, nn)) + int_0(x*y*v))
     print(TerminalExpr(l))
     print('')
@@ -413,7 +413,7 @@ def test_terminal_expr_linear_2d_1():
     # ...
 
     # ...
-    g = Tuple(x,y)
+    g = Matrix((x,y))
     l1 = LinearForm(v1, int_0(x*y*v1))
     l2 = LinearForm(v2, int_0(dot(grad(v2), g)))
 
@@ -431,7 +431,7 @@ def test_terminal_expr_linear_2d_1():
     # ...
 
     # ...
-    g = Tuple(x**2, y**2)
+    g = Matrix((x**2, y**2))
     l1 = LinearForm(v1, int_0(x*y*v1))
     l2 = LinearForm(v1, int_0(v1))
     l3 = LinearForm(v, int_1(v*dot(g, nn)))
@@ -460,14 +460,14 @@ def test_terminal_expr_linear_2d_2():
     int_0 = lambda expr: integral(domain , expr)
     int_1 = lambda expr: integral(B1, expr)
 
-    g = Tuple(x,y)
+    g = Matrix((x,y))
     l = LinearForm(v, int_0(dot(g, v)))
     print(TerminalExpr(l))
     print('')
     # ...
 
     # ...
-    g = Tuple(x,y)
+    g = Matrix((x,y))
     l = LinearForm(v, int_0(dot(g, v) + div(v)))
     print(TerminalExpr(l))
     print('')
@@ -1129,8 +1129,8 @@ def test_linearize_form_2d_4():
     int_0 = lambda expr: integral(domain , expr)
     int_1 = lambda expr: integral(Gamma_N, expr)
 
-    g = Tuple(cos(pi*x)*sin(pi*y),
-              sin(pi*x)*cos(pi*y))
+    g = Matrix((cos(pi*x)*sin(pi*y),
+              sin(pi*x)*cos(pi*y)))
 
     expr = dot(grad(v), grad(u)) - 4.*exp(-u)*v # + v*trace_1(g, Gamma_N)
 
@@ -1174,7 +1174,7 @@ def test_stabilization_2d_1():
 
     b1 = 1.
     b2 = 0.
-    b = Tuple(b1, b2)
+    b = Matrix((b1, b2))
 
     # right hand side
     f = x*y
@@ -1397,7 +1397,7 @@ def test_norm_2d_2():
     F = element_of(V, 'F')
 
     # ...
-    f = Tuple(sin(pi*x)*sin(pi*y), sin(pi*x)*sin(pi*y))
+    f = Matrix((sin(pi*x)*sin(pi*y), sin(pi*x)*sin(pi*y)))
     expr = Matrix([F[0]-f[0], F[1]-f[1]])
     l2_norm_u = Norm(expr, domain, kind='l2')
     h1_norm_u = Norm(expr, domain, kind='h1')
@@ -1496,16 +1496,16 @@ def test_linearity_linear_form_2d_1():
     _ = LinearForm(v, int_0(x * y * v))
     _ = LinearForm(v, int_0(x * y * v + v))
 
-    g = Tuple(x**2, y**2)
+    g = Matrix((x**2, y**2))
     _ = LinearForm(v, int_0(v * dot(g, nn)))
 
-    g = Tuple(x**2, y**2)
+    g = Matrix((x**2, y**2))
     _ = LinearForm(v, int_1(v*dot(g, nn)) + int_0(x*y*v))
 
     l1 = LinearForm(v1, int_0(x * y * v1))
     _  = LinearForm(v, l1(v))
 
-    g  = Tuple(x,y)
+    g  = Matrix((x,y))
     l1 = LinearForm(v1, int_0(x*y*v1))
     l2 = LinearForm(v2, int_0(dot(grad(v2), g)))
     _  = LinearForm(v, l1(v) + l2(v))
@@ -1514,7 +1514,7 @@ def test_linearity_linear_form_2d_1():
     l2 = LinearForm(v1, int_0(v1))
     _  = LinearForm(v, l1(v) + kappa*l2(v))
 
-    g  = Tuple(x**2, y**2)
+    g  = Matrix((x**2, y**2))
     l1 = LinearForm(v1, int_0(x*y*v1))
     l2 = LinearForm(v1, int_0(v1))
     l3 = LinearForm(v, int_1(v*dot(g, nn)))

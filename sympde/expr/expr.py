@@ -1,8 +1,8 @@
 # coding: utf-8
 
 from sympy import Dummy
-from sympy import Matrix
-from sympy.core import Basic
+from sympy import Matrix, ImmutableDenseMatrix
+from sympy.core import Basic, S
 from sympy.core import Expr, Add, Mul
 from sympy.core.expr import AtomicExpr
 from sympy.core.numbers import Zero as sy_Zero
@@ -12,7 +12,7 @@ from sympy.core.compatibility import is_sequence
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import Constant
 from sympde.core.utils import random_string
-from sympde.calculus import Dot, Inner
+from sympde.calculus import Dot, Inner, BasicOperator
 from sympde.calculus import Grad, Hessian
 from sympde.topology import BasicDomain, Union
 from sympde.topology import NormalVector
@@ -30,6 +30,42 @@ from .basic  import BasicExpr
 from .basic  import _sanitize_arguments
 from sympy   import cacheit
 
+from operator  import mul, add
+from functools import reduce
+
+class IntAdd(Add):
+    _op_priority          = 20
+    def __new__(cls, *args):
+        newargs = []
+        for i in args:
+            if isinstance(i, IntAdd):
+                newargs += list(i.args)
+            else:
+                newargs += [i]
+        newargs = [a for a in newargs if not a == 0]
+        domains = list(set([i.domain for i in newargs]))
+        groupes = [[i.expr for i in newargs if i.domain == d] for d in domains]
+        args    = [Integral(reduce(add, g, S.Zero), d) for g,d in zip(groupes, domains)]
+        return Add.__new__(cls, *args)
+
+    def __mul__(self, o):
+        return IntAdd(*[a*o for a in self.args])
+
+    def __rmul__(self, o):
+        return IntAdd(*[a*o for a in self.args])
+
+    def __div__(self, other):
+        return IntAdd(*[a/o for a in self.args])
+
+    def __rdiv__(self, other):
+        return IntAdd(*[a/o for a in self.args])
+
+    __truediv__ = __div__
+    __rtruediv__ = __rdiv__
+    
+    def _sympystr(self, printer):
+        args = [printer._print(i) for i in self.args]
+        return 'IntAdd({})'.format(','.join(args))
 #==============================================================================
 def expand(expr):
     """
@@ -38,8 +74,6 @@ def expand(expr):
 
     """
     from sympy import expand as _expand
-    from operator  import mul
-    from functools import reduce
 
     if isinstance(expr, Tuple):
         return expr
@@ -53,7 +87,7 @@ def expand(expr):
 #==============================================================================
 def _get_domain(expr):
     # expr is an integral of BasicExpr or Add of Integral of BasicExpr
-    if isinstance(expr, (DomainIntegral, BoundaryIntegral, InterfaceIntegral)):
+    if isinstance(expr, Integral):
         return expr.domain
 
     elif isinstance(expr, (Add, Mul)):
@@ -75,12 +109,12 @@ class LinearExpr(BasicExpr):
 
     def __new__(cls, arguments, expr):
 
-        if expr.atoms(DomainIntegral, BoundaryIntegral, InterfaceIntegral):
+        if expr.atoms(Integral):
             raise TypeError('')
 
         args = _sanitize_arguments(arguments, is_linear=True)
 
-        if not is_linear_expression(expr, args):
+        if not is_linear_expression(expr, args, integral=False):
             msg = '> Expression is not linear'
             raise UnconsistentLinearExpressionError(msg)
 
@@ -105,86 +139,87 @@ class LinearExpr(BasicExpr):
 #==============================================================================
 class Integral(CalculusFunction):
 
+    _op_priority          = 20
+    is_domain_integral    = None
+    is_boundary_integral  = None
+    is_interface_integral = None
+
     def __new__(cls, expr, domain, **options):
         # (Try to) sympify args first
-        if domain is None:
+        if domain is None or expr == 0:
             return sy_Zero()
 
         assert isinstance(domain, BasicDomain)
-        return Integral.eval(expr, domain)
-
-    @staticmethod
-    def eval(expr, domain):
-        """."""
-        expr = expand(expr)
 
         if not isinstance(expr, Expr):
             raise TypeError('only Expr are accepted')
 
-        if isinstance(expr, sy_Zero):
-            return sy_Zero()
-
-        if isinstance(expr, Add):
-            args = [Integral.eval(a, domain) for a in expr.args]
-            return expr._new_rawargs(*args)
-
         if isinstance(domain, Union):
-            expr = [Integral.eval(expr, d) for d in domain.args]
-            return Add(*expr)
-
-        if isinstance(domain, Boundary):
-            return BoundaryIntegral(expr, domain)
+            exprs = [cls(expr, d) for d in domain.args]
+            return IntAdd(*exprs)
+      
+        elif isinstance(domain, Boundary):
+            expr = cls.subs_boundary_expr(expr, domain)
+            obj = CalculusFunction.__new__(cls, expr, domain)
+            obj.is_boundary_integral = True
 
         elif isinstance(domain, Interface):
-            return InterfaceIntegral(expr, domain)
+            obj = CalculusFunction.__new__(cls, expr, domain)
+            obj.is_interface_integral = True
 
         else:
-            return DomainIntegral(expr, domain)
+            obj = CalculusFunction.__new__(cls, expr, domain)
+            obj.is_domain_integral = True
 
-#==============================================================================
-class DomainIntegral(AtomicExpr):
-    _op_priority = 20
+        return obj   
+
     @property
     def expr(self):
         return self._args[0]
+
     @property
     def domain(self):
         return self._args[1]
 
     def __mul__(self, o):
-        return DomainIntegral(self.expr*o, self.domain)
+        return Integral(self.expr*o, self.domain)
 
     def __rmul__(self, o):
-        return DomainIntegral(self.expr*o, self.domain)
+        return Integral(self.expr*o, self.domain)
 
+    def __div__(self, other):
+        return Integral(self.expr/o, self.domain)
+
+    def __rdiv__(self, other):
+        return Integral(self.expr/o, self.domain)
+
+    __truediv__ = __div__
+    __rtruediv__ = __rdiv__
+    
     def __add__(self, o):
         if o == 0:
             return self
         else:
-            return Add(self, o)
+            return IntAdd(self, o)
 
     def __radd__(self, o):
         if o == 0:
             return self
         else:
-            return Add(self, o)
+            return IntAdd(self, o)
 
     def __eq__(self, a):
-        if isinstance(a, DomainIntegral):
+        if isinstance(a, Integral):
             eq = self.domain == a.domain
-            eq = eq and self.expr == a.expr
+            eq = eq and ((self.expr == a.expr) or (self.expr - a.expr).expand() == 0)
             return eq
         return False
 
     def __hash__(self):
         return hash(self.expr) + hash(self.domain)
-
-#==============================================================================
-class BoundaryIntegral(AtomicExpr):
-    _op_priority = 20
-
-    def __new__(cls, expr, domain):
-
+        
+    @classmethod
+    def subs_boundary_expr(cls, expr, domain):
         atoms_1 = list(expr.atoms(Dot,Trace))
 
         for i in range(len(atoms_1)):
@@ -216,85 +251,12 @@ class BoundaryIntegral(AtomicExpr):
                 subs_3[val] = key
 
         expr, _ = expr._xreplace(subs_3)
+        return expr
 
-
-        return Basic.__new__(cls, expr, domain)
-
-    @property
-    def expr(self):
-        return self._args[0]
-    @property
-    def domain(self):
-        return self._args[1]
-
-    def __mul__(self, o):
-        return BoundaryIntegral(self.expr*o, self.domain)
-
-    def __rmul__(self, o):
-        return BoundaryIntegral(self.expr*o, self.domain)
-
-    def __add__(self, o):
-        if o == 0:
-            return self
-        else:
-            return Add(self, o)
-
-    def __radd__(self, o):
-        if o == 0:
-            return self
-        else:
-            return Add(self, o)
-
-    def __eq__(self, a):
-        if isinstance(a, BoundaryIntegral):
-            eq = self.domain == a.domain
-            eq = eq and self.expr == a.expr
-            return eq
-        return False
-
-    def __hash__(self):
-        return hash(self.expr) + hash(self.domain)
-
-#==============================================================================
-class InterfaceIntegral(AtomicExpr):
-    _op_priority = 20
-
-    @property
-    def expr(self):
-        return self._args[0]
-
-    @property
-    def domain(self):
-        return self._args[1]
-
-    def __mul__(self, o):
-        return InterfaceIntegral(self.expr*o, self.domain)
-
-    def __rmul__(self, o):
-        return InterfaceIntegral(self.expr*o, self.domain)
-
-    def __add__(self, o):
-        if o == 0:
-            return self
-        else:
-            return Add(self, o)
-
-    def __radd__(self, o):
-        if o == 0:
-            return self
-        else:
-            return Add(self, o)
-
-    def __eq__(self, a):
-        if isinstance(a, InterfaceIntegral):
-            eq = self.domain == a.domain
-            eq = eq and self.expr == a.expr
-            return eq
-        return False
-
-    def __hash__(self):
-        return hash(self.expr) + hash(self.domain)
-
+    def _sympystr(self, printer):
+        domain = printer._print(self.domain)
+        expr   = printer._print(self.expr)
+        return 'Integral({}, {})'.format(domain, expr)
 #==============================================================================
 class Functional(BasicForm):
     is_functional = True
@@ -338,10 +300,6 @@ class Functional(BasicForm):
     def space(self):
         return self._space
 
-    # TODO do we need it?
-#    def _eval_nseries(self, x, n, logx):
-#        return self.expr._eval_nseries(x, n, logx)
-
 #==============================================================================
 class LinearForm(BasicForm):
     is_linear = True
@@ -353,13 +311,10 @@ class LinearForm(BasicForm):
             return sy_Zero()
 
         # Check that integral expression is given
-        integral_types = DomainIntegral, BoundaryIntegral, InterfaceIntegral
-        if not expr.atoms(*integral_types):
-            raise ValueError('Expecting integral Expression')
+        if not expr.atoms(Integral):
+            raise ValueError('Expecting an integral Expression')
 
-        # Expand integral expression and sanitize arguments
         # TODO: why do we 'sanitize' here?
-        expr = expand(expr)
         args = _sanitize_arguments(arguments, is_linear=True)
 
         # Check linearity with respect to the given arguments
@@ -383,19 +338,6 @@ class LinearForm(BasicForm):
     @property
     def expr(self):
         return self._args[1]
-
-    @property
-    def body(self):
-        if self._body is None:
-            expr = self.expr
-            integrals = expr.atoms(DomainIntegral)
-            if integrals:
-                for integral in integrals:
-                    expr = expr.subs(integral, integral.expr)
-
-            self._body = expr
-
-        return self._body
 
     @property
     def test_functions(self):
@@ -445,14 +387,11 @@ class BilinearForm(BasicForm):
             return sy_Zero()
 
         # Check that integral expression is given
-        integral_types = DomainIntegral, BoundaryIntegral, InterfaceIntegral
-        if not expr.atoms(*integral_types):
+
+        if not expr.atoms(Integral):
             raise ValueError('Expecting integral Expression')
 
-        # Expand integral expression and sanitize arguments
         # TODO: why do we 'sanitize' here?
-
-        expr = expand(expr)
         args = _sanitize_arguments(arguments, is_bilinear=True)
 
         # Distinguish between trial and test functions
@@ -492,19 +431,6 @@ class BilinearForm(BasicForm):
         return self._args[2]
 
     @property
-    def body(self):
-        if self._body is None:
-            expr = self.expr
-            integrals = expr.atoms(DomainIntegral)
-            if integrals:
-                for integral in integrals:
-                    expr = expr.subs(integral, integral._args[0])
-
-            self._body = expr
-
-        return self._body
-
-    @property
     def test_functions(self):
         return self.variables[1]
 
@@ -532,8 +458,8 @@ class BilinearForm(BasicForm):
     def is_symmetric(self):
         if self._is_symmetric is None:
             left, right = self.variables
-            a1 = expand(self(left, right))
-            a2 = expand(self(right, left))
+            a1 = self(left, right)
+            a2 = self(right, left)
             self._is_symmetric = (a1 == a2)
         return self._is_symmetric
 
@@ -579,9 +505,9 @@ class Norm(Functional):
         # ...
 
         # ...
-        is_vector = isinstance(expr, (Matrix, Tuple, list, tuple))
+        is_vector = isinstance(expr, (Matrix, ImmutableDenseMatrix, Tuple, list, tuple))
         if is_vector:
-            expr = Matrix(expr)
+            expr = ImmutableDenseMatrix(expr)
         # ...
 
         # ...
@@ -597,26 +523,29 @@ class Norm(Functional):
                     raise ValueError('Wrong expression for Matrix. must be a row')
 
                 v = Tuple(*expr[:,0])
-                expr = Dot(v, v)
+                expr = Dot(v, v, evaluate=False)
 
         elif kind == 'h1'and evaluate :
             exponent = 2
 
             if not is_vector:
-                expr = Dot(Grad(expr), Grad(expr))
+                a    = Grad(expr, evaluate=False)
+                expr = Dot(a, a,evaluate=False)
 
             else:
                 if not( expr.shape[1] == 1 ):
                     raise ValueError('Wrong expression for Matrix. must be a row')
 
                 v = Tuple(*expr[:,0])
-                expr = Inner(Grad(v), Grad(v))
+                a = Grad(v, evaluate=False)
+                expr = Inner(a, a, evaluate=False)
 
         elif kind == 'h2'and evaluate :
             exponent = 2
 
             if not is_vector:
-                expr = Dot(Hessian(expr), Hessian(expr))
+                a    = Hessian(expr, evaluate=False)
+                expr = Dot(a, a, evaluate=False)
 
             else:
                 raise NotImplementedError('TODO')
@@ -690,20 +619,20 @@ def linearize(form, fields, trials=None):
     for I in integrals:
 
         g0 = I.expr
-        g1 = expand(I.expr.subs(zip(fields, new_fields)))
-        dg_du = (g1 - g0).as_leading_term(eps).as_coefficient(eps)
+        g1 = I.expr.subs(zip(fields, new_fields)).expand()
+        dg_du = ((g1-g0)/eps).series(eps, 0, 2).subs(eps, 0)
 
         if dg_du:
             new_I = integral(I.domain, dg_du)
             new_integrals.append(new_I)
 
-    bilinear_expr = Add(*new_integrals)
+    bilinear_expr = reduce(add, new_integrals)
     tests = form.variables
 
     return BilinearForm((trials, tests), bilinear_expr)
 
 #==============================================================================
-def is_linear_expression(expr, args, debug=True):
+def is_linear_expression(expr, args, integral=True, debug=True):
     """checks if an expression is linear with respect to the given arguments."""
     # ...
     left_args  = []
@@ -732,11 +661,6 @@ def is_linear_expression(expr, args, debug=True):
         newarg  = left + right
         newexpr = newexpr.subs(arg, newarg)
 
-    integrals = newexpr.atoms(DomainIntegral, BoundaryIntegral, InterfaceIntegral)
-
-    for a in integrals:
-        newexpr,_ = newexpr._xreplace({a:integral(a.domain, a.expr)})
-
     left_expr = expr
     for arg, left in zip(args, left_args):
         left_expr = left_expr.subs(arg, left)
@@ -745,12 +669,14 @@ def is_linear_expression(expr, args, debug=True):
     for arg, right in zip(args, right_args):
         right_expr = right_expr.subs(arg, right)
 
+    a = newexpr
+    b = left_expr + right_expr
 
-    if not( expand(newexpr) == expand(left_expr + right_expr) ):
+    if not( (a-b).expand() == 0 ):
         # TODO use a warning or exception?
         if debug:
             print('Failed to assert addition property')
-            print('{} != {}'.format(newexpr, left_expr + right_expr))
+            print('{} != {}'.format(a.expand(), b.expand()))
 
         return False
 
@@ -765,13 +691,17 @@ def is_linear_expression(expr, args, debug=True):
         newarg  = coeff * left
         newexpr = newexpr.subs(arg, newarg)
 
+    atoms     = list(newexpr.atoms(BasicOperator))
+    subs      = [e.func(*e.args, evaluate=True) for e in atoms]
+    newexpr   = newexpr.subs(zip(atoms, subs))
+
     left_expr = expr
     for arg, left in zip(args, left_args):
         left_expr = left_expr.subs(arg, left)
-
+ 
     left_expr = coeff * left_expr.subs(arg, left)
-
-    if not( expand(newexpr) == expand(left_expr)):
+ 
+    if not( (newexpr-left_expr).expand() == 0):
         # TODO use a warning or exception?
         if debug:
             print('Failed to assert multiplication property')
@@ -786,3 +716,25 @@ def is_linear_expression(expr, args, debug=True):
 def integral(domain, expr):
     """."""
     return Integral(expr, domain)
+
+def mul_integral(expr):
+    args = expr.args
+    return reduce(mul, args)
+
+def mul_add(expr):
+    args_int = [a for a in expr.args if isinstance(a, IntAdd)]
+    coeff    = Mul(*[a for a in expr.args if not a in args_int])
+    args_int[0] = [IntAdd(*[coeff*i for i in args_int[0].args])]
+    return Mul(*args_int)
+    
+def add_int(expr):
+    return IntAdd(*expr.args)
+
+Basic._constructor_postprocessor_mapping[Integral] = {
+    "Add": [add_int],
+    "Mul": [mul_integral],
+}
+
+Basic._constructor_postprocessor_mapping[IntAdd] = {
+    "Mul": [mul_add],
+}

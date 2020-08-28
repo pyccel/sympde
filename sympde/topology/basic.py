@@ -142,6 +142,7 @@ class Union(BasicDomain):
         else:
             obj = Basic.__new__(cls, *args)
 
+        obj.index = 0
         return obj
 
     @property
@@ -173,6 +174,16 @@ class Union(BasicDomain):
         ls = [i for i in self.args]
         return tuple(ls)
 
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        try:
+            result = self.args[self.index]
+        except IndexError:
+            raise StopIteration
+        self.index += 1
+        return result
 #==============================================================================
 class ProductDomain(BasicDomain):
     def __new__(cls, *args, name=None):
@@ -235,7 +246,7 @@ class Boundary(BasicDomain):
     Examples
 
     """
-    def __new__(cls, name, domain, axis, ext, mapping=None, logical_domain=None):
+    def __new__(cls, name, domain, axis=None, ext=None, mapping=None, logical_domain=None):
 
         if axis is not None:
             assert isinstance(axis, int)
@@ -308,9 +319,9 @@ class Interface(BasicDomain):
     Examples
 
     """
-    def __new__(cls, edge, bnd_minus, bnd_plus):
+    def __new__(cls, name, bnd_minus, bnd_plus):
 
-        if not isinstance(edge     , Edge    ): raise TypeError(edge)
+        if not isinstance(name     , str    ): raise TypeError(name)
         if not isinstance(bnd_minus, Boundary): raise TypeError(bnd_minus)
         if not isinstance(bnd_plus , Boundary): raise TypeError(bnd_plus)
 
@@ -327,7 +338,7 @@ class Interface(BasicDomain):
             logical_domain = (bnd_minus.logical_domain, bnd_plus.logical_domain)
 
         assert bnd_minus.axis == bnd_plus.axis
-        obj = Basic.__new__(cls, edge.name, bnd_minus, bnd_plus)
+        obj = Basic.__new__(cls, name, bnd_minus, bnd_plus)
         obj._mapping        = mapping
         obj._logical_domain = logical_domain
         return obj
@@ -420,8 +431,8 @@ class Connectivity(abc.Mapping):
         # ... create the connectivity
         connectivity = {}
         data = OrderedDict(sorted(self._data.items()))
-        for edge, pair in data.items():
-            connectivity[edge.name] = [bnd.todict() for bnd in pair]
+        for name, pair in data.items():
+            connectivity[name] = [bnd.todict() for bnd in pair]
 
         connectivity = OrderedDict(sorted(connectivity.items()))
         # ...
@@ -429,10 +440,8 @@ class Connectivity(abc.Mapping):
         return connectivity
 
     def __setitem__(self, key, value):
-        if isinstance(key, str):
-            key = Edge(key)
 
-        assert( isinstance( key, Edge ) )
+        assert( isinstance( key, str ) )
         assert( isinstance( value, (tuple, list)  ) )
         assert( len(value) in [1, 2] )
         assert( all( [isinstance( P, Boundary ) for P in value ] ) )

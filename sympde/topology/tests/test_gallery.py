@@ -2,6 +2,9 @@
 
 from sympy.abc import x,y,z
 from sympy import Tuple
+from sympy import symbols
+
+x1, x2, x3 = symbols('x1, x2, x3')
 
 from sympde.topology import Interval, ProductDomain, InteriorDomain, Domain
 from sympde.topology import Line, Square, Cube, NCubeInterior
@@ -29,7 +32,7 @@ def test_unit_line():
     # BasicDomain's attributes
     assert domain.dim  == 1
     assert domain.name == 'line'
-    assert domain.coordinates == x
+    assert domain.coordinates == x1
 
     # Domain's attributes
     assert isinstance(domain.interior, NCubeInterior)
@@ -47,7 +50,7 @@ def test_unit_line():
     # Export to file, read it again and compare with original domain
     domain.export('domain.h5')
     D = Domain.from_file('domain.h5')
-    assert D == domain
+    assert D.logical_domain == domain
 
 #==============================================================================
 def test_generic_line():
@@ -60,7 +63,7 @@ def test_generic_line():
     # BasicDomain's attributes
     assert domain.dim  == 1
     assert domain.name == 'line'
-    assert domain.coordinates == x
+    assert domain.coordinates == x1
 
     # Domain's attributes
     assert isinstance(domain.interior, NCubeInterior)
@@ -78,7 +81,7 @@ def test_generic_line():
     # Export to file, read it again and compare with original domain
     domain.export('domain.h5')
     D = Domain.from_file('domain.h5')
-    assert D == domain
+    assert D.logical_domain == domain
 
 #==============================================================================
 def test_unit_square():
@@ -91,7 +94,7 @@ def test_unit_square():
     # BasicDomain's attributes
     assert domain.dim  == 2
     assert domain.name == 'square'
-    assert domain.coordinates == (x, y)
+    assert domain.coordinates == (x1, x2)
 
     # Domain's attributes
     assert isinstance(domain.interior, InteriorDomain)
@@ -114,7 +117,7 @@ def test_unit_square():
     # Export to file, read it again and compare with original domain
     domain.export('domain.h5')
     D = Domain.from_file('domain.h5')
-    assert D == domain
+    assert D.logical_domain == domain
 
 #==============================================================================
 def test_rectangle():
@@ -127,7 +130,7 @@ def test_rectangle():
     # BasicDomain's attributes
     assert domain.dim  == 2
     assert domain.name == 'rectangle'
-    assert domain.coordinates == (x, y)
+    assert domain.coordinates == (x1, x2)
 
     # Domain's attributes
     assert isinstance(domain.interior, InteriorDomain)
@@ -150,7 +153,7 @@ def test_rectangle():
     # Export to file, read it again and compare with original domain
     domain.export('domain.h5')
     D = Domain.from_file('domain.h5')
-    assert D == domain
+    assert D.logical_domain == domain
 
 #==============================================================================
 def test_unit_cube():
@@ -163,7 +166,7 @@ def test_unit_cube():
     # Check object attributes
     assert domain.dim  == 3
     assert domain.name == 'cube'
-    assert domain.coordinates == (x, y, z)
+    assert domain.coordinates == (x1, x2, x3)
 
     # Domain's attributes
     assert isinstance(domain.interior, InteriorDomain)
@@ -188,7 +191,7 @@ def test_unit_cube():
     # Export to file, read it again and compare with original domain
     domain.export('domain.h5')
     D = Domain.from_file('domain.h5')
-    assert D == domain
+    assert D.logical_domain == domain
 
 #==============================================================================
 def test_orthogonal_hexahedron():
@@ -201,7 +204,7 @@ def test_orthogonal_hexahedron():
     # Check object attributes
     assert domain.dim  == 3
     assert domain.name == 'hexahedron'
-    assert domain.coordinates == (x, y, z)
+    assert domain.coordinates == (x1, x2, x3)
 
     # Domain's attributes
     assert isinstance(domain.interior, InteriorDomain)
@@ -226,7 +229,7 @@ def test_orthogonal_hexahedron():
     # Export to file, read it again and compare with original domain
     domain.export('domain.h5')
     D = Domain.from_file('domain.h5')
-    assert D == domain
+    assert D.logical_domain == domain
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE

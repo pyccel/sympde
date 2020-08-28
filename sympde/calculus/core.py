@@ -92,10 +92,12 @@ rot properties
 
 from sympy.core.compatibility import is_sequence
 from sympy.core import Basic
-from sympy import Indexed, IndexedBase
-from sympy.core import Add, Mul, Pow
+from sympy      import Indexed, IndexedBase, sympify
+from sympy      import Matrix, ImmutableDenseMatrix
+from sympy.core import Add, Mul, Pow, Symbol
 from sympy.core.containers import Tuple
 from sympy.core.singleton  import S
+
 
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import _coeffs_registery
@@ -107,16 +109,50 @@ from sympde.topology.domain import NormalVector, MinusNormalVector, PlusNormalVe
 from sympde.topology.datatype import H1SpaceType, HcurlSpaceType
 from sympde.topology.datatype import HdivSpaceType, L2SpaceType, UndefinedSpaceType
 
+from .matrices import MatrixSymbolicExpr, Matrix
 from .errors import ArgumentTypeError
+from sympy.core.decorators import call_highest_priority
+from operator  import mul,add
+from functools import reduce
+from sympy import S, cacheit, UnevaluatedExpr
 
+@cacheit
+def has(obj, types):
+    if hasattr(obj, 'args'):
+        return isinstance(obj, types) or any(has(i, types) for i in obj.args)
+    else:
+        return isinstance(obj, types)
 
+@cacheit
+def is_zero(x):
+    if isinstance(x, Matrix):
+        return all( i==0 for i in x[:])
+    else:
+        return x == 0
 #==============================================================================
 class BasicOperator(CalculusFunction):
     """
     Basic class for calculus operators.
     """
-    is_commutative = False
 
+    _op_priority   = 10.005
+    def __hash__(self):
+        return hash(self.args)
+
+    @call_highest_priority('__radd__')
+    def __add__(self, o):
+        return BasicOperatorAdd(self, o)
+
+    @call_highest_priority('__add__')
+    def __radd__(self, o):
+        return BasicOperatorAdd(self, o)
+
+class DiffOperator(CalculusFunction):
+    """
+    Basic class for calculus operators.
+    """
+    is_commutative = False
+    _op_priority   = 10.005
     def __getitem__(self, indices, **kw_args):
         if is_sequence(indices):
             # Special case needed because M[*my_tuple] is a syntax error.
@@ -124,8 +160,39 @@ class BasicOperator(CalculusFunction):
         else:
             return Indexed(self, indices, **kw_args)
 
-    def hash(self):
+    def __hash__(self):
         return hash(self.args)
+
+class BasicOperatorAdd(Add):
+    _op_priority   = 10.005
+    def __new__(cls, *args):
+
+        newargs = []
+        for i in args:
+            if isinstance(i, BasicOperatorAdd):
+                newargs += list(i.args)
+            elif not i == 0:
+                newargs += [i]
+
+        obj = Add.__new__(cls, *newargs)
+        return obj
+
+    @call_highest_priority('__rmul__')
+    def __mul__(self, o):
+        return BasicOperatorAdd(*[a*o for a in self.args])
+
+    @call_highest_priority('__mul__')
+    def __rmul__(self, o):
+        return BasicOperatorAdd(*[a*o for a in self.args])
+
+    @call_highest_priority('__radd__')
+    def __add__(self, o):
+        return BasicOperatorAdd(self, o)
+
+    @call_highest_priority('__add__')
+    def __radd__(self, o):
+        return BasicOperatorAdd(self, o)
+
 #==============================================================================
 def is_constant(atom):
     """ Determine whether the given atom represents a constant number.
@@ -147,6 +214,9 @@ def is_scalar(atom):
     return is_constant(atom) or isinstance(atom, (ScalarField, ScalarTestFunction))
 
 #==============================================================================
+# TODO add dot(u,u) +2*dot(u,v) + dot(v,v) = dot(u+v,u+v)
+# now we only have dot(u,u) + dot(u,v)+ dot(v,u) + dot(v,v) = dot(u+v,u+v)
+# add dot(u,v) = dot(v,u)
 class Dot(BasicOperator):
     """
     Represents a generic Dot operator, without knowledge of the dimension.
@@ -183,139 +253,136 @@ class Dot(BasicOperator):
     alpha*Dot(u1, v1)
     """
 
-    def __new__(cls, *args, **options):
+    is_scalar      = True
+    is_commutative = True
+    is_real        = False
+    is_positive    = False
+    def __new__(cls, arg1, arg2, **options):
         # (Try to) sympify args first
 
-        if len(args) != 2:
-            nargs = len(args)
-            msg = 'Dot takes exactly 2 arguments ({} given)'.format(nargs)
-            raise TypeError(msg)
-
-        if options.pop('evaluate', True):
-            arg1, arg2 = args
-            obj = cls.eval(arg1, arg2)
-            if isinstance(obj, (Inner, Dot)) and obj.args[0] == obj.args[1]:
-                obj.is_real     = True
-                obj.is_positive = True
-            return obj
-        else:
-            return Basic.__new__(cls, *args, **options)
-
-    @classmethod
-    def eval(cls, arg1, arg2):
-
-        # If one argument is scalar, convert Dot to Mul
-        # TODO: avoid this hack in the future
-        if is_scalar(arg1) or is_scalar(arg2):
-            return arg1*arg2
-
         # If one argument is the zero vector, return 0
-        if arg1 == 0 or arg2 == 0:
+        if is_zero(arg1) or is_zero(arg2):
             return S.Zero
 
-        # If both arguments are lists, use explicit formula:
-        #   dot(a, b) = a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + ...
-        indexed_types = (list, tuple, Tuple)
-        if isinstance(arg1, indexed_types) and isinstance(arg2, indexed_types):
-            if len(arg1) != len(arg2):
-                raise TypeError('Dimension mismatch in dot product')
-            else:
-                return Add(*[a1 * a2 for a1, a2 in zip(arg1, arg2)])
+        types = (VectorTestFunction, ScalarTestFunction)
+        if isinstance(arg1, Add):
+            a = [i for i in arg1.args if has(i, types)]
+            b = [i for i in arg1.args if i not in a]
 
-        # Recursive application of product rules to both arguments
-        for expr, args in (arg1, lambda a: (a, arg2)), \
-                          (arg2, lambda a: (arg1, a)):
+            a = [cls(i, arg2) for i in a]
+            b = cls(arg1.func(*b), arg2)
+            a = reduce(add, a, S.Zero)
+            return a+b
+                
 
-            # Sum: dot(a, b + c + d) = dot(a, b) + dot(a, c) + dot(a, d)
+        if isinstance(arg2, Add):
+            a = [i for i in arg2.args if has(i, types)]
+            b = [i for i in arg2.args if i not in a]
 
-            if isinstance(expr, Add):
-                b = 0
-                for a in expr.args:
-                    b += cls.eval(*args(a))
-                return b
+            a = [cls(arg1, i) for i in a]
+            b = cls(arg1, arg2.func(*b))
+            a = reduce(add, a, S.Zero)
+            return a+b
+          
+        if isinstance(arg1, Mul):
+            a = arg1.args
+        else:
+            a = [arg1]
+        
+        if isinstance(arg2, Mul):
+            b = arg2.args
+        else:
+            b = [arg2]
 
-            # Multiplication: dot(a, k*b) = k * dot(a, b) if k is scalar
-            if isinstance(expr, Mul):
-                scalars = [a for a in expr.args if is_scalar(a)]
-                vectors = [a for a in expr.args if a not in scalars]
+        args_1 = [i for i in a if not i.is_commutative]
+        c1     = [i for i in a if not i in args_1]
+        args_2 = [i for i in b if not i.is_commutative]
+        c2     = [i for i in b if not i in args_2]
 
-                if not vectors:
-                    return Mul(*scalars)
+        a = reduce(mul, args_1)
+        b = reduce(mul, args_2)
+        c = Mul(*c1)*Mul(*c2)
 
-                if scalars:
-                    a = Mul(*scalars)
-                    b = expr.func(*vectors)
-                    return a*cls.eval(*args(b))
+        if str(a) > str(b):
+            a,b = b,a
 
-        # Automatic evaluation to canonical form: reorder arguments by using
-        # commutativity property dot(v, u) = dot(u, v) and stop recursion.
-        if str(arg1) > str(arg2):
-            return cls(arg2, arg1, evaluate=False)
+        obj = Basic.__new__(cls, a, b)
 
-        # Stop recursion
-        return cls(arg1, arg2, evaluate=False)
+        if a == b:
+            obj.is_real     = True
+            obj.is_positive = True
+        return c*obj
+
 
 #==============================================================================
+#TODO add cross(u,v) + cross(v,u) = 0
 class Cross(BasicOperator):
     """
     This operator represents the cross product between two expressions,
     regardless of the dimension.
     """
+    is_scalar      = False
+    is_commutative = False
 
-    def __new__(cls, *args, **options):
-
-        if len(args) != 2:
-            nargs = len(args)
-            msg = 'Cross takes exactly 2 arguments ({} given)'.format(nargs)
-            raise TypeError(msg)
-
-        if options.pop('evaluate', True):
-            arg1, arg2 = args
-            return cls.eval(arg1, arg2)
-        else:
-            return Basic.__new__(cls, *args, **options)
-
-    @classmethod
-    def eval(cls, arg1, arg2):
+    def __new__(cls, arg1, arg2, **options):
 
         # Operator is anti-commutative, hence cross(u, u) = 0
         if arg1 == arg2:
             return S.Zero
 
         # If one argument is the zero vector, return 0
-        if arg1 == 0 or arg2 == 0:
+        if is_zero(arg1) or is_zero(arg2):
             return S.Zero
 
-        # Recursive application of linearity to both arguments
-        for expr, args in (arg1, lambda a: (a, arg2)), \
-                          (arg2, lambda a: (arg1, a)):
+        types = (VectorTestFunction, ScalarTestFunction)
+        if isinstance(arg1, Add):
+            a = [i for i in arg1.args if has(i, types)]
+            b = [i for i in arg1.args if i not in a]
 
-            # Sum: cross(a, b + c + d) = cross(a, b) + cross(a, c) + cross(a, d)
-            if isinstance(expr, Add):
-                return Add(*[cls.eval(*args(a)) for a in expr.args])
+            a = [cls(i, arg2) for i in a]
+            b = cls(arg1.func(*b), arg2)
+            a = reduce(add, a, S.Zero)
+            return a+b
+                
 
-            # Multiplication: cross(a, k*b) = k * cross(a, b) if k is scalar
-            if isinstance(expr, Mul):
-                scalars = [a for a in expr.args if is_scalar(a)]
-                vectors = [a for a in expr.args if a not in scalars]
+        if isinstance(arg2, Add):
+            a = [i for i in arg2.args if has(i, types)]
+            b = [i for i in arg2.args if i not in a]
 
-                if not vectors:
-                    return Mul(*scalars)
+            a = [cls(arg1, i) for i in a]
+            b = cls(arg1, arg2.func(*b))
+            a = reduce(add, a, S.Zero)
+            return a+b
 
-                if scalars:
-                    a = Mul(*scalars)
-                    b = Mul(*vectors)
-                    return Mul(a, cls.eval(*args(b)))
+        if isinstance(arg1, Mul):
+            a = arg1.args
+        else:
+            a = [arg1]
+        
+        if isinstance(arg2, Mul):
+            b = arg2.args
+        else:
+            b = [arg2]
 
-        # Automatic evaluation to canonical form: reorder arguments by using
-        # anti-commutativity property cross(v, u) = -cross(u, v) and stop recursion.
-        if str(arg1) > str(arg2):
-            return -cls(arg2, arg1, evaluate=False)
+        args_1 = [i for i in a if not i.is_commutative]
+        c1     = [i for i in a if not i in args_1]
+        args_2 = [i for i in b if not i.is_commutative]
+        c2     = [i for i in b if not i in args_2]
 
-        # Stop recursion
-        return cls(arg1, arg2, evaluate=False)
+        a = reduce(mul, args_1)
+        b = reduce(mul, args_2)
+        c = Mul(*c1)*Mul(*c2)
+
+        if str(a) > str(b):
+            a,b = b,a
+            c   = -c
+        obj = Basic.__new__(cls, a, b)
+        return c*obj
 
 #==============================================================================
+# TODO add inner(u,u) +2*inner(u,v) + inner(v,v) = inner(u+v,u+v)
+# now we only have inner(u,u) + inner(u,v)+ inner(v,u) + inner(v,v) = inner(u+v,u+v)
+# add inner(u,v) = inner(v,u)
 class Inner(BasicOperator):
     """
     Represents a generic Frobenius inner operator, without knowledge of the dimension.
@@ -340,60 +407,66 @@ class Inner(BasicOperator):
     >>> inner(grad(u1+u2), grad(v))
     Inner(Grad(u1), Grad(v)) + Inner(Grad(u2), Grad(v))
     """
-
-    def __new__(cls, *args, **options):
+    is_scalar      = True
+    is_commutative = True
+    is_real        = False
+    is_positive    = False
+    def __new__(cls, arg1, arg2, **options):
         # (Try to) sympify args first
 
-        if len(args) != 2:
-            nargs = len(args)
-            msg = 'Inner takes exactly 2 arguments ({} given)'.format(nargs)
-            raise TypeError(msg)
-
-        if options.pop('evaluate', True):
-            arg1, arg2 = args
-            obj = cls.eval(arg1, arg2)
-            if isinstance(obj, (Inner, Dot)) and obj.args[0] == obj.args[1]:
-                obj.is_real     = True
-                obj.is_positive = True
-            return obj
-        else:
-            return Basic.__new__(cls, *args, **options)
-
-    @classmethod
-    def eval(cls, arg1, arg2):
-
         # If one argument is the zero vector, return 0
-        if arg1 == 0 or arg2 == 0:
+        if is_zero(arg1) or is_zero(arg2):
             return S.Zero
 
-        # Recursive application of product rules to both arguments
-        for expr, args in (arg1, lambda a: (a, arg2)), \
-                          (arg2, lambda a: (arg1, a)):
+        types = (VectorTestFunction, ScalarTestFunction)
+        if isinstance(arg1, Add):
+            a = [i for i in arg1.args if has(i, types)]
+            b = [i for i in arg1.args if i not in a]
 
-            # Sum: dot(a, b + c + d) = inner(a, b) + inner(a, c) + inner(a, d)
-            if isinstance(expr, Add):
-                return Add(*[cls.eval(*args(a)) for a in expr.args])
+            a = [cls(i, arg2) for i in a]
+            b = cls(arg1.func(*b), arg2)
+            a = reduce(add, a, S.Zero)
+            return a+b
+                
 
-            # Multiplication: inner(a, k*b) = k * inner(a, b) if k is scalar
-            if isinstance(expr, Mul):
-                scalars = [a for a in expr.args if is_scalar(a)]
-                vectors = [a for a in expr.args if a not in scalars]
+        if isinstance(arg2, Add):
+            a = [i for i in arg2.args if has(i, types)]
+            b = [i for i in arg2.args if i not in a]
 
-                if not vectors:
-                    return Mul(*scalars)
+            a = [cls(arg1, i) for i in a]
+            b = cls(arg1, arg2.func(*b))
+            a = reduce(add, a, S.Zero)
+            return a+b
 
-                if scalars:
-                    a = Mul(*scalars)
-                    b = Mul(*vectors)
-                    return Mul(a, cls.eval(*args(b)))
+        if isinstance(arg1, Mul):
+            a = arg1.args
+        else:
+            a = [arg1]
+        
+        if isinstance(arg2, Mul):
+            b = arg2.args
+        else:
+            b = [arg2]
 
-        # Automatic evaluation to canonical form: reorder arguments by using
-        # commutativity property inner(v, u) = inner(u, v) and stop recursion.
-        if str(arg1) > str(arg2):
-            return cls(arg2, arg1, evaluate=False)
+        args_1 = [i for i in a if not i.is_commutative]
+        c1     = [i for i in a if not i in args_1]
+        args_2 = [i for i in b if not i.is_commutative]
+        c2     = [i for i in b if not i in args_2]
 
-        # Stop recursion
-        return cls(arg1, arg2, evaluate=False)
+        a = reduce(mul, args_1)
+        b = reduce(mul, args_2)
+        c = Mul(*c1)*Mul(*c2)
+
+        if str(a) > str(b):
+            a,b = b,a
+
+        obj = Basic.__new__(cls, a, b)
+        
+        if a == b:
+            obj.is_real     = True
+            obj.is_positive = True
+
+        return c*obj
 
 #==============================================================================
 class Outer(BasicOperator):
@@ -405,50 +478,56 @@ class Outer(BasicOperator):
 
     """
 
-    def __new__(cls, *args, **options):
+    is_scalar      = False
+    is_commutative = False
+
+    def __new__(cls, arg1, arg2, **options):
         # (Try to) sympify args first
-
-        if len(args) != 2:
-            nargs = len(args)
-            msg = 'Outer takes exactly 2 arguments ({} given)'.format(nargs)
-            raise TypeError(msg)
-
-        if options.pop('evaluate', True):
-            arg1, arg2 = args
-            return cls.eval(arg1, arg2)
-        else:
-            return Basic.__new__(cls, *args, **options)
-
-    @classmethod
-    def eval(cls, arg1, arg2):
-
         # If one argument is the zero vector, return 0
-        if arg1 == 0 or arg2 == 0:
+        if is_zero(arg1) or is_zero(arg2):
             return S.Zero
 
-        # Recursive application of product rules to both arguments
-        for expr, args in (arg1, lambda a: (a, arg2)), \
-                          (arg2, lambda a: (arg1, a)):
+        types = (VectorTestFunction, ScalarTestFunction)
+        if isinstance(arg1, Add):
+            a = [i for i in arg1.args if has(i, types)]
+            b = [i for i in arg1.args if i not in a]
 
-            # Sum: outer(a, b + c + d) = outer(a, b) + outer(a, c) + outer(a, d)
-            if isinstance(expr, Add):
-                return Add(*[cls.eval(*args(a)) for a in expr.args])
+            a = [cls(i, arg2) for i in a]
+            b = cls(arg1.func(*b), arg2)
+            a = reduce(add, a, S.Zero)
+            return a+b
+                
 
-            # Multiplication: outer(a, k*b) = k * outer(a, b) if k is scalar
-            if isinstance(expr, Mul):
-                scalars = [a for a in expr.args if is_scalar(a)]
-                vectors = [a for a in expr.args if a not in scalars]
+        if isinstance(arg2, Add):
+            a = [i for i in arg2.args if has(i, types)]
+            b = [i for i in arg2.args if i not in a]
 
-                if not vectors:
-                    return Mul(*scalars)
+            a = [cls(arg1, i) for i in a]
+            b = cls(arg1, arg2.func(*b))
+            a = reduce(add, a, S.Zero)
+            return a+b
 
-                if scalars:
-                    a = Mul(*scalars)
-                    b = Mul(*vectors)
-                    return Mul(a, cls.eval(*args(b)))
+        if isinstance(arg1, Mul):
+            a = arg1.args
+        else:
+            a = [arg1]
+        
+        if isinstance(arg2, Mul):
+            b = arg2.args
+        else:
+            b = [arg2]
 
-        # Stop recursion
-        return cls(arg1, arg2, evaluate=False)
+        args_1 = [i for i in a if not i.is_commutative]
+        c1     = [i for i in a if not i in args_1]
+        args_2 = [i for i in b if not i.is_commutative]
+        c2     = [i for i in b if not i in args_2]
+
+        a = reduce(mul, args_1)
+        b = reduce(mul, args_2)
+        c = Mul(*c1)*Mul(*c2)
+
+        obj = Basic.__new__(cls, a, b)
+        return c*obj
 
 #==============================================================================
 # TODO add it to evaluation
@@ -478,95 +557,62 @@ class Convect(BasicOperator):
     >>> convect(F,alpha*H)
     alpha*convect(F,H)
     """
+    is_scalar      = False
+    is_commutative = False
 
-    def __new__(cls, *args, **options):
+    def __new__(cls, arg1, arg2, **options):
         # (Try to) sympify args first
 
-        if options.pop('evaluate', True):
-            r = cls.eval(*args)
-        else:
-            r = None
-
-        if r is None:
-            return Basic.__new__(cls, *args, **options)
-        else:
-            return r
-
-    @classmethod
-    def eval(cls, *_args):
-        """."""
-
-        if not _args:
-            return
-
-        if not len(_args) == 2:
-            raise ValueError('Expecting two arguments')
-
-        left,right = _args
-        if (left == 0) or (right == 0):
-            return 0
-
-        # ...
-        if isinstance(left, Add):
-            args = [cls.eval(i, right) for i in left.args]
-            return Add(*args)
-        # ...
-
-        # ...
-        if isinstance(right, Add):
-            args = [cls.eval(left, i) for i in right.args]
-            return Add(*args)
-        # ...
-
-        # ... from now on, we construct left and right with some coeffs
-        #     return is done at the end
-        alpha = S.One
-        if isinstance(left, Mul):
-            coeffs  = [a for a in left.args if isinstance(a, _coeffs_registery)]
-            vectors = [a for a in left.args if not(a in coeffs)]
-
-            a = S.One
-            if coeffs:
-                a = Mul(*coeffs)
-
-            b = S.One
-            if vectors:
-                b = Mul(*vectors)
-
-            alpha *= a
-            left   = b
-
-        if isinstance(right, Mul):
-            coeffs  = [a for a in right.args if isinstance(a, _coeffs_registery)]
-            vectors = [a for a in right.args if not(a in coeffs)]
-
-            a = S.One
-            if coeffs:
-                a = Mul(*coeffs)
-
-            b = S.One
-            if vectors:
-                b = Mul(*vectors)
-
-            alpha *= a
-            right  = b
-        # ...
-
-        if isinstance(right, _coeffs_registery):
+        arg1 , arg2 = sympify(arg1), sympify(arg2)
+        # If one argument is the zero vector, return 0
+        if is_zero(arg1) or arg2.is_number:
             return S.Zero
 
-        # ... check consistency between space type and the operator
-        # TODO add appropriate space types
-        if _is_sympde_atom(right):
-            if not isinstance(right.space.kind, UndefinedSpaceType):
-                msg = '> Wrong space kind, given {}'.format(right.space.kind)
-                raise ArgumentTypeError(msg)
-        # ...
+        types = (VectorTestFunction, ScalarTestFunction)
+        if isinstance(arg1, Add):
+            a = [i for i in arg1.args if has(i, types)]
+            b = [i for i in arg1.args if i not in a]
 
-        return alpha*cls(left, right, evaluate=False)
+            a = [cls(i, arg2) for i in a]
+            b = cls(arg1.func(*b), arg2)
+            a = reduce(add, a, S.Zero)
+            return a+b
+                
+
+        if isinstance(arg2, Add):
+            a = [i for i in arg2.args if has(i, types)]
+            b = [i for i in arg2.args if i not in a]
+
+            a = [cls(arg1, i) for i in a]
+            b = cls(arg1, arg2.func(*b))
+            a = reduce(add, a, S.Zero)
+            return a+b
+
+        if isinstance(arg1, Mul):
+            a = arg1.args
+        else:
+            a = [arg1]
+        
+        if isinstance(arg2, Mul):
+            b = arg2.args
+        else:
+            b = [arg2]
+
+        args_1 = [i for i in a if not i.is_commutative]
+        c1     = [i for i in a if not i in args_1]
+        args_2 = [i for i in b if not i.is_commutative]
+        c2     = [i for i in b if not i in args_2]
+
+        a = reduce(mul, args_1)
+        b = reduce(mul, args_2)
+        c = Mul(*c1)*Mul(*c2)
+        
+        obj = Basic.__new__(cls, a, b)
+        return c*obj
 
 #==============================================================================
-class Grad(BasicOperator):
+# TODO add grad(a*A) = dot(grad(a),A) + a*grad(A) where A = (a1, a2, ...)
+class Grad(DiffOperator):
     """
     Represents a generic Grad operator, without knowledge of the dimension.
 
@@ -596,95 +642,97 @@ class Grad(BasicOperator):
     >>> grad(2)
     0
     """
-
-    def __new__(cls, *args, **options):
+    is_scalar      = False
+    is_commutative = False
+    def __new__(cls, expr, **options):
         # (Try to) sympify args first
 
         if options.pop('evaluate', True):
-            r = cls.eval(*args)
+            r = cls.eval(sympify(expr))
         else:
             r = None
 
         if r is None:
-            return Basic.__new__(cls, *args, **options)
+            return Basic.__new__(cls, expr, **options)
         else:
             return r
 
     @classmethod
-    def eval(cls, *_args):
+    def eval(cls, expr):
         """."""
+        types = (VectorTestFunction, ScalarTestFunction)
+        if not has(expr, types):
+            if expr.is_number:
+                return S.Zero
+            return cls(expr, evaluate=False)
 
-        if not _args:
-            return
-
-        if not len(_args) == 1:
-            raise ValueError('Expecting one argument')
-
-        expr = _args[0]
         if isinstance(expr, Add):
-            args = [cls.eval(a) for a in expr.args]
-            return Add(*args)
+            a = [i for i in expr.args if has(i, types)]
+            b = [i for i in expr.args if i not in a]
+            a = [cls(i) for i in a]
+            b = cls(expr.func(*b))
+            
+            return reduce(add, a) + b
 
         elif isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
-            vectors = [a for a in expr.args if not(a in coeffs)]
 
-            a = S.One
-            if coeffs:
-                a = Mul(*coeffs)
+            commutative           = [a for a in expr.args if a.is_commutative]
+            non_commutative       = [a for a in expr.args if not a in commutative]
 
-            b = S.One
-            if vectors:
-                try:
-                    if len(vectors) == 1:
-                        f = vectors[0]
-                        b = cls(f)
+            coeffs                = [a for a in commutative if a.is_number]
+            commutative_free_expr = [a for a in commutative if not a in coeffs and not has(a, types)]
+            commutative           = [a for a in commutative if not a in commutative_free_expr+coeffs]
 
-                    elif len(vectors) == 2:
-                        f,g = vectors
-                        b = f*cls(g) + g*cls(f)
 
-                    else:
-                        left = vectors[0]
-                        right = Mul(*vectors[1:])
+            a  = reduce(mul, coeffs, S.One)
+            b1 = reduce(mul, commutative_free_expr, S.One)
+            b2 = reduce(mul, commutative, S.One)
+            b3 = reduce(mul, non_commutative, S.One)
 
-                        f_left  = cls(left, evaluate=True)
-                        f_right = cls(right, evaluate=True)
+            if not b3 == 1:
+                b = cls( b1*b2*b3, evaluate=False)
+                return a*b
+            elif not b1 == 1:
 
-                        b = left * f_right + f_left * right
+                d_b1  = cls(b1, evaluate=False)
+                d_b2  = cls(b2, evaluate=True)
+            
+                return a * b1 * d_b2 + a * d_b1 * b2
+            elif not  b2 == 1:
+                if not isinstance(b2, Mul):
+                    return a * cls(b2, evaluate=True)
+                else:
+                    arg1 = b2.args[0]
+                    arg2 = b2.func(*b2.args[1:])
 
-                except:
-                    b = cls(expr.func(*vectors), evaluate=False)
+                    d_arg1  = cls(b2.args[0], evaluate=True)
+                    d_arg2  = cls(b2.func(*b2.args[1:]), evaluate=True)
 
-            return expr.func(a, b)
+                return a * arg1 * d_arg2 + a * d_arg1 * arg2
+            else:
+                return S.Zero
 
         elif isinstance(expr, Pow):  # TODO: fix this for the case where e is not a number
             b = expr.base
             e = expr.exp
-            return e*cls(b)*expr.func(b, e-1)
-
-        elif isinstance(expr, Dot):
-            try:
-                a,b = expr._args
-                return Cross(a, Curl(b)) - Cross(Curl(a), b) + Convect(a,b) + Convect(b,a)
-
-            except:
-                return cls(expr, evaluate=False)
-
-        elif isinstance(expr, _coeffs_registery):
-            return S.Zero
+            a = cls(b)
+            expr = expr.func(b, e-1)
+            if isinstance(a, Add):
+                expr = reduce(add, [e*expr*i for i in a.args])
+            else:
+                expr = e*a*expr
+            return expr
 
         # ... check consistency between space type and the operator
         if _is_sympde_atom(expr):
             if not isinstance(expr.space.kind, (UndefinedSpaceType, H1SpaceType)):
                 msg = '> Wrong space kind, given {}'.format(expr.space.kind)
                 raise ArgumentTypeError(msg)
-        # ...
 
         return cls(expr, evaluate=False)
 
 #==============================================================================
-class Curl(BasicOperator):
+class Curl(DiffOperator):
     """
     Represents a generic Curl operator, without knowledge of the dimension.
 
@@ -712,76 +760,53 @@ class Curl(BasicOperator):
     alpha*Curl(u1)
     """
 
-    def __new__(cls, *args, **options):
+    is_scalar      = False
+    is_commutative = False
+
+    def __new__(cls, expr, **options):
         # (Try to) sympify args first
 
         if options.pop('evaluate', True):
-            r = cls.eval(*args)
+            r = cls.eval(sympify(expr))
         else:
             r = None
 
         if r is None:
-            return Basic.__new__(cls, *args, **options)
+            return Basic.__new__(cls, expr, **options)
         else:
             return r
 
     @classmethod
-    def eval(cls, *_args):
+    def eval(cls, expr):
         """."""
 
-        if not _args:
-            return
+        types = (VectorTestFunction, ScalarTestFunction)
+        if not has(expr, types):
+            if expr.is_number:
+                return S.Zero
+            return cls(expr, evaluate=False)
 
-        if not len(_args) == 1:
-            raise ValueError('Expecting one argument')
-
-        expr = _args[0]
 
         if isinstance(expr, Add):
-            args = expr.args
-            args = [cls.eval(a) for a in expr.args]
-            return Add(*args)
+            a = [i for i in expr.args if has(i, types)]
+            b = [i for i in expr.args if i not in a]
+            a = [cls(i) for i in a]
+            b = cls(expr.func(*b))
+            
+            return reduce(add, a) + b
 
         elif isinstance(expr, Mul):
 
-            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            coeffs  = [a for a in expr.args if a.is_number]
             vectors = [a for a in expr.args if not(a in coeffs)]
 
-            a = S.One
-            if coeffs:
-                a = Mul(*coeffs)
-
-            b = S.One
-            if vectors:
-                if len(vectors) == 2:
-                    a,b = vectors
-                    if isinstance(a, (Tuple, VectorTestFunction, VectorField,
-                                      Grad)):
-                        f = b ; F = a
-                        return f*Curl(F) + Cross(grad(f), F)
-
-                    elif isinstance(b, (Tuple, VectorTestFunction, VectorField,
-                                       Grad)):
-                        f = a ; F = b
-                        return f*Curl(F) + Cross(grad(f), F)
-
-                b = cls(expr.func(*vectors), evaluate=False)
+            a = Mul(*coeffs)
+            b = cls(expr.func(*vectors), evaluate=False)
 
             return a*b
 
-        elif isinstance(expr, Cross):
-            try:
-                a,b = expr._args
-                return a * Div(b) - b*Div(a) + Convect(b, a) - Convect(a, b)
-            except:
-                return cls(expr, evaluate=False)
-
         elif isinstance(expr, Grad):
             return S.Zero
-
-        elif isinstance(expr, Curl):
-            f = expr._args[0]
-            return Grad(Div(f)) - Laplace(f)
 
         # ... check consistency between space type and the operator
         if _is_sympde_atom(expr):
@@ -794,7 +819,7 @@ class Curl(BasicOperator):
         return cls(expr, evaluate=False)
 
 #==============================================================================
-class Rot(BasicOperator):
+class Rot(DiffOperator):
     """
     Represents a generic 2D rotational operator.
 
@@ -822,48 +847,48 @@ class Rot(BasicOperator):
     alpha*Rot(u1)
     """
 
-    def __new__(cls, *args, **options):
+    is_scalar      = False
+    is_commutative = False
+
+    def __new__(cls, expr, **options):
         # (Try to) sympify args first
 
         if options.pop('evaluate', True):
-            r = cls.eval(*args)
+            r = cls.eval(sympify(expr))
         else:
             r = None
 
         if r is None:
-            return Basic.__new__(cls, *args, **options)
+            return Basic.__new__(cls, expr, **options)
         else:
             return r
 
     @classmethod
-    def eval(cls, *_args):
+    def eval(cls, expr):
         """."""
 
-        if not _args:
-            return
+        types = (VectorTestFunction, ScalarTestFunction)
+        if not has(expr, types):
+            if expr.is_number:
+                return S.Zero
+            return cls(expr, evaluate=False)
 
-        if not len(_args) == 1:
-            raise ValueError('Expecting one argument')
 
-        expr = _args[0]
         if isinstance(expr, Add):
-            args = expr.args
-            args = [cls.eval(a) for a in expr.args]
-            return expr.func(*args)
+            a = [i for i in expr.args if has(i, types)]
+            b = [i for i in expr.args if i not in a]
+            a = [cls(i) for i in a]
+            b = cls(expr.func(*b))
+            return reduce(add, a) + b
 
         elif isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            coeffs  = [a for a in expr.args if a.is_number]
             vectors = [a for a in expr.args if not(a in coeffs)]
 
-            a = S.One
-            if coeffs:
-                a = Mul(*coeffs)
+            a = Mul(*coeffs)
+            b = cls(expr.func(*vectors), evaluate=False)
 
-            b = S.One
-            if vectors:
-                b = cls(expr.func(*vectors), evaluate=False)
-
-            return expr.func(a, b)
+            return a*b
 
         # ... check consistency between space type and the operator
         # TODO add appropriate space types
@@ -876,7 +901,7 @@ class Rot(BasicOperator):
         return cls(expr, evaluate=False)
 
 #==============================================================================
-class Div(BasicOperator):
+class Div(DiffOperator):
     """
     Represents a generic Div operator, without knowledge of the dimension.
 
@@ -904,42 +929,47 @@ class Div(BasicOperator):
     alpha*Div(u1)
     """
     is_commutative = True
-    def __new__(cls, *args, **options):
+    is_scalar      = True
+
+    def __new__(cls, expr, **options):
         # (Try to) sympify args first
 
         if options.pop('evaluate', True):
-            r = cls.eval(*args)
+            r = cls.eval(sympify(expr))
         else:
             r = None
 
         if r is None:
-            return Basic.__new__(cls, *args, **options)
+            return Basic.__new__(cls, expr, **options)
         else:
             return r
 
     @classmethod
-    def eval(cls, *_args):
+    def eval(cls, expr):
         """."""
 
-        if not _args:
-            return
 
-        if not len(_args) == 1:
-            raise ValueError('Expecting one argument')
+        types = (VectorTestFunction, ScalarTestFunction)
+        if not has(expr, types):
+            if expr.is_number:
+                return S.Zero
+            return cls(expr, evaluate=False)
 
-        expr = _args[0]
+
         if isinstance(expr, Add):
-            args = expr.args
-            args = [cls.eval(a) for a in expr.args]
-            return expr.func(*args)
+            a = [i for i in expr.args if has(i, types)]
+            b = [i for i in expr.args if i not in a]
+            a = [cls(i) for i in a]
+            b = cls(expr.func(*b))
+            
+            return reduce(add, a) + b
 
         elif isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            coeffs  = [a for a in expr.args if a.is_number]
             vectors = [a for a in expr.args if not(a in coeffs)]
 
-            a = S.One
-            if coeffs:
-                a = Mul(*coeffs)
+
+            a = Mul(*coeffs)
 
             b = S.One
             if vectors:
@@ -960,7 +990,7 @@ class Div(BasicOperator):
 
                 b = cls(expr.func(*vectors), evaluate=False)
 
-            return expr.func(a, b)
+            return a*b
 
         elif isinstance(expr, Cross):
             a,b = expr._args
@@ -981,7 +1011,7 @@ class Div(BasicOperator):
         return cls(expr, evaluate=False)
 
 #==============================================================================
-class Laplace(BasicOperator):
+class Laplace(DiffOperator):
     """
     Represents a generic Laplace operator, without knowledge of the dimension.
 
@@ -1009,60 +1039,55 @@ class Laplace(BasicOperator):
     alpha*Laplace(u1)
     """
 
-    def __new__(cls, *args, **options):
+    is_scalar      = True
+    is_commutative = True
+    def __new__(cls, expr, **options):
         # (Try to) sympify args first
 
         if options.pop('evaluate', True):
-            r = cls.eval(*args)
+            r = cls.eval(sympify(expr))
         else:
             r = None
 
         if r is None:
-            return Basic.__new__(cls, *args, **options)
+            return Basic.__new__(cls, expr, **options)
         else:
             return r
 
     @classmethod
-    def eval(cls, *_args):
+    def eval(cls, expr):
         """."""
 
-        if not _args:
-            return
 
-        if not len(_args) == 1:
-            raise ValueError('Expecting one argument')
+        types = (VectorTestFunction, ScalarTestFunction)
+        if not has(expr, types):
+            if expr.is_number:
+                return S.Zero
+            return cls(expr, evaluate=False)
 
-        expr = _args[0]
+
         if isinstance(expr, Add):
-            args = expr.args
-            args = [cls.eval(a) for a in expr.args]
-            return Add(*args)
+            a = [i for i in expr.args if has(i, types)]
+            b = [i for i in expr.args if i not in a]
+            a = [cls(i) for i in a]
+            b = cls(expr.func(*b))
+            
+            return reduce(add, a) + b
 
         elif isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            coeffs  = [a for a in expr.args if a.is_number]
             vectors = [a for a in expr.args if not(a in coeffs)]
 
-            a = S.One
-            if coeffs:
-                a = Mul(*coeffs)
+            a = Mul(*coeffs)
 
-            b = S.One
-            if vectors:
-                if len(vectors) == 1:
-                    f = vectors[0]
-                    b = cls(f)
+            if len(vectors) == 2:
+                f,g = vectors
+                b = f*cls(g) + g*cls(f) + 2 * Dot(Grad(f), Grad(g))
 
-                elif len(vectors) == 2:
-                    f,g = vectors
-                    b = f*cls(g) + g*cls(f) + 2 * Dot(Grad(f), Grad(g))
+            else:
+                b = cls(Mul(*vectors), evaluate=False)
 
-                else:
-                    b = cls(Mul(*vectors), evaluate=False)
-
-            return Mul(a, b)
-
-        elif isinstance(expr, _coeffs_registery):
-            return S.Zero
+            return a*b
 
         # ... check consistency between space type and the operator
         # TODO add appropriate space types
@@ -1075,7 +1100,7 @@ class Laplace(BasicOperator):
         return cls(expr, evaluate=False)
 
 #==============================================================================
-class Hessian(BasicOperator):
+class Hessian(DiffOperator):
     """
     Represents a generic Hessian operator, without knowledge of the dimension.
 
@@ -1103,51 +1128,49 @@ class Hessian(BasicOperator):
     alpha*Hessian(u1)
     """
 
-    def __new__(cls, *args, **options):
+    is_scalar      = False
+    is_commutative = False
+
+    def __new__(cls, expr, **options):
         # (Try to) sympify args first
 
         if options.pop('evaluate', True):
-            r = cls.eval(*args)
+            r = cls.eval(sympify(expr))
         else:
             r = None
 
         if r is None:
-            return Basic.__new__(cls, *args, **options)
+            return Basic.__new__(cls, expr, **options)
         else:
             return r
 
     @classmethod
-    def eval(cls, *_args):
+    def eval(cls, expr):
         """."""
 
-        if not _args:
-            return
+        types = (VectorTestFunction, ScalarTestFunction)
+        if not has(expr, types):
+            if expr.is_number:
+                return S.Zero
+            return cls(expr, evaluate=False)
 
-        if not len(_args) == 1:
-            raise ValueError('Expecting one argument')
 
-        expr = _args[0]
         if isinstance(expr, Add):
-            args = expr.args
-            args = [cls.eval(a) for a in expr.args]
-            return Add(*args)
+            a = [i for i in expr.args if has(i, types)]
+            b = [i for i in expr.args if i not in a]
+            a = [cls(i) for i in a]
+            b = cls(expr.func(*b))
+            
+            return reduce(add, a) + b
 
         elif isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            coeffs  = [a for a in expr.args if a.is_number]
             vectors = [a for a in expr.args if not(a in coeffs)]
 
-            a = S.One
-            if coeffs:
-                a = Mul(*coeffs)
+            a = Mul(*coeffs)
+            b = cls(Mul(*vectors), evaluate=False)
 
-            b = S.One
-            if vectors:
-                b = cls(Mul(*vectors), evaluate=False)
-
-            return Mul(a, b)
-
-        elif isinstance(expr, _coeffs_registery):
-            return S.Zero
+            return a*b
 
         # ... check consistency between space type and the operator
         # TODO add appropriate space types
@@ -1160,28 +1183,30 @@ class Hessian(BasicOperator):
         return cls(expr, evaluate=False)
 
 #==============================================================================
-class Bracket(BasicOperator):
+class Bracket(DiffOperator):
     """
     This operator represents the Poisson bracket between two expressions.
     """
 
-    def __new__(cls, *args, **options):
+    is_scalar      = True
+    is_commutative = True
 
-        if len(args) != 2:
-            nargs = len(args)
-            msg = 'Bracket takes exactly 2 arguments ({} given)'.format(nargs)
-            raise TypeError(msg)
+    def __new__(cls, arg1, arg2, **options):
+
 
         if options.pop('evaluate', True):
-            arg1, arg2 = args
-            return cls.eval(arg1, arg2)
+            return cls.eval(sympify(arg1), sympify(arg2))
         else:
-            return Basic.__new__(cls, *args, **options)
+            return Basic.__new__(cls, arg1, arg2, **options)
 
     @classmethod
     def eval(cls, arg1, arg2):
 
         # Operator is anti-commutative, hence [u, u] = 0
+
+        if arg1.is_number or arg2.is_number:
+            return S.Zero
+  
         if arg1 == arg2:
             return S.Zero
 
@@ -1345,7 +1370,7 @@ class Convolution(BasicOperator):
         return alpha*cls(left, right, evaluate=False)
 
 #==============================================================================
-class NormalDerivative(BasicOperator):
+class NormalDerivative(DiffOperator):
     """
     Represents the normal derivative.
 
@@ -1762,4 +1787,11 @@ _is_op_test_function = lambda op: (isinstance(op, (Grad, Curl, Div)) and
 
 _is_op_field         = lambda op: (isinstance(op, (Grad, Curl, Div)) and
                                    isinstance(op._args[0], (ScalarField, VectorField)))
+
+def add_basicop(expr):
+    return BasicOperatorAdd(*expr.args)
+
+Basic._constructor_postprocessor_mapping[BasicOperator] = {
+    "Add": [add_basicop],
+}
 

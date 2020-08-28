@@ -3,7 +3,11 @@ from sympy                 import Add, Mul, Pow
 from sympy.core.decorators import call_highest_priority
 from sympy                 import Basic
 from sympy                 import sympify
+from sympde.core.basic     import _coeffs_registery
+from sympy import ImmutableDenseMatrix
 
+class Matrix(ImmutableDenseMatrix):
+    _op_priority   = 10.5
 
 class MatrixSymbolicExpr(Expr):
     is_commutative = False
@@ -16,6 +20,9 @@ class MatrixSymbolicExpr(Expr):
     def inv(self):
         return Inverse(self)
 
+    def inverse(self):
+        return Inverse(self)
+
     def transpose(self):
         return Transpose(self)
 
@@ -25,6 +32,9 @@ class MatrixSymbolicExpr(Expr):
 
     def det(self):
         return SymbolicDeterminant(self)
+
+    def trace(self):
+        return SymbolicTrace(self)
 
     # The following is adapted from the core Expr object
     def __neg__(self):
@@ -112,6 +122,14 @@ class MatMul(MatrixSymbolicExpr, Mul):
     def __new__(cls, *args):
         args = [sympify(a) for a in args if a != 1]
 
+        for i,a in enumerate(args):
+            if isinstance(a, Add):
+                newargs = []
+                for e in a.args:
+                    t = args[:i] + [e] + args[i+1:]
+                    newargs.append(MatMul(*t))
+                return type(a)(*newargs)
+          
         newargs = []
         for a in args:
             if isinstance(a, Mul):
@@ -121,9 +139,13 @@ class MatMul(MatrixSymbolicExpr, Mul):
 
         args   = [a for a in newargs if not a.is_commutative]
         coeffs = [a for a in newargs if a.is_commutative]
+        
+        
         if coeffs:
             c = Mul(*coeffs)
-            if isinstance(c, Mul):
+            if not args:
+                return c
+            elif isinstance(c, Mul):
                 args = list(c.args) + args
             elif c != 1:
                 args = [c] + args
@@ -137,8 +159,15 @@ class MatMul(MatrixSymbolicExpr, Mul):
 
     def _sympystr(self, printer):
         sstr = printer.doprint
-        return ' * '.join((sstr(i) for i in self.args))
-        #return 'MatMul({})'.format(','.join((sstr(i) for i in self.args)))
+        code = sstr(self.args[0])
+        for e in self.args[1:]:
+            if isinstance(e, Add):
+                code += ' * ({})'.format(sstr(e))
+            else:
+                code += ' * {}'.format(sstr(e))
+            
+        return code
+        return 'MatMul({})'.format(','.join((sstr(i) for i in self.args)))
 
     @staticmethod
     def _expandsums(sums):
@@ -161,6 +190,15 @@ class MatAdd(MatrixSymbolicExpr, Add):
     is_MatAdd = True
     def __new__(cls, *args):
         args = [sympify(a) for a in args if a != 0]
+        newargs = []
+        for i in args:
+            if isinstance(i, MatAdd):
+                newargs += list(i.args)
+            else:
+                newargs.append(i)
+
+        args = newargs
+
         if len(args) == 0:
             return S.Zero
         elif len(args) == 1:
@@ -170,14 +208,14 @@ class MatAdd(MatrixSymbolicExpr, Add):
 
     def _sympystr(self, printer):
         sstr = printer.doprint
-        return ' + '.join((sstr(i) for i in self.args))
-        #return 'MatAdd({})'.format(','.join((sstr(i) for i in self.args)))
+        #return ' + '.join((sstr(i) for i in self.args))
+        return 'MatAdd({})'.format(','.join((sstr(i) for i in self.args)))
 
 class MatPow(MatrixSymbolicExpr, Pow):
     def _sympystr(self, printer):
         sstr = printer.doprint
-        return '**'.join((sstr(i) for i in self.args))
-        #return 'MatPow({})'.format(','.join((sstr(i) for i in self.args)))
+        #return '**'.join((sstr(i) for i in self.args))
+        return 'MatPow({})'.format(','.join((sstr(i) for i in self.args)))
 
 class MatAbs(MatrixSymbolicExpr):
     def _sympystr(self, printer):
@@ -188,7 +226,6 @@ class SymbolicDeterminant(Expr):
     is_commutative = True
     def __new__(cls, *args):
         assert len(args) == 1
-        assert(isinstance(args[0], MatrixSymbolicExpr))
         return Basic.__new__(cls, *args)
 
     @property
@@ -200,6 +237,31 @@ class SymbolicDeterminant(Expr):
         arg = sstr(self.arg)
         return 'det({})'.format(arg)
 
+class SymbolicTrace(Expr):
+    is_commutative = True
+    def __new__(cls, *args):
+        assert len(args) == 1
+        arg = args[0]
+        if isinstance(arg, Add):
+            return Add(*[SymbolicTrace(a) for a in arg.args])
+
+        elif isinstance(arg, Mul):
+            coeffs = [a for a in arg.args if isinstance(a, _coeffs_registery)]
+            mats   = [a for a in arg.args if not a in coeffs]
+            if coeffs:
+                return Mul(*coeffs)*SymbolicTrace(arg.func(*mats))
+
+        return Basic.__new__(cls, *args)
+
+    @property
+    def arg(self):
+        return self._args[0]
+
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        arg = sstr(self.arg)
+        return 'tr({})'.format(arg)
+     
 class MatrixElement(Expr):
     def __new__(cls, base, indices):
         return Expr.__new__(cls, base, indices)

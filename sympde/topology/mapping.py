@@ -18,20 +18,20 @@ from sympy.core.containers import Tuple
 from sympy                 import S
 
 from sympde.calculus.core  import PlusInterfaceOperator, MinusInterfaceOperator
-from sympde.calculus.core  import grad, div, rot, curl, dot, inner, outer, _diff_ops
-from sympde.calculus.matrices import MatrixSymbolicExpr, MatrixElement
-from sympy                 import Determinant
+from sympde.calculus.core  import grad, div, rot, curl, laplace, hessian
+from sympde.calculus.core  import dot, inner, outer, _diff_ops
+from sympde.calculus.matrices import MatrixSymbolicExpr, MatrixElement, SymbolicTrace
 from sympde.core       import Constant
 from sympde.core.basic import BasicMapping
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import _coeffs_registery
 from sympde.topology   import NormalVector
 
-from .basic       import BasicDomain, Union, InteriorDomain, Boundary
+from .basic       import BasicDomain, Union, InteriorDomain, Boundary, Connectivity
 from .domain      import Domain
 from .space       import ScalarTestFunction, VectorTestFunction, IndexedTestTrial
 from .space       import ScalarField, VectorField, IndexedVectorField
-from .space import Trace, trace_0, trace_1
+from .space       import Trace, trace_0, trace_1
 from .datatype    import HcurlSpaceType, H1SpaceType, L2SpaceType, HdivSpaceType, UndefinedSpaceType
 from .derivatives import dx, dy, dz
 from .derivatives import _partial_derivatives
@@ -370,7 +370,7 @@ class MappedDomain(BasicDomain):
                 kwargs['interiors'] = mapping(interiors)
             if isinstance(boundaries, Union):
                 kwargs['boundaries'] = [mapping(a) for a in boundaries.args]
-            else:
+            elif boundaries:
                 kwargs['boundaries'] = mapping(boundaries)
 
             interfaces =  logical_domain.connectivity.interfaces
@@ -508,7 +508,7 @@ class Covariant(MappingApplication):
     @cacheit
     def eval(cls, F, v):
 
-        if not isinstance(v, (tuple, list, Tuple, Matrix)):
+        if not isinstance(v, (tuple, list, Tuple, ImmutableDenseMatrix, Matrix)):
             raise TypeError('> Expecting a tuple, list, Tuple, Matrix')
 
         M = Jacobian(F).inv().T
@@ -542,7 +542,7 @@ class Contravariant(MappingApplication):
         if not isinstance(F, Mapping):
             raise TypeError('> Expecting a Mapping')
 
-        if not isinstance(v, (tuple, list, Tuple, Matrix)):
+        if not isinstance(v, (tuple, list, Tuple, ImmutableDenseMatrix, Matrix)):
             raise TypeError('> Expecting a tuple, list, Tuple, Matrix')
 
         M = Jacobian(F)
@@ -605,7 +605,7 @@ class LogicalExpr(CalculusFunction):
 
         from sympde.expr.evaluation import TerminalExpr
         from sympde.expr.expr import BilinearForm, LinearForm, BasicForm, Norm
-        from sympde.expr.expr import DomainIntegral, BoundaryIntegral, InterfaceIntegral
+        from sympde.expr.expr import Integral
 
         M         = _args[0]
         expr      = _args[1]
@@ -679,6 +679,16 @@ class LogicalExpr(CalculusFunction):
             else:
                 raise NotImplementedError('TODO')
 
+        elif isinstance(expr, laplace):
+            v   = cls.eval(M, grad(expr.args[0]))
+            v   = M.jacobian.inv()*grad(v)
+            return SymbolicTrace(v)
+
+        elif isinstance(expr, hessian):
+            v   = cls.eval(M, grad(expr.args[0]))
+            v   = M.jacobian.inv()*grad(v)
+            return v
+          
         elif isinstance(expr, (dot, inner, outer)):
             args = [cls.eval(M, arg) for arg in expr.args]
             return type(expr)(*args)
@@ -722,7 +732,7 @@ class LogicalExpr(CalculusFunction):
 
             elif dim == 3:
                 lgrad_arg = LogicalGrad_3d(arg)
-
+            
             grad_arg = Covariant(M, lgrad_arg)
 
             expr = grad_arg[0]
@@ -788,9 +798,6 @@ class LogicalExpr(CalculusFunction):
             return expr
         elif isinstance(expr, NormalVector):
             return expr
-        elif isinstance(expr, Function):
-            args = [cls.eval(M, a) for a in expr.args]
-            return type(expr)(*args)
 
         elif isinstance(expr, Pow):
             b = expr.base
@@ -803,12 +810,13 @@ class LogicalExpr(CalculusFunction):
             bd = expr.boundary.logical_domain
             order = expr.order
             return Trace(e, bd, order)
-        elif isinstance(expr, (DomainIntegral, BoundaryIntegral, InterfaceIntegral)):
+
+        elif isinstance(expr, Integral):
             domain = expr.domain
             domain = domain.logical_domain
             assert domain is not None
 
-            if isinstance(expr, DomainIntegral):
+            if expr.is_domain_integral:
                 J   = M.jacobian
                 det = sqrt((J.T*J).det())
             else:
@@ -817,7 +825,7 @@ class LogicalExpr(CalculusFunction):
                 det  = sqrt((J.T*J).det())
 
             body   = cls.eval(M, expr.expr)*det
-            return type(expr)(body, domain)
+            return Integral(body, domain)
 
         elif isinstance(expr, BilinearForm):
             tests  = [PullBack(a) for a in expr.test_functions]
@@ -828,6 +836,8 @@ class LogicalExpr(CalculusFunction):
             return BilinearForm((trials, tests), body)
 
         elif isinstance(expr, LinearForm):
+            from sympy import cache
+            cache.clear_cache()
             tests  = [PullBack(a) for a in expr.test_functions]
             body   = cls.eval(M, expr.expr)
             tests  = [a.test for a in tests]
@@ -840,7 +850,9 @@ class LogicalExpr(CalculusFunction):
             norm           = Norm(e, domain, kind, evaluate=False)
             norm._exponent = exponent
             return norm
-
+        elif isinstance(expr, Function):
+            args = [cls.eval(M, a) for a in expr.args]
+            return type(expr)(*args)
         return cls(M, expr, evaluate=False)
 
 #==============================================================================

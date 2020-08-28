@@ -6,7 +6,7 @@ from sympy.core.containers import Tuple
 from sympy import pi, cos, sin
 
 from sympde.core        import Constant
-from sympde.calculus    import grad, dot, inner
+from sympde.calculus    import grad, dot, inner, Matrix
 from sympde.calculus    import laplace, bracket
 from sympde.topology    import ScalarFunctionSpace, VectorFunctionSpace
 from sympde.topology    import element_of
@@ -241,7 +241,7 @@ def test_equation_2d_4():
     # ... bilinear/linear forms
     a1 = BilinearForm((v,u), int_0(inner(grad(v), grad(u))))
 
-    f = Tuple(x*y, sin(pi*x)*sin(pi*y))
+    f = Matrix([x*y, sin(pi*x)*sin(pi*y)])
     l1 = LinearForm(v, int_0(dot(f,v)))
     # ...
 
@@ -266,8 +266,8 @@ def test_equation_2d_5():
     domain = Square()
     x,y = domain.coordinates
 
-    f0 = Tuple(2*pi**2*sin(pi*x)*sin(pi*y),
-              2*pi**2*sin(pi*x)*sin(pi*y))
+    f0 = Matrix([2*pi**2*sin(pi*x)*sin(pi*y),
+                 2*pi**2*sin(pi*x)*sin(pi*y)])
 
     f1 = cos(pi*x)*cos(pi*y)
 
@@ -321,7 +321,7 @@ def test_equation_2d_6():
 
     b1 = 1.
     b2 = 0.
-    b = Tuple(b1, b2)
+    b = Matrix([b1, b2])
 
     # right hand side
     f = x*y

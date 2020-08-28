@@ -49,7 +49,7 @@ class Domain(BasicDomain):
 
         # ...
         if not( interiors is None ):
-            if ( not isinstance( interiors, (tuple, list, Tuple)) and
+            if ( not isinstance( interiors, (tuple, list, Tuple, Union)) and
                  not isinstance( interiors, InteriorDomain) ):
                 raise TypeError('> Expecting an iterable or a InteriorDomain')
 
@@ -609,6 +609,7 @@ class Cube(NCube):
 
 #==============================================================================
 class BoundaryVector(IndexedBase):
+    is_commutative = False
     pass
 
 class NormalVector(BoundaryVector):

@@ -89,7 +89,7 @@ class DifferentialOperator(LinearOperator):
         elif isinstance(expr, Indexed) and isinstance(expr.base, BasicMapping):
             return cls(expr, evaluate=False)
 
-        elif isinstance(expr, (list, tuple, Tuple)):
+        elif isinstance(expr, (list, tuple, Tuple, Matrix, ImmutableDenseMatrix)):
             args = [cls(i, evaluate=True) for i in expr]
             args = Tuple(*args)
             return Matrix([args])
@@ -985,7 +985,7 @@ class LogicalGrad_2d(GradBasic):
 
         u = _args[0]
 
-        if isinstance(u, Tuple):
+        if isinstance(u, (Tuple, Matrix, ImmutableDenseMatrix)):
             n = len(u)
             lines = []
             for i in range(0, n):
@@ -1010,7 +1010,7 @@ class LogicalGrad_3d(GradBasic):
 
         u = _args[0]
 
-        if isinstance(u, Tuple):
+        if isinstance(u, (Tuple, Matrix, ImmutableDenseMatrix)):
             n = len(u)
             lines = []
             for i in range(0, n):

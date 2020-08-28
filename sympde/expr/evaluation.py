@@ -23,7 +23,7 @@ from sympde.calculus import Jump
 from sympde.calculus.core import _generic_ops, _diff_ops
 
 from sympde.calculus.matrices import SymbolicDeterminant, Inverse, Transpose
-from sympde.calculus.matrices import MatPow, MatrixElement
+from sympde.calculus.matrices import MatPow, MatrixElement, SymbolicTrace
 
 from sympde.topology.mapping import Jacobian, JacobianSymbol
 
@@ -63,7 +63,7 @@ from sympde.topology.space       import ScalarFunctionSpace
 
 from .basic import BasicExpr, BasicForm
 from .expr  import BilinearForm
-from .expr  import DomainIntegral, BoundaryIntegral, InterfaceIntegral
+from .expr  import Integral
 from .expr  import Functional
 from .expr  import _get_domain
 
@@ -250,8 +250,6 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
 
 #        # TODO add sub for avg
 #        expr = expr.subs({jump(v): v_minus - v_plus})
-
-    expr = expand(expr)
     # ...
 
     # ...
@@ -438,7 +436,7 @@ class TerminalExpr(CalculusFunction):
             o = args[0]
             for arg in args[1:]:
                 o = o + arg
-            return o
+            return o.factor()
 
         elif isinstance(expr, Mul):
             args = [cls.eval(a, dim=dim, logical=logical) for a in expr.args]
@@ -446,12 +444,15 @@ class TerminalExpr(CalculusFunction):
             for arg in args[1:]:
                 o = o * arg
             return o
+
         elif isinstance(expr, Abs):
             return Abs(cls.eval(expr.args[0], dim=dim, logical=logical))
+
         elif isinstance(expr, Pow):
             base = cls.eval(expr.base, dim=dim, logical=logical)
             exp  = cls.eval(expr.exp, dim=dim, logical=logical)
             return base**exp
+
         elif isinstance(expr, JacobianSymbol):
             axis = expr.axis
             J    = Jacobian(expr.mapping)
@@ -460,16 +461,25 @@ class TerminalExpr(CalculusFunction):
                 return J
             else:
                 return J.col_del(axis)
+
         elif isinstance(expr, SymbolicDeterminant):
             return cls.eval(expr.arg, dim=dim, logical=logical).det().factor()
+
+        elif isinstance(expr, SymbolicTrace):
+            return cls.eval(expr.arg, dim=dim, logical=logical).trace()
+
         elif isinstance(expr, Transpose):
             return cls.eval(expr.arg, dim=dim, logical=logical).T
+
         elif isinstance(expr, Inverse):
             return cls.eval(expr.arg, dim=dim, logical=logical).inv()
+
         elif isinstance(expr, (ScalarTestFunction, VectorTestFunction)):
             return expr
+
         elif isinstance(expr, PullBack):
             return cls.eval(expr.expr, dim=dim, logical=True)
+
         elif isinstance(expr, MatrixElement):
             base = cls.eval(expr.base, dim=dim, logical=logical)
             return base[expr.indices]
@@ -512,7 +522,6 @@ class TerminalExpr(CalculusFunction):
                     # ...
             else:
                 newexpr = cls.eval(expr.expr, dim=dim, logical=logical)
-                #newexpr = expand(newexpr)
                 # ...
                 if isinstance(expr, Functional):
                     domain = expr.domain
@@ -621,7 +630,7 @@ class TerminalExpr(CalculusFunction):
             # ...
             return ls
 
-        elif isinstance(expr, (DomainIntegral, BoundaryIntegral, InterfaceIntegral)):
+        elif isinstance(expr, Integral):
             dim     = expr.domain.dim if dim is None else dim
             logical = expr.domain.mapping is None
             return cls.eval(expr._args[0], dim=dim, logical=logical)
@@ -651,7 +660,8 @@ class TerminalExpr(CalculusFunction):
             op = type(expr)
             new  = eval('{0}_{1}d'.format(op, dim))
             args = [cls.eval(i, dim=dim, logical=logical) for i in expr.args]
-            return new(*args)
+            print(args)
+            return new(*args).factor()
 
         elif isinstance(expr, Trace):
             # TODO treate different spaces
