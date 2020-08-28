@@ -140,9 +140,8 @@ class Union(BasicDomain):
         elif len(args) == 1:
             obj = args[0]
         else:
-            obj = Basic.__new__(cls, *args)
-
-        obj.index = 0
+            obj       = Basic.__new__(cls, *args)
+            obj.index = 0
         return obj
 
     @property

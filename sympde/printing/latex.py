@@ -156,51 +156,26 @@ class LatexPrinter(LatexPrinterSympy):
     # ...
 
     # ...
-    def _print_DomainIntegral(self, expr):
-        dim = expr.domain.dim
-        domain = self._print(expr.domain)
-        expr   = self._print(expr.expr)
+    def _print_Integral(self, expr):
 
-        integral = r'\int_{' + domain + '}'
+        if expr.is_domain_integral:
+            dim = expr.domain.dim
+            if dim == 1:
+                dx = r'~dx'
 
-        if dim == 1:
-            dx = r'~dx'
-
+            else:
+                dx = r'~d\mathbf{x}'
         else:
-            dx = r'~d\mathbf{x}'
+            dx = r'~ds'
 
-        return '{integral} {expr} {dx}'.format(integral=integral,
-                                               expr=expr,
-                                               dx=dx)
-    # ...
-
-    # ...
-    def _print_BoundaryIntegral(self, expr):
         domain = self._print(expr.domain)
         expr   = self._print(expr.expr)
 
         integral = r'\int_{' + domain + '}'
 
-        dx = r'~ds'
-
         return '{integral} {expr} {dx}'.format(integral=integral,
                                                expr=expr,
                                                dx=dx)
-    # ...
-
-    # ...
-    def _print_InterfaceIntegral(self, expr):
-        domain = self._print(expr.domain)
-        expr   = self._print(expr.expr)
-
-        integral = r'\int_{' + domain + '}'
-
-        dx = r'~ds'
-
-        return '{integral} {expr} {dx}'.format(integral=integral,
-                                               expr=expr,
-                                               dx=dx)
-    # ...
 
     # ... forms
     def _print_BilinearForm(self, expr):
