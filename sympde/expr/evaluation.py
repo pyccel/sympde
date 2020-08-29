@@ -2,7 +2,7 @@
 
 from itertools import product
 from collections import OrderedDict
-from sympy import Abs, S
+from sympy import Abs, S, cacheit
 from sympy import Indexed, Matrix, ImmutableDenseMatrix
 from sympy import expand
 from sympy.core import Basic
@@ -416,6 +416,7 @@ class TerminalExpr(CalculusFunction):
         return args
 
     @classmethod
+    @cacheit
     def eval(cls, *_args, **kwargs):
         """."""
 
@@ -430,13 +431,13 @@ class TerminalExpr(CalculusFunction):
         n_cols  = kwargs.pop('n_cols', None)
         dim     = kwargs.pop('dim', None)
         logical = kwargs.pop('logical', None)
-
+        
         if isinstance(expr, Add):
             args = [cls.eval(a, dim=dim, logical=logical) for a in expr.args]
             o = args[0]
             for arg in args[1:]:
                 o = o + arg
-            return o.factor()
+            return o
 
         elif isinstance(expr, Mul):
             args = [cls.eval(a, dim=dim, logical=logical) for a in expr.args]
@@ -456,7 +457,6 @@ class TerminalExpr(CalculusFunction):
         elif isinstance(expr, JacobianSymbol):
             axis = expr.axis
             J    = Jacobian(expr.mapping)
-
             if axis is None:
                 return J
             else:
@@ -628,7 +628,7 @@ class TerminalExpr(CalculusFunction):
                 else:
                     raise TypeError('not implemented for {}'.format(type(domain)))
             # ...
-            return ls
+            return tuple(ls)
 
         elif isinstance(expr, Integral):
             dim     = expr.domain.dim if dim is None else dim
@@ -637,11 +637,11 @@ class TerminalExpr(CalculusFunction):
 
         elif isinstance(expr, NormalVector):
             lines = [[expr[i] for i in range(dim)]]
-            return Matrix(lines)
+            return ImmutableDenseMatrix(lines)
 
         elif isinstance(expr, TangentVector):
             lines = [[expr[i] for i in range(dim)]]
-            return Matrix(lines)
+            return ImmutableDenseMatrix(lines)
 
         elif isinstance(expr, BasicExpr):
             return cls.eval(expr.expr, dim=dim, logical=logical)
@@ -660,8 +660,7 @@ class TerminalExpr(CalculusFunction):
             op = type(expr)
             new  = eval('{0}_{1}d'.format(op, dim))
             args = [cls.eval(i, dim=dim, logical=logical) for i in expr.args]
-            print(args)
-            return new(*args).factor()
+            return new(*args)
 
         elif isinstance(expr, Trace):
             # TODO treate different spaces
@@ -690,7 +689,7 @@ class TerminalExpr(CalculusFunction):
             else:
                 raise ValueError('> Only traces of order 0 and 1 are available')
 
-        elif isinstance(expr, Matrix):
+        elif isinstance(expr, (Matrix, ImmutableDenseMatrix)):
             n,m = expr.shape
             lines = []
             for i in range(0, n):
@@ -698,7 +697,13 @@ class TerminalExpr(CalculusFunction):
                 for j in range(0, m):
                     line.append(cls.eval(expr[i,j], dim=dim, logical=logical))
                 lines.append(line)
-            return Matrix(lines)
+            return ImmutableDenseMatrix(lines)
+
+        elif isinstance(expr, LogicalExpr):
+            M         = expr.args[0]
+            expr      = cls(expr.args[1], dim=M.rdim)
+            dim       = M.rdim
+            return LogicalExpr(M, expr)
         return expr
 
 
@@ -1006,7 +1011,7 @@ class TensorExpr(CalculusFunction):
 
                 lines.append(line)
 
-            return Matrix(lines)
+            return ImmutableDenseMatrix(lines)
 
         elif isinstance(expr, DomainExpression):
             # TODO to be removed

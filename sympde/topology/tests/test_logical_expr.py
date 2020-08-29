@@ -327,7 +327,6 @@ def test_logical_expr_3d_1():
     expr = dx(det_M)
     expr = LogicalExpr(M, expr)
     expr = expr.subs(det_M, det)
-    expr = expand(expr)
     #print(expr)
     #print('')
     # ...
@@ -626,12 +625,12 @@ def test_czarny_mapping_2d_1():
     expected =  -cos(x2)/sqrt(eps*(eps + 2*x1*cos(x2)) + 1)
     assert(LogicalExpr(M, dx1(M[0])) == expected)
     expected =  b*(eps*x1*sin(x2)*cos(x2)/(sqrt(-eps**2/4 + 1)*sqrt(eps*(eps + 2*x1*cos(x2)) + 1)*(-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 2)**2) + sin(x2)/(sqrt(-eps**2/4 + 1)*(-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 2)))
-    assert(LogicalExpr(M, dx1(M[1])) == expected)
+    assert((LogicalExpr(M, dx1(M[1])) - expected).expand() == 0)
 
     expected =  x1*sin(x2)/sqrt(eps*(eps + 2*x1*cos(x2)) + 1)
     assert(LogicalExpr(M, dx2(M[0])) == expected)
     expected =  b*x1*(-eps*x1*sin(x2)**2/(sqrt(eps*(eps + 2*x1*cos(x2)) + 1)*(-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 2)**2) + cos(x2)/(-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 2))/sqrt(-eps**2/4 + 1)
-    assert(LogicalExpr(M, dx2(M[1])) == expected)
+    assert((LogicalExpr(M, dx2(M[1])) - expected).expand() == 0)
 
     expected =  Matrix([[-cos(x2)/sqrt(eps*(eps + 2*x1*cos(x2)) + 1),
                          x1*sin(x2)/sqrt(eps*(eps + 2*x1*cos(x2)) + 1)],

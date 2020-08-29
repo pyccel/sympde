@@ -20,28 +20,30 @@ from sympy                 import S
 from sympde.calculus.core  import PlusInterfaceOperator, MinusInterfaceOperator
 from sympde.calculus.core  import grad, div, rot, curl, laplace, hessian
 from sympde.calculus.core  import dot, inner, outer, _diff_ops
+from sympde.calculus.core  import has, DiffOperator
 from sympde.calculus.matrices import MatrixSymbolicExpr, MatrixElement, SymbolicTrace
 from sympde.core       import Constant
 from sympde.core.basic import BasicMapping
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import _coeffs_registery
-from sympde.topology   import NormalVector
+
 
 from .basic       import BasicDomain, Union, InteriorDomain, Boundary, Connectivity
 from .domain      import Domain
+from .domain      import NormalVector
 from .space       import ScalarTestFunction, VectorTestFunction, IndexedTestTrial
 from .space       import ScalarField, VectorField, IndexedVectorField
 from .space       import Trace, trace_0, trace_1
 from .datatype    import HcurlSpaceType, H1SpaceType, L2SpaceType, HdivSpaceType, UndefinedSpaceType
-from .derivatives import dx, dy, dz
+from .derivatives import dx, dy, dz, DifferentialOperator
 from .derivatives import _partial_derivatives
 from .derivatives import get_atom_derivatives, get_index_derivatives_atom
 from .derivatives import _logical_partial_derivatives
 from .derivatives import get_atom_logical_derivatives, get_index_logical_derivatives_atom
 from .derivatives import LogicalGrad_1d, LogicalGrad_2d, LogicalGrad_3d
 
-from sympy        import sqrt, symbols
 #==============================================================================
+from sympy                   import sqrt, symbols
 from sympy.core.exprtools    import factor_terms
 from sympy.polys.polytools   import parallel_poly_from_expr
 from sympy                   import cacheit
@@ -565,7 +567,7 @@ class LogicalExpr(CalculusFunction):
             #M    = M[0].mapping
             # TODO remove mapping from args
 
-            r = cls.eval(*args)
+            r = cls.eval(*args, **options)
             M = args[0]
             if M.is_analytical and not isinstance(M, InterfaceMapping):
                 for i in range(M.rdim):
@@ -603,6 +605,8 @@ class LogicalExpr(CalculusFunction):
         if not len(_args) == 2:
             raise ValueError('Expecting two arguments')
 
+        types = (ScalarTestFunction, VectorTestFunction, DifferentialOperator)
+
         from sympde.expr.evaluation import TerminalExpr
         from sympde.expr.expr import BilinearForm, LinearForm, BasicForm, Norm
         from sympde.expr.expr import Integral
@@ -612,6 +616,14 @@ class LogicalExpr(CalculusFunction):
         dim       = M.rdim # TODO this is not the dim of the domain
         l_coords  = ['x1', 'x2', 'x3'][:dim]
         ph_coords = ['x', 'y', 'z']
+
+        if not has(expr, types):
+            if has(expr, DiffOperator):
+                return cls( *_args, evaluate=False)
+            else:
+                syms = symbols(ph_coords[:dim])
+                Ms   = [M[i] for i in range(dim)]
+                return expr.subs(zip(syms, Ms))
 
         if isinstance(expr, Symbol) and expr.name in l_coords:
             return expr
@@ -625,7 +637,7 @@ class LogicalExpr(CalculusFunction):
             for i in args:
                 v += i
             n,d = v.as_numer_denom()
-            return cancel(n/d)
+            return n/d
 
         elif isinstance(expr, Mul):
             args = [cls.eval(M, a) for a in expr.args]
@@ -634,16 +646,9 @@ class LogicalExpr(CalculusFunction):
                 v *= i
             return v
 
-        elif isinstance(expr, _coeffs_registery):
+        elif isinstance(expr, _logical_partial_derivatives):
             return expr
 
-        elif isinstance(expr, _logical_partial_derivatives):
-            if M.is_analytical:
-                arg = cls.eval(M, expr._args[0])
-                op  = expr
-                return op.eval(arg)
-            else:
-                return expr
         elif isinstance(expr, (IndexedTestTrial, IndexedVectorField)):
             el = cls.eval(M, expr.base)
             return el[expr.indices[0]]
@@ -692,6 +697,7 @@ class LogicalExpr(CalculusFunction):
         elif isinstance(expr, (dot, inner, outer)):
             args = [cls.eval(M, arg) for arg in expr.args]
             return type(expr)(*args)
+
         elif isinstance(expr, _diff_ops):
             raise NotImplementedError('TODO')
 
@@ -734,7 +740,6 @@ class LogicalExpr(CalculusFunction):
                 lgrad_arg = LogicalGrad_3d(arg)
             
             grad_arg = Covariant(M, lgrad_arg)
-
             expr = grad_arg[0]
             return expr
 

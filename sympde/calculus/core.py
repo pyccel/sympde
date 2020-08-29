@@ -1058,7 +1058,6 @@ class Laplace(DiffOperator):
     def eval(cls, expr):
         """."""
 
-
         types = (VectorTestFunction, ScalarTestFunction)
         if not has(expr, types):
             if expr.is_number:

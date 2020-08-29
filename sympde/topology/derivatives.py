@@ -24,14 +24,15 @@ from sympy.core.function      import AppliedUndef
 from sympy.core.function      import UndefinedFunction
 from sympy.core.compatibility import is_sequence
 
-from sympde.core.basic import CalculusFunction
-from sympde.core.basic import _coeffs_registery
-from sympde.core.basic import BasicMapping
-from sympde.core.algebra import LinearOperator
-from .space import ScalarTestFunction, VectorTestFunction, IndexedTestTrial
-from .space import ScalarField, VectorField, IndexedVectorField
+from sympde.core.basic    import CalculusFunction
+from sympde.core.basic    import _coeffs_registery
+from sympde.core.basic    import BasicMapping
+from sympde.core.algebra  import LinearOperator
 from sympde.calculus.core import minus, plus
+from sympde.calculus.core import has
 
+from .space   import ScalarTestFunction, VectorTestFunction, IndexedTestTrial
+from .space   import ScalarField, VectorField, IndexedVectorField
 
 #==============================================================================
 class DifferentialOperator(LinearOperator):
@@ -53,8 +54,9 @@ class DifferentialOperator(LinearOperator):
         """."""
 
         expr = _args[0]
-        from sympde.topology.mapping import Mapping, Jacobian
 
+        types = (VectorTestFunction, ScalarTestFunction, 
+                DifferentialOperator, ScalarField, VectorField)
         if isinstance(expr, _logical_partial_derivatives):
             atom    = get_atom_logical_derivatives(expr)
             indices = get_index_logical_derivatives(expr)
@@ -64,13 +66,22 @@ class DifferentialOperator(LinearOperator):
                 d = _logical_partial_derivatives[-i-1]
                 for _ in range(n):
                     atom = d(atom, evaluate=False)
-
             if cls in _partial_derivatives:
                 atom = cls(atom, evaluate=False)
             elif cls not in _logical_partial_derivatives:
                 raise NotImplementedError('TODO')
             return atom
 
+
+        if isinstance(expr, (VectorTestFunction, VectorField)):
+            n = expr.shape[0]
+            args = [cls(expr[i], evaluate=False) for i in range(0, n)]
+            args = Tuple(*args)
+            return Matrix([args])
+        elif isinstance(expr, (list, tuple, Tuple, Matrix, ImmutableDenseMatrix)):
+            args = [cls(i, evaluate=True) for i in expr]
+            args = Tuple(*args)
+            return Matrix([args])
         elif isinstance(expr, (IndexedTestTrial, IndexedVectorField, DifferentialOperator)):
             return cls(expr, evaluate=False)
 
@@ -80,21 +91,26 @@ class DifferentialOperator(LinearOperator):
         elif isinstance(expr, (minus, plus)):
             return cls(expr, evaluate=False)
 
-        elif isinstance(expr, (VectorTestFunction, VectorField)):
-            n = expr.shape[0]
-            args = [cls(expr[i], evaluate=False) for i in range(0, n)]
-            args = Tuple(*args)
-            return Matrix([args])
-
         elif isinstance(expr, Indexed) and isinstance(expr.base, BasicMapping):
             return cls(expr, evaluate=False)
+        elif not has(expr, types):
+            if expr.is_number:
+                return S.Zero
 
-        elif isinstance(expr, (list, tuple, Tuple, Matrix, ImmutableDenseMatrix)):
-            args = [cls(i, evaluate=True) for i in expr]
-            args = Tuple(*args)
-            return Matrix([args])
+            elif isinstance(expr, Expr):
+                x = Symbol(cls.coordinate)
+                if cls.logical:
+                    M = expr.atoms(Mapping)
+                    if len(M)>0:
+                        M = list(M)[0]
+                        expr_primes = [diff(expr, M[i]) for i in range(M.rdim)]
+                        Jj = Jacobian(M)[:,cls.grad_index]
+                        expr_prime = sum([ei*Jji for ei,Jji in zip(expr_primes, Jj)])
+                        return expr_prime + diff(expr, x)
+                return diff(expr, x)
 
-        elif isinstance(expr, Add):
+
+        if isinstance(expr, Add):
             args = [cls(a, evaluate=True) for a in expr.args]
             v    = Add(*args)
             return v
@@ -139,36 +155,6 @@ class DifferentialOperator(LinearOperator):
             e = expr.exp
             v = (log(b)*cls(e, evaluate=True) + e*cls(b, evaluate=True)/b) * b**e
             return v
-
-        elif isinstance(expr, Derivative):
-            x = Symbol(cls.coordinate)
-            f = expr.args[0]
-            args = list(expr.args[1:])
-            args += [x]
-            return Derivative(f, *args)
-
-        elif isinstance(expr, UndefinedFunction):
-            x = Symbol(cls.coordinate)
-            return Derivative(expr, x)
-
-        elif isinstance(expr, AppliedUndef):
-            x = Symbol(cls.coordinate)
-            return Derivative(expr, x)
-
-        elif isinstance(expr, _coeffs_registery):
-            return S.Zero
-
-        elif isinstance(expr, Expr):
-            x = Symbol(cls.coordinate)
-            if cls.logical:
-                M = expr.atoms(Mapping)
-                if len(M)>0:
-                    M = list(M)[0]
-                    expr_primes = [diff(expr, M[i]) for i in range(M.rdim)]
-                    Jj = Jacobian(M)[:,cls.grad_index]
-                    expr_prime = sum([ei*Jji for ei,Jji in zip(expr_primes, Jj)]).simplify()
-                    return expr_prime + diff(expr, x)
-            return diff(expr, x)
 
         else:
             msg = '{expr} of type {type}'.format(expr=expr, type=type(expr))
@@ -991,7 +977,6 @@ class LogicalGrad_2d(GradBasic):
             for i in range(0, n):
                 line = [dx1(u)[0,i], dx2(u)[0,i]]
                 lines.append(line)
-
             v = ImmutableDenseMatrix(lines)
 
         else:
@@ -1394,3 +1379,5 @@ def get_max_logical_partial_derivatives(expr, F=None):
         for k,v in dd.items():
             if v > d[k]: d[k] = v
     return d
+
+from .mapping import Mapping, Jacobian
