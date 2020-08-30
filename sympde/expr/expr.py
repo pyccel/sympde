@@ -54,10 +54,10 @@ class IntAdd(Add):
     def __rmul__(self, o):
         return IntAdd(*[a*o for a in self.args])
 
-    def __div__(self, other):
+    def __div__(self, o):
         return IntAdd(*[a/o for a in self.args])
 
-    def __rdiv__(self, other):
+    def __rdiv__(self, o):
         return IntAdd(*[a/o for a in self.args])
 
     __truediv__ = __div__
@@ -187,10 +187,10 @@ class Integral(CalculusFunction):
     def __rmul__(self, o):
         return Integral(self.expr*o, self.domain)
 
-    def __div__(self, other):
+    def __div__(self, o):
         return Integral(self.expr/o, self.domain)
 
-    def __rdiv__(self, other):
+    def __rdiv__(self, o):
         return Integral(self.expr/o, self.domain)
 
     __truediv__ = __div__

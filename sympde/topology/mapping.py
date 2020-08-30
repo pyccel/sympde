@@ -605,11 +605,12 @@ class LogicalExpr(CalculusFunction):
         if not len(_args) == 2:
             raise ValueError('Expecting two arguments')
 
-        types = (ScalarTestFunction, VectorTestFunction, DifferentialOperator)
 
         from sympde.expr.evaluation import TerminalExpr
         from sympde.expr.expr import BilinearForm, LinearForm, BasicForm, Norm
         from sympde.expr.expr import Integral
+
+        types = (ScalarTestFunction, VectorTestFunction, DifferentialOperator, Trace, Integral)
 
         M         = _args[0]
         expr      = _args[1]
