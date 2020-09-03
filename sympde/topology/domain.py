@@ -396,7 +396,7 @@ class Domain(BasicDomain):
         # ... interiors
         interiors       = Union(self.interior, other.interior)
         if all(e.mapping for e in interiors):
-            logical_interiors    = (e.logical_domain for e in interiors)
+            logical_interiors    = Union(*[e.logical_domain for e in interiors])
             logical_boundaries   = [e.logical_domain for e in boundaries]
             logical_connectivity = Connectivity()
             for k,v in connectivity.items():

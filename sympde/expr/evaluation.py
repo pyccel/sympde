@@ -1060,10 +1060,6 @@ class TensorExpr(CalculusFunction):
                 variables     = [LogicalExpr(e, mapping=mapping, dim=dim) for e in variables ]
                 trials        = [LogicalExpr(e, mapping=mapping, dim=dim) for e in trials ]
                 tests         = [LogicalExpr(e, mapping=mapping, dim=dim) for e in tests ]
-                #det_M         = DetJacobian(mapping)
-                #det           = SymbolicDeterminant(mapping)
-                #terminal_expr = terminal_expr.subs(det_M, det)
-                #terminal_expr = expand(terminal_expr)
             # ...
 
             d_atoms = OrderedDict()

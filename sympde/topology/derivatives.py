@@ -38,6 +38,11 @@ from .space   import ScalarField, VectorField, IndexedVectorField
 class DifferentialOperator(LinearOperator):
     """
     This class is a linear operator that applies the Leibniz formula
+    
+    Parameters
+    ----------
+    expr : Expr
+        expr represents a Sympy expression
 
     """
     coordinate = None
@@ -50,10 +55,7 @@ class DifferentialOperator(LinearOperator):
 
     @classmethod
     @cacheit
-    def eval(cls, *_args):
-        """."""
-
-        expr = _args[0]
+    def eval(cls, expr):
 
         types = (VectorTestFunction, ScalarTestFunction, 
                 DifferentialOperator, ScalarField, VectorField)
@@ -219,12 +221,12 @@ def find_partial_derivatives(expr):
         return args
 
     elif isinstance(expr, _partial_derivatives):
-        return [expr]
+        return (expr,)
 
     elif isinstance(expr, _logical_partial_derivatives):
-        return [expr]
+        return (expr,)
 
-    return []
+    return ()
 
 #==============================================================================
 @cacheit
@@ -285,7 +287,7 @@ def sort_partial_derivatives(expr):
         ls += d[k]
     # ...
 
-    return ls
+    return tuple(ls)
 
 #==============================================================================
 @cacheit
@@ -1314,7 +1316,7 @@ def get_index_derivatives_atom(expr, atom, verbose=False):
             index = get_index_derivatives(i)
             indices.append(index)
 
-    return indices
+    return tuple(indices)
 
 #==============================================================================
 def get_index_logical_derivatives_atom(expr, atom, verbose=False):
@@ -1333,7 +1335,7 @@ def get_index_logical_derivatives_atom(expr, atom, verbose=False):
             index = get_index_logical_derivatives(i)
             indices.append(index)
 
-    return indices
+    return tuple(indices)
 
 #==============================================================================
 def get_max_partial_derivatives(expr, F=None):
