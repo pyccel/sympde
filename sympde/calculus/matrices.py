@@ -259,7 +259,7 @@ class SymbolicTrace(Expr):
         sstr = printer.doprint
         arg = sstr(self.arg)
         return 'tr({})'.format(arg)
-     
+
 class MatrixElement(Expr):
     def __new__(cls, base, indices):
         return Expr.__new__(cls, base, indices)
@@ -275,3 +275,4 @@ class MatrixElement(Expr):
     def _sympystr(self, printer):
         sstr = printer.doprint
         return '{}[{}]'.format(sstr(self.args[0]),sstr(self.args[1]))
+

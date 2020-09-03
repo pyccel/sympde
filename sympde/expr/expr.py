@@ -280,7 +280,7 @@ class Functional(BasicForm):
 
         if evaluate:
             expr = Integral(expr, domain)
- 
+
         obj         = Basic.__new__(cls, expr)
         obj._ldim   = domain.dim
         obj._space  = space

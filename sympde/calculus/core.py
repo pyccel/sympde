@@ -342,7 +342,6 @@ class Cross(BasicOperator):
             b = cls(arg1.func(*b), arg2)
             a = reduce(add, a, S.Zero)
             return a+b
-                
 
         if isinstance(arg2, Add):
             a = [i for i in arg2.args if has(i, types)]
@@ -426,7 +425,6 @@ class Inner(BasicOperator):
             b = cls(arg1.func(*b), arg2)
             a = reduce(add, a, S.Zero)
             return a+b
-                
 
         if isinstance(arg2, Add):
             a = [i for i in arg2.args if has(i, types)]
@@ -495,7 +493,6 @@ class Outer(BasicOperator):
             b = cls(arg1.func(*b), arg2)
             a = reduce(add, a, S.Zero)
             return a+b
-                
 
         if isinstance(arg2, Add):
             a = [i for i in arg2.args if has(i, types)]
@@ -576,7 +573,6 @@ class Convect(BasicOperator):
             b = cls(arg1.func(*b), arg2)
             a = reduce(add, a, S.Zero)
             return a+b
-                
 
         if isinstance(arg2, Add):
             a = [i for i in arg2.args if has(i, types)]

@@ -642,7 +642,6 @@ class Cube(NCube):
 #==============================================================================
 class BoundaryVector(IndexedBase):
     is_commutative = False
-    pass
 
 class NormalVector(BoundaryVector):
     pass
