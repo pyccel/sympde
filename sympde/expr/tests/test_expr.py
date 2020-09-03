@@ -1129,8 +1129,8 @@ def test_linearize_form_2d_4():
     int_0 = lambda expr: integral(domain , expr)
     int_1 = lambda expr: integral(Gamma_N, expr)
 
-    g = Matrix((cos(pi*x)*sin(pi*y),
-              sin(pi*x)*cos(pi*y)))
+#    g = Matrix((cos(pi*x)*sin(pi*y),
+#              sin(pi*x)*cos(pi*y)))
 
     expr = dot(grad(v), grad(u)) - 4.*exp(-u)*v # + v*trace_1(g, Gamma_N)
 

@@ -34,7 +34,7 @@ def test_partial_derivatives_1():
     # ...
     domain = Domain('Omega', dim=2)
     M      = Mapping('M', rdim=2)
-    
+
     mapped_domain = M(domain)
 
     x,y = mapped_domain.coordinates
@@ -48,10 +48,13 @@ def test_partial_derivatives_1():
     beta = Constant('beta')
     # ...
 
-    # ...
     assert(dx(x**2) == 2*x)
     assert(dy(x**2) == 0)
     assert(dz(x**2) == 0)
+
+    assert(dx(y**2) == 0)
+    assert(dy(y**2) == 2*y)
+    assert(dz(y**2) == 0)
 
     assert(dx(x*F) == F + x*dx(F))
     assert(dx(uvw) == Matrix([[dx(u), dx(v), dx(w)]]))

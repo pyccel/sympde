@@ -129,7 +129,7 @@ class MatMul(MatrixSymbolicExpr, Mul):
                     t = args[:i] + [e] + args[i+1:]
                     newargs.append(MatMul(*t))
                 return type(a)(*newargs)
-          
+
         newargs = []
         for a in args:
             if isinstance(a, Mul):
@@ -167,7 +167,6 @@ class MatMul(MatrixSymbolicExpr, Mul):
                 code += ' * {}'.format(sstr(e))
             
         return code
-        return 'MatMul({})'.format(','.join((sstr(i) for i in self.args)))
 
     @staticmethod
     def _expandsums(sums):

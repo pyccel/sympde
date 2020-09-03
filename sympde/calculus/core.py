@@ -114,7 +114,7 @@ from .errors import ArgumentTypeError
 from sympy.core.decorators import call_highest_priority
 from operator  import mul,add
 from functools import reduce
-from sympy import S, cacheit, UnevaluatedExpr
+from sympy import cacheit
 
 @cacheit
 def has(obj, types):
@@ -273,7 +273,6 @@ class Dot(BasicOperator):
             b = cls(arg1.func(*b), arg2)
             a = reduce(add, a, S.Zero)
             return a+b
-                
 
         if isinstance(arg2, Add):
             a = [i for i in arg2.args if has(i, types)]

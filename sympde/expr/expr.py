@@ -62,7 +62,7 @@ class IntAdd(Add):
 
     __truediv__ = __div__
     __rtruediv__ = __rdiv__
-    
+
     def _sympystr(self, printer):
         args = [printer._print(i) for i in self.args]
         return 'IntAdd({})'.format(','.join(args))
@@ -173,7 +173,7 @@ class Integral(CalculusFunction):
         else:
             raise TypeError(domain)
 
-        return obj   
+        return obj
 
     @property
     def expr(self):

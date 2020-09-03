@@ -456,7 +456,7 @@ class TerminalExpr(CalculusFunction):
         n_cols  = kwargs.pop('n_cols', None)
         dim     = kwargs.pop('dim', None)
         logical = kwargs.pop('logical', None)
-        
+
         if isinstance(expr, Add):
             args = [cls.eval(a, dim=dim, logical=logical) for a in expr.args]
             o = args[0]

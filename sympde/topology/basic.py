@@ -25,7 +25,7 @@ class BasicDomain(Basic):
     @property
     def coordinates(self):
         dim = self.dim
-        
+
         if self._coordinates is None:
             if self.mapping is None:
                 xyz = ['x1', 'x2', 'x3'][:dim]
@@ -158,7 +158,6 @@ class Union(BasicDomain):
 
     @property
     def coordinates(self):
-        dim = self.dim
         coords = self.args[0].coordinates
         assert all(e.coordinates == coords for e in self)
         return coords
@@ -431,7 +430,7 @@ class Connectivity(abc.Mapping):
     def interfaces(self):
         ls = []
         data = OrderedDict(sorted(self._data.items()))
-        for k,v in data.items():
+        for _,v in data.items():
             ls.append(v)
         return Union(*ls)
 

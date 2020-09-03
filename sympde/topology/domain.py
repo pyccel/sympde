@@ -350,7 +350,7 @@ class Domain(BasicDomain):
                 bnd   = Boundary(name, patch)
                 bnds.append(bnd)
 
-            connectivity[edge] = Interface(edge, *bnds)
+            connectivity[edge] = Interface(edge, bnds[0], bnds[1])
         # ...
 
         obj = Domain.__new__(cls, domain_name,
@@ -376,7 +376,7 @@ class Domain(BasicDomain):
                 int_logical_domain = None
 
             name               = '{l}|{r}'.format(l=bnd_minus.domain.name, r=bnd_plus.domain.name)
-            connectivity[name] = Interface(name, bnd_minus, bnd_plus, 
+            connectivity[name] = Interface(name, bnd_minus, bnd_plus,
                                            mapping=int_map,
                                            logical_domain=int_logical_domain)
 
@@ -403,9 +403,9 @@ class Domain(BasicDomain):
                 logical_connectivity[name] = v.logical_domain
 
             mapping        = tuple(e.mapping for e in interiors)
-            logical_domain = Domain(name, 
-                            interiors=logical_interiors, 
-                            boundaries=logical_boundaries, 
+            logical_domain = Domain(name,
+                            interiors=logical_interiors,
+                            boundaries=logical_boundaries,
                             connectivity=logical_connectivity)
         else:
             mapping              = None
@@ -467,11 +467,11 @@ class PeriodicDomain(BasicDomain):
 
 #==============================================================================
 class NCubeInterior(InteriorDomain):
-    
-    def __new__(cls, name, dim=None, dtype=None, min_coords=None, max_coords=None, 
+
+    def __new__(cls, name, dim=None, dtype=None, min_coords=None, max_coords=None,
                     mapping=None, logical_domain=None):
 
-        obj = InteriorDomain.__new__(cls, name, dim=dim, dtype=dtype, 
+        obj = InteriorDomain.__new__(cls, name, dim=dim, dtype=dtype,
                     mapping=mapping, logical_domain=logical_domain)
         obj._min_coords = min_coords
         obj._max_coords = max_coords

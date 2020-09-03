@@ -38,7 +38,7 @@ from .space   import ScalarField, VectorField, IndexedVectorField
 class DifferentialOperator(LinearOperator):
     """
     This class is a linear operator that applies the Leibniz formula
-    
+
     Parameters
     ----------
     expr : Expr
@@ -57,23 +57,27 @@ class DifferentialOperator(LinearOperator):
     @cacheit
     def eval(cls, expr):
 
-        types = (VectorTestFunction, ScalarTestFunction, 
+        types = (VectorTestFunction, ScalarTestFunction,
                 DifferentialOperator, ScalarField, VectorField)
+
         if isinstance(expr, _logical_partial_derivatives):
             atom    = get_atom_logical_derivatives(expr)
             indices = get_index_logical_derivatives(expr)
+
             if cls in _logical_partial_derivatives:
                 indices[cls.coordinate] += 1
+
             for i,n in enumerate(list(indices.values())[::-1]):
                 d = _logical_partial_derivatives[-i-1]
                 for _ in range(n):
                     atom = d(atom, evaluate=False)
+
             if cls in _partial_derivatives:
                 atom = cls(atom, evaluate=False)
             elif cls not in _logical_partial_derivatives:
                 raise NotImplementedError('TODO')
-            return atom
 
+            return atom
 
         if isinstance(expr, (VectorTestFunction, VectorField)):
             n = expr.shape[0]

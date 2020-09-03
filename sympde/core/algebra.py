@@ -69,13 +69,9 @@ class LinearOperator(CalculusFunction):
             return Indexed(self, indices, **kw_args)
 
     @classmethod
-    def eval(cls, *_args):
+    def eval(cls, expr):
         """."""
 
-        if not _args:
-            return
-
-        expr = _args[0]
         if isinstance(expr, Add):
             args = expr.args
             args = [cls.eval(a) for a in expr.args]

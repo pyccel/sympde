@@ -285,6 +285,7 @@ class MultiPatchMapping(Mapping):
 
     def mappings(self):
         return self.args[0]
+
     @property
     def is_analytical(self):
         return all(a.is_analytical for a in self.mappings.values())
@@ -492,16 +493,15 @@ class PullBack(Expr):
         if isinstance(kind, (UndefinedSpaceType, H1SpaceType)):
             expr =  el
         elif isinstance(kind, HdivSpaceType):
-            A     = J/J.det()
-            expr  =  A*ImmutableDenseMatrix(tuple(el[i] for i in range(dim)))
+            expr  =  (J/J.det())*ImmutableDenseMatrix(tuple(el[i] for i in range(dim)))
         elif isinstance(kind , HcurlSpaceType):
             expr  = J.inv().T*ImmutableDenseMatrix(tuple(el[i] for i in range(dim)))
         elif isinstance(kind, L2SpaceType):
             expr = J.det()*el
-        elif isinstance(kind, UndefinedSpaceType):
-            raise ValueError('kind must be specified in order to perform the pull-back transformation')
+#        elif isinstance(kind, UndefinedSpaceType):
+#            raise ValueError('kind must be specified in order to perform the pull-back transformation')
         else:
-            raise NotImplementedError('TODO')
+            raise ValueError("Unrecognized kind '{}' of space {}".format(kind, str(u.space)))
 
         obj       = Expr.__new__(cls, u)
         obj._expr = expr
