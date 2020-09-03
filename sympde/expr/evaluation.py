@@ -1055,10 +1055,11 @@ class TensorExpr(CalculusFunction):
 
             # ...
             if not(mapping is None):
-                terminal_expr = LogicalExpr(mapping, terminal_expr.expr)
-                variables     = [LogicalExpr(mapping, e) for e in variables ]
-                trials        = [LogicalExpr(mapping, e) for e in trials ]
-                tests         = [LogicalExpr(mapping, e) for e in tests ]
+                dim           = expr.ldim
+                terminal_expr = LogicalExpr(terminal_expr.expr, mapping=mapping, dim=dim)
+                variables     = [LogicalExpr(e, mapping=mapping, dim=dim) for e in variables ]
+                trials        = [LogicalExpr(e, mapping=mapping, dim=dim) for e in trials ]
+                tests         = [LogicalExpr(e, mapping=mapping, dim=dim) for e in tests ]
                 #det_M         = DetJacobian(mapping)
                 #det           = SymbolicDeterminant(mapping)
                 #terminal_expr = terminal_expr.subs(det_M, det)

@@ -32,7 +32,7 @@ from sympde.core.basic import _coeffs_registery
 
 
 from .basic       import BasicDomain, Union, InteriorDomain
-from .basic       import Boundary, Connectivity
+from .basic       import Boundary, Connectivity, Interface
 from .domain      import Domain, NCubeInterior
 from .domain      import NormalVector
 from .space       import ScalarTestFunction, VectorTestFunction, IndexedTestTrial
@@ -225,10 +225,7 @@ class JacobianSymbol(MatrixSymbolicExpr):
         return self._args[1]
 
     def _hashable_content(self):
-        if self.axis:
-            return (self.mapping, self.axis)
-        else:
-            return (self.mapping, )
+        return (self.mapping, self.axis)
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -427,7 +424,7 @@ class MappedDomain(BasicDomain):
                     interfaces = [interfaces]
                 connectivity = {}
                 for e in interfaces:
-                    connectivity[e.name] = (mapping(e.minus), mapping(e.plus))
+                    connectivity[e.name] = Interface(e.name, mapping(e.minus), mapping(e.plus))
                 kwargs['connectivity'] = Connectivity(connectivity)
             return Domain(logical_domain.name, **kwargs)
 
@@ -792,7 +789,7 @@ class LogicalExpr(CalculusFunction):
                 arg = arg.test
                 if isinstance(expr.args[0], (MinusInterfaceOperator, PlusInterfaceOperator)):
                     arg = type(expr.args[0])(arg)
-                return (1/J.det())*div(arg.test)
+                return (1/J.det())*div(arg)
             else:
                 raise NotImplementedError('TODO')
 
@@ -950,15 +947,10 @@ class LogicalExpr(CalculusFunction):
             if expr.is_domain_integral:
                 J   = mapping.jacobian
                 det = sqrt((J.T*J).det())
-            elif expr.is_interface_integral:
-                axis    = expr.domain.axis
-                J       = JacobianSymbol(mapping, axis)
-                det     = sqrt((J.T*J).det())
             else:
                 axis = expr.domain.axis
                 J    = JacobianSymbol(mapping, axis)
                 det  = sqrt((J.T*J).det())
-
             body   = cls.eval(expr.expr, mapping=mapping, dim=dim)*det
             return Integral(body, domain)
 

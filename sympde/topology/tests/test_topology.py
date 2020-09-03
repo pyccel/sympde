@@ -51,7 +51,7 @@ def test_topology_1():
     bnd_B_2 = Boundary('Gamma_2', B)
     bnd_B_3 = Boundary('Gamma_3', B)
 
-    connectivity['I'] = (bnd_A_1, bnd_B_2)
+    connectivity['I'] = Interface('I', bnd_A_1, bnd_B_2)
 
     Omega = Domain('Omega',
                    interiors=[A, B],

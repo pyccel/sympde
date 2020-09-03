@@ -60,8 +60,8 @@ class Domain(BasicDomain):
             else:
                 new_interiors = []
                 for i in interiors:
-                    if isinstance(i , Union):
-                        new_interiors += list(i.as_tuple())
+                    if isinstance(i , (tuple, list, Tuple, Union)):
+                        new_interiors += list(i)
                     else:
                         new_interiors.append(i)
 
@@ -350,7 +350,7 @@ class Domain(BasicDomain):
                 bnd   = Boundary(name, patch)
                 bnds.append(bnd)
 
-            connectivity[edge] = bnds
+            connectivity[edge] = Interface(edge, *bnds)
         # ...
 
         obj = Domain.__new__(cls, domain_name,
@@ -394,15 +394,15 @@ class Domain(BasicDomain):
         boundaries = boundaries.as_tuple()
 
         # ... interiors
-        interiors       = [self.interior, other.interior]
-        if self.interior.mapping:
-            logical_interiors    = (self.interior.logical_domain, other.interior.logical_domain)
+        interiors       = Union(self.interior, other.interior)
+        if all(e.mapping for e in interiors):
+            logical_interiors    = (e.logical_domain for e in interiors)
             logical_boundaries   = [e.logical_domain for e in boundaries]
             logical_connectivity = Connectivity()
             for k,v in connectivity.items():
                 logical_connectivity[name] = v.logical_domain
 
-            mapping        = (self.interior.mapping, other.interior.mapping)
+            mapping        = tuple(e.mapping for e in interiors)
             logical_domain = Domain(name, 
                             interiors=logical_interiors, 
                             boundaries=logical_boundaries, 

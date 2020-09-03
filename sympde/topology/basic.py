@@ -156,6 +156,13 @@ class Union(BasicDomain):
     def __len__(self):
         return len(self.args)
 
+    @property
+    def coordinates(self):
+        dim = self.dim
+        coords = self.args[0].coordinates
+        assert all(e.coordinates == coords for e in self)
+        return coords
+
     def complement(self, arg):
         if isinstance(arg, Union):
             arg = arg.args
@@ -179,13 +186,13 @@ class Union(BasicDomain):
         return tuple(ls)
 
     def __iter__(self):
+        self.index = 0
         return self
 
     def __next__(self):
         try:
             result = self.args[self.index]
         except IndexError:
-            self.index = 0
             raise StopIteration
         self.index += 1
         return result
@@ -433,7 +440,7 @@ class Connectivity(abc.Mapping):
         connectivity = {}
         data = OrderedDict(sorted(self._data.items()))
         for name, v in data.items():
-            connectivity[name] = v.todict()
+            connectivity[name] = [v.minus.todict(), v.plus.todict()]
         connectivity = OrderedDict(sorted(connectivity.items()))
         # ...
 

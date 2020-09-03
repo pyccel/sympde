@@ -271,7 +271,8 @@ class Functional(BasicForm):
             F = ls[0]
             space = F.space
         else:
-            raise ValueError(expr)
+            space = None
+            #TODO raise an error ?
 
         if isinstance(domain, Domain):
             domain = domain.interior
