@@ -287,7 +287,7 @@ class Dot(BasicOperator):
             a = arg1.args
         else:
             a = [arg1]
-        
+
         if isinstance(arg2, Mul):
             b = arg2.args
         else:

@@ -164,7 +164,7 @@ class MatMul(MatrixSymbolicExpr, Mul):
                 code += ' * ({})'.format(sstr(e))
             else:
                 code += ' * {}'.format(sstr(e))
-            
+
         return code
 
     @staticmethod

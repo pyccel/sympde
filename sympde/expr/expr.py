@@ -219,7 +219,7 @@ class Integral(CalculusFunction):
 
     def __hash__(self):
         return hash(self.expr) + hash(self.domain)
-        
+
     @classmethod
     def subs_boundary_expr(cls, expr, domain):
         atoms_1 = list(expr.atoms(Dot,Trace))
@@ -259,6 +259,7 @@ class Integral(CalculusFunction):
         domain = printer._print(self.domain)
         expr   = printer._print(self.expr)
         return 'Integral({}, {})'.format(domain, expr)
+
 #==============================================================================
 class Functional(BasicForm):
     is_functional = True
