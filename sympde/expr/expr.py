@@ -16,7 +16,7 @@ from sympde.calculus import Dot, Inner, BasicOperator
 from sympde.calculus import Grad, Hessian
 from sympde.topology import BasicDomain, Union
 from sympde.topology import NormalVector
-from sympde.topology import Boundary, Interface
+from sympde.topology import Boundary, Interface, Domain, InteriorDomain
 from sympde.topology.space import ScalarFunctionSpace
 from sympde.topology.space import ProductSpace
 from sympde.topology.space import ScalarTestFunction
@@ -98,9 +98,6 @@ def _get_domain(expr):
                 domains.extend(list(a.args))
             elif isinstance(a, BasicDomain):
                 domains.append(a)
-        if len(domains) == 1:
-            return domains[0]
-
         return Union(*domains)
 
 #==============================================================================
@@ -155,9 +152,12 @@ class Integral(CalculusFunction):
             raise TypeError('only Expr are accepted')
 
         if isinstance(domain, Union):
-            exprs = [cls(expr, d) for d in domain.args]
+            exprs = [cls(expr, d) for d in domain]
             return IntAdd(*exprs)
-      
+        elif isinstance(domain, Domain):
+            interiors = domain.interior if isinstance(domain.interior, Union) else [domain.interior]
+            exprs = [cls(expr, d) for d in interiors]
+            return IntAdd(*exprs)
         elif isinstance(domain, Boundary):
             expr = cls.subs_boundary_expr(expr, domain)
             obj = CalculusFunction.__new__(cls, expr, domain)
@@ -167,9 +167,11 @@ class Integral(CalculusFunction):
             obj = CalculusFunction.__new__(cls, expr, domain)
             obj.is_interface_integral = True
 
-        else:
+        elif isinstance(domain, InteriorDomain):
             obj = CalculusFunction.__new__(cls, expr, domain)
             obj.is_domain_integral = True
+        else:
+            raise TypeError(domain)
 
         return obj   
 
@@ -263,24 +265,24 @@ class Functional(BasicForm):
 
     def __new__(cls, expr, domain, evaluate=True):
 
-        if evaluate:
-            expr = Integral(expr, domain)
-        obj = Basic.__new__(cls, expr, domain)
-
         # compute dim from fields if available
-        ls = tuple(expr.atoms((ScalarField, VectorField)))
+        ls = tuple(expr.atoms(ScalarField, VectorField, ScalarTestFunction, VectorTestFunction))
         if ls:
             F = ls[0]
             space = F.space
-
         else:
-            tag = random_string( 3 )
-            space_name = 'space_{}'.format(tag)
-            space = ScalarFunctionSpace(space_name, domain)
-            # TODO vector case
+            raise ValueError(expr)
 
-        obj._ldim = domain.dim
-        obj._space = space
+        if isinstance(domain, Domain):
+            domain = domain.interior
+
+        if evaluate:
+            expr = Integral(expr, domain)
+ 
+        obj         = Basic.__new__(cls, expr)
+        obj._ldim   = domain.dim
+        obj._space  = space
+        obj._domain = domain
 
         return obj
 
@@ -290,7 +292,7 @@ class Functional(BasicForm):
 
     @property
     def domain(self):
-        return self._args[1]
+        return self._domain
 
     @property
     def coordinates(self):
@@ -338,6 +340,10 @@ class LinearForm(BasicForm):
     @property
     def expr(self):
         return self._args[1]
+
+    @property
+    def domain(self):
+        return self._domain
 
     @property
     def test_functions(self):
@@ -411,8 +417,8 @@ class BilinearForm(BasicForm):
 
         domain = _get_domain(expr)
         # Create new object of type BilinearForm
-        obj = Basic.__new__(cls, args, expr, domain)
-
+        obj = Basic.__new__(cls, args, expr)
+        obj._domain = domain
         # Compute 'domain' property (scalar or tuple)
         # TODO: is this is useful?
 
@@ -428,7 +434,7 @@ class BilinearForm(BasicForm):
 
     @property
     def domain(self):
-        return self._args[2]
+        return self._domain
 
     @property
     def test_functions(self):
@@ -523,29 +529,29 @@ class Norm(Functional):
                     raise ValueError('Wrong expression for Matrix. must be a row')
 
                 v = Tuple(*expr[:,0])
-                expr = Dot(v, v, evaluate=False)
+                expr = Dot(v, v)
 
         elif kind == 'h1'and evaluate :
             exponent = 2
 
             if not is_vector:
-                a    = Grad(expr, evaluate=False)
-                expr = Dot(a, a,evaluate=False)
+                a    = Grad(expr)
+                expr = Dot(a, a)
 
             else:
                 if not( expr.shape[1] == 1 ):
                     raise ValueError('Wrong expression for Matrix. must be a row')
 
                 v = Tuple(*expr[:,0])
-                a = Grad(v, evaluate=False)
-                expr = Inner(a, a, evaluate=False)
+                a = Grad(v)
+                expr = Inner(a, a)
 
         elif kind == 'h2'and evaluate :
             exponent = 2
 
             if not is_vector:
-                a    = Hessian(expr, evaluate=False)
-                expr = Dot(a, a, evaluate=False)
+                a    = Hessian(expr)
+                expr = Dot(a, a)
 
             else:
                 raise NotImplementedError('TODO')

@@ -738,8 +738,7 @@ class Div_1d(DivBasic):
             return
 
         u = _args[0]
-
-        return dx(u)
+        return dx(u[0])
 
 class Div_2d(DivBasic):
 
@@ -1088,7 +1087,7 @@ class LogicalDiv_1d(DivBasic):
 
         u = _args[0]
 
-        return dx1(u)
+        return dx1(u[0])
 
 class LogicalDiv_2d(DivBasic):
 

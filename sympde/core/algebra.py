@@ -131,7 +131,7 @@ class Dot_1d(DotBasic):
         u = _args[0]
         v = _args[1]
 
-        return u * v
+        return u[0] * v[0]
 
 class Dot_2d(DotBasic):
 

@@ -20,8 +20,9 @@ from sympy.core.expr import AtomicExpr
 
 from sympde.core.basic import CalculusFunction
 from .basic import BasicDomain, InteriorDomain, Boundary, Union, Connectivity
-from .basic import Interval
+from .basic import Interval, Interface
 from .basic import ProductDomain
+import sympde
 
 # TODO add pdim
 #==============================================================================
@@ -107,12 +108,7 @@ class Domain(BasicDomain):
         if len(interiors) == 0 and dim is None:
             raise TypeError('No interior domain found')
 
-        elif len(interiors) == 1:
-            interiors = interiors[0]
-            dtype = interiors.dtype
-            dim   = interiors.dim
-
-        elif len(interiors) > 1:
+        else:
             dtype = interiors[0].dtype
             dim   = interiors[0].dim
             interiors = Union(*interiors)
@@ -185,7 +181,7 @@ class Domain(BasicDomain):
     def _sympystr(self, printer):
         sstr = printer.doprint
         if self.mapping:
-            return '{}({})'.format(sstr(self.mapping.name), sstr(self.name))
+            return '{}({})'.format(sstr(self.mapping), sstr(self.name))
         else:
             return '{}'.format(sstr(self.name))
 
@@ -291,7 +287,6 @@ class Domain(BasicDomain):
     @classmethod
     def from_file( cls, filename ):
 
-        from sympde.topology.mapping import Mapping
         # ... check extension of the file
         basename, ext = os.path.splitext(filename)
         if not(ext == '.h5'):
@@ -307,7 +302,7 @@ class Domain(BasicDomain):
         d_interior     = yml['interior']
         d_boundary     = yml['boundary']
         d_connectivity = yml['connectivity']
-        mapping        = Mapping('{}_mapping'.format(domain_name), int(dim))
+        mapping        = sympde.topology.mapping.Mapping('{}_mapping'.format(domain_name), int(dim))
 
         if dtype == 'None': dtype = None
 
@@ -365,21 +360,31 @@ class Domain(BasicDomain):
         return mapping(obj)
 
     def join(self, other, name, bnd_minus=None, bnd_plus=None):
-        # ... interiors
-        interiors = [self.interior, other.interior]
-        # ...
 
         # ... connectivity
         connectivity = Connectivity()
         # TODO be careful with '|' in psydac
         if bnd_minus and bnd_plus:
-            connectivity['{l}|{r}'.format(l=bnd_minus.domain.name, r=bnd_plus.domain.name)] = (bnd_minus, bnd_plus)
+
+            if bnd_minus.mapping and bnd_plus.mapping:
+                int_map            = sympde.topology.mapping.InterfaceMapping(bnd_minus.mapping , bnd_plus.mapping)
+                a,b                = bnd_minus.logical_domain, bnd_plus.logical_domain
+                l_name             = '{l}|{r}'.format(l=a.domain.name, r=b.domain.name)
+                int_logical_domain = Interface(l_name, a,b)
+            else:
+                int_map            = None
+                int_logical_domain = None
+
+            name               = '{l}|{r}'.format(l=bnd_minus.domain.name, r=bnd_plus.domain.name)
+            connectivity[name] = Interface(name, bnd_minus, bnd_plus, 
+                                           mapping=int_map,
+                                           logical_domain=int_logical_domain)
+
         for k,v in self.connectivity.items():
             connectivity[k] = v
 
         for k,v in other.connectivity.items():
             connectivity[k] = v
-        # ...
 
         # ... boundary
         boundaries_minus = self.boundary.complement(bnd_minus)
@@ -387,11 +392,32 @@ class Domain(BasicDomain):
 
         boundaries = Union(boundaries_minus, boundaries_plus)
         boundaries = boundaries.as_tuple()
+
+        # ... interiors
+        interiors       = [self.interior, other.interior]
+        if self.interior.mapping:
+            logical_interiors    = (self.interior.logical_domain, other.interior.logical_domain)
+            logical_boundaries   = [e.logical_domain for e in boundaries]
+            logical_connectivity = Connectivity()
+            for k,v in connectivity.items():
+                logical_connectivity[name] = v.logical_domain
+
+            mapping        = (self.interior.mapping, other.interior.mapping)
+            logical_domain = Domain(name, 
+                            interiors=logical_interiors, 
+                            boundaries=logical_boundaries, 
+                            connectivity=logical_connectivity)
+        else:
+            mapping              = None
+            logical_domain       = None
+
         # ...
         return Domain(name,
                       interiors=interiors,
                       boundaries=boundaries,
-                      connectivity=connectivity)
+                      connectivity=connectivity,
+                      mapping=mapping,
+                      logical_domain=logical_domain)
 
 #==============================================================================
 class PeriodicDomain(BasicDomain):
@@ -441,8 +467,16 @@ class PeriodicDomain(BasicDomain):
 
 #==============================================================================
 class NCubeInterior(InteriorDomain):
-    _min_coords = None
-    _max_coords = None
+    
+    def __new__(cls, name, dim=None, dtype=None, min_coords=None, max_coords=None, 
+                    mapping=None, logical_domain=None):
+
+        obj = InteriorDomain.__new__(cls, name, dim=dim, dtype=dtype, 
+                    mapping=mapping, logical_domain=logical_domain)
+        obj._min_coords = min_coords
+        obj._max_coords = max_coords
+        return obj
+ 
     @property
     def min_coords(self):
         return self._min_coords
@@ -521,9 +555,7 @@ class NCube(Domain):
         else:
             interior = ProductDomain(*intervals, name=name)
 
-        interior             = NCubeInterior(interior, dtype=dtype)
-        interior._min_coords = tuple(min_coords)
-        interior._max_coords = tuple(max_coords)
+        interior = NCubeInterior(interior, dtype=dtype, min_coords=tuple(min_coords), max_coords=tuple(max_coords))
 
         boundaries = []
         i = 1
@@ -749,4 +781,5 @@ def split(domain, value):
 
     else:
         raise NotImplementedError('TODO')
+
 

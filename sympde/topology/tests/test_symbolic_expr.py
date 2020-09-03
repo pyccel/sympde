@@ -48,7 +48,6 @@ def test_derivatives_2d_with_mapping():
     V = ScalarFunctionSpace('V', O, kind='h1')
     u = element_of(V, 'u')
 
-
     det_jac = Jacobian(M).det()
     J = Symbol('J')
 
@@ -67,7 +66,7 @@ def test_derivatives_2d_with_mapping():
     expr = dx1(M[1])
     assert SymbolicExpr(expr) == Symbol('y_x1')
 
-    expr       = LogicalExpr(M, dx(u)).subs(det_jac, J)
+    expr       = LogicalExpr(dx(u), mapping=M, dim=rdim).subs(det_jac, J)
     expected   = '(u_x1 * y_x2 - u_x2 * y_x1)/J'
     difference = SymbolicExpr(expr) - sympify(expected)
     assert difference.simplify() == 0

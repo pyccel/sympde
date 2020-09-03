@@ -25,7 +25,7 @@ from sympde.calculus.core import _generic_ops, _diff_ops
 from sympde.calculus.matrices import SymbolicDeterminant, Inverse, Transpose
 from sympde.calculus.matrices import MatPow, MatrixElement, SymbolicTrace
 
-from sympde.topology.mapping import Jacobian, JacobianSymbol
+from sympde.topology.mapping import Jacobian, JacobianSymbol, InterfaceMapping
 
 from sympde.topology       import BasicDomain, Union, Interval
 from sympde.topology       import NormalVector, TangentVector
@@ -164,7 +164,7 @@ def _to_matrix_bilinear_form(expr, M, test_indices, trial_indices):
             subs_t_c = subs_tests.copy()
             subs_t_c.pop(v)
             M[test_indices[v], trial_indices[u]] = expr_v.subs(subs_t_c)
-    return M
+    return ImmutableDenseMatrix(M)
 
 #==============================================================================
 def _to_matrix_linear_form(expr, M, test_indices):
@@ -175,7 +175,7 @@ def _to_matrix_linear_form(expr, M, test_indices):
         subs_c = subs.copy()
         subs_c.pop(v)
         M[test_indices[v]] = expr.subs(subs_c)
-    return M
+    return ImmutableDenseMatrix(M)
 
 #==============================================================================
 def _to_matrix_functional_form(expr, M):
@@ -286,25 +286,41 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                 newexpr = _nullify(expr, u_minus, trials)
                 newexpr = _nullify(newexpr, v_minus, tests)
                 newexpr = newexpr.subs({u_minus: u, v_minus: v})
+                mapping = newexpr.atoms(InterfaceMapping)
+                if mapping and not newexpr.is_zero:
+                    mapping = list(mapping)[0]
+                    newexpr = newexpr.subs(mapping, mapping.minus)
+
                 if not newexpr.is_zero:
                     bnd_expressions[interface.minus] = newexpr
                 # ...
                 # TODO must call InterfaceExpression afterward
                 newexpr = _nullify(expr, u_minus, trials)
                 newexpr = _nullify(newexpr, v_plus, tests)
+                mapping = newexpr.atoms(InterfaceMapping)
+                if mapping:
+                    mapping = list(mapping)[0]
+                    newexpr = newexpr.subs(mapping, mapping.plus)
                 if not newexpr.is_zero:
                     int_expressions += [InterfaceExpression(interface, u_minus, v_plus, newexpr)]
                 # ...
                 # TODO must call InterfaceExpression afterward
                 newexpr = _nullify(expr, u_plus, trials)
                 newexpr = _nullify(newexpr, v_minus, tests)
-
+                mapping = newexpr.atoms(InterfaceMapping)
+                if mapping:
+                    mapping = list(mapping)[0]
+                    newexpr = newexpr.subs(mapping, mapping.plus)
                 if not newexpr.is_zero:
                     int_expressions += [InterfaceExpression(interface, u_plus, v_minus, newexpr)]
                 # ...
                 newexpr = _nullify(expr, u_plus, trials)
                 newexpr = _nullify(newexpr, v_plus, tests)
                 newexpr = newexpr.subs({u_plus: u, v_plus: v})
+                mapping = newexpr.atoms(InterfaceMapping)
+                if mapping:
+                    mapping = list(mapping)[0]
+                    newexpr = newexpr.subs(mapping, mapping.plus)
                 if not newexpr.is_zero:
                     bnd_expressions[interface.plus] = newexpr
                 # ...
@@ -317,6 +333,10 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
             # ...
             newexpr = _nullify(expr, v_minus, tests)
             newexpr = newexpr.subs({v_minus: v})
+            mapping = newexpr.atoms(InterfaceMapping)
+            if mapping:
+                mapping = list(mapping)[0]
+                newexpr = newexpr.subs(mapping, mapping.minus)
             if not newexpr.is_zero:
                 bnd_expressions[interface.minus] = newexpr
             # ...
@@ -324,18 +344,23 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
             # ...
             newexpr = _nullify(expr, v_plus, tests)
             newexpr = newexpr.subs({v_plus: v})
+            mapping = newexpr.atoms(InterfaceMapping)
+            if mapping:
+                mapping = list(mapping)[0]
+                newexpr = newexpr.subs(mapping, mapping.plus)
             if not newexpr.is_zero:
                 bnd_expressions[interface.plus] = newexpr
             # ...
+
     return int_expressions, bnd_expressions
 
 
 #==============================================================================
 class KernelExpression(Basic):
     def __new__(cls, target, expr):
-        assert(isinstance(expr, (Matrix, ImmutableDenseMatrix)))
-        n,m = expr.shape
-        if n*m == 1: expr = expr[0,0]
+        if isinstance(expr, (Matrix, ImmutableDenseMatrix)):
+            n,m = expr.shape
+            if n*m == 1: expr = expr[0,0]
 
         return Basic.__new__(cls, target, expr)
 
@@ -489,18 +514,14 @@ class TerminalExpr(CalculusFunction):
             dim     = expr.ldim
             domain  = expr.domain
 
-            if isinstance(domain, Union):
-                domain = domain.as_tuple()
-            else:
+            if not isinstance(domain, Union):
                 logical = domain.mapping is None
                 domain  = (domain,)
             # ...
-
             d_expr = OrderedDict()
             for d in domain:
                 d_expr[d] = S.Zero
             # ...
-
             if isinstance(expr.expr, Add):
                 for a in expr.expr.args:
                     newexpr = cls.eval(a, dim=dim, logical=True)
@@ -508,15 +529,11 @@ class TerminalExpr(CalculusFunction):
                     # ...
                     try:
                         domain = _get_domain(a)
-                        if isinstance(domain, Union):
-                            domain = list(domain._args)
-
-                        elif not is_sequence(domain):
-                            domain = [domain]
+                        if not isinstance(domain, Union):
+                            domain = (domain, )
                     except:
                         pass
                     # ...
-
                     for d in domain:
                         d_expr[d] += newexpr
                     # ...
@@ -652,7 +669,7 @@ class TerminalExpr(CalculusFunction):
                 new  = eval('Logical{0}_{1}d'.format(op, dim))
             else:
                 new  = eval('{0}_{1}d'.format(op, dim))
-
+            
             args = [cls.eval(i, dim=dim, logical=logical) for i in expr.args]
             return new(*args)
         elif isinstance(expr, _generic_ops):
@@ -700,10 +717,11 @@ class TerminalExpr(CalculusFunction):
             return ImmutableDenseMatrix(lines)
 
         elif isinstance(expr, LogicalExpr):
-            M         = expr.args[0]
-            expr      = cls(expr.args[1], dim=M.rdim)
+            M         = expr.mapping
+            dim       = expr.dim
+            expr      = cls(expr.expr, dim=dim)
             dim       = M.rdim
-            return LogicalExpr(M, expr)
+            return LogicalExpr(expr, mapping=M, dim=dim)
         return expr
 
 
@@ -779,7 +797,10 @@ def _tensorize_atomic_expr(expr, d_atoms):
         return expr
 
     elif isinstance(expr, (ScalarTestFunction, IndexedTestTrial)):
-        atoms = d_atoms[expr]
+        for k,e in d_atoms.items():
+            if k == expr:
+                atoms = e
+                break
         return Mul(*atoms)
 
     else:
@@ -874,8 +895,9 @@ Bilaplacian_1 = Bilaplacian(1)
 Bilaplacian_2 = Bilaplacian(2)
 
 #==============================================================================
-def _replace_atomic_expr(expr, trials, tests, d_atoms, logical=False):
+def _replace_atomic_expr(expr, trials, tests, d_atoms, logical=False, expand=False):
 
+    expr   = expr.expand(deep=expand)
     masses = [Mass_0, Mass_1, Mass_2]
     stiffs = [Stiffness_0, Stiffness_1, Stiffness_2]
     advs   = [Advection_0, Advection_1, Advection_2]
@@ -902,7 +924,6 @@ def _replace_atomic_expr(expr, trials, tests, d_atoms, logical=False):
                 bil   = bils[i]
 
                 d = ops[i]
-
                 # Mass
                 expr = expr.subs(vi*ui, mass)
 
@@ -917,7 +938,6 @@ def _replace_atomic_expr(expr, trials, tests, d_atoms, logical=False):
 
                 # Bilaplacian
                 expr = expr.subs(d(d(vi))*d(d(ui)), bil)
-
     return expr
 
 #==============================================================================
@@ -956,6 +976,7 @@ class TensorExpr(CalculusFunction):
         expr = _args[0]
         d_atoms = kwargs.pop('d_atoms', OrderedDict())
         mapping = kwargs.pop('mapping', None)
+        expand    = kwargs.pop('expand', False)
 
         if isinstance(expr, Add):
             args = [cls.eval(a, d_atoms=d_atoms, mapping=mapping) for a in expr.args]
@@ -1030,23 +1051,24 @@ class TensorExpr(CalculusFunction):
             # ...
             variables  = list(terminal_expr.atoms(ScalarTestFunction))
             variables += list(terminal_expr.atoms(IndexedTestTrial))
-
-            d_atoms = OrderedDict()
-            for a in variables:
-                new = _split_test_function(a)
-                d_atoms[a] = new[a]
             # ...
 
             # ...
-            logical = False
             if not(mapping is None):
-                logical = True
                 terminal_expr = LogicalExpr(mapping, terminal_expr.expr)
+                variables     = [LogicalExpr(mapping, e) for e in variables ]
+                trials        = [LogicalExpr(mapping, e) for e in trials ]
+                tests         = [LogicalExpr(mapping, e) for e in tests ]
                 #det_M         = DetJacobian(mapping)
                 #det           = SymbolicDeterminant(mapping)
                 #terminal_expr = terminal_expr.subs(det_M, det)
                 #terminal_expr = expand(terminal_expr)
             # ...
+
+            d_atoms = OrderedDict()
+            for a in variables:
+                new = _split_test_function(a)
+                d_atoms[a] = new[a]
 
             # ...
             expr = cls.eval(terminal_expr, d_atoms=d_atoms, mapping=mapping)
@@ -1061,7 +1083,7 @@ class TensorExpr(CalculusFunction):
             # ...
 
             expr = _replace_atomic_expr(expr, trials, tests, d_atoms,
-                                        logical=logical)
+                                        logical=True, expand=expand)
 
             return expr
 

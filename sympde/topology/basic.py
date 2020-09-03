@@ -25,8 +25,13 @@ class BasicDomain(Basic):
     @property
     def coordinates(self):
         dim = self.dim
+        
         if self._coordinates is None:
-            xyz = ['x', 'y', 'z'][:dim]
+            if self.mapping is None:
+                xyz = ['x1', 'x2', 'x3'][:dim]
+            else:
+                xyz = ['x', 'y', 'z'][:dim]
+
             xyz = [Symbol(i) for i in xyz]
             self._coordinates = xyz
 
@@ -180,6 +185,7 @@ class Union(BasicDomain):
         try:
             result = self.args[self.index]
         except IndexError:
+            self.index = 0
             raise StopIteration
         self.index += 1
         return result
@@ -289,7 +295,7 @@ class Boundary(BasicDomain):
 
     def _sympystr(self, printer):
         sstr = printer.doprint
-        return '{}_{}'.format(sstr(self.domain.name),sstr(self.name))
+        return '{}_{}'.format(sstr(self.domain),sstr(self.name))
 
     def __add__(self, other):
         if isinstance(other, ComplementBoundary):
@@ -318,7 +324,7 @@ class Interface(BasicDomain):
     Examples
 
     """
-    def __new__(cls, name, bnd_minus, bnd_plus):
+    def __new__(cls, name, bnd_minus, bnd_plus, mapping=None, logical_domain=None):
 
         if not isinstance(name     , str    ): raise TypeError(name)
         if not isinstance(bnd_minus, Boundary): raise TypeError(bnd_minus)
@@ -328,13 +334,8 @@ class Interface(BasicDomain):
             raise TypeError('Dimension mismatch: {} != {}'.format(
                 bnd_minus.dim, bnd_plus.dim))
 
-        mapping        = None
-        logical_domain = None
-
-        if bnd_minus.mapping or bnd_plus.mapping:
-            from sympde.topology.mapping import InterfaceMapping
-            mapping        = InterfaceMapping(bnd_minus.mapping , bnd_plus.mapping)
-            logical_domain = (bnd_minus.logical_domain, bnd_plus.logical_domain)
+        assert mapping is None and logical_domain is None or\
+               mapping is not None and logical_domain is not None
 
         assert bnd_minus.axis == bnd_plus.axis
         obj = Basic.__new__(cls, name, bnd_minus, bnd_plus)
@@ -408,10 +409,11 @@ class Connectivity(abc.Mapping):
     def __init__(self, data=None):
         if data is None:
             data = {}
-
         else:
             assert( isinstance( data, (dict, OrderedDict)) )
-
+            for k,v in data.items():
+                assert( isinstance( k, str ) )
+                assert( isinstance(v, Interface) )
         self._data = data
 
     @property
@@ -422,17 +424,16 @@ class Connectivity(abc.Mapping):
     def interfaces(self):
         ls = []
         data = OrderedDict(sorted(self._data.items()))
-        for k, (minus, plus) in data.items():
-            ls.append(Interface(k, minus, plus))
+        for k,v in data.items():
+            ls.append(v)
         return Union(*ls)
 
     def todict(self):
         # ... create the connectivity
         connectivity = {}
         data = OrderedDict(sorted(self._data.items()))
-        for name, pair in data.items():
-            connectivity[name] = [bnd.todict() for bnd in pair]
-
+        for name, v in data.items():
+            connectivity[name] = v.todict()
         connectivity = OrderedDict(sorted(connectivity.items()))
         # ...
 
@@ -441,9 +442,8 @@ class Connectivity(abc.Mapping):
     def __setitem__(self, key, value):
 
         assert( isinstance( key, str ) )
-        assert( isinstance( value, (tuple, list)  ) )
-        assert( len(value) in [1, 2] )
-        assert( all( [isinstance( P, Boundary ) for P in value ] ) )
+        assert( isinstance(value, Interface) )
+        assert( str(value.name) == key )
 
         self._data[key] = value
 

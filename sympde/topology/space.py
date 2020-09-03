@@ -675,7 +675,7 @@ class VectorField(Symbol, IndexedBase):
     Examples
 
     """
-    is_commutative = True
+    is_commutative = False
     _space = None
     _projection_of = None
     def __new__(cls, space, name=None):
