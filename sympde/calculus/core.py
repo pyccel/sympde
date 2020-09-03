@@ -695,7 +695,7 @@ class Grad(DiffOperator):
 
                 d_b1  = cls(b1, evaluate=False)
                 d_b2  = cls(b2, evaluate=True)
-            
+
                 return a * b1 * d_b2 + a * d_b1 * b2
             elif not  b2 == 1:
                 if not isinstance(b2, Mul):
