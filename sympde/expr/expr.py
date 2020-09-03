@@ -706,9 +706,9 @@ def is_linear_expression(expr, args, integral=True, debug=True):
     left_expr = expr
     for arg, left in zip(args, left_args):
         left_expr = left_expr.subs(arg, left)
- 
+
     left_expr = coeff * left_expr.subs(arg, left)
- 
+
     if not( (newexpr-left_expr).expand() == 0):
         # TODO use a warning or exception?
         if debug:
