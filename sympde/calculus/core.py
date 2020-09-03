@@ -458,7 +458,7 @@ class Inner(BasicOperator):
             a,b = b,a
 
         obj = Basic.__new__(cls, a, b)
-        
+
         if a == b:
             obj.is_real     = True
             obj.is_positive = True

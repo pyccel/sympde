@@ -722,7 +722,6 @@ def is_linear_expression(expr, args, integral=True, debug=True):
 
 #==============================================================================
 def integral(domain, expr):
-    """."""
     return Integral(expr, domain)
 
 def mul_integral(expr):
@@ -734,7 +733,7 @@ def mul_add(expr):
     coeff    = Mul(*[a for a in expr.args if not a in args_int])
     args_int[0] = [IntAdd(*[coeff*i for i in args_int[0].args])]
     return Mul(*args_int)
-    
+
 def add_int(expr):
     return IntAdd(*expr.args)
 
@@ -746,3 +745,4 @@ Basic._constructor_postprocessor_mapping[Integral] = {
 Basic._constructor_postprocessor_mapping[IntAdd] = {
     "Mul": [mul_add],
 }
+
