@@ -139,8 +139,7 @@ class MatMul(MatrixSymbolicExpr, Mul):
 
         args   = [a for a in newargs if not a.is_commutative]
         coeffs = [a for a in newargs if a.is_commutative]
-        
-        
+
         if coeffs:
             c = Mul(*coeffs)
             if not args:

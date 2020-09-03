@@ -282,7 +282,7 @@ class Dot(BasicOperator):
             b = cls(arg1, arg2.func(*b))
             a = reduce(add, a, S.Zero)
             return a+b
-          
+
         if isinstance(arg1, Mul):
             a = arg1.args
         else:

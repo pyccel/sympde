@@ -197,7 +197,7 @@ class Integral(CalculusFunction):
 
     __truediv__ = __div__
     __rtruediv__ = __rdiv__
-    
+
     def __add__(self, o):
         if o == 0:
             return self

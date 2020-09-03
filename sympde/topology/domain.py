@@ -476,7 +476,7 @@ class NCubeInterior(InteriorDomain):
         obj._min_coords = min_coords
         obj._max_coords = max_coords
         return obj
- 
+
     @property
     def min_coords(self):
         return self._min_coords

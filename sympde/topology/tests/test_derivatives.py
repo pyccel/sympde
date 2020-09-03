@@ -82,10 +82,8 @@ def test_partial_derivatives_2():
     # ...
     domain = Domain('Omega', dim=2)
     M      = Mapping('M', rdim=2)
-    
-    mapped_domain = M(domain)
 
-    x,y = mapped_domain.coordinates
+    mapped_domain = M(domain)
 
     V = ScalarFunctionSpace('V', mapped_domain)
     F = element_of(V, name='F')

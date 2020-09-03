@@ -669,7 +669,7 @@ class TerminalExpr(CalculusFunction):
                 new  = eval('Logical{0}_{1}d'.format(op, dim))
             else:
                 new  = eval('{0}_{1}d'.format(op, dim))
-            
+
             args = [cls.eval(i, dim=dim, logical=logical) for i in expr.args]
             return new(*args)
         elif isinstance(expr, _generic_ops):
