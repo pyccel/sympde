@@ -671,7 +671,6 @@ class Grad(DiffOperator):
             b = [i for i in expr.args if i not in a]
             a = [cls(i) for i in a]
             b = cls(expr.func(*b))
-            
             return reduce(add, a) + b
 
         elif isinstance(expr, Mul):
@@ -792,7 +791,6 @@ class Curl(DiffOperator):
             b = [i for i in expr.args if i not in a]
             a = [cls(i) for i in a]
             b = cls(expr.func(*b))
-            
             return reduce(add, a) + b
 
         elif isinstance(expr, Mul):
@@ -961,7 +959,6 @@ class Div(DiffOperator):
             b = [i for i in expr.args if i not in a]
             a = [cls(i) for i in a]
             b = cls(expr.func(*b))
-            
             return reduce(add, a) + b
 
         elif isinstance(expr, Mul):
@@ -1070,7 +1067,6 @@ class Laplace(DiffOperator):
             b = [i for i in expr.args if i not in a]
             a = [cls(i) for i in a]
             b = cls(expr.func(*b))
-            
             return reduce(add, a) + b
 
         elif isinstance(expr, Mul):
@@ -1159,7 +1155,6 @@ class Hessian(DiffOperator):
             b = [i for i in expr.args if i not in a]
             a = [cls(i) for i in a]
             b = cls(expr.func(*b))
-            
             return reduce(add, a) + b
 
         elif isinstance(expr, Mul):
