@@ -785,7 +785,6 @@ class Curl(DiffOperator):
                 return S.Zero
             return cls(expr, evaluate=False)
 
-
         if isinstance(expr, Add):
             a = [i for i in expr.args if has(i, types)]
             b = [i for i in expr.args if i not in a]
@@ -871,7 +870,6 @@ class Rot(DiffOperator):
                 return S.Zero
             return cls(expr, evaluate=False)
 
-
         if isinstance(expr, Add):
             a = [i for i in expr.args if has(i, types)]
             b = [i for i in expr.args if i not in a]
@@ -953,7 +951,6 @@ class Div(DiffOperator):
                 return S.Zero
             return cls(expr, evaluate=False)
 
-
         if isinstance(expr, Add):
             a = [i for i in expr.args if has(i, types)]
             b = [i for i in expr.args if i not in a]
@@ -964,7 +961,6 @@ class Div(DiffOperator):
         elif isinstance(expr, Mul):
             coeffs  = [a for a in expr.args if a.is_number]
             vectors = [a for a in expr.args if not(a in coeffs)]
-
 
             a = Mul(*coeffs)
 
@@ -1061,7 +1057,6 @@ class Laplace(DiffOperator):
                 return S.Zero
             return cls(expr, evaluate=False)
 
-
         if isinstance(expr, Add):
             a = [i for i in expr.args if has(i, types)]
             b = [i for i in expr.args if i not in a]
@@ -1149,7 +1144,6 @@ class Hessian(DiffOperator):
                 return S.Zero
             return cls(expr, evaluate=False)
 
-
         if isinstance(expr, Add):
             a = [i for i in expr.args if has(i, types)]
             b = [i for i in expr.args if i not in a]
@@ -1200,7 +1194,7 @@ class Bracket(DiffOperator):
 
         if arg1.is_number or arg2.is_number:
             return S.Zero
-  
+
         if arg1 == arg2:
             return S.Zero
 
