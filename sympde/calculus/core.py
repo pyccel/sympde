@@ -310,6 +310,7 @@ class Dot(BasicOperator):
         if a == b:
             obj.is_real     = True
             obj.is_positive = True
+
         return c*obj
 
 
@@ -374,7 +375,9 @@ class Cross(BasicOperator):
         if str(a) > str(b):
             a,b = b,a
             c   = -c
+
         obj = Basic.__new__(cls, a, b)
+
         return c*obj
 
 #==============================================================================
@@ -523,6 +526,7 @@ class Outer(BasicOperator):
         c = Mul(*c1)*Mul(*c2)
 
         obj = Basic.__new__(cls, a, b)
+
         return c*obj
 
 #==============================================================================
@@ -601,8 +605,9 @@ class Convect(BasicOperator):
         a = reduce(mul, args_1)
         b = reduce(mul, args_2)
         c = Mul(*c1)*Mul(*c2)
-        
+
         obj = Basic.__new__(cls, a, b)
+
         return c*obj
 
 #==============================================================================
