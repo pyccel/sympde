@@ -131,8 +131,6 @@ class BasicFunctionSpace(Basic):
         if kind is None:
             kind = 'undefined'
 
-        assert(isinstance(kind, (str, SpaceType)))
-
         if isinstance(kind, str):
             kind_str = kind.lower()
             assert(kind_str in ['h1', 'hcurl', 'hdiv', 'l2', 'undefined'])
