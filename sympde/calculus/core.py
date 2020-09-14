@@ -109,7 +109,7 @@ from sympde.topology.domain import NormalVector, MinusNormalVector, PlusNormalVe
 from sympde.topology.datatype import H1SpaceType, HcurlSpaceType
 from sympde.topology.datatype import HdivSpaceType, L2SpaceType, UndefinedSpaceType
 
-from .matrices import MatrixSymbolicExpr, Matrix
+from .matrices import MatrixSymbolicExpr
 from .errors import ArgumentTypeError
 from sympy.core.decorators import call_highest_priority
 from operator  import mul,add
@@ -125,7 +125,7 @@ def has(obj, types):
 
 @cacheit
 def is_zero(x):
-    if isinstance(x, Matrix):
+    if isinstance(x, (Matrix, ImmutableDenseMatrix)):
         return all( i==0 for i in x[:])
     else:
         return x == 0
