@@ -40,6 +40,10 @@ class BasicDomain(Basic):
         else:
             return self._coordinates
 
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        return '{}'.format(sstr(self.name))
+
 #==============================================================================
 class InteriorDomain(BasicDomain):
     """
@@ -135,7 +139,7 @@ class Union(BasicDomain):
             args += list(union.as_tuple())
 
         # remove duplicates and Sort domains by name
-        args = sorted(set(args), key=lambda x: x.name)
+        args = sorted(set(args), key=lambda x: str(x))
 
         # a. If the required Union contains no domains, return None;
         # b. If it contains a single domain, return the domain itself;
