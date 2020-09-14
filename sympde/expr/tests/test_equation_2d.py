@@ -4,9 +4,10 @@
 
 from sympy.core.containers import Tuple
 from sympy import pi, cos, sin
+from sympy import ImmutableDenseMatrix as Matrix
 
 from sympde.core        import Constant
-from sympde.calculus    import grad, dot, inner, Matrix
+from sympde.calculus    import grad, dot, inner
 from sympde.calculus    import laplace, bracket
 from sympde.topology    import ScalarFunctionSpace, VectorFunctionSpace
 from sympde.topology    import element_of

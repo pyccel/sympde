@@ -7,12 +7,12 @@ import pytest
 from sympy.core.containers import Tuple
 from sympy import Function
 from sympy import pi, cos, sin, exp
+from sympy import ImmutableDenseMatrix as Matrix
 
 from sympde.core     import Constant
 from sympde.calculus import grad, dot, inner, rot, div
 from sympde.calculus import laplace, bracket, convect
 from sympde.calculus import jump, avg, Dn, minus, plus
-from sympde.calculus import Matrix
 
 from sympde.topology import dx1, dx2, dx3
 from sympde.topology import dx, dy, dz
