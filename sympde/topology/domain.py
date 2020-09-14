@@ -252,6 +252,10 @@ class Domain(BasicDomain):
         dim          = str(self.dim)
         interior     = self.interior.todict()
         boundary     = self.boundary.todict()
+
+        if isinstance(boundary, (list, tuple)):
+            boundary     = sorted(boundary, key=lambda x:x['patch']+x['name'])
+
         connectivity = self.connectivity.todict()
 
         dtype = self.dtype
