@@ -139,7 +139,7 @@ class Union(BasicDomain):
             args += list(union.as_tuple())
 
         # remove duplicates and Sort domains by name
-        args = sorted(set(args), key=lambda x: str(x))
+        args = sorted(set(args), key=str)
 
         # a. If the required Union contains no domains, return None;
         # b. If it contains a single domain, return the domain itself;
