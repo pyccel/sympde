@@ -138,7 +138,7 @@ class Union(BasicDomain):
         for union in unions:
             args += list(union.as_tuple())
 
-        # remove duplicates and Sort domains by name
+        # remove duplicates and sort domains by their string representation
         args = sorted(set(args), key=str)
 
         # a. If the required Union contains no domains, return None;
