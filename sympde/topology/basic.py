@@ -178,7 +178,7 @@ class Union(BasicDomain):
         return self.complement(other)
 
     def todict(self):
-        return [i.todict() for i in self.args]
+        return set([i.todict() for i in self.args])
 
     def as_tuple(self):
         ls = [i for i in self.args]
