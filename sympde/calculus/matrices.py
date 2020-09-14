@@ -4,10 +4,6 @@ from sympy.core.decorators import call_highest_priority
 from sympy                 import Basic
 from sympy                 import sympify
 from sympde.core.basic     import _coeffs_registery
-from sympy import ImmutableDenseMatrix
-
-class Matrix(ImmutableDenseMatrix):
-    _op_priority   = 10.5
 
 class MatrixSymbolicExpr(Expr):
     is_commutative = False
