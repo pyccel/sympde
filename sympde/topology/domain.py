@@ -53,8 +53,7 @@ class Domain(BasicDomain):
 
         # ...
         if not( interiors is None ):
-            if ( not isinstance( interiors, iterable_types) and
-                 not isinstance( interiors, InteriorDomain) ):
+            if not isinstance( interiors, (*iterable_types, InteriorDomain)):
                 raise TypeError('> Expecting an iterable or a InteriorDomain')
 
             if isinstance( interiors, InteriorDomain ):
@@ -78,8 +77,7 @@ class Domain(BasicDomain):
 
         # ...
         if not( boundaries is None ):
-            if ( not isinstance( boundaries, iterable_types) and
-                 not isinstance( boundaries, Boundary) ):
+            if not isinstance( boundaries, (*iterable_types, Boundary)):
                 raise TypeError('> Expecting an iterable or a Boundary')
 
             if isinstance( boundaries, Boundary ):
