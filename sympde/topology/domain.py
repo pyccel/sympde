@@ -26,6 +26,8 @@ from .basic            import ProductDomain
 # TODO fix circular dependency between domain and mapping
 
 # TODO add pdim
+
+iterable_types = (tuple, list, Tuple, Union)
 #==============================================================================
 class Domain(BasicDomain):
     """
@@ -51,7 +53,7 @@ class Domain(BasicDomain):
 
         # ...
         if not( interiors is None ):
-            if ( not isinstance( interiors, (tuple, list, Tuple, Union)) and
+            if ( not isinstance( interiors, iterable_types) and
                  not isinstance( interiors, InteriorDomain) ):
                 raise TypeError('> Expecting an iterable or a InteriorDomain')
 
@@ -61,7 +63,7 @@ class Domain(BasicDomain):
             else:
                 new_interiors = []
                 for i in interiors:
-                    if isinstance(i , (tuple, list, Tuple, Union)):
+                    if isinstance(i , iterable_types):
                         new_interiors += list(i)
                     else:
                         new_interiors.append(i)
@@ -76,7 +78,7 @@ class Domain(BasicDomain):
 
         # ...
         if not( boundaries is None ):
-            if ( not isinstance( boundaries, (tuple, list, Tuple)) and
+            if ( not isinstance( boundaries, iterable_types) and
                  not isinstance( boundaries, Boundary) ):
                 raise TypeError('> Expecting an iterable or a Boundary')
 
@@ -499,8 +501,8 @@ class NCube(Domain):
 
         assert isinstance(name, str)
         assert isinstance(dim, (int, Integer))
-        assert isinstance(min_coords, (tuple, list, Tuple))
-        assert isinstance(max_coords, (tuple, list, Tuple))
+        assert isinstance(min_coords, iterable_types[:-1])
+        assert isinstance(max_coords, iterable_types[:-1])
 
         if not name:
             raise ValueError("Name must be provided")

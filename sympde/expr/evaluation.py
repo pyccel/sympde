@@ -153,7 +153,7 @@ def _init_matrix(expr):
     return M
 
 #==============================================================================
-def _to_matrix_bilinear_form(expr, M, test_indices, trial_indices):
+def _to_matrix_bilinear_form(expr, test_indices, trial_indices):
     """
     This function takes a bilinear expression and returns the matrix representation of the bilinear form
 
@@ -604,12 +604,12 @@ class TerminalExpr(CalculusFunction):
                     d_expr[d] = newexpr
                 # ...
 
+            M, test_indices, trial_indices = _init_matrix(expr)
             d_new = OrderedDict()
             for domain, newexpr in d_expr.items():
 
                 if newexpr != 0:
-                    M, test_indices, trial_indices = _init_matrix(expr)
-                    M = _to_matrix_form(newexpr, M, test_indices, trial_indices)
+                    M = _to_matrix_form(newexpr, M.zeros(*M.shape), test_indices, trial_indices)
 
                     # TODO ARA make sure thre is no problem with psydac
                     #      we should always take the interior of a domain
