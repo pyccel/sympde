@@ -46,6 +46,8 @@ from .derivatives import _logical_partial_derivatives
 from .derivatives import get_atom_logical_derivatives, get_index_logical_derivatives_atom
 from .derivatives import LogicalGrad_1d, LogicalGrad_2d, LogicalGrad_3d
 
+# TODO fix circular dependency between sympde.topology.domain and sympde.topology.mapping
+# TODO fix circular dependency between sympde.expr.evaluation and sympde.topology.mapping
 #==============================================================================
 from sympy                   import sqrt, symbols
 from sympy.core.exprtools    import factor_terms

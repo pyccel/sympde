@@ -19,10 +19,11 @@ from sympy.core import Add, Mul, Pow
 from sympy.core.expr import AtomicExpr
 
 from sympde.core.basic import CalculusFunction
-from .basic import BasicDomain, InteriorDomain, Boundary, Union, Connectivity
-from .basic import Interval, Interface
-from .basic import ProductDomain
-import sympde
+from .basic            import BasicDomain, InteriorDomain, Boundary, Union, Connectivity
+from .basic            import Interval, Interface
+from .basic            import ProductDomain
+
+# TODO fix circular dependency between domain and mapping
 
 # TODO add pdim
 #==============================================================================
@@ -292,6 +293,7 @@ class Domain(BasicDomain):
         if not(ext == '.h5'):
             raise ValueError('> Only h5 files are supported')
         # ...
+        from sympde.topology.mapping import Mapping
 
         h5  = h5py.File( filename, mode='r' )
         yml = yaml.load( h5['topology.yml'][()], Loader=yaml.SafeLoader )
@@ -302,7 +304,7 @@ class Domain(BasicDomain):
         d_interior     = yml['interior']
         d_boundary     = yml['boundary']
         d_connectivity = yml['connectivity']
-        mapping        = sympde.topology.mapping.Mapping('{}_mapping'.format(domain_name), int(dim))
+        mapping        = Mapping('{}_mapping'.format(domain_name), int(dim))
 
         if dtype == 'None': dtype = None
 
@@ -361,13 +363,14 @@ class Domain(BasicDomain):
 
     def join(self, other, name, bnd_minus=None, bnd_plus=None):
 
+        from sympde.topology.mapping import InterfaceMapping
         # ... connectivity
         connectivity = Connectivity()
         # TODO be careful with '|' in psydac
         if bnd_minus and bnd_plus:
 
             if bnd_minus.mapping and bnd_plus.mapping:
-                int_map            = sympde.topology.mapping.InterfaceMapping(bnd_minus.mapping , bnd_plus.mapping)
+                int_map            = InterfaceMapping(bnd_minus.mapping , bnd_plus.mapping)
                 a,b                = bnd_minus.logical_domain, bnd_plus.logical_domain
                 l_name             = '{l}|{r}'.format(l=a.domain.name, r=b.domain.name)
                 int_logical_domain = Interface(l_name, a,b)

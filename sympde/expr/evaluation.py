@@ -33,6 +33,8 @@ from sympde.topology.basic   import Boundary, Interface
 from sympde.topology.basic   import InteriorDomain
 from sympde.topology.mapping import LogicalExpr, PullBack
 
+# TODO fix circular dependency between sympde.expr.evaluation and sympde.topology.mapping
+
 from sympde.topology.space import ScalarTestFunction
 from sympde.topology.space import VectorTestFunction
 from sympde.topology.space import IndexedTestTrial
