@@ -417,12 +417,12 @@ class BilinearForm(BasicForm):
                     .format(test_functions)
             raise UnconsistentLinearExpressionError(msg)
 
-        domain = _get_domain(expr)
         # Create new object of type BilinearForm
         obj = Basic.__new__(cls, args, expr)
-        obj._domain = domain
+
         # Compute 'domain' property (scalar or tuple)
         # TODO: is this is useful?
+        obj._domain = _get_domain(expr)
 
         return obj
 

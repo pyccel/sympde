@@ -27,17 +27,19 @@ from sympde.calculus.matrices import MatPow, MatrixElement, SymbolicTrace
 
 from sympde.topology.mapping import Jacobian, JacobianSymbol, InterfaceMapping
 
-from sympde.topology       import BasicDomain, Union, Interval
-from sympde.topology       import NormalVector, TangentVector
-from sympde.topology       import Boundary, Interface
-from sympde.topology       import InteriorDomain
-from sympde.topology       import LogicalExpr, PullBack
+from sympde.topology.basic   import BasicDomain, Union, Interval
+from sympde.topology.domain  import NormalVector, TangentVector
+from sympde.topology.basic   import Boundary, Interface
+from sympde.topology.basic   import InteriorDomain
+from sympde.topology.mapping import LogicalExpr, PullBack
+
 from sympde.topology.space import ScalarTestFunction
 from sympde.topology.space import VectorTestFunction
 from sympde.topology.space import IndexedTestTrial
 from sympde.topology.space import Trace
 from sympde.topology.space import element_of
 from sympde.topology.space import VectorField
+
 from sympde.topology.derivatives import _partial_derivatives
 from sympde.topology.derivatives import _logical_partial_derivatives
 from sympde.topology.derivatives import get_atom_derivatives
@@ -73,19 +75,25 @@ def is_sequence(a):
     return isinstance(a, (list,tuple,Tuple))
 
 #==============================================================================
-# TODO use this function everywhere it is needed
-def zero_matrix(n_rows, n_cols):
-    lines = []
-    for i in range(0, n_rows):
-        line = []
-        for j in range(0, n_cols):
-            line.append(0)
-        lines.append(line)
-
-    return Matrix(lines)
-
-#==============================================================================
 def _get_size_and_starts(ls):
+    """
+    This function takes a list of test functions
+    and returns the number of test functions with a dictionary containing the index of each test function
+
+    Parameters:
+    ----------
+     ls: list
+        List of test functions
+
+    Returns:
+    ----------
+     n : int
+        Number of test functions
+
+     d_indices: OrderedDict
+       Index of each test function
+
+    """
     n = 0
     d_indices = OrderedDict()
     for x in ls:
@@ -113,15 +121,7 @@ def _init_matrix(expr):
         tests = list(expr.variables[1])
         n_rows, test_indices = _get_size_and_starts(tests)
 
-        # ...
-        lines = []
-        for i in range(0, n_rows):
-            line = []
-            for j in range(0, n_cols):
-                line.append(0)
-            lines.append(line)
-
-        M = Matrix(lines)
+        M = Matrix.zeros(n_rows, n_cols)
         # ...
 
         return  M, test_indices, trial_indices
@@ -132,8 +132,7 @@ def _init_matrix(expr):
         n_rows, test_indices = _get_size_and_starts(tests)
 
         # ...
-        lines = [0 for i in range(0, n_rows)]
-        M = Matrix(lines)
+        M = Matrix.zeros(n_rows, 1)
         # ...
 
         return  M, test_indices, None
@@ -153,7 +152,29 @@ def _init_matrix(expr):
 
 #==============================================================================
 def _to_matrix_bilinear_form(expr, M, test_indices, trial_indices):
+    """
+    This function takes a bilinear expression and returns the matrix representation of the bilinear form
 
+    Parameters:
+    ----------
+     expr: sympy.Expr
+        The bilinear form
+
+     M   : sympy.Matrix
+        Empty Matrix
+
+     test_indices : OrderedDict
+       Index of each test function
+
+     trial_indices : OrderedDict
+        Index of each trial function
+
+    Returns:
+    ----------
+     M : sympy.ImmutableDenseMatrix
+        the bilinear form as a matrix
+
+    """
     subs_tests  = {u:0 for u in test_indices.keys()}
     subs_trials = {u:0 for u in trial_indices.keys()}
     for u in trial_indices:
@@ -164,18 +185,41 @@ def _to_matrix_bilinear_form(expr, M, test_indices, trial_indices):
             subs_t_c = subs_tests.copy()
             subs_t_c.pop(v)
             M[test_indices[v], trial_indices[u]] = expr_v.subs(subs_t_c)
-    return ImmutableDenseMatrix(M)
+
+    M = ImmutableDenseMatrix(M)
+    return M
 
 #==============================================================================
 def _to_matrix_linear_form(expr, M, test_indices):
-    # ...
+    """
+    This function takes a linear expression and returns the matrix representation of the linear form
+
+    Parameters:
+    ----------
+     expr: sympy.Expr
+        The linear form
+
+     M   : sympy.Matrix
+        Empty Matrix
+
+     test_indices : OrderedDict
+       Index of each test function
+
+    Returns:
+    ----------
+     M : sympy.ImmutableDenseMatrix
+        the linear form as a matrix
+
+    """
     subs = {v:0 for v in test_indices.keys()}
 
     for v in test_indices:
         subs_c = subs.copy()
         subs_c.pop(v)
         M[test_indices[v]] = expr.subs(subs_c)
-    return ImmutableDenseMatrix(M)
+
+    M = ImmutableDenseMatrix(M)
+    return M
 
 #==============================================================================
 def _to_matrix_functional_form(expr, M):
