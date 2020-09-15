@@ -664,18 +664,11 @@ def is_linear_expression(expr, args, integral=True, debug=True):
     # ...
 
     # ... check addition
-    newexpr = expr
-    for arg, left, right in zip(args, left_args, right_args):
-        newarg  = left + right
-        newexpr = newexpr.subs(arg, newarg)
+    newargs = [left + right for left, right in zip(left_args, right_args)]
 
-    left_expr = expr
-    for arg, left in zip(args, left_args):
-        left_expr = left_expr.subs(arg, left)
-
-    right_expr = expr
-    for arg, right in zip(args, right_args):
-        right_expr = right_expr.subs(arg, right)
+    newexpr    = expr.subs(zip(args, newargs))
+    left_expr  = expr.subs(zip(args, left_args))
+    right_expr = expr.subs(zip(args, right_args))
 
     a = newexpr
     b = left_expr + right_expr
@@ -703,10 +696,7 @@ def is_linear_expression(expr, args, integral=True, debug=True):
     subs      = [e.func(*e.args, evaluate=True) for e in atoms]
     newexpr   = newexpr.subs(zip(atoms, subs))
 
-    left_expr = expr
-    for arg, left in zip(args, left_args):
-        left_expr = left_expr.subs(arg, left)
-
+    left_expr = expr.subs(zip(args, left_args))
     left_expr = coeff * left_expr.subs(arg, left)
 
     if not( (newexpr-left_expr).expand() == 0):

@@ -140,7 +140,7 @@ class Domain(BasicDomain):
 
     @property
     def mapping(self):
-        return self._args[3]
+        return self.args[3]
 
     @property
     def logical_domain(self):
