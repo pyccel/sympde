@@ -609,14 +609,14 @@ class TerminalExpr(CalculusFunction):
             for domain, newexpr in d_expr.items():
 
                 if newexpr != 0:
-                    M = _to_matrix_form(newexpr, M.zeros(*M.shape), test_indices, trial_indices)
+                    IM = _to_matrix_form(newexpr, M.zeros(*M.shape), test_indices, trial_indices)
 
                     # TODO ARA make sure thre is no problem with psydac
                     #      we should always take the interior of a domain
                     if not isinstance(domain, (Boundary, Interface, InteriorDomain)):
                         domain = domain.interior
 
-                    d_new[domain] = M
+                    d_new[domain] = IM
 
             # ...
             ls = []
