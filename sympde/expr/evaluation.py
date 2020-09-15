@@ -153,7 +153,7 @@ def _init_matrix(expr):
     return M
 
 #==============================================================================
-def _to_matrix_bilinear_form(expr, test_indices, trial_indices):
+def _to_matrix_bilinear_form(expr, M, test_indices, trial_indices):
     """
     This function takes a bilinear expression and returns the matrix representation of the bilinear form
 
