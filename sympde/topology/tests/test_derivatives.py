@@ -11,7 +11,6 @@ from sympde.core import Constant
 from sympde.calculus import grad, dot, inner
 from sympde.topology import Domain, element_of
 from sympde.topology import get_index_derivatives_atom
-from sympde.topology import partial_derivative_as_str
 from sympde.topology import get_max_partial_derivatives
 from sympde.topology import ScalarFunctionSpace
 from sympde.topology import (dx, dy, dz)

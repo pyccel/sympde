@@ -1212,61 +1212,6 @@ class LogicalBracket_2d(BracketBasic):
         return dx1(u)*dx2(v) - dx2(u)*dx1(v)
 
 #==============================================================================
-# ... TODO to be removed, not used anymore
-
-def partial_derivative_as_symbol(expr, name=None, dim=None):
-    """Returns a Symbol from a partial derivative expression."""
-    if not isinstance(expr, _partial_derivatives):
-        raise TypeError('Expecting a partial derivative expression')
-
-    index = get_index_derivatives(expr)
-    var = get_atom_derivatives(expr)
-
-    if not isinstance(var, (Symbol, Indexed)):
-        raise TypeError('Expecting a Symbol, Indexed')
-
-    code = ''
-    for k,n in list(index.items()):
-        code += k*n
-
-    if var.is_Indexed:
-        if name is None:
-            name = var.base
-
-        indices = ''.join('{}'.format(i) for i in var.indices)
-        name = '{name}_{code}'.format(name=name, code=code)
-        shape = None
-        if dim:
-            shape = [dim]
-        return IndexedBase(name, shape=shape)[indices]
-
-    else:
-        if name is None:
-            name = var.name
-
-        name = '{name}_{code}'.format(name=name, code=code)
-        return Symbol(name)
-
-#==============================================================================
-@cacheit
-def partial_derivative_as_str(expr):
-    """Returns a string from a partial derivative expression."""
-    if not isinstance(expr, _partial_derivatives):
-        raise TypeError('Expecting a partial derivative expression')
-
-    index = get_index_derivatives(expr)
-    var = get_atom_derivatives(expr)
-
-    if not isinstance(var, (Symbol, Indexed)):
-        raise TypeError('Expecting a Symbol, Indexed')
-
-    code = ''
-    for k,n in list(index.items()):
-        code += k*n
-
-    return code
-
-#==============================================================================
 def get_index_derivatives_atom(expr, atom, verbose=False):
     """This function return a dictionary of partial derivative indices for
     a given atom.
