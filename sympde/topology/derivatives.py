@@ -395,7 +395,6 @@ class Dot_1d(DotBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -412,7 +411,6 @@ class Dot_2d(DotBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -441,7 +439,6 @@ class Dot_3d(DotBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -491,7 +488,6 @@ class Cross_2d(CrossBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -512,7 +508,6 @@ class Cross_3d(CrossBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -556,7 +551,6 @@ class Grad_1d(GradBasic):
     @classmethod
     @cacheit
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -570,7 +564,6 @@ class Grad_2d(GradBasic):
     @classmethod
     @cacheit
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -596,7 +589,6 @@ class Grad_3d(GradBasic):
     @classmethod
     @cacheit
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -647,7 +639,6 @@ class Curl_2d(CurlBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -660,7 +651,6 @@ class Curl_3d(CurlBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -699,7 +689,6 @@ class Rot_2d(CalculusFunction):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -738,7 +727,6 @@ class Div_1d(DivBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -750,7 +738,6 @@ class Div_2d(DivBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -763,7 +750,6 @@ class Div_3d(DivBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -802,7 +788,6 @@ class Laplace_1d(LaplaceBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -817,7 +802,6 @@ class Laplace_2d(LaplaceBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -832,7 +816,6 @@ class Laplace_3d(LaplaceBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -873,7 +856,6 @@ class Hessian_1d(HessianBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -888,7 +870,6 @@ class Hessian_2d(HessianBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -904,7 +885,6 @@ class Hessian_3d(HessianBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -941,7 +921,6 @@ class Bracket_2d(BracketBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -956,7 +935,6 @@ class LogicalGrad_1d(GradBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -969,7 +947,6 @@ class LogicalGrad_2d(GradBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -993,7 +970,6 @@ class LogicalGrad_3d(GradBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -1020,7 +996,6 @@ class LogicalCurl_2d(CurlBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -1033,7 +1008,6 @@ class LogicalCurl_3d(CurlBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -1072,7 +1046,6 @@ class LogicalRot_2d(CalculusFunction):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -1086,7 +1059,6 @@ class LogicalDiv_1d(DivBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -1099,7 +1071,6 @@ class LogicalDiv_2d(DivBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -1112,7 +1083,6 @@ class LogicalDiv_3d(DivBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -1126,7 +1096,6 @@ class LogicalLaplace_1d(LaplaceBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -1141,7 +1110,6 @@ class LogicalLaplace_2d(LaplaceBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -1156,7 +1124,6 @@ class LogicalLaplace_3d(LaplaceBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -1172,7 +1139,6 @@ class LogicalHessian_1d(HessianBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -1187,7 +1153,6 @@ class LogicalHessian_2d(HessianBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -1203,7 +1168,6 @@ class LogicalHessian_3d(HessianBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -1238,7 +1202,6 @@ class LogicalBracket_2d(BracketBasic):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return

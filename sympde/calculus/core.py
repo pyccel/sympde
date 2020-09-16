@@ -659,7 +659,6 @@ class Grad(DiffOperator):
 
     @classmethod
     def eval(cls, expr):
-        """."""
         types = (VectorTestFunction, ScalarTestFunction)
         if not has(expr, types):
             if expr.is_number:
@@ -777,7 +776,6 @@ class Curl(DiffOperator):
 
     @classmethod
     def eval(cls, expr):
-        """."""
 
         types = (VectorTestFunction, ScalarTestFunction)
         if not has(expr, types):
@@ -862,7 +860,6 @@ class Rot(DiffOperator):
 
     @classmethod
     def eval(cls, expr):
-        """."""
 
         types = (VectorTestFunction, ScalarTestFunction)
         if not has(expr, types):
@@ -942,7 +939,6 @@ class Div(DiffOperator):
 
     @classmethod
     def eval(cls, expr):
-        """."""
 
 
         types = (VectorTestFunction, ScalarTestFunction)
@@ -1049,7 +1045,6 @@ class Laplace(DiffOperator):
 
     @classmethod
     def eval(cls, expr):
-        """."""
 
         types = (VectorTestFunction, ScalarTestFunction)
         if not has(expr, types):
@@ -1136,7 +1131,6 @@ class Hessian(DiffOperator):
 
     @classmethod
     def eval(cls, expr):
-        """."""
 
         types = (VectorTestFunction, ScalarTestFunction)
         if not has(expr, types):
@@ -1267,7 +1261,6 @@ class Convolution(BasicOperator):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -1383,7 +1376,6 @@ class NormalDerivative(DiffOperator):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -1457,7 +1449,6 @@ class Jump(BasicOperator):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -1531,7 +1522,6 @@ class Average(BasicOperator):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -1601,7 +1591,6 @@ class MinusInterfaceOperator(BasicOperator):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
@@ -1680,7 +1669,6 @@ class PlusInterfaceOperator(BasicOperator):
 
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
