@@ -453,7 +453,10 @@ class MappedDomain(BasicDomain):
             raise NotImplementedError('TODO')
 #==============================================================================
 class SymbolicWeightedVolume(Expr):
-    pass
+    """
+    This class represents the symbolic weighted volume of a quadrature rule
+    """
+#TODO move this somewhere else
 #==============================================================================
 class MappingApplication(Function):
     nargs = None
@@ -525,13 +528,26 @@ class PullBack(Expr):
 #==============================================================================
 class Jacobian(MappingApplication):
     """
-    Examples
+    This class calculates the Jacobian of a mapping
 
     """
 
     @classmethod
     @cacheit
     def eval(cls, F):
+        """
+        this class methods computes the jacobian of a mapping
+
+        Parameters:
+        ----------
+         F: Mapping
+            mapping object
+
+        Returns:
+        ----------
+         expr : ImmutableDenseMatrix
+            the jacobian matrix
+        """
 
         if not isinstance(F, Mapping):
             raise TypeError('> Expecting a Mapping object')
@@ -564,10 +580,27 @@ class Covariant(MappingApplication):
     @cacheit
     def eval(cls, F, v):
 
+        """
+        This class methods computes the covariant transformation
+
+        Parameters:
+        ----------
+         F: Mapping
+            mapping object
+
+         v: <tuple|list|Tuple|ImmutableDenseMatrix|Matrix>
+            the basis function
+
+        Returns:
+        ----------
+         expr : Tuple
+            the covariant transformation
+        """
+
         if not isinstance(v, (tuple, list, Tuple, ImmutableDenseMatrix, Matrix)):
             raise TypeError('> Expecting a tuple, list, Tuple, Matrix')
 
-        M = Jacobian(F).inv().T
+        M   = Jacobian(F).inv().T
         dim = F.rdim
         if dim == 1:
             b = M[0,0] * v[0]
@@ -594,6 +627,22 @@ class Contravariant(MappingApplication):
     @classmethod
     @cacheit
     def eval(cls, F, v):
+        """
+        This class methods computes the contravariant transformation
+
+        Parameters:
+        ----------
+         F: Mapping
+            mapping object
+
+         v: <tuple|list|Tuple|ImmutableDenseMatrix|Matrix>
+            the basis function
+
+        Returns:
+        ----------
+         expr : Tuple
+            the contravariant transformation
+        """
 
         if not isinstance(F, Mapping):
             raise TypeError('> Expecting a Mapping')
