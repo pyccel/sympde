@@ -77,168 +77,118 @@ def is_sequence(a):
     return isinstance(a, (list,tuple,Tuple))
 
 #==============================================================================
-def _get_size_and_starts(ls):
-    """
-    This function takes a list of test functions
-    and returns the number of test functions with a dictionary containing the index of each test function
+def _unpack_functions(ls):
 
-    Parameters:
-    ----------
-     ls: list
-        List of test functions
+    funcs = []
 
-    Returns:
-    ----------
-     n : int
-        Number of test functions
-
-     d_indices: OrderedDict
-       Index of each test function
-
-    """
-    n = 0
-    d_indices = OrderedDict()
     for x in ls:
         if isinstance(x, ScalarTestFunction):
-            d_indices[x] = n
-            n += 1
-
+            funcs.append(x)
         elif isinstance(x, VectorTestFunction):
-            for j in range(0, x.shape[0]):
-                d_indices[x[j]] = n + j
+            funcs.extend(x[j] for j in range(x.shape[0]))
+        else:
+            raise TypeError('Can only accept ScalarTestFunction and VectorTestFunction')
 
-            n += x.shape[0]
-
-    return n, d_indices
+    return tuple(funcs)
 
 #==============================================================================
-def _init_matrix(expr):
-    assert(isinstance(expr, (BasicForm, BasicExpr)))
+def _get_trials_tests_flattened(expr):
+    """
+    Get all scalar trial/test functions in the given expression, with vector
+    functions decomposed into their scalar components.
+
+    Parameters
+    ----------
+    expr : BasicForm | BasicExpr
+        Symbolic expression.
+
+    Returns
+    -------
+    trials : tuple
+        All scalar trial functions in the given expression, with vector
+        functions decomposed into their scalar components.
+
+    tests : tuple
+        All scalar test functions in the given expression, with vector
+        functions decomposed into their scalar components.
+    """
+
+    if not isinstance(expr, (BasicForm, BasicExpr)):
+        raise TypeError("Expression must be of type BasicForm or BasicExpr, got '{}' instead".format(type(expr)))
 
     if expr.is_bilinear:
-
-        trials = list(expr.variables[0])
-        n_cols, trial_indices = _get_size_and_starts(trials)
-
-        tests = list(expr.variables[1])
-        n_rows, test_indices = _get_size_and_starts(tests)
-
-        M = Matrix.zeros(n_rows, n_cols)
-        # ...
-
-        return  M, test_indices, trial_indices
+        trials = _unpack_functions(expr.variables[0])
+        tests  = _unpack_functions(expr.variables[1])
 
     elif expr.is_linear:
-
-        tests = list(expr.variables)
-        n_rows, test_indices = _get_size_and_starts(tests)
-
-        # ...
-        M = Matrix.zeros(n_rows, 1)
-        # ...
-
-        return  M, test_indices, None
+        trials = None
+        tests  = _unpack_functions(expr.variables)
 
     elif expr.is_functional:
-
-        # ...
-        M = Matrix([0.])
-        # ...
-
-        return  M, None, None
+        trials = None
+        tests  = None
 
     else:
-        raise TypeError('Expecting BasicExpr or BasicForm')
+        ValueError('Could not interpret expression as bilinear form, linear form, or functional')
 
-    return M
-
-#==============================================================================
-def _to_matrix_bilinear_form(expr, M, test_indices, trial_indices):
-    """
-    This function takes a bilinear expression and returns the matrix representation of the bilinear form
-
-    Parameters:
-    ----------
-     expr: sympy.Expr
-        The bilinear form
-
-     M   : sympy.Matrix
-        Empty Matrix
-
-     test_indices : OrderedDict
-       Index of each test function
-
-     trial_indices : OrderedDict
-        Index of each trial function
-
-    Returns:
-    ----------
-     M : sympy.ImmutableDenseMatrix
-        the bilinear form as a matrix
-
-    """
-    subs_tests  = {u:0 for u in test_indices.keys()}
-    subs_trials = {u:0 for u in trial_indices.keys()}
-    for u in trial_indices:
-        subs_tr_c = subs_trials.copy()
-        subs_tr_c.pop(u)
-        expr_v = expr.subs(subs_tr_c)
-        for v in test_indices:
-            subs_t_c = subs_tests.copy()
-            subs_t_c.pop(v)
-            M[test_indices[v], trial_indices[u]] = expr_v.subs(subs_t_c)
-
-    M = ImmutableDenseMatrix(M)
-    return M
+    return trials, tests
 
 #==============================================================================
-def _to_matrix_linear_form(expr, M, test_indices):
+def _to_matrix_form(expr, *, trials=None, tests=None):
     """
-    This function takes a linear expression and returns the matrix representation of the linear form
+    Create a matrix representation of input expression, based on trial and
+    test functions. We have three options:
 
-    Parameters:
+    1. if both the trial and test functions are given, we treat the expression
+       as a bilinear form and convert it to a (n_rows x n_cols) rectangular
+       matrix with n_rows = len(tests) and n_cols = len(trials);
+
+    2. if only the test functions are given, we treat the expression as a
+       linear form and convert it to a (n_rows x 1) matrix (column vector) with
+       n_rows = len(tests);
+
+    3. if neither the trial nor the test functions are given, we treat the
+       expression as a scalar functional and convert it to a 1x1 matrix.
+
+    Parameters
     ----------
-     expr: sympy.Expr
-        The linear form
+    expr : sympy.Expr
+        Expression corresponding to a bilinear/linear form or functional.
 
-     M   : sympy.Matrix
-        Empty Matrix
+    trials : iterable
+        List of all scalar trial functions (after unpacking vector functions).
 
-     test_indices : OrderedDict
-       Index of each test function
+    tests : iterable
+        List of all scalar test functions (after unpacking vector functions).
 
-    Returns:
-    ----------
-     M : sympy.ImmutableDenseMatrix
-        the linear form as a matrix
+    Returns
+    -------
+    M : sympy.matrices.immutable.ImmutableDenseMatrix
+        Matrix representation of input expression.
 
     """
-    subs = {v:0 for v in test_indices.keys()}
+    # Bilinear form
+    if trials and tests:
+        M = Matrix.zeros(len(tests), len(trials))
+        for i, test in enumerate(tests):
+            subs_i = {v:0 for v in tests if v != test}
+            expr_i = expr.subs(subs_i)
+            for j, trial in enumerate(trials):
+                subs_j  = {u:0 for u in trials if u != trial}
+                M[i, j] = expr_i.subs(subs_j)
 
-    for v in test_indices:
-        subs_c = subs.copy()
-        subs_c.pop(v)
-        M[test_indices[v]] = expr.subs(subs_c)
+    # Linear form
+    elif tests:
+        M = Matrix.zeros(len(tests), 1)
+        for i, test in enumerate(tests):
+            subs_i = {v:0 for v in tests if v != test}
+            M[i, 0] = expr.subs(subs_i)
 
-    M = ImmutableDenseMatrix(M)
-    return M
+    # Functional
+    else:
+        M = [[expr]]
 
-#==============================================================================
-def _to_matrix_functional_form(expr, M):
-    M[0] += expr
-
-    return M
-
-#==============================================================================
-def _to_matrix_form(expr, M, test_indices, trial_indices):
-    if not(test_indices is None) and not(trial_indices is None):
-        return _to_matrix_bilinear_form(expr, M, test_indices, trial_indices)
-
-    if not(test_indices is None) and trial_indices is None:
-        return _to_matrix_linear_form(expr, M, test_indices)
-
-    if test_indices is None and trial_indices is None:
-        return _to_matrix_functional_form(expr, M)
+    return ImmutableDenseMatrix(M)
 
 #==============================================================================
 def _split_expr_over_interface(expr, interface, tests=None, trials=None):
@@ -604,19 +554,19 @@ class TerminalExpr(CalculusFunction):
                     d_expr[d] = newexpr
                 # ...
 
-            M, test_indices, trial_indices = _init_matrix(expr)
+            trials, tests = _get_trials_tests_flattened(expr)
+
             d_new = OrderedDict()
             for domain, newexpr in d_expr.items():
 
                 if newexpr != 0:
-                    IM = _to_matrix_form(newexpr, M.zeros(*M.shape), test_indices, trial_indices)
 
                     # TODO ARA make sure thre is no problem with psydac
                     #      we should always take the interior of a domain
                     if not isinstance(domain, (Boundary, Interface, InteriorDomain)):
                         domain = domain.interior
 
-                    d_new[domain] = IM
+                    d_new[domain] = _to_matrix_form(newexpr, trials=trials, tests=tests)
 
             # ...
             ls = []
