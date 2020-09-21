@@ -25,8 +25,13 @@ class BasicDomain(Basic):
     @property
     def coordinates(self):
         dim = self.dim
+
         if self._coordinates is None:
-            xyz = ['x', 'y', 'z'][:dim]
+            if self.mapping is None:
+                xyz = ['x1', 'x2', 'x3'][:dim]
+            else:
+                xyz = ['x', 'y', 'z'][:dim]
+
             xyz = [Symbol(i) for i in xyz]
             self._coordinates = xyz
 
@@ -34,6 +39,10 @@ class BasicDomain(Basic):
             return self._coordinates[0]
         else:
             return self._coordinates
+
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        return '{}'.format(sstr(self.name))
 
 #==============================================================================
 class InteriorDomain(BasicDomain):
@@ -43,7 +52,7 @@ class InteriorDomain(BasicDomain):
     Examples
 
     """
-    def __new__(cls, name, dim=None, dtype=None):
+    def __new__(cls, name, dim=None, dtype=None, mapping=None, logical_domain=None):
         target = None
         if not isinstance(name, str):
             target = name
@@ -52,11 +61,16 @@ class InteriorDomain(BasicDomain):
         if not( target is None ):
             dim = target.dim
 
+        assert mapping is None and logical_domain is None or \
+        mapping is not None and logical_domain  is not None
+
         obj = Basic.__new__(cls, name)
 
-        obj._dim    = dim
-        obj._target = target
-        obj._dtype  = dtype
+        obj._dim            = dim
+        obj._target         = target
+        obj._dtype          = dtype
+        obj._mapping        = mapping
+        obj._logical_domain = logical_domain
 
         return obj
 
@@ -69,6 +83,14 @@ class InteriorDomain(BasicDomain):
         return self._target
 
     @property
+    def mapping(self):
+        return self._mapping
+
+    @property
+    def logical_domain(self):
+        return self._logical_domain
+
+    @property
     def dtype(self):
         return self._dtype
 
@@ -78,7 +100,10 @@ class InteriorDomain(BasicDomain):
 
     def _sympystr(self, printer):
         sstr = printer.doprint
-        return '{}'.format(sstr(self.name))
+        if self.mapping:
+            return '{}({})'.format(sstr(self.mapping.name), sstr(self.name))
+        else:
+            return '{}'.format(sstr(self.name))
 
     def todict(self):
         name   = str(self.name)
@@ -113,8 +138,8 @@ class Union(BasicDomain):
         for union in unions:
             args += list(union.as_tuple())
 
-        # remove duplicates and Sort domains by name
-        args = sorted(set(args), key=lambda x: x.name)
+        # remove duplicates and sort domains by their string representation
+        args = sorted(set(args), key=str)
 
         # a. If the required Union contains no domains, return None;
         # b. If it contains a single domain, return the domain itself;
@@ -124,8 +149,8 @@ class Union(BasicDomain):
         elif len(args) == 1:
             obj = args[0]
         else:
-            obj = Basic.__new__(cls, *args)
-
+            obj       = Basic.__new__(cls, *args)
+            obj.index = 0
         return obj
 
     @property
@@ -134,6 +159,12 @@ class Union(BasicDomain):
 
     def __len__(self):
         return len(self.args)
+
+    @property
+    def coordinates(self):
+        coords = self.args[0].coordinates
+        assert all(e.coordinates == coords for e in self)
+        return coords
 
     def complement(self, arg):
         if isinstance(arg, Union):
@@ -157,6 +188,17 @@ class Union(BasicDomain):
         ls = [i for i in self.args]
         return tuple(ls)
 
+    def __iter__(self):
+        self.index = 0
+        return self
+
+    def __next__(self):
+        try:
+            result = self.args[self.index]
+        except IndexError:
+            raise StopIteration
+        self.index += 1
+        return result
 #==============================================================================
 class ProductDomain(BasicDomain):
     def __new__(cls, *args, name=None):
@@ -219,7 +261,7 @@ class Boundary(BasicDomain):
     Examples
 
     """
-    def __new__(cls, name, domain, axis=None, ext=None):
+    def __new__(cls, name, domain, axis=None, ext=None, mapping=None, logical_domain=None):
 
         if axis is not None:
             assert isinstance(axis, int)
@@ -227,7 +269,9 @@ class Boundary(BasicDomain):
         if ext is not None:
             assert isinstance(ext, int)
 
-        obj = Basic.__new__(cls, name, domain, axis, ext)
+        obj                 = Basic.__new__(cls, name, domain, axis, ext)
+        obj._mapping        = mapping
+        obj._logical_domain = logical_domain
 
         return obj
 
@@ -248,12 +292,20 @@ class Boundary(BasicDomain):
         return self.args[3]
 
     @property
+    def mapping(self):
+        return self._mapping
+
+    @property
+    def logical_domain(self):
+        return self._logical_domain
+
+    @property
     def dim(self):
         return self.domain.dim
 
     def _sympystr(self, printer):
         sstr = printer.doprint
-        return '{}_{}'.format(sstr(self.domain.name),sstr(self.name))
+        return '{}_{}'.format(sstr(self.domain),sstr(self.name))
 
     def __add__(self, other):
         if isinstance(other, ComplementBoundary):
@@ -282,17 +334,24 @@ class Interface(BasicDomain):
     Examples
 
     """
-    def __new__(cls, edge, bnd_minus, bnd_plus):
+    def __new__(cls, name, bnd_minus, bnd_plus, mapping=None, logical_domain=None):
 
-        if not isinstance(edge     , Edge    ): raise TypeError(edge)
+        if not isinstance(name     , str    ): raise TypeError(name)
         if not isinstance(bnd_minus, Boundary): raise TypeError(bnd_minus)
         if not isinstance(bnd_plus , Boundary): raise TypeError(bnd_plus)
 
         if bnd_minus.dim != bnd_plus.dim:
             raise TypeError('Dimension mismatch: {} != {}'.format(
                 bnd_minus.dim, bnd_plus.dim))
+
+        assert mapping is None and logical_domain is None or\
+               mapping is not None and logical_domain is not None
+
         assert bnd_minus.axis == bnd_plus.axis
-        return Basic.__new__(cls, edge.name, bnd_minus, bnd_plus)
+        obj = Basic.__new__(cls, name, bnd_minus, bnd_plus)
+        obj._mapping        = mapping
+        obj._logical_domain = logical_domain
+        return obj
 
     @property
     def dim(self):
@@ -313,6 +372,14 @@ class Interface(BasicDomain):
     @property
     def axis(self):
         return self.plus.axis
+
+    @property
+    def mapping(self):
+        return self._mapping
+
+    @property
+    def logical_domain(self):
+        return self._logical_domain
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -352,10 +419,11 @@ class Connectivity(abc.Mapping):
     def __init__(self, data=None):
         if data is None:
             data = {}
-
         else:
             assert( isinstance( data, (dict, OrderedDict)) )
-
+            for k,v in data.items():
+                assert( isinstance( k, str ) )
+                assert( isinstance(v, Interface) )
         self._data = data
 
     @property
@@ -366,34 +434,26 @@ class Connectivity(abc.Mapping):
     def interfaces(self):
         ls = []
         data = OrderedDict(sorted(self._data.items()))
-        for k, (minus, plus) in data.items():
-            ls.append(Interface(k, minus, plus))
-
-        if len(ls) == 1:
-            return ls[0]
-        else:
-            return Union(*ls)
+        for _,v in data.items():
+            ls.append(v)
+        return Union(*ls)
 
     def todict(self):
         # ... create the connectivity
         connectivity = {}
         data = OrderedDict(sorted(self._data.items()))
-        for edge, pair in data.items():
-            connectivity[edge.name] = [bnd.todict() for bnd in pair]
-
+        for name, v in data.items():
+            connectivity[name] = [v.minus.todict(), v.plus.todict()]
         connectivity = OrderedDict(sorted(connectivity.items()))
         # ...
 
         return connectivity
 
     def __setitem__(self, key, value):
-        if isinstance(key, str):
-            key = Edge(key)
 
-        assert( isinstance( key, Edge ) )
-        assert( isinstance( value, (tuple, list)  ) )
-        assert( len(value) in [1, 2] )
-        assert( all( [isinstance( P, Boundary ) for P in value ] ) )
+        assert( isinstance( key, str ) )
+        assert( isinstance(value, Interface) )
+        assert( str(value.name) == key )
 
         self._data[key] = value
 
@@ -417,3 +477,5 @@ class Connectivity(abc.Mapping):
         return 0
 
     # ==========================================
+
+

@@ -16,6 +16,7 @@ class Constant(Symbol):
 
     """
     _label = ''
+    is_number = True
     def __new__(cls, *args, **kwargs):
         label = kwargs.pop('label', '')
 

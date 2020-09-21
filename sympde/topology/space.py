@@ -122,25 +122,25 @@ class BasicFunctionSpace(Basic):
         if not isinstance(domain, BasicDomain):
             raise TypeError('> Expecting a BasicDomain object for domain')
 
-        obj = Basic.__new__(cls, name, domain)
-        obj._shape = shape
+        obj = Basic.__new__(cls)
+        obj._name   = name
+        obj._domain = domain
+        obj._shape  = shape
 
         # ...
         if kind is None:
             kind = 'undefined'
 
-        assert(isinstance(kind, (str, SpaceType)))
+        if isinstance(kind, str):
+            kind_str = kind.lower()
+            assert(kind_str in ['h1', 'hcurl', 'hdiv', 'l2', 'undefined'])
 
-        kind_str = kind.lower()
-        assert(kind_str in ['h1', 'hcurl', 'hdiv', 'l2', 'undefined'])
-
-        kind = dtype_space_registry[kind_str]
-
-        if not isinstance(kind, SpaceType):
+            kind = dtype_space_registry[kind_str]
+        elif not isinstance(kind, SpaceType):
             raise TypeError('Expecting kind to be of SpaceType')
 
+        kind_str  = kind.name
         obj._kind = kind
-        # ...
 
         # ...
         if not(kind_str == 'undefined'):
@@ -162,11 +162,11 @@ class BasicFunctionSpace(Basic):
 
     @property
     def name(self):
-        return self._args[0]
+        return self._name
 
     @property
     def domain(self):
-        return self._args[1]
+        return self._domain
 
     @property
     def ldim(self):
@@ -199,6 +199,8 @@ class BasicFunctionSpace(Basic):
     def __mul__(self, other):
         return ProductSpace(self, other)
 
+    def __hash__(self):
+        return hash((self.name, self.domain, self.shape, self.kind))
 #==============================================================================
 class ScalarFunctionSpace(BasicFunctionSpace):
     """
@@ -433,16 +435,21 @@ class ScalarTestFunction(Symbol):
     _space         = None
     _projection_of = None
 
-    def __new__(cls, space, name=None):
+    def __new__(cls, space, name):
         if not isinstance(space, ScalarFunctionSpace):
             raise ValueError('Expecting a ScalarFunctionSpace')
-        obj = Symbol.__new__(cls, name)
+        obj = Expr.__new__(cls)
         obj._space = space
+        obj._name  = name
         return obj
 
     @property
     def space(self):
         return self._space
+
+    @property
+    def name(self):
+        return self._name
 
     @property
     def ldim(self):
@@ -462,6 +469,8 @@ class ScalarTestFunction(Symbol):
         sstr = printer.doprint
         return sstr(self.name)
 
+    def __hash__(self):
+        return hash((self.name, self.space))
 #==============================================================================
 # this class is needed, otherwise sympy will convert VectorTestFunction to
 # IndexedBase
@@ -517,6 +526,8 @@ class IndexedTestTrial(Indexed):
     def ldim(self):
         return self.base.space.ldim
 
+    def __hash__(self):
+        return hash(self._args)
 
 #==============================================================================
 class VectorTestFunction(Symbol, IndexedBase):
@@ -526,15 +537,16 @@ class VectorTestFunction(Symbol, IndexedBase):
     Examples
 
     """
-    is_commutative = True
+    is_commutative = False
     _space         = None
     _projection_of = None
 
-    def __new__(cls, space, name=None):
+    def __new__(cls, space, name):
         if not isinstance(space, VectorFunctionSpace):
             raise ValueError('Expecting a VectorFunctionSpace')
-        obj = Basic.__new__(cls, name)
+        obj        = Expr.__new__(cls)
         obj._space = space
+        obj._name = name
         return obj
 
     @property
@@ -543,7 +555,7 @@ class VectorTestFunction(Symbol, IndexedBase):
 
     @property
     def name(self):
-        return self._args[0]
+        return self._name
 
     @property
     def shape(self):
@@ -571,7 +583,6 @@ class VectorTestFunction(Symbol, IndexedBase):
             if isinstance(args[i], int):
                 args[i] = Integer(args[i])
 
-        assumptions ={}
         obj = IndexedTestTrial(self, *args)
         return obj
 
@@ -580,6 +591,13 @@ class VectorTestFunction(Symbol, IndexedBase):
 
     def set_as_projection(self, expr):
         self._projection_of = expr
+
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        return sstr(self.name)
+
+    def __hash__(self):
+        return hash((self.name, self.space))
 
 #==============================================================================
 # this is implemented as a function, it would be better to have it as a class
@@ -655,7 +673,7 @@ class VectorField(Symbol, IndexedBase):
     Examples
 
     """
-    is_commutative = True
+    is_commutative = False
     _space = None
     _projection_of = None
     def __new__(cls, space, name=None):

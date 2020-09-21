@@ -17,7 +17,7 @@ def _sanitize_arguments(arguments, is_bilinear=False, is_linear=False):
     if is_bilinear or is_linear:
 
         if is_bilinear:
-            test_functions = arguments[0]
+            test_functions = arguments[1]
 
         elif is_linear:
             test_functions = arguments
@@ -27,6 +27,7 @@ def _sanitize_arguments(arguments, is_bilinear=False, is_linear=False):
 
         elif isinstance(test_functions, (tuple, list, Tuple)):
             are_valid = [isinstance(i, (ScalarTestFunction, VectorTestFunction)) for i in test_functions]
+
             if not all(are_valid):
                 raise TypeError('> Wrong arguments for test functions')
 
@@ -37,10 +38,9 @@ def _sanitize_arguments(arguments, is_bilinear=False, is_linear=False):
         test_functions = Tuple(*test_functions)
     # ...
 
-    # ...
     if is_bilinear:
 
-        trial_functions = arguments[1]
+        trial_functions = arguments[0]
         if isinstance(trial_functions, (ScalarTestFunction, VectorTestFunction)):
             trial_functions = [trial_functions]
 
@@ -48,7 +48,6 @@ def _sanitize_arguments(arguments, is_bilinear=False, is_linear=False):
             are_valid = [isinstance(i, (ScalarTestFunction, VectorTestFunction)) for i in trial_functions]
             if not all(are_valid):
                 raise TypeError('> Wrong arguments for trial functions')
-
         else:
             msg = 'Wrong type for trial function(s). given {}'.format(type(trial_functions))
             raise TypeError(msg)
@@ -56,13 +55,7 @@ def _sanitize_arguments(arguments, is_bilinear=False, is_linear=False):
         trial_functions = Tuple(*trial_functions)
     # ...
 
-    if is_bilinear:
-        args = [test_functions, trial_functions]
-        args = Tuple(*args)
-
-    else:
-        args = Tuple(*test_functions)
-
+    args = Tuple(trial_functions, test_functions) if is_bilinear else Tuple(*test_functions)
     return args
 
 #==============================================================================
@@ -131,7 +124,7 @@ class BasicExpr(Expr):
             expr = expr.subs(zip(indexed, new_indexed))
             expr = expr.subs(zip(vector_fields, new_vector_fields))
             expr = expr.subs(zip(scalar_fields, new_scalar_fields))
-            expr = self.func(expr, self.domain, eval=False)
+            expr = self.func(expr, self.domain, evaluate=False)
             if self.is_norm:
                 expr._exponent = self._exponent
 
@@ -159,7 +152,7 @@ class BasicForm(Expr):
             args = self.variables
             if self.is_bilinear:
                 args = args[0]+args[1]
-            fields = tuple(atoms.difference(args))
+            fields = tuple(i for i in atoms if i not in args)
         else:
             fields = tuple(atoms)
         return fields
@@ -218,7 +211,6 @@ class BasicForm(Expr):
             return self
 
         if self.is_bilinear or self.is_linear:
-
             fields          = self.fields
             scalar_fields   = [f for f in fields if isinstance(f.space, ScalarFunctionSpace)]
             vector_fields   = [f for f in fields if isinstance(f.space, VectorFunctionSpace)]
@@ -251,7 +243,7 @@ class BasicForm(Expr):
             expr = expr.subs(zip(indexed, new_indexed))
             expr = expr.subs(zip(vector_fields, new_vector_fields))
             expr = expr.subs(zip(scalar_fields, new_scalar_fields))
-            expr = self.func(expr, self.domain, eval=False)
+            expr = self.func(expr, self.domain, evaluate=False)
             if self.is_norm:
                 expr._exponent = self._exponent
 

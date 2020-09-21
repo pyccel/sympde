@@ -69,13 +69,9 @@ class LinearOperator(CalculusFunction):
             return Indexed(self, indices, **kw_args)
 
     @classmethod
-    def eval(cls, *_args):
+    def eval(cls, expr):
         """."""
 
-        if not _args:
-            return
-
-        expr = _args[0]
         if isinstance(expr, Add):
             args = expr.args
             args = [cls.eval(a) for a in expr.args]
@@ -131,7 +127,7 @@ class Dot_1d(DotBasic):
         u = _args[0]
         v = _args[1]
 
-        return u * v
+        return u[0] * v[0]
 
 class Dot_2d(DotBasic):
 
@@ -148,12 +144,6 @@ class Dot_2d(DotBasic):
         u = _args[0]
         v = _args[1]
 
-        if isinstance(u, (Matrix, ImmutableDenseMatrix)):
-            if isinstance(v, (Matrix, ImmutableDenseMatrix)):
-                return u[0]*v[0] + u[1]*v[1]
-
-            else:
-                return Tuple(u[0,0]*v[0] + u[0,1]*v[1], u[1,0]*v[0] + u[1,1]*v[1])
 
         if isinstance(u, (Add, Mul)):
             ls = u.atoms(Tuple)
@@ -194,6 +184,7 @@ class Dot_3d(DotBasic):
                 return Tuple(u[0,0]*v[0] + u[0,1]*v[1] + u[0,2]*v[2],
                              u[1,0]*v[0] + u[1,1]*v[1] + u[1,2]*v[2],
                              u[2,0]*v[0] + u[2,1]*v[1] + u[2,2]*v[2])
+
 
         if isinstance(u, (Add, Mul)):
             ls = u.atoms(Tuple)

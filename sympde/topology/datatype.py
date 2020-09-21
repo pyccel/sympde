@@ -21,19 +21,19 @@ class SpaceType(with_metaclass(Singleton, Basic)):
     pass
 
 class H1SpaceType(SpaceType):
-    pass
+    name = 'h1'
 
 class HcurlSpaceType(SpaceType):
-    pass
+    name = 'hcurl'
 
 class HdivSpaceType(SpaceType):
-    pass
+    name = 'hdiv'
 
 class L2SpaceType(SpaceType):
-    pass
+    name = 'l2'
 
 class UndefinedSpaceType(SpaceType):
-    pass
+    name = 'undefined'
 
 H1Space        = H1SpaceType()
 HcurlSpace     = HcurlSpaceType()

@@ -4,8 +4,7 @@ from sympy import sympify
 from sympde.topology import Domain, ScalarFunctionSpace, element_of
 from sympde.topology import dx, dy, dz
 from sympde.topology import dx1, dx2, dx3
-from sympde.topology import Mapping
-from sympde.topology import DetJacobian
+from sympde.topology import Mapping, Jacobian
 from sympde.topology import LogicalExpr
 from sympde.topology import SymbolicExpr
 
@@ -44,13 +43,12 @@ def test_derivatives_2d_without_mapping():
 def test_derivatives_2d_with_mapping():
 
     rdim = 2
-
-    O = Domain('Omega', dim=rdim)
-    V = ScalarFunctionSpace('V', O)
+    M = Mapping('M', rdim)
+    O = M(Domain('Omega', dim=rdim))
+    V = ScalarFunctionSpace('V', O, kind='h1')
     u = element_of(V, 'u')
 
-    M = Mapping('M', rdim)
-    det_jac = DetJacobian(M)
+    det_jac = Jacobian(M).det()
     J = Symbol('J')
 
     expr = M
@@ -68,7 +66,7 @@ def test_derivatives_2d_with_mapping():
     expr = dx1(M[1])
     assert SymbolicExpr(expr) == Symbol('y_x1')
 
-    expr       = LogicalExpr(M, dx(u)).subs(det_jac, J)
+    expr       = LogicalExpr(dx(u), mapping=M, dim=rdim).subs(det_jac, J)
     expected   = '(u_x1 * y_x2 - u_x2 * y_x1)/J'
     difference = SymbolicExpr(expr) - sympify(expected)
     assert difference.simplify() == 0

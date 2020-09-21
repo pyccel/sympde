@@ -2,7 +2,7 @@
 
 from itertools import product
 from collections import OrderedDict
-from sympy import S
+from sympy import Abs, S, cacheit
 from sympy import Indexed, Matrix, ImmutableDenseMatrix
 from sympy import expand
 from sympy.core import Basic
@@ -20,21 +20,28 @@ from sympde.core.utils import random_string
 
 from sympde.calculus import jump, avg, minus, plus
 from sympde.calculus import Jump
-from sympde.calculus.core import _generic_ops
+from sympde.calculus.core import _generic_ops, _diff_ops
 
-from sympde.topology import BasicDomain, Union, Interval
-from sympde.topology import NormalVector, TangentVector
-from sympde.topology import Boundary, Interface
-from sympde.topology import InteriorDomain
-from sympde.topology import DetJacobian
-from sympde.topology import SymbolicDeterminant
-from sympde.topology import LogicalExpr
+from sympde.calculus.matrices import SymbolicDeterminant, Inverse, Transpose
+from sympde.calculus.matrices import MatPow, MatrixElement, SymbolicTrace
+
+from sympde.topology.mapping import Jacobian, JacobianSymbol, InterfaceMapping
+
+from sympde.topology.basic   import BasicDomain, Union, Interval
+from sympde.topology.domain  import NormalVector, TangentVector
+from sympde.topology.basic   import Boundary, Interface
+from sympde.topology.basic   import InteriorDomain
+from sympde.topology.mapping import LogicalExpr, PullBack
+
+# TODO fix circular dependency between sympde.expr.evaluation and sympde.topology.mapping
+
 from sympde.topology.space import ScalarTestFunction
 from sympde.topology.space import VectorTestFunction
 from sympde.topology.space import IndexedTestTrial
 from sympde.topology.space import Trace
 from sympde.topology.space import element_of
 from sympde.topology.space import VectorField
+
 from sympde.topology.derivatives import _partial_derivatives
 from sympde.topology.derivatives import _logical_partial_derivatives
 from sympde.topology.derivatives import get_atom_derivatives
@@ -47,191 +54,141 @@ from sympde.topology.derivatives import (Grad_1d, Div_1d,
 from sympde.topology.derivatives import Bracket_2d
 from sympde.topology.derivatives import Laplace_1d, Laplace_2d, Laplace_3d
 from sympde.topology.derivatives import Hessian_1d, Hessian_2d, Hessian_3d
+
+from sympde.topology.derivatives import (LogicalGrad_1d, LogicalDiv_1d,
+                                         LogicalGrad_2d, LogicalCurl_2d, LogicalRot_2d, LogicalDiv_2d,
+                                         LogicalGrad_3d, LogicalCurl_3d, LogicalDiv_3d)
+
+from sympde.topology.derivatives import LogicalBracket_2d
+from sympde.topology.derivatives import LogicalLaplace_1d, LogicalLaplace_2d, LogicalLaplace_3d
+from sympde.topology.derivatives import LogicalHessian_1d, LogicalHessian_2d, LogicalHessian_3d
+
 from sympde.topology.space       import ScalarFunctionSpace
 
 from .basic import BasicExpr, BasicForm
 from .expr  import BilinearForm
-from .expr  import DomainIntegral, BoundaryIntegral, InterfaceIntegral
+from .expr  import Integral
 from .expr  import Functional
 from .expr  import _get_domain
 
+import numpy as np
 #==============================================================================
 def is_sequence(a):
     return isinstance(a, (list,tuple,Tuple))
 
 #==============================================================================
-# TODO use this function everywhere it is needed
-def zero_matrix(n_rows, n_cols):
-    lines = []
-    for i in range(0, n_rows):
-        line = []
-        for j in range(0, n_cols):
-            line.append(0)
-        lines.append(line)
+def _unpack_functions(ls):
 
-    return Matrix(lines)
+    funcs = []
 
-#==============================================================================
-def _get_size_and_starts(ls):
-    n = 0
-    d_indices = OrderedDict()
     for x in ls:
-        d_indices[x] = n
         if isinstance(x, ScalarTestFunction):
-            n += 1
-
+            funcs.append(x)
         elif isinstance(x, VectorTestFunction):
-            for j in range(0, x.shape[0]):
-                d_indices[x[j]] = n + j
+            funcs.extend(x[j] for j in range(x.shape[0]))
+        else:
+            raise TypeError('Can only accept ScalarTestFunction and VectorTestFunction')
 
-            n += x.shape[0]
-
-    return n, d_indices
+    return tuple(funcs)
 
 #==============================================================================
-def _init_matrix(expr):
-    assert(isinstance(expr, (BasicForm, BasicExpr)))
+def _get_trials_tests_flattened(expr):
+    """
+    Get all scalar trial/test functions in the given expression, with vector
+    functions decomposed into their scalar components.
+
+    Parameters
+    ----------
+    expr : BasicForm | BasicExpr
+        Symbolic expression.
+
+    Returns
+    -------
+    trials : tuple
+        All scalar trial functions in the given expression, with vector
+        functions decomposed into their scalar components.
+
+    tests : tuple
+        All scalar test functions in the given expression, with vector
+        functions decomposed into their scalar components.
+    """
+
+    if not isinstance(expr, (BasicForm, BasicExpr)):
+        raise TypeError("Expression must be of type BasicForm or BasicExpr, got '{}' instead".format(type(expr)))
 
     if expr.is_bilinear:
-
-        trials = list(expr.variables[0])
-        n_cols, trial_indices = _get_size_and_starts(trials)
-
-        tests = list(expr.variables[1])
-        n_rows, test_indices = _get_size_and_starts(tests)
-
-        # ...
-        lines = []
-        for i in range(0, n_rows):
-            line = []
-            for j in range(0, n_cols):
-                line.append(0)
-            lines.append(line)
-
-        M = Matrix(lines)
-        # ...
-
-        return  M, test_indices, trial_indices
+        trials = _unpack_functions(expr.variables[0])
+        tests  = _unpack_functions(expr.variables[1])
 
     elif expr.is_linear:
-
-        tests = list(expr.variables)
-        n_rows, test_indices = _get_size_and_starts(tests)
-
-        # ...
-        lines = [0 for i in range(0, n_rows)]
-        M = Matrix(lines)
-        # ...
-
-        return  M, test_indices, None
+        trials = None
+        tests  = _unpack_functions(expr.variables)
 
     elif expr.is_functional:
-
-        # ...
-        M = Matrix([0.])
-        # ...
-
-        return  M, None, None
+        trials = None
+        tests  = None
 
     else:
-        raise TypeError('Expecting BasicExpr or BasicForm')
+        ValueError('Could not interpret expression as bilinear form, linear form, or functional')
 
-    return M
+    return trials, tests
 
 #==============================================================================
-def _to_matrix_bilinear_form(expr, M, test_indices, trial_indices):
+def _to_matrix_form(expr, *, trials=None, tests=None):
+    """
+    Create a matrix representation of input expression, based on trial and
+    test functions. We have three options:
 
-    # ...
-    def treat_form(arg, M):
-        atoms  = list(arg.atoms(ScalarTestFunction))
-        atoms += list(arg.atoms(VectorTestFunction))
-        atoms += list(arg.atoms(IndexedTestTrial))
+    1. if both the trial and test functions are given, we treat the expression
+       as a bilinear form and convert it to a (n_rows x n_cols) rectangular
+       matrix with n_rows = len(tests) and n_cols = len(trials);
 
-        for atom in atoms:
-            if atom in test_indices:
-                i_row = test_indices[atom]
+    2. if only the test functions are given, we treat the expression as a
+       linear form and convert it to a (n_rows x 1) matrix (column vector) with
+       n_rows = len(tests);
 
-            elif atom in trial_indices:
-                i_col = trial_indices[atom]
+    3. if neither the trial nor the test functions are given, we treat the
+       expression as a scalar functional and convert it to a 1x1 matrix.
 
-            else:
-                raise ValueError('> Could not find {}'.format(atom))
+    Parameters
+    ----------
+    expr : sympy.Expr
+        Expression corresponding to a bilinear/linear form or functional.
 
-        M[i_row, i_col] += arg
-        return M
-    # ...
+    trials : iterable
+        List of all scalar trial functions (after unpacking vector functions).
 
-    # ...
-    if isinstance(expr, Add):
-        args = expr.args
-        for arg in args:
-            if isinstance(arg, Mul):
-                M = treat_form(arg, M)
+    tests : iterable
+        List of all scalar test functions (after unpacking vector functions).
 
-    elif isinstance(expr, Mul):
-        M = treat_form(expr, M)
+    Returns
+    -------
+    M : sympy.matrices.immutable.ImmutableDenseMatrix
+        Matrix representation of input expression.
 
-    elif isinstance(expr, (ScalarTestFunction, VectorTestFunction, IndexedTestTrial)):
-        M = treat_form(expr, M)
+    """
+    # Bilinear form
+    if trials and tests:
+        M = Matrix.zeros(len(tests), len(trials))
+        for i, test in enumerate(tests):
+            subs_i = {v:0 for v in tests if v != test}
+            expr_i = expr.subs(subs_i)
+            for j, trial in enumerate(trials):
+                subs_j  = {u:0 for u in trials if u != trial}
+                M[i, j] = expr_i.subs(subs_j)
+
+    # Linear form
+    elif tests:
+        M = Matrix.zeros(len(tests), 1)
+        for i, test in enumerate(tests):
+            subs_i = {v:0 for v in tests if v != test}
+            M[i, 0] = expr.subs(subs_i)
+
+    # Functional
     else:
-        raise TypeError('> wrong type, given {}'.format(type(expr)))
-    # ...
+        M = [[expr]]
 
-    return M
-
-#==============================================================================
-def _to_matrix_linear_form(expr, M, test_indices):
-    # ...
-    def treat_form(arg, M):
-        atoms  = list(arg.atoms(ScalarTestFunction))
-        atoms += list(arg.atoms(VectorTestFunction))
-        atoms += list(arg.atoms(IndexedTestTrial))
-
-        for atom in atoms:
-            if atom in test_indices:
-                i_row = test_indices[atom]
-
-            else:
-                raise ValueError('> Could not find {}'.format(atom))
-
-        M[i_row] += arg
-        return M
-    # ...
-
-    # ...
-    if isinstance(expr, Add):
-        args = expr.args
-        for arg in args:
-            M = treat_form(arg, M)
-
-    elif isinstance(expr, Mul):
-        M = treat_form(expr, M)
-
-    elif isinstance(expr, (ScalarTestFunction, VectorTestFunction, IndexedTestTrial)):
-        M = treat_form(expr, M)
-
-    else:
-        raise TypeError('> wrong type, given {}'.format(type(expr)))
-    # ...
-
-    return M
-
-#==============================================================================
-def _to_matrix_functional_form(expr, M):
-    M[0] += expr
-
-    return M
-
-#==============================================================================
-def _to_matrix_form(expr, M, test_indices, trial_indices):
-    if not(test_indices is None) and not(trial_indices is None):
-        return _to_matrix_bilinear_form(expr, M, test_indices, trial_indices)
-
-    if not(test_indices is None) and trial_indices is None:
-        return _to_matrix_linear_form(expr, M, test_indices)
-
-    if test_indices is None and trial_indices is None:
-        return _to_matrix_functional_form(expr, M)
+    return ImmutableDenseMatrix(M)
 
 #==============================================================================
 def _split_expr_over_interface(expr, interface, tests=None, trials=None):
@@ -289,8 +246,6 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
 
 #        # TODO add sub for avg
 #        expr = expr.subs({jump(v): v_minus - v_plus})
-
-    expr = expand(expr)
     # ...
 
     # ...
@@ -327,25 +282,41 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                 newexpr = _nullify(expr, u_minus, trials)
                 newexpr = _nullify(newexpr, v_minus, tests)
                 newexpr = newexpr.subs({u_minus: u, v_minus: v})
+                mapping = newexpr.atoms(InterfaceMapping)
+                if mapping and not newexpr.is_zero:
+                    mapping = list(mapping)[0]
+                    newexpr = newexpr.subs(mapping, mapping.minus)
+
                 if not newexpr.is_zero:
                     bnd_expressions[interface.minus] = newexpr
                 # ...
                 # TODO must call InterfaceExpression afterward
                 newexpr = _nullify(expr, u_minus, trials)
                 newexpr = _nullify(newexpr, v_plus, tests)
+                mapping = newexpr.atoms(InterfaceMapping)
+                if mapping:
+                    mapping = list(mapping)[0]
+                    newexpr = newexpr.subs(mapping, mapping.plus)
                 if not newexpr.is_zero:
                     int_expressions += [InterfaceExpression(interface, u_minus, v_plus, newexpr)]
                 # ...
                 # TODO must call InterfaceExpression afterward
                 newexpr = _nullify(expr, u_plus, trials)
                 newexpr = _nullify(newexpr, v_minus, tests)
-
+                mapping = newexpr.atoms(InterfaceMapping)
+                if mapping:
+                    mapping = list(mapping)[0]
+                    newexpr = newexpr.subs(mapping, mapping.plus)
                 if not newexpr.is_zero:
                     int_expressions += [InterfaceExpression(interface, u_plus, v_minus, newexpr)]
                 # ...
                 newexpr = _nullify(expr, u_plus, trials)
                 newexpr = _nullify(newexpr, v_plus, tests)
                 newexpr = newexpr.subs({u_plus: u, v_plus: v})
+                mapping = newexpr.atoms(InterfaceMapping)
+                if mapping:
+                    mapping = list(mapping)[0]
+                    newexpr = newexpr.subs(mapping, mapping.plus)
                 if not newexpr.is_zero:
                     bnd_expressions[interface.plus] = newexpr
                 # ...
@@ -358,6 +329,10 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
             # ...
             newexpr = _nullify(expr, v_minus, tests)
             newexpr = newexpr.subs({v_minus: v})
+            mapping = newexpr.atoms(InterfaceMapping)
+            if mapping:
+                mapping = list(mapping)[0]
+                newexpr = newexpr.subs(mapping, mapping.minus)
             if not newexpr.is_zero:
                 bnd_expressions[interface.minus] = newexpr
             # ...
@@ -365,18 +340,23 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
             # ...
             newexpr = _nullify(expr, v_plus, tests)
             newexpr = newexpr.subs({v_plus: v})
+            mapping = newexpr.atoms(InterfaceMapping)
+            if mapping:
+                mapping = list(mapping)[0]
+                newexpr = newexpr.subs(mapping, mapping.plus)
             if not newexpr.is_zero:
                 bnd_expressions[interface.plus] = newexpr
             # ...
+
     return int_expressions, bnd_expressions
 
 
 #==============================================================================
 class KernelExpression(Basic):
     def __new__(cls, target, expr):
-        assert(isinstance(expr, (Matrix, ImmutableDenseMatrix)))
-        n,m = expr.shape
-        if n*m == 1: expr = expr[0,0]
+        if isinstance(expr, (Matrix, ImmutableDenseMatrix)):
+            n,m = expr.shape
+            if n*m == 1: expr = expr[0,0]
 
         return Basic.__new__(cls, target, expr)
 
@@ -419,13 +399,10 @@ class TerminalExpr(CalculusFunction):
         # (Try to) sympify args first
 
         if options.pop('evaluate', True):
-
             args = cls._annotate(*args)
             r = cls.eval(*args, **options)
-
         else:
             r = None
-
         if r is None:
             return Basic.__new__(cls, *args, **options)
         else:
@@ -460,6 +437,7 @@ class TerminalExpr(CalculusFunction):
         return args
 
     @classmethod
+    @cacheit
     def eval(cls, *_args, **kwargs):
         """."""
 
@@ -469,39 +447,72 @@ class TerminalExpr(CalculusFunction):
         if not len(_args) == 1:
             raise ValueError('Expecting one argument')
 
-        expr = _args[0]
-        n_rows = kwargs.pop('n_rows', None)
-        n_cols = kwargs.pop('n_cols', None)
-        dim    = kwargs.pop('dim', None)
+        expr    = _args[0]
+        n_rows  = kwargs.pop('n_rows', None)
+        n_cols  = kwargs.pop('n_cols', None)
+        dim     = kwargs.pop('dim', None)
+        logical = kwargs.pop('logical', None)
 
         if isinstance(expr, Add):
-            args = [cls.eval(a, dim=dim) for a in expr.args]
+            args = [cls.eval(a, dim=dim, logical=logical) for a in expr.args]
             o = args[0]
             for arg in args[1:]:
                 o = o + arg
             return o
 
         elif isinstance(expr, Mul):
-            args = [cls.eval(a, dim=dim) for a in expr.args]
+            args = [cls.eval(a, dim=dim, logical=logical) for a in expr.args]
             o = args[0]
             for arg in args[1:]:
                 o = o * arg
             return o
 
+        elif isinstance(expr, Abs):
+            return Abs(cls.eval(expr.args[0], dim=dim, logical=logical))
+
+        elif isinstance(expr, Pow):
+            base = cls.eval(expr.base, dim=dim, logical=logical)
+            exp  = cls.eval(expr.exp, dim=dim, logical=logical)
+            return base**exp
+
+        elif isinstance(expr, JacobianSymbol):
+            axis = expr.axis
+            J    = Jacobian(expr.mapping)
+            if axis is None:
+                return J
+            else:
+                return J.col_del(axis)
+
+        elif isinstance(expr, SymbolicDeterminant):
+            return cls.eval(expr.arg, dim=dim, logical=logical).det().factor()
+
+        elif isinstance(expr, SymbolicTrace):
+            return cls.eval(expr.arg, dim=dim, logical=logical).trace()
+
+        elif isinstance(expr, Transpose):
+            return cls.eval(expr.arg, dim=dim, logical=logical).T
+
+        elif isinstance(expr, Inverse):
+            return cls.eval(expr.arg, dim=dim, logical=logical).inv()
+
         elif isinstance(expr, (ScalarTestFunction, VectorTestFunction)):
             return expr
 
+        elif isinstance(expr, PullBack):
+            return cls.eval(expr.expr, dim=dim, logical=True)
+
+        elif isinstance(expr, MatrixElement):
+            base = cls.eval(expr.base, dim=dim, logical=logical)
+            return base[expr.indices]
+
         elif isinstance(expr, BasicForm):
             # ...
-            dim = expr.ldim
-            domain = expr.domain
-            if isinstance(domain, Union):
-                domain = domain.as_tuple()
+            dim     = expr.ldim
+            domain  = expr.domain
 
-            elif not is_sequence(domain):
-                domain = (domain,)
-            # ...
-
+            if not isinstance(domain, Union):
+                logical = domain.mapping is None
+                domain  = (domain,)
             # ...
             d_expr = OrderedDict()
             for d in domain:
@@ -509,29 +520,21 @@ class TerminalExpr(CalculusFunction):
             # ...
             if isinstance(expr.expr, Add):
                 for a in expr.expr.args:
-                    newexpr = cls.eval(a, dim=dim)
-                    newexpr = expand(newexpr)
+                    newexpr = cls.eval(a, dim=dim, logical=True)
 
                     # ...
                     try:
                         domain = _get_domain(a)
-                        if isinstance(domain, Union):
-                            domain = list(domain._args)
-
-                        elif not is_sequence(domain):
-                            domain = [domain]
+                        if not isinstance(domain, Union):
+                            domain = (domain, )
                     except:
                         pass
-                    # ...
-
                     # ...
                     for d in domain:
                         d_expr[d] += newexpr
                     # ...
             else:
-                newexpr = cls.eval(expr.expr, dim=dim)
-                newexpr = expand(newexpr)
-
+                newexpr = cls.eval(expr.expr, dim=dim, logical=logical)
                 # ...
                 if isinstance(expr, Functional):
                     domain = expr.domain
@@ -548,25 +551,22 @@ class TerminalExpr(CalculusFunction):
 
                 # ...
                 for d in domain:
-                    d_expr[d] += newexpr
+                    d_expr[d] = newexpr
                 # ...
-            # ...
 
-            # ...
+            trials, tests = _get_trials_tests_flattened(expr)
+
             d_new = OrderedDict()
             for domain, newexpr in d_expr.items():
 
                 if newexpr != 0:
-                    M, test_indices, trial_indices = _init_matrix(expr)
-                    M = _to_matrix_form(newexpr, M, test_indices, trial_indices)
 
                     # TODO ARA make sure thre is no problem with psydac
                     #      we should always take the interior of a domain
                     if not isinstance(domain, (Boundary, Interface, InteriorDomain)):
                         domain = domain.interior
 
-                    d_new[domain] = M
-            # ...
+                    d_new[domain] = _to_matrix_form(newexpr, trials=trials, tests=tests)
 
             # ...
             ls = []
@@ -641,40 +641,50 @@ class TerminalExpr(CalculusFunction):
                 else:
                     raise TypeError('not implemented for {}'.format(type(domain)))
             # ...
-            return ls
+            return tuple(ls)
 
-        elif isinstance(expr, (DomainIntegral, BoundaryIntegral, InterfaceIntegral)):
-            dim = expr.domain.dim if dim is None else dim
-            return cls.eval(expr._args[0], dim=dim)
+        elif isinstance(expr, Integral):
+            dim     = expr.domain.dim if dim is None else dim
+            logical = expr.domain.mapping is None
+            return cls.eval(expr._args[0], dim=dim, logical=logical)
 
         elif isinstance(expr, NormalVector):
             lines = [[expr[i] for i in range(dim)]]
-            return Matrix(lines)
+            return ImmutableDenseMatrix(lines)
 
         elif isinstance(expr, TangentVector):
             lines = [[expr[i] for i in range(dim)]]
-            return Matrix(lines)
+            return ImmutableDenseMatrix(lines)
 
         elif isinstance(expr, BasicExpr):
-            return cls.eval(expr.expr, dim=dim)
+            return cls.eval(expr.expr, dim=dim, logical=logical)
 
+        elif isinstance(expr, _diff_ops):
+            op   = type(expr)
+            if logical:
+                new  = eval('Logical{0}_{1}d'.format(op, dim))
+            else:
+                new  = eval('{0}_{1}d'.format(op, dim))
+
+            args = [cls.eval(i, dim=dim, logical=logical) for i in expr.args]
+            return new(*args)
         elif isinstance(expr, _generic_ops):
             # if i = Dot(...) then type(i) is Grad
             op = type(expr)
             new  = eval('{0}_{1}d'.format(op, dim))
-            args = [cls.eval(i, dim=dim) for i in expr.args]
+            args = [cls.eval(i, dim=dim, logical=logical) for i in expr.args]
             return new(*args)
 
         elif isinstance(expr, Trace):
             # TODO treate different spaces
             if expr.order == 0:
-                return cls.eval(expr.expr, dim=dim)
+                return cls.eval(expr.expr, dim=dim, logical=logical)
 
             elif expr.order == 1:
                 # TODO give a name to normal vector
                 normal_vector_name = 'n'
                 n = NormalVector(normal_vector_name)
-                M = cls.eval(expr.expr, dim=dim)
+                M = cls.eval(expr.expr, dim=dim, logical=logical)
 
                 if dim == 1:
                     return M
@@ -692,17 +702,22 @@ class TerminalExpr(CalculusFunction):
             else:
                 raise ValueError('> Only traces of order 0 and 1 are available')
 
-
-        elif isinstance(expr, Matrix):
+        elif isinstance(expr, (Matrix, ImmutableDenseMatrix)):
             n,m = expr.shape
             lines = []
             for i in range(0, n):
                 line = []
                 for j in range(0, m):
-                    line.append(cls.eval(expr[i,j], dim=dim))
+                    line.append(cls.eval(expr[i,j], dim=dim, logical=logical))
                 lines.append(line)
-            return Matrix(lines)
+            return ImmutableDenseMatrix(lines)
 
+        elif isinstance(expr, LogicalExpr):
+            M         = expr.mapping
+            dim       = expr.dim
+            expr      = cls(expr.expr, dim=dim)
+            dim       = M.rdim
+            return LogicalExpr(expr, mapping=M, dim=dim)
         return expr
 
 
@@ -778,7 +793,10 @@ def _tensorize_atomic_expr(expr, d_atoms):
         return expr
 
     elif isinstance(expr, (ScalarTestFunction, IndexedTestTrial)):
-        atoms = d_atoms[expr]
+        for k,e in d_atoms.items():
+            if k == expr:
+                atoms = e
+                break
         return Mul(*atoms)
 
     else:
@@ -873,8 +891,9 @@ Bilaplacian_1 = Bilaplacian(1)
 Bilaplacian_2 = Bilaplacian(2)
 
 #==============================================================================
-def _replace_atomic_expr(expr, trials, tests, d_atoms, logical=False):
+def _replace_atomic_expr(expr, trials, tests, d_atoms, logical=False, expand=False):
 
+    expr   = expr.expand(deep=expand)
     masses = [Mass_0, Mass_1, Mass_2]
     stiffs = [Stiffness_0, Stiffness_1, Stiffness_2]
     advs   = [Advection_0, Advection_1, Advection_2]
@@ -901,7 +920,6 @@ def _replace_atomic_expr(expr, trials, tests, d_atoms, logical=False):
                 bil   = bils[i]
 
                 d = ops[i]
-
                 # Mass
                 expr = expr.subs(vi*ui, mass)
 
@@ -916,7 +934,6 @@ def _replace_atomic_expr(expr, trials, tests, d_atoms, logical=False):
 
                 # Bilaplacian
                 expr = expr.subs(d(d(vi))*d(d(ui)), bil)
-
     return expr
 
 #==============================================================================
@@ -955,6 +972,7 @@ class TensorExpr(CalculusFunction):
         expr = _args[0]
         d_atoms = kwargs.pop('d_atoms', OrderedDict())
         mapping = kwargs.pop('mapping', None)
+        expand    = kwargs.pop('expand', False)
 
         if isinstance(expr, Add):
             args = [cls.eval(a, d_atoms=d_atoms, mapping=mapping) for a in expr.args]
@@ -1010,7 +1028,7 @@ class TensorExpr(CalculusFunction):
 
                 lines.append(line)
 
-            return Matrix(lines)
+            return ImmutableDenseMatrix(lines)
 
         elif isinstance(expr, DomainExpression):
             # TODO to be removed
@@ -1029,23 +1047,21 @@ class TensorExpr(CalculusFunction):
             # ...
             variables  = list(terminal_expr.atoms(ScalarTestFunction))
             variables += list(terminal_expr.atoms(IndexedTestTrial))
+            # ...
+
+            # ...
+            if not(mapping is None):
+                dim           = expr.ldim
+                terminal_expr = LogicalExpr(terminal_expr.expr, mapping=mapping, dim=dim)
+                variables     = [LogicalExpr(e, mapping=mapping, dim=dim) for e in variables ]
+                trials        = [LogicalExpr(e, mapping=mapping, dim=dim) for e in trials ]
+                tests         = [LogicalExpr(e, mapping=mapping, dim=dim) for e in tests ]
+            # ...
 
             d_atoms = OrderedDict()
             for a in variables:
                 new = _split_test_function(a)
                 d_atoms[a] = new[a]
-            # ...
-
-            # ...
-            logical = False
-            if not(mapping is None):
-                logical = True
-                terminal_expr = LogicalExpr(mapping, terminal_expr.expr)
-                det_M         = DetJacobian(mapping)
-                det           = SymbolicDeterminant(mapping)
-                terminal_expr = terminal_expr.subs(det_M, det)
-                terminal_expr = expand(terminal_expr)
-            # ...
 
             # ...
             expr = cls.eval(terminal_expr, d_atoms=d_atoms, mapping=mapping)
@@ -1060,7 +1076,7 @@ class TensorExpr(CalculusFunction):
             # ...
 
             expr = _replace_atomic_expr(expr, trials, tests, d_atoms,
-                                        logical=logical)
+                                        logical=True, expand=expand)
 
             return expr
 

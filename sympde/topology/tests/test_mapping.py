@@ -6,11 +6,11 @@ from sympy.tensor import IndexedBase
 from sympy import symbols, simplify
 
 from sympde.topology import Mapping, MappedDomain
-from sympde.topology import Jacobian, DetJacobian, Covariant, Contravariant
 from sympde.topology import dx, dy, dz
 from sympde.topology import dx1, dx2, dx3
 from sympde.topology import Domain
 
+from sympde.topology.mapping import Jacobian, Covariant, Contravariant
 # ...
 def test_mapping_1d():
     print('============ test_mapping_1d ==============')
@@ -23,12 +23,12 @@ def test_mapping_1d():
 
     # ...
     expected = Matrix([[dx1(F[0])]])
-    assert(F.jacobian == expected)
+    assert(Jacobian(F) == expected)
     # ...
 
     # ...
     expected = dx1(F[0])
-    assert(F.det_jacobian == expected)
+    assert(Jacobian(F).det() == expected)
     # ...
 # ...
 
@@ -48,12 +48,12 @@ def test_mapping_2d():
     # ...
     expected = Matrix([[dx1(F[0]), dx2(F[0])],
                        [dx1(F[1]), dx2(F[1])]])
-    assert(F.jacobian == expected)
+    assert(Jacobian(F) == expected)
     # ...
 
     # ...
     expected = dx1(F[0])*dx2(F[1]) - dx1(F[1])*dx2(F[0])
-    assert(F.det_jacobian == expected)
+    assert(Jacobian(F).det() == expected)
     # ...
 
     # ...
@@ -89,20 +89,24 @@ def test_mapping_3d():
     expected = Matrix([[dx1(F[0]), dx2(F[0]), dx3(F[0])],
                        [dx1(F[1]), dx2(F[1]), dx3(F[1])],
                        [dx1(F[2]), dx2(F[2]), dx3(F[2])]])
-    assert(F.jacobian == expected)
+    assert(Jacobian(F) == expected)
     # ...
 
     # ...
     expected = (dx1(F[0])*dx2(F[1])*dx3(F[2]) - dx1(F[0])*dx2(F[2])*dx3(F[1]) -
                 dx1(F[1])*dx2(F[0])*dx3(F[2]) + dx1(F[1])*dx2(F[2])*dx3(F[0]) +
                 dx1(F[2])*dx2(F[0])*dx3(F[1]) - dx1(F[2])*dx2(F[1])*dx3(F[0]))
-    assert(F.det_jacobian == expected)
+    assert(Jacobian(F).det() == expected)
     # ...
 
     # ...
     expected = Tuple (a*(dx2(F[1])*dx3(F[2]) - dx2(F[2])*dx3(F[1]))/(dx1(F[0])*dx2(F[1])*dx3(F[2]) - dx1(F[0])*dx2(F[2])*dx3(F[1]) - dx1(F[1])*dx2(F[0])*dx3(F[2]) + dx1(F[1])*dx2(F[2])*dx3(F[0]) + dx1(F[2])*dx2(F[0])*dx3(F[1]) - dx1(F[2])*dx2(F[1])*dx3(F[0])) + b*(-dx1(F[1])*dx3(F[2]) + dx1(F[2])*dx3(F[1]))/(dx1(F[0])*dx2(F[1])*dx3(F[2]) - dx1(F[0])*dx2(F[2])*dx3(F[1]) - dx1(F[1])*dx2(F[0])*dx3(F[2]) + dx1(F[1])*dx2(F[2])*dx3(F[0]) + dx1(F[2])*dx2(F[0])*dx3(F[1]) - dx1(F[2])*dx2(F[1])*dx3(F[0])) + c*(dx1(F[1])*dx2(F[2]) - dx1(F[2])*dx2(F[1]))/(dx1(F[0])*dx2(F[1])*dx3(F[2]) - dx1(F[0])*dx2(F[2])*dx3(F[1]) - dx1(F[1])*dx2(F[0])*dx3(F[2]) + dx1(F[1])*dx2(F[2])*dx3(F[0]) + dx1(F[2])*dx2(F[0])*dx3(F[1]) - dx1(F[2])*dx2(F[1])*dx3(F[0])), a*(-dx2(F[0])*dx3(F[2]) + dx2(F[2])*dx3(F[0]))/(dx1(F[0])*dx2(F[1])*dx3(F[2]) - dx1(F[0])*dx2(F[2])*dx3(F[1]) - dx1(F[1])*dx2(F[0])*dx3(F[2]) + dx1(F[1])*dx2(F[2])*dx3(F[0]) + dx1(F[2])*dx2(F[0])*dx3(F[1]) - dx1(F[2])*dx2(F[1])*dx3(F[0])) + b*(dx1(F[0])*dx3(F[2]) - dx1(F[2])*dx3(F[0]))/(dx1(F[0])*dx2(F[1])*dx3(F[2]) - dx1(F[0])*dx2(F[2])*dx3(F[1]) - dx1(F[1])*dx2(F[0])*dx3(F[2]) + dx1(F[1])*dx2(F[2])*dx3(F[0]) + dx1(F[2])*dx2(F[0])*dx3(F[1]) - dx1(F[2])*dx2(F[1])*dx3(F[0])) + c*(-dx1(F[0])*dx2(F[2]) + dx1(F[2])*dx2(F[0]))/(dx1(F[0])*dx2(F[1])*dx3(F[2]) - dx1(F[0])*dx2(F[2])*dx3(F[1]) - dx1(F[1])*dx2(F[0])*dx3(F[2]) + dx1(F[1])*dx2(F[2])*dx3(F[0]) + dx1(F[2])*dx2(F[0])*dx3(F[1]) - dx1(F[2])*dx2(F[1])*dx3(F[0])), a*(dx2(F[0])*dx3(F[1]) - dx2(F[1])*dx3(F[0]))/(dx1(F[0])*dx2(F[1])*dx3(F[2]) - dx1(F[0])*dx2(F[2])*dx3(F[1]) - dx1(F[1])*dx2(F[0])*dx3(F[2]) + dx1(F[1])*dx2(F[2])*dx3(F[0]) + dx1(F[2])*dx2(F[0])*dx3(F[1]) - dx1(F[2])*dx2(F[1])*dx3(F[0])) + b*(-dx1(F[0])*dx3(F[1]) + dx1(F[1])*dx3(F[0]))/(dx1(F[0])*dx2(F[1])*dx3(F[2]) - dx1(F[0])*dx2(F[2])*dx3(F[1]) - dx1(F[1])*dx2(F[0])*dx3(F[2]) + dx1(F[1])*dx2(F[2])*dx3(F[0]) + dx1(F[2])*dx2(F[0])*dx3(F[1]) - dx1(F[2])*dx2(F[1])*dx3(F[0])) + c*(dx1(F[0])*dx2(F[1]) - dx1(F[1])*dx2(F[0]))/(dx1(F[0])*dx2(F[1])*dx3(F[2]) - dx1(F[0])*dx2(F[2])*dx3(F[1]) - dx1(F[1])*dx2(F[0])*dx3(F[2]) + dx1(F[1])*dx2(F[2])*dx3(F[0]) + dx1(F[2])*dx2(F[0])*dx3(F[1]) - dx1(F[2])*dx2(F[1])*dx3(F[0])))
-    cov = Covariant(F, abc)
-    assert(simplify(cov) == simplify(expected))
+    cov      = Covariant(F, abc)
+    cov      = Matrix(cov)
+    expected = Matrix(expected)
+    diff     = cov-expected
+    diff.simplify()
+    assert(diff.is_zero)
     # ...
 
     # ...
@@ -117,11 +121,10 @@ def test_mapping_3d():
 def test_mapping_2d_2():
     print('============ test_mapping_2d_2 ==============')
 
-    rdim = 2
-
-    F = Mapping('F', rdim)
+    rdim   = 2
+    F      = Mapping('F', rdim)
     domain = Domain('Omega', dim=rdim)
-    D = F(domain)
+    D      = F(domain)
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE

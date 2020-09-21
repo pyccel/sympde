@@ -9,13 +9,12 @@ from sympy import srepr
 
 from sympde.core import Constant
 from sympde.calculus import grad, dot, inner
-from sympde.topology import Domain
-from sympde.topology import ScalarField
+from sympde.topology import Domain, element_of
 from sympde.topology import get_index_derivatives_atom
-from sympde.topology import partial_derivative_as_str
 from sympde.topology import get_max_partial_derivatives
 from sympde.topology import ScalarFunctionSpace
 from sympde.topology import (dx, dy, dz)
+from sympde.topology import Mapping
 
 
 def indices_as_str(a):
@@ -33,21 +32,28 @@ def test_partial_derivatives_1():
 
     # ...
     domain = Domain('Omega', dim=2)
-    x,y = domain.coordinates
+    M      = Mapping('M', rdim=2)
 
-    V = ScalarFunctionSpace('V', domain)
+    mapped_domain = M(domain)
 
-    F,u,v,w = [ScalarField(V, name=i) for i in ['F', 'u', 'v', 'w']]
+    x,y = mapped_domain.coordinates
+
+    V = ScalarFunctionSpace('V', mapped_domain)
+
+    F,u,v,w = [element_of(V, name=i) for i in ['F', 'u', 'v', 'w']]
     uvw = Tuple(u,v,w)
 
     alpha = Constant('alpha')
     beta = Constant('beta')
     # ...
 
-    # ...
     assert(dx(x**2) == 2*x)
     assert(dy(x**2) == 0)
     assert(dz(x**2) == 0)
+
+    assert(dx(y**2) == 0)
+    assert(dy(y**2) == 2*y)
+    assert(dz(y**2) == 0)
 
     assert(dx(x*F) == F + x*dx(F))
     assert(dx(uvw) == Matrix([[dx(u), dx(v), dx(w)]]))
@@ -74,10 +80,12 @@ def test_partial_derivatives_2():
 
     # ...
     domain = Domain('Omega', dim=2)
-    x,y = domain.coordinates
+    M      = Mapping('M', rdim=2)
 
-    V = ScalarFunctionSpace('V', domain)
-    F = ScalarField(V, name='F')
+    mapped_domain = M(domain)
+
+    V = ScalarFunctionSpace('V', mapped_domain)
+    F = element_of(V, name='F')
 
     alpha = Constant('alpha')
     beta = Constant('beta')

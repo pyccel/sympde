@@ -2,35 +2,78 @@
 
 from collections  import OrderedDict
 
-from sympy import Indexed, IndexedBase, Idx, Matrix, ImmutableDenseMatrix
-from sympy import Function
+from sympy import Indexed, IndexedBase, Idx
+from sympy import Matrix, ImmutableDenseMatrix
+from sympy import Function, Expr
 from sympy import sympify
+from sympy import cacheit
+
 from sympy.core import Basic
 from sympy.core import Symbol
 from sympy.core import Add, Mul, Pow
+
 from sympy.core.expr       import AtomicExpr
 from sympy.core.numbers    import ImaginaryUnit
 from sympy.core.containers import Tuple
+from sympy                 import S
 
-from sympde.calculus.core import PlusInterfaceOperator, MinusInterfaceOperator
+from sympde.calculus.core  import PlusInterfaceOperator, MinusInterfaceOperator
+from sympde.calculus.core  import grad, div, rot, curl, laplace, hessian
+from sympde.calculus.core  import dot, inner, outer, _diff_ops
+from sympde.calculus.core  import has, DiffOperator
+
+from sympde.calculus.matrices import MatrixSymbolicExpr, MatrixElement, SymbolicTrace
+from sympde.calculus.matrices import SymbolicDeterminant
 
 from sympde.core       import Constant
 from sympde.core.basic import BasicMapping
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import _coeffs_registery
-from sympde.topology   import NormalVector
 
-from .basic       import BasicDomain
+
+from .basic       import BasicDomain, Union, InteriorDomain
+from .basic       import Boundary, Connectivity, Interface
+from .domain      import Domain, NCubeInterior
+from .domain      import NormalVector
 from .space       import ScalarTestFunction, VectorTestFunction, IndexedTestTrial
 from .space       import ScalarField, VectorField, IndexedVectorField
-from .datatype    import HcurlSpaceType
-from .derivatives import dx, dy, dz
+from .space       import Trace, trace_0, trace_1
+from .datatype    import HcurlSpaceType, H1SpaceType, L2SpaceType, HdivSpaceType, UndefinedSpaceType
+from .derivatives import dx, dy, dz, DifferentialOperator
 from .derivatives import _partial_derivatives
 from .derivatives import get_atom_derivatives, get_index_derivatives_atom
 from .derivatives import _logical_partial_derivatives
 from .derivatives import get_atom_logical_derivatives, get_index_logical_derivatives_atom
 from .derivatives import LogicalGrad_1d, LogicalGrad_2d, LogicalGrad_3d
 
+# TODO fix circular dependency between sympde.topology.domain and sympde.topology.mapping
+# TODO fix circular dependency between sympde.expr.evaluation and sympde.topology.mapping
+#==============================================================================
+from sympy                   import sqrt, symbols
+from sympy.core.exprtools    import factor_terms
+from sympy.polys.polytools   import parallel_poly_from_expr
+from sympy                   import cacheit
+
+@cacheit
+def cancel(f):
+    try:
+        f           = factor_terms(f, radical=True)
+        p, q        = f.as_numer_denom()
+        # TODO accelerate parallel_poly_from_expr
+        (p, q), opt = parallel_poly_from_expr((p,q))
+        c, P, Q     = p.cancel(q)
+        return c*(P.as_expr()/Q.as_expr())
+    except:
+        return f
+
+def get_logical_test_function(u):
+    space           = u.space
+    kind            = space.kind
+    dim             = space.ldim
+    logical_domain  = space.domain.logical_domain
+    l_space         = type(space)(space.name, logical_domain, kind=kind)
+    el              = l_space.element(u.name)
+    return el
 #==============================================================================
 class Mapping(BasicMapping):
     """
@@ -68,12 +111,7 @@ class Mapping(BasicMapping):
         obj._name                = name
         obj._rdim                = rdim
         obj._coordinates         = _coordinates
-        obj._logical_coordinates = None
-        obj._jacobian            = None
-        obj._det_jacobian        = None
-        obj._covariant           = None
-        obj._contravariant       = None
-        obj._hessian             = None
+        obj._jacobian            = kwargs.pop('jacobian', JacobianSymbol(obj))
 
         lcoords = ['x1', 'x2', 'x3'][:rdim]
         lcoords = [Symbol(i) for i in lcoords]
@@ -141,43 +179,15 @@ class Mapping(BasicMapping):
 
     def __call__(self, domain):
         assert(isinstance(domain, BasicDomain))
-
         return MappedDomain(self, domain)
 
     @property
     def jacobian(self):
-        if self._jacobian is None:
-            self._compute_jacobian()
-
         return self._jacobian
 
     @property
     def det_jacobian(self):
-        if self._det_jacobian is None:
-            self._compute_det_jacobian()
-
-        return self._det_jacobian
-
-    @property
-    def covariant(self):
-        if self._covariant is None:
-            self._compute_covariant()
-
-        return self._covariant
-
-    @property
-    def contravariant(self):
-        if self._contravariant is None:
-            self._compute_contravariant()
-
-        return self._contravariant
-
-    @property
-    def hessian(self):
-        if self._hessian is None:
-            self._compute_hessian()
-
-        return self._hessian
+        return self.jacobian.det()
 
     @property
     def is_analytical(self):
@@ -191,74 +201,40 @@ class Mapping(BasicMapping):
         sstr = printer.doprint
         return sstr(self.name)
 
-    def _compute_jacobian(self):
-        M = Matrix(Jacobian(self))
-        self._jacobian = M
+class InverseMapping(Mapping):
+    def __new__(cls, mapping):
+        assert isinstance(mapping, Mapping)
+        name     = mapping.name
+        rdim     = mapping.rdim
+        coords   = mapping.logical_coordinates
+        jacobian = mapping.jacobian.inv()
+        return Mapping.__new__(cls, name, rdim , coordinates=coords, jacobian=jacobian)
 
-    def _compute_det_jacobian(self):
-        J = self.jacobian
+class JacobianSymbol(MatrixSymbolicExpr):
 
-        dim = self.rdim
-        if dim == 2:
-            det = J[0,0]* J[1,1] - J[0,1]* J[1,0]
+    def __new__(cls, mapping, axis=None):
+        assert isinstance(mapping, Mapping)
+        if axis is not None:
+            assert isinstance(axis, int)
+        return MatrixSymbolicExpr.__new__(cls, mapping, axis)
 
-        elif dim == 3:
-            det = (J[0, 0]*J[1, 1]*J[2, 2] -
-                   J[0, 0]*J[1, 2]*J[2, 1] -
-                   J[0, 1]*J[1, 0]*J[2, 2] +
-                   J[0, 1]*J[1, 2]*J[2, 0] +
-                   J[0, 2]*J[1, 0]*J[2, 1] -
-                   J[0, 2]*J[1, 1]*J[2, 0])
+    @property
+    def mapping(self):
+        return self._args[0]
 
+    @property
+    def axis(self):
+        return self._args[1]
+
+    def _hashable_content(self):
+        return (self.mapping, self.axis)
+
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        if self.axis:
+            return 'Jacobian({},{})'.format(sstr(self.mapping.name), self.axis)
         else:
-            det = J.det()
-
-        self._det_jacobian = det
-
-    def _compute_covariant(self):
-
-        J = self.jacobian
-        dim = self.rdim
-        if dim == 1:
-            M = 1/J[0,0]
-
-        elif dim == 2:
-            det = J[0,0]* J[1,1] - J[0,1]* J[1,0]
-            J_inv = Matrix([[J[1,1], -J[0,1]], [-J[1,0], J[0,0]]])
-            M = J_inv.transpose() / det
-
-        elif dim == 3:
-            det = (J[0, 0]*J[1, 1]*J[2, 2] -
-                   J[0, 0]*J[1, 2]*J[2, 1] -
-                   J[0, 1]*J[1, 0]*J[2, 2] +
-                   J[0, 1]*J[1, 2]*J[2, 0] +
-                   J[0, 2]*J[1, 0]*J[2, 1] -
-                   J[0, 2]*J[1, 1]*J[2, 0])
-
-            M = Matrix([[J[1, 1]*J[2, 2] - J[1, 2]*J[2, 1], J[0, 2]*J[2, 1] - J[0, 1]*J[2, 2], J[0, 1]*J[1, 2] - J[0, 2]*J[1, 1]],
-                        [J[1, 2]*J[2, 0] - J[1, 0]*J[2, 2], J[0, 0]*J[2, 2] - J[0, 2]*J[2, 0], J[0, 2]*J[1, 0] - J[0, 0]*J[1, 2]],
-                        [J[1, 0]*J[2, 1] - J[1, 1]*J[2, 0], J[0, 1]*J[2, 0] - J[0, 0]*J[2, 1], J[0, 0]*J[1, 1] - J[0, 1]*J[1, 0]]])
-
-            M = 1/det * M.transpose()
-
-        else:
-            M = J.inv().transpose()
-
-        self._covariant = M
-
-    def _compute_contravariant(self):
-        J = self.jacobian
-        j = self.det_jacobian
-        inv_j = 1/j
-        n_rows, n_cols = J.shape
-        for i_row in range(0, n_rows):
-            for i_col in range(0, n_cols):
-                J[i_row, i_col] *= inv_j
-
-        self._contravariant = J
-
-    def _compute_hessian(self):
-        raise NotImplementedError('TODO')
+            return 'Jacobian({})'.format(sstr(self.mapping.name))
 
 #==============================================================================
 class InterfaceMapping(Mapping):
@@ -274,24 +250,51 @@ class InterfaceMapping(Mapping):
     """
 
     def __new__(cls, minus, plus):
-        return Basic.__new__(cls, minus, plus)
+        assert isinstance(minus, Mapping)
+        assert isinstance(plus,  Mapping)
+        name = '{}|{}'.format(str(minus), str(plus))
+        obj  = Mapping.__new__(cls, name, rdim=minus.rdim)
+        obj._minus = minus
+        obj._plus  = plus
+        
+        return obj
 
     @property
     def minus(self):
-        return self._args[0]
+        return self._minus
 
     @property
     def plus(self):
-        return self._args[1]
+        return self._plus
 
     @property
     def is_analytical(self):
         return self.minus.is_analytical and self.plus.is_analytical
 
+    def _eval_subs(self, old, new):
+        minus = self.minus.subs(old, new)
+        plus  = self.plus.subs(old, new)
+        return InterfaceMapping(minus, plus)
+
+    def _eval_simplify(self, **kwargs):
+        return self
+
+class MultiPatchMapping(Mapping):
+
+    def __new__(cls, dic):
+        assert isinstance( dic, dict)
+        return Basic.__new__(cls, dict)
+
+    def mappings(self):
+        return self.args[0]
+
+    @property
+    def is_analytical(self):
+        return all(a.is_analytical for a in self.mappings.values())
+
     @property
     def rdim(self):
-        return self.minus.rdim
-
+        return self.args[0].rdim
 #==============================================================================
 class IdentityMapping(Mapping):
     """
@@ -394,79 +397,71 @@ class TwistedTargetMapping(Mapping):
 
 #==============================================================================
 class MappedDomain(BasicDomain):
-    def __new__(cls, mapping, domain):
+    """."""
+
+    def __new__(cls, mapping, logical_domain):
         assert(isinstance(mapping, Mapping))
-        assert(isinstance(domain, BasicDomain))
+        assert(isinstance(logical_domain, BasicDomain))
+        if isinstance(logical_domain, Domain):
+            kwargs = dict(
+            dim            = logical_domain._dim,
+            mapping        = mapping,
+            logical_domain = logical_domain)
+            boundaries     = logical_domain.boundary
+            interiors      = logical_domain.interior
 
-        return Basic.__new__(cls, mapping, domain)
+            if isinstance(interiors, Union):
+                kwargs['interiors'] = Union(*[mapping(a) for a in interiors.args])
+            else:
+                kwargs['interiors'] = mapping(interiors)
+            if isinstance(boundaries, Union):
+                kwargs['boundaries'] = [mapping(a) for a in boundaries.args]
+            elif boundaries:
+                kwargs['boundaries'] = mapping(boundaries)
 
-    @property
-    def mapping(self):
-        return self._args[0]
+            interfaces =  logical_domain.connectivity.interfaces
+            if interfaces:
+                if isinstance(interfaces, Union):
+                    interfaces = interfaces.args
+                else:
+                    interfaces = [interfaces]
+                connectivity = {}
+                for e in interfaces:
+                    connectivity[e.name] = Interface(e.name, mapping(e.minus), mapping(e.plus))
+                kwargs['connectivity'] = Connectivity(connectivity)
+            return Domain(logical_domain.name, **kwargs)
 
-    @property
-    def domain(self):
-        return self._args[1]
-
-    @property
-    def dim(self):
-        return self.domain.dim
-
+        elif isinstance(logical_domain, NCubeInterior):
+            name  = logical_domain.name
+            dim   = logical_domain.dim
+            dtype = logical_domain.dtype
+            min_coords = logical_domain.min_coords
+            max_coords = logical_domain.max_coords
+            return NCubeInterior(name, dim, dtype, min_coords, max_coords, mapping, logical_domain)
+        elif isinstance(logical_domain, InteriorDomain):
+            name  = logical_domain.name
+            dim   = logical_domain.dim
+            dtype = logical_domain.dtype
+            return InteriorDomain(name, dim, dtype, mapping, logical_domain)
+        elif isinstance(logical_domain, Boundary):
+            name   = logical_domain.name
+            axis   = logical_domain.axis
+            ext    = logical_domain.ext
+            domain = mapping(logical_domain.domain)
+            return Boundary(name, domain, axis, ext, mapping, logical_domain)
+        else:
+            raise NotImplementedError('TODO')
 #==============================================================================
-class SymbolicMappingExpr(AtomicExpr):
-
-    def __new__(cls, mapping):
-        assert(isinstance(mapping, Mapping))
-
-        return Basic.__new__(cls, mapping)
-
-    @property
-    def mapping(self):
-        return self._args[0]
-
-class SymbolicDeterminant(SymbolicMappingExpr):
-    _name = 'det'
-
-    def _sympystr(self, printer):
-        sstr = printer.doprint
-        mapping = sstr(self.mapping)
-        return 'det({})'.format(mapping)
-
-class SymbolicCovariant(SymbolicMappingExpr):
-    _name = 'covariant'
-
-    def _sympystr(self, printer):
-        sstr = printer.doprint
-        mapping = sstr(self.mapping)
-        return 'covariant({})'.format(mapping)
-
-class SymbolicContravariant(SymbolicMappingExpr):
-    _name = 'contravariant'
-
-    def _sympystr(self, printer):
-        sstr = printer.doprint
-        mapping = sstr(self.mapping)
-        return 'contravariant({})'.format(mapping)
-
-class SymbolicInverseDeterminant(SymbolicMappingExpr):
-    _name = 'inv_det'
-
-    def _sympystr(self, printer):
-        sstr = printer.doprint
-        mapping = sstr(self.mapping)
-        return 'inv_det({})'.format(mapping)
-
-class SymbolicWeightedVolume(SymbolicMappingExpr):
-    _name = 'wvol'
-    def _sympystr(self, printer):
-        sstr = printer.doprint
-        mapping = sstr(self.mapping)
-        return 'wvol({})'.format(mapping)
-
+class SymbolicWeightedVolume(Expr):
+    """
+    This class represents the symbolic weighted volume of a quadrature rule
+    """
+#TODO move this somewhere else
 #==============================================================================
 class MappingApplication(Function):
     nargs = None
 
+    @cacheit
     def __new__(cls, *args, **options):
 
         if options.pop('evaluate', True):
@@ -479,16 +474,80 @@ class MappingApplication(Function):
         else:
             return r
 
+class PullBack(Expr):
+    is_commutative = False
+
+    def __new__(cls, u, mapping=None):
+        if not isinstance(u, (VectorTestFunction, ScalarTestFunction, ScalarField, VectorField)):
+            raise TypeError('{} must be of type ScalarTestFunction or VectorTestFunction'.format(str(u)))
+
+        if u.space.domain.mapping is None:
+            raise ValueError('The pull-back can be performed only to mapped domains')
+
+        space = u.space
+        kind  = space.kind
+        dim   = space.ldim
+        el    = get_logical_test_function(u)
+
+        if space.is_broken:
+            assert mapping is not None
+        else:
+            mapping = space.domain.mapping
+
+        J               = mapping.jacobian
+        if isinstance(kind, (UndefinedSpaceType, H1SpaceType)):
+            expr =  el
+        elif isinstance(kind, HdivSpaceType):
+            expr  =  (J/J.det())*ImmutableDenseMatrix(tuple(el[i] for i in range(dim)))
+        elif isinstance(kind , HcurlSpaceType):
+            expr  = J.inv().T*ImmutableDenseMatrix(tuple(el[i] for i in range(dim)))
+        elif isinstance(kind, L2SpaceType):
+            expr = J.det()*el
+#        elif isinstance(kind, UndefinedSpaceType):
+#            raise ValueError('kind must be specified in order to perform the pull-back transformation')
+        else:
+            raise ValueError("Unrecognized kind '{}' of space {}".format(kind, str(u.space)))
+
+        obj       = Expr.__new__(cls, u)
+        obj._expr = expr
+        obj._kind = kind
+        obj._test = el
+        return obj
+
+    @property
+    def expr(self):
+        return self._expr
+
+    @property
+    def kind(self):
+        return self._kind
+
+    @property
+    def test(self):
+        return self._test
 #==============================================================================
 class Jacobian(MappingApplication):
     """
-
-    Examples
+    This class calculates the Jacobian of a mapping
 
     """
 
     @classmethod
+    @cacheit
     def eval(cls, F):
+        """
+        this class methods computes the jacobian of a mapping
+
+        Parameters:
+        ----------
+         F: Mapping
+            mapping object
+
+        Returns:
+        ----------
+         expr : ImmutableDenseMatrix
+            the jacobian matrix
+        """
 
         if not isinstance(F, Mapping):
             raise TypeError('> Expecting a Mapping object')
@@ -510,22 +569,6 @@ class Jacobian(MappingApplication):
         return expr
 
 #==============================================================================
-class DetJacobian(MappingApplication):
-    """
-
-    Examples
-
-    """
-
-    @classmethod
-    def eval(cls, F):
-
-        if not isinstance(F, Mapping):
-            raise TypeError('> Expecting a Mapping object')
-
-        return F.det_jacobian
-
-#==============================================================================
 class Covariant(MappingApplication):
     """
 
@@ -534,31 +577,43 @@ class Covariant(MappingApplication):
     """
 
     @classmethod
+    @cacheit
     def eval(cls, F, v):
 
-        if not isinstance(v, (tuple, list, Tuple, Matrix)):
+        """
+        This class methods computes the covariant transformation
+
+        Parameters:
+        ----------
+         F: Mapping
+            mapping object
+
+         v: <tuple|list|Tuple|ImmutableDenseMatrix|Matrix>
+            the basis function
+
+        Returns:
+        ----------
+         expr : Tuple
+            the covariant transformation
+        """
+
+        if not isinstance(v, (tuple, list, Tuple, ImmutableDenseMatrix, Matrix)):
             raise TypeError('> Expecting a tuple, list, Tuple, Matrix')
 
-        M = F.covariant
-#        v = Matrix(v)
+        M   = Jacobian(F).inv().T
         dim = F.rdim
         if dim == 1:
-            v = [M * v[0]]
-            return Tuple(*v)
-
+            b = M[0,0] * v[0]
+            return Tuple(b)
         else:
-#            v = M*v
-#            return Tuple(*v)
-
             n,m = M.shape
-            w = []
+            w   = []
             for i in range(0, n):
-                w.append(0)
+                w.append(S.Zero)
 
             for i in range(0, n):
                 for j in range(0, m):
                     w[i] += M[i,j] * v[j]
-
             return Tuple(*w)
 
 #==============================================================================
@@ -570,35 +625,80 @@ class Contravariant(MappingApplication):
     """
 
     @classmethod
+    @cacheit
     def eval(cls, F, v):
+        """
+        This class methods computes the contravariant transformation
+
+        Parameters:
+        ----------
+         F: Mapping
+            mapping object
+
+         v: <tuple|list|Tuple|ImmutableDenseMatrix|Matrix>
+            the basis function
+
+        Returns:
+        ----------
+         expr : Tuple
+            the contravariant transformation
+        """
 
         if not isinstance(F, Mapping):
             raise TypeError('> Expecting a Mapping')
 
-        if not isinstance(v, (tuple, list, Tuple, Matrix)):
+        if not isinstance(v, (tuple, list, Tuple, ImmutableDenseMatrix, Matrix)):
             raise TypeError('> Expecting a tuple, list, Tuple, Matrix')
 
-        M = F.contravariant
+        M = Jacobian(F)
+        M = M/M.det()
         v = Matrix(v)
         v = M*v
         return Tuple(*v)
 
-
 #==============================================================================
 class LogicalExpr(CalculusFunction):
 
-    def __new__(cls, *args, **options):
+    @cacheit
+    def __new__(cls, expr, **options):
         # (Try to) sympify args first
 
         if options.pop('evaluate', True):
-            r = cls.eval(*args)
+            r = cls.eval(expr, **options)
+            if options.pop('subs', False):
+                mapping = options['mapping']
+                if mapping.is_analytical and not isinstance(mapping, InterfaceMapping):
+                    for i in range(mapping.rdim):
+                        r = r.subs(mapping[i], mapping.expressions[i])
+
+                elif mapping.is_analytical and isinstance(mapping, InterfaceMapping):
+                    M1 = mapping.minus
+                    M2 = mapping.plus
+                    for i in range(M1.rdim):
+                        r = r.subs(M1[i], M1.expressions[i])
+                        r = r.subs(M2[i], M2.expressions[i])
         else:
             r = None
 
         if r is None:
-            return Basic.__new__(cls, *args, **options)
+            obj          = Basic.__new__(cls, expr)
+            obj._mapping = options.pop('mapping', None)
+            obj._dim     = options.pop('dim', None)
+            return obj
         else:
             return r
+
+    @property
+    def expr(self):
+        return self._args[0]
+
+    @property
+    def mapping(self):
+        return self._mapping
+
+    @property
+    def dim(self):
+        return self._dim
 
     def __getitem__(self, indices, **kw_args):
         if is_sequence(indices):
@@ -608,83 +708,196 @@ class LogicalExpr(CalculusFunction):
             return Indexed(self, indices, **kw_args)
 
     @classmethod
-    def eval(cls, *_args):
+    @cacheit
+    def eval(cls, expr, mapping=None, dim=None, **options):
         """."""
 
-        if not _args:
-            return
+        from sympde.expr.evaluation import TerminalExpr, DomainExpression
+        from sympde.expr.expr import BilinearForm, LinearForm, BasicForm, Norm
+        from sympde.expr.expr import Integral
 
-        if not len(_args) == 2:
-            raise ValueError('Expecting two arguments')
+        types = (ScalarTestFunction, VectorTestFunction, VectorField, ScalarField, DifferentialOperator, Trace, Integral)
 
-        M         = _args[0]
-        expr      = _args[1]
-        dim       = M.rdim # TODO this is not the dim of the domain
+        # TODO this is not the dim of the domain
         l_coords  = ['x1', 'x2', 'x3'][:dim]
         ph_coords = ['x', 'y', 'z']
 
-        if M.is_analytical and not isinstance(M, InterfaceMapping):
-            for i in range(dim):
-                expr = expr.subs(M[i], M.expressions[i])
+        if not has(expr, types):
+            if has(expr, DiffOperator):
+                return cls( expr, mapping=mapping, dim=dim, evaluate=False)
+            else:
+                syms = symbols(ph_coords[:dim])
+                if isinstance(mapping, InterfaceMapping):
+                    mapping = mapping.minus
+                    # here we assume that the two mapped domains
+                    # are identical in the interface so we choose one of them
+                Ms   = [mapping[i] for i in range(dim)]
+                return expr.subs(zip(syms, Ms))
 
         if isinstance(expr, Symbol) and expr.name in l_coords:
             return expr
-        elif isinstance(expr, Symbol) and expr.name in ph_coords:
-            if M.is_analytical:
-                return M.expressions[ph_coords.index(expr.name)]
-            else:
-                return expr
+
+        if isinstance(expr, Symbol) and expr.name in ph_coords:
+            return mapping[ph_coords.index(expr.name)]
 
         elif isinstance(expr, Add):
-            args = [cls.eval(M, a) for a in expr.args]
-            return Add(*args)
+            args = [cls.eval(a, mapping=mapping, dim=dim) for a in expr.args]
+            v    =  S.Zero
+            for i in args:
+                v += i
+            n,d = v.as_numer_denom()
+            return n/d
 
         elif isinstance(expr, Mul):
-            args = [cls.eval(M, a) for a in expr.args]
-            return Mul(*args)
-
-        elif isinstance(expr, _coeffs_registery):
-            return expr
+            args = [cls.eval(a, mapping=mapping, dim=dim) for a in expr.args]
+            v    =  S.One
+            for i in args:
+                v *= i
+            return v
 
         elif isinstance(expr, _logical_partial_derivatives):
-            if M.is_analytical:
-                arg = cls.eval(M, expr._args[0])
-                op  = expr
-                return op.eval(arg)
-
-            else:
-                return expr
-
-        elif isinstance(expr, (ScalarField, ScalarTestFunction, IndexedTestTrial, IndexedVectorField, Indexed)):
             return expr
 
-        elif isinstance(expr, (VectorField, VectorTestFunction)):
-            raise NotImplementedError('')
+        elif isinstance(expr, (IndexedTestTrial, IndexedVectorField)):
+            el = cls.eval(expr.base, mapping=mapping, dim=dim)
+            return el[expr.indices[0]]
+
+        elif isinstance(expr, MinusInterfaceOperator):
+            mapping = mapping.minus
+            return MinusInterfaceOperator(PullBack(expr.args[0], mapping).expr)
+
+        elif isinstance(expr, PlusInterfaceOperator):
+            mapping = mapping.plus
+            return PlusInterfaceOperator(PullBack(expr.args[0], mapping).expr)
+
+        elif isinstance(expr, (ScalarField, VectorField, 
+                               VectorTestFunction, 
+                               ScalarTestFunction)):
+            return PullBack(expr, mapping).expr
+
+        elif isinstance(expr, grad):
+            arg = expr.args[0]
+            if isinstance(mapping, InterfaceMapping):
+                if isinstance(arg, MinusInterfaceOperator):
+                    a     = arg.args[0]
+                    mapping = mapping.minus
+                elif isinstance(arg, PlusInterfaceOperator):
+                    a = arg.args[0]
+                    mapping = mapping.plus
+                else:
+                    raise TypeError(arg)
+
+                arg = type(arg)(cls.eval(a, mapping=mapping, dim=dim))
+            else:
+                arg = cls.eval(arg, mapping=mapping, dim=dim)
+
+            return mapping.jacobian.inv().T*grad(arg)
+
+        elif isinstance(expr, curl):
+            arg = expr.args[0]
+            if isinstance(mapping, InterfaceMapping):
+                if isinstance(arg, MinusInterfaceOperator):
+                    arg     = arg.args[0]
+                    mapping = mapping.minus
+                elif isinstance(arg, PlusInterfaceOperator):
+                    arg = arg.args[0]
+                    mapping = mapping.plus
+                else:
+                    raise TypeError(arg)
+
+            if isinstance(arg,(VectorField, VectorTestFunction)):
+                arg = PullBack(arg, mapping)
+            else:
+                arg = cls.eval(arg, mapping=mapping, dim=dim)
+                
+            if isinstance(arg, PullBack) and isinstance(arg.kind, HcurlSpaceType):
+                J   = mapping.jacobian
+                arg = arg.test
+                if isinstance(expr.args[0], (MinusInterfaceOperator, PlusInterfaceOperator)):
+                    arg = type(expr.args[0])(arg)
+                return (J/J.det())*curl(arg)
+            else:
+                raise NotImplementedError('TODO')
+
+        elif isinstance(expr, div):
+            arg = expr.args[0]
+            if isinstance(mapping, InterfaceMapping):
+                if isinstance(arg, MinusInterfaceOperator):
+                    arg     = arg.args[0]
+                    mapping = mapping.minus
+                elif isinstance(arg, PlusInterfaceOperator):
+                    arg = arg.args[0]
+                    mapping = mapping.plus
+                else:
+                    raise TypeError(arg)
+
+            if isinstance(arg,(VectorField, VectorTestFunction)):
+                arg = PullBack(arg, mapping)
+            else:
+                arg = cls.eval(arg, mapping=mapping, dim=dim)
+            if isinstance(arg, PullBack) and isinstance(arg.kind, HdivSpaceType):
+                J   = mapping.jacobian
+                arg = arg.test
+                if isinstance(expr.args[0], (MinusInterfaceOperator, PlusInterfaceOperator)):
+                    arg = type(expr.args[0])(arg)
+                return (1/J.det())*div(arg)
+            else:
+                raise NotImplementedError('TODO')
+
+        elif isinstance(expr, laplace):
+            arg = expr.args[0]
+            v   = cls.eval(grad(arg), mapping=mapping, dim=dim)
+            v   = mapping.jacobian.inv()*grad(v)
+            return SymbolicTrace(v)
+
+#        elif isinstance(expr, hessian):
+#           arg = expr.args[0]
+#            if isinstance(mapping, InterfaceMapping):
+#                if isinstance(arg, MinusInterfaceOperator):
+#                    arg     = arg.args[0]
+#                    mapping = mapping.minus
+#                elif isinstance(arg, PlusInterfaceOperator):
+#                    arg = arg.args[0]
+#                    mapping = mapping.plus
+#                else:
+#                    raise TypeError(arg)
+#            v   = cls.eval(grad(expr.args[0]), mapping=mapping, dim=dim)
+#            v   = mapping.jacobian.inv().T*grad(v)
+#            return v
+          
+        elif isinstance(expr, (dot, inner, outer)):
+            args = [cls.eval(arg, mapping=mapping, dim=dim) for arg in expr.args]
+            return type(expr)(*args)
+
+        elif isinstance(expr, _diff_ops):
+            raise NotImplementedError('TODO')
 
         # TODO MUST BE MOVED AFTER TREATING THE CASES OF GRAD, CURL, DIV IN FEEC
         elif isinstance(expr, (Matrix, ImmutableDenseMatrix)):
-
             n_rows, n_cols = expr.shape
-
-            lines = []
+            lines          = []
             for i_row in range(0, n_rows):
                 line = []
                 for i_col in range(0, n_cols):
-                    line.append(cls.eval(M, expr[i_row,i_col]))
+                    line.append(cls.eval(expr[i_row,i_col], mapping=mapping, dim=dim))
 
                 lines.append(line)
 
-            return Matrix(lines)
+            return type(expr)(lines)
 
         elif isinstance(expr, dx):
             if expr.atoms(PlusInterfaceOperator):
-                M = M.plus
+                mapping = mapping.plus
             elif expr.atoms(MinusInterfaceOperator):
-                M = M.minus
+                mapping = mapping.minus
 
             arg = expr.args[0]
-            arg = cls.eval(M, arg)
+            arg = cls(arg, mapping=mapping, dim=dim, evaluate=True)
 
+            if isinstance(arg, PullBack):
+                arg = TerminalExpr(arg, dim=dim)
+            elif isinstance(arg, MatrixElement):
+                arg = TerminalExpr(arg, dim=dim, logical=True)
             # ...
             if dim == 1:
                 lgrad_arg = LogicalGrad_1d(arg)
@@ -697,33 +910,25 @@ class LogicalExpr(CalculusFunction):
 
             elif dim == 3:
                 lgrad_arg = LogicalGrad_3d(arg)
-
-            grad_arg = Covariant(M, lgrad_arg)
-
-            if isinstance(arg, (ScalarField, ScalarTestFunction)):
-                if isinstance(arg.space.kind, HcurlSpaceType):
-                    grad_arg = Contravariant(M, lgrad_arg)
-            # ...
-
-            # TODO ARA improve: we should be able to avoid the previous symbolic
-            # computations here
+            
+            grad_arg = Covariant(mapping, lgrad_arg)
             expr = grad_arg[0]
-            if M.is_analytical:
-                for i in range(dim):
-                    expr = expr.subs(M[i], M.expressions[i])
-
             return expr
 
         elif isinstance(expr, dy):
             if expr.atoms(PlusInterfaceOperator):
-                M = M.plus
+                mapping = mapping.plus
             elif expr.atoms(MinusInterfaceOperator):
-                M = M.minus
+                mapping = mapping.minus
 
             arg = expr.args[0]
-            arg = cls.eval(M, arg)
+            arg = cls(arg, mapping=mapping, dim=dim, evaluate=True)
+            if isinstance(arg, PullBack):
+                arg = TerminalExpr(arg, dim=dim)
+            elif isinstance(arg, MatrixElement):
+                arg = TerminalExpr(arg, dim=dim, logical=True)
 
-            # ...
+            # ..p
             if dim == 1:
                 lgrad_arg = LogicalGrad_1d(arg)
 
@@ -733,30 +938,23 @@ class LogicalExpr(CalculusFunction):
             elif dim == 3:
                 lgrad_arg = LogicalGrad_3d(arg)
 
-            grad_arg = Covariant(M, lgrad_arg)
-            # ...
-            if isinstance(arg, (ScalarField, ScalarTestFunction)):
-                if isinstance(arg.space.kind, HcurlSpaceType):
-                    grad_arg = Contravariant(M, lgrad_arg)
+            grad_arg = Covariant(mapping, lgrad_arg)
 
-            # TODO ARA improve: we should be able to avoid the previous symbolic
-            # computations here
             expr = grad_arg[1]
-            if M.is_analytical:
-                for i in range(dim):
-                    expr = expr.subs(M[i], M.expressions[i])
-
             return expr
 
         elif isinstance(expr, dz):
             if expr.atoms(PlusInterfaceOperator):
-                M = M.plus
+                mapping = mapping.plus
             elif expr.atoms(MinusInterfaceOperator):
-                M = M.minus
+                mapping = mapping.minus
 
             arg = expr.args[0]
-            arg = cls.eval(M, arg)
-
+            arg = cls(arg, mapping=mapping, dim=dim, evaluate=True)
+            if isinstance(arg, PullBack):
+                arg = TerminalExpr(arg, dim=dim)
+            elif isinstance(arg, MatrixElement):
+                arg = TerminalExpr(arg, dim=dim, logical=True)
             # ...
             if dim == 1:
                 lgrad_arg = LogicalGrad_1d(arg)
@@ -767,43 +965,85 @@ class LogicalExpr(CalculusFunction):
             elif dim == 3:
                 lgrad_arg = LogicalGrad_3d(arg)
 
-            grad_arg = Covariant(M, lgrad_arg)
-            # ...
-            if isinstance(arg, (ScalarField, ScalarTestFunction)):
-                if isinstance(arg.space.kind, HcurlSpaceType):
-                    grad_arg = Contravariant(M, lgrad_arg)
+            grad_arg = Covariant(mapping, lgrad_arg)
 
-            # TODO ARA improve: we should be able to avoid the previous symbolic
-            # computations here
             expr = grad_arg[2]
-            if M.is_analytical:
-                for i in range(dim):
-                    expr = expr.subs(M[i], M.expressions[i])
 
             return expr
 
-        elif isinstance(expr, Symbol):
+        elif isinstance(expr, (Symbol, Indexed)):
             return expr
         elif isinstance(expr, NormalVector):
             return expr
-        elif isinstance(expr, Function):
-            func = expr.func
-            args = expr.args
-            args = [cls(M, a) for a in args]
-            return func(*args)
 
         elif isinstance(expr, Pow):
             b = expr.base
             e = expr.exp
-            return Pow(cls(M, b), cls(M, e))
+            expr =  Pow(cls(b, mapping=mapping, dim=dim), cls(e, mapping=mapping, dim=dim))
+            return expr
 
-        return cls(M, expr, evaluate=False)
+        elif isinstance(expr, Trace):
+            e = cls.eval(expr.expr, mapping=mapping, dim=dim)
+            bd = expr.boundary.logical_domain
+            order = expr.order
+            return Trace(e, bd, order)
+
+        elif isinstance(expr, Integral):
+            domain  = expr.domain
+            mapping = domain.mapping
+            domain  = domain.logical_domain
+            dim     = domain.dim
+            assert domain is not None
+
+            if expr.is_domain_integral:
+                J   = mapping.jacobian
+                det = sqrt((J.T*J).det())
+            else:
+                axis = expr.domain.axis
+                J    = JacobianSymbol(mapping, axis)
+                det  = sqrt((J.T*J).det())
+            body   = cls.eval(expr.expr, mapping=mapping, dim=dim)*det
+            return Integral(body, domain)
+
+        elif isinstance(expr, BilinearForm):
+            tests  = [get_logical_test_function(a) for a in expr.test_functions]
+            trials = [get_logical_test_function(a) for a in expr.trial_functions]
+            body   = cls.eval(expr.expr, mapping=mapping, dim=dim)
+            return BilinearForm((trials, tests), body)
+
+        elif isinstance(expr, LinearForm):
+            tests  = [get_logical_test_function(a) for a in expr.test_functions]
+            body   = cls.eval(expr.expr, mapping=mapping, dim=dim)
+            return LinearForm(tests, body)
+        elif isinstance(expr, Norm):
+            kind           = expr.kind
+            domain         = expr.domain.logical_domain
+            exponent       = expr.exponent
+            e              = cls.eval(expr.expr, mapping=mapping, dim=dim)
+            norm           = Norm(e, domain, kind, evaluate=False)
+            norm._exponent = exponent
+            return norm
+        elif isinstance(expr, DomainExpression):
+            domain  = expr.target.logical_domain
+            mapping = expr.target.mapping
+            dim     = domain.dim
+            J       = mapping.jacobian
+            newexpr = cls.eval(expr.expr, mapping=mapping, dim=dim)
+            det     = TerminalExpr(sqrt((J.T*J).det()), dim=dim, logical=True)
+            
+            return DomainExpression(domain, ImmutableDenseMatrix([[newexpr*det]]))
+            
+        elif isinstance(expr, Function):
+            args = [cls.eval(a, mapping=mapping, dim=dim) for a in expr.args]
+            return type(expr)(*args)
+        return cls(expr, mapping=mapping, dim=dim, evaluate=False)
 
 #==============================================================================
 class SymbolicExpr(CalculusFunction):
     """returns a sympy expression where partial derivatives are converted into
     sympy Symbols."""
 
+    @cacheit
     def __new__(cls, *args, **options):
         # (Try to) sympify args first
 
@@ -825,6 +1065,7 @@ class SymbolicExpr(CalculusFunction):
             return Indexed(self, indices, **kw_args)
 
     @classmethod
+    @cacheit
     def eval(cls, *_args, **kwargs):
         """."""
 
@@ -839,16 +1080,19 @@ class SymbolicExpr(CalculusFunction):
 
         if isinstance(expr, Add):
             args = [cls.eval(a, code=code) for a in expr.args]
-            return Add(*args)
+            v = Add(*args)
+            return v
 
         elif isinstance(expr, Mul):
             args = [cls.eval(a, code=code) for a in expr.args]
-            return Mul(*args)
+            v    = Mul(*args)
+            return v
 
         elif isinstance(expr, Pow):
             b = expr.base
             e = expr.exp
-            return Pow(cls(b, code=code), e)
+            v = Pow(cls.eval(b, code=code), e)
+            return v
 
         elif isinstance(expr, _coeffs_registery):
             return expr
@@ -857,7 +1101,7 @@ class SymbolicExpr(CalculusFunction):
             expr = [cls.eval(a, code=code) for a in expr]
             return Tuple(*expr)
 
-        elif isinstance(expr, Matrix):
+        elif isinstance(expr, (Matrix, ImmutableDenseMatrix)):
 
             lines = []
             n_row,n_col = expr.shape
@@ -868,7 +1112,7 @@ class SymbolicExpr(CalculusFunction):
 
                 lines.append(line)
 
-            return Matrix(lines)
+            return type(expr)(lines)
 
         elif isinstance(expr, (ScalarField, ScalarTestFunction, VectorField, VectorTestFunction)):
             if code:
@@ -926,15 +1170,6 @@ class SymbolicExpr(CalculusFunction):
                     code += k*n
             return cls.eval(atom, code=code)
 
-        elif isinstance(expr, SymbolicMappingExpr):
-            mapping = expr.mapping
-            if isinstance(mapping, InterfaceMapping):
-                mapping = mapping.minus
-            name = '{name}_{mapping}'.format(name=expr._name,
-                                             mapping=mapping)
-
-            return Symbol(name)
-
         elif isinstance(expr, Mapping):
             return Symbol(expr.name)
 
@@ -952,13 +1187,30 @@ class SymbolicExpr(CalculusFunction):
             return expr
 
         elif isinstance(expr, Function):
-            return expr
+            args = [cls.eval(a, code=code) for a in expr.args]
+            return type(expr)(*args)
 
         elif isinstance(expr, ImaginaryUnit):
             return expr
-        # ...
+
+
+        elif isinstance(expr, SymbolicWeightedVolume):
+            mapping = expr.args[0]
+            if isinstance(mapping, InterfaceMapping):
+                mapping = mapping.minus
+            name = 'wvol_{mapping}'.format(mapping=mapping)
+
+            return Symbol(name)
+
+        elif isinstance(expr, SymbolicDeterminant):
+            name = 'det_{}'.format(str(expr.args[0]))
+            return Symbol(name)
+
+        elif isinstance(expr, PullBack):
+            return cls.eval(expr.expr, code=code)
 
         # Expression must always be translated to Sympy!
         # TODO: check if we should use 'sympy.sympify(expr)' instead
         else:
             raise NotImplementedError('Cannot translate to Sympy: {}'.format(expr))
+

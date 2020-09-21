@@ -75,8 +75,8 @@ def test_tensorize_2d_1_mapping():
 
     M = Mapping('Map', DIM)
 
-    domain = Domain('Omega', dim=DIM)
-    B1 = Boundary(r'\Gamma_1', domain)
+    domain = M(Domain('Omega', dim=DIM))
+    B1     = Boundary(r'\Gamma_1', domain)
 
     x,y = domain.coordinates
 
@@ -103,7 +103,7 @@ def test_tensorize_2d_2_mapping():
 
     DIM = 2
     M = Mapping('M', DIM)
-    domain = Domain('Omega', dim=DIM)
+    domain = M(Domain('Omega', dim=DIM))
 
     V = VectorFunctionSpace('V', domain)
     u, v = elements_of(V, names='u, v')

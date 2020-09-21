@@ -51,7 +51,7 @@ def test_topology_1():
     bnd_B_2 = Boundary('Gamma_2', B)
     bnd_B_3 = Boundary('Gamma_3', B)
 
-    connectivity['I'] = (bnd_A_1, bnd_B_2)
+    connectivity['I'] = Interface('I', bnd_A_1, bnd_B_2)
 
     Omega = Domain('Omega',
                    interiors=[A, B],
@@ -167,7 +167,7 @@ def test_domain_join_line():
 
     print(AB)
     assert AB.interior   == Union(A.interior, B.interior)
-    assert AB.interfaces == Interface(Edge('A_x|B_x'), AB_bnd_minus, AB_bnd_plus)
+    assert AB.interfaces == Interface('A_x1|B_x1', AB_bnd_minus, AB_bnd_plus)
     print(AB.connectivity)
     print('')
     # ...
@@ -183,7 +183,7 @@ def test_domain_join_line():
 
     print(ABC)
     assert ABC.interior == Union(A.interior, B.interior, C.interior)
-    assert ABC.interfaces == Union(Interface(Edge('A_x|B_x'), AB_bnd_minus, AB_bnd_plus),Interface(Edge('B_x|C_x'), BC_bnd_minus, BC_bnd_plus))
+    assert ABC.interfaces == Union(Interface('A_x1|B_x1', AB_bnd_minus, AB_bnd_plus),Interface('B_x1|C_x1', BC_bnd_minus, BC_bnd_plus))
     print(list(ABC.connectivity.items()))
     print('')
     # ...
@@ -207,7 +207,7 @@ def test_domain_join_square():
 
     print(AB)
     assert AB.interior   == Union(A.interior, B.interior)
-    assert AB.interfaces == Interface(Edge('A|B'), AB_bnd_minus, AB_bnd_plus)
+    assert AB.interfaces == Interface('A|B', AB_bnd_minus, AB_bnd_plus)
     print(AB.connectivity)
     # ...
     BC_bnd_minus = B.get_boundary(axis=0, ext=1)
@@ -219,7 +219,7 @@ def test_domain_join_square():
 
     print(ABC)
     assert ABC.interior == Union(A.interior, B.interior, C.interior)
-    assert ABC.interfaces == Union(Interface(Edge('A|B'), AB_bnd_minus, AB_bnd_plus),Interface(Edge('B|C'), BC_bnd_minus, BC_bnd_plus))
+    assert ABC.interfaces == Union(Interface('A|B', AB_bnd_minus, AB_bnd_plus),Interface('B|C', BC_bnd_minus, BC_bnd_plus))
     print(list(ABC.connectivity.items()))
     print('')
     # ...
