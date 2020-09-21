@@ -577,10 +577,10 @@ class Grad_2d(GradBasic):
                 line = [dx(u)[0,i], dy(u)[0,i]]
                 lines.append(line)
 
-            v = Matrix(lines)
+            v = ImmutableDenseMatrix(lines)
 
         else:
-            v = Matrix((dx(u), dy(u)))
+            v = ImmutableDenseMatrix([[dx(u)], [dy(u)]])
 
         return v
 
@@ -602,10 +602,10 @@ class Grad_3d(GradBasic):
                 line = [dx(u)[0,i], dy(u)[0,i], dz(u)[0,i]]
                 lines.append(line)
 
-            v = Matrix(lines)
+            v = ImmutableDenseMatrix(lines)
 
         else:
-            v = Matrix((dx(u), dy(u), dz(u)))
+            v = ImmutableDenseMatrix([[dx(u)], [dy(u)], [dz(u)]])
 
         return v
 
@@ -657,9 +657,9 @@ class Curl_3d(CurlBasic):
 
         u = _args[0]
 
-        return Matrix((dy(u[2]) - dz(u[1]),
-                     dz(u[0]) - dx(u[2]),
-                     dx(u[1]) - dy(u[0])))
+        return ImmutableDenseMatrix([[dy(u[2]) - dz(u[1])],
+                                     [dz(u[0]) - dx(u[2])],
+                                     [dx(u[1]) - dy(u[0])]])
 
 #==============================================================================
 class Rot_2d(CalculusFunction):
@@ -695,7 +695,7 @@ class Rot_2d(CalculusFunction):
 
         u = _args[0]
 
-        return Matrix([[dy(u),-dx(u)]]).T
+        return ImmutableDenseMatrix([[dy(u)],[-dx(u)]])
 
 #==============================================================================
 class DivBasic(CalculusFunction):
@@ -878,7 +878,7 @@ class Hessian_2d(HessianBasic):
         if isinstance(u, (VectorTestFunction, VectorField)):
             raise NotImplementedError('TODO')
 
-        return Matrix([[dx(dx(u)), dx(dy(u))],
+        return ImmutableDenseMatrix([[dx(dx(u)), dx(dy(u))],
                        [dx(dy(u)), dy(dy(u))]])
 
 class Hessian_3d(HessianBasic):
@@ -893,7 +893,7 @@ class Hessian_3d(HessianBasic):
         if isinstance(u, (VectorTestFunction, VectorField)):
             raise NotImplementedError('TODO')
 
-        return Matrix([[dx(dx(u)), dx(dy(u)), dx(dz(u))],
+        return ImmutableDenseMatrix([[dx(dx(u)), dx(dy(u)), dx(dz(u))],
                        [dx(dy(u)), dy(dy(u)), dy(dz(u))],
                        [dx(dz(u)), dy(dz(u)), dz(dz(u))]])
 
@@ -962,7 +962,7 @@ class LogicalGrad_2d(GradBasic):
             v = ImmutableDenseMatrix(lines)
 
         else:
-            v = ImmutableDenseMatrix((dx1(u), dx2(u)))
+            v = ImmutableDenseMatrix([[dx1(u)], [dx2(u)]])
 
         return v
 
@@ -986,7 +986,7 @@ class LogicalGrad_3d(GradBasic):
             v = ImmutableDenseMatrix(lines)
 
         else:
-            v = ImmutableDenseMatrix((dx1(u), dx2(u), dx3(u)))
+            v = ImmutableDenseMatrix([[dx1(u)], [dx2(u)], [dx3(u)]])
 
         return v
 
@@ -1014,9 +1014,9 @@ class LogicalCurl_3d(CurlBasic):
 
         u = _args[0]
 
-        return ImmutableDenseMatrix((dx2(u[2]) - dx3(u[1]),
-                     dx3(u[0]) - dx1(u[2]),
-                     dx1(u[1]) - dx2(u[0])))
+        return ImmutableDenseMatrix([[dx2(u[2]) - dx3(u[1])],
+                     [dx3(u[0]) - dx1(u[2])],
+                     [dx1(u[1]) - dx2(u[0])]])
 
 #==============================================================================
 class LogicalRot_2d(CalculusFunction):
@@ -1052,7 +1052,7 @@ class LogicalRot_2d(CalculusFunction):
 
         u = _args[0]
 
-        return ImmutableDenseMatrix([[dx2(u),-dx1(u)]]).T
+        return ImmutableDenseMatrix([[dx2(u)],[-dx1(u)]])
 
 #==============================================================================
 class LogicalDiv_1d(DivBasic):
