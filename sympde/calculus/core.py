@@ -165,7 +165,7 @@ class DiffOperator(CalculusFunction):
 
 class BasicOperatorAdd(Add):
     _op_priority   = 10.005
-    def __new__(cls, *args):
+    def __new__(cls, *args, **options):
 
         newargs = []
         for i in args:

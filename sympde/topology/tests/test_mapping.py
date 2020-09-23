@@ -106,7 +106,8 @@ def test_mapping_3d():
     expected = Matrix(expected)
     diff     = cov-expected
     diff.simplify()
-    assert(diff.is_zero)
+
+    assert(diff.dot(diff).is_zero)
     # ...
 
     # ...

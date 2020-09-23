@@ -10,7 +10,7 @@ class MatrixSymbolicExpr(Expr):
     _op_priority   = 20.0
     is_MatrixSymbolicExpr = True
 
-    def __new__(cls, *args):
+    def __new__(cls, *args, **options):
         return Expr.__new__(cls, *args)
 
     def inv(self):
@@ -83,7 +83,7 @@ class MatrixSymbolicExpr(Expr):
 
 class Inverse(MatrixSymbolicExpr):
     is_commutative = False
-    def __new__(cls, *args):
+    def __new__(cls, *args, **options):
         assert len(args) == 1
         if isinstance(args[0], Inverse):
             return args[0].arg
@@ -99,7 +99,7 @@ class Inverse(MatrixSymbolicExpr):
 
 class Transpose(MatrixSymbolicExpr):
     is_commutative = False
-    def __new__(cls, *args):
+    def __new__(cls, *args, **options):
         assert len(args) == 1
         if isinstance(args[0], Transpose):
             return args[0].arg
@@ -115,7 +115,7 @@ class Transpose(MatrixSymbolicExpr):
 
 class MatMul(MatrixSymbolicExpr, Mul):
     is_MatMul = True
-    def __new__(cls, *args):
+    def __new__(cls, *args, **options):
         args = [sympify(a) for a in args if a != 1]
 
         for i,a in enumerate(args):
@@ -182,7 +182,7 @@ class MatMul(MatrixSymbolicExpr, Mul):
 
 class MatAdd(MatrixSymbolicExpr, Add):
     is_MatAdd = True
-    def __new__(cls, *args):
+    def __new__(cls, *args, **options):
         args = [sympify(a) for a in args if a != 0]
         newargs = []
         for i in args:
@@ -218,7 +218,7 @@ class MatAbs(MatrixSymbolicExpr):
 
 class SymbolicDeterminant(Expr):
     is_commutative = True
-    def __new__(cls, *args):
+    def __new__(cls, *args, **options):
         assert len(args) == 1
         return Basic.__new__(cls, *args)
 
@@ -233,7 +233,7 @@ class SymbolicDeterminant(Expr):
 
 class SymbolicTrace(Expr):
     is_commutative = True
-    def __new__(cls, *args):
+    def __new__(cls, *args, **options):
         assert len(args) == 1
         arg = args[0]
         if isinstance(arg, Add):
@@ -257,7 +257,7 @@ class SymbolicTrace(Expr):
         return 'tr({})'.format(arg)
 
 class MatrixElement(Expr):
-    def __new__(cls, base, indices):
+    def __new__(cls, base, indices, **options):
         return Expr.__new__(cls, base, indices)
 
     @property
