@@ -568,20 +568,15 @@ class Grad_2d(GradBasic):
         if not _args:
             return
 
-        u = _args[0]
+        u  = _args[0]
+        du = (dx(u), dy(u))
 
-        if isinstance(u, Tuple):
-            n = len(u)
-            lines = []
-            for i in range(0, n):
-                line = [dx(u)[0,i], dy(u)[0,i]]
-                lines.append(line)
-
-            v = ImmutableDenseMatrix(lines)
-
+        if isinstance(du[0], (Tuple, Matrix, ImmutableDenseMatrix)):
+            lines = [list(d[:]) for d in du]
         else:
-            v = ImmutableDenseMatrix([[dx(u)], [dy(u)]])
+            lines = [[d] for d in du]
 
+        v = ImmutableDenseMatrix(lines)
         return v
 
 class Grad_3d(GradBasic):
@@ -593,19 +588,15 @@ class Grad_3d(GradBasic):
         if not _args:
             return
 
-        u = _args[0]
+        u  = _args[0]
+        du = (dx(u), dy(u), dz(u))
 
-        if isinstance(u, Tuple):
-            n = len(u)
-            lines = []
-            for i in range(0, n):
-                line = [dx(u)[0,i], dy(u)[0,i], dz(u)[0,i]]
-                lines.append(line)
-
-            v = ImmutableDenseMatrix(lines)
-
+        if isinstance(du[0], (Tuple, Matrix, ImmutableDenseMatrix)):
+            lines = [list(d[:]) for d in du]
         else:
-            v = ImmutableDenseMatrix([[dx(u)], [dy(u)], [dz(u)]])
+            lines = [[d] for d in du]
+
+        v = ImmutableDenseMatrix(lines)
 
         return v
 
@@ -951,19 +942,15 @@ class LogicalGrad_2d(GradBasic):
         if not _args:
             return
 
-        u = _args[0]
+        u  = _args[0]
+        du = (dx1(u), dx2(u))
 
-        if isinstance(u, (Tuple, Matrix, ImmutableDenseMatrix)):
-            n = len(u)
-            lines = []
-            for i in range(0, n):
-                line = [dx1(u)[0,i], dx2(u)[0,i]]
-                lines.append(line)
-            v = ImmutableDenseMatrix(lines)
-
+        if isinstance(du[0], (Tuple, Matrix, ImmutableDenseMatrix)):
+            lines = [list(d[:]) for d in du]
         else:
-            v = ImmutableDenseMatrix([[dx1(u)], [dx2(u)]])
+            lines = [[d] for d in du]
 
+        v = ImmutableDenseMatrix(lines)
         return v
 
 class LogicalGrad_3d(GradBasic):
@@ -974,20 +961,15 @@ class LogicalGrad_3d(GradBasic):
         if not _args:
             return
 
-        u = _args[0]
+        u  = _args[0]
+        du = (dx1(u), dx2(u), dx3(u))
 
-        if isinstance(u, (Tuple, Matrix, ImmutableDenseMatrix)):
-            n = len(u)
-            lines = []
-            for i in range(0, n):
-                line = [dx1(u)[0,i], dx2(u)[0,i], dx3(u)[0,i]]
-                lines.append(line)
-
-            v = ImmutableDenseMatrix(lines)
-
+        if isinstance(du[0], (Tuple, Matrix, ImmutableDenseMatrix)):
+            lines = [list(d[:]) for d in du]
         else:
-            v = ImmutableDenseMatrix([[dx1(u)], [dx2(u)], [dx3(u)]])
+            lines = [[d] for d in du]
 
+        v = ImmutableDenseMatrix(lines)
         return v
 
 #==============================================================================
@@ -1162,7 +1144,7 @@ class LogicalHessian_2d(HessianBasic):
             raise NotImplementedError('TODO')
 
         return ImmutableDenseMatrix([[dx1(dx1(u)), dx1(dx2(u))],
-                       [dx1(dx2(u)), dx2(dx2(u))]])
+                                     [dx1(dx2(u)), dx2(dx2(u))]])
 
 class LogicalHessian_3d(HessianBasic):
 
@@ -1177,8 +1159,8 @@ class LogicalHessian_3d(HessianBasic):
             raise NotImplementedError('TODO')
 
         return ImmutableDenseMatrix([[dx1(dx1(u)), dx1(dx2(u)), dx1(dx3(u))],
-                       [dx1(dx2(u)), dx2(dx2(u)), dx2(dx3(u))],
-                       [dx1(dx3(u)), dx2(dx3(u)), dx3(dx3(u))]])
+                                     [dx1(dx2(u)), dx2(dx2(u)), dx2(dx3(u))],
+                                     [dx1(dx3(u)), dx2(dx3(u)), dx3(dx3(u))]])
 
 #==============================================================================
 

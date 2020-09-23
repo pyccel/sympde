@@ -283,8 +283,9 @@ class MultiPatchMapping(Mapping):
 
     def __new__(cls, dic):
         assert isinstance( dic, dict)
-        return Basic.__new__(cls, dict)
+        return Basic.__new__(cls, dic)
 
+    @property
     def mappings(self):
         return self.args[0]
 
@@ -294,7 +295,21 @@ class MultiPatchMapping(Mapping):
 
     @property
     def rdim(self):
-        return self.args[0].rdim
+        return list(self.mappings.values())[0].rdim
+
+    @property
+    def is_analytical(self):
+        return all(e.is_analytical for e in self.mappings.values())
+
+    def _eval_subs(self, old, new):
+        return self
+
+    def _eval_simplify(self, **kwargs):
+        return self
+
+    def __hash__(self):
+        return hash((*self.mappings.values(), *self.mappings.keys()))
+
 #==============================================================================
 class IdentityMapping(Mapping):
     """
@@ -566,7 +581,7 @@ class Jacobian(MappingApplication):
         elif rdim == 3:
             expr = LogicalGrad_3d(F)
 
-        return expr
+        return expr.T
 
 #==============================================================================
 class Covariant(MappingApplication):
@@ -847,7 +862,7 @@ class LogicalExpr(CalculusFunction):
         elif isinstance(expr, laplace):
             arg = expr.args[0]
             v   = cls.eval(grad(arg), mapping=mapping, dim=dim)
-            v   = mapping.jacobian.inv()*grad(v)
+            v   = mapping.jacobian.inv().T*grad(v)
             return SymbolicTrace(v)
 
 #        elif isinstance(expr, hessian):
