@@ -34,8 +34,8 @@ from operator  import mul, add
 from functools import reduce
 
 class IntAdd(Add):
-    _op_priority          = 20
-    def __new__(cls, *args):
+    _op_priority  = 20
+    def __new__(cls, *args, **options):
         newargs = []
         for i in args:
             if isinstance(i, IntAdd):
@@ -104,7 +104,7 @@ def _get_domain(expr):
 class LinearExpr(BasicExpr):
     is_linear = True
 
-    def __new__(cls, arguments, expr):
+    def __new__(cls, arguments, expr, **options):
 
         if expr.atoms(Integral):
             raise TypeError('')
@@ -264,7 +264,7 @@ class Integral(CalculusFunction):
 class Functional(BasicForm):
     is_functional = True
 
-    def __new__(cls, expr, domain, evaluate=True):
+    def __new__(cls, expr, domain, evaluate=True, **options):
 
         # compute dim from fields if available
         ls = tuple(expr.atoms(ScalarField, VectorField, ScalarTestFunction, VectorTestFunction))
@@ -308,7 +308,7 @@ class Functional(BasicForm):
 class LinearForm(BasicForm):
     is_linear = True
 
-    def __new__(cls, arguments, expr):
+    def __new__(cls, arguments, expr, **options):
 
         # Trivial case: null expression
         if expr == 0:
@@ -388,7 +388,7 @@ class BilinearForm(BasicForm):
     is_bilinear = True
     _is_symmetric = None
 
-    def __new__(cls, arguments, expr):
+    def __new__(cls, arguments, expr, **options):
 
         # Trivial case: null expression
         if expr == 0:
@@ -494,7 +494,7 @@ class BilinearForm(BasicForm):
 class Norm(Functional):
     is_norm = True
 
-    def __new__(cls, expr, domain, kind='l2', evaluate=True):
+    def __new__(cls, expr, domain, kind='l2', evaluate=True, **options):
 #        # ...
 #        tests = expr.atoms((ScalarTestFunction, VectorTestFunction))
 #        if tests:

@@ -293,7 +293,7 @@ class Domain(BasicDomain):
         if not(ext == '.h5'):
             raise ValueError('> Only h5 files are supported')
         # ...
-        from sympde.topology.mapping import Mapping
+        from sympde.topology.mapping import Mapping, MultiPatchMapping
 
         h5  = h5py.File( filename, mode='r' )
         yml = yaml.load( h5['topology.yml'][()], Loader=yaml.SafeLoader )
@@ -363,7 +363,7 @@ class Domain(BasicDomain):
 
     def join(self, other, name, bnd_minus=None, bnd_plus=None):
 
-        from sympde.topology.mapping import InterfaceMapping
+        from sympde.topology.mapping import InterfaceMapping, MultiPatchMapping
         # ... connectivity
         connectivity = Connectivity()
         # TODO be careful with '|' in psydac
@@ -405,7 +405,7 @@ class Domain(BasicDomain):
             for k,v in connectivity.items():
                 logical_connectivity[name] = v.logical_domain
 
-            mapping        = tuple(e.mapping for e in interiors)
+            mapping        = MultiPatchMapping({e.logical_domain: e.mapping for e in interiors})
             logical_domain = Domain(name,
                             interiors=logical_interiors,
                             boundaries=logical_boundaries,
