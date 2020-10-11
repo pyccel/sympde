@@ -4,11 +4,16 @@ from sympy.core.decorators import call_highest_priority
 from sympy                 import Basic
 from sympy                 import sympify
 from sympde.core.basic     import _coeffs_registery
+from sympy.core.basic      import Basic
 
 class MatrixSymbolicExpr(Expr):
     is_commutative = False
     _op_priority   = 20.0
     is_MatrixSymbolicExpr = True
+
+    is_Matrix     = True
+    is_ZeroMatrix = False
+    is_Identity   = False
 
     def __new__(cls, *args, **options):
         return Expr.__new__(cls, *args)
@@ -34,7 +39,7 @@ class MatrixSymbolicExpr(Expr):
 
     # The following is adapted from the core Expr object
     def __neg__(self):
-        return MatMul(S.NegativeOne, self)
+        return MatSymbolicMul(S.NegativeOne, self)
 
     def __abs__(self):
         return MatAbs(self)
@@ -44,39 +49,39 @@ class MatrixSymbolicExpr(Expr):
 
     @call_highest_priority('__radd__')
     def __add__(self, other):
-        return MatAdd(self, other)
+        return MatSymbolicAdd(self, other)
 
     @call_highest_priority('__add__')
     def __radd__(self, other):
-        return MatAdd(other, self)
+        return MatSymbolicAdd(other, self)
 
     @call_highest_priority('__rsub__')
     def __sub__(self, other):
-        return MatAdd(self, -other)
+        return MatSymbolicAdd(self, -other)
 
     @call_highest_priority('__sub__')
     def __rsub__(self, other):
-        return MatAdd(other, -self)
+        return MatSymbolicAdd(other, -self)
 
     @call_highest_priority('__rmul__')
     def __mul__(self, other):
-        return MatMul(self, other)
+        return MatSymbolicMul(self, other)
 
     @call_highest_priority('__mul__')
     def __rmul__(self, other):
-        return MatMul(other, self)
+        return MatSymbolicMul(other, self)
 
     @call_highest_priority('__pow__')
     def __pow__(self, other):
-        return MatPow(self, other)
+        return MatSymbolicPow(self, other)
 
     @call_highest_priority('__div__')
     def __div__(self, other):
-        return MatMul(self , other**S.NegativeOne)
+        return MatSymbolicMul(self , other**S.NegativeOne)
 
     @call_highest_priority('__rdiv__')
     def __rdiv__(self, other):
-        return MatMul(other, Pow(self, S.NegativeOne))
+        return MatSymbolicMul(other, Pow(self, S.NegativeOne))
 
     __truediv__ = __div__
     __rtruediv__ = __rdiv__
@@ -113,8 +118,8 @@ class Transpose(MatrixSymbolicExpr):
         sstr = printer.doprint
         return '{}.T'.format(sstr(self.arg))
 
-class MatMul(MatrixSymbolicExpr, Mul):
-    is_MatMul = True
+class MatSymbolicMul(MatrixSymbolicExpr, Mul):
+
     def __new__(cls, *args, **options):
         args = [sympify(a) for a in args if a != 1]
 
@@ -123,7 +128,7 @@ class MatMul(MatrixSymbolicExpr, Mul):
                 newargs = []
                 for e in a.args:
                     t = args[:i] + [e] + args[i+1:]
-                    newargs.append(MatMul(*t))
+                    newargs.append(MatSymbolicMul(*t))
                 return type(a)(*newargs)
 
         newargs = []
@@ -174,19 +179,19 @@ class MatMul(MatrixSymbolicExpr, Mul):
         if L == 1:
             return sums[0].args
         terms = []
-        left = MatMul._expandsums(sums[:L//2])
-        right = MatMul._expandsums(sums[L//2:])
-        terms = [MatMul(a, b) for a in left for b in right]
-        added = MatAdd(*terms)
+        left = MatSymbolicMul._expandsums(sums[:L//2])
+        right = MatSymbolicMul._expandsums(sums[L//2:])
+        terms = [MatSymbolicMul(a, b) for a in left for b in right]
+        added = MatSymbolicAdd(*terms)
         return Add.make_args(added) # it may have collapsed down to one term
 
-class MatAdd(MatrixSymbolicExpr, Add):
-    is_MatAdd = True
+class MatSymbolicAdd(MatrixSymbolicExpr, Add):
+
     def __new__(cls, *args, **options):
         args = [sympify(a) for a in args if a != 0]
         newargs = []
         for i in args:
-            if isinstance(i, MatAdd):
+            if isinstance(i, MatSymbolicAdd):
                 newargs += list(i.args)
             else:
                 newargs.append(i)
@@ -203,15 +208,15 @@ class MatAdd(MatrixSymbolicExpr, Add):
     def _sympystr(self, printer):
         sstr = printer.doprint
         #return ' + '.join((sstr(i) for i in self.args))
-        return 'MatAdd({})'.format(','.join((sstr(i) for i in self.args)))
+        return 'MatSymbolicAdd({})'.format(','.join((sstr(i) for i in self.args)))
 
-class MatPow(MatrixSymbolicExpr, Pow):
+class MatSymbolicPow(MatrixSymbolicExpr, Pow):
     def _sympystr(self, printer):
         sstr = printer.doprint
         #return '**'.join((sstr(i) for i in self.args))
-        return 'MatPow({})'.format(','.join((sstr(i) for i in self.args)))
+        return 'MatSymbolicPow({})'.format(','.join((sstr(i) for i in self.args)))
 
-class MatAbs(MatrixSymbolicExpr):
+class MatSymbolicAbs(MatrixSymbolicExpr):
     def _sympystr(self, printer):
         sstr = printer.doprint
         return 'Abs({})'.format(sstr(self.args[0]))
@@ -271,4 +276,14 @@ class MatrixElement(Expr):
     def _sympystr(self, printer):
         sstr = printer.doprint
         return '{}[{}]'.format(sstr(self.args[0]),sstr(self.args[1]))
+
+def f1(*x):
+    return MatSymbolicMul(*x)
+def f2(*x):
+    return MatSymbolicAdd(*x)
+
+Basic._constructor_postprocessor_mapping[MatrixSymbolicExpr] = {
+    "Mul": [f1],
+    "Add": [f2]
+}
 

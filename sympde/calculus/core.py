@@ -125,6 +125,7 @@ def has(obj, types):
 
 @cacheit
 def is_zero(x):
+
     if isinstance(x, (Matrix, ImmutableDenseMatrix)):
         return all( i==0 for i in x[:])
     else:

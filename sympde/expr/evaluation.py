@@ -23,7 +23,7 @@ from sympde.calculus import Jump
 from sympde.calculus.core import _generic_ops, _diff_ops
 
 from sympde.calculus.matrices import SymbolicDeterminant, Inverse, Transpose
-from sympde.calculus.matrices import MatPow, MatrixElement, SymbolicTrace
+from sympde.calculus.matrices import MatSymbolicPow, MatrixElement, SymbolicTrace
 
 from sympde.topology.mapping import Jacobian, JacobianSymbol, InterfaceMapping
 
@@ -401,8 +401,28 @@ class TerminalExpr(CalculusFunction):
         if options.pop('evaluate', True):
             args = cls._annotate(*args)
             r = cls.eval(*args, **options)
+            if options.pop('subs', False):
+                mapping = options['mapping']
+                if mapping.is_analytical and not isinstance(mapping, InterfaceMapping):
+                    for i in range(mapping.rdim):
+                        if isinstance(r, tuple):
+                            r = tuple(e.subs(mapping[i], mapping.expressions[i]) for e in r)
+                        else:
+                            r = r.subs(mapping[i], mapping.expressions[i])
+
+                elif mapping.is_analytical and isinstance(mapping, InterfaceMapping):
+                    M1 = mapping.minus
+                    M2 = mapping.plus
+                    for i in range(M1.rdim):
+                        if isinstance(r, tuple):
+                            r = tuple(e.subs(mapping[i], M1.expressions[i]) for e in r)
+                            r = tuple(e.subs(mapping[i], M2.expressions[i]) for e in r)
+                        else:
+                            r = r.subs(M1[i], M1.expressions[i])
+                            r = r.subs(M2[i], M2.expressions[i])
         else:
             r = None
+
         if r is None:
             return Basic.__new__(cls, *args, **options)
         else:
@@ -495,8 +515,11 @@ class TerminalExpr(CalculusFunction):
         elif isinstance(expr, Inverse):
             return cls.eval(expr.arg, dim=dim, logical=logical).inv()
 
-        elif isinstance(expr, (ScalarTestFunction, VectorTestFunction)):
+        elif isinstance(expr, ScalarTestFunction):
             return expr
+
+        elif isinstance(expr, VectorTestFunction):
+            return ImmutableDenseMatrix([[expr[i]] for i in range(dim)])
 
         elif isinstance(expr, PullBack):
             return cls.eval(expr.expr, dim=dim, logical=True)

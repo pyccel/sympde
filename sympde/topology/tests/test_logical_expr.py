@@ -17,7 +17,7 @@ from sympde.topology import IdentityMapping
 from sympde.topology import PolarMapping
 from sympde.topology import TargetMapping
 from sympde.topology import CzarnyMapping
-from sympde.topology import CollelaMapping
+from sympde.topology import CollelaMapping2D
 from sympde.topology import TorusMapping
 from sympde.topology import TwistedTargetMapping
 
@@ -652,7 +652,7 @@ def test_collela_mapping_2d_1():
     constants = ['eps', 'k1', 'k2']
     eps, k1, k2 = [Constant(i) for i in constants]
 
-    M = CollelaMapping('M', rdim)
+    M = CollelaMapping2D('M', rdim)
 
     assert(not( M[0] == x1 ))
     assert(not( M[1] == x2 ))

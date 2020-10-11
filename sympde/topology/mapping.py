@@ -372,7 +372,7 @@ class CzarnyMapping(Mapping):
 
     _rdim        = 2
 #==============================================================================
-class CollelaMapping(Mapping):
+class CollelaMapping2D(Mapping):
     """
     Represents a Collela 2D Mapping object.
 
@@ -383,6 +383,7 @@ class CollelaMapping(Mapping):
                     'y': '2.*(x2 + eps*sin(2.*pi*k1*x1)*sin(2.*pi*k2*x2)) - 1.'}
 
     _rdim        = 2
+
 #==============================================================================
 class TorusMapping(Mapping):
     """
@@ -513,9 +514,9 @@ class PullBack(Expr):
         if isinstance(kind, (UndefinedSpaceType, H1SpaceType)):
             expr =  el
         elif isinstance(kind, HdivSpaceType):
-            expr  =  (J/J.det())*ImmutableDenseMatrix(tuple(el[i] for i in range(dim)))
+            expr  =  (J/J.det())*el
         elif isinstance(kind , HcurlSpaceType):
-            expr  = J.inv().T*ImmutableDenseMatrix(tuple(el[i] for i in range(dim)))
+            expr  = J.inv().T*el
         elif isinstance(kind, L2SpaceType):
             expr = J.det()*el
 #        elif isinstance(kind, UndefinedSpaceType):
