@@ -10,7 +10,6 @@ class MatrixSymbolicExpr(Expr):
     is_commutative = False
     _op_priority   = 20.0
     is_MatrixSymbolicExpr = True
-
     is_Matrix     = True
     is_ZeroMatrix = False
     is_Identity   = False
