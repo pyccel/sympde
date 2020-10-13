@@ -25,7 +25,8 @@ from sympde.calculus.core import _generic_ops, _diff_ops
 from sympde.calculus.matrices import SymbolicDeterminant, Inverse, Transpose
 from sympde.calculus.matrices import MatSymbolicPow, MatrixElement, SymbolicTrace
 
-from sympde.topology.mapping import Jacobian, JacobianSymbol, InterfaceMapping
+from sympde.topology.mapping import Jacobian, JacobianSymbol, InterfaceMapping, MultiPatchMapping
+from sympde.topology.mapping import subs_mapping
 
 from sympde.topology.basic   import BasicDomain, Union, Interval
 from sympde.topology.domain  import NormalVector, TangentVector
@@ -401,25 +402,6 @@ class TerminalExpr(CalculusFunction):
         if options.pop('evaluate', True):
             args = cls._annotate(*args)
             r = cls.eval(*args, **options)
-            if options.pop('subs', False):
-                mapping = options['mapping']
-                if mapping.is_analytical and not isinstance(mapping, InterfaceMapping):
-                    for i in range(mapping.rdim):
-                        if isinstance(r, tuple):
-                            r = tuple(e.subs(mapping[i], mapping.expressions[i]) for e in r)
-                        else:
-                            r = r.subs(mapping[i], mapping.expressions[i])
-
-                elif mapping.is_analytical and isinstance(mapping, InterfaceMapping):
-                    M1 = mapping.minus
-                    M2 = mapping.plus
-                    for i in range(M1.rdim):
-                        if isinstance(r, tuple):
-                            r = tuple(e.subs(mapping[i], M1.expressions[i]) for e in r)
-                            r = tuple(e.subs(mapping[i], M2.expressions[i]) for e in r)
-                        else:
-                            r = r.subs(M1[i], M1.expressions[i])
-                            r = r.subs(M2[i], M2.expressions[i])
         else:
             r = None
 
@@ -452,7 +434,6 @@ class TerminalExpr(CalculusFunction):
                 new_fields = [f.space.field(f.name) for f in fields]
                 expr = expr.subs(zip(fields, new_fields))
 
-
         args[0] = expr
         return args
 
@@ -472,9 +453,11 @@ class TerminalExpr(CalculusFunction):
         n_cols  = kwargs.pop('n_cols', None)
         dim     = kwargs.pop('dim', None)
         logical = kwargs.pop('logical', None)
+        subs    = kwargs.pop('subs', False)
+        mapping = kwargs.pop('mapping', None)
 
         if isinstance(expr, Add):
-            args = [cls.eval(a, dim=dim, logical=logical) for a in expr.args]
+            args = [cls.eval(a, dim=dim, logical=logical, subs=subs, mapping=mapping) for a in expr.args]
             o = args[0]
             for arg in args[1:]:
                 o = o + arg
@@ -543,7 +526,7 @@ class TerminalExpr(CalculusFunction):
             # ...
             if isinstance(expr.expr, Add):
                 for a in expr.expr.args:
-                    newexpr = cls.eval(a, dim=dim, logical=True)
+                    newexpr = cls.eval(a, dim=dim, logical=logical, subs=subs, mapping=mapping)
 
                     # ...
                     try:
@@ -557,7 +540,7 @@ class TerminalExpr(CalculusFunction):
                         d_expr[d] += newexpr
                     # ...
             else:
-                newexpr = cls.eval(expr.expr, dim=dim, logical=logical)
+                newexpr = cls.eval(expr.expr, dim=dim, logical=logical, subs=subs, mapping=mapping)
                 # ...
                 if isinstance(expr, Functional):
                     domain = expr.domain
@@ -669,7 +652,10 @@ class TerminalExpr(CalculusFunction):
         elif isinstance(expr, Integral):
             dim     = expr.domain.dim if dim is None else dim
             logical = expr.domain.mapping is None
-            return cls.eval(expr._args[0], dim=dim, logical=logical)
+            expr    = cls.eval(expr._args[0], dim=dim, logical=logical)
+            if subs:
+                expr    = subs_mapping(expr, mapping)
+            return expr
 
         elif isinstance(expr, NormalVector):
             lines = [[expr[i] for i in range(dim)]]

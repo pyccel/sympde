@@ -403,7 +403,7 @@ class Domain(BasicDomain):
             logical_boundaries   = [e.logical_domain for e in boundaries]
             logical_connectivity = Connectivity()
             for k,v in connectivity.items():
-                logical_connectivity[name] = v.logical_domain
+                logical_connectivity[v.logical_domain.name] = v.logical_domain
 
             mapping        = MultiPatchMapping({e.logical_domain: e.mapping for e in interiors})
             logical_domain = Domain(name,

@@ -217,8 +217,11 @@ class Integral(CalculusFunction):
             return eq
         return False
 
+    def _hashable_content(self):
+        return (self.expr , self.domain)
+
     def __hash__(self):
-        return hash(self.expr) + hash(self.domain)
+        return hash(self._hashable_content())
 
     @classmethod
     def subs_boundary_expr(cls, expr, domain):
