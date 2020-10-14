@@ -85,9 +85,11 @@ class Mapping(BasicMapping):
     """
     _expressions = None # used for analytical mapping
     _rdim        = None
+    _jac_inv     = None
+    _jac         = None
     # TODO shall we keep rdim ?
     def __new__(cls, name, rdim=None, coordinates=None, **kwargs):
-        if isinstance(rdim, (tuple, list, Tuple)):
+        if isinstance(rdim, (tuple, list, Tuple, Matrix, ImmutableDenseMatrix)):
             if not len(rdim) == 1:
                 raise ValueError('> Expecting a tuple, list, Tuple of length 1')
 
@@ -136,6 +138,14 @@ class Mapping(BasicMapping):
                 x = sympify(i)
                 args = args.subs(x,0)
             # ...
+
+#            if obj._jac_inv:
+#                obj._jac_inv = ImmutableDenseMatrix(sympify(obj._jac_inv))
+#                obj._jac_inv = obj._jac_inv.subs(tuple(zip(_coordinates, args)))
+
+#            if obj._jac:
+#                obj._jac = ImmutableDenseMatrix(sympify(obj._jac))
+#                obj._jac = obj._jac.subs(tuple(zip(_coordinates, args)))
 
             constants = list(set(args.free_symbols) - set(lcoords))
             # subs constants as Constant objects instead of Symbol
@@ -215,11 +225,12 @@ class InverseMapping(Mapping):
 #==============================================================================
 class JacobianSymbol(MatrixSymbolicExpr):
 
-    def __new__(cls, mapping, axis=None):
+    def __new__(cls, mapping, axis=None, name=None):
         assert isinstance(mapping, Mapping)
         if axis is not None:
             assert isinstance(axis, int)
-        return MatrixSymbolicExpr.__new__(cls, mapping, axis)
+
+        return MatrixSymbolicExpr.__new__(cls, mapping, axis, 'rifkfklksl')
 
     @property
     def mapping(self):
@@ -229,11 +240,21 @@ class JacobianSymbol(MatrixSymbolicExpr):
     def axis(self):
         return self._args[1]
 
+    @property
+    def name(self):
+        return self._args[2]
+
+    def inv(self):
+        return JacobianInverseSymbol(self.mapping, name='-' + self.name)
+
     def _hashable_content(self):
         if self.axis is not None:
-            return (self.mapping, self.axis)
+            return (self.mapping, self.axis, self.name)
         else:
-            return (self.mapping,)
+            return (self.mapping, self.name)
+
+    def __hash__(self):
+        return hash(self._hashable_content())
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -242,6 +263,41 @@ class JacobianSymbol(MatrixSymbolicExpr):
         else:
             return 'Jacobian({})'.format(sstr(self.mapping.name))
 
+class JacobianInverseSymbol(MatrixSymbolicExpr):
+
+    def __new__(cls, mapping, axis=None, name=None):
+        assert isinstance(mapping, Mapping)
+        if axis is not None:
+            assert isinstance(axis, int)
+        return MatrixSymbolicExpr.__new__(cls, mapping, axis, name)
+
+    @property
+    def mapping(self):
+        return self._args[0]
+
+    @property
+    def axis(self):
+        return self._args[1]
+
+    @property
+    def name(self):
+        return self._args[2]
+
+    def _hashable_content(self):
+        if self.axis is not None:
+            return (self.mapping, self.axis, self.name)
+        else:
+            return (self.mapping, self.name)
+
+    def __hash__(self):
+        return hash(self._hashable_content())
+
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        if self.axis:
+            return 'Jacobian({},{})**(-1)'.format(sstr(self.mapping.name), self.axis)
+        else:
+            return 'Jacobian({})**(-1)'.format(sstr(self.mapping.name))
 #==============================================================================
 class InterfaceMapping(Mapping):
     """
@@ -576,6 +632,7 @@ class PullBack(Expr):
     @property
     def test(self):
         return self._test
+
 #==============================================================================
 class Jacobian(MappingApplication):
     """
@@ -604,6 +661,9 @@ class Jacobian(MappingApplication):
 
         if not isinstance(F, Mapping):
             raise TypeError('> Expecting a Mapping object')
+
+        if F._jac:
+            return F._jac
 
         rdim = F.rdim
 

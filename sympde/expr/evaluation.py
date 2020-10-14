@@ -26,7 +26,7 @@ from sympde.calculus.matrices import SymbolicDeterminant, Inverse, Transpose
 from sympde.calculus.matrices import MatSymbolicPow, MatrixElement, SymbolicTrace
 
 from sympde.topology.mapping import Jacobian, JacobianSymbol, InterfaceMapping, MultiPatchMapping
-from sympde.topology.mapping import subs_mapping
+from sympde.topology.mapping import subs_mapping, JacobianInverseSymbol
 
 from sympde.topology.basic   import BasicDomain, Union, Interval
 from sympde.topology.domain  import NormalVector, TangentVector
@@ -485,6 +485,13 @@ class TerminalExpr(CalculusFunction):
                 return J
             else:
                 return J.col_del(axis)
+        elif isinstance(expr, JacobianInverseSymbol):
+            axis = expr.axis
+            J    = Jacobian(expr.mapping).inv()
+            if axis is None:
+                return J
+            else:
+                return J.col_del(axis)
 
         elif isinstance(expr, SymbolicDeterminant):
             return cls.eval(expr.arg, dim=dim, logical=logical).det().factor()
@@ -496,6 +503,7 @@ class TerminalExpr(CalculusFunction):
             return cls.eval(expr.arg, dim=dim, logical=logical).T
 
         elif isinstance(expr, Inverse):
+            print(cls.eval(expr.arg, dim=dim, logical=logical))
             return cls.eval(expr.arg, dim=dim, logical=logical).inv()
 
         elif isinstance(expr, ScalarTestFunction):
@@ -653,7 +661,7 @@ class TerminalExpr(CalculusFunction):
             dim     = expr.domain.dim if dim is None else dim
             logical = expr.domain.mapping is None
             expr    = cls.eval(expr._args[0], dim=dim, logical=logical)
-            if subs:
+            if subs and mapping is not None:
                 expr    = subs_mapping(expr, mapping)
             return expr
 
