@@ -25,8 +25,7 @@ from sympde.calculus.core import _generic_ops, _diff_ops
 from sympde.calculus.matrices import SymbolicDeterminant, Inverse, Transpose
 from sympde.calculus.matrices import MatSymbolicPow, MatrixElement, SymbolicTrace
 
-from sympde.topology.mapping import Jacobian, JacobianSymbol, InterfaceMapping, MultiPatchMapping
-from sympde.topology.mapping import subs_mapping
+from sympde.topology.mapping import JacobianSymbol, InterfaceMapping, MultiPatchMapping, JacobianInverseSymbol
 
 from sympde.topology.basic   import BasicDomain, Union, Interval
 from sympde.topology.domain  import NormalVector, TangentVector
@@ -453,11 +452,9 @@ class TerminalExpr(CalculusFunction):
         n_cols  = kwargs.pop('n_cols', None)
         dim     = kwargs.pop('dim', None)
         logical = kwargs.pop('logical', None)
-        subs    = kwargs.pop('subs', False)
-        mapping = kwargs.pop('mapping', None)
 
         if isinstance(expr, Add):
-            args = [cls.eval(a, dim=dim, logical=logical, subs=subs, mapping=mapping) for a in expr.args]
+            args = [cls.eval(a, dim=dim, logical=logical) for a in expr.args]
             o = args[0]
             for arg in args[1:]:
                 o = o + arg
@@ -480,7 +477,15 @@ class TerminalExpr(CalculusFunction):
 
         elif isinstance(expr, JacobianSymbol):
             axis = expr.axis
-            J    = Jacobian(expr.mapping)
+            J    = expr.mapping.jacobian_expr
+            if axis is None:
+                return J
+            else:
+                return J.col_del(axis)
+
+        elif isinstance(expr, JacobianInverseSymbol):
+            axis = expr.axis
+            J    = expr.mapping.jacobian_inv_expr
             if axis is None:
                 return J
             else:
@@ -526,7 +531,7 @@ class TerminalExpr(CalculusFunction):
             # ...
             if isinstance(expr.expr, Add):
                 for a in expr.expr.args:
-                    newexpr = cls.eval(a, dim=dim, logical=logical, subs=subs, mapping=mapping)
+                    newexpr = cls.eval(a, dim=dim, logical=logical)
 
                     # ...
                     try:
@@ -540,7 +545,7 @@ class TerminalExpr(CalculusFunction):
                         d_expr[d] += newexpr
                     # ...
             else:
-                newexpr = cls.eval(expr.expr, dim=dim, logical=logical, subs=subs, mapping=mapping)
+                newexpr = cls.eval(expr.expr, dim=dim, logical=logical)
                 # ...
                 if isinstance(expr, Functional):
                     domain = expr.domain
@@ -653,8 +658,6 @@ class TerminalExpr(CalculusFunction):
             dim     = expr.domain.dim if dim is None else dim
             logical = expr.domain.mapping is None
             expr    = cls.eval(expr._args[0], dim=dim, logical=logical)
-            if subs:
-                expr    = subs_mapping(expr, mapping)
             return expr
 
         elif isinstance(expr, NormalVector):

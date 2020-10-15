@@ -342,7 +342,7 @@ def test_logical_expr_3d_2():
 
     dim   = 3
     domain = Domain('Omega', dim=dim)
-    M      = Mapping('M', dim=dim)
+    M      = Mapping('M', rdim=dim)
 
     mapped_domain = M(domain)
 
@@ -364,7 +364,7 @@ def test_logical_expr_3d_3():
 
     dim    = 3
     domain = Domain('Omega', dim=dim)
-    M      = Mapping('M', dim=3)
+    M      = Mapping('M', rdim=3)
 
     mapped_domain = M(domain)
 
@@ -385,7 +385,7 @@ def test_logical_expr_3d_4():
 
     dim    = 3
     domain = Domain('Omega', dim=dim)
-    M      = Mapping('M', dim=3)
+    M      = Mapping('M', rdim=3)
 
     mapped_domain = M(domain)
 
@@ -406,7 +406,7 @@ def test_logical_expr_3d_5():
 
     dim    = 3
     domain = Domain('Omega', dim=dim)
-    M      = Mapping('M', dim=dim)
+    M      = Mapping('M', rdim=dim)
 
     mapped_domain = M(domain)
 
@@ -516,18 +516,17 @@ def test_identity_mapping_2d_1():
     assert(not( M[0] == x1 ))
     assert(not( M[1] == x2 ))
 
-    assert(LogicalExpr(M[0], mapping=M, dim=rdim, subs=True) == x1)
-    assert(LogicalExpr(M[1], mapping=M, dim=rdim, subs=True) == x2)
+    assert(LogicalExpr(M[0], mapping=M, dim=rdim) == x1)
+    assert(LogicalExpr(M[1], mapping=M, dim=rdim) == x2)
 
-    assert(LogicalExpr(dx1(M[0]), mapping=M, dim=rdim, subs=True) == 1)
-    assert(LogicalExpr(dx1(M[1]), mapping=M, dim=rdim, subs=True) == 0)
+    assert(LogicalExpr(dx1(M[0]), mapping=M, dim=rdim) == 1)
+    assert(LogicalExpr(dx1(M[1]), mapping=M, dim=rdim) == 0)
 
-    assert(LogicalExpr(dx2(M[0]), mapping=M, dim=rdim, subs=True) == 0)
-    assert(LogicalExpr(dx2(M[1]), mapping=M, dim=rdim, subs=True) == 1)
+    assert(LogicalExpr(dx2(M[0]), mapping=M, dim=rdim) == 0)
+    assert(LogicalExpr(dx2(M[1]), mapping=M, dim=rdim) == 1)
 
     expected = Matrix([[1, 0], [0, 1]])
-    assert(not( M.jacobian == expected))
-    assert(LogicalExpr(Jacobian(M), mapping=M, dim=rdim, subs=True) == expected)
+    assert( Jacobian(M) == expected )
 
 
 #==============================================================================
@@ -544,8 +543,8 @@ def test_identity_mapping_2d_2():
     u = element_of(V, name='u')
 
     # ...
-    assert(LogicalExpr(dx(u), mapping=M, dim=rdim, subs=True) == dx1(u))
-    assert(LogicalExpr(dy(u), mapping=M, dim=rdim, subs=True) == dx2(u))
+    assert(LogicalExpr(dx(u), mapping=M, dim=rdim) == dx1(u))
+    assert(LogicalExpr(dy(u), mapping=M, dim=rdim) == dx2(u))
     # ...
 
 #==============================================================================
@@ -562,19 +561,19 @@ def test_polar_mapping_2d_1():
     assert(not( M[0] == x1 ))
     assert(not( M[1] == x2 ))
 
-    assert(LogicalExpr(M[0], mapping=M, dim=rdim, subs=True) == c1 + (rmax*x1 + rmin*(-x1 + 1))*cos(x2))
-    assert(LogicalExpr(M[1], mapping=M, dim=rdim, subs=True) == c2 + (rmax*x1 + rmin*(-x1 + 1))*sin(x2))
+    assert(LogicalExpr(M[0], mapping=M, dim=rdim) == c1 + (rmax*x1 + rmin*(-x1 + 1))*cos(x2))
+    assert(LogicalExpr(M[1], mapping=M, dim=rdim) == c2 + (rmax*x1 + rmin*(-x1 + 1))*sin(x2))
 
-    assert(LogicalExpr(dx1(M[0]), mapping=M, dim=rdim, subs=True) == (rmax - rmin)*cos(x2))
-    assert(LogicalExpr(dx1(M[1]), mapping=M, dim=rdim, subs=True) == (rmax - rmin)*sin(x2))
+    assert(LogicalExpr(dx1(M[0]), mapping=M, dim=rdim) == (rmax - rmin)*cos(x2))
+    assert(LogicalExpr(dx1(M[1]), mapping=M, dim=rdim) == (rmax - rmin)*sin(x2))
 
     expected = -(rmax*x1 + rmin*(-x1 + 1))*sin(x2)
-    assert(expand(LogicalExpr(dx2(M[0]), mapping=M, dim=rdim, subs=True)) == expand(expected))
-    assert(LogicalExpr(dx2(M[1]), mapping=M, dim=rdim, subs=True) == (rmax*x1 + rmin*(-x1 + 1))*cos(x2))
+    assert(expand(LogicalExpr(dx2(M[0]), mapping=M, dim=rdim)) == expand(expected))
+    assert(LogicalExpr(dx2(M[1]), mapping=M, dim=rdim) == (rmax*x1 + rmin*(-x1 + 1))*cos(x2))
 
     expected = Matrix([[(rmax - rmin)*cos(x2), -(rmax*x1 + rmin*(-x1 + 1))*sin(x2)],
                        [(rmax - rmin)*sin(x2), (rmax*x1 + rmin*(-x1 + 1))*cos(x2)]])
-    assert(expand(LogicalExpr(Jacobian(M), mapping=M, dim=rdim, subs=True)) == expand(expected))
+    assert(expand(LogicalExpr(Jacobian(M), mapping=M, dim=rdim)) == expand(expected))
 
 #==============================================================================
 def test_target_mapping_2d_1():
@@ -590,22 +589,21 @@ def test_target_mapping_2d_1():
     assert(not( M[0] == x1 ))
     assert(not( M[1] == x2 ))
 
-    assert(LogicalExpr(M[0], mapping=M, dim=rdim, subs=True) == -D*x1**2 + c1 + x1*(-k + 1)*cos(x2))
-    assert(LogicalExpr(M[1], mapping=M, dim=rdim, subs=True) == c2 + x1*(k + 1)*sin(x2))
+    assert(LogicalExpr(M[0], mapping=M, dim=rdim) == -D*x1**2 + c1 + x1*(-k + 1)*cos(x2))
+    assert(LogicalExpr(M[1], mapping=M, dim=rdim) == c2 + x1*(k + 1)*sin(x2))
 
-    assert(LogicalExpr(dx1(M[0]), mapping=M, dim=rdim, subs=True) == -2*D*x1 + (-k + 1)*cos(x2))
-    assert(LogicalExpr(dx1(M[1]), mapping=M, dim=rdim, subs=True) == (k + 1)*sin(x2))
+    assert(LogicalExpr(dx1(M[0]), mapping=M, dim=rdim) == -2*D*x1 + (-k + 1)*cos(x2))
+    assert(LogicalExpr(dx1(M[1]), mapping=M, dim=rdim) == (k + 1)*sin(x2))
 
-    assert(LogicalExpr(dx2(M[0]), mapping=M, dim=rdim, subs=True) == -x1*(-k + 1)*sin(x2))
-    assert(LogicalExpr(dx2(M[1]), mapping=M, dim=rdim, subs=True) == x1*(k + 1)*cos(x2))
+    assert(LogicalExpr(dx2(M[0]), mapping=M, dim=rdim) == -x1*(-k + 1)*sin(x2))
+    assert(LogicalExpr(dx2(M[1]), mapping=M, dim=rdim) == x1*(k + 1)*cos(x2))
 
     expected = Matrix([[-2*D*x1 + (-k + 1)*cos(x2),
                         -x1*(-k + 1)*sin(x2)],
                        [(k + 1)*sin(x2),
                         x1*(k + 1)*cos(x2)]])
 
-    assert(not( Jacobian(M) == expected))
-    assert(expand(LogicalExpr(Jacobian(M), mapping=M, dim=rdim, subs=True)) == expand(expected))
+    assert( Jacobian(M) == expected )
 
 #==============================================================================
 def test_czarny_mapping_2d_1():
@@ -622,26 +620,25 @@ def test_czarny_mapping_2d_1():
     assert(not( M[1] == x2 ))
 
     expected =  (-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 1)/eps
-    assert(LogicalExpr(M[0], mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(M[0], mapping=M, dim=rdim) == expected)
     expected =  b*x1*sin(x2)/(sqrt(-eps**2/4 + 1)*(-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 2)) + c2
-    assert(LogicalExpr(M[1], mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(M[1], mapping=M, dim=rdim) == expected)
 
     expected =  -cos(x2)/sqrt(eps*(eps + 2*x1*cos(x2)) + 1)
-    assert(LogicalExpr(dx1(M[0]), mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(dx1(M[0]), mapping=M, dim=rdim) == expected)
     expected =  b*(eps*x1*sin(x2)*cos(x2)/(sqrt(-eps**2/4 + 1)*sqrt(eps*(eps + 2*x1*cos(x2)) + 1)*(-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 2)**2) + sin(x2)/(sqrt(-eps**2/4 + 1)*(-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 2)))
-    assert((LogicalExpr(dx1(M[1]), mapping=M, dim=rdim, subs=True) - expected).expand() == 0)
+    assert((LogicalExpr(dx1(M[1]), mapping=M, dim=rdim) - expected).expand() == 0)
 
     expected =  x1*sin(x2)/sqrt(eps*(eps + 2*x1*cos(x2)) + 1)
-    assert(LogicalExpr(dx2(M[0]), mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(dx2(M[0]), mapping=M, dim=rdim) == expected)
     expected =  b*x1*(-eps*x1*sin(x2)**2/(sqrt(eps*(eps + 2*x1*cos(x2)) + 1)*(-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 2)**2) + cos(x2)/(-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 2))/sqrt(-eps**2/4 + 1)
-    assert((LogicalExpr(dx2(M[1]), mapping=M, dim=rdim, subs=True) - expected).expand() == 0)
+    assert((LogicalExpr(dx2(M[1]), mapping=M, dim=rdim) - expected).expand() == 0)
 
     expected =  Matrix([[-cos(x2)/sqrt(eps*(eps + 2*x1*cos(x2)) + 1),
                          x1*sin(x2)/sqrt(eps*(eps + 2*x1*cos(x2)) + 1)],
                         [b*(eps*x1*sin(x2)*cos(x2)/(sqrt(-eps**2/4 + 1)*sqrt(eps*(eps + 2*x1*cos(x2)) + 1)*(-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 2)**2) + sin(x2)/(sqrt(-eps**2/4 + 1)*(-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 2))),
                          b*x1*(-eps*x1*sin(x2)**2/(sqrt(eps*(eps + 2*x1*cos(x2)) + 1)*(-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 2)**2) + cos(x2)/(-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 2))/sqrt(-eps**2/4 + 1)]])
-    assert(not( Jacobian(M) == expected))
-    assert(expand(LogicalExpr(Jacobian(M), mapping=M, dim=rdim, subs=True)) == expand(expected))
+    assert( all(e.expand().is_zero for e in ( Jacobian(M) - expected)) )
 
 #==============================================================================
 def test_collela_mapping_2d_1():
@@ -658,26 +655,26 @@ def test_collela_mapping_2d_1():
     assert(not( M[1] == x2 ))
 
     expected = 2.0*eps*sin(2.0*k1*pi*x1)*sin(2.0*k2*pi*x2) + 2.0*x1 - 1.0
-    assert(LogicalExpr(M[0], mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(M[0], mapping=M, dim=rdim) == expected)
     expected = 2.0*eps*sin(2.0*k1*pi*x1)*sin(2.0*k2*pi*x2) + 2.0*x2 - 1.0
-    assert(LogicalExpr(M[1], mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(M[1], mapping=M, dim=rdim) == expected)
 
     expected = 4.0*eps*k1*pi*sin(2.0*k2*pi*x2)*cos(2.0*k1*pi*x1) + 2.0
-    assert(LogicalExpr(dx1(M[0]), mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(dx1(M[0]), mapping=M, dim=rdim) == expected)
     expected = 4.0*eps*k1*pi*sin(2.0*k2*pi*x2)*cos(2.0*k1*pi*x1)
-    assert(LogicalExpr(dx1(M[1]), mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(dx1(M[1]), mapping=M, dim=rdim) == expected)
 
     expected = 4.0*eps*k2*pi*sin(2.0*k1*pi*x1)*cos(2.0*k2*pi*x2)
-    assert(LogicalExpr(dx2(M[0]), mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(dx2(M[0]), mapping=M, dim=rdim) == expected)
     expected = 4.0*eps*k2*pi*sin(2.0*k1*pi*x1)*cos(2.0*k2*pi*x2) + 2.0
-    assert(LogicalExpr(dx2(M[1]), mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(dx2(M[1]), mapping=M, dim=rdim) == expected)
 
     expected = Matrix([[4.0*eps*k1*pi*sin(2.0*k2*pi*x2)*cos(2.0*k1*pi*x1) + 2.0,
                         4.0*eps*k2*pi*sin(2.0*k1*pi*x1)*cos(2.0*k2*pi*x2)],
                        [4.0*eps*k1*pi*sin(2.0*k2*pi*x2)*cos(2.0*k1*pi*x1),
                         4.0*eps*k2*pi*sin(2.0*k1*pi*x1)*cos(2.0*k2*pi*x2) + 2.0]])
-    assert(not( Jacobian(M) == expected))
-    assert(expand(LogicalExpr(Jacobian(M), mapping=M, dim=rdim, subs=True)) == expand(expected))
+
+    assert(( Jacobian(M) == expected ))
 
 #==============================================================================
 def test_torus_mapping_3d_1():
@@ -693,38 +690,38 @@ def test_torus_mapping_3d_1():
     assert(not( M[2] == x3 ))
 
     expected = (R0 + x1*cos(x2))*cos(x3)
-    assert(LogicalExpr(M[0], mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(M[0], mapping=M, dim=rdim) == expected)
     expected = (R0 + x1*cos(x2))*sin(x3)
-    assert(LogicalExpr(M[1], mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(M[1], mapping=M, dim=rdim) == expected)
     expected = x1*sin(x2)
-    assert(LogicalExpr(M[2], mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(M[2], mapping=M, dim=rdim) == expected)
 
     expected = cos(x2)*cos(x3)
-    assert(LogicalExpr(dx1(M[0]), mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(dx1(M[0]), mapping=M, dim=rdim) == expected)
     expected = sin(x3)*cos(x2)
-    assert(LogicalExpr(dx1(M[1]), mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(dx1(M[1]), mapping=M, dim=rdim) == expected)
     expected = sin(x2)
-    assert(LogicalExpr(dx1(M[2]), mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(dx1(M[2]), mapping=M, dim=rdim) == expected)
 
     expected = -x1*sin(x2)*cos(x3)
-    assert(LogicalExpr(dx2(M[0]), mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(dx2(M[0]), mapping=M, dim=rdim) == expected)
     expected = -x1*sin(x2)*sin(x3)
-    assert(LogicalExpr(dx2(M[1]), mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(dx2(M[1]), mapping=M, dim=rdim) == expected)
     expected = x1*cos(x2)
-    assert(LogicalExpr(dx2(M[2]), mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(dx2(M[2]), mapping=M, dim=rdim) == expected)
 
     expected = -(R0 + x1*cos(x2))*sin(x3)
-    assert(expand(LogicalExpr(dx3(M[0]), mapping=M, dim=rdim, subs=True)) == expand(expected))
+    assert(expand(LogicalExpr(dx3(M[0]), mapping=M, dim=rdim)) == expand(expected))
     expected = (R0 + x1*cos(x2))*cos(x3)
-    assert(LogicalExpr(dx3(M[1]), mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(dx3(M[1]), mapping=M, dim=rdim) == expected)
     expected = 0
-    assert(LogicalExpr(dx3(M[2]), mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(dx3(M[2]), mapping=M, dim=rdim) == expected)
 
     expected = Matrix([[cos(x2)*cos(x3),-x1*sin(x2)*cos(x3),-(R0+x1*cos(x2))*sin(x3)],
                        [sin(x3)*cos(x2),-x1*sin(x2)*sin(x3),(R0+x1*cos(x2))*cos(x3)],
                        [sin(x2), x1*cos(x2), 0]])
-    assert(not( Jacobian(M) == expected))
-    assert(expand(LogicalExpr(Jacobian(M), mapping=M, dim=rdim, subs=True)) == expand(expected))
+
+    assert( all(e.expand().is_zero for e in ( Jacobian(M) - expected)) )
 
 #==============================================================================
 def test_twisted_target_mapping_3d_1():
@@ -742,38 +739,37 @@ def test_twisted_target_mapping_3d_1():
     assert(not( M[2] == x3 ))
 
     expected = -D*x1**2 + c1 + x1*(-k + 1)*cos(x2)
-    assert(LogicalExpr(M[0], mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(M[0], mapping=M, dim=rdim) == expected)
     expected = c2 + x1*(k + 1)*sin(x2)
-    assert(LogicalExpr(M[1], mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(M[1], mapping=M, dim=rdim) == expected)
     expected = c3 + x1**2*x3*sin(2*x2)
-    assert(LogicalExpr(M[2], mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(M[2], mapping=M, dim=rdim) == expected)
 
     expected = -2*D*x1 + (-k + 1)*cos(x2)
-    assert(LogicalExpr(dx1(M[0]), mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(dx1(M[0]), mapping=M, dim=rdim) == expected)
     expected = (k + 1)*sin(x2)
-    assert(LogicalExpr(dx1(M[1]), mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(dx1(M[1]), mapping=M, dim=rdim) == expected)
     expected = 2*x1*x3*sin(2*x2)
-    assert(LogicalExpr(dx1(M[2]), mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(dx1(M[2]), mapping=M, dim=rdim) == expected)
 
     expected = -x1*(-k + 1)*sin(x2)
-    assert(LogicalExpr(dx2(M[0]), mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(dx2(M[0]), mapping=M, dim=rdim) == expected)
     expected = x1*(k + 1)*cos(x2)
-    assert(LogicalExpr(dx2(M[1]), mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(dx2(M[1]), mapping=M, dim=rdim) == expected)
     expected = 2*x1**2*x3*cos(2*x2)
-    assert(LogicalExpr(dx2(M[2]), mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(dx2(M[2]), mapping=M, dim=rdim) == expected)
 
     expected = 0
-    assert(expand(LogicalExpr(dx3(M[0]), mapping=M, dim=rdim, subs=True)) == expand(expected))
+    assert(expand(LogicalExpr(dx3(M[0]), mapping=M, dim=rdim)) == expand(expected))
     expected = 0
-    assert(LogicalExpr(dx3(M[1]), mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(dx3(M[1]), mapping=M, dim=rdim) == expected)
     expected = x1**2*sin(2*x2)
-    assert(LogicalExpr(dx3(M[2]), mapping=M, dim=rdim, subs=True) == expected)
+    assert(LogicalExpr(dx3(M[2]), mapping=M, dim=rdim) == expected)
 
     expected = Matrix([[-2*D*x1 + (-k + 1)*cos(x2), -x1*(-k + 1)*sin(x2), 0],
                        [(k + 1)*sin(x2),             x1*(k + 1)*cos(x2), 0],
                        [2*x1*x3*sin(2*x2),           2*x1**2*x3*cos(2*x2), x1**2*sin(2*x2)]])
-    assert(not( Jacobian(M) == expected))
-    assert(expand(LogicalExpr(Jacobian(M), mapping=M, dim=rdim, subs=True)) == expand(expected))
+    assert( Jacobian(M) == expected )
 
 
 #==============================================================================
