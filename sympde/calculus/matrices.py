@@ -1,10 +1,8 @@
 from sympy                 import Expr, S
 from sympy                 import Add, Mul, Pow
-from sympy.core.decorators import call_highest_priority
-from sympy                 import Basic
 from sympy                 import sympify
-from sympde.core.basic     import _coeffs_registery
-from sympy.core.basic      import Basic
+from sympy.core.decorators import call_highest_priority
+from sympde.core.basic     import _coeffs_registery, Basic
 
 class MatrixSymbolicExpr(Expr):
     is_commutative = False
