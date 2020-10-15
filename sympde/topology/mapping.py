@@ -394,9 +394,7 @@ class MultiPatchMapping(Mapping):
         return all(e.is_analytical for e in self.mappings.values())
 
     def _eval_subs(self, old, new):
-        minus = self.minus.subs(old, new)
-        plus  = self.plus.subs(old, new)
-        return InterfaceMapping(minus, plus)
+        return self
 
     def _eval_simplify(self, **kwargs):
         return self
