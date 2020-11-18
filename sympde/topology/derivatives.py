@@ -1252,5 +1252,27 @@ def get_max_partial_derivatives(expr, F=None):
             if v > d[k]: d[k] = v
     return d
 
+#==============================================================================
+def get_max_logical_partial_derivatives(expr, F=None):
+    if F is None:
+        Fs = (list(expr.atoms(ScalarTestFunction)) +
+              list(expr.atoms(VectorTestFunction)) +
+              list(expr.atoms(IndexedTestTrial)) +
+              list(expr.atoms(VectorField)) +
+              list(expr.atoms(IndexedVectorField)) +
+              list(expr.atoms(ScalarField)))
+
+        indices = []
+        for F in Fs:
+            indices += get_index_logical_derivatives_atom(expr, F)
+    else:
+        indices = get_index_logical_derivatives_atom(expr, F)
+
+    d = {'x1':0, 'x2':0, 'x3':0}
+    for dd in indices:
+        for k,v in dd.items():
+            if v > d[k]: d[k] = v
+    return d
+
 from .mapping import Mapping, Jacobian
 
