@@ -17,15 +17,19 @@ class CallableMapping:
         metric      = mapping.metric_expr
         metric_det  = mapping.metric_det_expr
 
-        free_symbols = mapping.free_symbols
-        params       = {a.name:a for a in free_symbols}
+        constants = mapping.constants
+        params       = {a.name:a for a in constants}
         params.update( kwargs )
-
         for p in params.values():
             assert not isinstance(p, Symbol)
 
-        self._params = params
-        self._symbolic_mapping = mapping
+        if params:
+            subs = {a:params[a.name] for a in constants}
+            expressions = expressions.subs(subs)
+            jac         = jac.subs(subs)
+            inv_jac     = inv_jac.subs(subs)
+            metric      = metric.subs(subs)
+            metric_det  = metric_det.subs(subs)
 
         # Callable function: __call__
         self._func_eval = tuple(lambdify( variables, expr, 'numpy' ) for expr in expressions)
@@ -42,24 +46,28 @@ class CallableMapping:
         # Callable function: metric_det
         self._metric_det = lambdify( variables, metric_det, 'numpy' )
 
+        # Symbolic information
+        self._params           = params
+        self._symbolic_mapping = mapping
+
 
     #--------------------------------------------------------------------------
     # Abstract interface
     #--------------------------------------------------------------------------
-    def __call__( self, eta ):
-        return self._func_eval( eta )
+    def __call__( self, *eta ):
+        return tuple( f( *eta ) for f in self._func_eval)
 
-    def jacobian( self, eta ):
-        return self._jacobian( eta )
+    def jacobian( self, *eta ):
+        return self._jacobian( *eta )
 
-    def jacobian_inv( self, eta ):
-        return self._jacobian_inv( eta )
+    def jacobian_inv( self, *eta ):
+        return self._jacobian_inv( *eta )
 
-    def metric( self, eta ):
-        return self._metric( eta )
+    def metric( self, *eta ):
+        return self._metric( *eta )
 
-    def metric_det( self, eta ):
-        return self._metric_det( eta )
+    def metric_det( self, *eta ):
+        return self._metric_det( *eta )
 
     @property
     def ldim( self ):
@@ -75,4 +83,8 @@ class CallableMapping:
     @property
     def params( self ):
         return self._params
-    default_params = dict( x0=0, y0=0, z0=0, k=0.3, D=0.2, c=0.5 )
+
+    @property
+    def symbolic_mapping( self ):
+        return self._symbolic_mapping
+

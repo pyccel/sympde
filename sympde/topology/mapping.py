@@ -83,10 +83,12 @@ class Mapping(BasicMapping):
     Examples
 
     """
-    _expressions = None # used for analytical mapping
-    _jac         = None
-    _inv_jac     = None
-    _rdim        = None
+    _expressions  = None # used for analytical mapping
+    _jac          = None
+    _inv_jac      = None
+    _rdim         = None
+    _constants    = None
+    _callable_map = None
 
     # TODO shall we keep rdim ?
     def __new__(cls, name, rdim=None, coordinates=None, **kwargs):
@@ -141,20 +143,15 @@ class Mapping(BasicMapping):
                 args = args.subs(x,0)
             # ...
 
-            constants = list(set(args.free_symbols) - set(lcoords))
+            constants        = list(set(args.free_symbols) - set(lcoords))
+            constants_values = {a.name:a for a in constants}
             # subs constants as Constant objects instead of Symbol
-            d = {}
-            for i in constants:
-                # TODO shall we add the type?
-                # by default it is real
-                if i.name in kwargs:
-                    d[i] = kwargs[i.name]
-                else:
-                    d[i] = Constant(i.name)
-
+            constants_values.update( kwargs )
+            d = {a:constants_values[a.name] for a in constants}
             args = args.subs(d)
 
             obj._expressions = args
+            obj._constants   = tuple(a for a in constants if isinstance(constants_values[a.name], Symbol))
 
             args  = [obj[i] for i in range(rdim)]
             exprs = obj._expressions
@@ -184,22 +181,22 @@ class Mapping(BasicMapping):
         return obj
 
     @property
-    def name(self):
+    def name( self ):
         return self._name
 
     @property
-    def rdim(self):
+    def rdim( self ):
         return self._rdim
 
     @property
-    def coordinates(self):
+    def coordinates( self ):
         if self.rdim == 1:
             return self._coordinates[0]
         else:
             return self._coordinates
 
     @property
-    def logical_coordinates(self):
+    def logical_coordinates( self ):
         if self.rdim == 1:
             return self._logical_coordinates[0]
         else:
@@ -210,45 +207,49 @@ class Mapping(BasicMapping):
         return MappedDomain(self, domain)
 
     @property
-    def jacobian(self):
+    def jacobian( self ):
         return self._jacobian
 
     @property
-    def det_jacobian(self):
+    def det_jacobian( self ):
         return self.jacobian.det()
 
     @property
-    def is_analytical(self):
+    def is_analytical( self ):
         return not( self._expressions is None )
 
     @property
-    def expressions(self):
+    def expressions( self ):
         return self._expressions
 
     @property
-    def jacobian_expr(self):
+    def jacobian_expr( self ):
         return self._jac
 
     @property
-    def jacobian_inv_expr(self):
+    def jacobian_inv_expr( self ):
         if not self.is_analytical and self._inv_jac is None:
             self._inv_jac = self.jacobian_expr.inv()
         return self._inv_jac
 
     @property
-    def metric_expr(self):
+    def metric_expr( self ):
         return self._metric
 
     @property
-    def jacobian_det_expr(self):
-        return self._jac.det()
-
-    @property
-    def metric_det_expr(self):
+    def metric_det_expr( self ):
         return self._metric_det
 
+    @property
     def constants( self ):
         return self._constants
+
+    def get_callable_mapping( self ):
+
+        if self._callable_map is None:
+            import sympde.topology.callable_mapping as cm
+            self._callable_map = cm.CallableMapping( self )
+        return self._callable_map
 
     def _eval_subs(self, old, new):
         return self
