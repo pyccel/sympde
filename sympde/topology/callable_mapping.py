@@ -10,7 +10,7 @@ class CallableMapping:
 
         variables   = mapping.logical_coordinates
         expressions = mapping.expressions
-        
+
         jac         = mapping.jacobian_expr
         inv_jac     = mapping.jacobian_inv_expr
 
@@ -39,7 +39,7 @@ class CallableMapping:
 
         # Callable function: jac_mat_inv
         self._jacobian_inv = lambdify( variables, inv_jac, 'numpy' )
-   
+
         # Callable function: metric
         self._metric = lambdify( variables, metric, 'numpy' )
 
@@ -49,7 +49,6 @@ class CallableMapping:
         # Symbolic information
         self._params           = params
         self._symbolic_mapping = mapping
-
 
     #--------------------------------------------------------------------------
     # Abstract interface
