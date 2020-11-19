@@ -7,7 +7,7 @@ class CallableMapping:
 
         # Extract information from class
         assert isinstance(mapping, Mapping)
-        
+
         variables   = mapping.logical_coordinates
         expressions = mapping.expressions
         
