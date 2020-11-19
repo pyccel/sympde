@@ -17,7 +17,7 @@ class CallableMapping:
         metric      = mapping.metric_expr
         metric_det  = mapping.metric_det_expr
 
-        constants = mapping.constants
+        constants    = mapping.constants
         params       = {a.name:a for a in constants}
         params.update( kwargs )
         for p in params.values():

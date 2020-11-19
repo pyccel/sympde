@@ -144,7 +144,7 @@ class Mapping(BasicMapping):
             # ...
 
             constants        = list(set(args.free_symbols) - set(lcoords))
-            constants_values = {a.name:a for a in constants}
+            constants_values = {a.name:Constant(a.name) for a in constants}
             # subs constants as Constant objects instead of Symbol
             constants_values.update( kwargs )
             d = {a:constants_values[a.name] for a in constants}
