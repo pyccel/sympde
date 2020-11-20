@@ -726,10 +726,8 @@ class TerminalExpr(CalculusFunction):
 
         elif isinstance(expr, LogicalExpr):
             M         = expr.mapping
-            dim       = expr.dim
-            expr      = cls(expr.expr, dim=dim)
-            dim       = M.rdim
-            return LogicalExpr(expr, mapping=M, dim=dim)
+            expr      = cls(expr.expr, dim=expr.dim)
+            return LogicalExpr(expr, mapping=M, dim=M.ldim)
         return expr
 
 

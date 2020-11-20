@@ -304,7 +304,7 @@ class Domain(BasicDomain):
         d_interior     = yml['interior']
         d_boundary     = yml['boundary']
         d_connectivity = yml['connectivity']
-        mapping        = Mapping('{}_mapping'.format(domain_name), int(dim))
+        mapping        = Mapping('{}_mapping'.format(domain_name), dim=int(dim))
 
         if dtype == 'None': dtype = None
 

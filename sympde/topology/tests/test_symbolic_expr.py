@@ -42,9 +42,9 @@ def test_derivatives_2d_without_mapping():
 #==============================================================================
 def test_derivatives_2d_with_mapping():
 
-    rdim = 2
-    M = Mapping('M', rdim)
-    O = M(Domain('Omega', dim=rdim))
+    dim = 2
+    M = Mapping('M', dim=dim)
+    O = M(Domain('Omega', dim=dim))
     V = ScalarFunctionSpace('V', O, kind='h1')
     u = element_of(V, 'u')
 
@@ -66,7 +66,7 @@ def test_derivatives_2d_with_mapping():
     expr = dx1(M[1])
     assert SymbolicExpr(expr) == Symbol('y_x1')
 
-    expr       = LogicalExpr(dx(u), mapping=M, dim=rdim).subs(det_jac, J)
+    expr       = LogicalExpr(dx(u), mapping=M, dim=dim).subs(det_jac, J)
     expected   = '(u_x1 * y_x2 - u_x2 * y_x1)/J'
     difference = SymbolicExpr(expr) - sympify(expected)
     assert difference.simplify() == 0

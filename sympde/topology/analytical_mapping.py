@@ -34,7 +34,9 @@ class PolarMapping(Mapping):
     _expressions = {'x': 'c1 + (rmin*(1-x1)+rmax*x1)*cos(x2)',
                     'y': 'c2 + (rmin*(1-x1)+rmax*x1)*sin(x2)'}
 
-    _rdim        = 2
+    _ldim        = 2
+    _pdim        = 2
+
 #==============================================================================
 class TargetMapping(Mapping):
     """
@@ -46,7 +48,9 @@ class TargetMapping(Mapping):
     _expressions = {'x': 'c1 + (1-k)*x1*cos(x2) - D*x1**2',
                     'y': 'c2 + (1+k)*x1*sin(x2)'}
 
-    _rdim        = 2
+    _ldim        = 2
+    _pdim        = 2
+
 #==============================================================================
 class CzarnyMapping(Mapping):
     """
@@ -59,7 +63,9 @@ class CzarnyMapping(Mapping):
                     'y': 'c2 + (b / sqrt(1-eps**2/4) * x1 * sin(x2)) /'
                         '(2 - sqrt( 1 + eps*(eps + 2*x1*cos(x2)) ))'}
 
-    _rdim        = 2
+    _ldim        = 2
+    _pdim        = 2
+
 #==============================================================================
 class CollelaMapping2D(Mapping):
     """
@@ -71,7 +77,8 @@ class CollelaMapping2D(Mapping):
     _expressions = {'x': '2.*(x1 + eps*sin(2.*pi*k1*x1)*sin(2.*pi*k2*x2)) - 1.',
                     'y': '2.*(x2 + eps*sin(2.*pi*k1*x1)*sin(2.*pi*k2*x2)) - 1.'}
 
-    _rdim        = 2
+    _ldim        = 2
+    _pdim        = 2
 
 #==============================================================================
 class TorusMapping(Mapping):
@@ -85,7 +92,9 @@ class TorusMapping(Mapping):
                     'y': '(R0+x1*cos(x2))*sin(x3)',
                     'z': 'x1*sin(x2)'}
 
-    _rdim        = 3
+    _ldim        = 2
+    _pdim        = 2
+
 #==============================================================================
 class TwistedTargetMapping(Mapping):
     """
@@ -98,4 +107,6 @@ class TwistedTargetMapping(Mapping):
                     'y': 'c2 + (1+k)*x1*sin(x2)',
                     'z': 'c3 + x3*x1**2*sin(2*x2)'}
 
-    _rdim        = 3
+    _ldim        = 2
+    _pdim        = 2
+

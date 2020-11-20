@@ -32,7 +32,7 @@ def test_partial_derivatives_1():
 
     # ...
     domain = Domain('Omega', dim=2)
-    M      = Mapping('M', rdim=2)
+    M      = Mapping('M', dim=2)
 
     mapped_domain = M(domain)
 
@@ -80,7 +80,7 @@ def test_partial_derivatives_2():
 
     # ...
     domain = Domain('Omega', dim=2)
-    M      = Mapping('M', rdim=2)
+    M      = Mapping('M', dim=2)
 
     mapped_domain = M(domain)
 

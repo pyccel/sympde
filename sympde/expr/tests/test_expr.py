@@ -861,7 +861,7 @@ def test_terminal_expr_bilinear_2d_4():
 def test_terminal_expr_bilinear_3d_1():
 
     domain = Domain('Omega', dim=3)
-    M      = Mapping('M', 3)
+    M      = Mapping('M', dim=3)
 
     mapped_domain = M(domain)
 

@@ -86,25 +86,39 @@ class Mapping(BasicMapping):
     _expressions  = None # used for analytical mapping
     _jac          = None
     _inv_jac      = None
-    _rdim         = None
     _constants    = None
     _callable_map = None
+    _ldim         = None
+    _pdim         = None
 
-    # TODO shall we keep rdim ?
-    def __new__(cls, name, rdim=None, coordinates=None, **kwargs):
+    def __new__(cls, name, dim=None, **kwargs):
 
-        if isinstance(rdim, (tuple, list, Tuple, Matrix, ImmutableDenseMatrix)):
-            if not len(rdim) == 1:
-                raise ValueError('> Expecting a tuple, list, Tuple of length 1')
+        ldim        = kwargs.pop('ldim', cls._ldim)
+        pdim        = kwargs.pop('pdim', cls._pdim)
+        coordinates = kwargs.pop('coordinates', None)
 
-            rdim = rdim[0]
-        elif rdim is None:
-            rdim = cls._rdim
+        dims = [dim, ldim, pdim]
+        for i,d in enumerate(dims):
+            if isinstance(d, (tuple, list, Tuple, Matrix, ImmutableDenseMatrix)):
+                if not len(d) == 1:
+                    raise ValueError('> Expecting a tuple, list, Tuple of length 1')
+                dims[i] = d[0]
 
-        obj = IndexedBase.__new__(cls, name, shape=(rdim))
+        dim, ldim, pdim = dims
+
+        if dim is None:
+            assert ldim is not None
+            assert pdim is not None
+            assert pdim >= ldim
+        else:
+            ldim = dim
+            pdim = dim
+
+
+        obj = IndexedBase.__new__(cls, name, shape=pdim)
 
         if coordinates is None:
-            _coordinates = [Symbol(name) for name in ['x', 'y', 'z'][:rdim]]
+            _coordinates = [Symbol(name) for name in ['x', 'y', 'z'][:pdim]]
         else:
             if not isinstance(coordinates, (list, tuple, Tuple)):
                 raise TypeError('> Expecting list, tuple, Tuple')
@@ -116,16 +130,17 @@ class Mapping(BasicMapping):
             _coordinates = [Symbol(name) for name in coordinates]
 
         obj._name                = name
-        obj._rdim                = rdim
+        obj._ldim                = ldim
+        obj._pdim                = pdim
         obj._coordinates         = _coordinates
         obj._jacobian            = kwargs.pop('jacobian', JacobianSymbol(obj))
 
-        lcoords = ['x1', 'x2', 'x3'][:rdim]
+        lcoords = ['x1', 'x2', 'x3'][:ldim]
         lcoords = [Symbol(i) for i in lcoords]
         obj._logical_coordinates = Tuple(*lcoords)
         # ...
         if not( obj._expressions is None ):
-            coords = ['x', 'y', 'z'][:rdim]
+            coords = ['x', 'y', 'z'][:pdim]
 
             # ...
             args = []
@@ -136,7 +151,7 @@ class Mapping(BasicMapping):
 
             args = Tuple(*args)
             # ...
-            zero_coords = ['x1', 'x2', 'x3'][rdim:]
+            zero_coords = ['x1', 'x2', 'x3'][ldim:]
 
             for i in zero_coords:
                 x = sympify(i)
@@ -153,7 +168,7 @@ class Mapping(BasicMapping):
             obj._expressions = args
             obj._constants   = tuple(a for a in constants if isinstance(constants_values[a.name], Symbol))
 
-            args  = [obj[i] for i in range(rdim)]
+            args  = [obj[i] for i in range(pdim)]
             exprs = obj._expressions
             subs  =list(zip(_coordinates, exprs))
 
@@ -185,19 +200,23 @@ class Mapping(BasicMapping):
         return self._name
 
     @property
-    def rdim( self ):
-        return self._rdim
+    def ldim( self ):
+        return self._ldim
+
+    @property
+    def pdim( self ):
+        return self._pdim
 
     @property
     def coordinates( self ):
-        if self.rdim == 1:
+        if self.pdim == 1:
             return self._coordinates[0]
         else:
             return self._coordinates
 
     @property
     def logical_coordinates( self ):
-        if self.rdim == 1:
+        if self.ldim == 1:
             return self._logical_coordinates[0]
         else:
             return self._logical_coordinates
@@ -263,10 +282,11 @@ class InverseMapping(Mapping):
     def __new__(cls, mapping):
         assert isinstance(mapping, Mapping)
         name     = mapping.name
-        rdim     = mapping.rdim
+        ldim     = mapping.ldim
+        pdim     = mapping.pdim
         coords   = mapping.logical_coordinates
         jacobian = mapping.jacobian.inv()
-        return Mapping.__new__(cls, name, rdim , coordinates=coords, jacobian=jacobian)
+        return Mapping.__new__(cls, name, ldim=ldim, pdim=pdim, coordinates=coords, jacobian=jacobian)
 
 #==============================================================================
 class JacobianSymbol(MatrixSymbolicExpr):
@@ -358,7 +378,7 @@ class InterfaceMapping(Mapping):
         assert isinstance(minus, Mapping)
         assert isinstance(plus,  Mapping)
         name = '{}|{}'.format(str(minus), str(plus))
-        obj  = Mapping.__new__(cls, name, rdim=minus.rdim)
+        obj  = Mapping.__new__(cls, name, ldim=minus.ldim, pdim=minus.pdim)
         obj._minus = minus
         obj._plus  = plus
         
@@ -400,8 +420,12 @@ class MultiPatchMapping(Mapping):
         return all(a.is_analytical for a in self.mappings.values())
 
     @property
-    def rdim(self):
-        return list(self.mappings.values())[0].rdim
+    def ldim(self):
+        return list(self.mappings.values())[0].ldim
+
+    @property
+    def pdim(self):
+        return list(self.mappings.values())[0].pdim
 
     @property
     def is_analytical(self):
@@ -586,18 +610,19 @@ class Jacobian(MappingApplication):
         if F.jacobian_expr is not None:
             return F.jacobian_expr
 
-        rdim = F.rdim
+        pdim = F.pdim
+        ldim = F.ldim
 
-        F = [F[i] for i in range(0, F.rdim)]
+        F = [F[i] for i in range(0, F.pdim)]
         F = Tuple(*F)
 
-        if rdim == 1:
+        if ldim == 1:
             expr = LogicalGrad_1d(F)
 
-        elif rdim == 2:
+        elif ldim == 2:
             expr = LogicalGrad_2d(F)
 
-        elif rdim == 3:
+        elif ldim == 3:
             expr = LogicalGrad_3d(F)
 
         return expr.T
@@ -634,7 +659,7 @@ class Covariant(MappingApplication):
             raise TypeError('> Expecting a tuple, list, Tuple, Matrix')
 
         M   = Jacobian(F).inv().T
-        dim = F.rdim
+        dim = F.pdim
         if dim == 1:
             b = M[0,0] * v[0]
             return Tuple(b)

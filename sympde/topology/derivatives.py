@@ -109,7 +109,7 @@ class DifferentialOperator(LinearOperator):
                     M = expr.atoms(Mapping)
                     if len(M)>0:
                         M = list(M)[0]
-                        expr_primes = [diff(expr, M[i]) for i in range(M.rdim)]
+                        expr_primes = [diff(expr, M[i]) for i in range(M.pdim)]
                         Jj = Jacobian(M)[:,cls.grad_index]
                         expr_prime = sum([ei*Jji for ei,Jji in zip(expr_primes, Jj)])
                         return expr_prime + diff(expr, x)
