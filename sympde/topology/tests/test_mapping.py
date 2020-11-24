@@ -15,9 +15,9 @@ from sympde.topology.mapping import Jacobian, Covariant, Contravariant
 def test_mapping_1d():
     print('============ test_mapping_1d ==============')
 
-    rdim = 1
+    dim = 1
 
-    F = Mapping('F', rdim)
+    F = Mapping('F', dim=dim)
 
     assert(F.name == 'F')
 
@@ -36,9 +36,9 @@ def test_mapping_1d():
 def test_mapping_2d():
     print('============ test_mapping_2d ==============')
 
-    rdim = 2
+    dim = 2
 
-    F = Mapping('F', rdim)
+    F = Mapping('F', dim=dim)
 
     a,b = symbols('a b')
     ab = Tuple(a, b)
@@ -76,9 +76,9 @@ def test_mapping_2d():
 def test_mapping_3d():
     print('============ test_mapping_3d ==============')
 
-    rdim = 3
+    dim = 3
 
-    F = Mapping('F', rdim)
+    F = Mapping('F', dim=dim)
 
     a,b,c = symbols('a b c')
     abc = Tuple(a, b, c)
@@ -122,9 +122,9 @@ def test_mapping_3d():
 def test_mapping_2d_2():
     print('============ test_mapping_2d_2 ==============')
 
-    rdim   = 2
-    F      = Mapping('F', rdim)
-    domain = Domain('Omega', dim=rdim)
+    dim   = 2
+    F      = Mapping('F', dim=dim)
+    domain = Domain('Omega', dim=dim)
     D      = F(domain)
 
 #==============================================================================

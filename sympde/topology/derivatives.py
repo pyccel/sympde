@@ -109,7 +109,7 @@ class DifferentialOperator(LinearOperator):
                     M = expr.atoms(Mapping)
                     if len(M)>0:
                         M = list(M)[0]
-                        expr_primes = [diff(expr, M[i]) for i in range(M.rdim)]
+                        expr_primes = [diff(expr, M[i]) for i in range(M.pdim)]
                         Jj = Jacobian(M)[:,cls.grad_index]
                         expr_prime = sum([ei*Jji for ei,Jji in zip(expr_primes, Jj)])
                         return expr_prime + diff(expr, x)
@@ -973,7 +973,6 @@ class LogicalGrad_3d(GradBasic):
         return v
 
 #==============================================================================
-
 class LogicalCurl_2d(CurlBasic):
 
     @classmethod
@@ -1253,7 +1252,7 @@ def get_max_partial_derivatives(expr, F=None):
             if v > d[k]: d[k] = v
     return d
 
-
+#==============================================================================
 def get_max_logical_partial_derivatives(expr, F=None):
     if F is None:
         Fs = (list(expr.atoms(ScalarTestFunction)) +
@@ -1276,3 +1275,4 @@ def get_max_logical_partial_derivatives(expr, F=None):
     return d
 
 from .mapping import Mapping, Jacobian
+

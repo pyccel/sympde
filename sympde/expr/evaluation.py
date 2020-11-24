@@ -23,9 +23,9 @@ from sympde.calculus import Jump
 from sympde.calculus.core import _generic_ops, _diff_ops
 
 from sympde.calculus.matrices import SymbolicDeterminant, Inverse, Transpose
-from sympde.calculus.matrices import MatPow, MatrixElement, SymbolicTrace
+from sympde.calculus.matrices import MatSymbolicPow, MatrixElement, SymbolicTrace
 
-from sympde.topology.mapping import Jacobian, JacobianSymbol, InterfaceMapping
+from sympde.topology.mapping import JacobianSymbol, InterfaceMapping, MultiPatchMapping, JacobianInverseSymbol
 
 from sympde.topology.basic   import BasicDomain, Union, Interval
 from sympde.topology.domain  import NormalVector, TangentVector
@@ -403,6 +403,7 @@ class TerminalExpr(CalculusFunction):
             r = cls.eval(*args, **options)
         else:
             r = None
+
         if r is None:
             return Basic.__new__(cls, *args, **options)
         else:
@@ -431,7 +432,6 @@ class TerminalExpr(CalculusFunction):
                 fields = list(expr.atoms(ScalarTestFunction,VectorTestFunction).difference(indexed_fields))
                 new_fields = [f.space.field(f.name) for f in fields]
                 expr = expr.subs(zip(fields, new_fields))
-
 
         args[0] = expr
         return args
@@ -477,7 +477,15 @@ class TerminalExpr(CalculusFunction):
 
         elif isinstance(expr, JacobianSymbol):
             axis = expr.axis
-            J    = Jacobian(expr.mapping)
+            J    = expr.mapping.jacobian_expr
+            if axis is None:
+                return J
+            else:
+                return J.col_del(axis)
+
+        elif isinstance(expr, JacobianInverseSymbol):
+            axis = expr.axis
+            J    = expr.mapping.jacobian_inv_expr
             if axis is None:
                 return J
             else:
@@ -495,8 +503,11 @@ class TerminalExpr(CalculusFunction):
         elif isinstance(expr, Inverse):
             return cls.eval(expr.arg, dim=dim, logical=logical).inv()
 
-        elif isinstance(expr, (ScalarTestFunction, VectorTestFunction)):
+        elif isinstance(expr, ScalarTestFunction):
             return expr
+
+        elif isinstance(expr, VectorTestFunction):
+            return ImmutableDenseMatrix([[expr[i]] for i in range(dim)])
 
         elif isinstance(expr, PullBack):
             return cls.eval(expr.expr, dim=dim, logical=True)
@@ -520,7 +531,7 @@ class TerminalExpr(CalculusFunction):
             # ...
             if isinstance(expr.expr, Add):
                 for a in expr.expr.args:
-                    newexpr = cls.eval(a, dim=dim, logical=True)
+                    newexpr = cls.eval(a, dim=dim, logical=logical)
 
                     # ...
                     try:
@@ -646,7 +657,8 @@ class TerminalExpr(CalculusFunction):
         elif isinstance(expr, Integral):
             dim     = expr.domain.dim if dim is None else dim
             logical = expr.domain.mapping is None
-            return cls.eval(expr._args[0], dim=dim, logical=logical)
+            expr    = cls.eval(expr._args[0], dim=dim, logical=logical)
+            return expr
 
         elif isinstance(expr, NormalVector):
             lines = [[expr[i] for i in range(dim)]]
@@ -714,10 +726,8 @@ class TerminalExpr(CalculusFunction):
 
         elif isinstance(expr, LogicalExpr):
             M         = expr.mapping
-            dim       = expr.dim
-            expr      = cls(expr.expr, dim=dim)
-            dim       = M.rdim
-            return LogicalExpr(expr, mapping=M, dim=dim)
+            expr      = cls(expr.expr, dim=expr.dim)
+            return LogicalExpr(expr, mapping=M, dim=M.ldim)
         return expr
 
 

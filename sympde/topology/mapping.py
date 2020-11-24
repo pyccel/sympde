@@ -74,6 +74,7 @@ def get_logical_test_function(u):
     l_space         = type(space)(space.name, logical_domain, kind=kind)
     el              = l_space.element(u.name)
     return el
+
 #==============================================================================
 class Mapping(BasicMapping):
     """
@@ -82,22 +83,42 @@ class Mapping(BasicMapping):
     Examples
 
     """
-    _expressions = None # used for analytical mapping
-    _rdim        = None
-    # TODO shall we keep rdim ?
-    def __new__(cls, name, rdim=None, coordinates=None, **kwargs):
-        if isinstance(rdim, (tuple, list, Tuple)):
-            if not len(rdim) == 1:
-                raise ValueError('> Expecting a tuple, list, Tuple of length 1')
+    _expressions  = None # used for analytical mapping
+    _jac          = None
+    _inv_jac      = None
+    _constants    = None
+    _callable_map = None
+    _ldim         = None
+    _pdim         = None
 
-            rdim = rdim[0]
-        elif rdim is None:
-            rdim = cls._rdim
+    def __new__(cls, name, dim=None, **kwargs):
 
-        obj = IndexedBase.__new__(cls, name, shape=(rdim))
+        ldim        = kwargs.pop('ldim', cls._ldim)
+        pdim        = kwargs.pop('pdim', cls._pdim)
+        coordinates = kwargs.pop('coordinates', None)
+
+        dims = [dim, ldim, pdim]
+        for i,d in enumerate(dims):
+            if isinstance(d, (tuple, list, Tuple, Matrix, ImmutableDenseMatrix)):
+                if not len(d) == 1:
+                    raise ValueError('> Expecting a tuple, list, Tuple of length 1')
+                dims[i] = d[0]
+
+        dim, ldim, pdim = dims
+
+        if dim is None:
+            assert ldim is not None
+            assert pdim is not None
+            assert pdim >= ldim
+        else:
+            ldim = dim
+            pdim = dim
+
+
+        obj = IndexedBase.__new__(cls, name, shape=pdim)
 
         if coordinates is None:
-            _coordinates = [Symbol(name) for name in ['x', 'y', 'z'][:rdim]]
+            _coordinates = [Symbol(name) for name in ['x', 'y', 'z'][:pdim]]
         else:
             if not isinstance(coordinates, (list, tuple, Tuple)):
                 raise TypeError('> Expecting list, tuple, Tuple')
@@ -109,16 +130,17 @@ class Mapping(BasicMapping):
             _coordinates = [Symbol(name) for name in coordinates]
 
         obj._name                = name
-        obj._rdim                = rdim
+        obj._ldim                = ldim
+        obj._pdim                = pdim
         obj._coordinates         = _coordinates
         obj._jacobian            = kwargs.pop('jacobian', JacobianSymbol(obj))
 
-        lcoords = ['x1', 'x2', 'x3'][:rdim]
+        lcoords = ['x1', 'x2', 'x3'][:ldim]
         lcoords = [Symbol(i) for i in lcoords]
         obj._logical_coordinates = Tuple(*lcoords)
         # ...
         if not( obj._expressions is None ):
-            coords = ['x', 'y', 'z'][:rdim]
+            coords = ['x', 'y', 'z'][:pdim]
 
             # ...
             args = []
@@ -129,50 +151,72 @@ class Mapping(BasicMapping):
 
             args = Tuple(*args)
             # ...
-            zero_coords = ['x1', 'x2', 'x3'][rdim:]
+            zero_coords = ['x1', 'x2', 'x3'][ldim:]
 
             for i in zero_coords:
                 x = sympify(i)
                 args = args.subs(x,0)
             # ...
 
-            constants = list(set(args.free_symbols) - set(lcoords))
+            constants        = list(set(args.free_symbols) - set(lcoords))
+            constants_values = {a.name:Constant(a.name) for a in constants}
             # subs constants as Constant objects instead of Symbol
-            d = {}
-            for i in constants:
-                # TODO shall we add the type?
-                # by default it is real
-                if i.name in kwargs:
-                    d[i] = kwargs[i.name]
-                else:
-                    d[i] = Constant(i.name)
-
+            constants_values.update( kwargs )
+            d = {a:constants_values[a.name] for a in constants}
             args = args.subs(d)
-            # ...
 
             obj._expressions = args
-        # ...
+            obj._constants   = tuple(a for a in constants if isinstance(constants_values[a.name], Symbol))
+
+            args  = [obj[i] for i in range(pdim)]
+            exprs = obj._expressions
+            subs  =list(zip(_coordinates, exprs))
+
+            if obj._jac is None and obj._inv_jac is None:
+                obj._jac     = Jacobian(obj).subs(list(zip(args, exprs)))
+                obj._inv_jac = obj._jac.inv()
+            elif obj._inv_jac is None:
+                inv          = ImmutableDenseMatrix(sympify(obj._jac)).inv()
+                obj._jac     = obj._jac.subs(subs)
+                obj._inv_jac = inv.subs(subs)
+            elif obj._jac is None:
+                jac          = ImmutableDenseMatrix(sympify(obj._inv_jac)).inv()
+                obj._jac     = jac.subs(subs)
+                obj._inv_jac = obj._inv_jac.subs(subs)
+            else:
+                obj._jac     = ImmutableDenseMatrix(sympify(obj._jac)).subs(subs)
+                obj._inv_jac = ImmutableDenseMatrix(sympify(obj._inv_jac)).subs(subs)
+
+        else:
+            obj._jac     = Jacobian(obj)
+
+        obj._metric     = obj._jac.T*obj._jac
+        obj._metric_det = obj._metric.det()
 
         return obj
 
     @property
-    def name(self):
+    def name( self ):
         return self._name
 
     @property
-    def rdim(self):
-        return self._rdim
+    def ldim( self ):
+        return self._ldim
 
     @property
-    def coordinates(self):
-        if self.rdim == 1:
+    def pdim( self ):
+        return self._pdim
+
+    @property
+    def coordinates( self ):
+        if self.pdim == 1:
             return self._coordinates[0]
         else:
             return self._coordinates
 
     @property
-    def logical_coordinates(self):
-        if self.rdim == 1:
+    def logical_coordinates( self ):
+        if self.ldim == 1:
             return self._logical_coordinates[0]
         else:
             return self._logical_coordinates
@@ -182,34 +226,69 @@ class Mapping(BasicMapping):
         return MappedDomain(self, domain)
 
     @property
-    def jacobian(self):
+    def jacobian( self ):
         return self._jacobian
 
     @property
-    def det_jacobian(self):
+    def det_jacobian( self ):
         return self.jacobian.det()
 
     @property
-    def is_analytical(self):
+    def is_analytical( self ):
         return not( self._expressions is None )
 
     @property
-    def expressions(self):
+    def expressions( self ):
         return self._expressions
+
+    @property
+    def jacobian_expr( self ):
+        return self._jac
+
+    @property
+    def jacobian_inv_expr( self ):
+        if not self.is_analytical and self._inv_jac is None:
+            self._inv_jac = self.jacobian_expr.inv()
+        return self._inv_jac
+
+    @property
+    def metric_expr( self ):
+        return self._metric
+
+    @property
+    def metric_det_expr( self ):
+        return self._metric_det
+
+    @property
+    def constants( self ):
+        return self._constants
+
+    def get_callable_mapping( self ):
+
+        if self._callable_map is None:
+            import sympde.topology.callable_mapping as cm
+            self._callable_map = cm.CallableMapping( self )
+        return self._callable_map
+
+    def _eval_subs(self, old, new):
+        return self
 
     def _sympystr(self, printer):
         sstr = printer.doprint
         return sstr(self.name)
 
+#==============================================================================
 class InverseMapping(Mapping):
     def __new__(cls, mapping):
         assert isinstance(mapping, Mapping)
         name     = mapping.name
-        rdim     = mapping.rdim
+        ldim     = mapping.ldim
+        pdim     = mapping.pdim
         coords   = mapping.logical_coordinates
         jacobian = mapping.jacobian.inv()
-        return Mapping.__new__(cls, name, rdim , coordinates=coords, jacobian=jacobian)
+        return Mapping.__new__(cls, name, ldim=ldim, pdim=pdim, coordinates=coords, jacobian=jacobian)
 
+#==============================================================================
 class JacobianSymbol(MatrixSymbolicExpr):
 
     def __new__(cls, mapping, axis=None):
@@ -226,8 +305,17 @@ class JacobianSymbol(MatrixSymbolicExpr):
     def axis(self):
         return self._args[1]
 
+    def inv(self):
+        return JacobianInverseSymbol(self.mapping, self.axis)
+
     def _hashable_content(self):
-        return (self.mapping, self.axis)
+        if self.axis is not None:
+            return ('JacobianSymbol', self.mapping, self.axis)
+        else:
+            return (self.mapping,)
+
+    def __hash__(self):
+        return hash(self._hashable_content())
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -235,6 +323,43 @@ class JacobianSymbol(MatrixSymbolicExpr):
             return 'Jacobian({},{})'.format(sstr(self.mapping.name), self.axis)
         else:
             return 'Jacobian({})'.format(sstr(self.mapping.name))
+
+#==============================================================================
+class JacobianInverseSymbol(MatrixSymbolicExpr):
+
+    def __new__(cls, mapping, axis=None):
+        assert isinstance(mapping, Mapping)
+        if axis is not None:
+            assert isinstance(axis, int)
+        return MatrixSymbolicExpr.__new__(cls, mapping, axis)
+
+    @property
+    def mapping(self):
+        return self._args[0]
+
+    @property
+    def axis(self):
+        return self._args[1]
+
+    @property
+    def name(self):
+        return self._args[2]
+
+    def _hashable_content(self):
+        if self.axis is not None:
+            return (self.mapping, self.axis)
+        else:
+            return ('JacobianInverseSymbol', self.mapping)
+
+    def __hash__(self):
+        return hash(self._hashable_content())
+
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        if self.axis:
+            return 'Jacobian({},{})**(-1)'.format(sstr(self.mapping.name), self.axis)
+        else:
+            return 'Jacobian({})**(-1)'.format(sstr(self.mapping.name))
 
 #==============================================================================
 class InterfaceMapping(Mapping):
@@ -253,7 +378,7 @@ class InterfaceMapping(Mapping):
         assert isinstance(minus, Mapping)
         assert isinstance(plus,  Mapping)
         name = '{}|{}'.format(str(minus), str(plus))
-        obj  = Mapping.__new__(cls, name, rdim=minus.rdim)
+        obj  = Mapping.__new__(cls, name, ldim=minus.ldim, pdim=minus.pdim)
         obj._minus = minus
         obj._plus  = plus
         
@@ -279,6 +404,7 @@ class InterfaceMapping(Mapping):
     def _eval_simplify(self, **kwargs):
         return self
 
+#==============================================================================
 class MultiPatchMapping(Mapping):
 
     def __new__(cls, dic):
@@ -294,8 +420,12 @@ class MultiPatchMapping(Mapping):
         return all(a.is_analytical for a in self.mappings.values())
 
     @property
-    def rdim(self):
-        return list(self.mappings.values())[0].rdim
+    def ldim(self):
+        return list(self.mappings.values())[0].ldim
+
+    @property
+    def pdim(self):
+        return list(self.mappings.values())[0].pdim
 
     @property
     def is_analytical(self):
@@ -310,105 +440,10 @@ class MultiPatchMapping(Mapping):
     def __hash__(self):
         return hash((*self.mappings.values(), *self.mappings.keys()))
 
-#==============================================================================
-class IdentityMapping(Mapping):
-    """
-    Represents an identity 1D/2D/3D Mapping object.
-
-    Examples
-
-    """
-    _expressions = {'x': 'x1',
-                    'y': 'x2',
-                    'z': 'x3'}
-
-#==============================================================================
-class AffineMapping(Mapping):
-    """
-    Represents a 1D/2D/3D Affine Mapping object.
-
-    Examples
-
-    """
-    _expressions = {'x': 'c1 + a11*x1 + a12*x2 + a13*x3',
-                    'y': 'c2 + a21*x1 + a22*x2 + a23*x3',
-                    'z': 'c3 + a31*x1 + a32*x2 + a33*x3'}
-
-#==============================================================================
-class PolarMapping(Mapping):
-    """
-    Represents a Polar 2D Mapping object (Annulus).
-
-    Examples
-
-    """
-    _expressions = {'x': 'c1 + (rmin*(1-x1)+rmax*x1)*cos(x2)',
-                    'y': 'c2 + (rmin*(1-x1)+rmax*x1)*sin(x2)'}
-
-    _rdim        = 2
-#==============================================================================
-class TargetMapping(Mapping):
-    """
-    Represents a Target 2D Mapping object.
-
-    Examples
-
-    """
-    _expressions = {'x': 'c1 + (1-k)*x1*cos(x2) - D*x1**2',
-                    'y': 'c2 + (1+k)*x1*sin(x2)'}
-
-    _rdim        = 2
-#==============================================================================
-class CzarnyMapping(Mapping):
-    """
-    Represents a Czarny 2D Mapping object.
-
-    Examples
-
-    """
-    _expressions = {'x': '(1 - sqrt( 1 + eps*(eps + 2*x1*cos(x2)) )) / eps',
-                    'y': 'c2 + (b / sqrt(1-eps**2/4) * x1 * sin(x2)) /'
-                        '(2 - sqrt( 1 + eps*(eps + 2*x1*cos(x2)) ))'}
-
-    _rdim        = 2
-#==============================================================================
-class CollelaMapping(Mapping):
-    """
-    Represents a Collela 2D Mapping object.
-
-    Examples
-
-    """
-    _expressions = {'x': '2.*(x1 + eps*sin(2.*pi*k1*x1)*sin(2.*pi*k2*x2)) - 1.',
-                    'y': '2.*(x2 + eps*sin(2.*pi*k1*x1)*sin(2.*pi*k2*x2)) - 1.'}
-
-    _rdim        = 2
-#==============================================================================
-class TorusMapping(Mapping):
-    """
-    Represents a Torus 3D Mapping object.
-
-    Examples
-
-    """
-    _expressions = {'x': '(R0+x1*cos(x2))*cos(x3)',
-                    'y': '(R0+x1*cos(x2))*sin(x3)',
-                    'z': 'x1*sin(x2)'}
-
-    _rdim        = 3
-#==============================================================================
-class TwistedTargetMapping(Mapping):
-    """
-    Represents a Twisted Target 3D Mapping object.
-
-    Examples
-
-    """
-    _expressions = {'x': 'c1 + (1-k)*x1*cos(x2) - D*x1**2',
-                    'y': 'c2 + (1+k)*x1*sin(x2)',
-                    'z': 'c3 + x3*x1**2*sin(2*x2)'}
-
-    _rdim        = 3
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        mappings = (sstr(i) for i in self.mappings.values())
+        return 'MultiPatchMapping({})'.format(', '.join(mappings))
 
 #==============================================================================
 class MappedDomain(BasicDomain):
@@ -476,7 +511,6 @@ class SymbolicWeightedVolume(Expr):
 class MappingApplication(Function):
     nargs = None
 
-    @cacheit
     def __new__(cls, *args, **options):
 
         if options.pop('evaluate', True):
@@ -512,12 +546,16 @@ class PullBack(Expr):
         J               = mapping.jacobian
         if isinstance(kind, (UndefinedSpaceType, H1SpaceType)):
             expr =  el
-        elif isinstance(kind, HdivSpaceType):
-            expr  =  (J/J.det())*ImmutableDenseMatrix(tuple(el[i] for i in range(dim)))
+
         elif isinstance(kind , HcurlSpaceType):
-            expr  = J.inv().T*ImmutableDenseMatrix(tuple(el[i] for i in range(dim)))
+            expr  = J.inv().T*el
+
+        elif isinstance(kind, HdivSpaceType):
+            expr  =  (J/J.det())*el
+
         elif isinstance(kind, L2SpaceType):
             expr = J.det()*el
+
 #        elif isinstance(kind, UndefinedSpaceType):
 #            raise ValueError('kind must be specified in order to perform the pull-back transformation')
         else:
@@ -540,17 +578,17 @@ class PullBack(Expr):
     @property
     def test(self):
         return self._test
+
 #==============================================================================
 class Jacobian(MappingApplication):
     """
     This class calculates the Jacobian of a mapping F
     where [J_{F}]_{i,j} =  \frac{\partial F_{i}}{\partial x_{j}}
-    or simplify J_{F} =  (\nabla F)^T
+    or simply J_{F} =  (\nabla F)^T
 
     """
 
     @classmethod
-    @cacheit
     def eval(cls, F):
         """
         this class methods computes the jacobian of a mapping
@@ -569,18 +607,22 @@ class Jacobian(MappingApplication):
         if not isinstance(F, Mapping):
             raise TypeError('> Expecting a Mapping object')
 
-        rdim = F.rdim
+        if F.jacobian_expr is not None:
+            return F.jacobian_expr
 
-        F = [F[i] for i in range(0, F.rdim)]
+        pdim = F.pdim
+        ldim = F.ldim
+
+        F = [F[i] for i in range(0, F.pdim)]
         F = Tuple(*F)
 
-        if rdim == 1:
+        if ldim == 1:
             expr = LogicalGrad_1d(F)
 
-        elif rdim == 2:
+        elif ldim == 2:
             expr = LogicalGrad_2d(F)
 
-        elif rdim == 3:
+        elif ldim == 3:
             expr = LogicalGrad_3d(F)
 
         return expr.T
@@ -594,7 +636,6 @@ class Covariant(MappingApplication):
     """
 
     @classmethod
-    @cacheit
     def eval(cls, F, v):
 
         """
@@ -617,8 +658,11 @@ class Covariant(MappingApplication):
         if not isinstance(v, (tuple, list, Tuple, ImmutableDenseMatrix, Matrix)):
             raise TypeError('> Expecting a tuple, list, Tuple, Matrix')
 
+        assert F.pdim == F.ldim
+
         M   = Jacobian(F).inv().T
-        dim = F.rdim
+        dim = F.pdim
+
         if dim == 1:
             b = M[0,0] * v[0]
             return Tuple(b)
@@ -642,7 +686,6 @@ class Contravariant(MappingApplication):
     """
 
     @classmethod
-    @cacheit
     def eval(cls, F, v):
         """
         This class methods computes the contravariant transformation
@@ -682,18 +725,6 @@ class LogicalExpr(CalculusFunction):
 
         if options.pop('evaluate', True):
             r = cls.eval(expr, **options)
-            if options.pop('subs', False):
-                mapping = options['mapping']
-                if mapping.is_analytical and not isinstance(mapping, InterfaceMapping):
-                    for i in range(mapping.rdim):
-                        r = r.subs(mapping[i], mapping.expressions[i])
-
-                elif mapping.is_analytical and isinstance(mapping, InterfaceMapping):
-                    M1 = mapping.minus
-                    M2 = mapping.plus
-                    for i in range(M1.rdim):
-                        r = r.subs(M1[i], M1.expressions[i])
-                        r = r.subs(M2[i], M2.expressions[i])
         else:
             r = None
 
@@ -749,7 +780,11 @@ class LogicalExpr(CalculusFunction):
                     # here we assume that the two mapped domains
                     # are identical in the interface so we choose one of them
                 Ms   = [mapping[i] for i in range(dim)]
-                return expr.subs(zip(syms, Ms))
+                expr = expr.subs(list(zip(syms, Ms)))
+
+                if mapping.is_analytical:
+                    expr = expr.subs(list(zip(Ms, mapping.expressions)))
+                return expr
 
         if isinstance(expr, Symbol) and expr.name in l_coords:
             return expr
@@ -773,6 +808,9 @@ class LogicalExpr(CalculusFunction):
             return v
 
         elif isinstance(expr, _logical_partial_derivatives):
+            if mapping.is_analytical:
+                Ms   = [mapping[i] for i in range(dim)]
+                expr = expr.subs(list(zip(Ms, mapping.expressions)))
             return expr
 
         elif isinstance(expr, (IndexedTestTrial, IndexedVectorField)):
@@ -1017,7 +1055,11 @@ class LogicalExpr(CalculusFunction):
                 det = sqrt((J.T*J).det())
             else:
                 axis = expr.domain.axis
-                J    = JacobianSymbol(mapping, axis)
+                if isinstance(mapping, InterfaceMapping):
+                    J    = JacobianSymbol(mapping.minus, axis)
+                else:
+                    J    = JacobianSymbol(mapping, axis)
+
                 det  = sqrt((J.T*J).det())
             body   = cls.eval(expr.expr, mapping=mapping, dim=dim)*det
             return Integral(body, domain)
@@ -1046,7 +1088,7 @@ class LogicalExpr(CalculusFunction):
             dim     = domain.dim
             J       = mapping.jacobian
             newexpr = cls.eval(expr.expr, mapping=mapping, dim=dim)
-            det     = TerminalExpr(sqrt((J.T*J).det()), dim=dim, logical=True)
+            det     = TerminalExpr(sqrt((J.T*J).det()), dim=dim, logical=True, mapping=mapping)
             
             return DomainExpression(domain, ImmutableDenseMatrix([[newexpr*det]]))
             
