@@ -658,8 +658,11 @@ class Covariant(MappingApplication):
         if not isinstance(v, (tuple, list, Tuple, ImmutableDenseMatrix, Matrix)):
             raise TypeError('> Expecting a tuple, list, Tuple, Matrix')
 
+        assert F.pdim == F.ldim
+
         M   = Jacobian(F).inv().T
         dim = F.pdim
+
         if dim == 1:
             b = M[0,0] * v[0]
             return Tuple(b)
