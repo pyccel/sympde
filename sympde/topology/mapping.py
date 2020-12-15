@@ -543,18 +543,18 @@ class PullBack(Expr):
         else:
             mapping = space.domain.mapping
 
-        J               = mapping.jacobian
+        J = mapping.jacobian
         if isinstance(kind, (UndefinedSpaceType, H1SpaceType)):
-            expr =  el
+            expr = el
 
-        elif isinstance(kind , HcurlSpaceType):
-            expr  = J.inv().T*el
+        elif isinstance(kind, HcurlSpaceType):
+            expr = el * J.inv().T
 
         elif isinstance(kind, HdivSpaceType):
-            expr  =  (J/J.det())*el
+            expr = el * (J/J.det())
 
         elif isinstance(kind, L2SpaceType):
-            expr = J.det()*el
+            expr = el / J.det()
 
 #        elif isinstance(kind, UndefinedSpaceType):
 #            raise ValueError('kind must be specified in order to perform the pull-back transformation')
