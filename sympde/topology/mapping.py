@@ -548,10 +548,10 @@ class PullBack(Expr):
             expr = el
 
         elif isinstance(kind, HcurlSpaceType):
-            expr = el * J.inv().T
+            expr = J.inv().T * el
 
         elif isinstance(kind, HdivSpaceType):
-            expr = el * (J/J.det())
+            expr = (J/J.det()) * el
 
         elif isinstance(kind, L2SpaceType):
             expr = el / J.det()
