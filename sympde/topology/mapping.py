@@ -554,7 +554,7 @@ class PullBack(Expr):
             expr  =  (J/J.det())*el
 
         elif isinstance(kind, L2SpaceType):
-            expr = J.det()*el
+            expr = el / J.det()
 
 #        elif isinstance(kind, UndefinedSpaceType):
 #            raise ValueError('kind must be specified in order to perform the pull-back transformation')
