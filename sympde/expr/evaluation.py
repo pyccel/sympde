@@ -480,8 +480,10 @@ class TerminalExpr(CalculusFunction):
             J    = expr.mapping.jacobian_expr
             if axis is None:
                 return J
-            else:
+            elif expr.mapping.ldim>1:
                 return J.col_del(axis)
+            elif expr.mapping.ldim == 1:
+                return J.eye(1)
 
         elif isinstance(expr, JacobianInverseSymbol):
             axis = expr.axis
