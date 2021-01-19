@@ -399,7 +399,6 @@ class TerminalExpr(CalculusFunction):
         # (Try to) sympify args first
 
         if options.pop('evaluate', True):
-            args = cls._annotate(*args)
             r = cls.eval(*args, **options)
         else:
             r = None
@@ -415,26 +414,6 @@ class TerminalExpr(CalculusFunction):
             return Indexed(self, *indices, **kw_args)
         else:
             return Indexed(self, indices, **kw_args)
-
-    # TODO should we keep it?
-    def _annotate(*args):
-        args = list(args)
-        expr = args[0]
-        if isinstance(expr, BasicForm):
-            if not expr.is_annotated:
-                expr = expr.annotate()
-        else:
-            if isinstance(expr, (Add, Mul)):
-                indexed_fields = list(expr.atoms(IndexedTestTrial))
-                new_indexed_fields = [VectorField(F.base.space,F.base.name) for F in indexed_fields]
-                new_indexed_fields = [new_F[F.indices[0]] for new_F,F in zip(new_indexed_fields, indexed_fields)]
-                expr = expr.subs(zip(indexed_fields, new_indexed_fields))
-                fields = list(expr.atoms(ScalarTestFunction,VectorTestFunction).difference(indexed_fields))
-                new_fields = [f.space.field(f.name) for f in fields]
-                expr = expr.subs(zip(fields, new_fields))
-
-        args[0] = expr
-        return args
 
     @classmethod
     @cacheit
