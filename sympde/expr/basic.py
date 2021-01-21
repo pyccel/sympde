@@ -64,7 +64,6 @@ class BasicExpr(Expr):
     is_linear     = False
     is_bilinear   = False
     is_functional = False
-    is_annotated  = False
 
     @property
     def fields(self):
@@ -85,52 +84,6 @@ class BasicExpr(Expr):
         # no redanduncy
         return tuple(ls)
 
-    def annotate(self):
-    
-        if self.is_annotated:
-            return self
-
-        if self.is_bilinear or self.is_linear:
-
-            fields          = self.fields
-            scalar_fields   = [f for f in fields if isinstance(f.space, ScalarFunctionSpace)]
-            vector_fields   = [f for f in fields if isinstance(f.space, VectorFunctionSpace)]
-
-            new_scalar_fields   = [f.space.field(f.name) for f in scalar_fields]
-            new_vector_fields   = [f.space.field(f.name) for f in vector_fields]
-            
-            indexed             = self.expr.atoms(IndexedTestTrial)
-            indexed             = [f for f in indexed if f.base in vector_fields]
-            new_indexed         = [VectorField(f.base.space, f.base.name)[f.indices[0]] for f in indexed]
-            
-            expr = self.subs(zip(indexed, new_indexed))
-            expr = expr.subs(zip(vector_fields, new_vector_fields))
-            expr = expr.subs(zip(scalar_fields, new_scalar_fields))
-            
-        elif self.is_functional:
-            domain = self.domain
-            expr   = self.expr
-            fields = self.fields
-            scalar_fields   = [f for f in fields if isinstance(f.space, ScalarFunctionSpace)]
-            vector_fields   = [f for f in fields if isinstance(f.space, VectorFunctionSpace)]
-
-            new_scalar_fields   = [f.space.field(f.name) for f in scalar_fields]
-            new_vector_fields   = [f.space.field(f.name) for f in vector_fields]
-
-            indexed             = self.expr.atoms(IndexedTestTrial)
-            indexed             = [f for f in indexed if f.base in vector_fields]
-            new_indexed         = [VectorField(f.base.space, f.base.name)[f.indices[0]] for f in indexed]
-            
-            expr = expr.subs(zip(indexed, new_indexed))
-            expr = expr.subs(zip(vector_fields, new_vector_fields))
-            expr = expr.subs(zip(scalar_fields, new_scalar_fields))
-            expr = self.func(expr, self.domain, evaluate=False)
-            if self.is_norm:
-                expr._exponent = self._exponent
-
-        expr.is_annotated = True
-        return expr
-
 #==============================================================================
 # TODO check unicity of domain in __new__
 class BasicForm(Expr):
@@ -138,7 +91,6 @@ class BasicForm(Expr):
     is_linear   = False
     is_bilinear = False
     is_functional = False
-    is_annotated  = False
     is_norm       = False
     _domain     = None
     _ldim        = None
@@ -203,49 +155,4 @@ class BasicForm(Expr):
             expr = expr.xreplace({var: v})
         # ...
 
-        return expr
-        
-    def annotate(self):
-    
-        if self.is_annotated:
-            return self
-
-        if self.is_bilinear or self.is_linear:
-            fields          = self.fields
-            scalar_fields   = [f for f in fields if isinstance(f.space, ScalarFunctionSpace)]
-            vector_fields   = [f for f in fields if isinstance(f.space, VectorFunctionSpace)]
-
-            new_scalar_fields   = [f.space.field(f.name) for f in scalar_fields]
-            new_vector_fields   = [f.space.field(f.name) for f in vector_fields]
-            
-            indexed             = self.expr.atoms(IndexedTestTrial)
-            indexed             = [f for f in indexed if f.base in vector_fields]
-            new_indexed         = [VectorField(f.base.space, f.base.name)[f.indices[0]] for f in indexed]
-            
-            expr = self.subs(zip(indexed, new_indexed))
-            expr = expr.subs(zip(vector_fields, new_vector_fields))
-            expr = expr.subs(zip(scalar_fields, new_scalar_fields))
-            
-        elif self.is_functional:
-            domain = self.domain
-            expr   = self.expr
-            fields = self.fields
-            scalar_fields   = [f for f in fields if isinstance(f.space, ScalarFunctionSpace)]
-            vector_fields   = [f for f in fields if isinstance(f.space, VectorFunctionSpace)]
-
-            new_scalar_fields   = [f.space.field(f.name) for f in scalar_fields]
-            new_vector_fields   = [f.space.field(f.name) for f in vector_fields]
-
-            indexed             = self.expr.atoms(IndexedTestTrial)
-            indexed             = [f for f in indexed if f.base in vector_fields]
-            new_indexed         = [VectorField(f.base.space, f.base.name)[f.indices[0]] for f in indexed]
-            
-            expr = expr.subs(zip(indexed, new_indexed))
-            expr = expr.subs(zip(vector_fields, new_vector_fields))
-            expr = expr.subs(zip(scalar_fields, new_scalar_fields))
-            expr = self.func(expr, self.domain, evaluate=False)
-            if self.is_norm:
-                expr._exponent = self._exponent
-
-        expr.is_annotated = True
         return expr

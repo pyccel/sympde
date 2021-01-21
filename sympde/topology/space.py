@@ -635,7 +635,7 @@ class ScalarField(Symbol):
     Examples
 
     """
-    _space = None
+    _space         = None
     is_commutative = True
     _projection_of = None
     def __new__(cls, space, name=None):
@@ -660,6 +660,14 @@ class ScalarField(Symbol):
 
     def set_as_projection(self, expr):
         self._projection_of = expr
+
+    def __eq__(self, a):
+        if isinstance(a, ScalarField):
+            return a.space == self.space and a.name == self.name
+        return False
+
+    def __hash__(self):
+        return hash((self.name, self.space))
 
     def _sympystr(self, printer):
         sstr = printer.doprint

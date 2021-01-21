@@ -719,7 +719,6 @@ class Contravariant(MappingApplication):
 #==============================================================================
 class LogicalExpr(CalculusFunction):
 
-    @cacheit
     def __new__(cls, expr, **options):
         # (Try to) sympify args first
 
@@ -756,7 +755,6 @@ class LogicalExpr(CalculusFunction):
             return Indexed(self, indices, **kw_args)
 
     @classmethod
-    @cacheit
     def eval(cls, expr, mapping=None, dim=None, **options):
         """."""
 
@@ -919,7 +917,7 @@ class LogicalExpr(CalculusFunction):
 #            v   = cls.eval(grad(expr.args[0]), mapping=mapping, dim=dim)
 #            v   = mapping.jacobian.inv().T*grad(v)
 #            return v
-          
+
         elif isinstance(expr, (dot, inner, outer)):
             args = [cls.eval(arg, mapping=mapping, dim=dim) for arg in expr.args]
             return type(expr)(*args)
@@ -935,9 +933,7 @@ class LogicalExpr(CalculusFunction):
                 line = []
                 for i_col in range(0, n_cols):
                     line.append(cls.eval(expr[i_row,i_col], mapping=mapping, dim=dim))
-
                 lines.append(line)
-
             return type(expr)(lines)
 
         elif isinstance(expr, dx):
@@ -1028,6 +1024,7 @@ class LogicalExpr(CalculusFunction):
 
         elif isinstance(expr, (Symbol, Indexed)):
             return expr
+
         elif isinstance(expr, NormalVector):
             return expr
 
@@ -1065,23 +1062,31 @@ class LogicalExpr(CalculusFunction):
             return Integral(body, domain)
 
         elif isinstance(expr, BilinearForm):
-            tests  = [get_logical_test_function(a) for a in expr.test_functions]
-            trials = [get_logical_test_function(a) for a in expr.trial_functions]
-            body   = cls.eval(expr.expr, mapping=mapping, dim=dim)
+            tests   = [get_logical_test_function(a) for a in expr.test_functions]
+            trials  = [get_logical_test_function(a) for a in expr.trial_functions]
+            mapping = expr.domain.mapping
+            dim     = expr.domain.dim
+            body    = cls.eval(expr.expr, mapping=mapping, dim=dim)
             return BilinearForm((trials, tests), body)
 
         elif isinstance(expr, LinearForm):
-            tests  = [get_logical_test_function(a) for a in expr.test_functions]
-            body   = cls.eval(expr.expr, mapping=mapping, dim=dim)
+            tests   = [get_logical_test_function(a) for a in expr.test_functions]
+            mapping = expr.domain.mapping
+            dim     = expr.domain.dim
+            body    = cls.eval(expr.expr, mapping=mapping, dim=dim)
             return LinearForm(tests, body)
+
         elif isinstance(expr, Norm):
             kind           = expr.kind
             domain         = expr.domain.logical_domain
+            mapping        = expr.domain.mapping
+            dim            = expr.domain.dim
             exponent       = expr.exponent
             e              = cls.eval(expr.expr, mapping=mapping, dim=dim)
             norm           = Norm(e, domain, kind, evaluate=False)
             norm._exponent = exponent
             return norm
+
         elif isinstance(expr, DomainExpression):
             domain  = expr.target.logical_domain
             mapping = expr.target.mapping
@@ -1089,12 +1094,12 @@ class LogicalExpr(CalculusFunction):
             J       = mapping.jacobian
             newexpr = cls.eval(expr.expr, mapping=mapping, dim=dim)
             det     = TerminalExpr(sqrt((J.T*J).det()), dim=dim, logical=True, mapping=mapping)
-            
             return DomainExpression(domain, ImmutableDenseMatrix([[newexpr*det]]))
             
         elif isinstance(expr, Function):
             args = [cls.eval(a, mapping=mapping, dim=dim) for a in expr.args]
             return type(expr)(*args)
+
         return cls(expr, mapping=mapping, dim=dim, evaluate=False)
 
 #==============================================================================

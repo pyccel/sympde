@@ -199,6 +199,12 @@ class Union(BasicDomain):
             raise StopIteration
         self.index += 1
         return result
+
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        args = ', '.join(sstr(a) for a in self.args)
+        return 'Union({})'.format(args)
+
 #==============================================================================
 class ProductDomain(BasicDomain):
     def __new__(cls, *args, name=None):
