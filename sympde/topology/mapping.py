@@ -1064,14 +1064,12 @@ class LogicalExpr(CalculusFunction):
         elif isinstance(expr, BilinearForm):
             tests   = [get_logical_test_function(a) for a in expr.test_functions]
             trials  = [get_logical_test_function(a) for a in expr.trial_functions]
-            mapping = expr.domain.mapping
             dim     = expr.domain.dim
             body    = cls.eval(expr.expr, mapping=mapping, dim=dim)
             return BilinearForm((trials, tests), body)
 
         elif isinstance(expr, LinearForm):
             tests   = [get_logical_test_function(a) for a in expr.test_functions]
-            mapping = expr.domain.mapping
             dim     = expr.domain.dim
             body    = cls.eval(expr.expr, mapping=mapping, dim=dim)
             return LinearForm(tests, body)
@@ -1079,7 +1077,6 @@ class LogicalExpr(CalculusFunction):
         elif isinstance(expr, Norm):
             kind           = expr.kind
             domain         = expr.domain.logical_domain
-            mapping        = expr.domain.mapping
             dim            = expr.domain.dim
             exponent       = expr.exponent
             e              = cls.eval(expr.expr, mapping=mapping, dim=dim)
