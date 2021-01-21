@@ -1024,6 +1024,7 @@ class LogicalExpr(CalculusFunction):
 
         elif isinstance(expr, (Symbol, Indexed)):
             return expr
+
         elif isinstance(expr, NormalVector):
             return expr
 
@@ -1074,6 +1075,7 @@ class LogicalExpr(CalculusFunction):
             dim     = expr.domain.dim
             body    = cls.eval(expr.expr, mapping=mapping, dim=dim)
             return LinearForm(tests, body)
+
         elif isinstance(expr, Norm):
             kind           = expr.kind
             domain         = expr.domain.logical_domain
@@ -1084,6 +1086,7 @@ class LogicalExpr(CalculusFunction):
             norm           = Norm(e, domain, kind, evaluate=False)
             norm._exponent = exponent
             return norm
+
         elif isinstance(expr, DomainExpression):
             domain  = expr.target.logical_domain
             mapping = expr.target.mapping
@@ -1091,12 +1094,12 @@ class LogicalExpr(CalculusFunction):
             J       = mapping.jacobian
             newexpr = cls.eval(expr.expr, mapping=mapping, dim=dim)
             det     = TerminalExpr(sqrt((J.T*J).det()), dim=dim, logical=True, mapping=mapping)
-            
             return DomainExpression(domain, ImmutableDenseMatrix([[newexpr*det]]))
             
         elif isinstance(expr, Function):
             args = [cls.eval(a, mapping=mapping, dim=dim) for a in expr.args]
             return type(expr)(*args)
+
         return cls(expr, mapping=mapping, dim=dim, evaluate=False)
 
 #==============================================================================
