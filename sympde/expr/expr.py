@@ -183,6 +183,9 @@ class Integral(CalculusFunction):
     def domain(self):
         return self._args[1]
 
+    def __neg__(self):
+        return Integral(-self.expr, self.domain)
+
     def __mul__(self, o):
         return Integral(self.expr*o, self.domain)
 
