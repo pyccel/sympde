@@ -154,12 +154,19 @@ class Integral(CalculusFunction):
         if isinstance(domain, Union):
             exprs = [cls(expr, d) for d in domain]
             return IntAdd(*exprs)
+
         elif isinstance(domain, Domain):
             interiors = domain.interior if isinstance(domain.interior, Union) else [domain.interior]
             exprs = [cls(expr, d) for d in interiors]
             return IntAdd(*exprs)
+
         elif isinstance(domain, Boundary):
-            expr = cls.subs_boundary_expr(expr, domain)
+            #------------------------------------------------------------
+            # NOTE [YG, 27.01.2021]:
+            #   we stop using Traces in the boundary integrals because of
+            #   an error that arises when using cross(v, nn).
+            #------------------------------------------------------------
+#            expr = cls.subs_boundary_expr(expr, domain)
             obj = CalculusFunction.__new__(cls, expr, domain)
             obj.is_boundary_integral = True
 
@@ -170,6 +177,7 @@ class Integral(CalculusFunction):
         elif isinstance(domain, InteriorDomain):
             obj = CalculusFunction.__new__(cls, expr, domain)
             obj.is_domain_integral = True
+
         else:
             raise TypeError(domain)
 
