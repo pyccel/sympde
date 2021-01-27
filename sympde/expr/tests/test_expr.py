@@ -22,7 +22,7 @@ from sympde.topology import element_of, elements_of
 from sympde.topology import InteriorDomain, Union
 from sympde.topology import Boundary, NormalVector
 from sympde.topology import Domain
-from sympde.topology import trace_1
+#from sympde.topology import trace_1  # TODO [YG, 27.01.2021]: fix trace
 from sympde.topology import Square
 from sympde.topology import ElementDomain
 from sympde.topology import Area
@@ -137,7 +137,8 @@ def test_linear_form_2d_1():
     print(l)
 
     assert(l.domain == B1)
-    assert(l(v1) == int_1(v1*trace_1(g, B1)))
+#    assert(l(v1) == int_1(v1*trace_1(g, B1))) # TODO [YG, 27.01.2021]: fix trace
+    assert(l(v1) == int_1(v1*dot(g, nn)))
     # ...
 
     # ...
@@ -148,7 +149,8 @@ def test_linear_form_2d_1():
     for i in l.domain.args:
         assert(i in [domain.interior, B1])
 
-    assert(l(v1) == int_1(v1*trace_1(g, B1)) + int_0(x*y*v1))
+#    assert(l(v1) == int_1(v1*trace_1(g, B1)) + int_0(x*y*v1)) # TODO [YG, 27.01.2021]: fix trace
+    assert(l(v1) == int_1(v1*dot(g, nn)) + int_0(x*y*v1))
     # ...
 
     # ...
@@ -277,7 +279,8 @@ def test_bilinear_form_2d_1():
     a = BilinearForm((u,v), int_1(v*dot(grad(u), nn)))
 
     assert(a.domain == B1)
-    assert(a(u1,v1) == int_1(v1*trace_1(grad(u1), B1)))
+#    assert(a(u1,v1) == int_1(v1*trace_1(grad(u1), B1))) # TODO [YG, 27.01.2021]: fix trace
+    assert a(u1,v1) == int_1(v1*dot(grad(u1), nn))
     # ...
 
     # ...
@@ -288,7 +291,8 @@ def test_bilinear_form_2d_1():
     for i in a.domain.args:
         assert(i in [domain.interior, B1])
 
-    assert(a(u1,v1) == int_0(u1*v1) + int_1(v1*trace_1(grad(u1), B1)))
+#    assert(a(u1,v1) == int_0(u1*v1) + int_1(v1*trace_1(grad(u1), B1))) # TODO [YG, 27.01.2021]: fix trace
+    assert a(u1,v1) == int_0(u1*v1) + int_1(v1*dot(grad(u1), nn))
     # ...
 
     # ...
