@@ -778,7 +778,8 @@ class Trace(AtomicExpr):
     Represents the trace over a boundary and a space function
 
     """
-    is_commutative = True
+    is_commutative = None
+
     def __new__(cls, expr, boundary, order=0, **options):
 #        # TODO these tests are not working for the moment for Grad(u)
 #        if not expr.atoms((ScalarTestFunction, VectorTestFunction, ScalarField)):
@@ -786,10 +787,13 @@ class Trace(AtomicExpr):
 #
 #        if not(expr.space.domain is boundary.domain):
 #            raise ValueError('> Space and boundary domains must be the same')
-        evaluate = options.pop('evaluate',True)
-        if evaluate:
+
+        if options.pop('evaluate',True):
             return cls.eval(expr, boundary, order)
-        return Basic.__new__(cls, expr, boundary, order)
+
+        obj = Basic.__new__(cls, expr, boundary, order)
+        obj.is_commutative = expr.is_commutative
+        return obj
 
     @property
     def expr(self):
