@@ -516,10 +516,9 @@ class IndexedTestTrial(Indexed):
     @property
     def free_symbols(self):
         base_free_symbols = self.base.free_symbols
-        symbolic_indices = [i for i in self.indices if isinstance(i, Basic)]
-        if len(symbolic_indices) > 0:
-            raise ValueError('symbolic indices not yet available')
-
+        for i in self.indices:
+            if not isinstance(i, (int, Integer)):
+                raise ValueError('Symbolic index {} of type {} cannot be used'.format(i, type(i)))
         return base_free_symbols
 
     @property
