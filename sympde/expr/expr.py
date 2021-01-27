@@ -154,12 +154,19 @@ class Integral(CalculusFunction):
         if isinstance(domain, Union):
             exprs = [cls(expr, d) for d in domain]
             return IntAdd(*exprs)
+
         elif isinstance(domain, Domain):
             interiors = domain.interior if isinstance(domain.interior, Union) else [domain.interior]
             exprs = [cls(expr, d) for d in interiors]
             return IntAdd(*exprs)
+
         elif isinstance(domain, Boundary):
-            expr = cls.subs_boundary_expr(expr, domain)
+            #------------------------------------------------------------
+            # NOTE [YG, 27.01.2021]:
+            #   we stop using Traces in the boundary integrals because of
+            #   an error that arises when using cross(v, nn).
+            #------------------------------------------------------------
+#            expr = cls.subs_boundary_expr(expr, domain)
             obj = CalculusFunction.__new__(cls, expr, domain)
             obj.is_boundary_integral = True
 
@@ -170,6 +177,7 @@ class Integral(CalculusFunction):
         elif isinstance(domain, InteriorDomain):
             obj = CalculusFunction.__new__(cls, expr, domain)
             obj.is_domain_integral = True
+
         else:
             raise TypeError(domain)
 
@@ -228,14 +236,10 @@ class Integral(CalculusFunction):
 
     @classmethod
     def subs_boundary_expr(cls, expr, domain):
-        atoms_1 = list(expr.atoms(Dot,Trace))
 
-        for i in range(len(atoms_1)):
-            a = atoms_1[i]
-            if isinstance(a, Dot):
-                if not isinstance(a.args[0], NormalVector):
-                    if not isinstance(a.args[1], NormalVector):
-                        atoms_1.remove(a)
+        atoms_1 = [*expr.atoms(Trace)] + [a for a in expr.atoms(Dot) \
+                                       if isinstance(a.args[0], NormalVector) \
+                                       or isinstance(a.args[1], NormalVector)]
 
         subs_1  = {a:Dummy() for a in atoms_1}
         expr, _ = expr._xreplace(subs_1)

@@ -516,10 +516,9 @@ class IndexedTestTrial(Indexed):
     @property
     def free_symbols(self):
         base_free_symbols = self.base.free_symbols
-        symbolic_indices = [i for i in self.indices if isinstance(i, Basic)]
-        if len(symbolic_indices) > 0:
-            raise ValueError('symbolic indices not yet available')
-
+        for i in self.indices:
+            if not isinstance(i, (int, Integer)):
+                raise ValueError('Symbolic index {} of type {} cannot be used'.format(i, type(i)))
         return base_free_symbols
 
     @property
@@ -778,7 +777,8 @@ class Trace(AtomicExpr):
     Represents the trace over a boundary and a space function
 
     """
-    is_commutative = True
+    is_commutative = None
+
     def __new__(cls, expr, boundary, order=0, **options):
 #        # TODO these tests are not working for the moment for Grad(u)
 #        if not expr.atoms((ScalarTestFunction, VectorTestFunction, ScalarField)):
@@ -786,10 +786,13 @@ class Trace(AtomicExpr):
 #
 #        if not(expr.space.domain is boundary.domain):
 #            raise ValueError('> Space and boundary domains must be the same')
-        evaluate = options.pop('evaluate',True)
-        if evaluate:
+
+        if options.pop('evaluate',True):
             return cls.eval(expr, boundary, order)
-        return Basic.__new__(cls, expr, boundary, order)
+
+        obj = Basic.__new__(cls, expr, boundary, order)
+        obj.is_commutative = expr.is_commutative
+        return obj
 
     @property
     def expr(self):
