@@ -228,14 +228,10 @@ class Integral(CalculusFunction):
 
     @classmethod
     def subs_boundary_expr(cls, expr, domain):
-        atoms_1 = list(expr.atoms(Dot,Trace))
 
-        for i in range(len(atoms_1)):
-            a = atoms_1[i]
-            if isinstance(a, Dot):
-                if not isinstance(a.args[0], NormalVector):
-                    if not isinstance(a.args[1], NormalVector):
-                        atoms_1.remove(a)
+        atoms_1 = [*expr.atoms(Trace)] + [a for a in expr.atoms(Dot) \
+                                       if isinstance(a.args[0], NormalVector) \
+                                       or isinstance(a.args[1], NormalVector)]
 
         subs_1  = {a:Dummy() for a in atoms_1}
         expr, _ = expr._xreplace(subs_1)
