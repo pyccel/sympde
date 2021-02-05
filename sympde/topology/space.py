@@ -2,24 +2,42 @@
 
 from numpy import unique
 
-from sympy.core import Basic
-from sympy.tensor import Indexed, IndexedBase
-from sympy.core import Symbol
-from sympy.core import Expr,Mul, Add
-from sympy.core.expr import AtomicExpr
-from sympy.core.containers import Tuple
-from sympy import Integer, Float, expand
+from sympy import Integer, expand
 from sympy import Function
+from sympy.core import Basic
+from sympy.core import Symbol
+from sympy.core import Expr, Mul, Add
+from sympy.core.expr import AtomicExpr
 from sympy.core.numbers import Zero as sy_Zero
-from sympy.core.singleton import S
+from sympy.core.containers import Tuple
+from sympy.tensor import Indexed, IndexedBase
 
 from sympde.core.utils import expand_name_patterns
 from sympde.core.utils import random_string
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import _coeffs_registery
-from .basic import BasicDomain, Union, Interval
+
+from .basic    import BasicDomain, Union, Interval
 from .datatype import SpaceType, dtype_space_registry
-from .datatype import RegularityType, dtype_regularity_registry
+from .datatype import dtype_regularity_registry
+
+__all__ = (
+    'element_of',
+    'elements_of',
+    'BasicFunctionSpace',
+    'Derham',
+    'IndexedTestTrial',
+    'ProductSpace',
+    'Projection',
+    'Projector',
+    'ScalarFunctionSpace',
+    'ScalarTestFunction',
+    'Trace',
+    'trace_0',
+    'trace_1',
+    'VectorFunctionSpace',
+    'VectorTestFunction',
+)
 
 #==============================================================================
 def element_of(space, name):
@@ -213,9 +231,6 @@ class ScalarFunctionSpace(BasicFunctionSpace):
     def element(self, name):
         return ScalarTestFunction(self, name)
 
-    def field(self, name):
-        return ScalarField(self, name)
-
 #==============================================================================
 class VectorFunctionSpace(BasicFunctionSpace):
     """
@@ -227,9 +242,6 @@ class VectorFunctionSpace(BasicFunctionSpace):
 
     def element(self, name):
         return VectorTestFunction(self, name)
-
-    def field(self, name):
-        return VectorField(self, name)
 
 #=============================================================================
 class Derham:
@@ -627,150 +639,6 @@ def TestFunction(space, name=None):
         raise TypeError('Wrong space type. given {}'.format(type(space)))
 
 #==============================================================================
-class ScalarField(Symbol):
-    """
-    Represents a ScalarField variable.
-
-    Examples
-
-    """
-    _space         = None
-    is_commutative = True
-    _projection_of = None
-    def __new__(cls, space, name=None):
-        if not isinstance(space, ScalarFunctionSpace):
-            raise ValueError('Expecting a ScalarFunctionSpace')
-
-        obj = Symbol.__new__(cls, name)
-        obj._space = space
-        return obj
-
-    @property
-    def space(self):
-        return self._space
-
-    @property
-    def ldim(self):
-        return self.space.ldim
-
-    @property
-    def projection_of(self):
-        return self._projection_of
-
-    def set_as_projection(self, expr):
-        self._projection_of = expr
-
-    def __eq__(self, a):
-        if isinstance(a, ScalarField):
-            return a.space == self.space and a.name == self.name
-        return False
-
-    def __hash__(self):
-        return hash((self.name, self.space))
-
-    def _sympystr(self, printer):
-        sstr = printer.doprint
-        return sstr(self.name)
-
-#==============================================================================
-class VectorField(Symbol, IndexedBase):
-    """
-    Represents a vector field as an element of a fem space.
-
-    Examples
-
-    """
-    is_commutative = False
-    _space = None
-    _projection_of = None
-    def __new__(cls, space, name=None):
-        if not isinstance(space, VectorFunctionSpace):
-            raise ValueError('Expecting a VectorFunctionSpace')
-
-        obj = Basic.__new__(cls, name)
-        obj._space = space
-        return obj
-
-    @property
-    def space(self):
-        return self._space
-
-    @property
-    def name(self):
-        return self._args[0]
-
-    @property
-    def shape(self):
-        # we return a list to make it compatible with IndexedBase sympy object
-        return [self.space.shape]
-
-    @property
-    def ldim(self):
-        return self.space.ldim
-
-    def __getitem__(self, *args):
-
-        if self.shape and len(self.shape) != len(args):
-            raise IndexException("Rank mismatch.")
-
-        if not(len(args) == 1):
-            raise ValueError('expecting exactly one argument')
-
-        args = list(args)
-        for i in range(len(args)):
-            if isinstance(args[i], int):
-                args[i] = Integer(args[i])
-
-        assumptions ={}
-        obj = IndexedVectorField(self, *args)
-        return obj
-
-    def duplicate(self, name):
-        return VectorField(self.space, name)
-
-    @property
-    def projection_of(self):
-        return self._projection_of
-
-    def set_as_projection(self, expr):
-        self._projection_of = expr
-
-#==============================================================================
-# this class is needed, otherwise sympy will convert VectorTestFunction to
-# IndexedBase
-class IndexedVectorField(Indexed):
-    """Represents a mathematical object with indices.
-
-    """
-    is_commutative = True
-    is_Indexed = True
-    is_symbol = True
-    is_Atom = True
-
-    def __new__(cls, base, *args, **kw_args):
-        assert(isinstance(base, VectorField))
-
-        if not args:
-            raise IndexException("Indexed needs at least one index.")
-
-        return Expr.__new__(cls, base, *args, **kw_args)
-
-    # free_symbols is redefined otherwise an expression u[0].free_symbols will
-    # give the error:  AttributeError: 'int' object has no attribute 'free_symbols'
-    @property
-    def free_symbols(self):
-        base_free_symbols = self.base.free_symbols
-        symbolic_indices = [i for i in self.indices if isinstance(i, Basic)]
-        if len(symbolic_indices) > 0:
-            raise ValueError('symbolic indices not yet available')
-
-        return base_free_symbols
-
-    @property
-    def ldim(self):
-        return self.base.space.ldim
-
-#==============================================================================
 # TODO Expr or AtomicExpr?
 class Trace(AtomicExpr):
     """
@@ -781,7 +649,7 @@ class Trace(AtomicExpr):
 
     def __new__(cls, expr, boundary, order=0, **options):
 #        # TODO these tests are not working for the moment for Grad(u)
-#        if not expr.atoms((ScalarTestFunction, VectorTestFunction, ScalarField)):
+#        if not expr.atoms((ScalarTestFunction, VectorTestFunction)):
 #            raise TypeError('> Wrong type for expr')
 #
 #        if not(expr.space.domain is boundary.domain):
@@ -847,12 +715,8 @@ class Trace(AtomicExpr):
 trace_0 = lambda x, B: Trace(x, B, order=0)
 trace_1 = lambda x, B: Trace(x, B, order=1)
 
-_is_sympde_atom = lambda a: isinstance(a, (ScalarTestFunction, VectorTestFunction,
-                                                   ScalarField, VectorField))
-
+_is_sympde_atom   = lambda a: isinstance(a, (ScalarTestFunction, VectorTestFunction))
 _is_test_function = lambda a: isinstance(a, (ScalarTestFunction, VectorTestFunction))
-_is_field         = lambda a: isinstance(a, (ScalarField, VectorField))
-
 
 #==============================================================================
 class Projector(Basic):
@@ -884,7 +748,7 @@ class Projector(Basic):
     def __call__(self, expr):
         V = self.space
 
-        if isinstance(expr, (ScalarField, VectorField, ScalarTestFunction, VectorTestFunction)):
+        if isinstance(expr, (ScalarTestFunction, VectorTestFunction)):
             if expr.space is V:
                 return expr
 

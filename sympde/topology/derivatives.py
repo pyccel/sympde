@@ -2,9 +2,10 @@
 
 # TODO add action of diff operators on sympy known functions
 
-import numpy as np
 from itertools   import groupby
 from collections import OrderedDict
+
+import numpy as np
 
 from sympy import Basic
 from sympy import Symbol
@@ -12,16 +13,12 @@ from sympy import Expr
 from sympy import Tuple
 from sympy import Matrix, ImmutableDenseMatrix
 from sympy import Mul, Add, Pow
-from sympy import Derivative
 from sympy import S
-from sympy import Indexed, IndexedBase
+from sympy import Indexed
 from sympy import diff
 from sympy import log
 from sympy import preorder_traversal
 from sympy import cacheit
-
-from sympy.core.function      import AppliedUndef
-from sympy.core.function      import UndefinedFunction
 from sympy.core.compatibility import is_sequence
 
 from sympde.core.basic    import CalculusFunction
@@ -32,7 +29,6 @@ from sympde.calculus.core import minus, plus
 from sympde.calculus.core import has
 
 from .space   import ScalarTestFunction, VectorTestFunction, IndexedTestTrial
-from .space   import ScalarField, VectorField, IndexedVectorField
 
 #==============================================================================
 class DifferentialOperator(LinearOperator):
@@ -57,8 +53,7 @@ class DifferentialOperator(LinearOperator):
     @cacheit
     def eval(cls, expr):
 
-        types = (VectorTestFunction, ScalarTestFunction,
-                DifferentialOperator, ScalarField, VectorField)
+        types = (VectorTestFunction, ScalarTestFunction, DifferentialOperator)
 
         if isinstance(expr, _logical_partial_derivatives):
             atom    = get_atom_logical_derivatives(expr)
@@ -79,7 +74,7 @@ class DifferentialOperator(LinearOperator):
 
             return atom
 
-        if isinstance(expr, (VectorTestFunction, VectorField)):
+        if isinstance(expr, VectorTestFunction):
             n = expr.shape[0]
             args = [cls(expr[i], evaluate=False) for i in range(0, n)]
             args = Tuple(*args)
@@ -88,10 +83,10 @@ class DifferentialOperator(LinearOperator):
             args = [cls(i, evaluate=True) for i in expr]
             args = Tuple(*args)
             return Matrix([args])
-        elif isinstance(expr, (IndexedTestTrial, IndexedVectorField, DifferentialOperator)):
+        elif isinstance(expr, (IndexedTestTrial, DifferentialOperator)):
             return cls(expr, evaluate=False)
 
-        elif isinstance(expr, (ScalarField, ScalarTestFunction)):
+        elif isinstance(expr, ScalarTestFunction):
             return cls(expr, evaluate=False)
 
         elif isinstance(expr, (minus, plus)):
@@ -784,7 +779,7 @@ class Laplace_1d(LaplaceBasic):
             return
 
         u = _args[0]
-        if isinstance(u, (VectorTestFunction, VectorField)):
+        if isinstance(u, VectorTestFunction):
             raise NotImplementedError('TODO')
 
         return dx(dx(u))
@@ -798,7 +793,7 @@ class Laplace_2d(LaplaceBasic):
             return
 
         u = _args[0]
-        if isinstance(u, (VectorTestFunction, VectorField)):
+        if isinstance(u, VectorTestFunction):
             raise NotImplementedError('TODO')
 
         return dx(dx(u)) + dy(dy(u))
@@ -812,7 +807,7 @@ class Laplace_3d(LaplaceBasic):
             return
 
         u = _args[0]
-        if isinstance(u, (VectorTestFunction, VectorField)):
+        if isinstance(u, VectorTestFunction):
             raise NotImplementedError('TODO')
 
         return dx(dx(u)) + dy(dy(u)) + dz(dz(u))
@@ -852,7 +847,7 @@ class Hessian_1d(HessianBasic):
             return
 
         u = _args[0]
-        if isinstance(u, (VectorTestFunction, VectorField)):
+        if isinstance(u, VectorTestFunction):
             raise NotImplementedError('TODO')
 
         return dx(dx(u))
@@ -866,7 +861,7 @@ class Hessian_2d(HessianBasic):
             return
 
         u = _args[0]
-        if isinstance(u, (VectorTestFunction, VectorField)):
+        if isinstance(u, VectorTestFunction):
             raise NotImplementedError('TODO')
 
         return ImmutableDenseMatrix([[dx(dx(u)), dx(dy(u))],
@@ -881,7 +876,7 @@ class Hessian_3d(HessianBasic):
             return
 
         u = _args[0]
-        if isinstance(u, (VectorTestFunction, VectorField)):
+        if isinstance(u, VectorTestFunction):
             raise NotImplementedError('TODO')
 
         return ImmutableDenseMatrix([[dx(dx(u)), dx(dy(u)), dx(dz(u))],
@@ -1082,7 +1077,7 @@ class LogicalLaplace_1d(LaplaceBasic):
             return
 
         u = _args[0]
-        if isinstance(u, (VectorTestFunction, VectorField)):
+        if isinstance(u, VectorTestFunction):
             raise NotImplementedError('TODO')
 
         return dx1(dx1(u))
@@ -1096,7 +1091,7 @@ class LogicalLaplace_2d(LaplaceBasic):
             return
 
         u = _args[0]
-        if isinstance(u, (VectorTestFunction, VectorField)):
+        if isinstance(u, VectorTestFunction):
             raise NotImplementedError('TODO')
 
         return dx1(dx1(u)) + dx2(dx2(u))
@@ -1110,7 +1105,7 @@ class LogicalLaplace_3d(LaplaceBasic):
             return
 
         u = _args[0]
-        if isinstance(u, (VectorTestFunction, VectorField)):
+        if isinstance(u, VectorTestFunction):
             raise NotImplementedError('TODO')
 
         return dx1(dx1(u)) + dx2(dx2(u)) + dx3(dx3(u))
@@ -1125,7 +1120,7 @@ class LogicalHessian_1d(HessianBasic):
             return
 
         u = _args[0]
-        if isinstance(u, (VectorTestFunction, VectorField)):
+        if isinstance(u, VectorTestFunction):
             raise NotImplementedError('TODO')
 
         return dx1(dx1(u))
@@ -1139,7 +1134,7 @@ class LogicalHessian_2d(HessianBasic):
             return
 
         u = _args[0]
-        if isinstance(u, (VectorTestFunction, VectorField)):
+        if isinstance(u, VectorTestFunction):
             raise NotImplementedError('TODO')
 
         return ImmutableDenseMatrix([[dx1(dx1(u)), dx1(dx2(u))],
@@ -1154,7 +1149,7 @@ class LogicalHessian_3d(HessianBasic):
             return
 
         u = _args[0]
-        if isinstance(u, (VectorTestFunction, VectorField)):
+        if isinstance(u, VectorTestFunction):
             raise NotImplementedError('TODO')
 
         return ImmutableDenseMatrix([[dx1(dx1(u)), dx1(dx2(u)), dx1(dx3(u))],
@@ -1235,10 +1230,7 @@ def get_max_partial_derivatives(expr, F=None):
     if F is None:
         Fs = (list(expr.atoms(ScalarTestFunction)) +
               list(expr.atoms(VectorTestFunction)) +
-              list(expr.atoms(IndexedTestTrial)) +
-              list(expr.atoms(VectorField)) +
-              list(expr.atoms(IndexedVectorField)) +
-              list(expr.atoms(ScalarField)))
+              list(expr.atoms(IndexedTestTrial)))
 
         indices = []
         for F in Fs:
@@ -1257,10 +1249,7 @@ def get_max_logical_partial_derivatives(expr, F=None):
     if F is None:
         Fs = (list(expr.atoms(ScalarTestFunction)) +
               list(expr.atoms(VectorTestFunction)) +
-              list(expr.atoms(IndexedTestTrial)) +
-              list(expr.atoms(VectorField)) +
-              list(expr.atoms(IndexedVectorField)) +
-              list(expr.atoms(ScalarField)))
+              list(expr.atoms(IndexedTestTrial)))
 
         indices = []
         for F in Fs:

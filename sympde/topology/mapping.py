@@ -2,42 +2,38 @@
 
 from collections  import OrderedDict
 
-from sympy import Indexed, IndexedBase, Idx
-from sympy import Matrix, ImmutableDenseMatrix
-from sympy import Function, Expr
-from sympy import sympify
-from sympy import cacheit
-
-from sympy.core import Basic
-from sympy.core import Symbol
-from sympy.core import Add, Mul, Pow
-
-from sympy.core.expr       import AtomicExpr
+from sympy                 import Indexed, IndexedBase, Idx
+from sympy                 import Matrix, ImmutableDenseMatrix
+from sympy                 import Function, Expr
+from sympy                 import sympify
+from sympy                 import cacheit
+from sympy.core            import Basic
+from sympy.core            import Symbol
+from sympy.core            import Add, Mul, Pow
 from sympy.core.numbers    import ImaginaryUnit
 from sympy.core.containers import Tuple
 from sympy                 import S
+from sympy                 import sqrt, symbols
+from sympy.core.exprtools  import factor_terms
+from sympy.polys.polytools import parallel_poly_from_expr
 
-from sympde.calculus.core  import PlusInterfaceOperator, MinusInterfaceOperator
-from sympde.calculus.core  import grad, div, rot, curl, laplace, hessian
-from sympde.calculus.core  import dot, inner, outer, _diff_ops
-from sympde.calculus.core  import has, DiffOperator
-
+from sympde.core              import Constant
+from sympde.core.basic        import BasicMapping
+from sympde.core.basic        import CalculusFunction
+from sympde.core.basic        import _coeffs_registery
+from sympde.calculus.core     import PlusInterfaceOperator, MinusInterfaceOperator
+from sympde.calculus.core     import grad, div, curl, laplace #, hessian
+from sympde.calculus.core     import dot, inner, outer, _diff_ops
+from sympde.calculus.core     import has, DiffOperator
 from sympde.calculus.matrices import MatrixSymbolicExpr, MatrixElement, SymbolicTrace
 from sympde.calculus.matrices import SymbolicDeterminant
-
-from sympde.core       import Constant
-from sympde.core.basic import BasicMapping
-from sympde.core.basic import CalculusFunction
-from sympde.core.basic import _coeffs_registery
-
 
 from .basic       import BasicDomain, Union, InteriorDomain
 from .basic       import Boundary, Connectivity, Interface
 from .domain      import Domain, NCubeInterior
 from .domain      import NormalVector
 from .space       import ScalarTestFunction, VectorTestFunction, IndexedTestTrial
-from .space       import ScalarField, VectorField, IndexedVectorField
-from .space       import Trace, trace_0, trace_1
+from .space       import Trace
 from .datatype    import HcurlSpaceType, H1SpaceType, L2SpaceType, HdivSpaceType, UndefinedSpaceType
 from .derivatives import dx, dy, dz, DifferentialOperator
 from .derivatives import _partial_derivatives
@@ -48,12 +44,26 @@ from .derivatives import LogicalGrad_1d, LogicalGrad_2d, LogicalGrad_3d
 
 # TODO fix circular dependency between sympde.topology.domain and sympde.topology.mapping
 # TODO fix circular dependency between sympde.expr.evaluation and sympde.topology.mapping
-#==============================================================================
-from sympy                   import sqrt, symbols
-from sympy.core.exprtools    import factor_terms
-from sympy.polys.polytools   import parallel_poly_from_expr
-from sympy                   import cacheit
 
+__all__ = (
+    'Contravariant',
+    'Covariant',
+    'InterfaceMapping',
+    'InverseMapping',
+    'Jacobian',
+    'JacobianInverseSymbol',
+    'JacobianSymbol',
+    'LogicalExpr',
+    'MappedDomain',
+    'MappingApplication',
+    'MultiPatchMapping',
+    'PullBack',
+    'SymbolicExpr',
+    'SymbolicWeightedVolume',
+    'get_logical_test_function',
+)
+
+#==============================================================================
 @cacheit
 def cancel(f):
     try:
@@ -527,7 +537,7 @@ class PullBack(Expr):
     is_commutative = False
 
     def __new__(cls, u, mapping=None):
-        if not isinstance(u, (VectorTestFunction, ScalarTestFunction, ScalarField, VectorField)):
+        if not isinstance(u, (VectorTestFunction, ScalarTestFunction)):
             raise TypeError('{} must be of type ScalarTestFunction or VectorTestFunction'.format(str(u)))
 
         if u.space.domain.mapping is None:
@@ -762,7 +772,7 @@ class LogicalExpr(CalculusFunction):
         from sympde.expr.expr import BilinearForm, LinearForm, BasicForm, Norm
         from sympde.expr.expr import Integral
 
-        types = (ScalarTestFunction, VectorTestFunction, VectorField, ScalarField, DifferentialOperator, Trace, Integral)
+        types = (ScalarTestFunction, VectorTestFunction, DifferentialOperator, Trace, Integral)
 
         # TODO this is not the dim of the domain
         l_coords  = ['x1', 'x2', 'x3'][:dim]
@@ -811,7 +821,7 @@ class LogicalExpr(CalculusFunction):
                 expr = expr.subs(list(zip(Ms, mapping.expressions)))
             return expr
 
-        elif isinstance(expr, (IndexedTestTrial, IndexedVectorField)):
+        elif isinstance(expr, IndexedTestTrial):
             el = cls.eval(expr.base, mapping=mapping, dim=dim)
             return el[expr.indices[0]]
 
@@ -823,9 +833,7 @@ class LogicalExpr(CalculusFunction):
             mapping = mapping.plus
             return PlusInterfaceOperator(PullBack(expr.args[0], mapping).expr)
 
-        elif isinstance(expr, (ScalarField, VectorField, 
-                               VectorTestFunction, 
-                               ScalarTestFunction)):
+        elif isinstance(expr, (VectorTestFunction, ScalarTestFunction)):
             return PullBack(expr, mapping).expr
 
         elif isinstance(expr, grad):
@@ -858,7 +866,7 @@ class LogicalExpr(CalculusFunction):
                 else:
                     raise TypeError(arg)
 
-            if isinstance(arg,(VectorField, VectorTestFunction)):
+            if isinstance(arg, VectorTestFunction):
                 arg = PullBack(arg, mapping)
             else:
                 arg = cls.eval(arg, mapping=mapping, dim=dim)
@@ -884,7 +892,7 @@ class LogicalExpr(CalculusFunction):
                 else:
                     raise TypeError(arg)
 
-            if isinstance(arg,(VectorField, VectorTestFunction)):
+            if isinstance(arg, VectorTestFunction):
                 arg = PullBack(arg, mapping)
             else:
                 arg = cls.eval(arg, mapping=mapping, dim=dim)
@@ -1175,7 +1183,7 @@ class SymbolicExpr(CalculusFunction):
 
             return type(expr)(lines)
 
-        elif isinstance(expr, (ScalarField, ScalarTestFunction, VectorField, VectorTestFunction)):
+        elif isinstance(expr, (ScalarTestFunction, VectorTestFunction)):
             if code:
                 name = '{name}_{code}'.format(name=expr.name, code=code)
             else:
