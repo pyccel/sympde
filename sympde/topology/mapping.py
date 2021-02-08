@@ -591,7 +591,7 @@ class PullBack(Expr):
 
 #==============================================================================
 class Jacobian(MappingApplication):
-    """
+    r"""
     This class calculates the Jacobian of a mapping F
     where [J_{F}]_{i,j} =  \frac{\partial F_{i}}{\partial x_{j}}
     or simply J_{F} =  (\nabla F)^T
