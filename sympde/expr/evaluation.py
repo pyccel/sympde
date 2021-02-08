@@ -1082,16 +1082,18 @@ class TensorExpr(CalculusFunction):
             return cls.eval(expr, d_atoms=d_atoms, mapping=mapping)
 
         elif isinstance(expr, BilinearForm):
-            trials = list(expr.variables[0])
-            tests  = list(expr.variables[1])
+            trials = expr.variables[0]
+            tests  = expr.variables[1]
+            fields = expr.fields
 
             # ... # TODO improve
             terminal_expr = TerminalExpr(expr)[0]
             # ...
 
             # ...
-            variables  = list(terminal_expr.atoms(ScalarTestFunction))
-            variables += list(terminal_expr.atoms(IndexedTestTrial))
+            # Collect all variables in the expression (fields must be excluded)
+            variables  = [e for e in terminal_expr.atoms(ScalarTestFunction) if e not in fields]
+            variables += [e for e in terminal_expr.atoms(IndexedTestTrial) if e.base not in fields]
             # ...
 
             # ...
@@ -1103,10 +1105,10 @@ class TensorExpr(CalculusFunction):
                 tests         = [LogicalExpr(e, mapping=mapping, dim=dim) for e in tests ]
             # ...
 
-            d_atoms = OrderedDict()
-            for a in variables:
-                new = _split_test_function(a)
-                d_atoms[a] = new[a]
+            # Prepare dictionary for '_tensorize_atomic_expr', which should
+            # process all variables but leave fields unchanged:
+            d_atoms = OrderedDict(
+                [(v, _split_test_function(v)[v]) for v in variables] + [(f, (f,)) for f in fields])
 
             # ...
             expr = cls.eval(terminal_expr, d_atoms=d_atoms, mapping=mapping)
