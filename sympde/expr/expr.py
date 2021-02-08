@@ -1,10 +1,12 @@
 # coding: utf-8
 
+from operator  import mul, add
+from functools import reduce
+
 from sympy import Dummy
 from sympy import Matrix, ImmutableDenseMatrix
 from sympy.core import Basic, S
 from sympy.core import Expr, Add, Mul
-from sympy.core.expr import AtomicExpr
 from sympy.core.numbers import Zero as sy_Zero
 from sympy.core.containers import Tuple
 from sympy.core.compatibility import is_sequence
@@ -17,22 +19,35 @@ from sympde.calculus import Grad, Hessian
 from sympde.topology import BasicDomain, Union
 from sympde.topology import NormalVector
 from sympde.topology import Boundary, Interface, Domain, InteriorDomain
-from sympde.topology.space import ScalarFunctionSpace
-from sympde.topology.space import ProductSpace
 from sympde.topology.space import ScalarTestFunction
 from sympde.topology.space import VectorTestFunction
 from sympde.topology.space import Trace, trace_0, trace_1
-from sympde.topology.space import ScalarField, VectorField
 
 from .errors import UnconsistentLinearExpressionError
 from .basic  import BasicForm
 from .basic  import BasicExpr
 from .basic  import _sanitize_arguments
-from sympy   import cacheit
 
-from operator  import mul, add
-from functools import reduce
+__all__ = (
+    'BilinearForm',
+    'Functional',
+    'IntAdd',
+    'Integral',
+    'LinearExpr',
+    'LinearForm',
+    'Norm',
+#
+    '_get_domain',
+    'add_int',
+    'expand',
+    'integral',
+    'is_linear_expression',
+    'linearize',
+    'mul_add',
+    'mul_integral',
+)
 
+#==============================================================================
 class IntAdd(Add):
     _op_priority  = 20
     def __new__(cls, *args, **options):
@@ -277,7 +292,7 @@ class Functional(BasicForm):
     def __new__(cls, expr, domain, evaluate=True, **options):
 
         # compute dim from fields if available
-        ls = tuple(expr.atoms(ScalarField, VectorField, ScalarTestFunction, VectorTestFunction))
+        ls = tuple(expr.atoms(ScalarTestFunction, VectorTestFunction))
         if ls:
             F = ls[0]
             space = F.space

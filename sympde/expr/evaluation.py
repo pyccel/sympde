@@ -2,6 +2,9 @@
 
 from itertools import product
 from collections import OrderedDict
+
+import numpy as np
+
 from sympy import Abs, S, cacheit
 from sympy import Indexed, Matrix, ImmutableDenseMatrix
 from sympy import expand
@@ -21,16 +24,14 @@ from sympde.core.utils import random_string
 from sympde.calculus import jump, avg, minus, plus
 from sympde.calculus import Jump, is_zero
 from sympde.calculus.core import _generic_ops, _diff_ops
-
 from sympde.calculus.matrices import SymbolicDeterminant, Inverse, Transpose
 from sympde.calculus.matrices import MatSymbolicPow, MatrixElement, SymbolicTrace
 
-from sympde.topology.mapping import JacobianSymbol, InterfaceMapping, MultiPatchMapping, JacobianInverseSymbol
-
 from sympde.topology.basic   import BasicDomain, Union, Interval
-from sympde.topology.domain  import NormalVector, TangentVector
 from sympde.topology.basic   import Boundary, Interface
 from sympde.topology.basic   import InteriorDomain
+from sympde.topology.domain  import NormalVector, TangentVector
+from sympde.topology.mapping import JacobianSymbol, InterfaceMapping, MultiPatchMapping, JacobianInverseSymbol
 from sympde.topology.mapping import LogicalExpr, PullBack
 
 # TODO fix circular dependency between sympde.expr.evaluation and sympde.topology.mapping
@@ -40,7 +41,7 @@ from sympde.topology.space import VectorTestFunction
 from sympde.topology.space import IndexedTestTrial
 from sympde.topology.space import Trace
 from sympde.topology.space import element_of
-from sympde.topology.space import VectorField
+from sympde.topology.space import ScalarFunctionSpace
 
 from sympde.topology.derivatives import _partial_derivatives
 from sympde.topology.derivatives import _logical_partial_derivatives
@@ -54,16 +55,12 @@ from sympde.topology.derivatives import (Grad_1d, Div_1d,
 from sympde.topology.derivatives import Bracket_2d
 from sympde.topology.derivatives import Laplace_1d, Laplace_2d, Laplace_3d
 from sympde.topology.derivatives import Hessian_1d, Hessian_2d, Hessian_3d
-
 from sympde.topology.derivatives import (LogicalGrad_1d, LogicalDiv_1d,
                                          LogicalGrad_2d, LogicalCurl_2d, LogicalRot_2d, LogicalDiv_2d,
                                          LogicalGrad_3d, LogicalCurl_3d, LogicalDiv_3d)
-
 from sympde.topology.derivatives import LogicalBracket_2d
 from sympde.topology.derivatives import LogicalLaplace_1d, LogicalLaplace_2d, LogicalLaplace_3d
 from sympde.topology.derivatives import LogicalHessian_1d, LogicalHessian_2d, LogicalHessian_3d
-
-from sympde.topology.space       import ScalarFunctionSpace
 
 from .basic import BasicExpr, BasicForm
 from .expr  import BilinearForm
@@ -71,7 +68,29 @@ from .expr  import Integral
 from .expr  import Functional
 from .expr  import _get_domain
 
-import numpy as np
+__all__ = (
+    'Advection',
+    'AdvectionT',
+    'Basic1dForm',
+    'Bilaplacian',
+    'BoundaryExpression',
+    'DomainExpression',
+    'InterfaceExpression',
+    'KernelExpression',
+    'Mass',
+    'Stiffness',
+    'TensorExpr',
+    'TerminalExpr',
+    '_get_trials_tests_flattened',
+    '_replace_atomic_expr',
+    '_split_expr_over_interface',
+    '_split_test_function',
+    '_tensorize_atomic_expr',
+    '_to_matrix_form',
+    '_unpack_functions',
+    'is_sequence',
+)
+
 #==============================================================================
 def is_sequence(a):
     return isinstance(a, (list,tuple,Tuple))

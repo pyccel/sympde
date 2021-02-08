@@ -4,11 +4,10 @@ from sympy.core import Expr
 from sympy.core.containers import Tuple
 
 from sympde.core.basic     import Constant
-from sympde.topology.space import ScalarFunctionSpace,VectorFunctionSpace
 from sympde.topology.space import ScalarTestFunction
 from sympde.topology.space import VectorTestFunction
-from sympde.topology.space import IndexedTestTrial
-from sympde.topology.space import ScalarField, VectorField
+
+__all__ = ('BasicExpr', 'BasicForm', '_sanitize_arguments')
 
 #==============================================================================
 def _sanitize_arguments(arguments, is_bilinear=False, is_linear=False):
@@ -67,7 +66,7 @@ class BasicExpr(Expr):
 
     @property
     def fields(self):
-        atoms  = self.expr.atoms(ScalarField, VectorField, ScalarTestFunction, VectorTestFunction)
+        atoms  = self.expr.atoms(ScalarTestFunction, VectorTestFunction)
         if self.is_bilinear or self.is_linear:
             args = self.variables
             if self.is_bilinear:
@@ -99,7 +98,7 @@ class BasicForm(Expr):
 
     @property
     def fields(self):
-        atoms  = self.expr.atoms(ScalarField, VectorField, ScalarTestFunction, VectorTestFunction)
+        atoms  = self.expr.atoms(ScalarTestFunction, VectorTestFunction)
         if self.is_bilinear or self.is_linear:
             args = self.variables
             if self.is_bilinear:

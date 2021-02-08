@@ -8,6 +8,7 @@ naturally give 0
 >>> from sympde.topology import Domain
 >>> from sympde.topology import ScalarFunctionSpace
 >>> from sympde.topology import ScalarTestFunction
+>>> from sympde.topology import element_of
 
 >>> domain = Domain('Omega', dim=2)
 >>> V = ScalarFunctionSpace('V', domain)
@@ -24,8 +25,8 @@ naturally give 0
 
 >>> alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
 
->>> f,g,h = [ScalarField(V, name=i) for i in ['f','g','h']]
->>> F,G,H = [VectorField(W, i) for i in ['F','G','H']]
+>>> f,g,h = [element_of(V, name=i) for i in ['f','g','h']]
+>>> F,G,H = [element_of(W, i) for i in ['F','G','H']]
 
 Generic properties
 ******************
@@ -90,32 +91,84 @@ rot properties
 
 """
 
-from sympy.core.compatibility import is_sequence
-from sympy.core import Basic
-from sympy      import Indexed, IndexedBase, sympify
-from sympy      import Matrix, ImmutableDenseMatrix
-from sympy.core import Add, Mul, Pow, Symbol
-from sympy.core.containers import Tuple
-from sympy.core.singleton  import S
-
-
-from sympde.core.basic import CalculusFunction
-from sympde.core.basic import _coeffs_registery
-
-from sympde.topology.space import ScalarTestFunction, VectorTestFunction, IndexedTestTrial
-from sympde.topology.space import ScalarField, VectorField, IndexedVectorField
-from sympde.topology.space import _is_sympde_atom
-from sympde.topology.domain import NormalVector, MinusNormalVector, PlusNormalVector
-from sympde.topology.datatype import H1SpaceType, HcurlSpaceType
-from sympde.topology.datatype import HdivSpaceType, L2SpaceType, UndefinedSpaceType
-
-from .matrices import MatrixSymbolicExpr
-from .errors import ArgumentTypeError
-from sympy.core.decorators import call_highest_priority
-from operator  import mul,add
+from operator  import mul, add
 from functools import reduce
-from sympy import cacheit
 
+from sympy                    import Indexed, sympify
+from sympy                    import Matrix, ImmutableDenseMatrix
+from sympy                    import cacheit
+from sympy.core               import Basic
+from sympy.core               import Add, Mul, Pow
+from sympy.core.containers    import Tuple
+from sympy.core.singleton     import S
+from sympy.core.decorators    import call_highest_priority
+from sympy.core.compatibility import is_sequence
+
+from sympde.core.basic        import CalculusFunction
+from sympde.core.basic        import _coeffs_registery
+from sympde.topology.space    import ScalarTestFunction, VectorTestFunction
+from sympde.topology.space    import _is_sympde_atom
+from sympde.topology.domain   import NormalVector, MinusNormalVector, PlusNormalVector
+from sympde.topology.datatype import H1SpaceType, HcurlSpaceType
+from sympde.topology.datatype import HdivSpaceType, UndefinedSpaceType
+
+from .errors import ArgumentTypeError
+
+__all__ = (
+    'Average',
+    'BasicOperator',
+    'BasicOperatorAdd',
+    'Bracket',
+    'Convect',
+    'Convolution',
+    'Cross',
+    'Curl',
+    'DiffOperator',
+    'Div',
+    'Dot',
+    'Grad',
+    'Hessian',
+    'Inner',
+    'Jump',
+    'Laplace',
+    'MinusInterfaceOperator',
+    'NormalDerivative',
+    'Outer',
+    'PlusInterfaceOperator',
+    'Rot',
+    'StrainTensor',
+#
+    'add_basicop',
+    'has',
+    'is_constant',
+    'is_scalar',
+    'is_zero',
+#
+    'D',
+    'Dn',
+    '_diff_ops',
+    '_generic_ops',
+    '_is_op_test_function',
+    'avg',
+    'bracket',
+    'conv',
+    'convect',
+    'cross',
+    'curl',
+    'div',
+    'dot',
+    'grad',
+    'hessian',
+    'inner',
+    'jump',
+    'laplace',
+    'minus',
+    'outer',
+    'plus',
+    'rot',
+)
+
+#==============================================================================
 @cacheit
 def has(obj, types):
     if hasattr(obj, 'args'):
@@ -129,6 +182,7 @@ def is_zero(x):
         return all( i==0 for i in x[:])
     else:
         return x == 0
+
 #==============================================================================
 class BasicOperator(CalculusFunction):
     """
@@ -211,7 +265,7 @@ def is_constant(atom):
 def is_scalar(atom):
     """ Determine whether the given atom represents a scalar quantity.
     """
-    return is_constant(atom) or isinstance(atom, (ScalarField, ScalarTestFunction))
+    return is_constant(atom) or isinstance(atom, ScalarTestFunction)
 
 #==============================================================================
 # TODO add dot(u,u) +2*dot(u,v) + dot(v,v) = dot(u+v,u+v)
@@ -545,8 +599,8 @@ class Convect(BasicOperator):
     >>> V = ScalarFunctionSpace('V', domain)
     >>> W = VectorFunctionSpace('W', domain)
     >>> alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
-    >>> f,g,h = [ScalarField(V, name=i) for i in ['f','g','h']]
-    >>> F,G,H = [VectorField(W, i) for i in ['F','G','H']]
+    >>> f,g,h = [element_of(V, name=i) for i in ['f','g','h']]
+    >>> F,G,H = [element_of(W, i) for i in ['F','G','H']]
 
     >>> convect(F+G, H)
     convect(F,H) + convect(G,H)
@@ -966,11 +1020,11 @@ class Div(DiffOperator):
                     a,b = vectors
                     # TODO remove try/except using regularity from space
                     try:
-                        if isinstance(a, (Tuple, VectorTestFunction, VectorField)):
+                        if isinstance(a, (Tuple, VectorTestFunction)):
                             f = b ; F = a
                             return f*Div(F) + Dot(F, grad(f))
 
-                        elif isinstance(b, (Tuple, VectorTestFunction, VectorField)):
+                        elif isinstance(b, (Tuple, VectorTestFunction)):
                             f = a ; F = b
                             return f*Div(F) + Dot(F, grad(f))
 
@@ -1786,9 +1840,6 @@ plus  = PlusInterfaceOperator
 
 _is_op_test_function = lambda op: (isinstance(op, (Grad, Curl, Div)) and
                                    isinstance(op._args[0], (ScalarTestFunction, VectorTestFunction)))
-
-_is_op_field         = lambda op: (isinstance(op, (Grad, Curl, Div)) and
-                                   isinstance(op._args[0], (ScalarField, VectorField)))
 
 def add_basicop(expr):
     return BasicOperatorAdd(*expr.args)
