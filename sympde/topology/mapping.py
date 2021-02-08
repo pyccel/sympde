@@ -817,11 +817,17 @@ class LogicalExpr(CalculusFunction):
 
         elif isinstance(expr, MinusInterfaceOperator):
             mapping = mapping.minus
-            return MinusInterfaceOperator(PullBack(expr.args[0], mapping).expr)
+            newexpr = PullBack(expr.args[0], mapping)
+            test    = newexpr.test
+            newexpr = newexpr.expr.subs(test, MinusInterfaceOperator(test))
+            return newexpr
 
         elif isinstance(expr, PlusInterfaceOperator):
             mapping = mapping.plus
-            return PlusInterfaceOperator(PullBack(expr.args[0], mapping).expr)
+            newexpr = PullBack(expr.args[0], mapping)
+            test    = newexpr.test
+            newexpr = newexpr.expr.subs(test, PlusInterfaceOperator(test))
+            return newexpr
 
         elif isinstance(expr, (ScalarField, VectorField, 
                                VectorTestFunction, 

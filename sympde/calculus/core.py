@@ -125,7 +125,6 @@ def has(obj, types):
 
 @cacheit
 def is_zero(x):
-
     if isinstance(x, (Matrix, ImmutableDenseMatrix)):
         return all( i==0 for i in x[:])
     else:
@@ -1646,7 +1645,20 @@ class MinusInterfaceOperator(BasicOperator):
         elif isinstance(expr, NormalVector):
             return MinusNormalVector('n')
 
+        elif expr.is_zero:
+            return S.Zero
+
+        elif isinstance(expr, (Matrix, ImmutableDenseMatrix)):
+            newexpr = Matrix.zeros(*expr.shape)
+            for i in range(expr.shape[0]):
+                for j in range(expr.shape[1]):
+                    newexpr[i,j] = cls(expr[i,j])
+            return type(expr)(newexpr)
+
         return cls(expr, evaluate=False)
+
+    def __getitem__(self, key):
+        return MinusInterfaceOperator(self.args[0][key])
 
 #==============================================================================
 class PlusInterfaceOperator(BasicOperator):
@@ -1724,7 +1736,20 @@ class PlusInterfaceOperator(BasicOperator):
         elif isinstance(expr, NormalVector):
             return PlusNormalVector('n')
 
+        elif expr.is_zero:
+            return S.Zero
+
+        elif isinstance(expr, (Matrix, ImmutableDenseMatrix)):
+            newexpr = Matrix.zeros(*expr.shape)
+            for i in range(expr.shape[0]):
+                for j in range(expr.shape[1]):
+                    newexpr[i,j] = cls(expr[i,j])
+            return type(expr)(newexpr)
+
         return cls(expr, evaluate=False)
+
+    def __getitem__(self, key):
+        return PlusInterfaceOperator(self.args[0][key])
 
 #==============================================================================
 

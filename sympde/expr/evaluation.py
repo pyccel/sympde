@@ -19,7 +19,7 @@ from sympde.core.algebra import (Dot_1d,
 from sympde.core.utils import random_string
 
 from sympde.calculus import jump, avg, minus, plus
-from sympde.calculus import Jump
+from sympde.calculus import Jump, is_zero
 from sympde.calculus.core import _generic_ops, _diff_ops
 
 from sympde.calculus.matrices import SymbolicDeterminant, Inverse, Transpose
@@ -91,6 +91,7 @@ def _unpack_functions(ls):
 
     return tuple(funcs)
 
+
 #==============================================================================
 def _get_trials_tests_flattened(expr):
     """
@@ -134,7 +135,7 @@ def _get_trials_tests_flattened(expr):
     return trials, tests
 
 #==============================================================================
-def _to_matrix_form(expr, *, trials=None, tests=None):
+def _to_matrix_form(expr, *, trials=None, tests=None, domain=None):
     """
     Create a matrix representation of input expression, based on trial and
     test functions. We have three options:
@@ -161,12 +162,26 @@ def _to_matrix_form(expr, *, trials=None, tests=None):
     tests : iterable
         List of all scalar test functions (after unpacking vector functions).
 
+    domain : Domain
+        domain of expr
+
     Returns
     -------
     M : sympy.matrices.immutable.ImmutableDenseMatrix
         Matrix representation of input expression.
 
     """
+
+    if not isinstance(domain, Interface):
+        atoms     = expr.atoms(minus, plus)
+        new_atoms = [e.args[0] for e in atoms]
+        subs      = tuple(zip(atoms, new_atoms))
+        expr      = expr.subs(subs)
+        mapping   = expr.atoms(InterfaceMapping)
+        if mapping:
+            mapping = list(mapping)[0]
+            expr    = expr.subs(mapping, mapping.minus)
+ 
     # Bilinear form
     if trials and tests:
         M = Matrix.zeros(len(tests), len(trials))
@@ -216,7 +231,7 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
     if tests  is None: tests  = []
     # ...
 
-    int_expressions = []
+    int_expressions = OrderedDict()
     bnd_expressions = OrderedDict()
 
     # ...
@@ -283,11 +298,14 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                 newexpr = _nullify(newexpr, v_minus, tests)
                 newexpr = newexpr.subs({u_minus: u, v_minus: v})
                 mapping = newexpr.atoms(InterfaceMapping)
-                if mapping and not newexpr.is_zero:
+                if mapping and not is_zero(newexpr):
                     mapping = list(mapping)[0]
                     newexpr = newexpr.subs(mapping, mapping.minus)
 
-                if not newexpr.is_zero:
+                if not is_zero(newexpr):
+                    if interface.minus in bnd_expressions:
+                        newexpr += bnd_expressions[interface.minus]
+
                     bnd_expressions[interface.minus] = newexpr
                 # ...
                 # TODO must call InterfaceExpression afterward
@@ -297,8 +315,16 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                 if mapping:
                     mapping = list(mapping)[0]
                     newexpr = newexpr.subs(mapping, mapping.plus)
-                if not newexpr.is_zero:
-                    int_expressions += [InterfaceExpression(interface, u_minus, v_plus, newexpr)]
+
+                if not is_zero(newexpr):
+                    if isinstance(u, IndexedTestTrial):
+                        u_minus = minus(u.base)
+                    if isinstance(v, IndexedTestTrial):
+                        v_plus = plus(v.base)
+                    if (u_minus, v_plus) in int_expressions:
+                        newexpr += int_expressions[u_minus, v_plus].expr
+
+                    int_expressions[u_minus, v_plus] = InterfaceExpression(interface, u_minus, v_plus, newexpr)
                 # ...
                 # TODO must call InterfaceExpression afterward
                 newexpr = _nullify(expr, u_plus, trials)
@@ -307,8 +333,15 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                 if mapping:
                     mapping = list(mapping)[0]
                     newexpr = newexpr.subs(mapping, mapping.plus)
-                if not newexpr.is_zero:
-                    int_expressions += [InterfaceExpression(interface, u_plus, v_minus, newexpr)]
+                if not is_zero(newexpr):
+                    if isinstance(u, IndexedTestTrial):
+                        u_plus = plus(u.base)
+                    if isinstance(v, IndexedTestTrial):
+                        v_minus = minus(v.base)
+                    if (u_plus, v_minus) in int_expressions:
+                        newexpr += int_expressions[u_plus, v_minus].expr
+
+                    int_expressions[u_plus, v_minus] = InterfaceExpression(interface, u_plus, v_minus, newexpr)
                 # ...
                 newexpr = _nullify(expr, u_plus, trials)
                 newexpr = _nullify(newexpr, v_plus, tests)
@@ -317,7 +350,11 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                 if mapping:
                     mapping = list(mapping)[0]
                     newexpr = newexpr.subs(mapping, mapping.plus)
-                if not newexpr.is_zero:
+
+                if not is_zero(newexpr):
+                    if interface.plus in bnd_expressions:
+                        newexpr += bnd_expressions[interface.plus]
+
                     bnd_expressions[interface.plus] = newexpr
                 # ...
 
@@ -333,10 +370,13 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
             if mapping:
                 mapping = list(mapping)[0]
                 newexpr = newexpr.subs(mapping, mapping.minus)
-            if not newexpr.is_zero:
+
+            if not is_zero(newexpr):
+                if interface.minus in bnd_expressions:
+                    newexpr += bnd_expressions[interface.minus]
+
                 bnd_expressions[interface.minus] = newexpr
             # ...
-
             # ...
             newexpr = _nullify(expr, v_plus, tests)
             newexpr = newexpr.subs({v_plus: v})
@@ -344,10 +384,15 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
             if mapping:
                 mapping = list(mapping)[0]
                 newexpr = newexpr.subs(mapping, mapping.plus)
-            if not newexpr.is_zero:
+
+            if not is_zero(newexpr):
+                if interface.plus in bnd_expressions:
+                     newexpr += bnd_expressions[interface.plus]
+
                 bnd_expressions[interface.plus] = newexpr
             # ...
 
+    int_expressions = list(int_expressions.values())
     return int_expressions, bnd_expressions
 
 
@@ -490,6 +535,10 @@ class TerminalExpr(CalculusFunction):
         elif isinstance(expr, VectorTestFunction):
             return ImmutableDenseMatrix([[expr[i]] for i in range(dim)])
 
+        elif isinstance(expr, (minus, plus)):
+            newexpr = cls.eval(expr.args[0], dim=dim, logical=logical)
+            return type(expr)(newexpr)
+
         elif isinstance(expr, PullBack):
             return cls.eval(expr.expr, dim=dim, logical=True)
 
@@ -552,33 +601,18 @@ class TerminalExpr(CalculusFunction):
             for domain, newexpr in d_expr.items():
 
                 if newexpr != 0:
-
                     # TODO ARA make sure thre is no problem with psydac
                     #      we should always take the interior of a domain
                     if not isinstance(domain, (Boundary, Interface, InteriorDomain)):
                         domain = domain.interior
-
-                    d_new[domain] = _to_matrix_form(newexpr, trials=trials, tests=tests)
+                    d_new[domain] = _to_matrix_form(newexpr, trials=trials, tests=tests, domain=domain)
 
             # ...
             ls = []
             d_all = OrderedDict()
-
             # ... treating interfaces
             keys = [k for k in d_new.keys() if isinstance(k, Interface)]
             for interface in keys:
-                # ...
-                trials = None
-                tests  = None
-                if expr.is_bilinear:
-                    trials = list(expr.variables[0])
-                    tests  = list(expr.variables[1])
-
-                elif expr.is_linear:
-                    tests  = list(expr.variables)
-                # ...
-
-                # ...
                 newexpr = d_new[interface]
                 ls_int, d_bnd = _split_expr_over_interface(newexpr, interface,
                                                        tests=tests,
@@ -664,8 +698,9 @@ class TerminalExpr(CalculusFunction):
         elif isinstance(expr, _generic_ops):
             # if i = Dot(...) then type(i) is Grad
             op = type(expr)
+            aa = expr.args[0]
             new  = eval('{0}_{1}d'.format(op, dim))
-            args = [cls.eval(i, dim=dim, logical=logical) for i in expr.args]
+            args = [cls.eval(i, dim=dim, logical=logical).simplify() for i in expr.args]
             return new(*args)
 
         elif isinstance(expr, Trace):
