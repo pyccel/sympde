@@ -7,8 +7,8 @@ from sympy.parsing.sympy_parser import parse_expr
 
 from sympde.topology.basic import Boundary, Union
 from sympde.topology.space  import VectorFunctionSpace, ScalarFunctionSpace
-from sympde.topology.space import ScalarTestFunction
-from sympde.topology.space import VectorTestFunction, IndexedTestTrial
+from sympde.topology.space import ScalarFunction
+from sympde.topology.space import VectorFunction, IndexedVectorFunction
 from sympde.topology import Boundary, NormalVector, TangentVector
 from sympde.topology import Trace, trace_0, trace_1
 from sympde.calculus import grad, dot
@@ -40,12 +40,12 @@ class EssentialBC(BasicBoundaryCondition):
         # ...
 
         # ...
-        indexed = list(lhs.atoms(IndexedTestTrial))
+        indexed = list(lhs.atoms(IndexedVectorFunction))
 
-        u  = list(lhs.atoms(ScalarTestFunction))
+        u  = list(lhs.atoms(ScalarFunction))
 
         if not indexed:
-            u += list(lhs.atoms(VectorTestFunction))
+            u += list(lhs.atoms(VectorFunction))
 
         else:
             u += indexed
@@ -69,7 +69,7 @@ class EssentialBC(BasicBoundaryCondition):
 
         # ...
         nn               = list(lhs.atoms(NormalVector))
-        normal_component = isinstance(u, VectorTestFunction) and (len(nn) > 0)
+        normal_component = isinstance(u, VectorFunction) and (len(nn) > 0)
         # ...
         # ...
         if nn:
@@ -85,11 +85,11 @@ class EssentialBC(BasicBoundaryCondition):
         # ...
         if lhs in order_0_expr:
             order = 0
-            if isinstance(u, (IndexedTestTrial)):
+            if isinstance(u, (IndexedVectorFunction)):
                 variable = u.base
                 index_component = list(u.indices)
 
-            elif isinstance(u, VectorTestFunction) and not normal_component \
+            elif isinstance(u, VectorFunction) and not normal_component \
                  and isinstance(u.space, VectorFunctionSpace)\
                  and not normal_component:
                 variable = u
@@ -101,7 +101,7 @@ class EssentialBC(BasicBoundaryCondition):
             order = 1
             variable = u
 
-            if isinstance(u, IndexedTestTrial):
+            if isinstance(u, IndexedVectorFunction):
                 raise NotImplementedError('Indexed case')
         else:
             # TODO change error to unconsistent error
@@ -168,7 +168,7 @@ class EssentialBC(BasicBoundaryCondition):
 class Mean(BasicConstraint):
 
     def __new__(cls, lhs, rhs):
-        assert isinstance(lhs,  (ScalarTestFunction, VectorTestFunction))
+        assert isinstance(lhs,  (ScalarFunction, VectorFunction))
         rhs = parse_expr(str(rhs))
         if not isinstance(rhs, Expr):
             raise ValueError('only sympy Expr are accepted')
@@ -200,11 +200,11 @@ class Equation(Basic):
         # ...
 
         # ...
-        _is_test_function = lambda u: isinstance(u, (ScalarTestFunction, VectorTestFunction))
+        _is_test_function = lambda u: isinstance(u, (ScalarFunction, VectorFunction))
         # ...
 
         # ...
-        if isinstance(tests, (ScalarTestFunction, VectorTestFunction)):
+        if isinstance(tests, (ScalarFunction, VectorFunction)):
             tests = [tests]
 
         else:
@@ -215,7 +215,7 @@ class Equation(Basic):
         # ...
 
         # ...
-        if isinstance(trials, (ScalarTestFunction, VectorTestFunction)):
+        if isinstance(trials, (ScalarFunction, VectorFunction)):
             trials = [trials]
 
         else:
@@ -229,20 +229,20 @@ class Equation(Basic):
 #        # find unknowns and tests of the equation
 #        # ...
 #        tests_lhs, trials_lhs = lhs.variables
-#        if isinstance(tests_lhs, (ScalarTestFunction, VectorTestFunction)):
+#        if isinstance(tests_lhs, (ScalarFunction, VectorFunction)):
 #            tests_lhs = [tests_lhs]
 #
 #        elif not isinstance(tests_lhs, (list, tuple, Tuple)):
-#            msg =  '> Expecting iterable or ScalarTestFunction/VectorTestFunction'
+#            msg =  '> Expecting iterable or ScalarFunction/VectorFunction'
 #            raise UnconsistentArgumentsError(msg)
 #
 #        tests_lhs = Tuple(*tests_lhs)
 #
-#        if isinstance(trials_lhs, (ScalarTestFunction, VectorTestFunction)):
+#        if isinstance(trials_lhs, (ScalarFunction, VectorFunction)):
 #            trials_lhs = [trials_lhs]
 #
 #        elif not isinstance(trials_lhs, (list, tuple, Tuple)):
-#            msg =  '> Expecting iterable or ScalarTestFunction/VectorTestFunction'
+#            msg =  '> Expecting iterable or ScalarFunction/VectorFunction'
 #            raise UnconsistentArgumentsError(msg)
 #
 #        trials_lhs = Tuple(*trials_lhs)
@@ -250,11 +250,11 @@ class Equation(Basic):
 #
 #        # ... find test functions
 #        tests_rhs = rhs.variables
-#        if isinstance(tests_rhs, (ScalarTestFunction, VectorTestFunction)):
+#        if isinstance(tests_rhs, (ScalarFunction, VectorFunction)):
 #            tests_rhs = [tests_rhs]
 #
 #        elif not isinstance(tests_rhs, (list, tuple, Tuple)):
-#            msg =  '> Expecting iterable or ScalarTestFunction/VectorTestFunction'
+#            msg =  '> Expecting iterable or ScalarFunction/VectorFunction'
 #            raise UnconsistentArgumentsError(msg)
 #
 #        tests_rhs = Tuple(*tests_rhs)

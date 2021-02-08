@@ -24,7 +24,7 @@ def test_field_2d_1():
 
     assert( dx(F) == Matrix([[dx(F[0]), dx(F[1])]]) )
 
-    # TODO not working yet => check it for VectorTestFunction also
+    # TODO not working yet => check it for VectorFunction also
 #    print(dx(x*F))
 
     expr = inner(grad(F), grad(F))

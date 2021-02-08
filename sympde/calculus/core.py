@@ -7,12 +7,12 @@ naturally give 0
 >>> from sympde.calculus import grad, curl
 >>> from sympde.topology import Domain
 >>> from sympde.topology import ScalarFunctionSpace
->>> from sympde.topology import ScalarTestFunction
+>>> from sympde.topology import ScalarFunction
 >>> from sympde.topology import element_of
 
 >>> domain = Domain('Omega', dim=2)
 >>> V = ScalarFunctionSpace('V', domain)
->>> u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+>>> u,u1,u2 = [ScalarFunction(V, name=i) for i in ['u', 'u1', 'u2']]
 
 >>> curl(grad(u))
 0
@@ -106,7 +106,7 @@ from sympy.core.compatibility import is_sequence
 
 from sympde.core.basic        import CalculusFunction
 from sympde.core.basic        import _coeffs_registery
-from sympde.topology.space    import ScalarTestFunction, VectorTestFunction
+from sympde.topology.space    import ScalarFunction, VectorFunction
 from sympde.topology.space    import _is_sympde_atom
 from sympde.topology.domain   import NormalVector, MinusNormalVector, PlusNormalVector
 from sympde.topology.datatype import H1SpaceType, HcurlSpaceType
@@ -266,7 +266,7 @@ def is_constant(atom):
 def is_scalar(atom):
     """ Determine whether the given atom represents a scalar quantity.
     """
-    return is_constant(atom) or isinstance(atom, ScalarTestFunction)
+    return is_constant(atom) or isinstance(atom, ScalarFunction)
 
 #==============================================================================
 # TODO add dot(u,u) +2*dot(u,v) + dot(v,v) = dot(u+v,u+v)
@@ -292,12 +292,12 @@ class Dot(BasicOperator):
     >>> from sympde.core import Constant
     >>> from sympde.topology import Domain
     >>> from sympde.topology import VectorFunctionSpace
-    >>> from sympde.topology import VectorTestFunction
+    >>> from sympde.topology import VectorFunction
 
     >>> domain = Domain('Omega', dim=2)
     >>> V = VectorFunctionSpace('V', domain)
-    >>> u,u1,u2 = [VectorTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    >>> v,v1,v2 = [VectorTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    >>> u,u1,u2 = [VectorFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    >>> v,v1,v2 = [VectorFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
     >>> alpha = Constant('alpha', is_real=True)
 
@@ -319,7 +319,7 @@ class Dot(BasicOperator):
         if is_zero(arg1) or is_zero(arg2):
             return S.Zero
 
-        types = (VectorTestFunction, ScalarTestFunction)
+        types = (VectorFunction, ScalarFunction)
         if isinstance(arg1, Add):
             a = [i for i in arg1.args if has(i, types)]
             b = [i for i in arg1.args if i not in a]
@@ -389,7 +389,7 @@ class Cross(BasicOperator):
         if is_zero(arg1) or is_zero(arg2):
             return S.Zero
 
-        types = (VectorTestFunction, ScalarTestFunction)
+        types = (VectorFunction, ScalarFunction)
         if isinstance(arg1, Add):
             a = [i for i in arg1.args if has(i, types)]
             b = [i for i in arg1.args if i not in a]
@@ -450,12 +450,12 @@ class Inner(BasicOperator):
     >>> from sympde.calculus import inner, grad
     >>> from sympde.topology import Domain
     >>> from sympde.topology import VectorFunctionSpace
-    >>> from sympde.topology import VectorTestFunction
+    >>> from sympde.topology import VectorFunction
 
     >>> domain = Domain('Omega', dim=2)
     >>> V = VectorFunctionSpace('V', domain)
-    >>> u,u1,u2 = [VectorTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    >>> v,v1,v2 = [VectorTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    >>> u,u1,u2 = [VectorFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    >>> v,v1,v2 = [VectorFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
     >>> inner(grad(u), grad(v))
     Inner(Grad(u), Grad(v))
@@ -474,7 +474,7 @@ class Inner(BasicOperator):
         if is_zero(arg1) or is_zero(arg2):
             return S.Zero
 
-        types = (VectorTestFunction, ScalarTestFunction)
+        types = (VectorFunction, ScalarFunction)
         if isinstance(arg1, Add):
             a = [i for i in arg1.args if has(i, types)]
             b = [i for i in arg1.args if i not in a]
@@ -542,7 +542,7 @@ class Outer(BasicOperator):
         if is_zero(arg1) or is_zero(arg2):
             return S.Zero
 
-        types = (VectorTestFunction, ScalarTestFunction)
+        types = (VectorFunction, ScalarFunction)
         if isinstance(arg1, Add):
             a = [i for i in arg1.args if has(i, types)]
             b = [i for i in arg1.args if i not in a]
@@ -623,7 +623,7 @@ class Convect(BasicOperator):
         if is_zero(arg1) or arg2.is_number:
             return S.Zero
 
-        types = (VectorTestFunction, ScalarTestFunction)
+        types = (VectorFunction, ScalarFunction)
         if isinstance(arg1, Add):
             a = [i for i in arg1.args if has(i, types)]
             b = [i for i in arg1.args if i not in a]
@@ -679,12 +679,12 @@ class Grad(DiffOperator):
     >>> from sympde.core import Constant
     >>> from sympde.topology import Domain
     >>> from sympde.topology import VectorFunctionSpace
-    >>> from sympde.topology import VectorTestFunction
+    >>> from sympde.topology import VectorFunction
 
     >>> domain = Domain('Omega', dim=2)
     >>> V = ScalarFunctionSpace('V', domain)
-    >>> u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    >>> v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    >>> u,u1,u2 = [ScalarFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    >>> v,v1,v2 = [ScalarFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
     >>> alpha = Constant('alpha', is_real=True)
 
@@ -714,7 +714,7 @@ class Grad(DiffOperator):
 
     @classmethod
     def eval(cls, expr):
-        types = (VectorTestFunction, ScalarTestFunction)
+        types = (VectorFunction, ScalarFunction)
         if not has(expr, types):
             if expr.is_number:
                 return S.Zero
@@ -797,12 +797,12 @@ class Curl(DiffOperator):
     >>> from sympde.core import Constant
     >>> from sympde.topology import Domain
     >>> from sympde.topology import VectorFunctionSpace
-    >>> from sympde.topology import VectorTestFunction
+    >>> from sympde.topology import VectorFunction
 
     >>> domain = Domain('Omega', dim=2)
     >>> V = VectorFunctionSpace('V', domain)
-    >>> u,u1,u2 = [VectorTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    >>> v,v1,v2 = [VectorTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    >>> u,u1,u2 = [VectorFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    >>> v,v1,v2 = [VectorFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
     >>> alpha = Constant('alpha', is_real=True)
 
@@ -832,7 +832,7 @@ class Curl(DiffOperator):
     @classmethod
     def eval(cls, expr):
 
-        types = (VectorTestFunction, ScalarTestFunction)
+        types = (VectorFunction, ScalarFunction)
         if not has(expr, types):
             if expr.is_number:
                 return S.Zero
@@ -881,12 +881,12 @@ class Rot(DiffOperator):
     >>> from sympde.core import Constant
     >>> from sympde.topology import Domain
     >>> from sympde.topology import VectorFunctionSpace
-    >>> from sympde.topology import VectorTestFunction
+    >>> from sympde.topology import VectorFunction
 
     >>> domain = Domain('Omega', dim=2)
     >>> V = ScalarFunctionSpace('V', domain)
-    >>> u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    >>> v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    >>> u,u1,u2 = [ScalarFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    >>> v,v1,v2 = [ScalarFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
     >>> alpha = Constant('alpha', is_real=True)
 
@@ -916,7 +916,7 @@ class Rot(DiffOperator):
     @classmethod
     def eval(cls, expr):
 
-        types = (VectorTestFunction, ScalarTestFunction)
+        types = (VectorFunction, ScalarFunction)
         if not has(expr, types):
             if expr.is_number:
                 return S.Zero
@@ -961,12 +961,12 @@ class Div(DiffOperator):
     >>> from sympde.core import Constant
     >>> from sympde.topology import Domain
     >>> from sympde.topology import VectorFunctionSpace
-    >>> from sympde.topology import VectorTestFunction
+    >>> from sympde.topology import VectorFunction
 
     >>> domain = Domain('Omega', dim=2)
     >>> V = VectorFunctionSpace('V', domain)
-    >>> u,u1,u2 = [VectorTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    >>> v,v1,v2 = [VectorTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    >>> u,u1,u2 = [VectorFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    >>> v,v1,v2 = [VectorFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
     >>> alpha = Constant('alpha', is_real=True)
 
@@ -996,7 +996,7 @@ class Div(DiffOperator):
     def eval(cls, expr):
 
 
-        types = (VectorTestFunction, ScalarTestFunction)
+        types = (VectorFunction, ScalarFunction)
         if not has(expr, types):
             if expr.is_number:
                 return S.Zero
@@ -1021,11 +1021,11 @@ class Div(DiffOperator):
                     a,b = vectors
                     # TODO remove try/except using regularity from space
                     try:
-                        if isinstance(a, (Tuple, VectorTestFunction)):
+                        if isinstance(a, (Tuple, VectorFunction)):
                             f = b ; F = a
                             return f*Div(F) + Dot(F, grad(f))
 
-                        elif isinstance(b, (Tuple, VectorTestFunction)):
+                        elif isinstance(b, (Tuple, VectorFunction)):
                             f = a ; F = b
                             return f*Div(F) + Dot(F, grad(f))
 
@@ -1067,12 +1067,12 @@ class Laplace(DiffOperator):
     >>> from sympde.core import Constant
     >>> from sympde.topology import Domain
     >>> from sympde.topology import VectorFunctionSpace
-    >>> from sympde.topology import VectorTestFunction
+    >>> from sympde.topology import VectorFunction
 
     >>> domain = Domain('Omega', dim=2)
     >>> V = ScalarFunctionSpace('V', domain)
-    >>> u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    >>> v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    >>> u,u1,u2 = [ScalarFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    >>> v,v1,v2 = [ScalarFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
     >>> alpha = Constant('alpha', is_real=True)
 
@@ -1101,7 +1101,7 @@ class Laplace(DiffOperator):
     @classmethod
     def eval(cls, expr):
 
-        types = (VectorTestFunction, ScalarTestFunction)
+        types = (VectorFunction, ScalarFunction)
         if not has(expr, types):
             if expr.is_number:
                 return S.Zero
@@ -1152,12 +1152,12 @@ class Hessian(DiffOperator):
     >>> from sympde.core import Constant
     >>> from sympde.topology import Domain
     >>> from sympde.topology import VectorFunctionSpace
-    >>> from sympde.topology import VectorTestFunction
+    >>> from sympde.topology import VectorFunction
 
     >>> domain = Domain('Omega', dim=2)
     >>> V = ScalarFunctionSpace('V', domain)
-    >>> u,u1,u2 = [ScalarTestFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    >>> v,v1,v2 = [ScalarTestFunction(V, name=i) for i in ['v', 'v1', 'v2']]
+    >>> u,u1,u2 = [ScalarFunction(V, name=i) for i in ['u', 'u1', 'u2']]
+    >>> v,v1,v2 = [ScalarFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
     >>> alpha = Constant('alpha', is_real=True)
 
@@ -1187,7 +1187,7 @@ class Hessian(DiffOperator):
     @classmethod
     def eval(cls, expr):
 
-        types = (VectorTestFunction, ScalarTestFunction)
+        types = (VectorFunction, ScalarFunction)
         if not has(expr, types):
             if expr.is_number:
                 return S.Zero
@@ -1814,7 +1814,7 @@ plus  = PlusInterfaceOperator
 # ...
 
 _is_op_test_function = lambda op: (isinstance(op, (Grad, Curl, Div)) and
-                                   isinstance(op._args[0], (ScalarTestFunction, VectorTestFunction)))
+                                   isinstance(op._args[0], (ScalarFunction, VectorFunction)))
 
 def add_basicop(expr):
     return BasicOperatorAdd(*expr.args)

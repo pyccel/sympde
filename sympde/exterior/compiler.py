@@ -14,7 +14,7 @@ from sympde.core.basic import _coeffs_registery
 from sympde.core.basic import CalculusFunction
 from sympde.topology   import H1SpaceType, HcurlSpaceType, HdivSpaceType
 from sympde.topology   import L2SpaceType, UndefinedSpaceType
-from sympde.topology   import ScalarTestFunction, VectorTestFunction
+from sympde.topology   import ScalarFunction, VectorFunction
 from sympde.calculus   import Grad, Curl, Div
 from sympde.calculus   import Dot, Inner, Cross
 #from sympde.calculus import grad, dot, inner, cross, rot, curl, div
@@ -26,7 +26,7 @@ from .calculus import AdjointExteriorDerivative
 
 #==============================================================================
 
-_is_function      = lambda u: isinstance(u, (ScalarTestFunction, VectorTestFunction))
+_is_function      = lambda u: isinstance(u, (ScalarFunction, VectorFunction))
 _is_test_function = lambda u: _is_function(u) and not isinstance(u.space.kind, UndefinedSpaceType)
 _is_field         = lambda u: _is_function(u) and     isinstance(u.space.kind, UndefinedSpaceType)
 _is_proxy         = lambda u: _is_field(u) or isinstance(u, Tuple)
@@ -482,12 +482,12 @@ class ExteriorCalculusExpr(CalculusFunction):
 
                 else:
                     convert = False
-                    if isinstance(vectors[0], ScalarTestFunction):
+                    if isinstance(vectors[0], ScalarFunction):
                         left  = vectors[1]
                         right = vectors[0]
                         convert = True
 
-                    elif isinstance(vectors[1], ScalarTestFunction):
+                    elif isinstance(vectors[1], ScalarFunction):
                         left  = vectors[0]
                         right = vectors[1]
                         convert = True

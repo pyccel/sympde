@@ -6,7 +6,7 @@ from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
 #from sympde.topology import ProductSpace
 from sympde.topology import element_of
 from sympde.topology import H1Space, HcurlSpace, HdivSpace, L2Space, UndefinedSpace
-from sympde.topology import ScalarTestFunction, VectorTestFunction
+from sympde.topology import ScalarFunction, VectorFunction
 from sympde.topology import Projector
 
 #==============================================================================
@@ -66,9 +66,9 @@ def test_space_2d_1():
     # ...
     v1, v2, v3 = element_of(V, 'v1, v2, v3')
 
-    assert(isinstance(v1, ScalarTestFunction))
-    assert(isinstance(v2, ScalarTestFunction))
-    assert(isinstance(v3, ScalarTestFunction))
+    assert(isinstance(v1, ScalarFunction))
+    assert(isinstance(v2, ScalarFunction))
+    assert(isinstance(v3, ScalarFunction))
     assert(v1.space is V1)
     assert(v2.space is V2)
     assert(v3.space is V3)
@@ -80,9 +80,9 @@ def test_space_2d_1():
     # ...
     u1, u2, u3 = element_of(U, 'u1, u2, u3')
 
-    assert(isinstance(u1, ScalarTestFunction))
-    assert(isinstance(u2, ScalarTestFunction))
-    assert(isinstance(u3, VectorTestFunction))
+    assert(isinstance(u1, ScalarFunction))
+    assert(isinstance(u2, ScalarFunction))
+    assert(isinstance(u3, VectorFunction))
     assert(u1.name == 'u1')
     assert(u2.name == 'u2')
     assert(u3.name == 'u3')
@@ -153,12 +153,12 @@ def test_projector_2d_1():
     assert(P_V.space == V)
 
     Pv = P_V(v)
-    assert(isinstance(Pv, ScalarTestFunction))
+    assert(isinstance(Pv, ScalarFunction))
     assert(Pv == v)
     assert(grad(Pv**2) == 2*v*grad(v))
 
     Pdiv_w = P_V(div(w))
-    assert(isinstance(Pdiv_w, ScalarTestFunction))
+    assert(isinstance(Pdiv_w, ScalarFunction))
     # ...
 
     # ...
@@ -166,11 +166,11 @@ def test_projector_2d_1():
     assert(P_W.space == W)
 
     Pw = P_W(w)
-    assert(isinstance(Pw, VectorTestFunction))
+    assert(isinstance(Pw, VectorFunction))
     assert(Pw == w)
 
     Pgrad_v = P_W(grad(v))
-    assert(isinstance(Pgrad_v, VectorTestFunction))
+    assert(isinstance(Pgrad_v, VectorFunction))
     assert(P_W(Pgrad_v) == Pgrad_v)
     # ...
 
