@@ -306,9 +306,9 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
     # ...
     if is_bilinear:
         for u in d_trials.keys():
-            u_minus = d_trials[u]['-']
-            u_plus  = d_trials[u]['+']
             for v in d_tests.keys():
+                u_minus = d_trials[u]['-']
+                u_plus  = d_trials[u]['+']
                 v_minus = d_tests[v]['-']
                 v_plus  = d_tests[v]['+']
 
@@ -337,13 +337,13 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
 
                 if not is_zero(newexpr):
                     if isinstance(u, IndexedTestTrial):
-                        uu_minus = minus(u.base)
+                        u_minus = minus(u.base)
                     if isinstance(v, IndexedTestTrial):
-                        vv_plus = plus(v.base)
-                    if (uu_minus, vv_plus) in int_expressions:
-                        newexpr += int_expressions[uu_minus, vv_plus].expr
+                        v_plus = plus(v.base)
+                    if (u_minus, v_plus) in int_expressions:
+                        newexpr += int_expressions[u_minus, v_plus].expr
 
-                    int_expressions[uu_minus, vv_plus] = InterfaceExpression(interface, uu_minus, vv_plus, newexpr)
+                    int_expressions[u_minus, v_plus] = InterfaceExpression(interface, u_minus, v_plus, newexpr)
                 # ...
                 # TODO must call InterfaceExpression afterward
                 newexpr = _nullify(expr, u_plus, trials)
@@ -354,13 +354,13 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                     newexpr = newexpr.subs(mapping, mapping.plus)
                 if not is_zero(newexpr):
                     if isinstance(u, IndexedTestTrial):
-                        uu_plus = plus(u.base)
+                        u_plus = plus(u.base)
                     if isinstance(v, IndexedTestTrial):
-                        vv_minus = minus(v.base)
-                    if (uu_plus, vv_minus) in int_expressions:
-                        newexpr += int_expressions[uu_plus, vv_minus].expr
+                        v_minus = minus(v.base)
+                    if (u_plus, v_minus) in int_expressions:
+                        newexpr += int_expressions[u_plus, v_minus].expr
 
-                    int_expressions[uu_plus, vv_minus] = InterfaceExpression(interface, uu_plus, vv_minus, newexpr)
+                    int_expressions[u_plus, v_minus] = InterfaceExpression(interface, u_plus, v_minus, newexpr)
                 # ...
                 newexpr = _nullify(expr, u_plus, trials)
                 newexpr = _nullify(newexpr, v_plus, tests)
