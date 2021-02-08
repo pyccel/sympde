@@ -30,13 +30,13 @@ __all__ = (
     'ProductSpace',
     'Projection',
     'Projector',
+    'ScalarFunction',
     'ScalarFunctionSpace',
-    'ScalarTestFunction',
     'Trace',
     'trace_0',
     'trace_1',
+    'VectorFunction',
     'VectorFunctionSpace',
-    'VectorTestFunction',
 )
 
 #==============================================================================
@@ -55,7 +55,7 @@ def element_of(space, name):
 
     Results
     -------
-    res : ScalarTestFunction | VectorTestFunction | iterable
+    res : ScalarFunction | VectorFunction | iterable
         Single element taken from the given space. If space is ProductSpace,
         an element is a list of functions; otherwise, it is a single function.
 
@@ -229,7 +229,7 @@ class ScalarFunctionSpace(BasicFunctionSpace):
         return BasicFunctionSpace.__new__(cls, name, domain, shape, kind)
 
     def element(self, name):
-        return ScalarTestFunction(self, name)
+        return ScalarFunction(self, name)
 
 #==============================================================================
 class VectorFunctionSpace(BasicFunctionSpace):
@@ -241,7 +241,7 @@ class VectorFunctionSpace(BasicFunctionSpace):
         return BasicFunctionSpace.__new__(cls, name, domain, shape, kind)
 
     def element(self, name):
-        return VectorTestFunction(self, name)
+        return VectorFunction(self, name)
 
 #=============================================================================
 class Derham:
@@ -432,16 +432,16 @@ class ProductSpace(BasicFunctionSpace):
         return sstr(self.name)
 
 #==============================================================================
-class ScalarTestFunction(Symbol):
+class ScalarFunction(Symbol):
     """
     Represents a test function as an element of a fem space.
 
     Examples
 
     >>> from sympde.codegen.core import SplineFemSpace
-    >>> from sympde.codegen.core import ScalarTestFunction
+    >>> from sympde.codegen.core import ScalarFunction
     >>> V = SplineFemSpace('V')
-    >>> phi = ScalarTestFunction(V, 'phi')
+    >>> phi = ScalarFunction(V, 'phi')
     """
     is_commutative = True
     _space         = None
@@ -472,7 +472,7 @@ class ScalarTestFunction(Symbol):
         return self._projection_of
 
     def duplicate(self, name):
-        return ScalarTestFunction(self.space, name)
+        return ScalarFunction(self.space, name)
 
     def set_as_projection(self, expr):
         self._projection_of = expr
@@ -484,7 +484,7 @@ class ScalarTestFunction(Symbol):
     def __hash__(self):
         return hash((self.name, self.space))
 #==============================================================================
-# this class is needed, otherwise sympy will convert VectorTestFunction to
+# this class is needed, otherwise sympy will convert VectorFunction to
 # IndexedBase
 class IndexedTestTrial(Indexed):
     """Represents a mathematical object with indices.
@@ -497,14 +497,14 @@ class IndexedTestTrial(Indexed):
 
     def __new__(cls, base, *args, **kw_args):
 
-        if isinstance(base, VectorTestFunction):
+        if isinstance(base, VectorFunction):
             pass
 
         elif isinstance(base, Add):
             return Add(*[cls(b, *args, **kw_args) for b in base.args])
 
         elif isinstance(base, Mul):
-            scalar_types = (*_coeffs_registery, ScalarTestFunction)
+            scalar_types = (*_coeffs_registery, ScalarFunction)
             scalars = [s for s in base.args if isinstance(s, scalar_types)]
             others  = [s for s in base.args if s not in scalars]
             return Mul(*scalars) * Mul(*[cls(b, *args, **kw_args) for b in others])
@@ -516,7 +516,7 @@ class IndexedTestTrial(Indexed):
             return Trace(expr, boundary, order)
 
         else:
-            raise ValueError('Expecting VectorTestFunction, Trace, or Add/Mul object')
+            raise ValueError('Expecting VectorFunction, Trace, or Add/Mul object')
 
         if not args:
             raise IndexException("Indexed needs at least one index.")
@@ -541,7 +541,7 @@ class IndexedTestTrial(Indexed):
         return hash(self._args)
 
 #==============================================================================
-class VectorTestFunction(Symbol, IndexedBase):
+class VectorFunction(Symbol, IndexedBase):
     """
     Represents a vector test function as an element of a fem space.
 
@@ -598,7 +598,7 @@ class VectorTestFunction(Symbol, IndexedBase):
         return obj
 
     def duplicate(self, name):
-        return VectorTestFunction(self.space, name)
+        return VectorFunction(self.space, name)
 
     def set_as_projection(self, expr):
         self._projection_of = expr
@@ -614,11 +614,11 @@ class VectorTestFunction(Symbol, IndexedBase):
 # this is implemented as a function, it would be better to have it as a class
 def TestFunction(space, name=None):
 
-    if isinstance(space,ScalarFunctionSpace):
-        return ScalarTestFunction(space, name=name)
+    if isinstance(space, ScalarFunctionSpace):
+        return ScalarFunction(space, name=name)
 
     elif isinstance(space, VectorFunctionSpace):
-        return VectorTestFunction(space, name=name)
+        return VectorFunction(space, name=name)
 
     elif isinstance(space, ProductSpace):
 
@@ -649,7 +649,7 @@ class Trace(AtomicExpr):
 
     def __new__(cls, expr, boundary, order=0, **options):
 #        # TODO these tests are not working for the moment for Grad(u)
-#        if not expr.atoms((ScalarTestFunction, VectorTestFunction)):
+#        if not expr.atoms((ScalarFunction, VectorFunction)):
 #            raise TypeError('> Wrong type for expr')
 #
 #        if not(expr.space.domain is boundary.domain):
@@ -715,8 +715,8 @@ class Trace(AtomicExpr):
 trace_0 = lambda x, B: Trace(x, B, order=0)
 trace_1 = lambda x, B: Trace(x, B, order=1)
 
-_is_sympde_atom   = lambda a: isinstance(a, (ScalarTestFunction, VectorTestFunction))
-_is_test_function = lambda a: isinstance(a, (ScalarTestFunction, VectorTestFunction))
+_is_sympde_atom   = lambda a: isinstance(a, (ScalarFunction, VectorFunction))
+_is_test_function = lambda a: isinstance(a, (ScalarFunction, VectorFunction))
 
 #==============================================================================
 class Projector(Basic):
@@ -748,7 +748,7 @@ class Projector(Basic):
     def __call__(self, expr):
         V = self.space
 
-        if isinstance(expr, (ScalarTestFunction, VectorTestFunction)):
+        if isinstance(expr, (ScalarFunction, VectorFunction)):
             if expr.space is V:
                 return expr
 

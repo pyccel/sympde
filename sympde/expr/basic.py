@@ -4,8 +4,8 @@ from sympy.core import Expr
 from sympy.core.containers import Tuple
 
 from sympde.core.basic     import Constant
-from sympde.topology.space import ScalarTestFunction
-from sympde.topology.space import VectorTestFunction
+from sympde.topology.space import ScalarFunction
+from sympde.topology.space import VectorFunction
 
 __all__ = ('BasicExpr', 'BasicForm', '_sanitize_arguments')
 
@@ -21,11 +21,11 @@ def _sanitize_arguments(arguments, is_bilinear=False, is_linear=False):
         elif is_linear:
             test_functions = arguments
 
-        if isinstance(test_functions, (ScalarTestFunction, VectorTestFunction)):
+        if isinstance(test_functions, (ScalarFunction, VectorFunction)):
             test_functions = [test_functions]
 
         elif isinstance(test_functions, (tuple, list, Tuple)):
-            are_valid = [isinstance(i, (ScalarTestFunction, VectorTestFunction)) for i in test_functions]
+            are_valid = [isinstance(i, (ScalarFunction, VectorFunction)) for i in test_functions]
 
             if not all(are_valid):
                 raise TypeError('> Wrong arguments for test functions')
@@ -40,11 +40,11 @@ def _sanitize_arguments(arguments, is_bilinear=False, is_linear=False):
     if is_bilinear:
 
         trial_functions = arguments[0]
-        if isinstance(trial_functions, (ScalarTestFunction, VectorTestFunction)):
+        if isinstance(trial_functions, (ScalarFunction, VectorFunction)):
             trial_functions = [trial_functions]
 
         elif isinstance(trial_functions, (tuple, list, Tuple)):
-            are_valid = [isinstance(i, (ScalarTestFunction, VectorTestFunction)) for i in trial_functions]
+            are_valid = [isinstance(i, (ScalarFunction, VectorFunction)) for i in trial_functions]
             if not all(are_valid):
                 raise TypeError('> Wrong arguments for trial functions')
         else:
@@ -66,7 +66,7 @@ class BasicExpr(Expr):
 
     @property
     def fields(self):
-        atoms  = self.expr.atoms(ScalarTestFunction, VectorTestFunction)
+        atoms  = self.expr.atoms(ScalarFunction, VectorFunction)
         if self.is_bilinear or self.is_linear:
             args = self.variables
             if self.is_bilinear:
@@ -98,7 +98,7 @@ class BasicForm(Expr):
 
     @property
     def fields(self):
-        atoms  = self.expr.atoms(ScalarTestFunction, VectorTestFunction)
+        atoms  = self.expr.atoms(ScalarFunction, VectorFunction)
         if self.is_bilinear or self.is_linear:
             args = self.variables
             if self.is_bilinear:

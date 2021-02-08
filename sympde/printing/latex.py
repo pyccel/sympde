@@ -13,8 +13,9 @@ from sympde.topology.derivatives import sort_partial_derivatives
 from sympde.topology.derivatives import get_index_derivatives
 from sympde.topology.derivatives import get_atom_derivatives
 from sympde.topology.space import ProductSpace
-from sympde.topology.space import ScalarTestFunction, VectorTestFunction
+from sympde.topology.space import ScalarFunction, VectorFunction
 
+#==============================================================================
 class LatexPrinter(LatexPrinterSympy):
 
     # ... differential operators
@@ -61,7 +62,7 @@ class LatexPrinter(LatexPrinterSympy):
 
     def _print_MinusInterfaceOperator(self, expr):
         arg = expr.args[0]
-        if isinstance(arg, (ScalarTestFunction, VectorTestFunction,
+        if isinstance(arg, (ScalarFunction, VectorFunction,
                             Symbol, IndexedBase, Indexed)):
             return self._print(arg) + '_{-}'
 
@@ -70,7 +71,7 @@ class LatexPrinter(LatexPrinterSympy):
 
     def _print_PlusInterfaceOperator(self, expr):
         arg = expr.args[0]
-        if isinstance(arg, (ScalarTestFunction, VectorTestFunction,
+        if isinstance(arg, (ScalarFunction, VectorFunction,
                             Symbol, IndexedBase, Indexed)):
             return self._print(arg) + '_{+}'
 
@@ -80,7 +81,7 @@ class LatexPrinter(LatexPrinterSympy):
     def _print_NormalDerivative(self, expr):
         nn = self._print(NormalVector('n'))
         arg = expr.args[0]
-        if isinstance(arg, (ScalarTestFunction, VectorTestFunction)):
+        if isinstance(arg, (ScalarFunction, VectorFunction)):
             arg = r'\nabla ' + self._print(arg)
 
         else:
@@ -114,7 +115,7 @@ class LatexPrinter(LatexPrinterSympy):
     # ...
 
     # ...
-    def _print_VectorTestFunction(self, expr):
+    def _print_VectorFunction(self, expr):
         return r'\mathbf{' + self._print(expr.name) + '}'
     # ...
 
