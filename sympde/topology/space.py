@@ -26,7 +26,7 @@ __all__ = (
     'elements_of',
     'BasicFunctionSpace',
     'Derham',
-    'IndexedTestTrial',
+    'IndexedVectorFunction',
     'ProductSpace',
     'Projection',
     'Projector',
@@ -486,7 +486,7 @@ class ScalarFunction(Symbol):
 #==============================================================================
 # this class is needed, otherwise sympy will convert VectorFunction to
 # IndexedBase
-class IndexedTestTrial(Indexed):
+class IndexedVectorFunction(Indexed):
     """Represents a mathematical object with indices.
 
     """
@@ -594,7 +594,7 @@ class VectorFunction(Symbol, IndexedBase):
             if isinstance(args[i], int):
                 args[i] = Integer(args[i])
 
-        obj = IndexedTestTrial(self, *args)
+        obj = IndexedVectorFunction(self, *args)
         return obj
 
     def duplicate(self, name):

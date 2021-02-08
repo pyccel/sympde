@@ -32,7 +32,7 @@ from .basic       import BasicDomain, Union, InteriorDomain
 from .basic       import Boundary, Connectivity, Interface
 from .domain      import Domain, NCubeInterior
 from .domain      import NormalVector
-from .space       import ScalarFunction, VectorFunction, IndexedTestTrial
+from .space       import ScalarFunction, VectorFunction, IndexedVectorFunction
 from .space       import Trace
 from .datatype    import HcurlSpaceType, H1SpaceType, L2SpaceType, HdivSpaceType, UndefinedSpaceType
 from .derivatives import dx, dy, dz, DifferentialOperator
@@ -821,7 +821,7 @@ class LogicalExpr(CalculusFunction):
                 expr = expr.subs(list(zip(Ms, mapping.expressions)))
             return expr
 
-        elif isinstance(expr, IndexedTestTrial):
+        elif isinstance(expr, IndexedVectorFunction):
             el = cls.eval(expr.base, mapping=mapping, dim=dim)
             return el[expr.indices[0]]
 

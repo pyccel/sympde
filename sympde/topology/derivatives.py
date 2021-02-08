@@ -28,7 +28,7 @@ from sympde.core.algebra  import LinearOperator
 from sympde.calculus.core import minus, plus
 from sympde.calculus.core import has
 
-from .space   import ScalarFunction, VectorFunction, IndexedTestTrial
+from .space   import ScalarFunction, VectorFunction, IndexedVectorFunction
 
 #==============================================================================
 class DifferentialOperator(LinearOperator):
@@ -83,7 +83,7 @@ class DifferentialOperator(LinearOperator):
             args = [cls(i, evaluate=True) for i in expr]
             args = Tuple(*args)
             return Matrix([args])
-        elif isinstance(expr, (IndexedTestTrial, DifferentialOperator)):
+        elif isinstance(expr, (IndexedVectorFunction, DifferentialOperator)):
             return cls(expr, evaluate=False)
 
         elif isinstance(expr, ScalarFunction):
@@ -1230,7 +1230,7 @@ def get_max_partial_derivatives(expr, F=None):
     if F is None:
         Fs = (list(expr.atoms(ScalarFunction)) +
               list(expr.atoms(VectorFunction)) +
-              list(expr.atoms(IndexedTestTrial)))
+              list(expr.atoms(IndexedVectorFunction)))
 
         indices = []
         for F in Fs:
@@ -1249,7 +1249,7 @@ def get_max_logical_partial_derivatives(expr, F=None):
     if F is None:
         Fs = (list(expr.atoms(ScalarFunction)) +
               list(expr.atoms(VectorFunction)) +
-              list(expr.atoms(IndexedTestTrial)))
+              list(expr.atoms(IndexedVectorFunction)))
 
         indices = []
         for F in Fs:

@@ -8,7 +8,7 @@ from sympy.parsing.sympy_parser import parse_expr
 from sympde.topology.basic import Boundary, Union
 from sympde.topology.space  import VectorFunctionSpace, ScalarFunctionSpace
 from sympde.topology.space import ScalarFunction
-from sympde.topology.space import VectorFunction, IndexedTestTrial
+from sympde.topology.space import VectorFunction, IndexedVectorFunction
 from sympde.topology import Boundary, NormalVector, TangentVector
 from sympde.topology import Trace, trace_0, trace_1
 from sympde.calculus import grad, dot
@@ -40,7 +40,7 @@ class EssentialBC(BasicBoundaryCondition):
         # ...
 
         # ...
-        indexed = list(lhs.atoms(IndexedTestTrial))
+        indexed = list(lhs.atoms(IndexedVectorFunction))
 
         u  = list(lhs.atoms(ScalarFunction))
 
@@ -85,7 +85,7 @@ class EssentialBC(BasicBoundaryCondition):
         # ...
         if lhs in order_0_expr:
             order = 0
-            if isinstance(u, (IndexedTestTrial)):
+            if isinstance(u, (IndexedVectorFunction)):
                 variable = u.base
                 index_component = list(u.indices)
 
@@ -101,7 +101,7 @@ class EssentialBC(BasicBoundaryCondition):
             order = 1
             variable = u
 
-            if isinstance(u, IndexedTestTrial):
+            if isinstance(u, IndexedVectorFunction):
                 raise NotImplementedError('Indexed case')
         else:
             # TODO change error to unconsistent error
