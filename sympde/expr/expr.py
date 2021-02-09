@@ -19,8 +19,8 @@ from sympde.calculus import Grad, Hessian
 from sympde.topology import BasicDomain, Union
 from sympde.topology import NormalVector
 from sympde.topology import Boundary, Interface, Domain, InteriorDomain
-from sympde.topology.space import ScalarTestFunction
-from sympde.topology.space import VectorTestFunction
+from sympde.topology.space import ScalarFunction
+from sympde.topology.space import VectorFunction
 from sympde.topology.space import Trace, trace_0, trace_1
 
 from .errors import UnconsistentLinearExpressionError
@@ -259,7 +259,7 @@ class Integral(CalculusFunction):
         subs_1  = {a:Dummy() for a in atoms_1}
         expr, _ = expr._xreplace(subs_1)
 
-        atoms_2 = expr.atoms(ScalarTestFunction, VectorTestFunction)
+        atoms_2 = expr.atoms(ScalarFunction, VectorFunction)
         subs_2  = {a:trace_0(a, domain) for a in atoms_2}
         expr, _ = expr._xreplace(subs_2)
 
@@ -292,7 +292,7 @@ class Functional(BasicForm):
     def __new__(cls, expr, domain, evaluate=True, **options):
 
         # compute dim from fields if available
-        ls = tuple(expr.atoms(ScalarTestFunction, VectorTestFunction))
+        ls = tuple(expr.atoms(ScalarFunction, VectorFunction))
         if ls:
             F = ls[0]
             space = F.space
@@ -521,7 +521,7 @@ class Norm(Functional):
 
     def __new__(cls, expr, domain, kind='l2', evaluate=True, **options):
 #        # ...
-#        tests = expr.atoms((ScalarTestFunction, VectorTestFunction))
+#        tests = expr.atoms((ScalarFunction, VectorFunction))
 #        if tests:
 #            msg = '> Expecting an Expression without test functions'
 #            raise UnconsistentArgumentsError(msg)
@@ -606,11 +606,11 @@ def linearize(form, fields, trials=None):
     form : LinearForm
         Linear form F(v; u) to be linearized. F is nonlinear in the parameter u
 
-    fields : [Scalar|Vector]TestFunction or tuple
+    fields : {Scalar|Vector}Function or tuple
         Function u with respect to which F should be differentiated.
         Tuple if element of ProductSpace.
 
-    trials : [Scalar|Vector]TestFunction or tuple
+    trials : {Scalar|Vector}Function or tuple
         Trial function to be used in resulting bilinear form.
 
     Results
@@ -627,8 +627,8 @@ def linearize(form, fields, trials=None):
         fields = [fields]
 
     for field in fields:
-        if not isinstance(field, (ScalarTestFunction, VectorTestFunction)):
-            raise TypeError('> Expecting a TestFunction', field)
+        if not isinstance(field, (ScalarFunction, VectorFunction)):
+            raise TypeError('> Expecting a {Scalar|Vector}Function', field)
 
     # ...
     if trials:
@@ -636,8 +636,8 @@ def linearize(form, fields, trials=None):
             trials = [trials]
 
         for trial in trials:
-            if not isinstance(trial, (ScalarTestFunction, VectorTestFunction)):
-                raise TypeError('> Expecting a TestFunction', trial)
+            if not isinstance(trial, (ScalarFunction, VectorFunction)):
+                raise TypeError('> Expecting a {Scalar|Vector}Function', trial)
     else:
         trials = [x.space.element(x.name + '_trial_' + random_string(4)) for x in fields]
 
@@ -674,15 +674,15 @@ def is_linear_expression(expr, args, integral=True, debug=True):
     for arg in args:
         tag    = random_string( 4 )
 
-        if isinstance(arg, ScalarTestFunction):
-            left  = ScalarTestFunction(arg.space, name='l_' + tag)
-            right = ScalarTestFunction(arg.space, name='r_' + tag)
+        if isinstance(arg, ScalarFunction):
+            left  = ScalarFunction(arg.space, name='l_' + tag)
+            right = ScalarFunction(arg.space, name='r_' + tag)
 
-        elif isinstance(arg, VectorTestFunction):
-            left  = VectorTestFunction(arg.space, name='l_' + tag)
-            right = VectorTestFunction(arg.space, name='r_' + tag)
+        elif isinstance(arg, VectorFunction):
+            left  = VectorFunction(arg.space, name='l_' + tag)
+            right = VectorFunction(arg.space, name='r_' + tag)
         else:
-            raise TypeError('argument must be a TestFunction')
+            raise TypeError('argument must be a {Scalar|Vector}Function')
 
         left_args  += [left]
         right_args += [right]

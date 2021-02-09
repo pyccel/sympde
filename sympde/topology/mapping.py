@@ -32,7 +32,7 @@ from .basic       import BasicDomain, Union, InteriorDomain
 from .basic       import Boundary, Connectivity, Interface
 from .domain      import Domain, NCubeInterior
 from .domain      import NormalVector
-from .space       import ScalarTestFunction, VectorTestFunction, IndexedTestTrial
+from .space       import ScalarFunction, VectorFunction, IndexedVectorFunction
 from .space       import Trace
 from .datatype    import HcurlSpaceType, H1SpaceType, L2SpaceType, HdivSpaceType, UndefinedSpaceType
 from .derivatives import dx, dy, dz, DifferentialOperator
@@ -537,8 +537,8 @@ class PullBack(Expr):
     is_commutative = False
 
     def __new__(cls, u, mapping=None):
-        if not isinstance(u, (VectorTestFunction, ScalarTestFunction)):
-            raise TypeError('{} must be of type ScalarTestFunction or VectorTestFunction'.format(str(u)))
+        if not isinstance(u, (VectorFunction, ScalarFunction)):
+            raise TypeError('{} must be of type ScalarFunction or VectorFunction'.format(str(u)))
 
         if u.space.domain.mapping is None:
             raise ValueError('The pull-back can be performed only to mapped domains')
@@ -591,7 +591,7 @@ class PullBack(Expr):
 
 #==============================================================================
 class Jacobian(MappingApplication):
-    """
+    r"""
     This class calculates the Jacobian of a mapping F
     where [J_{F}]_{i,j} =  \frac{\partial F_{i}}{\partial x_{j}}
     or simply J_{F} =  (\nabla F)^T
@@ -772,7 +772,7 @@ class LogicalExpr(CalculusFunction):
         from sympde.expr.expr import BilinearForm, LinearForm, BasicForm, Norm
         from sympde.expr.expr import Integral
 
-        types = (ScalarTestFunction, VectorTestFunction, DifferentialOperator, Trace, Integral)
+        types = (ScalarFunction, VectorFunction, DifferentialOperator, Trace, Integral)
 
         # TODO this is not the dim of the domain
         l_coords  = ['x1', 'x2', 'x3'][:dim]
@@ -821,7 +821,7 @@ class LogicalExpr(CalculusFunction):
                 expr = expr.subs(list(zip(Ms, mapping.expressions)))
             return expr
 
-        elif isinstance(expr, IndexedTestTrial):
+        elif isinstance(expr, IndexedVectorFunction):
             el = cls.eval(expr.base, mapping=mapping, dim=dim)
             return el[expr.indices[0]]
 
@@ -839,7 +839,7 @@ class LogicalExpr(CalculusFunction):
             newexpr = newexpr.expr.subs(test, PlusInterfaceOperator(test))
             return newexpr
 
-        elif isinstance(expr, (VectorTestFunction, ScalarTestFunction)):
+        elif isinstance(expr, (VectorFunction, ScalarFunction)):
             return PullBack(expr, mapping).expr
 
         elif isinstance(expr, grad):
@@ -872,7 +872,7 @@ class LogicalExpr(CalculusFunction):
                 else:
                     raise TypeError(arg)
 
-            if isinstance(arg, VectorTestFunction):
+            if isinstance(arg, VectorFunction):
                 arg = PullBack(arg, mapping)
             else:
                 arg = cls.eval(arg, mapping=mapping, dim=dim)
@@ -898,7 +898,7 @@ class LogicalExpr(CalculusFunction):
                 else:
                     raise TypeError(arg)
 
-            if isinstance(arg, VectorTestFunction):
+            if isinstance(arg, VectorFunction):
                 arg = PullBack(arg, mapping)
             else:
                 arg = cls.eval(arg, mapping=mapping, dim=dim)
@@ -1189,7 +1189,7 @@ class SymbolicExpr(CalculusFunction):
 
             return type(expr)(lines)
 
-        elif isinstance(expr, (ScalarTestFunction, VectorTestFunction)):
+        elif isinstance(expr, (ScalarFunction, VectorFunction)):
             if code:
                 name = '{name}_{code}'.format(name=expr.name, code=code)
             else:

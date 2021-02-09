@@ -28,7 +28,7 @@ from sympde.core.algebra  import LinearOperator
 from sympde.calculus.core import minus, plus
 from sympde.calculus.core import has
 
-from .space   import ScalarTestFunction, VectorTestFunction, IndexedTestTrial
+from .space   import ScalarFunction, VectorFunction, IndexedVectorFunction
 
 #==============================================================================
 class DifferentialOperator(LinearOperator):
@@ -53,7 +53,7 @@ class DifferentialOperator(LinearOperator):
     @cacheit
     def eval(cls, expr):
 
-        types = (VectorTestFunction, ScalarTestFunction, DifferentialOperator)
+        types = (VectorFunction, ScalarFunction, DifferentialOperator)
 
         if isinstance(expr, _logical_partial_derivatives):
             atom    = get_atom_logical_derivatives(expr)
@@ -74,7 +74,7 @@ class DifferentialOperator(LinearOperator):
 
             return atom
 
-        if isinstance(expr, VectorTestFunction):
+        if isinstance(expr, VectorFunction):
             n = expr.shape[0]
             args = [cls(expr[i], evaluate=False) for i in range(0, n)]
             args = Tuple(*args)
@@ -83,10 +83,10 @@ class DifferentialOperator(LinearOperator):
             args = [cls(i, evaluate=True) for i in expr]
             args = Tuple(*args)
             return Matrix([args])
-        elif isinstance(expr, (IndexedTestTrial, DifferentialOperator)):
+        elif isinstance(expr, (IndexedVectorFunction, DifferentialOperator)):
             return cls(expr, evaluate=False)
 
-        elif isinstance(expr, ScalarTestFunction):
+        elif isinstance(expr, ScalarFunction):
             return cls(expr, evaluate=False)
 
         elif isinstance(expr, (minus, plus)):
@@ -779,7 +779,7 @@ class Laplace_1d(LaplaceBasic):
             return
 
         u = _args[0]
-        if isinstance(u, VectorTestFunction):
+        if isinstance(u, VectorFunction):
             raise NotImplementedError('TODO')
 
         return dx(dx(u))
@@ -793,7 +793,7 @@ class Laplace_2d(LaplaceBasic):
             return
 
         u = _args[0]
-        if isinstance(u, VectorTestFunction):
+        if isinstance(u, VectorFunction):
             raise NotImplementedError('TODO')
 
         return dx(dx(u)) + dy(dy(u))
@@ -807,7 +807,7 @@ class Laplace_3d(LaplaceBasic):
             return
 
         u = _args[0]
-        if isinstance(u, VectorTestFunction):
+        if isinstance(u, VectorFunction):
             raise NotImplementedError('TODO')
 
         return dx(dx(u)) + dy(dy(u)) + dz(dz(u))
@@ -847,7 +847,7 @@ class Hessian_1d(HessianBasic):
             return
 
         u = _args[0]
-        if isinstance(u, VectorTestFunction):
+        if isinstance(u, VectorFunction):
             raise NotImplementedError('TODO')
 
         return dx(dx(u))
@@ -861,7 +861,7 @@ class Hessian_2d(HessianBasic):
             return
 
         u = _args[0]
-        if isinstance(u, VectorTestFunction):
+        if isinstance(u, VectorFunction):
             raise NotImplementedError('TODO')
 
         return ImmutableDenseMatrix([[dx(dx(u)), dx(dy(u))],
@@ -876,7 +876,7 @@ class Hessian_3d(HessianBasic):
             return
 
         u = _args[0]
-        if isinstance(u, VectorTestFunction):
+        if isinstance(u, VectorFunction):
             raise NotImplementedError('TODO')
 
         return ImmutableDenseMatrix([[dx(dx(u)), dx(dy(u)), dx(dz(u))],
@@ -1077,7 +1077,7 @@ class LogicalLaplace_1d(LaplaceBasic):
             return
 
         u = _args[0]
-        if isinstance(u, VectorTestFunction):
+        if isinstance(u, VectorFunction):
             raise NotImplementedError('TODO')
 
         return dx1(dx1(u))
@@ -1091,7 +1091,7 @@ class LogicalLaplace_2d(LaplaceBasic):
             return
 
         u = _args[0]
-        if isinstance(u, VectorTestFunction):
+        if isinstance(u, VectorFunction):
             raise NotImplementedError('TODO')
 
         return dx1(dx1(u)) + dx2(dx2(u))
@@ -1105,7 +1105,7 @@ class LogicalLaplace_3d(LaplaceBasic):
             return
 
         u = _args[0]
-        if isinstance(u, VectorTestFunction):
+        if isinstance(u, VectorFunction):
             raise NotImplementedError('TODO')
 
         return dx1(dx1(u)) + dx2(dx2(u)) + dx3(dx3(u))
@@ -1120,7 +1120,7 @@ class LogicalHessian_1d(HessianBasic):
             return
 
         u = _args[0]
-        if isinstance(u, VectorTestFunction):
+        if isinstance(u, VectorFunction):
             raise NotImplementedError('TODO')
 
         return dx1(dx1(u))
@@ -1134,7 +1134,7 @@ class LogicalHessian_2d(HessianBasic):
             return
 
         u = _args[0]
-        if isinstance(u, VectorTestFunction):
+        if isinstance(u, VectorFunction):
             raise NotImplementedError('TODO')
 
         return ImmutableDenseMatrix([[dx1(dx1(u)), dx1(dx2(u))],
@@ -1149,7 +1149,7 @@ class LogicalHessian_3d(HessianBasic):
             return
 
         u = _args[0]
-        if isinstance(u, VectorTestFunction):
+        if isinstance(u, VectorFunction):
             raise NotImplementedError('TODO')
 
         return ImmutableDenseMatrix([[dx1(dx1(u)), dx1(dx2(u)), dx1(dx3(u))],
@@ -1228,9 +1228,9 @@ def get_index_logical_derivatives_atom(expr, atom, verbose=False):
 #==============================================================================
 def get_max_partial_derivatives(expr, F=None):
     if F is None:
-        Fs = (list(expr.atoms(ScalarTestFunction)) +
-              list(expr.atoms(VectorTestFunction)) +
-              list(expr.atoms(IndexedTestTrial)))
+        Fs = (list(expr.atoms(ScalarFunction)) +
+              list(expr.atoms(VectorFunction)) +
+              list(expr.atoms(IndexedVectorFunction)))
 
         indices = []
         for F in Fs:
@@ -1247,9 +1247,9 @@ def get_max_partial_derivatives(expr, F=None):
 #==============================================================================
 def get_max_logical_partial_derivatives(expr, F=None):
     if F is None:
-        Fs = (list(expr.atoms(ScalarTestFunction)) +
-              list(expr.atoms(VectorTestFunction)) +
-              list(expr.atoms(IndexedTestTrial)))
+        Fs = (list(expr.atoms(ScalarFunction)) +
+              list(expr.atoms(VectorFunction)) +
+              list(expr.atoms(IndexedVectorFunction)))
 
         indices = []
         for F in Fs:

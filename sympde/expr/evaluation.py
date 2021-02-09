@@ -36,9 +36,9 @@ from sympde.topology.mapping import LogicalExpr, PullBack
 
 # TODO fix circular dependency between sympde.expr.evaluation and sympde.topology.mapping
 
-from sympde.topology.space import ScalarTestFunction
-from sympde.topology.space import VectorTestFunction
-from sympde.topology.space import IndexedTestTrial
+from sympde.topology.space import ScalarFunction
+from sympde.topology.space import VectorFunction
+from sympde.topology.space import IndexedVectorFunction
 from sympde.topology.space import Trace
 from sympde.topology.space import element_of
 from sympde.topology.space import ScalarFunctionSpace
@@ -101,12 +101,12 @@ def _unpack_functions(ls):
     funcs = []
 
     for x in ls:
-        if isinstance(x, ScalarTestFunction):
+        if isinstance(x, ScalarFunction):
             funcs.append(x)
-        elif isinstance(x, VectorTestFunction):
+        elif isinstance(x, VectorFunction):
             funcs.extend(x[j] for j in range(x.shape[0]))
         else:
-            raise TypeError('Can only accept ScalarTestFunction and VectorTestFunction')
+            raise TypeError('Can only accept ScalarFunction and VectorFunction')
 
     return tuple(funcs)
 
@@ -548,10 +548,10 @@ class TerminalExpr(CalculusFunction):
         elif isinstance(expr, Inverse):
             return cls.eval(expr.arg, dim=dim, logical=logical).inv()
 
-        elif isinstance(expr, ScalarTestFunction):
+        elif isinstance(expr, ScalarFunction):
             return expr
 
-        elif isinstance(expr, VectorTestFunction):
+        elif isinstance(expr, VectorFunction):
             return ImmutableDenseMatrix([[expr[i]] for i in range(dim)])
 
         elif isinstance(expr, (minus, plus)):
@@ -770,7 +770,7 @@ class TerminalExpr(CalculusFunction):
 # TODO use random_string for space name and use it for 1d test function
 def _split_test_function(expr):
 
-    if isinstance(expr, ScalarTestFunction):
+    if isinstance(expr, ScalarFunction):
 
         dim = expr.space.ldim
         name = expr.name
@@ -780,11 +780,11 @@ def _split_test_function(expr):
             Di = Interval()
             Vi = ScalarFunctionSpace('tmp_V_{}'.format(i), domain=Di)
 
-            ai = ScalarTestFunction(Vi, '{name}_{i}'.format(name=name, i=i+1))
+            ai = ScalarFunction(Vi, '{name}_{i}'.format(name=name, i=i+1))
             ls += [ai]
 
         return {expr:tuple(ls)}
-    elif isinstance(expr, VectorTestFunction):
+    elif isinstance(expr, VectorFunction):
 
         dim = expr.space.ldim
         name = expr.name
@@ -793,11 +793,11 @@ def _split_test_function(expr):
         Di = Interval()
         for i in range(dim):
             Vi = ScalarFunctionSpace('tmp_V_{}'.format(i), domain=Di)
-            ls[expr[i]] = tuple(ScalarTestFunction(Vi, '{name}_{i}_{j}'.format(name=name, i=i,j=j+1)) for j in range(dim))
+            ls[expr[i]] = tuple(ScalarFunction(Vi, '{name}_{i}_{j}'.format(name=name, i=i,j=j+1)) for j in range(dim))
 
         return ls
 
-    elif isinstance(expr, IndexedTestTrial):
+    elif isinstance(expr, IndexedVectorFunction):
 
         dim = expr.base.space.ldim
         index = expr.indices[0]
@@ -808,12 +808,12 @@ def _split_test_function(expr):
         ls = []
         for i in range(dim):
             Vi = ScalarFunctionSpace('tmp_V_{}'.format(i), domain=Di)
-            ai = ScalarTestFunction(Vi, '{name}_{j}_{i}'.format(name=name, j=index,i=i+1))
+            ai = ScalarFunction(Vi, '{name}_{j}_{i}'.format(name=name, j=index,i=i+1))
             ls += [ai]
         return {expr:tuple(ls)}
 
     else:
-        msg = 'Expecting ScalarTestFunction or IndexedTestTrial, given {}'.format(type(expr))
+        msg = 'Expecting ScalarFunction or IndexedVectorFunction, given {}'.format(type(expr))
         raise TypeError(msg)
 
 #==============================================================================
@@ -837,7 +837,7 @@ def _tensorize_atomic_expr(expr, d_atoms):
         expr = expr.subs(u, op(u))
         return expr
 
-    elif isinstance(expr, (ScalarTestFunction, IndexedTestTrial)):
+    elif isinstance(expr, (ScalarFunction, IndexedVectorFunction)):
         for k,e in d_atoms.items():
             if k == expr:
                 atoms = e
@@ -1025,8 +1025,8 @@ class TensorExpr(CalculusFunction):
 
         elif isinstance(expr, Mul):
             coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
-            stests  = [a for a in expr.args if not(a in coeffs) and a.atoms(ScalarTestFunction)]
-            vtests  = [a for a in expr.args if not(a in coeffs) and a.atoms(VectorTestFunction)]
+            stests  = [a for a in expr.args if not(a in coeffs) and a.atoms(ScalarFunction)]
+            vtests  = [a for a in expr.args if not(a in coeffs) and a.atoms(VectorFunction)]
             vectors = [a for a in expr.args if (not(a in coeffs) and
                                                 not(a in stests) and
                                                 not(a in vtests))]
@@ -1092,8 +1092,8 @@ class TensorExpr(CalculusFunction):
 
             # ...
             # Collect all variables in the expression (fields must be excluded)
-            variables  = [e for e in terminal_expr.atoms(ScalarTestFunction) if e not in fields]
-            variables += [e for e in terminal_expr.atoms(IndexedTestTrial) if e.base not in fields]
+            variables  = [e for e in terminal_expr.atoms(ScalarFunction) if e not in fields]
+            variables += [e for e in terminal_expr.atoms(IndexedVectorFunction) if e.base not in fields]
             # ...
 
             # ...
@@ -1115,11 +1115,11 @@ class TensorExpr(CalculusFunction):
             # ...
 
             # ...
-            trials = [a for a in variables if ((isinstance(a, ScalarTestFunction) and a in trials) or
-                                               (isinstance(a, IndexedTestTrial) and a.base in trials))]
+            trials = [a for a in variables if ((isinstance(a, ScalarFunction) and a in trials) or
+                                               (isinstance(a, IndexedVectorFunction) and a.base in trials))]
 
-            tests = [a for a in variables if ((isinstance(a, ScalarTestFunction) and a in tests) or
-                                              (isinstance(a, IndexedTestTrial) and a.base in tests))]
+            tests = [a for a in variables if ((isinstance(a, ScalarFunction) and a in tests) or
+                                              (isinstance(a, IndexedVectorFunction) and a.base in tests))]
             # ...
 
             expr = _replace_atomic_expr(expr, trials, tests, d_atoms,
@@ -1127,7 +1127,7 @@ class TensorExpr(CalculusFunction):
 
             return expr
 
-        if expr.atoms(ScalarTestFunction) or expr.atoms(IndexedTestTrial):
+        if expr.atoms(ScalarFunction) or expr.atoms(IndexedVectorFunction):
             return _tensorize_atomic_expr(expr, d_atoms)
 
         return cls(expr, evaluate=False)
