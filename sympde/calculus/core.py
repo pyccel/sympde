@@ -864,7 +864,12 @@ class Curl(DiffOperator):
                                                 H1SpaceType)):
                 msg = '> Wrong space kind, given {}'.format(expr.space.kind)
                 raise ArgumentTypeError(msg)
-        # ...
+
+            obj                = cls(expr, evaluate=False)
+            obj.is_scalar      = expr.space.domain.dim == 2
+            obj.is_commutative = expr.space.domain.dim == 2
+            return obj
+
         return cls(expr, evaluate=False)
 
 #==============================================================================

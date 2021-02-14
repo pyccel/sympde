@@ -10,6 +10,7 @@ from sympy                 import cacheit
 from sympy.core            import Basic
 from sympy.core            import Symbol
 from sympy.core            import Add, Mul, Pow
+
 from sympy.core.numbers    import ImaginaryUnit
 from sympy.core.containers import Tuple
 from sympy                 import S
@@ -137,7 +138,7 @@ class Mapping(BasicMapping):
                 if not isinstance(a, (str, Symbol)):
                     raise TypeError('> Expecting str or Symbol')
 
-            _coordinates = [Symbol(name) for name in coordinates]
+            _coordinates = [Symbol(u) for u in coordinates]
 
         obj._name                = name
         obj._ldim                = ldim
@@ -300,12 +301,15 @@ class InverseMapping(Mapping):
 
 #==============================================================================
 class JacobianSymbol(MatrixSymbolicExpr):
-
+    _axis = None
     def __new__(cls, mapping, axis=None):
         assert isinstance(mapping, Mapping)
         if axis is not None:
-            assert isinstance(axis, int)
-        return MatrixSymbolicExpr.__new__(cls, mapping, axis)
+            assert isinstance(axis, (int, Integer))
+
+        obj = MatrixSymbolicExpr.__new__(cls, mapping)
+        obj._axis = axis
+        return obj
 
     @property
     def mapping(self):
@@ -313,16 +317,16 @@ class JacobianSymbol(MatrixSymbolicExpr):
 
     @property
     def axis(self):
-        return self._args[1]
+        return self._axis
 
     def inv(self):
         return JacobianInverseSymbol(self.mapping, self.axis)
 
     def _hashable_content(self):
         if self.axis is not None:
-            return ('JacobianSymbol', self.mapping, self.axis)
+            return (type(self).__name__, self.mapping, self.axis)
         else:
-            return (self.mapping,)
+            return (type(self).__name__, self.mapping)
 
     def __hash__(self):
         return hash(self._hashable_content())
@@ -336,12 +340,14 @@ class JacobianSymbol(MatrixSymbolicExpr):
 
 #==============================================================================
 class JacobianInverseSymbol(MatrixSymbolicExpr):
-
+    _axis = None
     def __new__(cls, mapping, axis=None):
         assert isinstance(mapping, Mapping)
         if axis is not None:
             assert isinstance(axis, int)
-        return MatrixSymbolicExpr.__new__(cls, mapping, axis)
+        obj = MatrixSymbolicExpr.__new__(cls, mapping)
+        obj._axis = axis
+        return obj
 
     @property
     def mapping(self):
@@ -349,17 +355,13 @@ class JacobianInverseSymbol(MatrixSymbolicExpr):
 
     @property
     def axis(self):
-        return self._args[1]
-
-    @property
-    def name(self):
-        return self._args[2]
+        return self._axis
 
     def _hashable_content(self):
         if self.axis is not None:
-            return (self.mapping, self.axis)
+            return (type(self).__name__, self.mapping, self.axis)
         else:
-            return ('JacobianInverseSymbol', self.mapping)
+            return (type(self).__name__, self.mapping)
 
     def __hash__(self):
         return hash(self._hashable_content())
@@ -469,7 +471,6 @@ class MappedDomain(BasicDomain):
             logical_domain = logical_domain)
             boundaries     = logical_domain.boundary
             interiors      = logical_domain.interior
-
             if isinstance(interiors, Union):
                 kwargs['interiors'] = Union(*[mapping(a) for a in interiors.args])
             else:
@@ -872,16 +873,16 @@ class LogicalExpr(CalculusFunction):
                 else:
                     raise TypeError(arg)
 
-            if isinstance(arg, VectorFunction):
-                arg = PullBack(arg, mapping)
-            else:
-                arg = cls.eval(arg, mapping=mapping, dim=dim)
-                
+            arg = cls.eval(arg, mapping=mapping, dim=dim)
             if isinstance(arg, PullBack) and isinstance(arg.kind, HcurlSpaceType):
                 J   = mapping.jacobian
                 arg = arg.test
                 if isinstance(expr.args[0], (MinusInterfaceOperator, PlusInterfaceOperator)):
                     arg = type(expr.args[0])(arg)
+
+                if expr.is_scalar:
+                    return (1/J.det())*curl(arg)
+
                 return (J/J.det())*curl(arg)
             else:
                 raise NotImplementedError('TODO')
@@ -898,10 +899,7 @@ class LogicalExpr(CalculusFunction):
                 else:
                     raise TypeError(arg)
 
-            if isinstance(arg, VectorFunction):
-                arg = PullBack(arg, mapping)
-            else:
-                arg = cls.eval(arg, mapping=mapping, dim=dim)
+            arg = cls.eval(arg, mapping=mapping, dim=dim)
             if isinstance(arg, PullBack) and isinstance(arg.kind, HdivSpaceType):
                 J   = mapping.jacobian
                 arg = arg.test

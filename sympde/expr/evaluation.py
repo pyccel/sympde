@@ -354,9 +354,9 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                     newexpr = newexpr.subs(mapping, mapping.plus)
 
                 if not is_zero(newexpr):
-                    if isinstance(u, IndexedTestTrial):
+                    if isinstance(u, IndexedVectorFunction):
                         u_minus = minus(u.base)
-                    if isinstance(v, IndexedTestTrial):
+                    if isinstance(v, IndexedVectorFunction):
                         v_plus = plus(v.base)
                     if (u_minus, v_plus) in int_expressions:
                         newexpr += int_expressions[u_minus, v_plus].expr
@@ -371,9 +371,9 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                     mapping = list(mapping)[0]
                     newexpr = newexpr.subs(mapping, mapping.plus)
                 if not is_zero(newexpr):
-                    if isinstance(u, IndexedTestTrial):
+                    if isinstance(u, IndexedVectorFunction):
                         u_plus = plus(u.base)
-                    if isinstance(v, IndexedTestTrial):
+                    if isinstance(v, IndexedVectorFunction):
                         v_minus = minus(v.base)
                     if (u_plus, v_minus) in int_expressions:
                         newexpr += int_expressions[u_plus, v_minus].expr
