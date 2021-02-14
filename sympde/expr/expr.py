@@ -729,6 +729,7 @@ def is_linear_expression(expr, args, integral=True, debug=True):
             print('Failed to assert multiplication property')
             print('{} != {}'.format(newexpr, left_expr))
 
+
         return False
     # ...
 

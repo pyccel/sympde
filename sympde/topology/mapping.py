@@ -8,7 +8,7 @@ from sympy                 import Function, Expr
 from sympy                 import sympify
 from sympy                 import cacheit
 from sympy.core            import Basic
-from sympy.core            import Symbol
+from sympy.core            import Symbol,Integer
 from sympy.core            import Add, Mul, Pow
 
 from sympy.core.numbers    import ImaginaryUnit
@@ -873,7 +873,11 @@ class LogicalExpr(CalculusFunction):
                 else:
                     raise TypeError(arg)
 
-            arg = cls.eval(arg, mapping=mapping, dim=dim)
+            if isinstance(arg, VectorFunction):
+                arg = PullBack(arg, mapping)
+            else:
+                arg = cls.eval(arg, mapping=mapping, dim=dim)
+
             if isinstance(arg, PullBack) and isinstance(arg.kind, HcurlSpaceType):
                 J   = mapping.jacobian
                 arg = arg.test
@@ -899,7 +903,11 @@ class LogicalExpr(CalculusFunction):
                 else:
                     raise TypeError(arg)
 
-            arg = cls.eval(arg, mapping=mapping, dim=dim)
+            if isinstance(arg, (ScalarFunction, VectorFunction)):
+                arg = PullBack(arg, mapping)
+            else:
+                arg = cls.eval(arg, mapping=mapping, dim=dim)
+
             if isinstance(arg, PullBack) and isinstance(arg.kind, HdivSpaceType):
                 J   = mapping.jacobian
                 arg = arg.test

@@ -621,9 +621,6 @@ class TerminalExpr(CalculusFunction):
             trials, tests = _get_trials_tests_flattened(expr)
 
             d_new = OrderedDict()
-            print(expr.expr)
-            print(newexpr)
-            raise
             for domain, newexpr in d_expr.items():
 
                 if newexpr != 0:

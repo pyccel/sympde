@@ -824,9 +824,14 @@ class Curl(DiffOperator):
             r = None
 
         if r is None:
-            return Basic.__new__(cls, expr, **options)
-        else:
-            return r
+            r = Basic.__new__(cls, expr, **options)
+
+        if r and _is_sympde_atom(expr):
+            r.is_scalar      = expr.space.domain.dim == 2
+            r.is_commutative = expr.space.domain.dim == 2
+
+        return r
+
 
     @classmethod
     def eval(cls, expr):
@@ -864,11 +869,6 @@ class Curl(DiffOperator):
                                                 H1SpaceType)):
                 msg = '> Wrong space kind, given {}'.format(expr.space.kind)
                 raise ArgumentTypeError(msg)
-
-            obj                = cls(expr, evaluate=False)
-            obj.is_scalar      = expr.space.domain.dim == 2
-            obj.is_commutative = expr.space.domain.dim == 2
-            return obj
 
         return cls(expr, evaluate=False)
 
