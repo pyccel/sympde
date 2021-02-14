@@ -188,7 +188,7 @@ class MatSymbolicAdd(MatrixSymbolicExpr, Add):
         args = [sympify(a) for a in args if a != 0]
         newargs = []
         for i in args:
-            if isinstance(i, MatSymbolicAdd):
+            if isinstance(i, (MatSymbolicAdd, Add)):
                 newargs += list(i.args)
             else:
                 newargs.append(i)
@@ -199,7 +199,7 @@ class MatSymbolicAdd(MatrixSymbolicExpr, Add):
             return S.Zero
         elif len(args) == 1:
             return args[0]
-
+        args = sorted(args, key=str)
         return Expr.__new__(cls, *args)
 
     def _sympystr(self, printer):

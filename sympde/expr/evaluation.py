@@ -203,21 +203,22 @@ def _to_matrix_form(expr, *, trials=None, tests=None, domain=None):
  
     # Bilinear form
     if trials and tests:
-        M = Matrix.zeros(len(tests), len(trials))
+        M = [[None for j in trials] for i in tests]
         for i, test in enumerate(tests):
             subs_i = {v:0 for v in tests if v != test}
             expr_i = expr.subs(subs_i)
             for j, trial in enumerate(trials):
                 subs_j  = {u:0 for u in trials if u != trial}
-                M[i, j] = expr_i.subs(subs_j)
+                M[i][j] = expr_i.subs(subs_j)
+        M = Matrix(M)
 
     # Linear form
     elif tests:
-        M = Matrix.zeros(len(tests), 1)
+        M = [[None] for i in tests]
         for i, test in enumerate(tests):
             subs_i = {v:0 for v in tests if v != test}
-            M[i, 0] = expr.subs(subs_i)
-
+            M[i][0] = expr.subs(subs_i)
+        M = Matrix(M)
     # Functional
     else:
         M = [[expr]]
@@ -326,6 +327,23 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                         newexpr += bnd_expressions[interface.minus]
 
                     bnd_expressions[interface.minus] = newexpr
+
+                # ...
+                newexpr = _nullify(expr, u_plus, trials)
+                newexpr = _nullify(newexpr, v_plus, tests)
+                newexpr = newexpr.subs({u_plus: u, v_plus: v})
+                mapping = newexpr.atoms(InterfaceMapping)
+
+                if mapping and not is_zero(newexpr):
+                    mapping = list(mapping)[0]
+                    newexpr = newexpr.subs(mapping, mapping.plus)
+
+                if not is_zero(newexpr):
+                    if interface.plus in bnd_expressions:
+                        newexpr += bnd_expressions[interface.plus]
+
+                    bnd_expressions[interface.plus] = newexpr
+
                 # ...
                 # TODO must call InterfaceExpression afterward
                 newexpr = _nullify(expr, u_minus, trials)
@@ -361,20 +379,6 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                         newexpr += int_expressions[u_plus, v_minus].expr
 
                     int_expressions[u_plus, v_minus] = InterfaceExpression(interface, u_plus, v_minus, newexpr)
-                # ...
-                newexpr = _nullify(expr, u_plus, trials)
-                newexpr = _nullify(newexpr, v_plus, tests)
-                newexpr = newexpr.subs({u_plus: u, v_plus: v})
-                mapping = newexpr.atoms(InterfaceMapping)
-                if mapping:
-                    mapping = list(mapping)[0]
-                    newexpr = newexpr.subs(mapping, mapping.plus)
-
-                if not is_zero(newexpr):
-                    if interface.plus in bnd_expressions:
-                        newexpr += bnd_expressions[interface.plus]
-
-                    bnd_expressions[interface.plus] = newexpr
                 # ...
 
     elif is_linear:
@@ -617,6 +621,9 @@ class TerminalExpr(CalculusFunction):
             trials, tests = _get_trials_tests_flattened(expr)
 
             d_new = OrderedDict()
+            print(expr.expr)
+            print(newexpr)
+            raise
             for domain, newexpr in d_expr.items():
 
                 if newexpr != 0:
@@ -719,7 +726,7 @@ class TerminalExpr(CalculusFunction):
             op = type(expr)
             aa = expr.args[0]
             new  = eval('{0}_{1}d'.format(op, dim))
-            args = [cls.eval(i, dim=dim, logical=logical).simplify() for i in expr.args]
+            args = [cls.eval(i, dim=dim, logical=logical) for i in expr.args]
             return new(*args)
 
         elif isinstance(expr, Trace):
