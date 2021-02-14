@@ -883,7 +883,6 @@ class LogicalExpr(CalculusFunction):
                 arg = arg.test
                 if isinstance(expr.args[0], (MinusInterfaceOperator, PlusInterfaceOperator)):
                     arg = type(expr.args[0])(arg)
-
                 if expr.is_scalar:
                     return (1/J.det())*curl(arg)
 

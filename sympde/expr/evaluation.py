@@ -200,7 +200,7 @@ def _to_matrix_form(expr, *, trials=None, tests=None, domain=None):
         if mapping:
             mapping = list(mapping)[0]
             expr    = expr.subs(mapping, mapping.minus)
- 
+
     # Bilinear form
     if trials and tests:
         M = [[None for j in trials] for i in tests]

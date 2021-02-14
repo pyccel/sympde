@@ -107,7 +107,6 @@ from sympy.core.compatibility import is_sequence
 from sympde.core.basic        import CalculusFunction
 from sympde.core.basic        import _coeffs_registery
 from sympde.topology.space    import ScalarFunction, VectorFunction
-from sympde.topology.space    import _is_sympde_atom
 from sympde.topology.domain   import NormalVector, MinusNormalVector, PlusNormalVector
 from sympde.topology.datatype import H1SpaceType, HcurlSpaceType
 from sympde.topology.datatype import HdivSpaceType, UndefinedSpaceType
@@ -1716,6 +1715,10 @@ class MinusInterfaceOperator(BasicOperator):
 
         return cls(expr, evaluate=False)
 
+    @property
+    def space(self):
+        return self.args[0].space
+
     def __getitem__(self, key):
         return MinusInterfaceOperator(self.args[0][key])
 
@@ -1807,6 +1810,10 @@ class PlusInterfaceOperator(BasicOperator):
 
         return cls(expr, evaluate=False)
 
+    @property
+    def space(self):
+        return self.args[0].space
+
     def __getitem__(self, key):
         return PlusInterfaceOperator(self.args[0][key])
 
@@ -1845,6 +1852,8 @@ plus  = PlusInterfaceOperator
 
 _is_op_test_function = lambda op: (isinstance(op, (Grad, Curl, Div)) and
                                    isinstance(op._args[0], (ScalarFunction, VectorFunction)))
+
+_is_sympde_atom   = lambda a: isinstance(a, (ScalarFunction, VectorFunction, minus, plus))
 
 def add_basicop(expr):
     return BasicOperatorAdd(*expr.args)
