@@ -26,7 +26,7 @@ from sympde.calculus.core     import PlusInterfaceOperator, MinusInterfaceOperat
 from sympde.calculus.core     import grad, div, curl, laplace #, hessian
 from sympde.calculus.core     import dot, inner, outer, _diff_ops
 from sympde.calculus.core     import has, DiffOperator
-from sympde.calculus.matrices import MatrixSymbolicExpr, MatrixElement, SymbolicTrace
+from sympde.calculus.matrices import MatrixSymbolicExpr, MatrixElement, SymbolicTrace, Inverse, Transpose
 from sympde.calculus.matrices import SymbolicDeterminant
 
 from .basic       import BasicDomain, Union, InteriorDomain
@@ -824,6 +824,7 @@ class LogicalExpr(CalculusFunction):
 
         elif isinstance(expr, IndexedVectorFunction):
             el = cls.eval(expr.base, mapping=mapping, dim=dim)
+            el = TerminalExpr(el, dim=dim, logical=True, mapping=mapping)
             return el[expr.indices[0]]
 
         elif isinstance(expr, MinusInterfaceOperator):
