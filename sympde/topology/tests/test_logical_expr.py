@@ -45,21 +45,21 @@ def test_logical_expr_1d_1():
 
     # ...
     expr = 2*u + alpha*v
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     #print(expr)
     #print('')
     # ...
 
     # ...
     expr = dx(u)
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     #print(expr.subs(det_M, det))
     #print('')
     # ...
 
     # ...
     expr = dx(det_M)
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     expr = expr.subs(det_M, det)
     expr = expand(expr)
     #print(expr)
@@ -68,7 +68,7 @@ def test_logical_expr_1d_1():
 
     # ...
     expr = dx(dx(u))
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     #print(expr.subs(det_M, det))
     #print('')
     # ...
@@ -93,28 +93,28 @@ def test_symbolic_expr_1d_1():
 
     # ...
     expr = u
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     #print(expr)
     # ...
 
     # ...
     expr = dx1(u)
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     #print(expr)
     # ...
 
     # ...
     expr = dx1(M[0])
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     #print(expr)
     # ...
 
     # ...
     expr = dx(u)
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     expr = expr.subs(det_M, det)
     #print(expr)
@@ -122,7 +122,7 @@ def test_symbolic_expr_1d_1():
 
     # ...
     expr = dx(Jacobian(M).det())
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     expr = expr.subs(det_M, det)
     #print(expand(expr))
@@ -130,7 +130,7 @@ def test_symbolic_expr_1d_1():
 
     # ...
     expr = dx(dx(u))
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     expr = expr.subs(det_M, det)
     #print(expand(expr))
@@ -138,7 +138,7 @@ def test_symbolic_expr_1d_1():
 
     # ...
     expr = dx(dx(dx(u)))
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     expr = expr.subs(det_M, det)
     #print(expand(expr))
@@ -165,28 +165,28 @@ def test_logical_expr_2d_1():
 
     # ...
     expr = 2*u + alpha*v
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     #print(expr)
     #print('')
     # ...
 
     # ...
     expr = dx(u)
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     #print(expr.subs(det_M, det))
     #print('')
     # ...
 
     # ...
     expr = dy(u)
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     #print(expr.subs(det_M, det))
     #print('')
     # ...
 
     # ...
     expr = dx(det_M)
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     expr = expr.subs(det_M, det)
     expr = expand(expr)
     #print(expr)
@@ -195,14 +195,14 @@ def test_logical_expr_2d_1():
 
     # ...
     expr = dx(dx(u))
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     #print(expr.subs(det_M, det))
     #print('')
     # ...
 
     # ...
     expr = dx(w[0])
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     #print(expr.subs(det_M, det))
     #print('')
     # ...
@@ -227,35 +227,35 @@ def test_symbolic_expr_2d_1():
 
     # ...
     expr = u
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     #print(expr)
     # ...
 
     # ...
     expr = dx1(u)
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     #print(expr)
     # ...
 
     # ...
     expr = dx1(dx2(u))
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     #print(expr)
     # ...
 
     # ...
     expr = dx1(M[0])
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     #print(expr)
     # ...
 
     # ...
     expr = dx(u)
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     expr = expr.subs(det_M, det)
     #print(expr)
@@ -263,7 +263,7 @@ def test_symbolic_expr_2d_1():
 
     # ...
     expr = dx(Jacobian(M).det())
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     expr = expr.subs(det_M, det)
     #print(expand(expr))
@@ -271,7 +271,7 @@ def test_symbolic_expr_2d_1():
 
     # ...
     expr = dx(dx(u))
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     expr = expr.subs(det_M, det)
     #print(expand(expr))
@@ -279,7 +279,7 @@ def test_symbolic_expr_2d_1():
 
     # ...
     expr = dx(dx(dx(u)))
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     expr = expr.subs(det_M, det)
     #print(expand(expr))
@@ -304,28 +304,28 @@ def test_logical_expr_3d_1():
 
     # ...
     expr = 2*u + alpha*v
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     #print(expr)
     #print('')
     # ...
 
     # ...
     expr = dx(u)
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     #print(expr.subs(det_M, det))
     #print('')
     # ...
 
     # ...
     expr = dy(u)
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     #print(expr.subs(det_M, det))
     #print('')
     # ...
 
     # ...
     expr = dx(det_M)
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     expr = expr.subs(det_M, det)
     #print(expr)
     #print('')
@@ -333,7 +333,7 @@ def test_logical_expr_3d_1():
 
     # ...
     expr = dx(dx(u))
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     #print(expr.subs(det_M, det))
     #print('')
     # ...
@@ -355,7 +355,7 @@ def test_logical_expr_3d_2():
     J   = M.jacobian
 
     a = dot(grad(um),grad(vm))
-    e = LogicalExpr(a, mapping=M, dim=dim)
+    e = LogicalExpr(a, mapped_domain)
 
     assert e == dot(J.inv().T*grad(u), J.inv().T*grad(v))
 
@@ -377,7 +377,7 @@ def test_logical_expr_3d_3():
     J   = M.jacobian
 
     a = dot(curl(um), curl(vm))
-    e = LogicalExpr(a, mapping=M, dim=dim)
+    e = LogicalExpr(a, mapped_domain)
 
     assert e == dot(J/J.det()*curl(u), J/J.det()*curl(v))
 
@@ -398,7 +398,7 @@ def test_logical_expr_3d_4():
     J   = M.jacobian
 
     a = div(um)*div(vm)
-    e = LogicalExpr(a, mapping=M, dim=dim)
+    e = LogicalExpr(a, mapped_domain)
 
     assert e == J.det()**-2*div(u)*div(v)
 
@@ -421,7 +421,7 @@ def test_logical_expr_3d_5():
     int_ld = lambda expr: integral(domain , expr)
 
     am  = BilinearForm((um,vm), int_md(dot(curl(vm),curl(um))))
-    a   = LogicalExpr(am)
+    a   = LogicalExpr(am, mapped_domain)
 
     assert a == BilinearForm((u,v), int_ld(sqrt((J.T*J).det())*dot(J/J.det()*curl(u), J/J.det()*curl(v))))
 
@@ -446,35 +446,35 @@ def test_symbolic_expr_3d_1():
 
     # ...
     expr = u
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     #print(expr)
     # ...
 
     # ...
     expr = dx1(u)
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     #print(expr)
     # ...
 
     # ...
     expr = dx1(dx2(u))
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     #print(expr)
     # ...
 
     # ...
     expr = dx1(M[0])
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     #print(expr)
     # ...
 
     # ...
     expr = dx(u)
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     expr = expr.subs(det_M, det)
     #print(expr)
@@ -482,7 +482,7 @@ def test_symbolic_expr_3d_1():
 
     # ...
     expr = dx(Jacobian(M).det())
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     expr = expr.subs(det_M, det)
     #print(expand(expr))
@@ -490,7 +490,7 @@ def test_symbolic_expr_3d_1():
 
     # ...
     expr = dx(dx(u))
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     expr = expr.subs(det_M, det)
     #print(expand(expr))
@@ -498,7 +498,7 @@ def test_symbolic_expr_3d_1():
 
     # ...
     expr = dx(dx(dx(u)))
-    expr = LogicalExpr(expr, mapping=M, dim=dim)
+    expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     expr = expr.subs(det_M, det)
     #print(expand(expr))
@@ -513,17 +513,19 @@ def test_identity_mapping_2d_1():
 
     M = IdentityMapping('M', dim=dim)
 
+    domain = M(Domain('Omega', dim=dim))
+
     assert(not( M[0] == x1 ))
     assert(not( M[1] == x2 ))
 
-    assert(LogicalExpr(M[0], mapping=M, dim=dim) == x1)
-    assert(LogicalExpr(M[1], mapping=M, dim=dim) == x2)
+    assert(LogicalExpr(M[0], domain) == x1)
+    assert(LogicalExpr(M[1], domain) == x2)
 
-    assert(LogicalExpr(dx1(M[0]), mapping=M, dim=dim) == 1)
-    assert(LogicalExpr(dx1(M[1]), mapping=M, dim=dim) == 0)
+    assert(LogicalExpr(dx1(M[0]), domain) == 1)
+    assert(LogicalExpr(dx1(M[1]), domain) == 0)
 
-    assert(LogicalExpr(dx2(M[0]), mapping=M, dim=dim) == 0)
-    assert(LogicalExpr(dx2(M[1]), mapping=M, dim=dim) == 1)
+    assert(LogicalExpr(dx2(M[0]), domain) == 0)
+    assert(LogicalExpr(dx2(M[1]), domain) == 1)
 
     expected = Matrix([[1, 0], [0, 1]])
     assert( Jacobian(M) == expected )
@@ -543,8 +545,8 @@ def test_identity_mapping_2d_2():
     u = element_of(V, name='u')
 
     # ...
-    assert(LogicalExpr(dx(u), mapping=M, dim=dim) == dx1(u))
-    assert(LogicalExpr(dy(u), mapping=M, dim=dim) == dx2(u))
+    assert(LogicalExpr(dx(u), domain) == dx1(u))
+    assert(LogicalExpr(dy(u), domain) == dx2(u))
     # ...
 
 #==============================================================================
@@ -558,22 +560,24 @@ def test_polar_mapping_2d_1():
 
     M = PolarMapping('M', dim=dim)
 
+    domain = M(Domain('Omega', dim=dim))
+
     assert(not( M[0] == x1 ))
     assert(not( M[1] == x2 ))
 
-    assert(LogicalExpr(M[0], mapping=M, dim=dim) == c1 + (rmax*x1 + rmin*(-x1 + 1))*cos(x2))
-    assert(LogicalExpr(M[1], mapping=M, dim=dim) == c2 + (rmax*x1 + rmin*(-x1 + 1))*sin(x2))
+    assert(LogicalExpr(M[0], domain) == c1 + (rmax*x1 + rmin*(-x1 + 1))*cos(x2))
+    assert(LogicalExpr(M[1], domain) == c2 + (rmax*x1 + rmin*(-x1 + 1))*sin(x2))
 
-    assert(LogicalExpr(dx1(M[0]), mapping=M, dim=dim) == (rmax - rmin)*cos(x2))
-    assert(LogicalExpr(dx1(M[1]), mapping=M, dim=dim) == (rmax - rmin)*sin(x2))
+    assert(LogicalExpr(dx1(M[0]), domain) == (rmax - rmin)*cos(x2))
+    assert(LogicalExpr(dx1(M[1]), domain) == (rmax - rmin)*sin(x2))
 
     expected = -(rmax*x1 + rmin*(-x1 + 1))*sin(x2)
-    assert(expand(LogicalExpr(dx2(M[0]), mapping=M, dim=dim)) == expand(expected))
-    assert(LogicalExpr(dx2(M[1]), mapping=M, dim=dim) == (rmax*x1 + rmin*(-x1 + 1))*cos(x2))
+    assert(expand(LogicalExpr(dx2(M[0]), domain)) == expand(expected))
+    assert(LogicalExpr(dx2(M[1]), domain) == (rmax*x1 + rmin*(-x1 + 1))*cos(x2))
 
     expected = Matrix([[(rmax - rmin)*cos(x2), -(rmax*x1 + rmin*(-x1 + 1))*sin(x2)],
                        [(rmax - rmin)*sin(x2), (rmax*x1 + rmin*(-x1 + 1))*cos(x2)]])
-    assert(expand(LogicalExpr(Jacobian(M), mapping=M, dim=dim)) == expand(expected))
+    assert(expand(LogicalExpr(Jacobian(M), domain)) == expand(expected))
 
 #==============================================================================
 def test_target_mapping_2d_1():
@@ -586,17 +590,19 @@ def test_target_mapping_2d_1():
 
     M = TargetMapping('M', dim=dim)
 
+    domain = M(Domain('Omega', dim=dim))
+
     assert(not( M[0] == x1 ))
     assert(not( M[1] == x2 ))
 
-    assert(LogicalExpr(M[0], mapping=M, dim=dim) == -D*x1**2 + c1 + x1*(-k + 1)*cos(x2))
-    assert(LogicalExpr(M[1], mapping=M, dim=dim) == c2 + x1*(k + 1)*sin(x2))
+    assert(LogicalExpr(M[0], domain) == -D*x1**2 + c1 + x1*(-k + 1)*cos(x2))
+    assert(LogicalExpr(M[1], domain) == c2 + x1*(k + 1)*sin(x2))
 
-    assert(LogicalExpr(dx1(M[0]), mapping=M, dim=dim) == -2*D*x1 + (-k + 1)*cos(x2))
-    assert(LogicalExpr(dx1(M[1]), mapping=M, dim=dim) == (k + 1)*sin(x2))
+    assert(LogicalExpr(dx1(M[0]), domain) == -2*D*x1 + (-k + 1)*cos(x2))
+    assert(LogicalExpr(dx1(M[1]), domain) == (k + 1)*sin(x2))
 
-    assert(LogicalExpr(dx2(M[0]), mapping=M, dim=dim) == -x1*(-k + 1)*sin(x2))
-    assert(LogicalExpr(dx2(M[1]), mapping=M, dim=dim) == x1*(k + 1)*cos(x2))
+    assert(LogicalExpr(dx2(M[0]), domain) == -x1*(-k + 1)*sin(x2))
+    assert(LogicalExpr(dx2(M[1]), domain) == x1*(k + 1)*cos(x2))
 
     expected = Matrix([[-2*D*x1 + (-k + 1)*cos(x2),
                         -x1*(-k + 1)*sin(x2)],
@@ -616,23 +622,25 @@ def test_czarny_mapping_2d_1():
 
     M = CzarnyMapping('M', dim=dim)
 
+    domain = M(Domain('Omega', dim=dim))
+
     assert(not( M[0] == x1 ))
     assert(not( M[1] == x2 ))
 
     expected =  (-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 1)/eps
-    assert(LogicalExpr(M[0], mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(M[0], domain) == expected)
     expected =  b*x1*sin(x2)/(sqrt(-eps**2/4 + 1)*(-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 2)) + c2
-    assert(LogicalExpr(M[1], mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(M[1], domain) == expected)
 
     expected =  -cos(x2)/sqrt(eps*(eps + 2*x1*cos(x2)) + 1)
-    assert(LogicalExpr(dx1(M[0]), mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(dx1(M[0]), domain) == expected)
     expected =  b*(eps*x1*sin(x2)*cos(x2)/(sqrt(-eps**2/4 + 1)*sqrt(eps*(eps + 2*x1*cos(x2)) + 1)*(-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 2)**2) + sin(x2)/(sqrt(-eps**2/4 + 1)*(-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 2)))
-    assert((LogicalExpr(dx1(M[1]), mapping=M, dim=dim) - expected).expand() == 0)
+    assert((LogicalExpr(dx1(M[1]), domain) - expected).expand() == 0)
 
     expected =  x1*sin(x2)/sqrt(eps*(eps + 2*x1*cos(x2)) + 1)
-    assert(LogicalExpr(dx2(M[0]), mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(dx2(M[0]), domain) == expected)
     expected =  b*x1*(-eps*x1*sin(x2)**2/(sqrt(eps*(eps + 2*x1*cos(x2)) + 1)*(-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 2)**2) + cos(x2)/(-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 2))/sqrt(-eps**2/4 + 1)
-    assert((LogicalExpr(dx2(M[1]), mapping=M, dim=dim) - expected).expand() == 0)
+    assert((LogicalExpr(dx2(M[1]), domain) - expected).expand() == 0)
 
     expected =  Matrix([[-cos(x2)/sqrt(eps*(eps + 2*x1*cos(x2)) + 1),
                          x1*sin(x2)/sqrt(eps*(eps + 2*x1*cos(x2)) + 1)],
@@ -651,23 +659,25 @@ def test_collela_mapping_2d_1():
 
     M = CollelaMapping2D('M', dim)
 
+    domain = M(Domain('Omega', dim=dim))
+
     assert(not( M[0] == x1 ))
     assert(not( M[1] == x2 ))
 
     expected = 2.0*eps*sin(2.0*k1*pi*x1)*sin(2.0*k2*pi*x2) + 2.0*x1 - 1.0
-    assert(LogicalExpr(M[0], mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(M[0], domain) == expected)
     expected = 2.0*eps*sin(2.0*k1*pi*x1)*sin(2.0*k2*pi*x2) + 2.0*x2 - 1.0
-    assert(LogicalExpr(M[1], mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(M[1], domain) == expected)
 
     expected = 4.0*eps*k1*pi*sin(2.0*k2*pi*x2)*cos(2.0*k1*pi*x1) + 2.0
-    assert(LogicalExpr(dx1(M[0]), mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(dx1(M[0]), domain) == expected)
     expected = 4.0*eps*k1*pi*sin(2.0*k2*pi*x2)*cos(2.0*k1*pi*x1)
-    assert(LogicalExpr(dx1(M[1]), mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(dx1(M[1]), domain) == expected)
 
     expected = 4.0*eps*k2*pi*sin(2.0*k1*pi*x1)*cos(2.0*k2*pi*x2)
-    assert(LogicalExpr(dx2(M[0]), mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(dx2(M[0]), domain) == expected)
     expected = 4.0*eps*k2*pi*sin(2.0*k1*pi*x1)*cos(2.0*k2*pi*x2) + 2.0
-    assert(LogicalExpr(dx2(M[1]), mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(dx2(M[1]), domain) == expected)
 
     expected = Matrix([[4.0*eps*k1*pi*sin(2.0*k2*pi*x2)*cos(2.0*k1*pi*x1) + 2.0,
                         4.0*eps*k2*pi*sin(2.0*k1*pi*x1)*cos(2.0*k2*pi*x2)],
@@ -685,37 +695,39 @@ def test_torus_mapping_3d_1():
 
     M = TorusMapping('M', dim=dim)
 
+    domain = M(Domain('Omega', dim=dim))
+
     assert(not( M[0] == x1 ))
     assert(not( M[1] == x2 ))
     assert(not( M[2] == x3 ))
 
     expected = (R0 + x1*cos(x2))*cos(x3)
-    assert(LogicalExpr(M[0], mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(M[0], domain) == expected)
     expected = (R0 + x1*cos(x2))*sin(x3)
-    assert(LogicalExpr(M[1], mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(M[1], domain) == expected)
     expected = x1*sin(x2)
-    assert(LogicalExpr(M[2], mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(M[2], domain) == expected)
 
     expected = cos(x2)*cos(x3)
-    assert(LogicalExpr(dx1(M[0]), mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(dx1(M[0]), domain) == expected)
     expected = sin(x3)*cos(x2)
-    assert(LogicalExpr(dx1(M[1]), mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(dx1(M[1]), domain) == expected)
     expected = sin(x2)
-    assert(LogicalExpr(dx1(M[2]), mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(dx1(M[2]), domain) == expected)
 
     expected = -x1*sin(x2)*cos(x3)
-    assert(LogicalExpr(dx2(M[0]), mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(dx2(M[0]), domain) == expected)
     expected = -x1*sin(x2)*sin(x3)
-    assert(LogicalExpr(dx2(M[1]), mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(dx2(M[1]), domain) == expected)
     expected = x1*cos(x2)
-    assert(LogicalExpr(dx2(M[2]), mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(dx2(M[2]), domain) == expected)
 
     expected = -(R0 + x1*cos(x2))*sin(x3)
-    assert(expand(LogicalExpr(dx3(M[0]), mapping=M, dim=dim)) == expand(expected))
+    assert(expand(LogicalExpr(dx3(M[0]), domain)) == expand(expected))
     expected = (R0 + x1*cos(x2))*cos(x3)
-    assert(LogicalExpr(dx3(M[1]), mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(dx3(M[1]), domain) == expected)
     expected = 0
-    assert(LogicalExpr(dx3(M[2]), mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(dx3(M[2]), domain) == expected)
 
     expected = Matrix([[cos(x2)*cos(x3),-x1*sin(x2)*cos(x3),-(R0+x1*cos(x2))*sin(x3)],
                        [sin(x3)*cos(x2),-x1*sin(x2)*sin(x3),(R0+x1*cos(x2))*cos(x3)],
@@ -734,37 +746,39 @@ def test_twisted_target_mapping_3d_1():
 
     M = TwistedTargetMapping('M', dim=dim)
 
+    domain = M(Domain('Omega', dim=dim))
+
     assert(not( M[0] == x1 ))
     assert(not( M[1] == x2 ))
     assert(not( M[2] == x3 ))
 
     expected = -D*x1**2 + c1 + x1*(-k + 1)*cos(x2)
-    assert(LogicalExpr(M[0], mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(M[0], domain) == expected)
     expected = c2 + x1*(k + 1)*sin(x2)
-    assert(LogicalExpr(M[1], mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(M[1], domain) == expected)
     expected = c3 + x1**2*x3*sin(2*x2)
-    assert(LogicalExpr(M[2], mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(M[2], domain) == expected)
 
     expected = -2*D*x1 + (-k + 1)*cos(x2)
-    assert(LogicalExpr(dx1(M[0]), mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(dx1(M[0]), domain) == expected)
     expected = (k + 1)*sin(x2)
-    assert(LogicalExpr(dx1(M[1]), mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(dx1(M[1]), domain) == expected)
     expected = 2*x1*x3*sin(2*x2)
-    assert(LogicalExpr(dx1(M[2]), mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(dx1(M[2]), domain) == expected)
 
     expected = -x1*(-k + 1)*sin(x2)
-    assert(LogicalExpr(dx2(M[0]), mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(dx2(M[0]), domain) == expected)
     expected = x1*(k + 1)*cos(x2)
-    assert(LogicalExpr(dx2(M[1]), mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(dx2(M[1]), domain) == expected)
     expected = 2*x1**2*x3*cos(2*x2)
-    assert(LogicalExpr(dx2(M[2]), mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(dx2(M[2]), domain) == expected)
 
     expected = 0
-    assert(expand(LogicalExpr(dx3(M[0]), mapping=M, dim=dim)) == expand(expected))
+    assert(expand(LogicalExpr(dx3(M[0]), domain)) == expand(expected))
     expected = 0
-    assert(LogicalExpr(dx3(M[1]), mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(dx3(M[1]), domain) == expected)
     expected = x1**2*sin(2*x2)
-    assert(LogicalExpr(dx3(M[2]), mapping=M, dim=dim) == expected)
+    assert(LogicalExpr(dx3(M[2]), domain) == expected)
 
     expected = Matrix([[-2*D*x1 + (-k + 1)*cos(x2), -x1*(-k + 1)*sin(x2), 0],
                        [(k + 1)*sin(x2),             x1*(k + 1)*cos(x2), 0],

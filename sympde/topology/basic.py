@@ -4,7 +4,7 @@
 from collections import OrderedDict
 from collections import abc
 
-from sympy.core import Basic, Symbol
+from sympy.core import Basic, Symbol, Expr
 from sympy.core.containers import Tuple
 from sympy.tensor import IndexedBase
 

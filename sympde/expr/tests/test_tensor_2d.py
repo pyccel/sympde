@@ -41,7 +41,7 @@ def test_tensorize_2d_1():
 #    a = BilinearForm((u,v), dx(u)*v)
 #    a = BilinearForm((u,v), laplace(u)*laplace(v))
 
-    expr = TensorExpr(a)
+    expr = TensorExpr(a, domain=domain)
     print(expr)
     # ...
 
@@ -64,7 +64,7 @@ def test_tensorize_2d_2():
 #    a = BilinearForm((u,v), dot(u,v))
     a = BilinearForm((u,v), int_0(curl(u)*curl(v) + div(u)*div(v)))
 
-    expr = TensorExpr(a)
+    expr = TensorExpr(a, domain=domain)
     print(expr)
     # ...
 
@@ -94,7 +94,7 @@ def test_tensorize_2d_1_mapping():
 #    a = BilinearForm((u,v), dx(u)*v)
 #    a = BilinearForm((u,v), laplace(u)*laplace(v))
 
-    expr = TensorExpr(a, mapping=M)
+    expr = TensorExpr(a, domain=domain)
     print(expr)
     # ...
 
@@ -113,7 +113,7 @@ def test_tensorize_2d_2_mapping():
     int_0 = lambda expr: integral(domain , expr)
 
     a = BilinearForm((u,v), int_0(c * div(v) * div(u) + curl(v) * curl(u)))
-    expr = TensorExpr(a, mapping=M)
+    expr = TensorExpr(a, domain=domain)
     print(expr)
 
 #==============================================================================
@@ -131,7 +131,7 @@ def test_tensorize_2d_3():
     expr = integral(domain, dot(b, grad(v)) * dot(b, grad(u)))
     a = BilinearForm((u,v), expr)
 
-    print(TensorExpr(a))
+    print(TensorExpr(a, domain=domain))
     print('')
 
 
