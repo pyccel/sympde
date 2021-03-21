@@ -88,7 +88,7 @@ class DifferentialOperator(LinearOperator):
             for i in range(expr.shape[0]):
                 for j in range(expr.shape[1]):
                     newexpr[i,j] = cls(expr[i,j], evaluate=True)
-            return type(expr)(newexpr)            
+            return type(expr)(newexpr)
         elif isinstance(expr, (IndexedVectorFunction, DifferentialOperator)):
             return cls(expr, evaluate=False)
 

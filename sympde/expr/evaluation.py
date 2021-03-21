@@ -532,7 +532,7 @@ class TerminalExpr(CalculusFunction):
             if isinstance(domain, Interface):
                 mapping = expr.mapping
                 assert mapping.is_plus is not mapping.is_minus
-                if mapping.is_plus:
+                if mapping.is_plus and mapping.is_analytical:
                     domain      = domain.plus
                     axis        = domain.axis
                     ext         = domain.ext
@@ -552,7 +552,7 @@ class TerminalExpr(CalculusFunction):
             if isinstance(domain, Interface):
                 mapping = expr.mapping
                 assert mapping.is_plus is not mapping.is_minus
-                if mapping.is_plus:
+                if mapping.is_plus and mapping.is_analytical:
                     domain      = domain.plus
                     axis        = domain.axis
                     ext         = domain.ext
