@@ -390,10 +390,7 @@ class Domain(BasicDomain):
             connectivity[k] = v
 
         # ... boundary
-        boundaries_minus = self.boundary.complement(bnd_minus)
-        boundaries_plus  = other.boundary.complement(bnd_plus)
-
-        boundaries = Union(boundaries_minus, boundaries_plus)
+        boundaries = Union(self.boundary, other.boundary).complement(Union(bnd_minus, bnd_plus))
         boundaries = boundaries.as_tuple()
 
         # ... interiors
