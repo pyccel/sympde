@@ -193,13 +193,12 @@ class Mapping(BasicMapping):
                 obj._jac     = Jacobian(obj).subs(list(zip(args, exprs)))
                 obj._inv_jac = obj._jac.inv()
             elif obj._inv_jac is None:
-                inv          = ImmutableDenseMatrix(sympify(obj._jac)).inv()
-                obj._jac     = obj._jac.subs(subs)
-                obj._inv_jac = inv.subs(subs)
+                obj._jac     = ImmutableDenseMatrix(sympify(obj._jac)).subs(subs)
+                obj._inv_jac = obj._jac.inv()
+
             elif obj._jac is None:
-                jac          = ImmutableDenseMatrix(sympify(obj._inv_jac)).inv()
-                obj._jac     = jac.subs(subs)
-                obj._inv_jac = obj._inv_jac.subs(subs)
+                obj._inv_jac = ImmutableDenseMatrix(sympify(obj._inv_jac)).subs(subs)
+                obj._jac     = obj._inv_jac.inv()
             else:
                 obj._jac     = ImmutableDenseMatrix(sympify(obj._jac)).subs(subs)
                 obj._inv_jac = ImmutableDenseMatrix(sympify(obj._inv_jac)).subs(subs)

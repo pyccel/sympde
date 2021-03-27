@@ -20,7 +20,7 @@ from sympy.core.expr import AtomicExpr
 
 from sympde.core.basic import CalculusFunction
 from .basic            import BasicDomain, InteriorDomain, Boundary, Union, Connectivity
-from .basic            import Interval, Interface
+from .basic            import Interval, Interface, CornerBoundary, CornerInterface
 from .basic            import ProductDomain
 
 # TODO fix circular dependency between domain and mapping
@@ -122,6 +122,7 @@ class Domain(BasicDomain):
 
         obj = Basic.__new__(cls, name, interiors, boundaries, mapping)
         obj._connectivity   = connectivity
+        obj._corners        = None
         obj._dtype          = dtype
         obj._dim            = dim
         obj._logical_domain = logical_domain
@@ -163,6 +164,12 @@ class Domain(BasicDomain):
     def interfaces(self):
         return self.connectivity.interfaces
 
+    @property
+    def corners(self):
+        if self._corners is None:
+            self._corners = self.get_shared_corners()
+        return self._corners
+
     def __len__(self):
         if isinstance(self.interior, InteriorDomain):
             return 1
@@ -178,6 +185,10 @@ class Domain(BasicDomain):
         elif isinstance(self.interior, Union):
             return [i.name for i in self.interior.args]
 
+
+    def set_interfaces(self, *interfaces):
+        for i in interfaces:
+            self.connectivity[i.name] = i
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -361,27 +372,15 @@ class Domain(BasicDomain):
                               connectivity=connectivity)
         return mapping(obj)
 
-    def join(self, other, name, bnd_minus=None, bnd_plus=None):
+    def join(self, other, name, bnd_minus=None, bnd_plus=None, direction=None):
 
-        from sympde.topology.mapping import InterfaceMapping, MultiPatchMapping
+        from sympde.topology.mapping import MultiPatchMapping
         # ... connectivity
         connectivity = Connectivity()
-        # TODO be careful with '|' in psydac
+
         if bnd_minus and bnd_plus:
-
-            if bnd_minus.mapping and bnd_plus.mapping:
-                int_map            = InterfaceMapping(bnd_minus.mapping , bnd_plus.mapping)
-                a,b                = bnd_minus.logical_domain, bnd_plus.logical_domain
-                l_name             = '{l}|{r}'.format(l=a.domain.name, r=b.domain.name)
-                int_logical_domain = Interface(l_name, a,b)
-            else:
-                int_map            = None
-                int_logical_domain = None
-
-            name               = '{l}|{r}'.format(l=bnd_minus.domain.name, r=bnd_plus.domain.name)
-            connectivity[name] = Interface(name, bnd_minus, bnd_plus,
-                                           mapping=int_map,
-                                           logical_domain=int_logical_domain)
+            interface          = bnd_minus.join(bnd_plus, direction=direction)
+            connectivity[interface.name] = interface
 
         for k,v in self.connectivity.items():
             connectivity[k] = v
@@ -418,6 +417,57 @@ class Domain(BasicDomain):
                       connectivity=connectivity,
                       mapping=mapping,
                       logical_domain=logical_domain)
+
+    def get_shared_corners(self):
+
+        interfaces   = self.interfaces
+        interfaces = (interfaces,) if isinstance(interfaces, Interface) else interfaces
+
+        directions   = {i.plus:i.direction for i in interfaces}
+        directions.update({i.minus:i.direction for i in interfaces})
+
+        boundaries    = {i.minus:i.plus for i in interfaces}
+        boundaries.update({value:key for key, value in boundaries.items()})
+
+        not_treated_corners = set([tuple(set((b, n))) for b in boundaries for n in b.neighbours])
+        grouped_corners     = []
+        while not_treated_corners:
+            corner = not_treated_corners.pop()
+            grouped_corners.append([corner])
+            if not ( corner[0] in boundaries and corner[1] in boundaries):
+                while corner[1] in boundaries:
+                    bd1     = boundaries[corner[1]]
+                    bd2     = bd1.domain.get_boundary(axis=corner[0].axis, ext=corner[0].ext)
+                    corner = (bd1, bd2.rotate(directions[bd1]))
+                    grouped_corners[-1].append(corner)
+
+                corner = grouped_corners[-1][0]
+                while corner[0] in boundaries:
+                    bd2     = boundaries[corner[0]]
+                    bd1     = bd2.domain.get_boundary(axis=corner[1].axis, ext=corner[1].ext)
+                    corner = (bd1, bd2.rotate(directions[bd2]))
+                    grouped_corners[-1].insert(0, corner)
+            else:
+                while corner[1] in boundaries:
+                    bd1     = boundaries[corner[1]]
+                    bd2     = bd1.domain.get_boundary(axis=corner[0].axis, ext=corner[0].ext)
+                    corner = (bd1, bd2.rotate(directions[bd1]))
+                    if corner == grouped_corners[-1][0]:
+                        break
+                    grouped_corners[-1].append(corner)
+                else:
+                    corner = grouped_corners[-1][0]
+                    while corner[0] in boundaries:
+                        bd2     = boundaries[corner[0]]
+                        bd1     = bd2.domain.get_boundary(axis=corner[1].axis, ext=corner[1].ext)
+                        corner = (bd1, bd2.rotate(directions[bd2]))
+                        grouped_corners[-1].insert(0, corner)
+
+            grouped_corners[-1] = [tuple(set(c)) for c in grouped_corners[-1]]
+            not_treated_corners = not_treated_corners.difference(grouped_corners[-1])
+
+        grouped_corners = Union(*[CornerInterface(*[CornerBoundary(*e) for e in cs]) for cs in grouped_corners])
+        return grouped_corners
 
 #==============================================================================
 class PeriodicDomain(BasicDomain):
@@ -473,8 +523,18 @@ class NCubeInterior(InteriorDomain):
 
         obj = InteriorDomain.__new__(cls, name, dim=dim, dtype=dtype,
                     mapping=mapping, logical_domain=logical_domain)
+
+        boundaries = []
+        i = 1
+        for axis in range(dim):
+            for ext in [-1, 1]:
+                bnd_name = r'\Gamma_{}'.format(i)
+                Gamma = Boundary(bnd_name, obj, axis=axis, ext=ext)
+                boundaries += [Gamma]
+                i += 1
         obj._min_coords = min_coords
         obj._max_coords = max_coords
+        obj._boundary   = Union(*boundaries)
         return obj
 
     @property
@@ -485,6 +545,44 @@ class NCubeInterior(InteriorDomain):
     def max_coords(self):
         return self._max_coords
 
+    @property
+    def boundary(self):
+        return self._boundary
+
+    def get_boundary(self, axis=None, ext=None):
+        """return boundary by (axis, ext)."""
+        # ...
+        assert(not( ext  is None ))
+
+        if axis is None:
+            assert(self.dim == 1)
+            axis = 0
+
+        if axis == 0:
+            if ext == -1:
+                name = r'\Gamma_1'
+
+            if ext == 1:
+                name = r'\Gamma_2'
+
+        if axis == 1:
+            if ext == -1:
+                name = r'\Gamma_3'
+
+            if ext == 1:
+                name = r'\Gamma_4'
+
+        if axis == 2:
+            if ext == -1:
+                name = r'\Gamma_5'
+
+            if ext == 1:
+                name = r'\Gamma_6'
+
+        if isinstance(self.boundary, Union):
+            x = [i for i in self.boundary.args if i.name == name]
+            if x:return x[0]
+        raise ValueError('> could not find boundary {}'.format(name))
 #==============================================================================
 # Ncube's properties (in addition to Domain's properties):
 #   . min_coords (default value is tuple of zeros)
@@ -555,20 +653,10 @@ class NCube(Domain):
         else:
             interior = ProductDomain(*intervals, name=name)
 
-        interior = NCubeInterior(interior, dtype=dtype, min_coords=tuple(min_coords), max_coords=tuple(max_coords))
-
-        boundaries = []
-        i = 1
-        for axis in range(dim):
-            for ext in [-1, 1]:
-                bnd_name = r'\Gamma_{}'.format(i)
-                Gamma = Boundary(bnd_name, interior, axis=axis, ext=ext)
-                boundaries += [Gamma]
-                i += 1
+        interior = NCubeInterior(interior, dim=dim, dtype=dtype, min_coords=tuple(min_coords), max_coords=tuple(max_coords))
 
         # Create instance of given type
-        obj = super().__new__(cls, name, interiors=[interior],
-                boundaries=boundaries)
+        obj = super().__new__(cls, name, interiors=[interior], boundaries=interior.boundary)
 
         # Store attributes in object
         obj._coordinates = tuple(coordinates)

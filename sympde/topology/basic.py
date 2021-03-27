@@ -309,6 +309,44 @@ class Boundary(BasicDomain):
     def dim(self):
         return self.domain.dim
 
+    @property
+    def neighbours(self):
+        boundaries = [a for a in self.domain.boundary if a.axis !=self.axis]
+        return Union(*boundaries)
+
+    def rotate(self, *directions):
+        assert len(directions) == self.dim-1
+
+        if self.dim == 2:
+            if directions[0] == 1:
+                return self
+            elif directions[0] == -1:
+                return self.domain.get_boundary(axis=self.axis, ext=-self.ext)
+
+            else:
+                raise TypeError('must be int')
+
+        raise NotImplementedError('only 2d case is available')
+
+    def join(self, boundary, direction=None):
+        from sympde.topology.mapping import InterfaceMapping
+        # TODO be careful with '|' in psydac
+        if self.mapping and boundary.mapping:
+            int_map            = InterfaceMapping(self.mapping , boundary.mapping)
+            a,b                = self.logical_domain, boundary.logical_domain
+            l_name             = '{l}|{r}'.format(l=a.domain.name, r=b.domain.name)
+            int_logical_domain = Interface(l_name, a,b, direction=direction)
+        else:
+            int_map            = None
+            int_logical_domain = None
+
+        name               = '{l}|{r}'.format(l=self.domain.name, r=boundary.domain.name)
+        interface = Interface(name, self, boundary,
+                              mapping=int_map,
+                              logical_domain=int_logical_domain, direction=direction)
+
+        return interface
+
     def _sympystr(self, printer):
         sstr = printer.doprint
         return '{}_{}'.format(sstr(self.domain),sstr(self.name))
@@ -333,6 +371,54 @@ class Boundary(BasicDomain):
         return OrderedDict(sorted(d.items()))
 
 #==============================================================================
+class CornerBoundary(BasicDomain):
+    """
+    Represents an undefined corner over a domain.
+
+    """
+    def __new__(cls, *boundaries):
+        assert all(isinstance(i, Boundary) for i in boundaries)
+        assert all(i.domain==boundaries[0].domain for i in boundaries)
+        obj = Basic.__new__(cls, *boundaries)
+        obj._domain = boundaries[0].domain
+        return obj
+
+    @property
+    def boundaries(self):
+        return self._args
+
+    @property
+    def domain(self):
+        return self._domain
+
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        boundaries = ', '.join(sstr(b) for b in self.boundaries)
+        return 'CornerBoundary({})'.format(boundaries)
+
+#==============================================================================
+class CornerInterface(BasicDomain):
+    """
+    Represents a corner over multiple domains.
+
+    """
+    def __new__(cls, *corners):
+        assert all(isinstance(i, CornerBoundary) for i in corners)
+        return Basic.__new__(cls, *corners)
+
+    @property
+    def corners(self):
+        return self._args
+
+    def __len__(self):
+        return len(self.corners)
+
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        corners = ', '.join(sstr(b) for b in self.corners)
+        return 'CornerInterface({})'.format(corners)
+
+#==============================================================================
 class Interface(BasicDomain):
     """
     Represents an interface between two subdomains through two boundaries.
@@ -340,7 +426,7 @@ class Interface(BasicDomain):
     Examples
 
     """
-    def __new__(cls, name, bnd_minus, bnd_plus, mapping=None, logical_domain=None):
+    def __new__(cls, name, bnd_minus, bnd_plus, mapping=None, logical_domain=None, direction=None):
 
         if not isinstance(name     , str    ): raise TypeError(name)
         if not isinstance(bnd_minus, Boundary): raise TypeError(bnd_minus)
@@ -354,7 +440,7 @@ class Interface(BasicDomain):
                mapping is not None and logical_domain is not None
 
         assert bnd_minus.axis == bnd_plus.axis
-        obj = Basic.__new__(cls, name, bnd_minus, bnd_plus)
+        obj = Basic.__new__(cls, name, bnd_minus, bnd_plus, direction)
         obj._mapping        = mapping
         obj._logical_domain = logical_domain
         return obj
@@ -374,6 +460,10 @@ class Interface(BasicDomain):
     @property
     def plus(self):
         return self.args[2]
+
+    @property
+    def direction(self):
+        return self.args[3]
 
     @property
     def axis(self):
@@ -404,7 +494,6 @@ class Interface(BasicDomain):
 
         return '{}'.format(sstr(self.name))
 
-
 #==============================================================================
 class Edge(object):
     def __init__(self, name):
@@ -416,7 +505,6 @@ class Edge(object):
 
     def __lt__(self, other):
         return self.name.__lt__(other.name)
-
 
 #==============================================================================
 class Connectivity(abc.Mapping):
