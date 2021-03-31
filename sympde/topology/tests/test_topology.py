@@ -8,7 +8,7 @@ from sympde.topology import InteriorDomain, Union
 from sympde.topology import Boundary, NormalVector, TangentVector
 from sympde.topology import Connectivity, Edge
 from sympde.topology import Domain, ElementDomain
-from sympde.topology import Area
+from sympde.topology import Area, Mapping
 from sympde.topology import Interface
 from sympde.topology import Line, Square
 
@@ -53,10 +53,18 @@ def test_topology_1():
 
     connectivity['I'] = Interface('I', bnd_A_1, bnd_B_2)
 
+    mapping        = Mapping('M', dim=2)
+    logical_domain = Domain('D', dim=2)
+
+    interiors  = [A, B]
+    boundaries = [bnd_A_2, bnd_A_3, bnd_B_1, bnd_B_3]
+
     Omega = Domain('Omega',
-                   interiors=[A, B],
-                   boundaries=[bnd_A_2, bnd_A_3, bnd_B_1, bnd_B_3],
-                   connectivity=connectivity)
+                   interiors=interiors,
+                   boundaries=boundaries,
+                   connectivity=connectivity, 
+                   mapping=mapping, 
+                   logical_domain=logical_domain)
 
     interfaces = Omega.interfaces
     assert(isinstance(interfaces, Interface))

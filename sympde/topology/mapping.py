@@ -509,6 +509,7 @@ class MultiPatchMapping(Mapping):
 class MappedDomain(BasicDomain):
     """."""
 
+    @cacheit
     def __new__(cls, mapping, logical_domain):
         assert(isinstance(mapping, Mapping))
         assert(isinstance(logical_domain, BasicDomain))
@@ -519,10 +520,12 @@ class MappedDomain(BasicDomain):
             logical_domain = logical_domain)
             boundaries     = logical_domain.boundary
             interiors      = logical_domain.interior
+
             if isinstance(interiors, Union):
                 kwargs['interiors'] = Union(*[mapping(a) for a in interiors.args])
             else:
                 kwargs['interiors'] = mapping(interiors)
+
             if isinstance(boundaries, Union):
                 kwargs['boundaries'] = [mapping(a) for a in boundaries.args]
             elif boundaries:
@@ -538,7 +541,9 @@ class MappedDomain(BasicDomain):
                 for e in interfaces:
                     connectivity[e.name] = Interface(e.name, mapping(e.minus), mapping(e.plus))
                 kwargs['connectivity'] = Connectivity(connectivity)
-            return Domain(logical_domain.name, **kwargs)
+
+            name = '{}({})'.format(str(mapping.name), str(logical_domain.name))
+            return Domain(name, **kwargs)
 
         elif isinstance(logical_domain, NCubeInterior):
             name  = logical_domain.name
@@ -546,11 +551,13 @@ class MappedDomain(BasicDomain):
             dtype = logical_domain.dtype
             min_coords = logical_domain.min_coords
             max_coords = logical_domain.max_coords
+            name = '{}({})'.format(str(mapping.name), str(name))
             return NCubeInterior(name, dim, dtype, min_coords, max_coords, mapping, logical_domain)
         elif isinstance(logical_domain, InteriorDomain):
             name  = logical_domain.name
             dim   = logical_domain.dim
             dtype = logical_domain.dtype
+            name = '{}({})'.format(str(mapping.name), str(name))
             return InteriorDomain(name, dim, dtype, mapping, logical_domain)
         elif isinstance(logical_domain, Boundary):
             name   = logical_domain.name

@@ -75,7 +75,6 @@ class Domain(BasicDomain):
             interiors = Tuple(*interiors)
         # ...
 
-        # ...
         if not( boundaries is None ):
             if not isinstance( boundaries, (*iterable_types, Boundary)):
                 raise TypeError('> Expecting an iterable or a Boundary')
@@ -91,9 +90,7 @@ class Domain(BasicDomain):
             boundaries = []
 
         boundaries = Tuple(*boundaries)
-        # ...
 
-        # ...
         if not( connectivity is None ):
             if not isinstance( connectivity, Connectivity ):
                 raise TypeError('> Expecting a Connectivity')
@@ -192,56 +189,40 @@ class Domain(BasicDomain):
 
     def _sympystr(self, printer):
         sstr = printer.doprint
-        if self.mapping:
-            return '{}({})'.format(sstr(self.mapping), sstr(self.name))
-        else:
-            return '{}'.format(sstr(self.name))
+        return '{}'.format(sstr(self.name))
 
-    def get_boundary(self, name=None, axis=None, ext=None):
+    def get_boundary(self, axis, ext):
         """return boundary by name or (axis, ext)."""
         # ...
-        if name is None:
-            assert(not( ext  is None ))
 
-            if axis is None:
-                assert(self.interior.dim == 1)
-                axis = 0
-
-            if axis == 0:
-                if ext == -1:
-                    name = r'\Gamma_1'
-
-                if ext == 1:
-                    name = r'\Gamma_2'
-
-            if axis == 1:
-                if ext == -1:
-                    name = r'\Gamma_3'
-
-                if ext == 1:
-                    name = r'\Gamma_4'
-
-            if axis == 2:
-                if ext == -1:
-                    name = r'\Gamma_5'
-
-                if ext == 1:
-                    name = r'\Gamma_6'
+        if axis is None:
+            assert(self.interior.dim == 1)
+            axis = 0
         # ...
 
         if isinstance(self.boundary, Union):
-            x = [i for i in self.boundary.args if i.name == name]
+            x = [i for i in self.boundary.args if i.ext == ext and i.axis == axis]
             if len(x) == 0:
-                raise ValueError('> could not find boundary {}'.format(name))
+                raise ValueError('> could not find boundary with axis {} and ext {}'.format(axis, ext))
 
             return x[0]
 
         elif isinstance(self.boundary, Boundary):
-            if self.boundary.name == name:
+            if self.boundary.axis == axis and self.boundary.ext == ext:
                 return self.boundary
-
             else:
                 return None
+
+    def get_interface(self, domain1, domain2):
+        interfaces = []
+        for i in self.interface:
+            if i.plus in [domain1, domain2]:
+                if i.minus in [domain1, domain2]:
+                    interfaces.append(i)
+        if interfaces:
+            return Union(*interfaces)
+
+        raise ValueError('> could not find the interface of {} and {}'.format(domain1, domain2))
 
     def get_interior(self, name):
         """return interior by name."""
@@ -366,11 +347,17 @@ class Domain(BasicDomain):
             connectivity[edge] = Interface(edge, bnds[0], bnds[1])
         # ...
 
+        logical_domain = Domain(domain_name, dim=dim, 
+                                interiors=interior, 
+                                boundaries=boundary,
+                                connectivity=connectivity)
+
         obj = Domain.__new__(cls, domain_name,
                               interiors=interior,
                               boundaries=boundary,
-                              connectivity=connectivity)
-        return mapping(obj)
+                              connectivity=connectivity,
+                              mapping = mapping, logical_domain=logical_domain)
+        return obj
 
     def join(self, other, name, bnd_minus=None, bnd_plus=None, direction=None):
 
@@ -524,16 +511,20 @@ class NCubeInterior(InteriorDomain):
         obj = InteriorDomain.__new__(cls, name, dim=dim, dtype=dtype,
                     mapping=mapping, logical_domain=logical_domain)
 
+        obj._min_coords = min_coords
+        obj._max_coords = max_coords
+
         boundaries = []
         i = 1
         for axis in range(dim):
             for ext in [-1, 1]:
                 bnd_name = r'\Gamma_{}'.format(i)
-                Gamma = Boundary(bnd_name, obj, axis=axis, ext=ext)
+                bd_logical_domain = logical_domain
+                if bd_logical_domain:
+                    bd_logical_domain = bd_logical_domain.get_boundary(axis=axis, ext=ext)
+                Gamma = Boundary(bnd_name, obj, axis=axis, ext=ext, mapping=mapping, logical_domain=bd_logical_domain)
                 boundaries += [Gamma]
                 i += 1
-        obj._min_coords = min_coords
-        obj._max_coords = max_coords
         obj._boundary   = Union(*boundaries)
         return obj
 
@@ -558,29 +549,8 @@ class NCubeInterior(InteriorDomain):
             assert(self.dim == 1)
             axis = 0
 
-        if axis == 0:
-            if ext == -1:
-                name = r'\Gamma_1'
-
-            if ext == 1:
-                name = r'\Gamma_2'
-
-        if axis == 1:
-            if ext == -1:
-                name = r'\Gamma_3'
-
-            if ext == 1:
-                name = r'\Gamma_4'
-
-        if axis == 2:
-            if ext == -1:
-                name = r'\Gamma_5'
-
-            if ext == 1:
-                name = r'\Gamma_6'
-
         if isinstance(self.boundary, Union):
-            x = [i for i in self.boundary.args if i.name == name]
+            x = [i for i in self.boundary.args if i.ext == ext and i.axis==axis]
             if x:return x[0]
         raise ValueError('> could not find boundary {}'.format(name))
 #==============================================================================

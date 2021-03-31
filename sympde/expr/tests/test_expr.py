@@ -578,14 +578,16 @@ def test_terminal_expr_linear_2d_4():
     print('')
     # ...
 #==============================================================================
-def test_terminal_expr_linear_2d_5(boundary=[r'\Gamma_1', r'\Gamma_3']):
+def test_terminal_expr_linear_2d_5():
 
     # ... abstract model
     domain = Square()
 
     V      = ScalarFunctionSpace('V', domain)
 
-    B_neumann = [domain.get_boundary(i) for i in boundary]
+    B_neumann = [domain.get_boundary(axis=0, ext=-1), 
+                domain.get_boundary(axis=1, ext=-1)]
+
     if len(B_neumann) == 1:
         B_neumann = B_neumann[0]
 

@@ -100,15 +100,11 @@ class InteriorDomain(BasicDomain):
 
     def _sympystr(self, printer):
         sstr = printer.doprint
-        if self.mapping:
-            return '{}({})'.format(sstr(self.mapping.name), sstr(self.name))
-        else:
-            return '{}'.format(sstr(self.name))
+        return '{}'.format(sstr(self.name))
 
     def todict(self):
         name   = str(self.name)
         d = {'name': name}
-
         return OrderedDict(sorted(d.items()))
 
 
@@ -344,7 +340,6 @@ class Boundary(BasicDomain):
         interface = Interface(name, self, boundary,
                               mapping=int_map,
                               logical_domain=int_logical_domain, direction=direction)
-
         return interface
 
     def _sympystr(self, printer):
@@ -379,6 +374,8 @@ class CornerBoundary(BasicDomain):
     def __new__(cls, *boundaries):
         assert all(isinstance(i, Boundary) for i in boundaries)
         assert all(i.domain==boundaries[0].domain for i in boundaries)
+
+        boundaries = sorted(boundaries, key=lambda x:x.axis)
         obj = Basic.__new__(cls, *boundaries)
         obj._domain = boundaries[0].domain
         return obj
@@ -390,6 +387,21 @@ class CornerBoundary(BasicDomain):
     @property
     def domain(self):
         return self._domain
+
+    @property
+    def coordinates(self):
+        coords = [None]*self.domain.dim
+        for b in self.boundaries:
+            coords[b.axis] = (b.ext + 1)//2
+        return tuple(coords)
+
+    @property
+    def logical_domain(self):
+        boundaries = [a.logical_domain for a in self.boundaries]
+        if boundaries[0]:
+            return CornerBoundary(*boundaries)
+        else:
+            return None
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -409,6 +421,14 @@ class CornerInterface(BasicDomain):
     @property
     def corners(self):
         return self._args
+
+    @property
+    def logical_domain(self):
+        corners = [a.logical_domain for a in self.corners]
+        if corners[0]:
+            return CornerInterface(*corners)
+        else:
+            return None
 
     def __len__(self):
         return len(self.corners)
@@ -479,19 +499,6 @@ class Interface(BasicDomain):
 
     def _sympystr(self, printer):
         sstr = printer.doprint
-
-#        name  = self.name
-#        minus = self.minus
-#        plus  = self.plus
-#        minus = '{domain}.{bnd}'.format( domain = sstr(minus.domain),
-#                                         bnd    = sstr(minus) )
-#        plus = '{domain}.{bnd}'.format( domain = sstr(plus.domain),
-#                                         bnd    = sstr(plus) )
-#        pattern = 'Interface( {name}; {minus}, {plus} )'
-#        return pattern.format( name  = sstr(self.name),
-#                               minus = minus,
-#                               plus = plus )
-
         return '{}'.format(sstr(self.name))
 
 #==============================================================================
