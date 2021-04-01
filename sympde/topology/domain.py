@@ -418,6 +418,7 @@ class Domain(BasicDomain):
 
         not_treated_corners = set([tuple(set((b, n))) for b in boundaries for n in b.neighbours])
         grouped_corners     = []
+
         while not_treated_corners:
             corner = not_treated_corners.pop()
             grouped_corners.append([corner])
@@ -432,8 +433,9 @@ class Domain(BasicDomain):
                 while corner[0] in boundaries:
                     bd2     = boundaries[corner[0]]
                     bd1     = bd2.domain.get_boundary(axis=corner[1].axis, ext=corner[1].ext)
-                    corner = (bd1, bd2.rotate(directions[bd2]))
+                    corner = (bd1.rotate(directions[bd2]), bd2)
                     grouped_corners[-1].insert(0, corner)
+
             else:
                 while corner[1] in boundaries:
                     bd1     = boundaries[corner[1]]
@@ -447,12 +449,13 @@ class Domain(BasicDomain):
                     while corner[0] in boundaries:
                         bd2     = boundaries[corner[0]]
                         bd1     = bd2.domain.get_boundary(axis=corner[1].axis, ext=corner[1].ext)
-                        corner = (bd1, bd2.rotate(directions[bd2]))
+                        corner = (bd1.rotate(directions[bd2]), bd2)
                         grouped_corners[-1].insert(0, corner)
 
-            grouped_corners[-1] = [tuple(set(c)) for c in grouped_corners[-1]]
+            grouped_corners[-1] = tuple(tuple(set(c)) for c in grouped_corners[-1])
             not_treated_corners = not_treated_corners.difference(grouped_corners[-1])
 
+        grouped_corners = set(tuple(grouped_corners))
         grouped_corners = Union(*[CornerInterface(*[CornerBoundary(*e) for e in cs]) for cs in grouped_corners])
         return grouped_corners
 

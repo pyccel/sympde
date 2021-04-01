@@ -416,6 +416,7 @@ class CornerInterface(BasicDomain):
     """
     def __new__(cls, *corners):
         assert all(isinstance(i, CornerBoundary) for i in corners)
+        corners = sorted(corners, key=lambda x:x.domain.name)
         return Basic.__new__(cls, *corners)
 
     @property
