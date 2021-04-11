@@ -210,8 +210,8 @@ class Domain(BasicDomain):
         elif isinstance(self.boundary, Boundary):
             if self.boundary.axis == axis and self.boundary.ext == ext:
                 return self.boundary
-            else:
-                return None
+
+        raise ValueError('> could not find boundary with axis {} and ext {}'.format(axis, ext))
 
     def get_interface(self, domain1, domain2):
         interfaces = []
@@ -600,6 +600,9 @@ class NCube(Domain):
         #   cls = globals()[dtype['type']]
         #   domain = cls(name, **dtype['parameters'])
         #
+        min_coords = tuple(float(i) for i in min_coords)
+        max_coords = tuple(float(i) for i in max_coords)
+
         if dim == 1:
             cls = Line
             dtype = {'type': 'Line',
