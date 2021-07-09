@@ -8,7 +8,7 @@ import numpy as np
 from sympy import Abs, S, cacheit
 from sympy import Indexed, Matrix, ImmutableDenseMatrix
 from sympy import expand
-from sympy.core import Basic
+from sympy.core import Basic, Symbol
 from sympy.core import Add, Mul, Pow
 from sympy.core.expr import AtomicExpr
 from sympy.core.containers import Tuple
@@ -342,7 +342,9 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                     if interface.plus in bnd_expressions:
                         newexpr += bnd_expressions[interface.plus]
 
-                    bnd_expressions[interface.plus] = newexpr
+                    newcoords = [Symbol(c.name+"_plus") for c in interface.plus.coordinates]
+                    subs      = list(zip(newcoords, interface.plus.coordinates))
+                    bnd_expressions[interface.plus] = newexpr.subs(subs)
 
                 # ...
                 # TODO must call InterfaceExpression afterward
@@ -541,6 +543,9 @@ class TerminalExpr(CalculusFunction):
                     if isinstance(domain, (NCube, NCubeInterior)):
                         bounds      = domain.min_coords if ext == -1 else domain.max_coords
                         J = J.subs(coordinates[axis], bounds[axis])
+                    newcoords = [Symbol(c.name+"_plus") for c in coordinates]
+                    subs      = list(zip(coordinates, newcoords))
+                    J = J.subs(subs)
             return J
 
         elif isinstance(expr, JacobianInverseSymbol):
@@ -561,6 +566,9 @@ class TerminalExpr(CalculusFunction):
                     if isinstance(domain, (NCube, NCubeInterior)):
                         bounds      = domain.min_coords if ext == -1 else domain.max_coords
                         J = J.subs(coordinates[axis], bounds[axis])
+                    newcoords = [Symbol(c.name+"_plus") for c in coordinates]
+                    subs      = list(zip(coordinates, newcoords))
+                    J = J.subs(subs)
             return J
 
         elif isinstance(expr, SymbolicDeterminant):
