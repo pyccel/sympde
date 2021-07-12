@@ -348,7 +348,6 @@ class JacobianSymbol(MatrixSymbolicExpr):
         assert isinstance(mapping, Mapping)
         if axis is not None:
             assert isinstance(axis, (int, Integer))
-
         obj = MatrixSymbolicExpr.__new__(cls, mapping)
         obj._axis = axis
         return obj
@@ -373,6 +372,14 @@ class JacobianSymbol(MatrixSymbolicExpr):
     def __hash__(self):
         return hash(self._hashable_content())
 
+    def _eval_subs(self, old, new):
+        if isinstance(new, Mapping):
+            if self.axis is not None:
+                obj = JacobianSymbol(new, self.axis)
+            else:
+                obj = JacobianSymbol(new)
+            return obj
+        return self
     def _sympystr(self, printer):
         sstr = printer.doprint
         if self.axis:
@@ -441,7 +448,6 @@ class InterfaceMapping(Mapping):
         obj  = Mapping.__new__(cls, name, ldim=minus.ldim, pdim=minus.pdim)
         obj._minus = minus
         obj._plus  = plus
-        
         return obj
 
     @property
@@ -1125,12 +1131,9 @@ class LogicalExpr(CalculusFunction):
                 det = sqrt((J.T*J).det())
             else:
                 axis = domain.axis
-                if isinstance(mapping, InterfaceMapping):
-                    J    = JacobianSymbol(mapping.minus, axis=axis)
-                else:
-                    J    = JacobianSymbol(mapping, axis=axis)
-
+                J    = JacobianSymbol(mapping, axis=axis)
                 det  = sqrt((J.T*J).det())
+
             body   = cls.eval(expr.expr, domain)*det
             domain  = domain.logical_domain
             return Integral(body, domain)

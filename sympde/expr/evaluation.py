@@ -81,7 +81,7 @@ __all__ = (
     'Stiffness',
     'TensorExpr',
     'TerminalExpr',
-    '_get_trials_tests_flattened',
+    '_get_trials_tests',
     '_replace_atomic_expr',
     '_split_expr_over_interface',
     '_split_test_function',
@@ -112,10 +112,9 @@ def _unpack_functions(ls):
 
 
 #==============================================================================
-def _get_trials_tests_flattened(expr):
+def _get_trials_tests(expr, flatten):
     """
-    Get all scalar trial/test functions in the given expression, with vector
-    functions decomposed into their scalar components.
+    Get all scalar trial/test functions in the given expression.
 
     Parameters
     ----------
@@ -131,18 +130,22 @@ def _get_trials_tests_flattened(expr):
     tests : tuple
         All scalar test functions in the given expression, with vector
         functions decomposed into their scalar components.
+
+    flatten: Boolean
+        Decompose the vector trial/test functions into their scalar components.
+
     """
 
     if not isinstance(expr, (BasicForm, BasicExpr)):
         raise TypeError("Expression must be of type BasicForm or BasicExpr, got '{}' instead".format(type(expr)))
 
     if expr.is_bilinear:
-        trials = _unpack_functions(expr.variables[0])
-        tests  = _unpack_functions(expr.variables[1])
+        trials = _unpack_functions(expr.variables[0]) if flatten else expr.variables[0]
+        tests  = _unpack_functions(expr.variables[1]) if flatten else expr.variables[1]
 
     elif expr.is_linear:
         trials = None
-        tests  = _unpack_functions(expr.variables)
+        tests  = _unpack_functions(expr.variables) if flatten else expr.variables
 
     elif expr.is_functional:
         trials = None
@@ -325,8 +328,7 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                 if not is_zero(newexpr):
                     if interface.minus in bnd_expressions:
                         newexpr += bnd_expressions[interface.minus]
-
-                    bnd_expressions[interface.minus] = newexpr
+                    bnd_expressions[interface.minus] = newexpr.subs(interface, interface.minus)
 
                 # ...
                 newexpr = _nullify(expr, u_plus, trials)
@@ -341,10 +343,7 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                 if not is_zero(newexpr):
                     if interface.plus in bnd_expressions:
                         newexpr += bnd_expressions[interface.plus]
-
-                    newcoords = [Symbol(c.name+"_plus") for c in interface.plus.coordinates]
-                    subs      = list(zip(newcoords, interface.plus.coordinates))
-                    bnd_expressions[interface.plus] = newexpr.subs(subs)
+                    bnd_expressions[interface.plus] = newexpr.subs(interface, interface.plus)
 
                 # ...
                 # TODO must call InterfaceExpression afterward
@@ -353,7 +352,7 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                 mapping = newexpr.atoms(InterfaceMapping)
                 if mapping:
                     mapping = list(mapping)[0]
-                    newexpr = newexpr.subs(mapping, mapping.plus)
+                    newexpr = newexpr.subs(mapping, mapping.minus)
 
                 if not is_zero(newexpr):
                     if isinstance(u, IndexedVectorFunction):
@@ -371,7 +370,7 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                 mapping = newexpr.atoms(InterfaceMapping)
                 if mapping:
                     mapping = list(mapping)[0]
-                    newexpr = newexpr.subs(mapping, mapping.plus)
+                    newexpr = newexpr.subs(mapping, mapping.minus)
                 if not is_zero(newexpr):
                     if isinstance(u, IndexedVectorFunction):
                         u_plus = plus(u.base)
@@ -530,8 +529,8 @@ class TerminalExpr(CalculusFunction):
                     J = J.col_del(axis)
                 if expr.mapping.ldim == 1:
                     J = J.eye(1)
-
             if isinstance(domain, Interface):
+
                 mapping = expr.mapping
                 assert mapping.is_plus is not mapping.is_minus
                 if mapping.is_plus and mapping.is_analytical:
@@ -542,10 +541,11 @@ class TerminalExpr(CalculusFunction):
                     coordinates = domain.coordinates
                     if isinstance(domain, (NCube, NCubeInterior)):
                         bounds      = domain.min_coords if ext == -1 else domain.max_coords
-                        J = J.subs(coordinates[axis], bounds[axis])
+                        J           = J.subs(coordinates[axis], bounds[axis])
                     newcoords = [Symbol(c.name+"_plus") for c in coordinates]
                     subs      = list(zip(coordinates, newcoords))
                     J = J.subs(subs)
+
             return J
 
         elif isinstance(expr, JacobianInverseSymbol):
@@ -569,6 +569,7 @@ class TerminalExpr(CalculusFunction):
                     newcoords = [Symbol(c.name+"_plus") for c in coordinates]
                     subs      = list(zip(coordinates, newcoords))
                     J = J.subs(subs)
+
             return J
 
         elif isinstance(expr, SymbolicDeterminant):
@@ -609,12 +610,12 @@ class TerminalExpr(CalculusFunction):
                 domains  = (domains,)
             # ...
             d_expr = OrderedDict()
+            d_int  = OrderedDict()
             for d in domains:
                 d_expr[d] = S.Zero
             # ...
             if isinstance(expr.expr, Add):
                 for a in expr.expr.args:
-                    newexpr = cls.eval(a, domain=domain)
 
                     # ...
                     try:
@@ -625,10 +626,9 @@ class TerminalExpr(CalculusFunction):
                         pass
                     # ...
                     for d in domains:
-                        d_expr[d] += newexpr
+                        d_expr[d] += a
                     # ...
             else:
-                newexpr = cls.eval(expr.expr, domain=domain)
                 # ...
                 if isinstance(expr, Functional):
                     domains = expr.domain
@@ -645,14 +645,35 @@ class TerminalExpr(CalculusFunction):
 
                 # ...
                 for d in domains:
-                    d_expr[d] = newexpr
+                    d_expr[d] = expr.expr
                 # ...
 
-            trials, tests = _get_trials_tests_flattened(expr)
+            trials, tests = _get_trials_tests(expr, flatten=False)
+            # ... treating interfaces
+            keys = [k for k in d_expr.keys() if isinstance(k, Interface)]
+            for interface in keys:
+                newexpr = d_expr.pop(interface)
+                ls_int, d_bnd = _split_expr_over_interface(newexpr, interface,
+                                                       tests=tests,
+                                                       trials=trials)
+                # ...
+                for a in ls_int:
+                    if (a.target, a.trial, a.test) in d_int:
+                        d_int[a.target, a.trial, a.test] += a.expr
+                    else:
+                        d_int[a.target, a.trial, a.test] = a.expr
+ 
+                for k, v in d_bnd.items():
+                    if k in d_expr.keys():
+                        d_expr[k] += v
 
+                    else:
+                        d_expr[k] = v
+            # ...
+            trials, tests = _get_trials_tests(expr, flatten=True)
             d_new = OrderedDict()
-            for domain, newexpr in d_expr.items():
-
+            for domain, a in d_expr.items():
+                newexpr = cls.eval(a, domain=domain)
                 if newexpr != 0:
                     # TODO ARA make sure thre is no problem with psydac
                     #      we should always take the interior of a domain
@@ -660,60 +681,32 @@ class TerminalExpr(CalculusFunction):
                         domain = domain.interior
                     d_new[domain] = _to_matrix_form(newexpr, trials=trials, tests=tests, domain=domain)
 
-            # ...
-            ls = []
-            d_all = OrderedDict()
-            # ... treating interfaces
-            keys = [k for k in d_new.keys() if isinstance(k, Interface)]
-            for interface in keys:
-                newexpr = d_new[interface]
-                ls_int, d_bnd = _split_expr_over_interface(newexpr, interface,
-                                                       tests=tests,
-                                                       trials=trials)
-                # ...
-
-                ls += ls_int
-                # ...
-                for k, v in d_bnd.items():
-                    if k in d_all.keys():
-                        d_all[k] += v
-
-                    else:
-                        d_all[k] = v
-            # ...
 
             # ... treating subdomains
             keys = [k for k in d_new.keys() if isinstance(k, Union)]
             for domain in keys:
-
-                newexpr = d_new[domain]
+                newexpr = d_new.pop(domain)
                 d       = OrderedDict((interior, newexpr) for interior in domain.as_tuple())
                             # ...
                 for k, v in d.items():
-                    if k in d_all.keys():
-                        d_all[k] += v
+                    if k in d_new.keys():
+                        d_new[k] += v
 
                     else:
-                        d_all[k] = v
+                        d_new[k] = v
 
-            d = OrderedDict()
-
-            for k, v in d_new.items():
-                if not isinstance( k, (Interface, Union)):
-                    d[k] = d_new[k]
-
-            for k, v in d_all.items():
-                if k in d.keys():
-                    d[k] += v
-                else:
-                    d[k] = v
-
-            d_new = d
-            # ...
+            ls = []
+            for key in d_int:
+                domain, u,v = key
+                expr    = d_int[domain, u, v]
+                newexpr = cls.eval(expr, domain=domain)
+                if newexpr != 0:
+                    newexpr = _to_matrix_form(newexpr, trials=trials, tests=tests, domain=domain)
+                    ls += [InterfaceExpression(domain, u, v, newexpr)]
+ 
             for domain, newexpr in d_new.items():
                 if isinstance(domain, Boundary):
                     ls += [BoundaryExpression(domain, newexpr)]
-
                 elif isinstance(domain, BasicDomain):
                     ls += [DomainExpression(domain, newexpr)]
 
