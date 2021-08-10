@@ -23,7 +23,7 @@ from sympde.core.utils import random_string
 
 from sympde.calculus import jump, avg, minus, plus
 from sympde.calculus import Jump
-from sympde.calculus.core import _generic_ops, _diff_ops
+from sympde.calculus.core import _generic_ops, _diff_ops, Trace as mat_Trace
 from sympde.calculus.matrices import SymbolicDeterminant, Inverse, Transpose
 from sympde.calculus.matrices import MatSymbolicPow, MatrixElement, SymbolicTrace
 
@@ -680,6 +680,11 @@ class TerminalExpr(CalculusFunction):
 
             args = [cls.eval(i, dim=dim, logical=logical) for i in expr.args]
             return new(*args)
+
+        elif isinstance(expr, mat_Trace):
+            arg = cls.eval(expr.arg, dim=dim, logical=logical)
+            return Add(*[arg[i,i] for i in range(arg.shape[0])])
+
         elif isinstance(expr, _generic_ops):
             # if i = Dot(...) then type(i) is Grad
             op = type(expr)

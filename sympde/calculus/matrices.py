@@ -105,6 +105,12 @@ class Transpose(MatrixSymbolicExpr):
         assert len(args) == 1
         if isinstance(args[0], Transpose):
             return args[0].arg
+        elif isinstance(args[0], Add):
+            return Add(*[Transpose(a) for a in args[0].args])
+        elif isinstance(args[0], Mul):
+            coeffs = [a for a in args[0].args if a.is_commutative]
+            args   = [a for a in args[0].args if not a.is_commutative]
+            return Mul(*coeffs)*Expr.__new__(cls, Mul(*args))
         return Expr.__new__(cls, *args)
 
     @property
@@ -113,7 +119,7 @@ class Transpose(MatrixSymbolicExpr):
 
     def _sympystr(self, printer):
         sstr = printer.doprint
-        return '{}.T'.format(sstr(self.arg))
+        return '({}).T'.format(sstr(self.arg))
 
 class MatSymbolicMul(MatrixSymbolicExpr, Mul):
 

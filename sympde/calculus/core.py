@@ -126,6 +126,7 @@ __all__ = (
     'DiffOperator',
     'Div',
     'Dot',
+    'Trace',
     'Grad',
     'Hessian',
     'Inner',
@@ -665,6 +666,35 @@ class Convect(BasicOperator):
 
         return c*obj
 
+#==============================================================================
+class Trace(BasicOperator):
+    """
+    Represents a generic Trace operator, without knowledge of the dimension.
+    """
+
+    is_scalar      = True
+    is_commutative = True
+    is_real        = False
+    is_positive    = False
+    def __new__(cls, arg, **options):
+
+        if isinstance(arg, Add):
+            return Add(*[Trace(a) for a in arg.args])
+
+        if isinstance(arg, Mul):
+            args = [i for i in arg.args if not i.is_commutative]
+            c    = [i for i in arg.args if not i in args]
+            arg  = Mul(*args)
+            c    = Mul(*c)
+            obj  =  c*Basic.__new__(cls, arg)
+        else:
+            obj = Basic.__new__(cls, arg)
+
+        return obj
+
+    @property
+    def arg(self):
+        return self._args[0]
 #==============================================================================
 # TODO add grad(a*A) = dot(grad(a),A) + a*grad(A) where A = (a1, a2, ...)
 class Grad(DiffOperator):
