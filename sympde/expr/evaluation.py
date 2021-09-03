@@ -711,7 +711,7 @@ class TerminalExpr(CalculusFunction):
                 if newexpr != 0:
                     newexpr = _to_matrix_form(newexpr, trials=trials, tests=tests, domain=domain)
                     ls += [InterfaceExpression(domain, u, v, newexpr)]
- 
+
             for domain, newexpr in d_new.items():
                 if isinstance(domain, Boundary):
                     ls += [BoundaryExpression(domain, newexpr)]
