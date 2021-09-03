@@ -123,6 +123,7 @@ class Domain(BasicDomain):
         obj._dtype          = dtype
         obj._dim            = dim
         obj._logical_domain = logical_domain
+        obj._corners        = None
         return obj
 
     @property
@@ -281,7 +282,8 @@ class Domain(BasicDomain):
     def from_file( cls, filename ):
 
         # ... check extension of the file
-        basename, ext = os.path.splitext(filename)
+        _, ext = os.path.splitext(filename)
+
         if not(ext == '.h5'):
             raise ValueError('> Only h5 files are supported')
         # ...
@@ -347,8 +349,8 @@ class Domain(BasicDomain):
             connectivity[edge] = Interface(edge, bnds[0], bnds[1])
         # ...
 
-        logical_domain = Domain(domain_name, dim=dim, 
-                                interiors=interior, 
+        logical_domain = Domain(domain_name, dim=dim,
+                                interiors=interior,
                                 boundaries=boundary,
                                 connectivity=connectivity)
 

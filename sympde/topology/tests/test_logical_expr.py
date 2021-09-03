@@ -80,8 +80,6 @@ def test_symbolic_expr_1d_1():
     M = Mapping('M', dim=dim)
     domain = M(Domain('Omega', dim=dim))
 
-    alpha = Constant('alpha')
-
     V = ScalarFunctionSpace('V', domain, kind='h1')
 
     u = element_of(V, name='u')
@@ -533,10 +531,7 @@ def test_identity_mapping_2d_1():
 
 #==============================================================================
 def test_identity_mapping_2d_2():
-    dim = 2
-
-    x1, x2 = symbols('x1, x2')
-
+    dim    = 2
     M      = IdentityMapping('F', dim=dim)
     domain = M(Domain('Omega', dim=dim))
 

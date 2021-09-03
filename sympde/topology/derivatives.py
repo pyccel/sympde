@@ -307,7 +307,6 @@ def get_index_derivatives(expr):
 
     ops = [a for a in preorder_traversal(expr) if isinstance(a, _partial_derivatives)]
     for i in ops:
-        op = type(i)
 
         if isinstance(i, dx):
             d['x'] += 1

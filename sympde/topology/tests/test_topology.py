@@ -62,8 +62,8 @@ def test_topology_1():
     Omega = Domain('Omega',
                    interiors=interiors,
                    boundaries=boundaries,
-                   connectivity=connectivity, 
-                   mapping=mapping, 
+                   connectivity=connectivity,
+                   mapping=mapping,
                    logical_domain=logical_domain)
 
     interfaces = Omega.interfaces

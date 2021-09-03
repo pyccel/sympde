@@ -669,7 +669,7 @@ class TerminalExpr(CalculusFunction):
                         d_int[a.target, a.trial, a.test] += a.expr
                     else:
                         d_int[a.target, a.trial, a.test] = a.expr
- 
+
                 for k, v in d_bnd.items():
                     if k in d_expr.keys():
                         d_expr[k] += v
@@ -1110,9 +1110,7 @@ class TensorExpr(CalculusFunction):
 
         elif isinstance(expr, DomainExpression):
             # TODO to be removed
-            target = expr.target
-            expr   = expr.expr
-            return cls.eval(expr, d_atoms=d_atoms, domain=domain)
+            return cls.eval(expr.expr, d_atoms=d_atoms, domain=domain)
 
         elif isinstance(expr, BilinearForm):
             trials = expr.variables[0]
@@ -1131,7 +1129,6 @@ class TensorExpr(CalculusFunction):
 
             # ...
             if domain is not None and domain.mapping is not None:
-                dim           = expr.ldim
                 terminal_expr = LogicalExpr(terminal_expr.expr, domain)
                 variables     = [LogicalExpr(e, domain) for e in variables ]
                 trials        = [LogicalExpr(e, domain) for e in trials ]
