@@ -23,8 +23,6 @@ def test_tensorize_2d_1():
 
     domain = Domain('Omega', dim=2)
 
-    _,y = domain.coordinates
-
     mu    = Constant('mu'   , is_real=True)
 
     V = ScalarFunctionSpace('V', domain)
@@ -47,11 +45,6 @@ def test_tensorize_2d_1():
 def test_tensorize_2d_2():
 
     domain = Domain('Omega', dim=2)
-    B1 = Boundary(r'\Gamma_1', domain)
-
-    x,y = domain.coordinates
-
-    kappa = Constant('kappa', is_real=True)
 
     V = VectorFunctionSpace('V', domain)
     u, v = elements_of(V, names='u, v')
@@ -73,12 +66,8 @@ def test_tensorize_2d_1_mapping():
     M = Mapping('Map', dim=DIM)
 
     domain = M(Domain('Omega', dim=DIM))
-    B1     = Boundary(r'\Gamma_1', domain)
 
-    x,y = domain.coordinates
-
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
+#    mu    = Constant('mu'   , is_real=True)
 
     V = ScalarFunctionSpace('V', domain)
     u, v = elements_of(V, names='u, v')

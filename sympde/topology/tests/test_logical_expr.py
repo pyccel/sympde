@@ -207,12 +207,9 @@ def test_logical_expr_2d_1():
 
 #==============================================================================
 def test_symbolic_expr_2d_1():
-    dim = 2
-
-    M = Mapping('M', dim=dim)
+    dim    = 2
+    M      = Mapping('M', dim=dim)
     domain = M(Domain('Omega', dim=dim))
-
-    alpha = Constant('alpha')
 
     V = ScalarFunctionSpace('V', domain, kind='h1')
 

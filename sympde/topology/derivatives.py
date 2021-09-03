@@ -345,7 +345,6 @@ def get_index_logical_derivatives(expr):
 
     ops = [a for a in preorder_traversal(expr) if isinstance(a, _logical_partial_derivatives)]
     for i in ops:
-        op = type(i)
 
         if isinstance(i, dx1):
             d['x1'] += 1

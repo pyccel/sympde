@@ -348,7 +348,6 @@ class ProductSpace(BasicFunctionSpace):
         # ...
 
         # ... all spaces must have the same domain
-        domain = spaces[0].domain
 
         #TODO uncomment
         #for space in spaces:

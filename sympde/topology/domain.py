@@ -123,7 +123,6 @@ class Domain(BasicDomain):
         obj._dtype          = dtype
         obj._dim            = dim
         obj._logical_domain = logical_domain
-        obj._corners        = None
         return obj
 
     @property
@@ -164,9 +163,11 @@ class Domain(BasicDomain):
 
     @property
     def corners(self):
-        if self._corners is None:
-            self._corners = self.get_shared_corners()
-        return self._corners
+        corners = getattr(self,'_corners', None)
+        if corners is None:
+            corners = self.get_shared_corners()
+        self._corners = corners
+        return corners
 
     def __len__(self):
         if isinstance(self.interior, InteriorDomain):
