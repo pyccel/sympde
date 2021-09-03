@@ -147,7 +147,7 @@ class Mapping(BasicMapping):
         obj._name                = name
         obj._ldim                = ldim
         obj._pdim                = pdim
-        obj._coordinates         = _coordinates
+        obj._coordinates         = tuple(_coordinates)
         obj._jacobian            = kwargs.pop('jacobian', JacobianSymbol(obj))
         obj._is_minus            = None
         obj._is_plus             = None
@@ -319,7 +319,7 @@ class Mapping(BasicMapping):
         return obj
 
     def _hashable_content(self):
-        args = (self.name, self.ldim, self.pdim, tuple(self.coordinates), self.logical_coordinates,
+        args = (self.name, self.ldim, self.pdim, self._coordinates, self._logical_coordinates,
                 self._expressions, self._constants, self._is_plus, self._is_minus)
         return tuple([a for a in args if a is not None])
 
