@@ -340,6 +340,9 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                     mapping = list(mapping)[0]
                     newexpr = newexpr.subs(mapping, mapping.plus)
 
+                for nn in newexpr.atoms(NormalVector):
+                    newexpr = newexpr.subs(nn, -nn)
+
                 if not is_zero(newexpr):
                     if interface.plus in bnd_expressions:
                         newexpr += bnd_expressions[interface.plus]
@@ -352,7 +355,10 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                 mapping = newexpr.atoms(InterfaceMapping)
                 if mapping:
                     mapping = list(mapping)[0]
-                    newexpr = newexpr.subs(mapping, mapping.minus)
+                    for det in newexpr.atoms(SymbolicDeterminant):
+                        if det.atoms(InterfaceMapping):
+                            newdet = det.subs(mapping, mapping.minus)
+                            newexpr = newexpr.subs(det, newdet)
 
                 if not is_zero(newexpr):
                     if isinstance(u, IndexedVectorFunction):
@@ -363,6 +369,7 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                         newexpr += int_expressions[u_minus, v_plus].expr
 
                     int_expressions[u_minus, v_plus] = InterfaceExpression(interface, u_minus, v_plus, newexpr)
+
                 # ...
                 # TODO must call InterfaceExpression afterward
                 newexpr = _nullify(expr, u_plus, trials)
@@ -370,7 +377,10 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                 mapping = newexpr.atoms(InterfaceMapping)
                 if mapping:
                     mapping = list(mapping)[0]
-                    newexpr = newexpr.subs(mapping, mapping.minus)
+                    for det in newexpr.atoms(SymbolicDeterminant):
+                        if det.atoms(InterfaceMapping):
+                            newdet = det.subs(mapping, mapping.minus)
+                            newexpr = newexpr.subs(det, newdet)
                 if not is_zero(newexpr):
                     if isinstance(u, IndexedVectorFunction):
                         u_plus = plus(u.base)
@@ -380,7 +390,6 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                         newexpr += int_expressions[u_plus, v_minus].expr
 
                     int_expressions[u_plus, v_minus] = InterfaceExpression(interface, u_plus, v_minus, newexpr)
-                # ...
 
     elif is_linear:
         for v in d_tests.keys():
@@ -497,8 +506,7 @@ class TerminalExpr(CalculusFunction):
     def eval(cls, expr, domain):
         """."""
 
-        dim     = domain.dim
-
+        dim = domain.dim
         if isinstance(expr, Add):
             args = [cls.eval(a, domain=domain) for a in expr.args]
             o = args[0]
@@ -530,7 +538,6 @@ class TerminalExpr(CalculusFunction):
                 if expr.mapping.ldim == 1:
                     J = J.eye(1)
             if isinstance(domain, Interface):
-
                 mapping = expr.mapping
                 assert mapping.is_plus is not mapping.is_minus
                 if mapping.is_plus and mapping.is_analytical:
@@ -699,6 +706,7 @@ class TerminalExpr(CalculusFunction):
             for key in d_int:
                 domain, u,v = key
                 expr    = d_int[domain, u, v]
+
                 newexpr = cls.eval(expr, domain=domain)
                 if newexpr != 0:
                     newexpr = _to_matrix_form(newexpr, trials=trials, tests=tests, domain=domain)

@@ -314,7 +314,14 @@ class Mapping(BasicMapping):
         obj._metric              = self._metric
         obj._metric_det          = self._metric_det
         obj.__callable_map       = self._callable_map
+        obj._is_plus             = self._is_plus
+        obj._is_minus            = self._is_minus
         return obj
+
+    def _hashable_content(self):
+        args = (self.name, self.ldim, self.pdim, tuple(self.coordinates), self.logical_coordinates,
+                self._expressions, self._constants, self._is_plus, self._is_minus)
+        return tuple([a for a in args if a is not None])
 
     def get_callable_mapping( self ):
 
