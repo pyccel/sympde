@@ -24,10 +24,11 @@ from sympde.core.basic        import CalculusFunction
 from sympde.core.basic        import _coeffs_registery
 from sympde.calculus.core     import PlusInterfaceOperator, MinusInterfaceOperator
 from sympde.calculus.core     import grad, div, curl, laplace #, hessian
-from sympde.calculus.core     import dot, inner, outer, _diff_ops
+from sympde.calculus.core     import dot, inner, outer, _diff_ops, Trace as mat_Trace
 from sympde.calculus.core     import has, DiffOperator
-from sympde.calculus.matrices import MatrixSymbolicExpr, MatrixElement, SymbolicTrace, Inverse, Transpose
-from sympde.calculus.matrices import SymbolicDeterminant
+
+from sympde.calculus.matrices import MatrixSymbolicExpr, MatrixElement, SymbolicTrace, Inverse
+from sympde.calculus.matrices import SymbolicDeterminant, Transpose
 
 from .basic       import BasicDomain, Union, InteriorDomain
 from .basic       import Boundary, Connectivity, Interface
@@ -633,7 +634,7 @@ class PullBack(Expr):
             expr = (J/J.det()) * el
 
         elif isinstance(kind, L2SpaceType):
-            expr = el / J.det()
+            expr = el
 
 #        elif isinstance(kind, UndefinedSpaceType):
 #            raise ValueError('kind must be specified in order to perform the pull-back transformation')
@@ -910,6 +911,10 @@ class LogicalExpr(CalculusFunction):
         elif isinstance(expr, (VectorFunction, ScalarFunction)):
             return PullBack(expr, mapping).expr
 
+        elif isinstance(expr, Transpose):
+            arg = cls(expr.arg, mapping=mapping, dim=dim)
+            return Transpose(arg)
+            
         elif isinstance(expr, grad):
             arg = expr.args[0]
             if isinstance(mapping, InterfaceMapping):
@@ -972,6 +977,7 @@ class LogicalExpr(CalculusFunction):
             if isinstance(arg, (ScalarFunction, VectorFunction)):
                 arg = PullBack(arg, mapping)
             else:
+
                 arg = cls.eval(arg, domain)
 
             if isinstance(arg, PullBack) and isinstance(arg.kind, HdivSpaceType):
@@ -980,6 +986,8 @@ class LogicalExpr(CalculusFunction):
                 if isinstance(expr.args[0], (MinusInterfaceOperator, PlusInterfaceOperator)):
                     arg = type(expr.args[0])(arg)
                 return (1/J.det())*div(arg)
+            elif isinstance(arg, PullBack):
+                return mat_Trace(mapping.jacobian.inv().T*grad(arg.test))
             else:
                 raise NotImplementedError('TODO')
 
