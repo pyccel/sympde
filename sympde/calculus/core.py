@@ -107,7 +107,6 @@ from sympy.core.compatibility import is_sequence
 from sympde.core.basic        import CalculusFunction
 from sympde.core.basic        import _coeffs_registery
 from sympde.topology.space    import ScalarFunction, VectorFunction
-from sympde.topology.space    import _is_sympde_atom
 from sympde.topology.domain   import NormalVector, MinusNormalVector, PlusNormalVector
 from sympde.topology.datatype import H1SpaceType, HcurlSpaceType
 from sympde.topology.datatype import HdivSpaceType, UndefinedSpaceType
@@ -179,7 +178,6 @@ def has(obj, types):
 
 @cacheit
 def is_zero(x):
-
     if isinstance(x, (Matrix, ImmutableDenseMatrix)):
         return all( i==0 for i in x[:])
     else:
@@ -855,9 +853,14 @@ class Curl(DiffOperator):
             r = None
 
         if r is None:
-            return Basic.__new__(cls, expr, **options)
-        else:
-            return r
+            r = Basic.__new__(cls, expr, **options)
+
+        if r and _is_sympde_atom(expr):
+            r.is_scalar      = expr.space.domain.dim == 2
+            r.is_commutative = expr.space.domain.dim == 2
+
+        return r
+
 
     @classmethod
     def eval(cls, expr):
@@ -895,7 +898,7 @@ class Curl(DiffOperator):
                                                 H1SpaceType)):
                 msg = '> Wrong space kind, given {}'.format(expr.space.kind)
                 raise ArgumentTypeError(msg)
-        # ...
+
         return cls(expr, evaluate=False)
 
 #==============================================================================
@@ -1730,7 +1733,24 @@ class MinusInterfaceOperator(BasicOperator):
         elif isinstance(expr, NormalVector):
             return MinusNormalVector('n')
 
+        elif expr.is_zero:
+            return S.Zero
+
+        elif isinstance(expr, (Matrix, ImmutableDenseMatrix)):
+            newexpr = Matrix.zeros(*expr.shape)
+            for i in range(expr.shape[0]):
+                for j in range(expr.shape[1]):
+                    newexpr[i,j] = cls(expr[i,j])
+            return type(expr)(newexpr)
+
         return cls(expr, evaluate=False)
+
+    @property
+    def space(self):
+        return self.args[0].space
+
+    def __getitem__(self, key):
+        return MinusInterfaceOperator(self.args[0][key])
 
 #==============================================================================
 class PlusInterfaceOperator(BasicOperator):
@@ -1808,7 +1828,24 @@ class PlusInterfaceOperator(BasicOperator):
         elif isinstance(expr, NormalVector):
             return PlusNormalVector('n')
 
+        elif expr.is_zero:
+            return S.Zero
+
+        elif isinstance(expr, (Matrix, ImmutableDenseMatrix)):
+            newexpr = Matrix.zeros(*expr.shape)
+            for i in range(expr.shape[0]):
+                for j in range(expr.shape[1]):
+                    newexpr[i,j] = cls(expr[i,j])
+            return type(expr)(newexpr)
+
         return cls(expr, evaluate=False)
+
+    @property
+    def space(self):
+        return self.args[0].space
+
+    def __getitem__(self, key):
+        return PlusInterfaceOperator(self.args[0][key])
 
 #==============================================================================
 
@@ -1845,6 +1882,8 @@ plus  = PlusInterfaceOperator
 
 _is_op_test_function = lambda op: (isinstance(op, (Grad, Curl, Div)) and
                                    isinstance(op._args[0], (ScalarFunction, VectorFunction)))
+
+_is_sympde_atom   = lambda a: isinstance(a, (ScalarFunction, VectorFunction, minus, plus))
 
 def add_basicop(expr):
     return BasicOperatorAdd(*expr.args)

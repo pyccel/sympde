@@ -284,7 +284,7 @@ class Derham:
             self._V3  = spaces[3]
 
 
-        self._spaces = spaces
+        self._spaces = tuple(spaces)
         self._domain = domain
         self._shape  = shape
 
@@ -318,17 +318,6 @@ class Derham:
     def V3(self):
         return self._V3
 
-    @property
-    def spaces(self):
-        if self.shape == 1:
-            return (self._V0, self._V1)
-
-        elif self.shape == 2:
-            return (self._V0, self._V1, self._V2)
-
-        elif self.shape == 3:
-            return (self._V0, self._V1, self._V2, self._V3)
-
 #==============================================================================
 # TODO must check that all spaces have the same domain
 #     for the moment this class is not used
@@ -359,14 +348,11 @@ class ProductSpace(BasicFunctionSpace):
         # ...
 
         # ... all spaces must have the same domain
-        domain = spaces[0].domain
 
         #TODO uncomment
         #for space in spaces:
         #    if not(space.domain is domain):
         #        raise ValueError('> all spaces must have the same domain')
-
-        ldim = domain.dim
         # ...
 
         # ...
@@ -589,12 +575,8 @@ class VectorFunction(Symbol, IndexedBase):
         if not(len(args) == 1):
             raise ValueError('expecting exactly one argument')
 
-        args = list(args)
-        for i in range(len(args)):
-            if isinstance(args[i], int):
-                args[i] = Integer(args[i])
-
-        obj = IndexedVectorFunction(self, *args)
+        args = [Integer(a) if isinstance(a, int) else a for a in args]
+        obj  = IndexedVectorFunction(self, *args)
         return obj
 
     def duplicate(self, name):
@@ -715,7 +697,6 @@ class Trace(AtomicExpr):
 trace_0 = lambda x, B: Trace(x, B, order=0)
 trace_1 = lambda x, B: Trace(x, B, order=1)
 
-_is_sympde_atom   = lambda a: isinstance(a, (ScalarFunction, VectorFunction))
 _is_test_function = lambda a: isinstance(a, (ScalarFunction, VectorFunction))
 
 #==============================================================================

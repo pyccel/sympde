@@ -8,7 +8,7 @@ import numpy as np
 from sympy import Abs, S, cacheit
 from sympy import Indexed, Matrix, ImmutableDenseMatrix
 from sympy import expand
-from sympy.core import Basic
+from sympy.core import Basic, Symbol
 from sympy.core import Add, Mul, Pow
 from sympy.core.expr import AtomicExpr
 from sympy.core.containers import Tuple
@@ -22,15 +22,15 @@ from sympde.core.algebra import (Dot_1d,
 from sympde.core.utils import random_string
 
 from sympde.calculus import jump, avg, minus, plus
-from sympde.calculus import Jump
-from sympde.calculus.core import _generic_ops, _diff_ops, Trace as mat_Trace
+from sympde.calculus import Jump, is_zero
+from sympde.calculus.core import _generic_ops, _diff_ops,  Trace as mat_Trace
 from sympde.calculus.matrices import SymbolicDeterminant, Inverse, Transpose
 from sympde.calculus.matrices import MatSymbolicPow, MatrixElement, SymbolicTrace
 
 from sympde.topology.basic   import BasicDomain, Union, Interval
 from sympde.topology.basic   import Boundary, Interface
 from sympde.topology.basic   import InteriorDomain
-from sympde.topology.domain  import NormalVector, TangentVector
+from sympde.topology.domain  import NormalVector, TangentVector, NCube, NCubeInterior
 from sympde.topology.mapping import JacobianSymbol, InterfaceMapping, MultiPatchMapping, JacobianInverseSymbol
 from sympde.topology.mapping import LogicalExpr, PullBack
 
@@ -81,7 +81,7 @@ __all__ = (
     'Stiffness',
     'TensorExpr',
     'TerminalExpr',
-    '_get_trials_tests_flattened',
+    '_get_trials_tests',
     '_replace_atomic_expr',
     '_split_expr_over_interface',
     '_split_test_function',
@@ -110,11 +110,11 @@ def _unpack_functions(ls):
 
     return tuple(funcs)
 
+
 #==============================================================================
-def _get_trials_tests_flattened(expr):
+def _get_trials_tests(expr, flatten):
     """
-    Get all scalar trial/test functions in the given expression, with vector
-    functions decomposed into their scalar components.
+    Get all scalar trial/test functions in the given expression.
 
     Parameters
     ----------
@@ -130,18 +130,22 @@ def _get_trials_tests_flattened(expr):
     tests : tuple
         All scalar test functions in the given expression, with vector
         functions decomposed into their scalar components.
+
+    flatten: Boolean
+        Decompose the vector trial/test functions into their scalar components.
+
     """
 
     if not isinstance(expr, (BasicForm, BasicExpr)):
         raise TypeError("Expression must be of type BasicForm or BasicExpr, got '{}' instead".format(type(expr)))
 
     if expr.is_bilinear:
-        trials = _unpack_functions(expr.variables[0])
-        tests  = _unpack_functions(expr.variables[1])
+        trials = _unpack_functions(expr.variables[0]) if flatten else expr.variables[0]
+        tests  = _unpack_functions(expr.variables[1]) if flatten else expr.variables[1]
 
     elif expr.is_linear:
         trials = None
-        tests  = _unpack_functions(expr.variables)
+        tests  = _unpack_functions(expr.variables) if flatten else expr.variables
 
     elif expr.is_functional:
         trials = None
@@ -153,7 +157,7 @@ def _get_trials_tests_flattened(expr):
     return trials, tests
 
 #==============================================================================
-def _to_matrix_form(expr, *, trials=None, tests=None):
+def _to_matrix_form(expr, *, trials=None, tests=None, domain=None):
     """
     Create a matrix representation of input expression, based on trial and
     test functions. We have three options:
@@ -180,29 +184,44 @@ def _to_matrix_form(expr, *, trials=None, tests=None):
     tests : iterable
         List of all scalar test functions (after unpacking vector functions).
 
+    domain : Domain
+        domain of expr
+
     Returns
     -------
     M : sympy.matrices.immutable.ImmutableDenseMatrix
         Matrix representation of input expression.
 
     """
+
+    if not isinstance(domain, Interface):
+        atoms     = expr.atoms(minus, plus)
+        new_atoms = [e.args[0] for e in atoms]
+        subs      = tuple(zip(atoms, new_atoms))
+        expr      = expr.subs(subs)
+        mapping   = expr.atoms(InterfaceMapping)
+        if mapping:
+            mapping = list(mapping)[0]
+            expr    = expr.subs(mapping, mapping.minus)
+
     # Bilinear form
     if trials and tests:
-        M = Matrix.zeros(len(tests), len(trials))
+        M = [[None for j in trials] for i in tests]
         for i, test in enumerate(tests):
             subs_i = {v:0 for v in tests if v != test}
             expr_i = expr.subs(subs_i)
             for j, trial in enumerate(trials):
                 subs_j  = {u:0 for u in trials if u != trial}
-                M[i, j] = expr_i.subs(subs_j)
+                M[i][j] = expr_i.subs(subs_j)
+        M = Matrix(M)
 
     # Linear form
     elif tests:
-        M = Matrix.zeros(len(tests), 1)
+        M = [[None] for i in tests]
         for i, test in enumerate(tests):
             subs_i = {v:0 for v in tests if v != test}
-            M[i, 0] = expr.subs(subs_i)
-
+            M[i][0] = expr.subs(subs_i)
+        M = Matrix(M)
     # Functional
     else:
         M = [[expr]]
@@ -235,7 +254,7 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
     if tests  is None: tests  = []
     # ...
 
-    int_expressions = []
+    int_expressions = OrderedDict()
     bnd_expressions = OrderedDict()
 
     # ...
@@ -291,9 +310,9 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
     # ...
     if is_bilinear:
         for u in d_trials.keys():
-            u_minus = d_trials[u]['-']
-            u_plus  = d_trials[u]['+']
             for v in d_tests.keys():
+                u_minus = d_trials[u]['-']
+                u_plus  = d_trials[u]['+']
                 v_minus = d_tests[v]['-']
                 v_plus  = d_tests[v]['+']
 
@@ -302,12 +321,33 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                 newexpr = _nullify(newexpr, v_minus, tests)
                 newexpr = newexpr.subs({u_minus: u, v_minus: v})
                 mapping = newexpr.atoms(InterfaceMapping)
-                if mapping and not newexpr.is_zero:
+                if mapping and not is_zero(newexpr):
                     mapping = list(mapping)[0]
                     newexpr = newexpr.subs(mapping, mapping.minus)
 
-                if not newexpr.is_zero:
-                    bnd_expressions[interface.minus] = newexpr
+                if not is_zero(newexpr):
+                    if interface.minus in bnd_expressions:
+                        newexpr += bnd_expressions[interface.minus]
+                    bnd_expressions[interface.minus] = newexpr.subs(interface, interface.minus)
+
+                # ...
+                newexpr = _nullify(expr, u_plus, trials)
+                newexpr = _nullify(newexpr, v_plus, tests)
+                newexpr = newexpr.subs({u_plus: u, v_plus: v})
+                mapping = newexpr.atoms(InterfaceMapping)
+
+                if mapping and not is_zero(newexpr):
+                    mapping = list(mapping)[0]
+                    newexpr = newexpr.subs(mapping, mapping.plus)
+
+                for nn in newexpr.atoms(NormalVector):
+                    newexpr = newexpr.subs(nn, -nn)
+
+                if not is_zero(newexpr):
+                    if interface.plus in bnd_expressions:
+                        newexpr += bnd_expressions[interface.plus]
+                    bnd_expressions[interface.plus] = newexpr.subs(interface, interface.plus)
+
                 # ...
                 # TODO must call InterfaceExpression afterward
                 newexpr = _nullify(expr, u_minus, trials)
@@ -315,9 +355,21 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                 mapping = newexpr.atoms(InterfaceMapping)
                 if mapping:
                     mapping = list(mapping)[0]
-                    newexpr = newexpr.subs(mapping, mapping.plus)
-                if not newexpr.is_zero:
-                    int_expressions += [InterfaceExpression(interface, u_minus, v_plus, newexpr)]
+                    for det in newexpr.atoms(SymbolicDeterminant):
+                        if det.atoms(InterfaceMapping):
+                            newdet = det.subs(mapping, mapping.minus)
+                            newexpr = newexpr.subs(det, newdet)
+
+                if not is_zero(newexpr):
+                    if isinstance(u, IndexedVectorFunction):
+                        u_minus = minus(u.base)
+                    if isinstance(v, IndexedVectorFunction):
+                        v_plus = plus(v.base)
+                    if (u_minus, v_plus) in int_expressions:
+                        newexpr += int_expressions[u_minus, v_plus].expr
+
+                    int_expressions[u_minus, v_plus] = InterfaceExpression(interface, u_minus, v_plus, newexpr)
+
                 # ...
                 # TODO must call InterfaceExpression afterward
                 newexpr = _nullify(expr, u_plus, trials)
@@ -325,20 +377,19 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                 mapping = newexpr.atoms(InterfaceMapping)
                 if mapping:
                     mapping = list(mapping)[0]
-                    newexpr = newexpr.subs(mapping, mapping.plus)
-                if not newexpr.is_zero:
-                    int_expressions += [InterfaceExpression(interface, u_plus, v_minus, newexpr)]
-                # ...
-                newexpr = _nullify(expr, u_plus, trials)
-                newexpr = _nullify(newexpr, v_plus, tests)
-                newexpr = newexpr.subs({u_plus: u, v_plus: v})
-                mapping = newexpr.atoms(InterfaceMapping)
-                if mapping:
-                    mapping = list(mapping)[0]
-                    newexpr = newexpr.subs(mapping, mapping.plus)
-                if not newexpr.is_zero:
-                    bnd_expressions[interface.plus] = newexpr
-                # ...
+                    for det in newexpr.atoms(SymbolicDeterminant):
+                        if det.atoms(InterfaceMapping):
+                            newdet = det.subs(mapping, mapping.minus)
+                            newexpr = newexpr.subs(det, newdet)
+                if not is_zero(newexpr):
+                    if isinstance(u, IndexedVectorFunction):
+                        u_plus = plus(u.base)
+                    if isinstance(v, IndexedVectorFunction):
+                        v_minus = minus(v.base)
+                    if (u_plus, v_minus) in int_expressions:
+                        newexpr += int_expressions[u_plus, v_minus].expr
+
+                    int_expressions[u_plus, v_minus] = InterfaceExpression(interface, u_plus, v_minus, newexpr)
 
     elif is_linear:
         for v in d_tests.keys():
@@ -352,10 +403,13 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
             if mapping:
                 mapping = list(mapping)[0]
                 newexpr = newexpr.subs(mapping, mapping.minus)
-            if not newexpr.is_zero:
+
+            if not is_zero(newexpr):
+                if interface.minus in bnd_expressions:
+                    newexpr += bnd_expressions[interface.minus]
+
                 bnd_expressions[interface.minus] = newexpr
             # ...
-
             # ...
             newexpr = _nullify(expr, v_plus, tests)
             newexpr = newexpr.subs({v_plus: v})
@@ -363,10 +417,15 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
             if mapping:
                 mapping = list(mapping)[0]
                 newexpr = newexpr.subs(mapping, mapping.plus)
-            if not newexpr.is_zero:
+
+            if not is_zero(newexpr):
+                if interface.plus in bnd_expressions:
+                     newexpr += bnd_expressions[interface.plus]
+
                 bnd_expressions[interface.plus] = newexpr
             # ...
 
+    int_expressions = list(int_expressions.values())
     return int_expressions, bnd_expressions
 
 
@@ -414,16 +473,16 @@ class InterfaceExpression(KernelExpression):
 #==============================================================================
 class TerminalExpr(CalculusFunction):
 
-    def __new__(cls, *args, **options):
+    def __new__(cls, expr, domain, **options):
         # (Try to) sympify args first
 
         if options.pop('evaluate', True):
-            r = cls.eval(*args, **options)
+            r = cls.eval(expr, domain)
         else:
             r = None
 
         if r is None:
-            return Basic.__new__(cls, *args, **options)
+            return Basic.__new__(cls, expr, domain)
         else:
             return r
 
@@ -434,74 +493,103 @@ class TerminalExpr(CalculusFunction):
         else:
             return Indexed(self, indices, **kw_args)
 
+    @property
+    def expr(self):
+        return self._args[0]
+
+    @property
+    def domain(self):
+        return self._args[1]
+
     @classmethod
     @cacheit
-    def eval(cls, *_args, **kwargs):
+    def eval(cls, expr, domain):
         """."""
 
-        if not _args:
-            return
-
-        if not len(_args) == 1:
-            raise ValueError('Expecting one argument')
-
-        expr    = _args[0]
-        n_rows  = kwargs.pop('n_rows', None)
-        n_cols  = kwargs.pop('n_cols', None)
-        dim     = kwargs.pop('dim', None)
-        logical = kwargs.pop('logical', None)
-
+        dim = domain.dim
         if isinstance(expr, Add):
-            args = [cls.eval(a, dim=dim, logical=logical) for a in expr.args]
+            args = [cls.eval(a, domain=domain) for a in expr.args]
             o = args[0]
             for arg in args[1:]:
                 o = o + arg
             return o
 
         elif isinstance(expr, Mul):
-            args = [cls.eval(a, dim=dim, logical=logical) for a in expr.args]
+            args = [cls.eval(a, domain=domain) for a in expr.args]
             o = args[0]
             for arg in args[1:]:
                 o = o * arg
             return o
 
         elif isinstance(expr, Abs):
-            return Abs(cls.eval(expr.args[0], dim=dim, logical=logical))
+            return Abs(cls.eval(expr.args[0], domain=domain))
 
         elif isinstance(expr, Pow):
-            base = cls.eval(expr.base, dim=dim, logical=logical)
-            exp  = cls.eval(expr.exp, dim=dim, logical=logical)
+            base = cls.eval(expr.base, domain=domain)
+            exp  = cls.eval(expr.exp, domain=domain)
             return base**exp
 
         elif isinstance(expr, JacobianSymbol):
             axis = expr.axis
             J    = expr.mapping.jacobian_expr
-            if axis is None:
-                return J
-            elif expr.mapping.ldim > 1:
-                return J.col_del(axis)
-            elif expr.mapping.ldim == 1:
-                return J.eye(1)
+            if not axis is None:
+                if expr.mapping.ldim > 1:
+                    J = J.col_del(axis)
+                if expr.mapping.ldim == 1:
+                    J = J.eye(1)
+            if isinstance(domain, Interface):
+                mapping = expr.mapping
+                assert mapping.is_plus is not mapping.is_minus
+                if mapping.is_plus and mapping.is_analytical:
+                    domain      = domain.plus
+                    axis        = domain.axis
+                    ext         = domain.ext
+                    domain      = domain.domain
+                    coordinates = domain.coordinates
+                    if isinstance(domain, (NCube, NCubeInterior)):
+                        bounds      = domain.min_coords if ext == -1 else domain.max_coords
+                        J           = J.subs(coordinates[axis], bounds[axis])
+                    newcoords = [Symbol(c.name+"_plus") for c in coordinates]
+                    subs      = list(zip(coordinates, newcoords))
+                    J = J.subs(subs)
+
+            return J
 
         elif isinstance(expr, JacobianInverseSymbol):
             axis = expr.axis
             J    = expr.mapping.jacobian_inv_expr
-            if axis is None:
-                return J
-            else:
-                return J.col_del(axis)
+            if not axis is None:
+                J = J.col_del(axis)
+
+            if isinstance(domain, Interface):
+                mapping = expr.mapping
+                assert mapping.is_plus is not mapping.is_minus
+                if mapping.is_plus and mapping.is_analytical:
+                    domain      = domain.plus
+                    axis        = domain.axis
+                    ext         = domain.ext
+                    domain      = domain.domain
+                    coordinates = domain.coordinates
+                    if isinstance(domain, (NCube, NCubeInterior)):
+                        bounds      = domain.min_coords if ext == -1 else domain.max_coords
+                        J = J.subs(coordinates[axis], bounds[axis])
+                    newcoords = [Symbol(c.name+"_plus") for c in coordinates]
+                    subs      = list(zip(coordinates, newcoords))
+                    J = J.subs(subs)
+
+            return J
 
         elif isinstance(expr, SymbolicDeterminant):
-            return cls.eval(expr.arg, dim=dim, logical=logical).det().factor()
+            return cls.eval(expr.arg, domain=domain).det().factor()
 
         elif isinstance(expr, SymbolicTrace):
-            return cls.eval(expr.arg, dim=dim, logical=logical).trace()
+            return cls.eval(expr.arg, domain=domain).trace()
 
         elif isinstance(expr, Transpose):
-            return cls.eval(expr.arg, dim=dim, logical=logical).T
+            return cls.eval(expr.arg, domain=domain).T
 
         elif isinstance(expr, Inverse):
-            return cls.eval(expr.arg, dim=dim, logical=logical).inv()
+            return cls.eval(expr.arg, domain=domain).inv()
 
         elif isinstance(expr, ScalarFunction):
             return expr
@@ -509,143 +597,124 @@ class TerminalExpr(CalculusFunction):
         elif isinstance(expr, VectorFunction):
             return ImmutableDenseMatrix([[expr[i]] for i in range(dim)])
 
+        elif isinstance(expr, (minus, plus)):
+            newexpr = cls.eval(expr.args[0], domain=domain)
+            return type(expr)(newexpr)
+
         elif isinstance(expr, PullBack):
-            return cls.eval(expr.expr, dim=dim, logical=True)
+            return cls.eval(expr.expr, domain=domain)
 
         elif isinstance(expr, MatrixElement):
-            base = cls.eval(expr.base, dim=dim, logical=logical)
+            base = cls.eval(expr.base, domain=domain)
             return base[expr.indices]
 
         elif isinstance(expr, BasicForm):
             # ...
             dim     = expr.ldim
-            domain  = expr.domain
+            domains  = expr.domain
 
-            if not isinstance(domain, Union):
-                logical = domain.mapping is None
-                domain  = (domain,)
+            if not isinstance(domains, Union):
+                domains  = (domains,)
             # ...
             d_expr = OrderedDict()
-            for d in domain:
+            d_int  = OrderedDict()
+            for d in domains:
                 d_expr[d] = S.Zero
             # ...
             if isinstance(expr.expr, Add):
                 for a in expr.expr.args:
-                    newexpr = cls.eval(a, dim=dim, logical=logical)
 
                     # ...
                     try:
-                        domain = _get_domain(a)
-                        if not isinstance(domain, Union):
-                            domain = (domain, )
+                        domains = _get_domain(a)
+                        if not isinstance(domains, Union):
+                            domains = (domains, )
                     except:
                         pass
                     # ...
-                    for d in domain:
-                        d_expr[d] += newexpr
+                    for d in domains:
+                        d_expr[d] += a
                     # ...
             else:
-                newexpr = cls.eval(expr.expr, dim=dim, logical=logical)
                 # ...
                 if isinstance(expr, Functional):
-                    domain = expr.domain
+                    domains = expr.domain
 
                 else:
-                    domain = _get_domain(expr.expr)
+                    domains = _get_domain(expr.expr)
 
-                if isinstance(domain, Union):
-                    domain = list(domain._args)
+                if isinstance(domains, Union):
+                    domains = list(domains._args)
 
-                elif not is_sequence(domain):
-                    domain = [domain]
+                elif not is_sequence(domains):
+                    domains = (domains,)
                 # ...
 
                 # ...
-                for d in domain:
-                    d_expr[d] = newexpr
+                for d in domains:
+                    d_expr[d] = expr.expr
                 # ...
 
-            trials, tests = _get_trials_tests_flattened(expr)
-
-            d_new = OrderedDict()
-            for domain, newexpr in d_expr.items():
-
-                if newexpr != 0:
-
-                    # TODO ARA make sure thre is no problem with psydac
-                    #      we should always take the interior of a domain
-                    if not isinstance(domain, (Boundary, Interface, InteriorDomain)):
-                        domain = domain.interior
-
-                    d_new[domain] = _to_matrix_form(newexpr, trials=trials, tests=tests)
-
-            # ...
-            ls = []
-            d_all = OrderedDict()
-
+            trials, tests = _get_trials_tests(expr, flatten=False)
             # ... treating interfaces
-            keys = [k for k in d_new.keys() if isinstance(k, Interface)]
+            keys = [k for k in d_expr.keys() if isinstance(k, Interface)]
             for interface in keys:
-                # ...
-                trials = None
-                tests  = None
-                if expr.is_bilinear:
-                    trials = list(expr.variables[0])
-                    tests  = list(expr.variables[1])
-
-                elif expr.is_linear:
-                    tests  = list(expr.variables)
-                # ...
-
-                # ...
-                newexpr = d_new[interface]
+                newexpr = d_expr.pop(interface)
                 ls_int, d_bnd = _split_expr_over_interface(newexpr, interface,
                                                        tests=tests,
                                                        trials=trials)
                 # ...
+                for a in ls_int:
+                    if (a.target, a.trial, a.test) in d_int:
+                        d_int[a.target, a.trial, a.test] += a.expr
+                    else:
+                        d_int[a.target, a.trial, a.test] = a.expr
 
-                ls += ls_int
-                # ...
                 for k, v in d_bnd.items():
-                    if k in d_all.keys():
-                        d_all[k] += v
+                    if k in d_expr.keys():
+                        d_expr[k] += v
 
                     else:
-                        d_all[k] = v
+                        d_expr[k] = v
             # ...
+            trials, tests = _get_trials_tests(expr, flatten=True)
+            d_new = OrderedDict()
+            for domain, a in d_expr.items():
+                newexpr = cls.eval(a, domain=domain)
+                if newexpr != 0:
+                    # TODO ARA make sure thre is no problem with psydac
+                    #      we should always take the interior of a domain
+                    if not isinstance(domain, (Boundary, Interface, InteriorDomain)):
+                        domain = domain.interior
+                    d_new[domain] = _to_matrix_form(newexpr, trials=trials, tests=tests, domain=domain)
+
 
             # ... treating subdomains
             keys = [k for k in d_new.keys() if isinstance(k, Union)]
             for domain in keys:
-
-                newexpr = d_new[domain]
+                newexpr = d_new.pop(domain)
                 d       = OrderedDict((interior, newexpr) for interior in domain.as_tuple())
                             # ...
                 for k, v in d.items():
-                    if k in d_all.keys():
-                        d_all[k] += v
+                    if k in d_new.keys():
+                        d_new[k] += v
 
                     else:
-                        d_all[k] = v
+                        d_new[k] = v
 
-            d = OrderedDict()
+            ls = []
+            for key in d_int:
+                domain, u,v = key
+                expr    = d_int[domain, u, v]
 
-            for k, v in d_new.items():
-                if not isinstance( k, (Interface, Union)):
-                    d[k] = d_new[k]
+                newexpr = cls.eval(expr, domain=domain)
+                if newexpr != 0:
+                    newexpr = _to_matrix_form(newexpr, trials=trials, tests=tests, domain=domain)
+                    ls += [InterfaceExpression(domain, u, v, newexpr)]
 
-            for k, v in d_all.items():
-                if k in d.keys():
-                    d[k] += v
-                else:
-                    d[k] = v
-
-            d_new = d
-            # ...
             for domain, newexpr in d_new.items():
                 if isinstance(domain, Boundary):
                     ls += [BoundaryExpression(domain, newexpr)]
-
                 elif isinstance(domain, BasicDomain):
                     ls += [DomainExpression(domain, newexpr)]
 
@@ -655,9 +724,8 @@ class TerminalExpr(CalculusFunction):
             return tuple(ls)
 
         elif isinstance(expr, Integral):
-            dim     = expr.domain.dim if dim is None else dim
-            logical = expr.domain.mapping is None
-            expr    = cls.eval(expr._args[0], dim=dim, logical=logical)
+            domain = expr.domain
+            expr   = cls.eval(expr._args[0], domain=domain)
             return expr
 
         elif isinstance(expr, NormalVector):
@@ -669,16 +737,16 @@ class TerminalExpr(CalculusFunction):
             return ImmutableDenseMatrix(lines)
 
         elif isinstance(expr, BasicExpr):
-            return cls.eval(expr.expr, dim=dim, logical=logical)
+            return cls.eval(expr.expr, domain=domain)
 
         elif isinstance(expr, _diff_ops):
             op   = type(expr)
-            if logical:
+            if domain.mapping is None:
                 new  = eval('Logical{0}_{1}d'.format(op, dim))
             else:
                 new  = eval('{0}_{1}d'.format(op, dim))
 
-            args = [cls.eval(i, dim=dim, logical=logical) for i in expr.args]
+            args = [cls.eval(i, domain=domain) for i in expr.args]
             return new(*args)
 
         elif isinstance(expr, mat_Trace):
@@ -689,19 +757,19 @@ class TerminalExpr(CalculusFunction):
             # if i = Dot(...) then type(i) is Grad
             op = type(expr)
             new  = eval('{0}_{1}d'.format(op, dim))
-            args = [cls.eval(i, dim=dim, logical=logical) for i in expr.args]
+            args = [cls.eval(i, domain=domain) for i in expr.args]
             return new(*args)
 
         elif isinstance(expr, Trace):
             # TODO treate different spaces
             if expr.order == 0:
-                return cls.eval(expr.expr, dim=dim, logical=logical)
+                return cls.eval(expr.expr, domain=domain)
 
             elif expr.order == 1:
                 # TODO give a name to normal vector
                 normal_vector_name = 'n'
                 n = NormalVector(normal_vector_name)
-                M = cls.eval(expr.expr, dim=dim, logical=logical)
+                M = cls.eval(expr.expr, domain=domain)
 
                 if dim == 1:
                     return M
@@ -725,14 +793,14 @@ class TerminalExpr(CalculusFunction):
             for i in range(0, n):
                 line = []
                 for j in range(0, m):
-                    line.append(cls.eval(expr[i,j], dim=dim, logical=logical))
+                    line.append(cls.eval(expr[i,j], domain=domain))
                 lines.append(line)
             return ImmutableDenseMatrix(lines)
 
         elif isinstance(expr, LogicalExpr):
-            M         = expr.mapping
-            expr      = cls(expr.expr, dim=expr.dim)
-            return LogicalExpr(expr, mapping=M, dim=M.ldim)
+            domain    = expr.domain
+            expr      = cls(expr.expr, domain=domain)
+            return LogicalExpr(expr, domain=domain)
         return expr
 
 
@@ -986,11 +1054,11 @@ class TensorExpr(CalculusFunction):
 
         expr = _args[0]
         d_atoms = kwargs.pop('d_atoms', OrderedDict())
-        mapping = kwargs.pop('mapping', None)
-        expand    = kwargs.pop('expand', False)
+        domain  = kwargs.pop('domain', None)
+        expand  = kwargs.pop('expand', False)
 
         if isinstance(expr, Add):
-            args = [cls.eval(a, d_atoms=d_atoms, mapping=mapping) for a in expr.args]
+            args = [cls.eval(a, d_atoms=d_atoms, domain=domain) for a in expr.args]
             return Add(*args)
 
         elif isinstance(expr, Mul):
@@ -1013,12 +1081,12 @@ class TensorExpr(CalculusFunction):
 
             sb = S.One
             if stests:
-                args = [cls.eval(i, d_atoms=d_atoms, mapping=mapping) for i in stests]
+                args = [cls.eval(i, d_atoms=d_atoms, domain=domain) for i in stests]
                 sb = Mul(*args)
 
             vb = S.One
             if vtests:
-                args = [cls.eval(i, d_atoms=d_atoms, mapping=mapping) for i in vtests]
+                args = [cls.eval(i, d_atoms=d_atoms, domain=domain) for i in vtests]
                 vb = Mul(*args)
 
             return Mul(a, b, sb, vb)
@@ -1039,7 +1107,7 @@ class TensorExpr(CalculusFunction):
             for i_row in range(0, n_rows):
                 line = []
                 for i_col in range(0, n_cols):
-                    line.append(cls.eval(expr[i_row,i_col], d_atoms=d_atoms, mapping=mapping))
+                    line.append(cls.eval(expr[i_row,i_col], d_atoms=d_atoms, domain=domain))
 
                 lines.append(line)
 
@@ -1047,9 +1115,7 @@ class TensorExpr(CalculusFunction):
 
         elif isinstance(expr, DomainExpression):
             # TODO to be removed
-            target = expr.target
-            expr   = expr.expr
-            return cls.eval(expr, d_atoms=d_atoms, mapping=mapping)
+            return cls.eval(expr.expr, d_atoms=d_atoms, domain=domain)
 
         elif isinstance(expr, BilinearForm):
             trials = expr.variables[0]
@@ -1057,7 +1123,7 @@ class TensorExpr(CalculusFunction):
             fields = expr.fields
 
             # ... # TODO improve
-            terminal_expr = TerminalExpr(expr)[0]
+            terminal_expr = TerminalExpr(expr, domain)[0]
             # ...
 
             # ...
@@ -1067,12 +1133,11 @@ class TensorExpr(CalculusFunction):
             # ...
 
             # ...
-            if not(mapping is None):
-                dim           = expr.ldim
-                terminal_expr = LogicalExpr(terminal_expr.expr, mapping=mapping, dim=dim)
-                variables     = [LogicalExpr(e, mapping=mapping, dim=dim) for e in variables ]
-                trials        = [LogicalExpr(e, mapping=mapping, dim=dim) for e in trials ]
-                tests         = [LogicalExpr(e, mapping=mapping, dim=dim) for e in tests ]
+            if domain is not None and domain.mapping is not None:
+                terminal_expr = LogicalExpr(terminal_expr.expr, domain)
+                variables     = [LogicalExpr(e, domain) for e in variables ]
+                trials        = [LogicalExpr(e, domain) for e in trials ]
+                tests         = [LogicalExpr(e, domain) for e in tests ]
             # ...
 
             # Prepare dictionary for '_tensorize_atomic_expr', which should
@@ -1081,7 +1146,7 @@ class TensorExpr(CalculusFunction):
                 [(v, _split_test_function(v)[v]) for v in variables] + [(f, (f,)) for f in fields])
 
             # ...
-            expr = cls.eval(terminal_expr, d_atoms=d_atoms, mapping=mapping)
+            expr = cls.eval(terminal_expr, d_atoms=d_atoms, domain=domain)
             # ...
 
             # ...

@@ -698,12 +698,11 @@ def is_linear_expression(expr, args, integral=True, debug=True):
     a = newexpr
     b = left_expr + right_expr
 
-    if not( (a-b).expand() == 0 ):
+    if not( (a-b).expand() == 0 or a.expand() == b.expand()):
         # TODO use a warning or exception?
         if debug:
             print('Failed to assert addition property')
             print('{} != {}'.format(a.expand(), b.expand()))
-
         return False
 
     # ...
@@ -721,15 +720,14 @@ def is_linear_expression(expr, args, integral=True, debug=True):
     subs      = [e.func(*e.args, evaluate=True) for e in atoms]
     newexpr   = newexpr.subs(zip(atoms, subs))
 
-    left_expr = expr.subs(zip(args, left_args))
-    left_expr = coeff * left_expr.subs(arg, left)
 
-    if not( (newexpr-left_expr).expand() == 0):
+    left_expr = expr.subs(list(zip(args, left_args)))
+    left_expr = coeff * left_expr
+    if not( (newexpr-left_expr).expand() == 0 or newexpr.expand()==left_expr.expand()):
         # TODO use a warning or exception?
         if debug:
             print('Failed to assert multiplication property')
             print('{} != {}'.format(newexpr, left_expr))
-
         return False
     # ...
 

@@ -79,10 +79,16 @@ class DifferentialOperator(LinearOperator):
             args = [cls(expr[i], evaluate=False) for i in range(0, n)]
             args = Tuple(*args)
             return Matrix([args])
-        elif isinstance(expr, (list, tuple, Tuple, Matrix, ImmutableDenseMatrix)):
+        elif isinstance(expr, (list, tuple, Tuple)):
             args = [cls(i, evaluate=True) for i in expr]
             args = Tuple(*args)
             return Matrix([args])
+        elif isinstance(expr, (Matrix, ImmutableDenseMatrix)):
+            newexpr = Matrix.zeros(*expr.shape)
+            for i in range(expr.shape[0]):
+                for j in range(expr.shape[1]):
+                    newexpr[i,j] = cls(expr[i,j], evaluate=True)
+            return type(expr)(newexpr)
         elif isinstance(expr, (IndexedVectorFunction, DifferentialOperator)):
             return cls(expr, evaluate=False)
 
@@ -301,7 +307,6 @@ def get_index_derivatives(expr):
 
     ops = [a for a in preorder_traversal(expr) if isinstance(a, _partial_derivatives)]
     for i in ops:
-        op = type(i)
 
         if isinstance(i, dx):
             d['x'] += 1
@@ -340,7 +345,6 @@ def get_index_logical_derivatives(expr):
 
     ops = [a for a in preorder_traversal(expr) if isinstance(a, _logical_partial_derivatives)]
     for i in ops:
-        op = type(i)
 
         if isinstance(i, dx1):
             d['x1'] += 1
@@ -1093,7 +1097,6 @@ class LogicalLaplace_2d(LaplaceBasic):
         u = _args[0]
         if isinstance(u, VectorFunction):
             raise NotImplementedError('TODO')
-
         return dx1(dx1(u)) + dx2(dx2(u))
 
 class LogicalLaplace_3d(LaplaceBasic):

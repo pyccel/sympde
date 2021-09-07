@@ -22,11 +22,7 @@ from sympde.expr.evaluation import TensorExpr
 def test_tensorize_2d_1():
 
     domain = Domain('Omega', dim=2)
-    B1 = Boundary(r'\Gamma_1', domain)
 
-    x,y = domain.coordinates
-
-    kappa = Constant('kappa', is_real=True)
     mu    = Constant('mu'   , is_real=True)
 
     V = ScalarFunctionSpace('V', domain)
@@ -41,7 +37,7 @@ def test_tensorize_2d_1():
 #    a = BilinearForm((u,v), dx(u)*v)
 #    a = BilinearForm((u,v), laplace(u)*laplace(v))
 
-    expr = TensorExpr(a)
+    expr = TensorExpr(a, domain=domain)
     print(expr)
     # ...
 
@@ -49,12 +45,6 @@ def test_tensorize_2d_1():
 def test_tensorize_2d_2():
 
     domain = Domain('Omega', dim=2)
-    B1 = Boundary(r'\Gamma_1', domain)
-
-    x,y = domain.coordinates
-
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
 
     V = VectorFunctionSpace('V', domain)
     u, v = elements_of(V, names='u, v')
@@ -64,7 +54,7 @@ def test_tensorize_2d_2():
 #    a = BilinearForm((u,v), dot(u,v))
     a = BilinearForm((u,v), int_0(curl(u)*curl(v) + div(u)*div(v)))
 
-    expr = TensorExpr(a)
+    expr = TensorExpr(a, domain=domain)
     print(expr)
     # ...
 
@@ -76,12 +66,8 @@ def test_tensorize_2d_1_mapping():
     M = Mapping('Map', dim=DIM)
 
     domain = M(Domain('Omega', dim=DIM))
-    B1     = Boundary(r'\Gamma_1', domain)
 
-    x,y = domain.coordinates
-
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
+#    mu    = Constant('mu'   , is_real=True)
 
     V = ScalarFunctionSpace('V', domain)
     u, v = elements_of(V, names='u, v')
@@ -94,7 +80,7 @@ def test_tensorize_2d_1_mapping():
 #    a = BilinearForm((u,v), dx(u)*v)
 #    a = BilinearForm((u,v), laplace(u)*laplace(v))
 
-    expr = TensorExpr(a, mapping=M)
+    expr = TensorExpr(a, domain=domain)
     print(expr)
     # ...
 
@@ -113,7 +99,7 @@ def test_tensorize_2d_2_mapping():
     int_0 = lambda expr: integral(domain , expr)
 
     a = BilinearForm((u,v), int_0(c * div(v) * div(u) + curl(v) * curl(u)))
-    expr = TensorExpr(a, mapping=M)
+    expr = TensorExpr(a, domain=domain)
     print(expr)
 
 #==============================================================================
@@ -131,7 +117,7 @@ def test_tensorize_2d_3():
     expr = integral(domain, dot(b, grad(v)) * dot(b, grad(u)))
     a = BilinearForm((u,v), expr)
 
-    print(TensorExpr(a))
+    print(TensorExpr(a, domain=domain))
     print('')
 
 

@@ -194,7 +194,7 @@ class MatSymbolicAdd(MatrixSymbolicExpr, Add):
         args = [sympify(a) for a in args if a != 0]
         newargs = []
         for i in args:
-            if isinstance(i, MatSymbolicAdd):
+            if isinstance(i, (MatSymbolicAdd, Add)):
                 newargs += list(i.args)
             else:
                 newargs.append(i)
@@ -205,7 +205,7 @@ class MatSymbolicAdd(MatrixSymbolicExpr, Add):
             return S.Zero
         elif len(args) == 1:
             return args[0]
-
+        args = sorted(args, key=str)
         return Expr.__new__(cls, *args)
 
     def _sympystr(self, printer):
@@ -280,13 +280,14 @@ class MatrixElement(Expr):
         sstr = printer.doprint
         return '{}[{}]'.format(sstr(self.args[0]),sstr(self.args[1]))
 
-def f1(*x):
-    return MatSymbolicMul(*x)
-def f2(*x):
-    return MatSymbolicAdd(*x)
+def f1(x):
+    return MatSymbolicMul(*x.args)
+def f2(x):
+    return MatSymbolicAdd(*x.args)
 
 Basic._constructor_postprocessor_mapping[MatrixSymbolicExpr] = {
     "Mul": [f1],
     "Add": [f2]
 }
+
 
