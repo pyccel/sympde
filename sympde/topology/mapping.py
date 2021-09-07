@@ -912,7 +912,7 @@ class LogicalExpr(CalculusFunction):
             return PullBack(expr, mapping).expr
 
         elif isinstance(expr, Transpose):
-            arg = cls(expr.arg, mapping=mapping, dim=dim)
+            arg = cls(expr.arg, domain)
             return Transpose(arg)
             
         elif isinstance(expr, grad):

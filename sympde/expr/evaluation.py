@@ -750,7 +750,7 @@ class TerminalExpr(CalculusFunction):
             return new(*args)
 
         elif isinstance(expr, mat_Trace):
-            arg = cls.eval(expr.arg, dim=dim, logical=logical)
+            arg = cls.eval(expr.arg, domain=domain)
             return Add(*[arg[i,i] for i in range(arg.shape[0])])
 
         elif isinstance(expr, _generic_ops):
