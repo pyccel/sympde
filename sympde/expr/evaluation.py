@@ -688,6 +688,17 @@ class TerminalExpr(CalculusFunction):
                         domain = domain.interior
                     d_new[domain] = _to_matrix_form(newexpr, trials=trials, tests=tests, domain=domain)
 
+            if len(d_new) == 0:
+                # ... corner case where the expression is zero
+                for domain, a in d_expr.items():
+                    if not isinstance(domain, (Boundary, Interface, InteriorDomain)):
+                        domain = domain.interior
+                    d_new[domain] = _to_matrix_form(S.Zero, trials=trials, tests=tests, domain=domain)
+
+                    if isinstance(domain, Boundary):
+                        return (BoundaryExpression(domain, d_new[domain]),)
+                    elif isinstance(domain, BasicDomain):
+                        return (DomainExpression(domain, d_new[domain]),)
 
             # ... treating subdomains
             keys = [k for k in d_new.keys() if isinstance(k, Union)]
