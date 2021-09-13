@@ -262,7 +262,7 @@ def test_logical_expr_2d_2():
     assert str(expr) == 'Integral(A|B, Dot((Jacobian(M2)**(-1)).T * Grad(PlusInterfaceOperator(u2)), (Jacobian(M2)**(-1)).T * Grad(PlusInterfaceOperator(v2)))*sqrt(det((Jacobian(M1|M2)).T * Jacobian(M1|M2))))'
 
 
-def test_logical_expr_2d_2():
+def test_logical_expr_2d_3():
     dim = 2
 
     A = Square('A')
@@ -283,7 +283,6 @@ def test_logical_expr_2d_2():
     u,v = [element_of(V, name=i) for i in ['u', 'v']]
 
     int_0 = lambda expr: integral(domain , expr)
-    int_1 = lambda expr: integral(domain.interfaces , expr)
 
     expr = LogicalExpr(int_0(dot(u,v)), domain)
     assert str(expr.args[0]) == 'Integral(A, Dot((Jacobian(M1)**(-1)).T * u, (Jacobian(M1)**(-1)).T * v)*sqrt(det((Jacobian(M1)).T * Jacobian(M1))))'
@@ -858,19 +857,6 @@ def test_twisted_target_mapping_3d_1():
                        [2*x1*x3*sin(2*x2),           2*x1**2*x3*cos(2*x2), x1**2*sin(2*x2)]])
     assert( Jacobian(M) == expected )
 
-
-def test_identity_mapping_2d_2():
-    dim    = 2
-    M      = IdentityMapping('F', dim=dim)
-    domain = M(Domain('Omega', dim=dim))
-
-
-    V = ScalarFunctionSpace('V', domain, kind='h1')
-    u = element_of(V, name='u')
-
-    # ...
-    assert(LogicalExpr(dx(u), domain) == dx1(u))
-    assert(LogicalExpr(dy(u), domain) == dx2(u))
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
