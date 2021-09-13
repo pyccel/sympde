@@ -9,7 +9,7 @@ from sympde.core     import Constant
 from sympde.calculus import grad, dot, inner, rot, div
 from sympde.calculus import laplace, bracket, convect
 from sympde.calculus import jump, avg, Dn, minus, plus
-from sympde.topology import Domain, Mapping
+from sympde.topology import Domain, Mapping, Square
 from sympde.topology import dx, dy
 from sympde.topology import dx1, dx2, dx3
 from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
