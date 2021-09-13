@@ -812,6 +812,7 @@ class TerminalExpr(CalculusFunction):
             domain    = expr.domain
             expr      = cls(expr.expr, domain=domain)
             return LogicalExpr(expr, domain=domain)
+
         return expr
 
 

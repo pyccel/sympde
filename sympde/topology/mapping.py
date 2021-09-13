@@ -634,7 +634,7 @@ class PullBack(Expr):
             expr = (J/J.det()) * el
 
         elif isinstance(kind, L2SpaceType):
-            expr = el
+            expr = el/J.det()
 
 #        elif isinstance(kind, UndefinedSpaceType):
 #            raise ValueError('kind must be specified in order to perform the pull-back transformation')
@@ -1177,6 +1177,7 @@ class LogicalExpr(CalculusFunction):
             domain  = expr.target
             J       = domain.mapping.jacobian
             newexpr = cls.eval(expr.expr, domain)
+            newexpr = TerminalExpr(newexpr, domain=domain)
             domain  = domain.logical_domain
             det     = TerminalExpr(sqrt((J.T*J).det()), domain=domain)
             return DomainExpression(domain, ImmutableDenseMatrix([[newexpr*det]]))

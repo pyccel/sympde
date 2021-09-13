@@ -6,6 +6,9 @@ from sympy import expand
 from sympy import cos, sin, sqrt, pi
 
 from sympde.core     import Constant
+from sympde.calculus import grad, dot, inner, rot, div
+from sympde.calculus import laplace, bracket, convect
+from sympde.calculus import jump, avg, Dn, minus, plus
 from sympde.topology import Domain, Mapping
 from sympde.topology import dx, dy
 from sympde.topology import dx1, dx2, dx3
@@ -204,6 +207,87 @@ def test_logical_expr_2d_1():
     #print(expr.subs(det_M, det))
     #print('')
     # ...
+
+#==============================================================================
+def test_logical_expr_2d_2():
+    dim = 2
+
+    A = Square('A')
+    B = Square('B')
+
+    M1 = Mapping('M1', dim=dim)
+    M2 = Mapping('M2', dim=dim)
+
+    D1 = M1(A)
+    D2 = M2(B)
+
+    domain = D1.join(D2, name = 'domain',
+               bnd_minus = D1.get_boundary(axis=0, ext=1),
+               bnd_plus  = D2.get_boundary(axis=0, ext=-1))
+
+
+    V1 = ScalarFunctionSpace('V1', domain, kind='h1')
+    V2 = VectorFunctionSpace('V2', domain, kind='h1')
+
+    u1,v1 = [element_of(V1, name=i) for i in ['u1', 'v1']]
+    u2,v2 = [element_of(V2, name=i) for i in ['u2', 'v2']]
+
+    int_0 = lambda expr: integral(domain , expr)
+    int_1 = lambda expr: integral(domain.interfaces , expr)
+
+    expr = LogicalExpr(int_0(u1*v1), domain)
+    assert str(expr.args[0]) == 'Integral(A, u1*v1*sqrt(det((Jacobian(M1)).T * Jacobian(M1))))'
+    assert str(expr.args[1]) == 'Integral(B, u1*v1*sqrt(det((Jacobian(M2)).T * Jacobian(M2))))'
+
+    expr = LogicalExpr(int_1(plus(u1)*plus(v1)), domain)
+    assert str(expr) == 'Integral(A|B, PlusInterfaceOperator(u1)*PlusInterfaceOperator(v1)*sqrt(det((Jacobian(M1|M2)).T * Jacobian(M1|M2))))'
+
+    expr = LogicalExpr(int_1(minus(u1)*minus(v1)), domain)
+    assert str(expr) == 'Integral(A|B, MinusInterfaceOperator(u1)*MinusInterfaceOperator(v1)*sqrt(det((Jacobian(M1|M2)).T * Jacobian(M1|M2))))'
+
+    expr = LogicalExpr(int_0(dot(u2,v2)), domain)
+    assert str(expr.args[0]) == 'Integral(A, Dot(u2, v2)*sqrt(det((Jacobian(M1)).T * Jacobian(M1))))'
+    assert str(expr.args[1]) == 'Integral(B, Dot(u2, v2)*sqrt(det((Jacobian(M2)).T * Jacobian(M2))))'
+
+    expr = LogicalExpr(int_1(dot(plus(u2),plus(v2))), domain)
+    assert str(expr) == 'Integral(A|B, Dot(PlusInterfaceOperator(u2), PlusInterfaceOperator(v2))*sqrt(det((Jacobian(M1|M2)).T * Jacobian(M1|M2))))'
+
+    expr = LogicalExpr(int_1(dot(minus(u2), minus(v2))), domain)
+    assert str(expr) == 'Integral(A|B, Dot(MinusInterfaceOperator(u2), MinusInterfaceOperator(v2))*sqrt(det((Jacobian(M1|M2)).T * Jacobian(M1|M2))))'
+
+    expr = LogicalExpr(int_1(dot(grad(minus(u2)),grad(minus(v2)))), domain)
+    assert str(expr) == 'Integral(A|B, Dot((Jacobian(M1)**(-1)).T * Grad(MinusInterfaceOperator(u2)), (Jacobian(M1)**(-1)).T * Grad(MinusInterfaceOperator(v2)))*sqrt(det((Jacobian(M1|M2)).T * Jacobian(M1|M2))))'
+
+    expr = LogicalExpr(int_1(dot(grad(plus(u2)),grad(plus(v2)))), domain)
+    assert str(expr) == 'Integral(A|B, Dot((Jacobian(M2)**(-1)).T * Grad(PlusInterfaceOperator(u2)), (Jacobian(M2)**(-1)).T * Grad(PlusInterfaceOperator(v2)))*sqrt(det((Jacobian(M1|M2)).T * Jacobian(M1|M2))))'
+
+
+def test_logical_expr_2d_2():
+    dim = 2
+
+    A = Square('A')
+    B = Square('B')
+
+    M1 = Mapping('M1', dim=dim)
+    M2 = Mapping('M2', dim=dim)
+
+    D1 = M1(A)
+    D2 = M2(B)
+
+    domain = D1.join(D2, name = 'domain',
+               bnd_minus = D1.get_boundary(axis=0, ext=1),
+               bnd_plus  = D2.get_boundary(axis=0, ext=-1))
+
+    V = VectorFunctionSpace('V', domain, kind='hcurl')
+
+    u,v = [element_of(V, name=i) for i in ['u', 'v']]
+
+    int_0 = lambda expr: integral(domain , expr)
+    int_1 = lambda expr: integral(domain.interfaces , expr)
+
+    expr = LogicalExpr(int_0(dot(u,v)), domain)
+    assert str(expr.args[0]) == 'Integral(A, Dot((Jacobian(M1)**(-1)).T * u, (Jacobian(M1)**(-1)).T * v)*sqrt(det((Jacobian(M1)).T * Jacobian(M1))))'
+    assert str(expr.args[1]) == 'Integral(B, Dot((Jacobian(M2)**(-1)).T * u, (Jacobian(M2)**(-1)).T * v)*sqrt(det((Jacobian(M2)).T * Jacobian(M2))))'
 
 #==============================================================================
 def test_symbolic_expr_2d_1():
@@ -775,6 +859,18 @@ def test_twisted_target_mapping_3d_1():
     assert( Jacobian(M) == expected )
 
 
+def test_identity_mapping_2d_2():
+    dim    = 2
+    M      = IdentityMapping('F', dim=dim)
+    domain = M(Domain('Omega', dim=dim))
+
+
+    V = ScalarFunctionSpace('V', domain, kind='h1')
+    u = element_of(V, name='u')
+
+    # ...
+    assert(LogicalExpr(dx(u), domain) == dx1(u))
+    assert(LogicalExpr(dy(u), domain) == dx2(u))
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================

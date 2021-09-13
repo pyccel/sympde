@@ -1834,7 +1834,66 @@ def test_interface_integral_3():
     print(expr)
     # ...
 
+#==============================================================================
+def test_interface_integral_4():
 
+    # ...
+    A = Square('A')
+    B = Square('B')
+
+    domain = A.join(B, name = 'AB',
+               bnd_minus = A.get_boundary(axis=0, ext=1),
+               bnd_plus  = B.get_boundary(axis=0, ext=-1))
+
+    x,y = domain.coordinates
+    assert all([x.name == 'x1', y.name == 'x2'])
+
+    V1 = ScalarFunctionSpace('V1', domain, kind=None)
+    V2 = VectorFunctionSpace('V2', domain, kind=None)
+    assert(V1.is_broken)
+
+    u1, v1 = elements_of(V1, names='u1, v1')
+    u2, v2 = elements_of(V2, names='u2, v2')
+
+    # ...
+    I = domain.interfaces
+
+    a1 = BilinearForm((u1,v1), integral(I, plus(u1)*plus(v1)))
+
+    expr = TerminalExpr(a1, domain)
+
+    assert len(expr) == 1
+    assert expr[0].target == B.get_boundary(axis=0, ext=-1)
+    assert expr[0].expr   == u1*v1
+
+    a2 = BilinearForm((u1,v1), integral(I, minus(u1)*minus(v1)))
+
+    expr = TerminalExpr(a2, domain)
+
+    assert len(expr) == 1
+    assert expr[0].target == A.get_boundary(axis=0, ext=1)
+    assert expr[0].expr   == u1*v1
+
+
+    a1 = BilinearForm((u2,v2), integral(I, dot(plus(u2),plus(v2))))
+
+    expr = TerminalExpr(a1, domain)
+
+    assert len(expr) == 1
+    assert expr[0].target == B.get_boundary(axis=0, ext=-1)
+    assert expr[0].expr[0,0]   == u2[0]*v2[0]
+    assert expr[0].expr[1,1]   == u2[1]*v2[1]
+
+    a2 = BilinearForm((u2,v2), integral(I, dot(minus(u2),minus(v2))))
+
+    expr = TerminalExpr(a2, domain)
+
+    assert len(expr) == 1
+    assert expr[0].target == A.get_boundary(axis=0, ext=1)
+    assert expr[0].expr[0,0]   == u2[0]*v2[0]
+    assert expr[0].expr[1,1]   == u2[1]*v2[1]
+
+    # ...
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
