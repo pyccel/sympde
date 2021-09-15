@@ -236,30 +236,30 @@ def test_logical_expr_2d_2():
     int_1 = lambda expr: integral(domain.interfaces , expr)
 
     expr = LogicalExpr(int_0(u1*v1), domain)
-    assert str(expr.args[0]) == 'Integral(A, u1*v1*sqrt(det((Jacobian(M1)).T * Jacobian(M1))))'
-    assert str(expr.args[1]) == 'Integral(B, u1*v1*sqrt(det((Jacobian(M2)).T * Jacobian(M2))))'
+    assert str(expr.args[0]) == 'Integral(A, u1*v1*sqrt(det(Jacobian(M1).T * Jacobian(M1))))'
+    assert str(expr.args[1]) == 'Integral(B, u1*v1*sqrt(det(Jacobian(M2).T * Jacobian(M2))))'
 
     expr = LogicalExpr(int_1(plus(u1)*plus(v1)), domain)
-    assert str(expr) == 'Integral(A|B, PlusInterfaceOperator(u1)*PlusInterfaceOperator(v1)*sqrt(det((Jacobian(M1|M2)).T * Jacobian(M1|M2))))'
+    assert str(expr) == 'Integral(A|B, PlusInterfaceOperator(u1)*PlusInterfaceOperator(v1)*sqrt(det(Jacobian(M1|M2).T * Jacobian(M1|M2))))'
 
     expr = LogicalExpr(int_1(minus(u1)*minus(v1)), domain)
-    assert str(expr) == 'Integral(A|B, MinusInterfaceOperator(u1)*MinusInterfaceOperator(v1)*sqrt(det((Jacobian(M1|M2)).T * Jacobian(M1|M2))))'
+    assert str(expr) == 'Integral(A|B, MinusInterfaceOperator(u1)*MinusInterfaceOperator(v1)*sqrt(det(Jacobian(M1|M2).T * Jacobian(M1|M2))))'
 
     expr = LogicalExpr(int_0(dot(u2,v2)), domain)
-    assert str(expr.args[0]) == 'Integral(A, Dot(u2, v2)*sqrt(det((Jacobian(M1)).T * Jacobian(M1))))'
-    assert str(expr.args[1]) == 'Integral(B, Dot(u2, v2)*sqrt(det((Jacobian(M2)).T * Jacobian(M2))))'
+    assert str(expr.args[0]) == 'Integral(A, Dot(u2, v2)*sqrt(det(Jacobian(M1).T * Jacobian(M1))))'
+    assert str(expr.args[1]) == 'Integral(B, Dot(u2, v2)*sqrt(det(Jacobian(M2).T * Jacobian(M2))))'
 
     expr = LogicalExpr(int_1(dot(plus(u2),plus(v2))), domain)
-    assert str(expr) == 'Integral(A|B, Dot(PlusInterfaceOperator(u2), PlusInterfaceOperator(v2))*sqrt(det((Jacobian(M1|M2)).T * Jacobian(M1|M2))))'
+    assert str(expr) == 'Integral(A|B, Dot(PlusInterfaceOperator(u2), PlusInterfaceOperator(v2))*sqrt(det(Jacobian(M1|M2).T * Jacobian(M1|M2))))'
 
     expr = LogicalExpr(int_1(dot(minus(u2), minus(v2))), domain)
-    assert str(expr) == 'Integral(A|B, Dot(MinusInterfaceOperator(u2), MinusInterfaceOperator(v2))*sqrt(det((Jacobian(M1|M2)).T * Jacobian(M1|M2))))'
+    assert str(expr) == 'Integral(A|B, Dot(MinusInterfaceOperator(u2), MinusInterfaceOperator(v2))*sqrt(det(Jacobian(M1|M2).T * Jacobian(M1|M2))))'
 
     expr = LogicalExpr(int_1(dot(grad(minus(u2)),grad(minus(v2)))), domain)
-    assert str(expr) == 'Integral(A|B, Dot((Jacobian(M1)**(-1)).T * Grad(MinusInterfaceOperator(u2)), (Jacobian(M1)**(-1)).T * Grad(MinusInterfaceOperator(v2)))*sqrt(det((Jacobian(M1|M2)).T * Jacobian(M1|M2))))'
+    assert str(expr) == 'Integral(A|B, Dot((Jacobian(M1)**(-1)).T * Grad(MinusInterfaceOperator(u2)), (Jacobian(M1)**(-1)).T * Grad(MinusInterfaceOperator(v2)))*sqrt(det(Jacobian(M1|M2).T * Jacobian(M1|M2))))'
 
     expr = LogicalExpr(int_1(dot(grad(plus(u2)),grad(plus(v2)))), domain)
-    assert str(expr) == 'Integral(A|B, Dot((Jacobian(M2)**(-1)).T * Grad(PlusInterfaceOperator(u2)), (Jacobian(M2)**(-1)).T * Grad(PlusInterfaceOperator(v2)))*sqrt(det((Jacobian(M1|M2)).T * Jacobian(M1|M2))))'
+    assert str(expr) == 'Integral(A|B, Dot((Jacobian(M2)**(-1)).T * Grad(PlusInterfaceOperator(u2)), (Jacobian(M2)**(-1)).T * Grad(PlusInterfaceOperator(v2)))*sqrt(det(Jacobian(M1|M2).T * Jacobian(M1|M2))))'
 
 
 def test_logical_expr_2d_3():
@@ -285,8 +285,8 @@ def test_logical_expr_2d_3():
     int_0 = lambda expr: integral(domain , expr)
 
     expr = LogicalExpr(int_0(dot(u,v)), domain)
-    assert str(expr.args[0]) == 'Integral(A, Dot((Jacobian(M1)**(-1)).T * u, (Jacobian(M1)**(-1)).T * v)*sqrt(det((Jacobian(M1)).T * Jacobian(M1))))'
-    assert str(expr.args[1]) == 'Integral(B, Dot((Jacobian(M2)**(-1)).T * u, (Jacobian(M2)**(-1)).T * v)*sqrt(det((Jacobian(M2)).T * Jacobian(M2))))'
+    assert str(expr.args[0]) == 'Integral(A, Dot((Jacobian(M1)**(-1)).T * u, (Jacobian(M1)**(-1)).T * v)*sqrt(det(Jacobian(M1).T * Jacobian(M1))))'
+    assert str(expr.args[1]) == 'Integral(B, Dot((Jacobian(M2)**(-1)).T * u, (Jacobian(M2)**(-1)).T * v)*sqrt(det(Jacobian(M2).T * Jacobian(M2))))'
 
 #==============================================================================
 def test_symbolic_expr_2d_1():

@@ -398,6 +398,7 @@ class JacobianSymbol(MatrixSymbolicExpr):
 #==============================================================================
 class JacobianInverseSymbol(MatrixSymbolicExpr):
     _axis = None
+    is_Matrix     = False
     def __new__(cls, mapping, axis=None):
         assert isinstance(mapping, Mapping)
         if axis is not None:
