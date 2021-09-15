@@ -97,7 +97,10 @@ class Inverse(MatrixSymbolicExpr):
 
     def _sympystr(self, printer):
         sstr = printer.doprint
-        return '{}**(-1)'.format(sstr(self.arg))
+        arg  = self.arg
+        if isinstance(arg, (Inverse, Transpose, Mul, Add, Pow)):
+            return '({})**(-1)'.format(sstr(arg))
+        return '{}**(-1)'.format(sstr(arg))
 
 class Transpose(MatrixSymbolicExpr):
     is_commutative = False
@@ -119,7 +122,10 @@ class Transpose(MatrixSymbolicExpr):
 
     def _sympystr(self, printer):
         sstr = printer.doprint
-        return '({}).T'.format(sstr(self.arg))
+        arg  = self.arg
+        if isinstance(arg, (Inverse, Transpose, Mul, Add, Pow)):
+            return '({}).T'.format(sstr(arg))
+        return '{}.T'.format(sstr(arg))
 
 class MatSymbolicMul(MatrixSymbolicExpr, Mul):
 
