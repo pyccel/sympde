@@ -289,14 +289,8 @@ class MatrixElement(Expr):
         sstr = printer.doprint
         return '{}[{}]'.format(sstr(self.args[0]),sstr(self.args[1]))
 
-def f1(x):
-    return MatSymbolicMul(*x.args)
-def f2(x):
-    return MatSymbolicAdd(*x.args)
-
 Basic._constructor_postprocessor_mapping[MatrixSymbolicExpr] = {
-    "Mul": [f1],
-    "Add": [f2]
+    "Mul": [lambda x: MatSymbolicMul(*x.args)],
+    "Add": [lambda x: MatSymbolicAdd(*x.args)]
 }
-
 
