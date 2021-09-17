@@ -368,7 +368,7 @@ class Boundary(BasicDomain):
 #==============================================================================
 class CornerBoundary(BasicDomain):
     """
-    Represents an undefined corner over a domain.
+    Represents an undefined corner over a domain in 2D.
 
     """
     def __new__(cls, *boundaries):
@@ -411,7 +411,7 @@ class CornerBoundary(BasicDomain):
 #==============================================================================
 class CornerInterface(BasicDomain):
     """
-    Represents a corner over multiple domains.
+    Represents a corner over multiple domains in 2D.
 
     """
     def __new__(cls, *corners):

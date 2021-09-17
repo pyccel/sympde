@@ -409,6 +409,7 @@ class Domain(BasicDomain):
                       logical_domain=logical_domain)
 
     def get_shared_corners(self):
+        """ Compute the corners of multiple patches in 2D """
 
         interfaces   = self.interfaces
         interfaces = (interfaces,) if isinstance(interfaces, Interface) else interfaces
