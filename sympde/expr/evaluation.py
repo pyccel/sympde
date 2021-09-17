@@ -472,10 +472,26 @@ class InterfaceExpression(KernelExpression):
 
 #==============================================================================
 class TerminalExpr(CalculusFunction):
-
+    """
+    This class takes a Sympy expression and transforms its vectorized operators into atomic ones.
+    """
     def __new__(cls, expr, domain, **options):
-        # (Try to) sympify args first
+        """
+        Atomize an expression defined in a domain
 
+        Parameters
+        ----------
+        expr: sympy.Expr
+          The mathematical expression
+
+        domain: Domain
+          The domain in which the expression is defined
+
+        Returns
+        -------
+          r: sympy.Expr or tuple of sympy.Expr
+            The atomized expression
+        """
         if options.pop('evaluate', True):
             r = cls.eval(expr, domain)
         else:
