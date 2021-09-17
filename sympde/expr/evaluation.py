@@ -642,14 +642,10 @@ class TerminalExpr(CalculusFunction):
             # ...
             if isinstance(expr.expr, Add):
                 for a in expr.expr.args:
+                    domains = _get_domain(a)
+                    if not isinstance(domains, Union):
+                        domains = (domains, )
 
-                    # ...
-                    try:
-                        domains = _get_domain(a)
-                        if not isinstance(domains, Union):
-                            domains = (domains, )
-                    except:
-                        pass
                     # ...
                     for d in domains:
                         d_expr[d] += a
