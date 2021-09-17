@@ -476,8 +476,8 @@ class InterfaceExpression(KernelExpression):
 #==============================================================================
 class TerminalExpr(CalculusFunction):
     """
-     This class takes a Sympy expression and transforms its vectorized operators into atomic ones.
-     in a specified domain.
+     This class takes a SymPDE expression and transforms its vector operators into atomic ones
+     for a specified domain.
 
      Parameters
      ----------
