@@ -23,7 +23,7 @@ from sympde.core.utils import random_string
 
 from sympde.calculus import jump, avg, minus, plus
 from sympde.calculus import Jump, is_zero
-from sympde.calculus.core import _generic_ops, _diff_ops,  Trace as mat_Trace
+from sympde.calculus.core import _generic_ops, _diff_ops
 from sympde.calculus.matrices import SymbolicDeterminant, Inverse, Transpose
 from sympde.calculus.matrices import MatSymbolicPow, MatrixElement, SymbolicTrace
 
@@ -110,9 +110,8 @@ def _unpack_functions(ls):
 
     return tuple(funcs)
 
-
 #==============================================================================
-def _get_trials_tests(expr, flatten):
+def _get_trials_tests(expr, *, flatten=False):
     """
     Get all scalar trial/test functions in the given expression.
 
@@ -120,6 +119,9 @@ def _get_trials_tests(expr, flatten):
     ----------
     expr : BasicForm | BasicExpr
         Symbolic expression.
+
+    flatten: Boolean, optional
+        Decompose the vector trial/test functions into their scalar components.
 
     Returns
     -------
@@ -131,8 +133,6 @@ def _get_trials_tests(expr, flatten):
         All scalar test functions in the given expression, with vector
         functions decomposed into their scalar components.
 
-    flatten: Boolean
-        Decompose the vector trial/test functions into their scalar components.
 
     """
 
@@ -172,6 +172,9 @@ def _to_matrix_form(expr, *, trials=None, tests=None, domain=None):
 
     3. if neither the trial nor the test functions are given, we treat the
        expression as a scalar functional and convert it to a 1x1 matrix.
+
+    The domain is needed when the expression is defined over an interface,
+    to delete the plus/minus operators and the InterfaceMapping object.
 
     Parameters
     ----------
@@ -775,10 +778,6 @@ class TerminalExpr(CalculusFunction):
 
             args = [cls.eval(i, domain=domain) for i in expr.args]
             return new(*args)
-
-        elif isinstance(expr, mat_Trace):
-            arg = cls.eval(expr.arg, domain=domain)
-            return Add(*[arg[i,i] for i in range(arg.shape[0])])
 
         elif isinstance(expr, _generic_ops):
             # if i = Dot(...) then type(i) is Grad

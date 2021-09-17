@@ -24,7 +24,7 @@ from sympde.core.basic        import CalculusFunction
 from sympde.core.basic        import _coeffs_registery
 from sympde.calculus.core     import PlusInterfaceOperator, MinusInterfaceOperator
 from sympde.calculus.core     import grad, div, curl, laplace #, hessian
-from sympde.calculus.core     import dot, inner, outer, _diff_ops, Trace as mat_Trace
+from sympde.calculus.core     import dot, inner, outer, _diff_ops
 from sympde.calculus.core     import has, DiffOperator
 
 from sympde.calculus.matrices import MatrixSymbolicExpr, MatrixElement, SymbolicTrace, Inverse
@@ -988,7 +988,7 @@ class LogicalExpr(CalculusFunction):
                     arg = type(expr.args[0])(arg)
                 return (1/J.det())*div(arg)
             elif isinstance(arg, PullBack):
-                return mat_Trace(mapping.jacobian.inv().T*grad(arg.test))
+                return SymbolicTrace(mapping.jacobian.inv().T*grad(arg.test))
             else:
                 raise NotImplementedError('TODO')
 
