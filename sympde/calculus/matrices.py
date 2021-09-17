@@ -84,6 +84,7 @@ class MatrixSymbolicExpr(Expr):
     __rtruediv__ = __rdiv__
 
 class Inverse(MatrixSymbolicExpr):
+    is_Matrix     = False
     is_commutative = False
     def __new__(cls, *args, **options):
         assert len(args) == 1
@@ -97,14 +98,24 @@ class Inverse(MatrixSymbolicExpr):
 
     def _sympystr(self, printer):
         sstr = printer.doprint
-        return '{}**(-1)'.format(sstr(self.arg))
+        arg  = self.arg
+        if not arg.is_Matrix:
+            return '({})**(-1)'.format(sstr(arg))
+        return '{}**(-1)'.format(sstr(arg))
 
 class Transpose(MatrixSymbolicExpr):
     is_commutative = False
+    is_Matrix      = False
     def __new__(cls, *args, **options):
         assert len(args) == 1
         if isinstance(args[0], Transpose):
             return args[0].arg
+        elif isinstance(args[0], Add):
+            return Add(*[Transpose(a) for a in args[0].args])
+        elif isinstance(args[0], Mul):
+            coeffs = [a for a in args[0].args if a.is_commutative]
+            args   = [a for a in args[0].args if not a.is_commutative]
+            return Mul(*coeffs)*Expr.__new__(cls, Mul(*args))
         return Expr.__new__(cls, *args)
 
     @property
@@ -113,10 +124,13 @@ class Transpose(MatrixSymbolicExpr):
 
     def _sympystr(self, printer):
         sstr = printer.doprint
-        return '{}.T'.format(sstr(self.arg))
+        arg  = self.arg
+        if not arg.is_Matrix:
+            return '({}).T'.format(sstr(arg))
+        return '{}.T'.format(sstr(arg))
 
 class MatSymbolicMul(MatrixSymbolicExpr, Mul):
-
+    is_Matrix     = False
     def __new__(cls, *args, **options):
         args = [sympify(a) for a in args if a != 1]
 
@@ -183,12 +197,12 @@ class MatSymbolicMul(MatrixSymbolicExpr, Mul):
         return Add.make_args(added) # it may have collapsed down to one term
 
 class MatSymbolicAdd(MatrixSymbolicExpr, Add):
-
+    is_Matrix     = False
     def __new__(cls, *args, **options):
         args = [sympify(a) for a in args if a != 0]
         newargs = []
         for i in args:
-            if isinstance(i, MatSymbolicAdd):
+            if isinstance(i, (MatSymbolicAdd, Add)):
                 newargs += list(i.args)
             else:
                 newargs.append(i)
@@ -199,7 +213,7 @@ class MatSymbolicAdd(MatrixSymbolicExpr, Add):
             return S.Zero
         elif len(args) == 1:
             return args[0]
-
+        args = sorted(args, key=str)
         return Expr.__new__(cls, *args)
 
     def _sympystr(self, printer):
@@ -208,6 +222,7 @@ class MatSymbolicAdd(MatrixSymbolicExpr, Add):
         return 'MatSymbolicAdd({})'.format(','.join((sstr(i) for i in self.args)))
 
 class MatSymbolicPow(MatrixSymbolicExpr, Pow):
+    is_Matrix     = False
     def _sympystr(self, printer):
         sstr = printer.doprint
         #return '**'.join((sstr(i) for i in self.args))
@@ -274,13 +289,8 @@ class MatrixElement(Expr):
         sstr = printer.doprint
         return '{}[{}]'.format(sstr(self.args[0]),sstr(self.args[1]))
 
-def f1(*x):
-    return MatSymbolicMul(*x)
-def f2(*x):
-    return MatSymbolicAdd(*x)
-
 Basic._constructor_postprocessor_mapping[MatrixSymbolicExpr] = {
-    "Mul": [f1],
-    "Add": [f2]
+    "Mul": [lambda x: MatSymbolicMul(*x.args)],
+    "Add": [lambda x: MatSymbolicAdd(*x.args)]
 }
 

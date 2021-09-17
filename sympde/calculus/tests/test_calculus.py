@@ -496,6 +496,42 @@ def test_calculus_2d_4():
     assert(plus(a*u) == a*plus(u))
     # ...
 
+def test_calculus_2d_5():
+
+    DIM = 2
+    domain = Domain('Omega', dim=DIM)
+
+    V = VectorFunctionSpace('V', domain, kind=None)
+
+    u, v = elements_of(V, names='u, v')
+
+    a = Constant('a', is_real=True)
+
+    # ... jump operator
+    assert(jump(u+v) == jump(u) + jump(v))
+    assert(jump(a*u) == a*jump(u))
+    # ...
+
+    # ... avg operator
+    assert(avg(u+v) == avg(u) + avg(v))
+    assert(avg(a*u) == a*avg(u))
+    # ...
+
+    # ... Dn operator
+    assert(Dn(u+v) == Dn(u) + Dn(v))
+    assert(Dn(a*u) == a*Dn(u))
+    # ...
+
+    # ... minus operator
+    assert(minus(u+v)      == minus(u) + minus(v))
+    assert(minus(a*u)      == a*minus(u))
+    assert(div(minus(u+v)) == div(minus(u)) + div(minus(v)))
+    # ...
+
+    # ... plus operator
+    assert(plus(u+v)      == plus(u) + plus(v))
+    assert(plus(a*u)      == a*plus(u))
+    assert(div(plus(u+v)) == div(plus(u)) + div(plus(v)))
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================

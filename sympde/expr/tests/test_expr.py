@@ -385,34 +385,34 @@ def test_terminal_expr_linear_2d_1():
 
     l = LinearForm(v, int_0(x*y*v))
 
-    print(TerminalExpr(l))
+    print(TerminalExpr(l, domain))
     print('')
     # ...
 
     # ...
     l = LinearForm(v, int_0(x*y*v + v))
-    print(TerminalExpr(l))
+    print(TerminalExpr(l, domain))
     print('')
     # ...
 
     # ...
     g = Matrix((x**2, y**2))
     l = LinearForm(v, int_1(v*dot(g, nn)))
-    print(TerminalExpr(l))
+    print(TerminalExpr(l, domain))
     print('')
     # ...
 
     # ...
     g = Matrix((x**2, y**2))
     l = LinearForm(v, int_1(v*dot(g, nn)) + int_0(x*y*v))
-    print(TerminalExpr(l))
+    print(TerminalExpr(l, domain))
     print('')
     # ...
 
     # ...
     l1 = LinearForm(v1, int_0(x*y*v1))
     l = LinearForm(v, l1(v))
-    print(TerminalExpr(l))
+    print(TerminalExpr(l, domain))
     print('')
     # ...
 
@@ -422,7 +422,7 @@ def test_terminal_expr_linear_2d_1():
     l2 = LinearForm(v2, int_0(dot(grad(v2), g)))
 
     l = LinearForm(v, l1(v) + l2(v))
-    print(TerminalExpr(l))
+    print(TerminalExpr(l, domain))
     print('')
     # ...
 
@@ -430,7 +430,7 @@ def test_terminal_expr_linear_2d_1():
     l1 = LinearForm(v1, int_0(x*y*v1))
     l2 = LinearForm(v1, int_0(v1))
     l = LinearForm(v, l1(v) + kappa*l2(v))
-    print(TerminalExpr(l))
+    print(TerminalExpr(l, domain))
     print('')
     # ...
 
@@ -440,7 +440,7 @@ def test_terminal_expr_linear_2d_1():
     l2 = LinearForm(v1, int_0(v1))
     l3 = LinearForm(v, int_1(v*dot(g, nn)))
     l = LinearForm(v, l1(v) + kappa*l2(v) + mu*l3(v))
-    print(TerminalExpr(l))
+    print(TerminalExpr(l, domain))
     print('')
     # ...
 
@@ -466,14 +466,14 @@ def test_terminal_expr_linear_2d_2():
 
     g = Matrix((x,y))
     l = LinearForm(v, int_0(dot(g, v)))
-    print(TerminalExpr(l))
+    print(TerminalExpr(l, domain))
     print('')
     # ...
 
     # ...
     g = Matrix((x,y))
     l = LinearForm(v, int_0(dot(g, v) + div(v)))
-    print(TerminalExpr(l))
+    print(TerminalExpr(l, domain))
     print('')
     # ...
 
@@ -549,7 +549,7 @@ def test_terminal_expr_linear_2d_3():
     int_1 = lambda expr: integral(B, expr)
 
     l = LinearForm(v, int_1(dot(grad(v), nn)))
-    print(TerminalExpr(l))
+    print(TerminalExpr(l, domain))
     print('')
     # ...
 
@@ -574,18 +574,20 @@ def test_terminal_expr_linear_2d_4():
     int_0 = lambda expr: integral(domain , expr)
 
     l = LinearForm(v, int_0(x*y*v))
-    print(TerminalExpr(l))
+    print(TerminalExpr(l, domain))
     print('')
     # ...
 #==============================================================================
-def test_terminal_expr_linear_2d_5(boundary=[r'\Gamma_1', r'\Gamma_3']):
+def test_terminal_expr_linear_2d_5():
 
     # ... abstract model
     domain = Square()
 
     V      = ScalarFunctionSpace('V', domain)
 
-    B_neumann = [domain.get_boundary(i) for i in boundary]
+    B_neumann = [domain.get_boundary(axis=0, ext=-1), 
+                domain.get_boundary(axis=1, ext=-1)]
+
     if len(B_neumann) == 1:
         B_neumann = B_neumann[0]
 
@@ -618,7 +620,7 @@ def test_terminal_expr_linear_2d_5(boundary=[r'\Gamma_1', r'\Gamma_3']):
     expr = l0(v) + l_B_neumann(v)
     l = LinearForm(v, expr)
 
-    print(TerminalExpr(l))
+    print(TerminalExpr(l, domain))
     print('')
     # ...
 
@@ -647,35 +649,35 @@ def test_terminal_expr_bilinear_2d_1():
 
     a = BilinearForm((u,v), int_0(u*v))
     print(a)
-    print(TerminalExpr(a))
+    print(TerminalExpr(a, domain))
     print('')
     # ...
 
     # ...
     a = BilinearForm((u,v), int_0(dot(grad(u),grad(v))))
     print(a)
-    print(TerminalExpr(a))
+    print(TerminalExpr(a, domain))
     print('')
     # ...
 
     # ...
     a = BilinearForm((u,v), int_0(u*v + dot(grad(u),grad(v))))
     print(a)
-    print(TerminalExpr(a))
+    print(TerminalExpr(a, domain))
     print('')
     # ...
 
     # ...
     a = BilinearForm((u,v), int_0(u*v + dot(grad(u),grad(v))) + int_1(v*dot(grad(u), nn)) )
     print(a)
-    print(TerminalExpr(a))
+    print(TerminalExpr(a, domain))
     print('')
     # ...
 
     # ...
     a = BilinearForm(((u1,u2),(v1,v2)), int_0(u1*v1 + u2*v2))
     print(a)
-    print(TerminalExpr(a))
+    print(TerminalExpr(a, domain))
     print('')
     # ...
 
@@ -683,7 +685,7 @@ def test_terminal_expr_bilinear_2d_1():
     a1 = BilinearForm((u1,v1), int_0(u1*v1))
     a = BilinearForm((u,v), a1(u,v))
     print(a)
-    print(TerminalExpr(a))
+    print(TerminalExpr(a, domain))
     print('')
     # ...
 
@@ -692,7 +694,7 @@ def test_terminal_expr_bilinear_2d_1():
     a2 = BilinearForm((u2,v2), int_0(dot(grad(u2), grad(v2))))
     a = BilinearForm((u,v), a1(u,v) + a2(u,v))
     print(a)
-    print(TerminalExpr(a))
+    print(TerminalExpr(a, domain))
     print('')
     # ...
 
@@ -701,7 +703,7 @@ def test_terminal_expr_bilinear_2d_1():
     a2 = BilinearForm((u2,v2), int_0(dot(grad(u2), grad(v2))))
     a = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v))
     print(a)
-    print(TerminalExpr(a))
+    print(TerminalExpr(a, domain))
     print('')
     # ...
 
@@ -711,7 +713,7 @@ def test_terminal_expr_bilinear_2d_1():
     a3 = BilinearForm((u,v), int_1(v*dot(grad(u), nn)))
     a = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v) + mu*a3(u,v))
     print(a)
-    print(TerminalExpr(a))
+    print(TerminalExpr(a, domain))
     print('')
     # ...
 
@@ -722,7 +724,7 @@ def test_terminal_expr_bilinear_2d_1():
                                + u*v / eps))
     a = BilinearForm((u,v), a0(u,v) + a_B1(u,v))
     print(a)
-    print(TerminalExpr(a))
+    print(TerminalExpr(a, domain))
     print('')
     # ...
 
@@ -748,18 +750,18 @@ def test_terminal_expr_bilinear_2d_2():
     int_1 = lambda expr: integral(B1, expr)
 
     a = BilinearForm((u,v), int_0(dot(u,v)))
-    print(TerminalExpr(a))
+    print(TerminalExpr(a, domain))
     print('')
 
     # ...
     a = BilinearForm((u,v), int_0(inner(grad(u),grad(v))))
-    print(TerminalExpr(a))
+    print(TerminalExpr(a, domain))
     print('')
     # ...
 
     # ...
     a = BilinearForm((u,v), int_0(dot(u,v) + inner(grad(u),grad(v))))
-    print(TerminalExpr(a))
+    print(TerminalExpr(a, domain))
     print('')
     # ...
 
@@ -790,24 +792,24 @@ def test_terminal_expr_bilinear_2d_3():
 
     a = BilinearForm((u,v), a0(u,v) + a_B(u,v))
 
-    print(TerminalExpr(a))
+    print(TerminalExpr(a, domain))
     print('')
 
     a = BilinearForm((u,v), int_0(u*v + dot(grad(u),grad(v))) + int_1(v*dot(grad(u), nn)) )
-    print(TerminalExpr(a))
+    print(TerminalExpr(a, domain))
     print('')
     # ...
 
     # ...
     a = BilinearForm((u,v), int_0(u*v))
-    print(TerminalExpr(a))
+    print(TerminalExpr(a, domain))
     print('')
     # ...
 
     # ...
     a1 = BilinearForm((u,v), int_0(u*v))
     a = BilinearForm((u,v), a1(u,v))
-    print(TerminalExpr(a))
+    print(TerminalExpr(a, domain))
     print('')
     # ...
 
@@ -815,7 +817,7 @@ def test_terminal_expr_bilinear_2d_3():
     a1 = BilinearForm((u,v), int_0(u*v))
     a2 = BilinearForm((u,v), int_0(dot(grad(u), grad(v))))
     a = BilinearForm((u,v), a1(u,v) + a2(u,v))
-    print(TerminalExpr(a))
+    print(TerminalExpr(a, domain))
     print('')
     # ...
 
@@ -823,7 +825,7 @@ def test_terminal_expr_bilinear_2d_3():
     a1 = BilinearForm((u,v), int_0(u*v))
     a2 = BilinearForm((u,v), int_0(dot(grad(u), grad(v))))
     a = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v))
-    print(TerminalExpr(a))
+    print(TerminalExpr(a, domain))
     print('')
     # ...
 
@@ -832,7 +834,7 @@ def test_terminal_expr_bilinear_2d_3():
     a2 = BilinearForm((u,v), int_0(dot(grad(u), grad(v))))
     a3 = BilinearForm((u,v), int_1(v*dot(grad(u), nn)))
     a = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v) + mu*a3(u,v))
-    print(TerminalExpr(a))
+    print(TerminalExpr(a, domain))
     print('')
 #    # ...
 
@@ -858,7 +860,7 @@ def test_terminal_expr_bilinear_2d_4():
     b = BilinearForm((v,p), int_0(div(v)*p))
     a = BilinearForm(((u,p),(v,q)), a(v,u) - b(v,p) + b(u,q))
 
-    print(TerminalExpr(a))
+    print(TerminalExpr(a, domain))
     print('')
 
 #==============================================================================
@@ -887,9 +889,9 @@ def test_terminal_expr_bilinear_3d_1():
     a2 = BilinearForm((um,vm), int_1(dot(grad(um),grad(vm))))
     a3 = BilinearForm((u,v), int_0(J*dot(grad(u),grad(v))))
 
-    e1 = TerminalExpr(a1)
-    e2 = TerminalExpr(a2)
-    e3 = TerminalExpr(a3)
+    e1 = TerminalExpr(a1, domain)
+    e2 = TerminalExpr(a2, domain)
+    e3 = TerminalExpr(a3, domain)
 
     assert e1[0].expr          == dx1(u)*dx1(v) + dx2(u)*dx2(v) + dx3(u)*dx3(v)
     assert e2[0].expr          == dx(um)*dx(vm) + dy(um)*dy(vm) + dz(um)*dz(vm)
@@ -1164,7 +1166,7 @@ def test_area_2d_1():
 
     # ...
     a = BilinearForm((v,u), int_0(area * u * v))
-    print(TerminalExpr(a))
+    print(TerminalExpr(a, domain))
     # ...
 
 #==============================================================================
@@ -1242,15 +1244,15 @@ def test_stabilization_2d_1():
     # ...
 
     print(a1)
-    print(TerminalExpr(a1))
+    print(TerminalExpr(a1, domain))
     print('')
 
     print(a2)
-    print(TerminalExpr(a2))
+    print(TerminalExpr(a2, domain))
     print('')
 
     print(a3)
-    print(TerminalExpr(a3))
+    print(TerminalExpr(a3, domain))
     print('')
 
 #==============================================================================
@@ -1276,7 +1278,7 @@ def test_user_function_2d_1():
     a = BilinearForm((v,u), int_0(expr))
 
     print(a)
-    print(TerminalExpr(a))
+    print(TerminalExpr(a, domain))
     print('')
     # ...
 
@@ -1285,7 +1287,7 @@ def test_user_function_2d_1():
     l = LinearForm(v, int_0(expr))
 
     print(l)
-    print(TerminalExpr(l))
+    print(TerminalExpr(l, domain))
     print('')
     # ...
 
@@ -1308,7 +1310,7 @@ def test_functional_2d_1():
     a = Functional(int_0(expr), domain)
 
     print(a)
-    print(TerminalExpr(a))
+    print(TerminalExpr(a, domain))
     print('')
     # ...
 
@@ -1318,7 +1320,7 @@ def test_functional_2d_1():
     a = Functional(int_0(expr), domain)
 
     print(a)
-    print(TerminalExpr(a))
+    print(TerminalExpr(a, domain))
     print('')
     # ...
 
@@ -1336,8 +1338,8 @@ def test_norm_2d_1():
     l2_norm_u = Norm(expr, domain, kind='l2')
     h1_norm_u = Norm(expr, domain, kind='h1')
 
-    print('> l2 norm = ', TerminalExpr(l2_norm_u))
-    print('> h1 norm = ', TerminalExpr(h1_norm_u))
+    print('> l2 norm = ', TerminalExpr(l2_norm_u, domain))
+    print('> h1 norm = ', TerminalExpr(h1_norm_u, domain))
     print('')
     # ...
 
@@ -1346,8 +1348,8 @@ def test_norm_2d_1():
     l2_norm_u = Norm(expr, domain, kind='l2')
     h1_norm_u = Norm(expr, domain, kind='h1')
 
-    print('> l2 norm = ', TerminalExpr(l2_norm_u))
-    print('> h1 norm = ', TerminalExpr(h1_norm_u))
+    print('> l2 norm = ', TerminalExpr(l2_norm_u, domain))
+    print('> h1 norm = ', TerminalExpr(h1_norm_u, domain))
     print('')
     # ...
 
@@ -1356,8 +1358,8 @@ def test_norm_2d_1():
     l2_norm_u = Norm(expr, domain, kind='l2')
     h1_norm_u = Norm(expr, domain, kind='h1')
 
-    print('> l2 norm = ', TerminalExpr(l2_norm_u))
-    print('> h1 norm = ', TerminalExpr(h1_norm_u))
+    print('> l2 norm = ', TerminalExpr(l2_norm_u, domain))
+    print('> h1 norm = ', TerminalExpr(h1_norm_u, domain))
     print('')
     # ...
 
@@ -1366,8 +1368,8 @@ def test_norm_2d_1():
     l2_norm_u = Norm(expr, domain, kind='l2')
     h1_norm_u = Norm(expr, domain, kind='h1')
 
-    print('> l2 norm = ', TerminalExpr(l2_norm_u))
-    print('> h1 norm = ', TerminalExpr(h1_norm_u))
+    print('> l2 norm = ', TerminalExpr(l2_norm_u, domain))
+    print('> h1 norm = ', TerminalExpr(h1_norm_u, domain))
     print('')
     # ...
 
@@ -1376,8 +1378,8 @@ def test_norm_2d_1():
     l2_norm_u = Norm(expr, domain, kind='l2')
     h1_norm_u = Norm(expr, domain, kind='h1')
 
-    print('> l2 norm = ', TerminalExpr(l2_norm_u))
-    print('> h1 norm = ', TerminalExpr(h1_norm_u))
+    print('> l2 norm = ', TerminalExpr(l2_norm_u, domain))
+    print('> h1 norm = ', TerminalExpr(h1_norm_u, domain))
     print('')
     # ...
 
@@ -1386,8 +1388,8 @@ def test_norm_2d_1():
     l2_norm_u = Norm(expr, domain, kind='l2')
     h1_norm_u = Norm(expr, domain, kind='h1')
 
-    print('> l2 norm = ', TerminalExpr(l2_norm_u))
-    print('> h1 norm = ', TerminalExpr(h1_norm_u))
+    print('> l2 norm = ', TerminalExpr(l2_norm_u, domain))
+    print('> h1 norm = ', TerminalExpr(h1_norm_u, domain))
     print('')
     # ...
 
@@ -1406,8 +1408,8 @@ def test_norm_2d_2():
     l2_norm_u = Norm(expr, domain, kind='l2')
     h1_norm_u = Norm(expr, domain, kind='h1')
 
-    print('> l2 norm = ', TerminalExpr(l2_norm_u))
-    print('> h1 norm = ', TerminalExpr(h1_norm_u))
+    print('> l2 norm = ', TerminalExpr(l2_norm_u, domain))
+    print('> h1 norm = ', TerminalExpr(h1_norm_u, domain))
     print('')
     # ...
 
@@ -1731,7 +1733,7 @@ def test_interface_integral_1():
 #                          + integral(I,      jump(u) * jump(v))
 #                          + integral(bnd_A,      dx(u)*v))
 
-    expr = TerminalExpr(a)
+    expr = TerminalExpr(a, domain)
     print(expr)
     # ...
 
@@ -1772,15 +1774,15 @@ def test_interface_integral_2():
     A = BilinearForm(((u1,u2),(v1,v2)), a(u1,v1) + a(u2,v2) + b(u1,v1) + b(u2,v2) + b(u1, v2) )
     B = BilinearForm(((u1,u2,u3),(v1,v2,v3)), a(u1,v1) + a(u2,v2) + a(u3,v3) + b(u1,v1) + b(u2,v2) + b(u1, v2) )
 
-    print(TerminalExpr(A))
-    print(TerminalExpr(B))
+    print(TerminalExpr(A, domain))
+    print(TerminalExpr(B, domain))
     # ...
 
     # ... linear forms
     b = LinearForm(v, integral(I, jump(v)))
 
     b = LinearForm((v1,v2), b(v1) + b(v2) )
-    expr = TerminalExpr(b)
+    expr = TerminalExpr(b, domain)
     print(expr)
     # ...
 
@@ -1820,7 +1822,7 @@ def test_interface_integral_3():
     a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v)))
                           + integral(I,      jump(u) * jump(v)))
 
-    expr = TerminalExpr(a)
+    expr = TerminalExpr(a, domain)
     print(expr)
     # ...
 
@@ -1828,11 +1830,70 @@ def test_interface_integral_3():
     b = LinearForm(v, integral(domain, sin(x+y)*v)
                     + integral(I, cos(x+y) * jump(v)))
 
-    expr = TerminalExpr(b)
+    expr = TerminalExpr(b, domain)
     print(expr)
     # ...
 
+#==============================================================================
+def test_interface_integral_4():
 
+    # ...
+    A = Square('A')
+    B = Square('B')
+
+    domain = A.join(B, name = 'AB',
+               bnd_minus = A.get_boundary(axis=0, ext=1),
+               bnd_plus  = B.get_boundary(axis=0, ext=-1))
+
+    x,y = domain.coordinates
+    assert all([x.name == 'x1', y.name == 'x2'])
+
+    V1 = ScalarFunctionSpace('V1', domain, kind=None)
+    V2 = VectorFunctionSpace('V2', domain, kind=None)
+    assert(V1.is_broken)
+
+    u1, v1 = elements_of(V1, names='u1, v1')
+    u2, v2 = elements_of(V2, names='u2, v2')
+
+    # ...
+    I = domain.interfaces
+
+    a1 = BilinearForm((u1,v1), integral(I, plus(u1)*plus(v1)))
+
+    expr = TerminalExpr(a1, domain)
+
+    assert len(expr) == 1
+    assert expr[0].target == B.get_boundary(axis=0, ext=-1)
+    assert expr[0].expr   == u1*v1
+
+    a2 = BilinearForm((u1,v1), integral(I, minus(u1)*minus(v1)))
+
+    expr = TerminalExpr(a2, domain)
+
+    assert len(expr) == 1
+    assert expr[0].target == A.get_boundary(axis=0, ext=1)
+    assert expr[0].expr   == u1*v1
+
+
+    a1 = BilinearForm((u2,v2), integral(I, dot(plus(u2),plus(v2))))
+
+    expr = TerminalExpr(a1, domain)
+
+    assert len(expr) == 1
+    assert expr[0].target == B.get_boundary(axis=0, ext=-1)
+    assert expr[0].expr[0,0]   == u2[0]*v2[0]
+    assert expr[0].expr[1,1]   == u2[1]*v2[1]
+
+    a2 = BilinearForm((u2,v2), integral(I, dot(minus(u2),minus(v2))))
+
+    expr = TerminalExpr(a2, domain)
+
+    assert len(expr) == 1
+    assert expr[0].target == A.get_boundary(axis=0, ext=1)
+    assert expr[0].expr[0,0]   == u2[0]*v2[0]
+    assert expr[0].expr[1,1]   == u2[1]*v2[1]
+
+    # ...
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
