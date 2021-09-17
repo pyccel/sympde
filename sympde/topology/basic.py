@@ -306,7 +306,7 @@ class Boundary(BasicDomain):
         return self.domain.dim
 
     @property
-    def neighbours(self):
+    def adjacent_boundaries(self):
         boundaries = [a for a in self.domain.boundary if a.axis !=self.axis]
         return Union(*boundaries)
 
