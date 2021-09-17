@@ -419,7 +419,7 @@ class Domain(BasicDomain):
         boundaries    = {i.minus:i.plus for i in interfaces}
         boundaries.update({value:key for key, value in boundaries.items()})
 
-        not_treated_corners = set([tuple(set((b, n))) for b in boundaries for n in b.neighbours])
+        not_treated_corners = set([tuple(set((b, n))) for b in boundaries for n in b.adjacent_boundaries])
         grouped_corners     = []
 
         while not_treated_corners:
