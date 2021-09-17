@@ -411,7 +411,7 @@ class CornerBoundary(BasicDomain):
 #==============================================================================
 class CornerInterface(BasicDomain):
     """
-    Represents a corner over multiple domains in 2D.
+    Represents a shared corner over multiple patches in 2D.
 
     """
     def __new__(cls, *corners):
