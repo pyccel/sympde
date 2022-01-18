@@ -47,6 +47,7 @@ install_requires = [
 def setup_package():
 
     setup(packages = packages,
+          python_requires = '>=3.7',
           include_package_data = True,
           install_requires = install_requires,
           zip_safe = True,
