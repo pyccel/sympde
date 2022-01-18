@@ -2,8 +2,6 @@
 
 # TODO - assert the space type is not Undefined
 
-from collections import OrderedDict
-
 from sympy import Basic
 from sympy import Add, Mul
 from sympy import S
@@ -133,7 +131,7 @@ class ExteriorCalculusExpr(CalculusFunction):
         tests = kwargs.pop('tests', [])
         atoms = kwargs.pop('atoms', {})
 
-        assert(isinstance(atoms, (dict, OrderedDict)))
+        assert isinstance(atoms, dict)
 
         if _is_field(expr):
             return expr

@@ -2,7 +2,6 @@
 
 import numpy as np
 from itertools import groupby
-from collections import OrderedDict
 
 #from sympy.core.sympify import sympify
 from sympy.simplify.simplify import simplify

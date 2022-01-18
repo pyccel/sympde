@@ -1,7 +1,5 @@
 # coding: utf-8
 
-from collections import OrderedDict
-
 from sympy.tensor import Indexed
 
 from sympde.topology import InteriorDomain, Union
@@ -23,8 +21,8 @@ def test_interior_domain():
     D1 = InteriorDomain('D1', dim=2)
     D2 = InteriorDomain('D2', dim=2)
 
-    assert( D1.todict() == OrderedDict([('name', 'D1')]) )
-    assert( D2.todict() == OrderedDict([('name', 'D2')]) )
+    assert( D1.todict() == {'name': 'D1'} )
+    assert( D2.todict() == {'name': 'D2'} )
 
     assert( Union(D2, D1) == Union(D1, D2) )
 
@@ -32,8 +30,8 @@ def test_interior_domain():
 
     assert(D.dim == 2)
     assert(len(D) == 2)
-    assert( D.todict() == [OrderedDict([('name', 'D1')]),
-                           OrderedDict([('name', 'D2')])] )
+    assert( D.todict() == [{'name': 'D1'},
+                           {'name': 'D2'}] )
 
 #==============================================================================
 def test_topology_1():

@@ -1,7 +1,7 @@
 # coding: utf-8
 
 from itertools import product
-from collections import OrderedDict
+
 
 import numpy as np
 
@@ -257,8 +257,8 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
     if tests  is None: tests  = []
     # ...
 
-    int_expressions = OrderedDict()
-    bnd_expressions = OrderedDict()
+    int_expressions = {}
+    bnd_expressions = {}
 
     # ...
     # we replace all jumps
@@ -270,7 +270,7 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
     # ...
 
     # ...
-    d_trials = OrderedDict()
+    d_trials = {}
     for u in trials:
         u_minus = minus(u)
         u_plus  = plus(u)
@@ -279,7 +279,7 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
 #        # TODO add sub for avg
 #        expr = expr.subs({jump(u): u_minus - u_plus})
 
-    d_tests  = OrderedDict()
+    d_tests  = {}
     for v in tests:
         v_minus = minus(v)
         v_plus  = plus(v)
@@ -634,8 +634,8 @@ class TerminalExpr(CalculusFunction):
             if not isinstance(domains, Union):
                 domains  = (domains,)
             # ...
-            d_expr = OrderedDict()
-            d_int  = OrderedDict()
+            d_expr = {}
+            d_int  = {}
             for d in domains:
                 d_expr[d] = S.Zero
             # ...
@@ -692,7 +692,7 @@ class TerminalExpr(CalculusFunction):
                         d_expr[k] = v
             # ...
             trials, tests = _get_trials_tests(expr, flatten=True)
-            d_new = OrderedDict()
+            d_new = {}
             for domain, a in d_expr.items():
                 newexpr = cls.eval(a, domain=domain)
                 if newexpr != 0:
@@ -718,7 +718,7 @@ class TerminalExpr(CalculusFunction):
             keys = [k for k in d_new.keys() if isinstance(k, Union)]
             for domain in keys:
                 newexpr = d_new.pop(domain)
-                d       = OrderedDict((interior, newexpr) for interior in domain.as_tuple())
+                d       = {interior: newexpr for interior in domain.as_tuple()}
                             # ...
                 for k, v in d.items():
                     if k in d_new.keys():
@@ -849,7 +849,7 @@ def _split_test_function(expr):
         dim = expr.space.ldim
         name = expr.name
 
-        ls = OrderedDict()
+        ls = {}
         Di = Interval()
         for i in range(dim):
             Vi = ScalarFunctionSpace('tmp_V_{}'.format(i), domain=Di)
@@ -1075,7 +1075,7 @@ class TensorExpr(CalculusFunction):
             raise ValueError('Expecting one argument')
 
         expr = _args[0]
-        d_atoms = kwargs.pop('d_atoms', OrderedDict())
+        d_atoms = kwargs.pop('d_atoms', {})
         domain  = kwargs.pop('domain', None)
         expand  = kwargs.pop('expand', False)
 
@@ -1164,8 +1164,8 @@ class TensorExpr(CalculusFunction):
 
             # Prepare dictionary for '_tensorize_atomic_expr', which should
             # process all variables but leave fields unchanged:
-            d_atoms = OrderedDict(
-                [(v, _split_test_function(v)[v]) for v in variables] + [(f, (f,)) for f in fields])
+            d_atoms = {v: _split_test_function(v)[v] for v in variables}
+            d_atoms.update({f: (f,) for f in fields})
 
             # ...
             expr = cls.eval(terminal_expr, d_atoms=d_atoms, domain=domain)

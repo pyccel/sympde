@@ -42,7 +42,6 @@ install_requires = [
     'h5py',
     'pytest',
     'pyyaml',
-    'yamlloader'
 ]
 
 def setup_package():
