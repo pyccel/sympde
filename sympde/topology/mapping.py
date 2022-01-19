@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from collections  import OrderedDict
+
 
 from sympy                 import Indexed, IndexedBase, Idx
 from sympy                 import Matrix, ImmutableDenseMatrix
@@ -1303,7 +1303,7 @@ class SymbolicExpr(CalculusFunction):
             if indices:
                 index = indices[0]
                 code = ''
-                index = OrderedDict(sorted(index.items()))
+                index =dict(sorted(index.items()))
 
                 for k,n in list(index.items()):
                     code += k*n
@@ -1316,7 +1316,7 @@ class SymbolicExpr(CalculusFunction):
             if indices:
                 index = indices[0]
                 code = ''
-                index = OrderedDict(sorted(index.items()))
+                index = dict(sorted(index.items()))
                 for k,n in list(index.items()):
                     code += k*n
             return cls.eval(atom, code=code)

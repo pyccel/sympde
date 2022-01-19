@@ -3,7 +3,6 @@
 # TODO add action of diff operators on sympy known functions
 
 from itertools   import groupby
-from collections import OrderedDict
 
 import numpy as np
 
@@ -301,7 +300,7 @@ def get_index_derivatives(expr):
     """
     coord = ['x','y','z']
 
-    d = OrderedDict()
+    d = {}
     for c in coord:
         d[c] = 0
 
@@ -339,7 +338,7 @@ def get_index_logical_derivatives(expr):
     """
     coord = ['x1','x2','x3']
 
-    d = OrderedDict()
+    d = {}
     for c in coord:
         d[c] = 0
 

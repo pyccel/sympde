@@ -3,10 +3,8 @@
 import numpy as np
 import h5py
 import yaml
-import yamlloader
 import os
 
-from collections import OrderedDict
 from collections import abc
 
 from sympy import Integer
@@ -260,7 +258,7 @@ class Domain(BasicDomain):
              'boundary':     boundary,
              'connectivity': connectivity}
 
-        return OrderedDict(sorted(d.items()))
+        return dict(sorted(d.items()))
 
     def export( self, filename ):
 
@@ -268,7 +266,7 @@ class Domain(BasicDomain):
 
         # Dump metadata to string in YAML file format
         geo = yaml.dump( data   = yml,
-                         Dumper = yamlloader.ordereddict.Dumper )
+                         sort_keys = None)
 
         # Create HDF5 file (in parallel mode if MPI communicator size > 1)
         h5 = h5py.File( filename, mode='w' )

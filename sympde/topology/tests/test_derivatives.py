@@ -1,7 +1,5 @@
 # coding: utf-8
 
-from collections import OrderedDict
-
 from sympy import symbols
 from sympy import Tuple
 from sympy import Matrix
@@ -18,7 +16,7 @@ from sympde.topology import Mapping
 
 
 def indices_as_str(a):
-    a = OrderedDict(sorted(a.items()))
+    a = dict(sorted(a.items()))
     code = ''
     for k,n in list(a.items()):
         code += k*n

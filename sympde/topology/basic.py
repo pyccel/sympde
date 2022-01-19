@@ -1,7 +1,7 @@
 # coding: utf-8
 
 
-from collections import OrderedDict
+
 from collections import abc
 
 from sympy.core import Basic, Symbol, Expr
@@ -103,9 +103,7 @@ class InteriorDomain(BasicDomain):
         return '{}'.format(sstr(self.name))
 
     def todict(self):
-        name   = str(self.name)
-        d = {'name': name}
-        return OrderedDict(sorted(d.items()))
+        return {'name': str(self.name)}
 
 
 #==============================================================================
@@ -353,17 +351,10 @@ class Boundary(BasicDomain):
         return Union(self, other)
 
     def todict(self):
-        domain = str(self.domain.name)
-        name   = str(self.name)
-        axis   = str(self.axis)
-        ext    = str(self.ext)
-
-        d = {'patch': domain,
-             'name':  name,
-             'axis':  axis,
-             'ext':   ext}
-
-        return OrderedDict(sorted(d.items()))
+        return {'axis'  : str(self.axis),
+                'ext'  : str(self.ext),
+                'name' : str(self.name),
+                'patch': str(self.domain.name)}
 
 #==============================================================================
 class CornerBoundary(BasicDomain):
@@ -522,7 +513,7 @@ class Connectivity(abc.Mapping):
         if data is None:
             data = {}
         else:
-            assert( isinstance( data, (dict, OrderedDict)) )
+            assert isinstance( data, dict )
             for k,v in data.items():
                 assert( isinstance( k, str ) )
                 assert( isinstance(v, Interface) )
@@ -535,7 +526,7 @@ class Connectivity(abc.Mapping):
     @property
     def interfaces(self):
         ls = []
-        data = OrderedDict(sorted(self._data.items()))
+        data = dict(sorted(self._data.items()))
         for _,v in data.items():
             ls.append(v)
         return Union(*ls)
@@ -543,10 +534,10 @@ class Connectivity(abc.Mapping):
     def todict(self):
         # ... create the connectivity
         connectivity = {}
-        data = OrderedDict(sorted(self._data.items()))
+        data = dict(sorted(self._data.items()))
         for name, v in data.items():
             connectivity[name] = [v.minus.todict(), v.plus.todict()]
-        connectivity = OrderedDict(sorted(connectivity.items()))
+        connectivity = dict(sorted(connectivity.items()))
         # ...
 
         return connectivity
