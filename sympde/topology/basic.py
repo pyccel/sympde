@@ -103,9 +103,7 @@ class InteriorDomain(BasicDomain):
         return '{}'.format(sstr(self.name))
 
     def todict(self):
-        name   = str(self.name)
-        d = {'name': name}
-        return dict(sorted(d.items()))
+        return {'name': self.name}
 
 
 #==============================================================================
@@ -353,17 +351,10 @@ class Boundary(BasicDomain):
         return Union(self, other)
 
     def todict(self):
-        domain = str(self.domain.name)
-        name   = str(self.name)
-        axis   = str(self.axis)
-        ext    = str(self.ext)
-
-        d = {'patch': domain,
-             'name':  name,
-             'axis':  axis,
-             'ext':   ext}
-
-        return dict(sorted(d.items()))
+        return {'axis'  : str(self.axis),
+                'domain': str(self.domain),
+                'ext'   : str(self.ext),
+                'name'  : str(self.name)}
 
 #==============================================================================
 class CornerBoundary(BasicDomain):
