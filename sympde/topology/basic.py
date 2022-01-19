@@ -543,7 +543,7 @@ class Connectivity(abc.Mapping):
     def todict(self):
         # ... create the connectivity
         connectivity = {}
-        data = {k: v for k,v in sorted(self._data.items())}
+        data = dict(sorted(self._data.items()))
         for name, v in data.items():
             connectivity[name] = [v.minus.todict(), v.plus.todict()]
         connectivity = dict(sorted(connectivity.items()))
