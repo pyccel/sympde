@@ -103,7 +103,7 @@ class InteriorDomain(BasicDomain):
         return '{}'.format(sstr(self.name))
 
     def todict(self):
-        return {'name': self.name}
+        return {'name': str(self.name)}
 
 
 #==============================================================================
@@ -352,9 +352,9 @@ class Boundary(BasicDomain):
 
     def todict(self):
         return {'axis'  : str(self.axis),
-                'domain': str(self.domain),
-                'ext'   : str(self.ext),
-                'name'  : str(self.name)}
+                'ext'  : str(self.ext),
+                'name' : str(self.name),
+                'patch': str(self.domain.name)}
 
 #==============================================================================
 class CornerBoundary(BasicDomain):
