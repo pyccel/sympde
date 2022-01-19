@@ -1303,7 +1303,7 @@ class SymbolicExpr(CalculusFunction):
             if indices:
                 index = indices[0]
                 code = ''
-                index = {k: v for k,v in sorted(index.items())}
+                index =dict(sorted(index.items()))
 
                 for k,n in list(index.items()):
                     code += k*n
@@ -1316,7 +1316,7 @@ class SymbolicExpr(CalculusFunction):
             if indices:
                 index = indices[0]
                 code = ''
-                index = {k: v for k,v in sorted(index.items())}
+                index = dict(sorted(index.items()))
                 for k,n in list(index.items()):
                     code += k*n
             return cls.eval(atom, code=code)

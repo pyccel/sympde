@@ -16,7 +16,7 @@ from sympde.topology import Mapping
 
 
 def indices_as_str(a):
-    a = {k: v for k,v in sorted(a.items())}
+    a = dict(sorted(a.items()))
     code = ''
     for k,n in list(a.items()):
         code += k*n

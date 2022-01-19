@@ -718,7 +718,7 @@ class TerminalExpr(CalculusFunction):
             keys = [k for k in d_new.keys() if isinstance(k, Union)]
             for domain in keys:
                 newexpr = d_new.pop(domain)
-                d       = {interior: newexpr for interior in domain.as_tuple()}
+                d       = dict((interior, newexpr) for interior in domain.as_tuple())
                             # ...
                 for k, v in d.items():
                     if k in d_new.keys():
@@ -1164,8 +1164,8 @@ class TensorExpr(CalculusFunction):
 
             # Prepare dictionary for '_tensorize_atomic_expr', which should
             # process all variables but leave fields unchanged:
-            d_atoms = {v: _split_test_function(v)[v] for v in variables}
-            d_atoms.update({f: (f,) for f in fields})
+            d_atoms = dict(
+                [(v,_split_test_function(v)[v]) for v in variables] + [(f, (f,)) for f in fields])
 
             # ...
             expr = cls.eval(terminal_expr, d_atoms=d_atoms, domain=domain)

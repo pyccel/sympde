@@ -105,7 +105,7 @@ class InteriorDomain(BasicDomain):
     def todict(self):
         name   = str(self.name)
         d = {'name': name}
-        return {k: v for k,v in sorted(d.items())}
+        return dict(sorted(d.items()))
 
 
 #==============================================================================
@@ -363,7 +363,7 @@ class Boundary(BasicDomain):
              'axis':  axis,
              'ext':   ext}
 
-        return {k: v for k,v in sorted(d.items())}
+        return dict(sorted(d.items()))
 
 #==============================================================================
 class CornerBoundary(BasicDomain):
@@ -535,7 +535,7 @@ class Connectivity(abc.Mapping):
     @property
     def interfaces(self):
         ls = []
-        data = {k: v for k,v in sorted(self._data.items())}
+        data = dict(sorted(self._data.items()))
         for _,v in data.items():
             ls.append(v)
         return Union(*ls)
@@ -546,7 +546,7 @@ class Connectivity(abc.Mapping):
         data = {k: v for k,v in sorted(self._data.items())}
         for name, v in data.items():
             connectivity[name] = [v.minus.todict(), v.plus.todict()]
-        connectivity = {k: v for k,v in sorted(connectivity.items())}
+        connectivity = dict(sorted(connectivity.items()))
         # ...
 
         return connectivity

@@ -258,7 +258,7 @@ class Domain(BasicDomain):
              'boundary':     boundary,
              'connectivity': connectivity}
 
-        return {k: v for k,v in sorted(d.items())}
+        return dict(sorted(d.items()))
 
     def export( self, filename ):
 
