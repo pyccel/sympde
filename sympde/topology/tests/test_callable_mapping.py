@@ -1,0 +1,231 @@
+import numpy as np
+
+from sympde.topology.analytical_mapping import IdentityMapping, AffineMapping
+from sympde.topology.analytical_mapping import PolarMapping
+
+# Tolerance for testing float equality
+RTOL = 1e-15
+ATOL = 1e-15
+
+#==============================================================================
+def test_identity_mapping_1d():
+
+    F = IdentityMapping('F', dim=1)
+    f = F.get_callable_mapping()
+
+    assert f.ldim == 1
+    assert f.pdim == 1
+
+    x1_pts = [-0.7, 0.5, 33]
+
+    for x1 in x1_pts:
+        assert f(x1)              == (x1,)
+        assert f.jacobian(x1)     == 1.0
+        assert f.jacobian_inv(x1) == 1.0
+        assert f.metric(x1)       == 1.0
+        assert f.metric_det(x1)   == 1.0
+
+
+def test_identity_mapping_2d():
+
+    F = IdentityMapping('F', dim=2)
+    f = F.get_callable_mapping()
+
+    assert f.ldim == 2
+    assert f.pdim == 2
+
+    x1_pts = [-0.7, 0.5, 33]
+    x2_pts = [-0.2, 1.3, 14]
+
+    I = [[1, 0],
+         [0, 1]]
+
+    for x1 in x1_pts:
+        for x2 in x2_pts:
+            assert f(x1, x2) == (x1, x2)
+            assert np.array_equal(f.jacobian    (x1, x2), I)
+            assert np.array_equal(f.jacobian_inv(x1, x2), I)
+            assert np.array_equal(f.metric      (x1, x2), I)
+            assert f.metric_det(x1, x2) == 1.0
+
+
+def test_identity_mapping_3d():
+
+    F = IdentityMapping('F', dim=3)
+    f = F.get_callable_mapping()
+
+    assert f.ldim == 3
+    assert f.pdim == 3
+
+    x1_pts = [-0.5, 3]
+    x2_pts = [-0.2, 2]
+    x3_pts = [-1, 4.8]
+
+    I = [[1, 0, 0],
+         [0, 1, 0],
+         [0, 0, 1]]
+
+    for x1 in x1_pts:
+        for x2 in x2_pts:
+            for x3 in x3_pts:
+                assert f(x1, x2, x3) == (x1, x2, x3)
+                assert np.array_equal(f.jacobian    (x1, x2, x3), I)
+                assert np.array_equal(f.jacobian_inv(x1, x2, x3), I)
+                assert np.array_equal(f.metric      (x1, x2, x3), I)
+                assert f.metric_det(x1, x2, x3) == 1.0
+
+
+#------------------------------------------------------------------------------
+def test_affine_mapping_1d():
+
+    # x = 1 - x1
+    params = {'c1': 1, 'a11': -1}
+
+    F = AffineMapping('F', **params, dim=1)
+    f = F.get_callable_mapping()
+
+    assert f.ldim == 1
+    assert f.pdim == 1
+
+    assert f(0  ) == (1  ,)
+    assert f(0.5) == (0.5,)
+    assert f(1  ) == (0  ,)
+
+    for x1 in [0, 0.5, 1]:
+        assert f.jacobian(x1)     == -1
+        assert f.jacobian_inv(x1) == -1
+        assert f.metric(x1)       ==  1
+        assert f.metric_det(x1)   ==  1
+
+
+def test_affine_mapping_2d():
+
+    c1, c2 = (1, 2)
+    J = [[a11, a12], [a21, a22]] = [[3, 5], [-2, 4]]
+
+    params = dict(c1=c1, c2=c2, a11=a11, a12=a12, a21=a21, a22=a22)
+
+    F = AffineMapping('F', **params, dim=2)
+    f = F.get_callable_mapping()
+
+    assert f.ldim == 2
+    assert f.pdim == 2
+
+    J_det = a11 * a22 - a12 * a21
+    J_inv = [[ a22 / J_det, -a12 / J_det],
+             [-a21 / J_det,  a11 / J_det]]
+
+    G = [[a11 * a11 + a21 * a21, a11 * a12 + a21 * a22],
+         [a12 * a11 + a22 * a21, a12 * a12 + a22 * a22]]
+    G_det = G[0][0] * G[1][1] - G[0][1] * G[1][0]
+
+    x1_pts = [-0.7, 0.5, 33]
+    x2_pts = [-0.2, 1.3, 14]
+
+    for x1 in x1_pts:
+        for x2 in x2_pts:
+            x = c1 + a11 * x1 + a12 * x2
+            y = c2 + a21 * x1 + a22 * x2
+            assert f(x1, x2) == (x, y)
+            assert np.array_equal(f.jacobian    (x1, x2), J    )
+            assert np.array_equal(f.jacobian_inv(x1, x2), J_inv)
+            assert np.array_equal(f.metric      (x1, x2), G    )
+            assert f.metric_det(x1, x2) == G_det
+
+
+def test_affine_mapping_3d():
+
+    c1, c2, c3 = (-3, 1, 5)
+
+    [a11, a12, a13] = [ 2,  7, -1]
+    [a21, a22, a23] = [ 0,  3,  5]
+    [a31, a32, a33] = [-4, -1,  1]
+
+    params = dict(c1=c1, c2=c2, c3=c3,
+            a11=a11, a12=a12, a13=a13,
+            a21=a21, a22=a22, a23=a23,
+            a31=a31, a32=a32, a33=a33,)
+
+    F = AffineMapping('F', **params, dim=3)
+    f = F.get_callable_mapping()
+
+    assert f.ldim == 3
+    assert f.pdim == 3
+
+    J = np.array([[a11, a12, a13],
+               [a21, a22, a23],
+               [a31, a32, a33]])
+
+    J_adj = np.array([[a22*a33-a23*a32, a13*a32-a12*a33, a12*a23-a13*a22],
+                      [a23*a31-a21*a33, a11*a33-a13*a31, a13*a21-a11*a23],
+                      [a21*a32-a22*a31, a12*a31-a11*a32, a11*a22-a12*a21]])
+
+    J_det = (J * J_adj).sum()
+    J_inv = J_adj / J_det
+
+    G     = J.T @ J
+    G_det = J_det**2
+
+    x1_pts = [-0.5, 3]
+    x2_pts = [-0.2, 2]
+    x3_pts = [-1,   4]
+
+    for x1 in x1_pts:
+        for x2 in x2_pts:
+            for x3 in x3_pts:
+                x = c1 + a11 * x1 + a12 * x2 + a13 * x3
+                y = c2 + a21 * x1 + a22 * x2 + a23 * x3
+                z = c3 + a31 * x1 + a32 * x2 + a33 * x3
+                assert np.allclose(f(x1, x2, x3), (x, y, z), rtol=RTOL, atol=ATOL)
+                assert np.array_equal(f.jacobian    (x1, x2, x3), J    )
+                assert np.array_equal(f.jacobian_inv(x1, x2, x3), J_inv)
+                assert np.array_equal(f.metric      (x1, x2, x3), G    )
+                assert f.metric_det(x1, x2, x3) == G_det
+
+
+#------------------------------------------------------------------------------
+def test_polar_mapping():
+
+    c1, c2 = (-1, -1)
+    rmin, rmax = (1, 2)
+
+    params = dict(c1=c1, c2=c2, rmin=rmin, rmax=rmax)
+
+    F = PolarMapping('F', **params)
+    f = F.get_callable_mapping()
+
+    assert f.ldim == 2
+    assert f.pdim == 2
+
+    assert f(0, 0) == (0, -1)
+    assert f(1, 0) == (1, -1)
+    assert np.allclose(f(0, np.pi/2), (-1, 0))
+
+    x1_pts = [0, 0.5, 1]
+    x2_pts = [-0.2, 1.3, 14]
+
+    for x1 in x1_pts:
+        for x2 in x2_pts:
+            x  = c1 + (rmin * (1-x1) + rmax * x1) * np.cos(x2)
+            y  = c2 + (rmin * (1-x1) + rmax * x1) * np.sin(x2)
+
+            J  = [[(rmax-rmin) * np.cos(x2), -(rmin*(1-x1)+rmax*x1) * np.sin(x2)],
+                  [(rmax-rmin) * np.sin(x2),  (rmin*(1-x1)+rmax*x1) * np.cos(x2)]]
+            G  = [[(rmax-rmin)**2,                        0],
+                  [             0, (rmin*(1-x1)+rmax*x1)**2]]
+
+            G_det = G[0][0] * G[1][1] - G[0][1] * G[1][0]
+            J_det = J[0][0] * J[1][1] - J[0][1] * J[1][0]
+            J_inv = [[ J[1][1] / J_det, -J[0][1] / J_det],
+                     [-J[1][0] / J_det,  J[0][0] / J_det]]
+
+            assert f(x1, x2) == (x, y)
+            assert np.allclose(f.jacobian    (x1, x2), J    , rtol=RTOL, atol=ATOL)
+            assert np.allclose(f.jacobian_inv(x1, x2), J_inv, rtol=RTOL, atol=ATOL)
+            assert np.allclose(f.metric      (x1, x2), G    , rtol=RTOL, atol=ATOL)
+            assert np.allclose(f.metric_det  (x1, x2), G_det, rtol=RTOL, atol=ATOL)
+
+
+#------------------------------------------------------------------------------
+# TODO [YG 23.02.2022]: add unit tests for other mappings
+# TODO [YG 23.02.2022]: test with array arguments

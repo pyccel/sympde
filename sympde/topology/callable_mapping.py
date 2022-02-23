@@ -70,11 +70,11 @@ class CallableMapping:
 
     @property
     def ldim( self ):
-        return type( self ).symbolic.ldim
+        return self.symbolic_mapping.ldim
 
     @property
     def pdim( self ):
-        return type( self ).symbolic.pdim
+        return self.symbolic_mapping.pdim
 
     #--------------------------------------------------------------------------
     # Symbolic information
