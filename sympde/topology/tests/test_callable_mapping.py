@@ -124,8 +124,9 @@ def test_affine_mapping_2d():
 
     for x1 in x1_pts:
         for x2 in x2_pts:
-            assert f(x1, x2) == (c1 + a11 * x1 + a12 * x2,
-                                 c2 + a21 * x1 + a22 * x2)
+            x = c1 + a11 * x1 + a12 * x2
+            y = c2 + a21 * x1 + a22 * x2
+            assert f(x1, x2) == (x, y)
             assert np.array_equal(f.jacobian    (x1, x2), J    )
             assert np.array_equal(f.jacobian_inv(x1, x2), J_inv)
             assert np.array_equal(f.metric      (x1, x2), G    )
@@ -172,10 +173,9 @@ def test_affine_mapping_3d():
     for x1 in x1_pts:
         for x2 in x2_pts:
             for x3 in x3_pts:
-                (x, y, z) = (c1 + a11 * x1 + a12 * x2 + a13 * x3,
-                             c2 + a21 * x1 + a22 * x2 + a23 * x3,
-                             c3 + a31 * x1 + a32 * x2 + a33 * x3) 
-
+                x = c1 + a11 * x1 + a12 * x2 + a13 * x3
+                y = c2 + a21 * x1 + a22 * x2 + a23 * x3
+                z = c3 + a31 * x1 + a32 * x2 + a33 * x3
                 assert np.allclose(f(x1, x2, x3), (x, y, z), rtol=RTOL, atol=ATOL)
                 assert np.array_equal(f.jacobian    (x1, x2, x3), J    )
                 assert np.array_equal(f.jacobian_inv(x1, x2, x3), J_inv)
@@ -206,10 +206,8 @@ def test_polar_mapping():
 
     for x1 in x1_pts:
         for x2 in x2_pts:
-
             x  = c1 + (rmin * (1-x1) + rmax * x1) * np.cos(x2)
             y  = c2 + (rmin * (1-x1) + rmax * x1) * np.sin(x2)
-            r2 = (x - c1)**2 + (y - c2)**2
 
             J  = [[(rmax-rmin) * np.cos(x2), -(rmin*(1-x1)+rmax*x1) * np.sin(x2)],
                   [(rmax-rmin) * np.sin(x2),  (rmin*(1-x1)+rmax*x1) * np.cos(x2)]]
