@@ -451,7 +451,7 @@ def test_polar_mapping_array():
 
     J  = np.array([[(rmax-rmin) * np.cos(xx2), -(rmin*(1-xx1)+rmax*xx1) * np.sin(xx2)],
                    [(rmax-rmin) * np.sin(xx2),  (rmin*(1-xx1)+rmax*xx1) * np.cos(xx2)]])
-    
+
     G  = np.array([[np.full_like(xx1, (rmax-rmin)**2),         np.zeros_like(xx1)],
                    [               np.zeros_like(xx1), (rmin*(1-xx1)+rmax*xx1)**2]])
 
