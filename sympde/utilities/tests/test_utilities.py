@@ -133,6 +133,3 @@ def test_lambdify_sympde_2d():
     assert np.array_equal(sparse_input_ia, expected_ia)
     assert np.array_equal(sparse_input_da, expected_da)
     assert np.array_equal(sparse_input_sa, expected_sa)
-
-
-
