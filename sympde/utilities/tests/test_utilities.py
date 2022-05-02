@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 
 from sympy import Matrix, symbols, Array
-from sympy import S 
+from sympy import S
 from sympde.utilities.utils import lambdify_sympde
 
 
@@ -29,11 +29,11 @@ def test_lambdify_sympde_1d():
     scalar_input_ia = f_ia(0)
     scalar_input_da = f_da(0)
 
-    assert np.array_equal(scalar_input_i, 1) 
+    assert np.array_equal(scalar_input_i, 1)
     assert np.array_equal(scalar_input_d, 0)
     
     assert np.array_equal(scalar_input_ia, np.eye(2))
-    assert np.array_equal(scalar_input_da, np.full((2, 2), 0)) 
+    assert np.array_equal(scalar_input_da, np.full((2, 2), 0))
 
     array_input_i = f_i(np.linspace(0, 1, 10))
     array_input_d = f_d(np.linspace(0, 1, 10))
@@ -56,7 +56,7 @@ def test_lambdify_sympde_1d():
 def test_lambdify_sympde_2d():
     x,y = symbols("x, y")
 
-    independent_expr = S.One * 2 
+    independent_expr = S.One * 2
     dependent_expr = x + y
     semi_dependent_expr = x + 3
 
@@ -84,7 +84,7 @@ def test_lambdify_sympde_2d():
     assert np.array_equal(scalar_input_d, 0)
     assert np.array_equal(scalar_input_s, 3)
 
-    assert np.array_equal(scalar_input_ia, np.array([[0, 3, 5], [5, 3, 4]]))    
+    assert np.array_equal(scalar_input_ia, np.array([[0, 3, 5], [5, 3, 4]]))
     assert np.array_equal(scalar_input_da, np.array([[3, 3], [0, 0]]))
     assert np.array_equal(scalar_input_sa, np.array([[0, 0], [0, 5]]))
 

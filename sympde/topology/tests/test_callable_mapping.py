@@ -259,11 +259,11 @@ def test_identity_mapping_array_2d():
     xx1, xx2 = np.meshgrid(x1, x2)
 
     I = np.zeros((2, 2, 3, 3)) + np.eye(2)[..., None, None]
-    
+
     r1, r2 = f(xx1, xx2)
 
     assert np.array_equal(r1, xx1)
-    assert np.array_equal(r2, xx2) 
+    assert np.array_equal(r2, xx2)
     assert np.array_equal(f.jacobian    (xx1, xx2), I)
     assert np.array_equal(f.jacobian_inv(xx1, xx2), I)
     assert np.array_equal(f.metric      (xx1, xx2), I)

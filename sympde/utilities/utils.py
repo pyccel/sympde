@@ -4,16 +4,16 @@ from sympy import lambdify
 
 def lambdify_sympde(variables, expr):
     """
-    Custom lambify function that covers the 
+    Custom lambify function that covers the
     shortcomings of sympy's lambdify.
 
     Parameters
     ----------
     variables : sympy.core.symbol.Symbol or list of sympy.core.symbol.Symbol
         variables that appear in the expression
-    expr : 
+    expr :
         Sympy expression
-    
+
     Returns
     -------
     lambda_f : callable
@@ -21,7 +21,7 @@ def lambdify_sympde(variables, expr):
 
     Notes
     -----
-    Compared to Sympy's lambdify, this function 
+    Compared to Sympy's lambdify, this function
     is capable of properly handling constant values,
     and array_like structures where not all components
     depend on all variables. See below.
