@@ -6,7 +6,7 @@ def lambdify_sympde(variables, expr):
     """
     Custom lambify function that covers the
     shortcomings of sympy's lambdify. Most notably,
-    this function uses numpy broadcasting rules to 
+    this function uses numpy broadcasting rules to
     compute the shape of the output.
 
     Parameters
