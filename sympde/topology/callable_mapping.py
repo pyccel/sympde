@@ -1,5 +1,6 @@
+from sympde.utilities.utils import lambdify_sympde
 from .mapping import Mapping
-from sympy import lambdify, Symbol
+from sympy import Symbol
 
 class CallableMapping:
 
@@ -32,19 +33,19 @@ class CallableMapping:
             metric_det  = metric_det.subs(subs)
 
         # Callable function: __call__
-        self._func_eval = tuple(lambdify( variables, expr, 'numpy' ) for expr in expressions)
+        self._func_eval = tuple(lambdify_sympde( variables, expr) for expr in expressions)
 
         # Callable function: jac_mat
-        self._jacobian = lambdify( variables, jac, 'numpy' )
+        self._jacobian = lambdify_sympde( variables, jac)
 
         # Callable function: jac_mat_inv
-        self._jacobian_inv = lambdify( variables, inv_jac, 'numpy' )
+        self._jacobian_inv = lambdify_sympde( variables, inv_jac)
 
         # Callable function: metric
-        self._metric = lambdify( variables, metric, 'numpy' )
+        self._metric = lambdify_sympde( variables, metric)
 
         # Callable function: metric_det
-        self._metric_det = lambdify( variables, metric_det, 'numpy' )
+        self._metric_det = lambdify_sympde( variables, metric_det)
 
         # Symbolic information
         self._params           = params
