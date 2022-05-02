@@ -33,7 +33,7 @@ def test_lambdify_sympde_1d():
     assert np.array_equal(scalar_input_d, 0)
 
     assert np.array_equal(scalar_input_ia, np.eye(2))
-    assert np.array_equal(scalar_input_da, np.full((2, 2), 0))
+    assert np.array_equal(scalar_input_da, np.zeros(2, 2))
 
     array_input_i = f_i(np.linspace(0, 1, 10))
     array_input_d = f_d(np.linspace(0, 1, 10))
@@ -41,7 +41,7 @@ def test_lambdify_sympde_1d():
     array_input_ia = f_ia(np.linspace(0, 1, 10))
     array_input_da = f_da(np.linspace(0, 1, 10))
 
-    assert np.array_equal(array_input_i, np.full((10,), 1))
+    assert np.array_equal(array_input_i, np.ones(10))
     assert np.array_equal(array_input_d, np.linspace(0, 1, 10))
 
     expected_a_ia = np.zeros((2, 2, 10)) + np.eye(2)[:, :, None]

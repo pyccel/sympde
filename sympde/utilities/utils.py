@@ -5,7 +5,9 @@ from sympy import lambdify
 def lambdify_sympde(variables, expr):
     """
     Custom lambify function that covers the
-    shortcomings of sympy's lambdify.
+    shortcomings of sympy's lambdify. Most notably,
+    this function uses numpy broadcasting rules to 
+    compute the shape of the output.
 
     Parameters
     ----------
@@ -77,5 +79,3 @@ def lambdify_sympde(variables, expr):
                 result[multi_index] = scalar_functions[multi_index](*XYZ)
             return result
         return f_vec_v
-
-
