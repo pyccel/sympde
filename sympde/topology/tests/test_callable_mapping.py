@@ -287,7 +287,7 @@ def test_identity_mapping_array_3d():
     xx1, xx2, xx3 = np.meshgrid(x1, x2, x3)
 
     r1, r2, r3 = f(xx1, xx2, xx3)
-    
+
     assert np.array_equal(r1, xx1)
     assert np.array_equal(r2, xx2)
     assert np.array_equal(r3, xx3)

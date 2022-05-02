@@ -69,7 +69,7 @@ def lambdify_sympde(variables, expr):
         scalar_functions = {}
         for multi_index in it.product(*tuple(range(s) for s in scalar_shape)):
             scalar_functions[multi_index] = lambdify(variables, array_expr[multi_index], 'numpy')
-        
+
         def f_vec_v(*XYZ):
             b = np.broadcast(*XYZ)
             result = np.zeros(scalar_shape + b.shape)
