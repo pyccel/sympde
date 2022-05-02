@@ -343,7 +343,7 @@ def test_affine_mapping_array_2d():
     x2 = np.array([-0.2, 1.3, 14])
 
     xx1, xx2 = np.meshgrid(x1, x2)
-    
+
     x = c1 + a11 * xx1 + a12 * xx2
     y = c2 + a21 * xx1 + a22 * xx2
 
@@ -448,8 +448,6 @@ def test_polar_mapping_array():
 
     x  = c1 + (rmin * (1-xx1) + rmax * xx1) * np.cos(xx2)
     y  = c2 + (rmin * (1-xx1) + rmax * xx1) * np.sin(xx2)
-
-
 
     J  = np.array([[(rmax-rmin) * np.cos(xx2), -(rmin*(1-xx1)+rmax*xx1) * np.sin(xx2)],
                    [(rmax-rmin) * np.sin(xx2),  (rmin*(1-xx1)+rmax*xx1) * np.cos(xx2)]])
