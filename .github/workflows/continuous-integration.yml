@@ -31,4 +31,4 @@ jobs:
           python -m pip install .
       - name: Test with pytest
         run: |
-          pytest --pyargs sympde
+          python -m pytest --pyargs sympde
