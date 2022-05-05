@@ -34,6 +34,7 @@ setup_args = dict(
 
 # ...
 packages = find_packages()
+tests = [p + '.tests' for p in packages]
 #packages = find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"])
 # ...
 
@@ -47,7 +48,7 @@ install_requires = [
 
 def setup_package():
 
-    setup(packages = packages,
+    setup(packages = packages + tests,
           python_requires = '>=3.7',
           include_package_data = True,
           install_requires = install_requires,
