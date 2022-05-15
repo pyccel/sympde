@@ -1288,6 +1288,8 @@ class SymbolicExpr(CalculusFunction):
                 else:
                     raise ValueError('Wrong index')
 
+                if base.is_plus:
+                    name = name + '_plus'
             else:
                 name =  '{base}_{i}'.format(base=base.name, i=expr.indices[0])
 

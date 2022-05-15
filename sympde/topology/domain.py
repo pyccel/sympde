@@ -104,10 +104,16 @@ class Domain(BasicDomain):
         if len(interiors) == 0 and dim is None:
             raise TypeError('No interior domain found')
 
-        else:
+        elif len(interiors) == 1:
             dtype = interiors[0].dtype
             dim   = interiors[0].dim
             interiors = Union(*interiors)
+        else:
+            dim   = interiors[0].dim
+            interiors = Union(*interiors)
+            dtype = [i.dtype for i in interiors]
+
+
 
         assert mapping is None and logical_domain is None or \
         mapping is not None and logical_domain  is not None
@@ -297,13 +303,54 @@ class Domain(BasicDomain):
         d_interior     = yml['interior']
         d_boundary     = yml['boundary']
         d_connectivity = yml['connectivity']
-        mapping        = Mapping('{}_mapping'.format(domain_name), dim=int(dim))
 
         if dtype == 'None': dtype = None
 
         if dtype is not None:
-            constructor = globals()[dtype['type']]
-            return mapping(constructor(domain_name, **dtype['parameters']))
+            if len(d_interior)==1:
+                constructor = globals()[dtype['type']]
+                mapping     = Mapping('mapping_0', dim=int(dim))
+                domain      = mapping(constructor(domain_name, **dtype['parameters']))
+            else:
+                constructors = [globals()[dt['type']] for dt in dtype]
+                interiors    = [cs(i['name'], **dt['parameters']) for cs,i,dt in zip(constructors, d_interior, dtype)]
+                patch_index  = {i['name']:ind for ind,i in enumerate(d_interior)}
+                mappings     = [Mapping('mapping_{}'.format(i), dim=int(dim)) for i in range(len(interiors))]
+                domains      = [mapping(i) for i,mapping in zip(interiors, mappings)]
+
+                boundaries   = []
+                for bd in d_boundary:
+                    name = bd['patch']
+                    axis = bd['axis']
+                    ext  = bd['ext']
+                    i    = patch_index[name]
+                    bd   = domains[i].get_boundary(axis=int(axis), ext=int(ext))
+                    boundaries.append(bd)
+
+                interfaces = []
+                for edge,(minus, plus) in d_connectivity.items():
+                    minus_name = minus['patch']
+                    minus_axis = minus['axis']
+                    minus_ext  = minus['ext']
+                    minus_patch_i = patch_index[minus_name]
+                    minus_bd   = domains[minus_patch_i].get_boundary(axis=int(minus_axis), ext=int(minus_ext))
+
+                    plus_name = plus['patch']
+                    plus_axis = plus['axis']
+                    plus_ext  = plus['ext']
+                    plus_patch_i = patch_index[plus_name]
+                    plus_bd   = domains[plus_patch_i].get_boundary(axis=int(plus_axis), ext=int(plus_ext))
+
+                    interfaces.append([minus_bd, plus_bd, 1])
+
+                domain = domains[0]
+                for p in domains[1:]:
+                    domain = domain.join(p, name=domain_name)
+
+                for I in interfaces:
+                    domain = domain.join(domain, domain.name, bnd_minus=I[0], bnd_plus=I[1], direction=I[2])
+
+            return domain
 
         # ... create sympde InteriorDomain (s)
         interior = [InteriorDomain(i['name'], dim=dim) for i in d_interior]
