@@ -103,7 +103,8 @@ class InteriorDomain(BasicDomain):
         return '{}'.format(sstr(self.name))
 
     def todict(self):
-        return {'name': str(self.name)}
+        return {'name': str(self.logical_domain.name if self.logical_domain else self.name ),
+                'mapping':str(self.mapping.name if self.mapping else None)}
 
 
 #==============================================================================
@@ -351,11 +352,14 @@ class Boundary(BasicDomain):
         return Union(self, other)
 
     def todict(self):
-        return {'axis'  : str(self.axis),
+        name = self.domain.logical_domain.name if self.logical_domain else self.domain.name
+        mapping = self.domain.mapping.name if self.domain.mapping else 'None'
+        d = {'axis'  : str(self.axis),
                 'ext'  : str(self.ext),
                 'name' : str(self.name),
-                'patch': str(self.domain.name)}
-
+                'patch': str(name),
+                'mapping':str(mapping)}
+        return d
 #==============================================================================
 class CornerBoundary(BasicDomain):
     """

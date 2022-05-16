@@ -21,8 +21,8 @@ def test_interior_domain():
     D1 = InteriorDomain('D1', dim=2)
     D2 = InteriorDomain('D2', dim=2)
 
-    assert( D1.todict() == {'name': 'D1'} )
-    assert( D2.todict() == {'name': 'D2'} )
+    assert( D1.todict() == {'name': 'D1', 'mapping':'None'} )
+    assert( D2.todict() == {'name': 'D2', 'mapping':'None'} )
 
     assert( Union(D2, D1) == Union(D1, D2) )
 
@@ -30,8 +30,8 @@ def test_interior_domain():
 
     assert(D.dim == 2)
     assert(len(D) == 2)
-    assert( D.todict() == [{'name': 'D1'},
-                           {'name': 'D2'}] )
+    assert( D.todict() == [{'name': 'D1', 'mapping':'None'},
+                           {'name': 'D2', 'mapping':'None'}] )
 
 #==============================================================================
 def test_topology_1():
@@ -49,20 +49,18 @@ def test_topology_1():
     bnd_B_2 = Boundary('Gamma_2', B)
     bnd_B_3 = Boundary('Gamma_3', B)
 
-    connectivity['I'] = Interface('I', bnd_A_1, bnd_B_2)
-
-    mapping        = Mapping('M', dim=2)
-    logical_domain = Domain('D', dim=2)
+    mapping    = Mapping('M', dim=2)
 
     interiors  = [A, B]
     boundaries = [bnd_A_2, bnd_A_3, bnd_B_1, bnd_B_3]
 
-    Omega = Domain('Omega',
+    lOmega = Domain('Omega',
                    interiors=interiors,
                    boundaries=boundaries,
-                   connectivity=connectivity,
-                   mapping=mapping,
-                   logical_domain=logical_domain)
+                   connectivity=connectivity)
+
+    Omega = mapping(lOmega)
+    Omega = Omega.join(Omega, name=Omega.name, bnd_minus=mapping(bnd_A_1), bnd_plus=mapping(bnd_B_2))
 
     interfaces = Omega.interfaces
     assert(isinstance(interfaces, Interface))
@@ -73,6 +71,36 @@ def test_topology_1():
 
     # read it again and check that it has the same description as Omega
     D = Domain.from_file('omega.h5')
+    assert( D.todict() == Omega.todict() )
+
+#==============================================================================
+def test_topology_2():
+
+    # ... create a domain with 2 subdomains D1 and D2
+    A = Square('A')
+    B = Square('B')
+    # ...
+
+    M1 = Mapping('M1', dim=2)
+    M2 = Mapping('M2', dim=2)
+
+    D1 = M1(A)
+    D2 = M2(B)
+
+    Omega = D1.join(D2, name = 'Omega',
+               bnd_minus = D1.get_boundary(axis=0, ext=1),
+               bnd_plus  = D2.get_boundary(axis=0, ext=-1))
+
+    interfaces = Omega.interfaces
+    assert(isinstance(interfaces, Interface))
+
+    # export
+    Omega.export('omega.h5')
+    # ...
+
+    # read it again and check that it has the same description as Omega
+    D = Domain.from_file('omega.h5')
+
     assert( D.todict() == Omega.todict() )
 
 #==============================================================================
@@ -173,7 +201,7 @@ def test_domain_join_line():
 
     print(AB)
     assert AB.interior   == Union(A.interior, B.interior)
-    assert AB.interfaces == Interface('A_x1|B_x1', AB_bnd_minus, AB_bnd_plus)
+    assert AB.interfaces == Interface('A|B', AB_bnd_minus, AB_bnd_plus)
     print(AB.connectivity)
     print('')
     # ...
@@ -189,7 +217,7 @@ def test_domain_join_line():
 
     print(ABC)
     assert ABC.interior == Union(A.interior, B.interior, C.interior)
-    assert ABC.interfaces == Union(Interface('A_x1|B_x1', AB_bnd_minus, AB_bnd_plus),Interface('B_x1|C_x1', BC_bnd_minus, BC_bnd_plus))
+    assert ABC.interfaces == Union(Interface('A|B', AB_bnd_minus, AB_bnd_plus),Interface('B|C', BC_bnd_minus, BC_bnd_plus))
     print(list(ABC.connectivity.items()))
     print('')
     # ...

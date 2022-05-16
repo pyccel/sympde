@@ -298,7 +298,7 @@ class Domain(BasicDomain):
         yml = yaml.load( h5['topology.yml'][()], Loader=yaml.SafeLoader )
 
         domain_name    = yml['name']
-        dim            = yml['dim']
+        dim            = int(yml['dim'])
         dtype          = yml['dtype']
         d_interior     = yml['interior']
         d_boundary     = yml['boundary']
@@ -307,105 +307,110 @@ class Domain(BasicDomain):
         if dtype == 'None': dtype = None
 
         if dtype is not None:
-            if len(d_interior)==1:
-                constructor = globals()[dtype['type']]
-                mapping     = Mapping('mapping_0', dim=int(dim))
-                domain      = mapping(constructor(domain_name, **dtype['parameters']))
-            else:
-                constructors = [globals()[dt['type']] for dt in dtype]
-                interiors    = [cs(i['name'], **dt['parameters']) for cs,i,dt in zip(constructors, d_interior, dtype)]
-                patch_index  = {i['name']:ind for ind,i in enumerate(d_interior)}
-                mappings     = [Mapping('mapping_{}'.format(i), dim=int(dim)) for i in range(len(interiors))]
-                domains      = [mapping(i) for i,mapping in zip(interiors, mappings)]
+            if isinstance(d_interior, dict):
+                d_interior = [d_interior]
+                dtype      = [dtype]
 
-                boundaries   = []
-                for bd in d_boundary:
-                    name = bd['patch']
-                    axis = bd['axis']
-                    ext  = bd['ext']
-                    i    = patch_index[name]
-                    bd   = domains[i].get_boundary(axis=int(axis), ext=int(ext))
-                    boundaries.append(bd)
+        if dtype is not None and all(dtype):
+            constructors = [globals()[dt['type']] for dt in dtype]
+            interiors    = [cs(i['name'], **dt['parameters']) for cs,i,dt in zip(constructors, d_interior, dtype)]
+            mappings     = [Mapping(I['mapping'], dim=dim) if I.get('mapping', "None") != "None" else None for I in d_interior]
+            domains      = [mapping(i) if mapping else i for i,mapping in zip(interiors, mappings)]
+            patch_index  = {I.name:ind for ind,I in enumerate(interiors)}
 
-                interfaces = []
-                for edge,(minus, plus) in d_connectivity.items():
-                    minus_name = minus['patch']
-                    minus_axis = minus['axis']
-                    minus_ext  = minus['ext']
-                    minus_patch_i = patch_index[minus_name]
-                    minus_bd   = domains[minus_patch_i].get_boundary(axis=int(minus_axis), ext=int(minus_ext))
+            boundaries   = []
+            for bd in d_boundary:
+                name = bd['patch']
+                axis = bd['axis']
+                ext  = bd['ext']
+                i    = patch_index[name]
+                bd   = domains[i].get_boundary(axis=int(axis), ext=int(ext))
+                boundaries.append(bd)
 
-                    plus_name = plus['patch']
-                    plus_axis = plus['axis']
-                    plus_ext  = plus['ext']
-                    plus_patch_i = patch_index[plus_name]
-                    plus_bd   = domains[plus_patch_i].get_boundary(axis=int(plus_axis), ext=int(plus_ext))
+            interfaces = []
+            for edge,(minus, plus) in d_connectivity.items():
+                minus_name = minus['patch']
+                minus_axis = minus['axis']
+                minus_ext  = minus['ext']
+                minus_patch_i = patch_index[minus_name]
+                minus_bd   = domains[minus_patch_i].get_boundary(axis=int(minus_axis), ext=int(minus_ext))
 
-                    interfaces.append([minus_bd, plus_bd, 1])
+                plus_name = plus['patch']
+                plus_axis = plus['axis']
+                plus_ext  = plus['ext']
+                plus_patch_i = patch_index[plus_name]
+                plus_bd   = domains[plus_patch_i].get_boundary(axis=int(plus_axis), ext=int(plus_ext))
 
-                domain = domains[0]
-                for p in domains[1:]:
-                    domain = domain.join(p, name=domain_name)
+                interfaces.append([minus_bd, plus_bd, 1])
 
-                for I in interfaces:
-                    domain = domain.join(domain, domain.name, bnd_minus=I[0], bnd_plus=I[1], direction=I[2])
+            domain = domains[0]
+            for p in domains[1:]:
+                domain = domain.join(p, name=domain_name)
+
+            for I in interfaces:
+                domain = domain.join(domain, domain.name, bnd_minus=I[0], bnd_plus=I[1], direction=I[2])
 
             return domain
 
         # ... create sympde InteriorDomain (s)
-        interior = [InteriorDomain(i['name'], dim=dim) for i in d_interior]
+        l_interiors = [Domain(i['name'], dim=dim).interior for i in d_interior]
+        mappings    = [Mapping(i['mapping'], dim=dim) if i['mapping'] != 'None' else None for i in d_interior]
+        l_interiors_index = {I.name:ind for ind,I in enumerate(l_interiors)}
 
         # create a dict of interiors accessed by name => needed for boundaries
-        d_interior = {}
-        for i in interior:
-            d_interior[i.name] = i
-
-        if len(interior) == 1:
-            interior = interior[0]
-        # ...
+        d_l_interiors  = {}
+        d_l_boundaries = {}
+        for i in l_interiors:
+            d_l_interiors[i.name] = i
+            d_l_boundaries[i.name] = []
 
         # ... create sympde Boundary (s)
-        boundary = []
+
         for desc in d_boundary:
             name  = desc['name']
-            patch = d_interior[desc['patch']]
+            patch = d_l_interiors[desc['patch']]
             axis  = desc['axis']
             ext   = desc['ext']
 
             if axis == 'None': axis = None
             if ext  == 'None': ext  = None
 
-            bnd = Boundary(name, patch, axis=axis, ext=ext)
-            boundary.append(bnd)
-
-        if len(boundary) == 1:
-            boundary = boundary[0]
+            lbnd = Boundary(name, patch, axis=axis, ext=ext)
+            d_l_boundaries[patch.name].append(lbnd)
         # ...
 
-        # ... create connectivity
-        connectivity = Connectivity()
+        subdomains = []
+        for name,M in zip(d_l_interiors, mappings):
+            I = d_l_interiors[name]
+            B = d_l_boundaries[name]
+            D = Domain(I.name, dim=dim, interiors=I, boundaries=B)
+            D = M(D) if M else D
+            subdomains.append(D)
+
+#         ... create connectivity
+        interfaces = []
         for edge,pair in d_connectivity.items():
             bnds = []
             for desc in pair:
-                patch = d_interior[desc['patch']]
+                patch = d_l_interiors[desc['patch']]
+                patch_index = l_interiors_index[patch.name]
                 name  = desc['name']
                 bnd   = Boundary(name, patch)
+                M     = mappings[patch_index]
+                bnd   = M(bnd) if M else bnd
                 bnds.append(bnd)
 
-            connectivity[edge] = Interface(edge, bnds[0], bnds[1])
+            interfaces.append(bnds)
         # ...
 
-        logical_domain = Domain(domain_name, dim=dim,
-                                interiors=interior,
-                                boundaries=boundary,
-                                connectivity=connectivity)
+        domain = subdomains[0]
+        for p in subdomains[1:]:
+            domain = domain.join(p, name=domain_name)
 
-        obj = Domain.__new__(cls, domain_name,
-                              interiors=interior,
-                              boundaries=boundary,
-                              connectivity=connectivity,
-                              mapping = mapping, logical_domain=logical_domain)
-        return obj
+        for I in interfaces:
+            domain = domain.join(domain, domain.name, bnd_minus=I[0], bnd_plus=I[1])
+
+        return domain
 
     def join(self, other, name, bnd_minus=None, bnd_plus=None, direction=None):
 
@@ -632,10 +637,7 @@ class NCube(Domain):
             raise ValueError("Min coordinates must be smaller than max")
 
         coord_names = 'x1:{}'.format(dim + 1)
-
         coordinates = symbols(coord_names)
-        intervals   = [Interval('{}_{}'.format(name, c.name), coordinate=c, bounds=(xmin, xmax))
-                       for c, xmin, xmax in zip(coordinates, min_coords, max_coords)]
 
         # Choose which type to use:
         #   a) if dim <= 3, use Line, Square or Cube;
@@ -673,12 +675,7 @@ class NCube(Domain):
                                     'min_coords': [*min_coords],
                                     'max_coords': [*max_coords]}}
 
-        if len(intervals) == 1:
-            interior = intervals[0]
-        else:
-            interior = ProductDomain(*intervals, name=name)
-
-        interior = NCubeInterior(interior, dim=dim, dtype=dtype, min_coords=tuple(min_coords), max_coords=tuple(max_coords))
+        interior = NCubeInterior(name, dim=dim, dtype=dtype, min_coords=tuple(min_coords), max_coords=tuple(max_coords))
 
         # Create instance of given type
         obj = super().__new__(cls, name, interiors=[interior], boundaries=interior.boundary)
