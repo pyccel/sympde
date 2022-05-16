@@ -328,7 +328,7 @@ class Domain(BasicDomain):
                 boundaries.append(bd)
 
             interfaces = []
-            for edge,(minus, plus) in d_connectivity.items():
+            for _,(minus, plus) in d_connectivity.items():
                 minus_name = minus['patch']
                 minus_axis = minus['axis']
                 minus_ext  = minus['ext']
