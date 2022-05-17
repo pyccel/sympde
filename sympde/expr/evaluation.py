@@ -594,7 +594,12 @@ class TerminalExpr(CalculusFunction):
                     newcoords = [Symbol(c.name+"_plus") for c in coordinates]
                     subs      = list(zip(coordinates, newcoords))
                     J = J.subs(subs)
-
+                elif mapping.is_plus:
+                    M = list(J.atoms(type(mapping)))[0]
+                    coordinates = [M[i] for i in range(domain.dim)]
+                    newcoords   = [mapping[i] for i in range(domain.dim)]
+                    subs = list(zip(coordinates, newcoords))
+                    J = J.subs(subs)
             return J
 
         elif isinstance(expr, SymbolicDeterminant):

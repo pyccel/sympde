@@ -50,7 +50,7 @@ def test_unit_line():
     # Export to file, read it again and compare with original domain
     domain.export('domain.h5')
     D = Domain.from_file('domain.h5')
-    assert D.logical_domain == domain
+    assert D == domain
 
 #==============================================================================
 def test_generic_line():
@@ -81,7 +81,7 @@ def test_generic_line():
     # Export to file, read it again and compare with original domain
     domain.export('domain.h5')
     D = Domain.from_file('domain.h5')
-    assert D.logical_domain == domain
+    assert D == domain
 
 #==============================================================================
 def test_unit_square():
@@ -98,9 +98,7 @@ def test_unit_square():
 
     # Domain's attributes
     assert isinstance(domain.interior, InteriorDomain)
-    assert isinstance(domain.interior.target, ProductDomain)
-    assert all(isinstance(i, Interval) for i in domain.interior.target.domains)
-    assert len(domain.interior.target.domains) == 2
+
     assert len(domain.boundary) == 4
     assert domain.dtype == {'type': 'Square',
                             'parameters': {'bounds1': [0, 1],
@@ -117,7 +115,7 @@ def test_unit_square():
     # Export to file, read it again and compare with original domain
     domain.export('domain.h5')
     D = Domain.from_file('domain.h5')
-    assert D.logical_domain == domain
+    assert D == domain
 
 #==============================================================================
 def test_rectangle():
@@ -134,9 +132,6 @@ def test_rectangle():
 
     # Domain's attributes
     assert isinstance(domain.interior, InteriorDomain)
-    assert isinstance(domain.interior.target, ProductDomain)
-    assert all(isinstance(i, Interval) for i in domain.interior.target.domains)
-    assert len(domain.interior.target.domains) == 2
     assert len(domain.boundary) == 4
     assert domain.dtype == {'type': 'Square',
                             'parameters': {'bounds1': [1, 5],
@@ -153,7 +148,7 @@ def test_rectangle():
     # Export to file, read it again and compare with original domain
     domain.export('domain.h5')
     D = Domain.from_file('domain.h5')
-    assert D.logical_domain == domain
+    assert D == domain
 
 #==============================================================================
 def test_unit_cube():
@@ -170,9 +165,6 @@ def test_unit_cube():
 
     # Domain's attributes
     assert isinstance(domain.interior, InteriorDomain)
-    assert isinstance(domain.interior.target, ProductDomain)
-    assert all(isinstance(i, Interval) for i in domain.interior.target.domains)
-    assert len(domain.interior.target.domains) == 3
     assert len(domain.boundary) == 6
     assert domain.dtype == {'type': 'Cube',
                             'parameters': {'bounds1': [0, 1],
@@ -191,7 +183,7 @@ def test_unit_cube():
     # Export to file, read it again and compare with original domain
     domain.export('domain.h5')
     D = Domain.from_file('domain.h5')
-    assert D.logical_domain == domain
+    assert D == domain
 
 #==============================================================================
 def test_orthogonal_hexahedron():
@@ -208,9 +200,6 @@ def test_orthogonal_hexahedron():
 
     # Domain's attributes
     assert isinstance(domain.interior, InteriorDomain)
-    assert isinstance(domain.interior.target, ProductDomain)
-    assert all(isinstance(i, Interval) for i in domain.interior.target.domains)
-    assert len(domain.interior.target.domains) == 3
     assert len(domain.boundary) == 6
     assert domain.dtype == {'type': 'Cube',
                             'parameters': {'bounds1': [-1, 1],
@@ -229,7 +218,7 @@ def test_orthogonal_hexahedron():
     # Export to file, read it again and compare with original domain
     domain.export('domain.h5')
     D = Domain.from_file('domain.h5')
-    assert D.logical_domain == domain
+    assert D == domain
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
