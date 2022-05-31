@@ -344,7 +344,7 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                     newexpr = newexpr.subs(mapping, mapping.plus)
 
                 for nn in newexpr.atoms(NormalVector):
-                    newexpr = newexpr.subs(nn, -nn)
+                    newexpr = newexpr.replace(nn, -nn)
 
                 if not is_zero(newexpr):
                     if interface.plus in bnd_expressions:
@@ -760,7 +760,7 @@ class TerminalExpr(CalculusFunction):
 
         elif isinstance(expr, NormalVector):
             lines = [[expr[i] for i in range(dim)]]
-            return ImmutableDenseMatrix(lines)
+            return ImmutableDenseMatrix(lines).T
 
         elif isinstance(expr, TangentVector):
             lines = [[expr[i] for i in range(dim)]]
