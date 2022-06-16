@@ -110,3 +110,14 @@ class TwistedTargetMapping(Mapping):
     _ldim        = 2
     _pdim        = 2
 
+#==============================================================================
+class SphericalMapping(Mapping):
+    """
+    Represents a Spherical 3D Mapping object.
+    """
+    _expressions = {'x': 'x1*sin(x2)*cos(x3)',
+                    'y': 'x1*sin(x2)*sin(x3)',
+                    'z': 'x1*cos(x2)'}
+
+    _ldim        = 3
+    _pdim        = 3
