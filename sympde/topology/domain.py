@@ -542,7 +542,7 @@ class Domain(BasicDomain):
         if isinstance(self.interior, InteriorDomain):
             assert names[0] == self.interior.name
             return self
-        
+
         # If all patches are joined we get the full domain
         # Same if the full domain is part of the union
         if len(names) == len(self.interior_names) or self.name in names:
@@ -571,7 +571,6 @@ class Domain(BasicDomain):
         else:
             interfaces_dict = {}
 
-
         interfaces = []
 
         for name in names:
@@ -587,7 +586,7 @@ class Domain(BasicDomain):
                 if other_name != name:
                     i_minus = interfaces_dict.pop((name, other_name), None)
                     i_plus = interfaces_dict.pop((other_name, name), None)
-                    
+
                     if other_name not in names:
                         if i_minus is not None:
                             boundaries.append(i_minus.minus)
