@@ -512,7 +512,7 @@ class Domain(BasicDomain):
         grouped_corners = set(tuple(grouped_corners))
         grouped_corners = Union(*[CornerInterface(*[CornerBoundary(*e) for e in cs]) for cs in grouped_corners])
         return grouped_corners
-    
+
     def get_subdomain(self, names):
         """
         Returns an individual patch or a Union of patches of a multipatch domain.
