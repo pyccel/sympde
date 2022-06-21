@@ -599,7 +599,8 @@ class Domain(BasicDomain):
                             interfaces.append((i_minus.name, i_minus))
 
             # Create domain with name, interior and boundaries
-            new_domain = Domain(name=name, interiors=interior, boundaries=boundaries)
+            new_domain = Domain(name=name, interiors=interior, boundaries=boundaries,
+                                mapping=interior.mapping, logical_domain=interior.logical_domain)
             try:
                 previous_domain = previous_domain.join(new_domain, name=f"{previous_domain.name}|{new_domain.name}")
             except NameError:
