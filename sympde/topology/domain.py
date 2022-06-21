@@ -516,23 +516,23 @@ class Domain(BasicDomain):
     def get_subdomain(self, names):
         """
         Returns an individual patch or a Union of patches of a multipatch domain.
-        
+
         Parameters
         ----------
         names : tuple of str or str
             Names of the patched to join.
-            If a string is given, the corresponding patch will be returned. 
+            If a string is given, the corresponding patch will be returned.
             If a tuple of strings is given, the Union of the corresponding subdomains will be returned.
-        
+
         Notes
         -----
         The subdomain is returned as it was before being joined which that its boundary includes the
-        boundaries that are part of an interface in the multipatch domain. 
-        """ 
+        boundaries that are part of an interface in the multipatch domain.
+        """
         if isinstance(names, str):
             names = (names,)
             assert names[0] in self.interior_names
-        
+
         elif isinstance(names, tuple):
             assert all(isinstance(name, str) for name in names)
             assert len(set(names)) == len(names)
@@ -608,7 +608,7 @@ class Domain(BasicDomain):
 
         joined_domain = previous_domain
         for k,v in interfaces:
-            joined_domain.connectivity[k] = v            
+            joined_domain.connectivity[k] = v
 
         return joined_domain
 
@@ -709,7 +709,7 @@ class NCubeInterior(InteriorDomain):
         if isinstance(self.boundary, Union):
             x = [i for i in self.boundary.args if i.ext == ext and i.axis==axis]
             if x:return x[0]
-        raise ValueError('> could not find boundary {}'.format(axis, ext))
+        raise ValueError('> could not find boundary with axis {} and ext {}'.format(axis, ext))
 #==============================================================================
 # Ncube's properties (in addition to Domain's properties):
 #   . min_coords (default value is tuple of zeros)

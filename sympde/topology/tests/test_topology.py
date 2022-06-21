@@ -280,7 +280,7 @@ def test_get_subdomain():
     ABC = AB.join(C, name = 'ABC',
                bnd_minus = BC_bnd_minus,
                bnd_plus  = BC_bnd_plus)
-    
+
     A_1 = AB.get_subdomain('A')
     A_2 = ABC.get_subdomain('A')
 
