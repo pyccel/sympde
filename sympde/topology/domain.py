@@ -520,13 +520,13 @@ class Domain(BasicDomain):
         Parameters
         ----------
         names : tuple of str or str
-            Names of the patched to join.
+            Names of the patches to join.
             If a string is given, the corresponding patch will be returned.
             If a tuple of strings is given, the Union of the corresponding subdomains will be returned.
 
         Notes
         -----
-        The subdomain is returned as it was before being joined which that its boundary includes the
+        The subdomain is returned as it was before being joined, which means that its boundary includes the
         boundaries that are part of an interface in the multipatch domain.
         """
         if isinstance(names, str):
@@ -561,7 +561,7 @@ class Domain(BasicDomain):
         else:
             boundary_dict = {}
 
-        # Build dictionnary of interfaces
+        # Build dictionary of interfaces
         if self.interfaces is not None:
             if isinstance(self.interfaces, Union):
                 interfaces_dict = {(i.minus.domain.name, i.plus.domain.name): i for i in self.interfaces.as_tuple()}
@@ -606,6 +606,7 @@ class Domain(BasicDomain):
             except NameError:
                 previous_domain = new_domain
 
+        # Add interfaces
         joined_domain = previous_domain
         for k,v in interfaces:
             joined_domain.connectivity[k] = v
