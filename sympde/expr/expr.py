@@ -670,7 +670,7 @@ def is_linear_expression(expr, args, integral=True, debug=True):
     # ...
     left_args  = []
     right_args = []
-    return True
+
     for arg in args:
         tag    = random_string( 4 )
 
