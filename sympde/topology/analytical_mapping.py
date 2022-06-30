@@ -110,3 +110,20 @@ class TwistedTargetMapping(Mapping):
     _ldim        = 2
     _pdim        = 2
 
+#==============================================================================
+class SphericalMapping(Mapping):
+    """
+    Parametrization of a sphere (or a portion of it) using spherical
+    coordinates (x1, x2, x3) = (r, theta, phi), where:
+
+      - radius      r >= 0
+      - inclination 0 <= theta <= pi
+      - azimuth     0 <= phi < 2 pi
+
+    """
+    _expressions = {'x': 'x1 * sin(x2) * cos(x3)',
+                    'y': 'x1 * sin(x2) * sin(x3)',
+                    'z': 'x1 * cos(x2)'}
+
+    _ldim        = 3
+    _pdim        = 3
