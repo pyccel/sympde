@@ -513,6 +513,107 @@ class Domain(BasicDomain):
         grouped_corners = Union(*[CornerInterface(*[CornerBoundary(*e) for e in cs]) for cs in grouped_corners])
         return grouped_corners
 
+    def get_subdomain(self, names):
+        """
+        Returns an individual patch or a Union of patches of a multipatch domain.
+
+        Parameters
+        ----------
+        names : tuple of str or str
+            Names of the patches to join.
+            If a string is given, the corresponding patch will be returned.
+            If a tuple of strings is given, the Union of the corresponding subdomains will be returned.
+
+        Notes
+        -----
+        The subdomain is returned as it was before being joined, which means that its boundary includes the
+        boundaries that are part of an interface in the multipatch domain.
+        """
+        if isinstance(names, str):
+            names = (names,)
+            assert names[0] in self.interior_names
+
+        elif isinstance(names, tuple):
+            assert all(isinstance(name, str) for name in names)
+            assert len(set(names)) == len(names)
+            assert all(name in self.interior_names or name == self.name for name in names)
+
+        # Check trivial case of single patch domain
+        if isinstance(self.interior, InteriorDomain):
+            assert names[0] == self.interior.name
+            return self
+
+        # If all patches are joined we get the full domain
+        # Same if the full domain is part of the union
+        if len(names) == len(self.interior_names) or self.name in names:
+            return self
+
+        # Build dictionary of interiors accessed by names
+        interior_dict = {i.name: i for i in self.interior.as_tuple()}
+
+        # Build dictionary of boundaries
+        if self.boundary is not None:
+            if isinstance(self.boundary, Union):
+                boundary_dict = {(b.domain.name, b.axis, b.ext): b for b in self.boundary.as_tuple()}
+            else:
+                b = self.boundary
+                boundary_dict = {(b.domain.name, b.axis, b.ext): b}
+        else:
+            boundary_dict = {}
+
+        # Build dictionary of interfaces
+        if self.interfaces is not None:
+            if isinstance(self.interfaces, Union):
+                interfaces_dict = {(i.minus.domain.name, i.plus.domain.name): i for i in self.interfaces.as_tuple()}
+            elif isinstance(self.interfaces, Interface):
+                i = self.interfaces
+                interfaces_dict = {(i.minus.domain.name, i.plus.domain.name): i}
+        else:
+            interfaces_dict = {}
+
+        interfaces = []
+
+        for name in names:
+            if name == self.name:
+                return self
+            interior = interior_dict[name]
+            boundaries = [boundary_dict.get((name, axis, ext)) for axis in range(self.dim) for ext in [-1, 1]]
+
+            boundaries = [b for b in boundaries if b is not None]
+
+            # Extract boundaries and interfaces from interfaces_dict
+            for other_name in self.interior_names:
+                if other_name != name:
+                    i_minus = interfaces_dict.pop((name, other_name), None)
+                    i_plus = interfaces_dict.pop((other_name, name), None)
+
+                    if other_name not in names:
+                        if i_minus is not None:
+                            boundaries.append(i_minus.minus)
+                        if i_plus is not None:
+                            boundaries.append(i_plus.plus)
+                    else:
+                        if i_plus is not None:
+                            interfaces.append((i_plus.name, i_plus))
+                        if i_minus is not None:
+                            interfaces.append((i_minus.name, i_minus))
+
+            # Create domain with name, interior and boundaries
+            new_domain = Domain(name=name, interiors=interior, boundaries=boundaries,
+                                mapping=interior.mapping, logical_domain=interior.logical_domain)
+            try:
+                previous_domain = previous_domain.join(new_domain, name=f"{previous_domain.name}|{new_domain.name}")
+            except NameError:
+                previous_domain = new_domain
+
+        # Add interfaces
+        joined_domain = previous_domain
+        for k,v in interfaces:
+            joined_domain.connectivity[k] = v
+
+        return joined_domain
+
+
 #==============================================================================
 class PeriodicDomain(BasicDomain):
 
@@ -609,7 +710,7 @@ class NCubeInterior(InteriorDomain):
         if isinstance(self.boundary, Union):
             x = [i for i in self.boundary.args if i.ext == ext and i.axis==axis]
             if x:return x[0]
-        raise ValueError('> could not find boundary {}'.format(name))
+        raise ValueError('> could not find boundary with axis {} and ext {}'.format(axis, ext))
 #==============================================================================
 # Ncube's properties (in addition to Domain's properties):
 #   . min_coords (default value is tuple of zeros)

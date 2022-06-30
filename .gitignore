@@ -108,3 +108,6 @@ venv.bak/
 doc/_build
 doc/utils/*.dot
 doc/utils/*.png
+
+# Swap files
+*.swp

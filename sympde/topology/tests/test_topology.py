@@ -258,6 +258,46 @@ def test_domain_join_square():
     print('')
     # ...
 
+#==============================================================================
+def test_get_subdomain():
+    A = Square('A')
+    B = Square('B')
+    C = Square('C')
+    # ...
+
+    # ...
+    AB_bnd_minus = A.get_boundary(axis=0, ext=1)
+    AB_bnd_plus  = B.get_boundary(axis=0, ext=-1)
+
+    AB = A.join(B, name = 'AB',
+               bnd_minus = AB_bnd_minus,
+               bnd_plus  = AB_bnd_plus)
+
+    # ...
+    BC_bnd_minus = B.get_boundary(axis=0, ext=1)
+    BC_bnd_plus  = C.get_boundary(axis=0, ext=-1)
+
+    ABC = AB.join(C, name = 'ABC',
+               bnd_minus = BC_bnd_minus,
+               bnd_plus  = BC_bnd_plus)
+
+    A_1 = AB.get_subdomain('A')
+    A_2 = ABC.get_subdomain('A')
+
+    assert A_1.boundary == A_2.boundary == A.boundary
+
+    A_pipe_B = ABC.get_subdomain(('A', 'B'))
+
+    assert A_pipe_B.boundary == AB.boundary
+    assert A_pipe_B.interfaces == AB.interfaces
+
+    A_pipe_B_pipe_C_1 = ABC.get_subdomain(('A', 'B', 'C'))
+
+    assert A_pipe_B_pipe_C_1 is ABC
+
+    A_pipe_B_pipe_C_2 = ABC.get_subdomain(('A', 'ABC'))
+
+    assert A_pipe_B_pipe_C_2 is ABC
 
 
 #==============================================================================
