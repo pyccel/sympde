@@ -698,6 +698,9 @@ class NCubeInterior(InteriorDomain):
     def boundary(self):
         return self._boundary
 
+    def __hash__(self):
+        return hash((self.args, self.min_coords, self.max_coords))
+
     def get_boundary(self, axis=None, ext=None):
         """return boundary by (axis, ext)."""
         # ...
