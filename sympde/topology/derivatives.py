@@ -520,22 +520,31 @@ class Cross_3d(CrossBasic):
 #==============================================================================
 class GradBasic(CalculusFunction):
 
-    nargs = None
+    nargs = None  # TODO [YG, 21.07.2022]: Check why we need this
     name = 'Grad'
 
     @cacheit
-    def __new__(cls, *args, **options):
+    def __new__(cls, u, **options):
         # (Try to) sympify args first
-
         if options.pop('evaluate', True):
-            r = cls.eval(*args)
+            return cls.eval(u)
         else:
-            r = None
+            return Basic.__new__(cls, u, **options)
 
-        if r is None:
-            return Basic.__new__(cls, *args, **options)
+    @classmethod
+    @cacheit
+    def eval(cls, u):
+        du = [dxi(u) for dxi in cls._derivatives]
+
+        # 1D case: scalar output
+        if len(du) == 1: return du[0]
+
+        # 2D and 3D cases
+        if isinstance(du[0], (Tuple, Matrix, ImmutableDenseMatrix)):
+            lines = [list(d[:]) for d in du]
         else:
-            return r
+            lines = [[d] for d in du]
+        return ImmutableDenseMatrix(lines)
 
     def __getitem__(self, indices, **kw_args):
         if is_sequence(indices):
@@ -544,59 +553,17 @@ class GradBasic(CalculusFunction):
         else:
             return Indexed(self, indices, **kw_args)
 
+
 class Grad_1d(GradBasic):
+    _derivatives = (dx,)
 
-    @classmethod
-    @cacheit
-    def eval(cls, *_args):
-
-        if not _args:
-            return
-
-        u = _args[0]
-
-        return dx(u)
 
 class Grad_2d(GradBasic):
+    _derivatives = (dx, dy)
 
-    @classmethod
-    @cacheit
-    def eval(cls, *_args):
-
-        if not _args:
-            return
-
-        u  = _args[0]
-        du = (dx(u), dy(u))
-
-        if isinstance(du[0], (Tuple, Matrix, ImmutableDenseMatrix)):
-            lines = [list(d[:]) for d in du]
-        else:
-            lines = [[d] for d in du]
-
-        v = ImmutableDenseMatrix(lines)
-        return v
 
 class Grad_3d(GradBasic):
-
-    @classmethod
-    @cacheit
-    def eval(cls, *_args):
-
-        if not _args:
-            return
-
-        u  = _args[0]
-        du = (dx(u), dy(u), dz(u))
-
-        if isinstance(du[0], (Tuple, Matrix, ImmutableDenseMatrix)):
-            lines = [list(d[:]) for d in du]
-        else:
-            lines = [[d] for d in du]
-
-        v = ImmutableDenseMatrix(lines)
-
-        return v
+    _derivatives = (dx, dy, dz)
 
 #==============================================================================
 class CurlBasic(CalculusFunction):
