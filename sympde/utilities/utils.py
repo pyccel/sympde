@@ -86,7 +86,7 @@ def lambdify_sympde(variables, expr):
         return f_vec_v
 
 
-def plot_topological_domain(domain, draw=True):
+def plot_domain(domain, draw=True):
     pdim = domain.dim if domain.mapping is None else domain.mapping.pdim
     if pdim == 2:
         plot_2d(domain, draw=draw)
