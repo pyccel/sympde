@@ -114,7 +114,6 @@ def plot_2d(domain, draw=True):
 
 def plot_3d(domain, draw=True):
     mapping = domain.mapping
-    d_log = domain.logical_domain
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection="3d")
