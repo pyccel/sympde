@@ -568,21 +568,15 @@ class Grad_3d(GradBasic):
 #==============================================================================
 class CurlBasic(CalculusFunction):
 
-    nargs = None
+    nargs = None  # TODO [YG, 21.07.2022]: Check why we need this
     name = 'Curl'
 
-    def __new__(cls, *args, **options):
+    def __new__(cls, u, **options):
         # (Try to) sympify args first
-
         if options.pop('evaluate', True):
-            r = cls.eval(*args)
+            return cls.eval(u)
         else:
-            r = None
-
-        if r is None:
-            return Basic.__new__(cls, *args, **options)
-        else:
-            return r
+            return Basic.__new__(cls, u, **options)
 
     def __getitem__(self, indices, **kw_args):
         if is_sequence(indices):
@@ -591,28 +585,18 @@ class CurlBasic(CalculusFunction):
         else:
             return Indexed(self, indices, **kw_args)
 
+
 class Curl_2d(CurlBasic):
 
     @classmethod
-    def eval(cls, *_args):
+    def eval(cls, u):
+        return dx(u[1]) - dy(u[0])
 
-        if not _args:
-            return
-
-        u = _args[0]
-
-        return dx(u[1])-dy(u[0])
 
 class Curl_3d(CurlBasic):
 
     @classmethod
-    def eval(cls, *_args):
-
-        if not _args:
-            return
-
-        u = _args[0]
-
+    def eval(cls, u):
         return ImmutableDenseMatrix([[dy(u[2]) - dz(u[1])],
                                      [dz(u[0]) - dx(u[2])],
                                      [dx(u[1]) - dy(u[0])]])
@@ -623,18 +607,12 @@ class Rot_2d(CalculusFunction):
     nargs = None
     name = 'Grad'
 
-    def __new__(cls, *args, **options):
+    def __new__(cls, u, **options):
         # (Try to) sympify args first
-
         if options.pop('evaluate', True):
-            r = cls.eval(*args)
+            return cls.eval(u)
         else:
-            r = None
-
-        if r is None:
-            return Basic.__new__(cls, *args, **options)
-        else:
-            return r
+            return Basic.__new__(cls, u, **options)
 
     def __getitem__(self, indices, **kw_args):
         if is_sequence(indices):
@@ -644,14 +622,8 @@ class Rot_2d(CalculusFunction):
             return Indexed(self, indices, **kw_args)
 
     @classmethod
-    def eval(cls, *_args):
-
-        if not _args:
-            return
-
-        u = _args[0]
-
-        return ImmutableDenseMatrix([[dy(u)],[-dx(u)]])
+    def eval(cls, u):
+        return ImmutableDenseMatrix([[dy(u)], [-dx(u)]])
 
 #==============================================================================
 class DivBasic(CalculusFunction):
