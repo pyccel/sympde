@@ -363,6 +363,7 @@ class ProductSpace(BasicFunctionSpace):
         name = ''.join(i.name for i in spaces)
         # ...
 
+        assert all(i.is_broken for i in spaces) or all(not i.is_broken for i in spaces)
         # ...
         def _get_name(V):
             if V.ldim == 1:
@@ -383,9 +384,10 @@ class ProductSpace(BasicFunctionSpace):
         # ...
         obj = Basic.__new__(cls, spaces)
 
-        obj._shape = shape
+        obj._shape       = shape
         obj._coordinates = coordinates
-        obj._name = name
+        obj._name        = name
+        obj._is_broken   = spaces[0].is_broken
         # ...
 
         return obj
@@ -522,6 +524,10 @@ class IndexedVectorFunction(Indexed):
     @property
     def ldim(self):
         return self.base.space.ldim
+
+    @property
+    def space(self):
+        return self.base.space
 
     def __hash__(self):
         return hash(self._args)

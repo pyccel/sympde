@@ -732,6 +732,11 @@ class Div_2d(DivBasic):
             return
 
         u = _args[0]
+        if isinstance(u, (Matrix, ImmutableDenseMatrix)) and u.shape[1]>1:
+            div = []
+            for j in range(u.shape[1]):
+                div.append(dx(u[0,j])+dy(u[1,j]))
+            return ImmutableDenseMatrix(div)
 
         return dx(u[0]) + dy(u[1])
 
@@ -744,6 +749,12 @@ class Div_3d(DivBasic):
             return
 
         u = _args[0]
+
+        if isinstance(u, (Matrix, ImmutableDenseMatrix)) and u.shape[1]>1:
+            div = []
+            for j in range(u.shape[1]):
+                div.append(dx(u[0,j])+dy(u[1,j])+dz(u[2,j]))
+            return ImmutableDenseMatrix(div)
 
         return dx(u[0]) + dy(u[1]) + dz(u[2])
 
@@ -1056,6 +1067,12 @@ class LogicalDiv_2d(DivBasic):
 
         u = _args[0]
 
+        if isinstance(u, (Matrix, ImmutableDenseMatrix)) and u.shape[1]>1:
+            div = []
+            for j in range(u.shape[1]):
+                div.append(dx1(u[0,j])+dx2(u[1,j]))
+            return ImmutableDenseMatrix(div)
+
         return dx1(u[0]) + dx2(u[1])
 
 class LogicalDiv_3d(DivBasic):
@@ -1067,6 +1084,12 @@ class LogicalDiv_3d(DivBasic):
             return
 
         u = _args[0]
+
+        if isinstance(u, (Matrix, ImmutableDenseMatrix)) and u.shape[1]>1:
+            div = []
+            for j in range(u.shape[1]):
+                div.append(dx1(u[0,j])+dx2(u[1,j])+dx3(u[2,j]))
+            return ImmutableDenseMatrix(div)
 
         return dx1(u[0]) + dx2(u[1]) + dx3(u[2])
 
