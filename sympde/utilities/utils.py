@@ -2,6 +2,11 @@ import numpy as np
 import itertools as it
 from sympy import lambdify
 
+from mpl_toolkits.mplot3d import *
+import matplotlib.pyplot as plt
+
+from sympde.topology import IdentityMapping, InteriorDomain, MultiPatchMapping
+
 def lambdify_sympde(variables, expr):
     """
     Custom lambify function that covers the
@@ -79,3 +84,93 @@ def lambdify_sympde(variables, expr):
                 result[multi_index] = scalar_functions[multi_index](*XYZ)
             return result
         return f_vec_v
+
+
+def plot_topological_domain(domain, draw=True):
+    pdim = domain.dim if domain.mapping is None else domain.mapping.pdim
+    if pdim == 2:
+        plot_2d(domain, draw=draw)
+    elif pdim ==3:
+        plot_3d(domain, draw=draw)
+
+
+def plot_2d(domain, draw=True):
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    if isinstance(domain.interior, InteriorDomain):
+        plot_2d_single_patch(domain.interior, domain.mapping, ax)
+    else:
+        if isinstance(domain.mapping, MultiPatchMapping):
+            for patch, mapping in domain.mapping.mappings.items():
+                plot_2d_single_patch(patch, mapping, ax)
+        else:
+            for interior in domain.interior.as_tuple():
+                plot_2d_single_patch(interior, interior.mapping, ax)
+
+    ax.set_aspect('equal', adjustable='box')
+    if draw:
+        plt.show()
+
+def plot_3d(domain, draw=True):
+    mapping = domain.mapping
+    d_log = domain.logical_domain
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection="3d")
+
+    if isinstance(domain.interior, InteriorDomain):
+        plot_3d_single_patch(domain.interior, domain.mapping, ax)
+    else:
+        if isinstance(domain.mapping, MultiPatchMapping):
+            for patch, mapping in domain.mapping.mappings.items():
+                plot_3d_single_patch(patch, mapping, ax)
+        else:
+            for interior in domain.interior.as_tuple():
+                plot_3d_single_patch(interior, interior.mapping, ax)
+
+    if draw:
+        plt.show()
+
+def plot_3d_single_patch(patch, mapping, ax):
+    if mapping is None:
+        mapping = IdentityMapping('Id', dim=3)
+
+    map_call = mapping.get_callable_mapping()
+    refinement = 21
+    mesh_grid = np.meshgrid(
+        *[np.linspace(patch.min_coords[i],
+                      patch.max_coords[i],
+                      num=refinement,
+                      endpoint=True) for i in range(3)],
+        indexing='ij',
+        sparse=True
+    )
+
+    XX, YY, ZZ = map_call(*mesh_grid)
+
+    for i in range(0, XX.shape[-1], 2):
+        ax.plot_wireframe(XX[:, :, i], YY[:, :, i], ZZ[:, :, i], color='k', cstride=20, rstride=20)
+    for j in range(0, XX.shape[-2], 2):
+        ax.plot_wireframe(XX[:, j, :], YY[:, j, :], ZZ[:, j, :], color='k', cstride=20, rstride=20)
+    for k in range(0, XX.shape[-3], 2):
+        ax.plot_wireframe(XX[k, :, :], YY[k, :, :], ZZ[k, :, :], color='k',  cstride=20, rstride=20)
+
+
+def plot_2d_single_patch(patch, mapping, ax):
+    if mapping is None:
+        mapping = IdentityMapping('Id', dim=3)
+
+    map_call = mapping.get_callable_mapping()
+    refinement = 41
+    mesh_grid = np.meshgrid(
+        *[np.linspace(patch.min_coords[i],
+                      patch.max_coords[i],
+                      num=refinement,
+                      endpoint=True) for i in range(2)],
+        indexing='ij',
+    )
+    XX, YY = map_call(*mesh_grid)
+
+    ax.plot(XX[:, ::5], YY[:, ::5], 'k')
+    ax.plot(XX[::5, :].T, YY[::5, :].T, 'k')
