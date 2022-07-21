@@ -604,7 +604,7 @@ class Curl_3d(CurlBasic):
 #==============================================================================
 class Rot_2d(CalculusFunction):
 
-    nargs = None
+    nargs = None  # TODO [YG, 21.07.2022]: Check why we need this
     name = 'Grad'
 
     def __new__(cls, u, **options):
@@ -628,21 +628,15 @@ class Rot_2d(CalculusFunction):
 #==============================================================================
 class DivBasic(CalculusFunction):
 
-    nargs = None
+    nargs = None  # TODO [YG, 21.07.2022]: Check why we need this
     name = 'Div'
 
-    def __new__(cls, *args, **options):
+    def __new__(cls, u, **options):
         # (Try to) sympify args first
-
         if options.pop('evaluate', True):
-            r = cls.eval(*args)
+            return cls.eval(u)
         else:
-            r = None
-
-        if r is None:
-            return Basic.__new__(cls, *args, **options)
-        else:
-            return r
+            return Basic.__new__(cls, u, **options)
 
     def __getitem__(self, indices, **kw_args):
         if is_sequence(indices):
@@ -651,70 +645,78 @@ class DivBasic(CalculusFunction):
         else:
             return Indexed(self, indices, **kw_args)
 
-class Div_1d(DivBasic):
+#    @classmethod
+#    def scalar_eval(cls, u):
+#        return sum(dxi(u[i]) for i, dxi in enumerate(cls._derivatives))
+#
+#    @classmethod
+#    def eval(cls, u):
+#        if isinstance(u, (Matrix, ImmutableDenseMatrix)) and u.shape[1] > 1:
+#            div = [cls.scalar_eval(u[:, j]) for j in range(u.shape[1])]
+#            return ImmutableDenseMatrix(div)
+#        else:
+#            return cls.scalar_eval(u)
+
 
     @classmethod
-    def eval(cls, *_args):
+    def eval(cls, u):
+        if isinstance(u, (Matrix, ImmutableDenseMatrix)) and u.shape[1] > 1:
+            div = [cls.eval(u[:, j]) for j in range(u.shape[1])]
+            return ImmutableDenseMatrix(div)
+        else:
+            return sum(dxi(u[i]) for i, dxi in enumerate(cls._derivatives))
 
-        if not _args:
-            return
 
-        u = _args[0]
-        return dx(u[0])
+class Div_1d(DivBasic):
+    _derivatives = (dx, )
+
 
 class Div_2d(DivBasic):
+    _derivatives = (dx, dy)
 
-    @classmethod
-    def eval(cls, *_args):
-
-        if not _args:
-            return
-
-        u = _args[0]
-        if isinstance(u, (Matrix, ImmutableDenseMatrix)) and u.shape[1]>1:
-            div = []
-            for j in range(u.shape[1]):
-                div.append(dx(u[0,j])+dy(u[1,j]))
-            return ImmutableDenseMatrix(div)
-
-        return dx(u[0]) + dy(u[1])
 
 class Div_3d(DivBasic):
+    _derivatives = (dx, dy, dz)
 
-    @classmethod
-    def eval(cls, *_args):
 
-        if not _args:
-            return
-
-        u = _args[0]
-
-        if isinstance(u, (Matrix, ImmutableDenseMatrix)) and u.shape[1]>1:
-            div = []
-            for j in range(u.shape[1]):
-                div.append(dx(u[0,j])+dy(u[1,j])+dz(u[2,j]))
-            return ImmutableDenseMatrix(div)
-
-        return dx(u[0]) + dy(u[1]) + dz(u[2])
+#class Div_1d(DivBasic):
+#    @classmethod
+#    def eval(cls, u):
+#        return dx(u[0])
+#
+#
+#class Div_2d(DivBasic):
+#    @classmethod
+#    def eval(cls, u):
+#        if isinstance(u, (Matrix, ImmutableDenseMatrix)) and u.shape[1] > 1:
+#            div = [dx(u[0, j]) + dy(u[1, j]) for j in range(u.shape[1])]
+#            return ImmutableDenseMatrix(div)
+#        else:
+#            return dx(u[0]) + dy(u[1])
+#
+#
+#class Div_3d(DivBasic):
+#    @classmethod
+#    def eval(cls, u):
+#        if isinstance(u, (Matrix, ImmutableDenseMatrix)) and u.shape[1] > 1:
+#            div = [dx(u[0, j]) + dy(u[1, j]) + dz(u[2, j])
+#                    for j in range(u.shape[1])]
+#            return ImmutableDenseMatrix(div)
+#        else:
+#            return dx(u[0]) + dy(u[1]) + dz(u[2])
 
 #==============================================================================
 class LaplaceBasic(CalculusFunction):
 
-    nargs = None
+    nargs = None  # TODO [YG, 21.07.2022]: Check why we need this
     name = 'Laplace'
 
-    def __new__(cls, *args, **options):
+    def __new__(cls, u, **options):
         # (Try to) sympify args first
-
         if options.pop('evaluate', True):
-            r = cls.eval(*args)
+            return cls.eval(u)
         else:
-            r = None
-
-        if r is None:
-            return Basic.__new__(cls, *args, **options)
-        else:
-            return r
+            return Basic.__new__(cls, u, **options)
 
     def __getitem__(self, indices, **kw_args):
         if is_sequence(indices):
@@ -723,66 +725,37 @@ class LaplaceBasic(CalculusFunction):
         else:
             return Indexed(self, indices, **kw_args)
 
-class Laplace_1d(LaplaceBasic):
-
     @classmethod
-    def eval(cls, *_args):
-
-        if not _args:
-            return
-
-        u = _args[0]
+    def eval(cls, u):
         if isinstance(u, VectorFunction):
             raise NotImplementedError('TODO')
 
-        return dx(dx(u))
+        return sum(dxi(dxi(u)) for dxi in cls._derivatives)
+
+
+class Laplace_1d(LaplaceBasic):
+    _derivatives = (dx,)
+
 
 class Laplace_2d(LaplaceBasic):
+    _derivatives = (dx, dy)
 
-    @classmethod
-    def eval(cls, *_args):
-
-        if not _args:
-            return
-
-        u = _args[0]
-        if isinstance(u, VectorFunction):
-            raise NotImplementedError('TODO')
-
-        return dx(dx(u)) + dy(dy(u))
 
 class Laplace_3d(LaplaceBasic):
-
-    @classmethod
-    def eval(cls, *_args):
-
-        if not _args:
-            return
-
-        u = _args[0]
-        if isinstance(u, VectorFunction):
-            raise NotImplementedError('TODO')
-
-        return dx(dx(u)) + dy(dy(u)) + dz(dz(u))
+    _derivatives = (dx, dy, dz)
 
 #==============================================================================
 class HessianBasic(CalculusFunction):
 
-    nargs = None
+    nargs = None  # TODO [YG, 21.07.2022]: Check why we need this
     name = 'Hessian'
 
-    def __new__(cls, *args, **options):
+    def __new__(cls, u, **options):
         # (Try to) sympify args first
-
         if options.pop('evaluate', True):
-            r = cls.eval(*args)
+            return cls.eval(u)
         else:
-            r = None
-
-        if r is None:
-            return Basic.__new__(cls, *args, **options)
-        else:
-            return r
+            return Basic.__new__(cls, u, **options)
 
     def __getitem__(self, indices, **kw_args):
         if is_sequence(indices):
@@ -791,50 +764,43 @@ class HessianBasic(CalculusFunction):
         else:
             return Indexed(self, indices, **kw_args)
 
+#    @classmethod
+#    def eval(cls, u):
+#        if isinstance(u, VectorFunction):
+#            raise NotImplementedError('TODO')
+#
+#        hessian = ImmutableDenseMatrix(
+#            [[di(dj(u)) for dj in cls._derivatives]
+#                        for di in cls._derivatives]
+#        )
+#
+#        return hessian[0, 0] if hessian.shape == (1, 1) else hessian
+
 class Hessian_1d(HessianBasic):
-
     @classmethod
-    def eval(cls, *_args):
-
-        if not _args:
-            return
-
-        u = _args[0]
+    def eval(cls, u):
         if isinstance(u, VectorFunction):
             raise NotImplementedError('TODO')
+        return dx(u)
 
-        return dx(dx(u))
 
 class Hessian_2d(HessianBasic):
-
     @classmethod
-    def eval(cls, *_args):
-
-        if not _args:
-            return
-
-        u = _args[0]
+    def eval(cls, u):
         if isinstance(u, VectorFunction):
             raise NotImplementedError('TODO')
-
         return ImmutableDenseMatrix([[dx(dx(u)), dx(dy(u))],
-                       [dx(dy(u)), dy(dy(u))]])
+                                     [dx(dy(u)), dy(dy(u))]])
+
 
 class Hessian_3d(HessianBasic):
-
     @classmethod
-    def eval(cls, *_args):
-
-        if not _args:
-            return
-
-        u = _args[0]
+    def eval(cls, u):
         if isinstance(u, VectorFunction):
             raise NotImplementedError('TODO')
-
         return ImmutableDenseMatrix([[dx(dx(u)), dx(dy(u)), dx(dz(u))],
-                       [dx(dy(u)), dy(dy(u)), dy(dz(u))],
-                       [dx(dz(u)), dy(dz(u)), dz(dz(u))]])
+                                     [dx(dy(u)), dy(dy(u)), dy(dz(u))],
+                                     [dx(dz(u)), dy(dz(u)), dz(dz(u))]])
 
 #==============================================================================
 class BracketBasic(CalculusFunction):
