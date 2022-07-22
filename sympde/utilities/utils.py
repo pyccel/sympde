@@ -145,7 +145,7 @@ def plot_2d(domain, draw=True, isolines=False, refinement=40):
 
     ax.set_aspect('equal', adjustable='box')
     ax.set_xlabel('X')
-    ax.set_ylabel('Y')
+    ax.set_ylabel('Y', rotation='horizontal')
     if draw:
         plt.show()
 
@@ -177,7 +177,7 @@ def plot_3d(domain, draw=True, refinement=15):
                 plot_3d_single_patch(interior, interior.mapping, ax)
 
     ax.set_xlabel('X')
-    ax.set_ylabel('Y')
+    ax.set_ylabel('Y', rotation='horizontal')
     ax.set_zlabel('Z')
     if draw:
         plt.show()
