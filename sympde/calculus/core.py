@@ -366,7 +366,6 @@ class Dot(BasicOperator):
 
         return c*obj
 
-
 #==============================================================================
 #TODO add cross(u,v) + cross(v,u) = 0
 class Cross(BasicOperator):
