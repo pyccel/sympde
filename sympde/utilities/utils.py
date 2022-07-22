@@ -6,6 +6,7 @@ from mpl_toolkits.mplot3d import *
 import matplotlib.pyplot as plt
 
 from sympde.topology import IdentityMapping, InteriorDomain, MultiPatchMapping
+from sympde.topology.analytical_mapping import TorusMapping
 
 def lambdify_sympde(variables, expr):
     """
@@ -87,6 +88,17 @@ def lambdify_sympde(variables, expr):
 
 
 def plot_domain(domain, draw=True):
+    """
+    Plots a 2D  or 3D domain using matplotlib
+
+    Parameters
+    ----------
+    domain : sympde.topology.Domain
+        Domain to plot
+
+    draw : bool
+        if true, plt.show() will be called.
+    """
     pdim = domain.dim if domain.mapping is None else domain.mapping.pdim
     if pdim == 2:
         plot_2d(domain, draw=draw)
@@ -95,6 +107,17 @@ def plot_domain(domain, draw=True):
 
 
 def plot_2d(domain, draw=True):
+    """
+    Plot a 2D domain
+
+    Parameters
+    ----------
+    domain : sympde.topology.Domain
+        Domain to plot
+
+    draw : bool
+        if true, plt.show() will be called.
+    """
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
@@ -113,6 +136,17 @@ def plot_2d(domain, draw=True):
         plt.show()
 
 def plot_3d(domain, draw=True):
+    """
+    Plot a 3D domain
+
+    Parameters
+    ----------
+    domain : sympde.topology.Domain
+        Domain to plot
+
+    draw : bool
+        if true, plt.show() will be called.
+    """
     mapping = domain.mapping
 
     fig = plt.figure()
@@ -132,6 +166,18 @@ def plot_3d(domain, draw=True):
         plt.show()
 
 def plot_3d_single_patch(patch, mapping, ax):
+    """
+    Plot a singe patch in a 3D domain
+
+    Parameters
+    ----------
+    patch : sympde.topology.InteriorDomain
+
+    mapping : sympde.topology.mapping
+
+    ax : mpl_toolkits.mplot3d.axes3d.Axes3D
+        Axes object on which the patch is drawn.
+    """
     if mapping is None:
         mapping = IdentityMapping('Id', dim=3)
 
@@ -157,19 +203,42 @@ def plot_3d_single_patch(patch, mapping, ax):
 
 
 def plot_2d_single_patch(patch, mapping, ax):
+    """
+    Plot a singe patch in a 2D domain
+
+    Parameters
+    ----------
+    patch : sympde.topology.InteriorDomain
+
+    mapping : sympde.topology.mapping
+
+    ax : matplotlib.axes.Axes
+        Axes object on which the patch is drawn.
+    """
     if mapping is None:
         mapping = IdentityMapping('Id', dim=3)
 
     map_call = mapping.get_callable_mapping()
     refinement = 41
-    mesh_grid = np.meshgrid(
-        *[np.linspace(patch.min_coords[i],
-                      patch.max_coords[i],
-                      num=refinement,
-                      endpoint=True) for i in range(2)],
-        indexing='ij',
-    )
-    XX, YY = map_call(*mesh_grid)
+    linspace_0 = np.linspace(patch.min_coords[0], patch.max_coords[0], refinement, endpoint=True)
+    linspace_1 = np.linspace(patch.min_coords[1], patch.max_coords[1], refinement, endpoint=True)
 
-    ax.plot(XX[:, ::5], YY[:, ::5], 'k')
-    ax.plot(XX[::5, :].T, YY[::5, :].T, 'k')
+    X_00, Y_00 = map_call(linspace_0, np.full(refinement, linspace_1[0]))
+    X_01, Y_01 = map_call(linspace_0, np.full(refinement, linspace_1[-1]))
+    X_10, Y_10 = map_call(np.full(refinement, linspace_0[0]), linspace_1)
+    X_11, Y_11 = map_call(np.full(refinement, linspace_0[-1]), linspace_1)
+
+
+    ax.plot(X_00, Y_00, 'k')
+    ax.plot(X_01, Y_01, 'k')
+    ax.plot(X_10, Y_10, 'k')
+    ax.plot(X_11, Y_11, 'k')
+
+if __name__ == '__main__':
+
+    from sympde.topology import Square, PolarMapping, Cube
+    A = Square('A', bounds1=(0, 1), bounds2=(0, np.pi/2))
+    F = PolarMapping('F', c1=0, c2=0, rmin=0.5, rmax=1)
+    Omega = F(A)
+
+    plot_domain(Omega)
