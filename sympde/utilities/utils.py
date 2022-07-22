@@ -144,6 +144,8 @@ def plot_2d(domain, draw=True, isolines=False, refinement=40):
                 plot_2d_single_patch(interior, interior.mapping, ax, isolines=isolines)
 
     ax.set_aspect('equal', adjustable='box')
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
     if draw:
         plt.show()
 
@@ -174,6 +176,9 @@ def plot_3d(domain, draw=True, refinement=15):
             for interior in domain.interior.as_tuple():
                 plot_3d_single_patch(interior, interior.mapping, ax)
 
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
     if draw:
         plt.show()
 
@@ -282,4 +287,6 @@ if __name__ == '__main__':
     F = PolarMapping('F', c1=0, c2=0, rmin=0.5, rmax=1)
     Omega = F(A)
 
+    from sympde.topology import Cube
+    Omega=Cube()
     plot_domain(Omega, draw=True, isolines=True)
