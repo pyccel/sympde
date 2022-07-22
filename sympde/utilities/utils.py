@@ -296,6 +296,4 @@ if __name__ == '__main__':
     F = PolarMapping('F', c1=0, c2=0, rmin=0.5, rmax=1)
     Omega = F(A)
 
-    from sympde.topology import Cube
-    Omega = Cube()
     plot_domain(Omega, draw=True, isolines=True)
