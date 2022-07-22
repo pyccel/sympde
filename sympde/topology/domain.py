@@ -529,6 +529,9 @@ class Domain(BasicDomain):
         The subdomain is returned as it was before being joined, which means that its boundary includes the
         boundaries that are part of an interface in the multipatch domain.
         """
+        if names == ():
+            return None
+
         if isinstance(names, str):
             names = (names,)
             assert names[0] in self.interior_names
@@ -697,6 +700,9 @@ class NCubeInterior(InteriorDomain):
     @property
     def boundary(self):
         return self._boundary
+
+    def __hash__(self):
+        return hash((self.args, self.min_coords, self.max_coords))
 
     def get_boundary(self, axis=None, ext=None):
         """return boundary by (axis, ext)."""

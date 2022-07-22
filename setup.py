@@ -43,6 +43,8 @@ install_requires = [
     'h5py',
     'pytest',
     'pyyaml',
+    'numpy',
+    'matplotlib'
 ]
 
 def setup_package():
