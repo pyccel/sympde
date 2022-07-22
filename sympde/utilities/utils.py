@@ -87,7 +87,7 @@ def lambdify_sympde(variables, expr):
         return f_vec_v
 
 
-def plot_domain(domain, draw=True):
+def plot_domain(domain, draw=True, isolines=False, refinement=None):
     """
     Plots a 2D  or 3D domain using matplotlib
 
@@ -96,17 +96,29 @@ def plot_domain(domain, draw=True):
     domain : sympde.topology.Domain
         Domain to plot
 
-    draw : bool
-        if true, plt.show() will be called.
+    draw : bool, default=True
+        If true, plt.show() will be called.
+
+    isolines : bool, default=False
+        If true and the domain is 2D, also plots iso-lines.
+
+    refinement : int or None
+        If None, uses 15 for 3D domains and 40 for 2D domains
     """
     pdim = domain.dim if domain.mapping is None else domain.mapping.pdim
     if pdim == 2:
-        plot_2d(domain, draw=draw)
+        if refinement is None:
+            plot_2d(domain, draw=draw, isolines=isolines)
+        else:
+            plot_2d(domain, draw=draw, isolines=isolines, refinement=refinement)
     elif pdim ==3:
-        plot_3d(domain, draw=draw)
+        if refinement is None:
+            plot_3d(domain, draw=draw)
+        else:
+            plot_3d(domain, draw=draw, refinement=refinement)
 
 
-def plot_2d(domain, draw=True):
+def plot_2d(domain, draw=True, isolines=False, refinement=40):
     """
     Plot a 2D domain
 
@@ -122,20 +134,20 @@ def plot_2d(domain, draw=True):
     ax = fig.add_subplot(111)
 
     if isinstance(domain.interior, InteriorDomain):
-        plot_2d_single_patch(domain.interior, domain.mapping, ax)
+        plot_2d_single_patch(domain.interior, domain.mapping, ax, isolines=isolines)
     else:
         if isinstance(domain.mapping, MultiPatchMapping):
             for patch, mapping in domain.mapping.mappings.items():
-                plot_2d_single_patch(patch, mapping, ax)
+                plot_2d_single_patch(patch, mapping, ax, isolines=isolines)
         else:
             for interior in domain.interior.as_tuple():
-                plot_2d_single_patch(interior, interior.mapping, ax)
+                plot_2d_single_patch(interior, interior.mapping, ax, isolines=isolines)
 
     ax.set_aspect('equal', adjustable='box')
     if draw:
         plt.show()
 
-def plot_3d(domain, draw=True):
+def plot_3d(domain, draw=True, refinement=15):
     """
     Plot a 3D domain
 
@@ -165,7 +177,7 @@ def plot_3d(domain, draw=True):
     if draw:
         plt.show()
 
-def plot_3d_single_patch(patch, mapping, ax):
+def plot_3d_single_patch(patch, mapping, ax, refinement=15):
     """
     Plot a singe patch in a 3D domain
 
@@ -177,34 +189,52 @@ def plot_3d_single_patch(patch, mapping, ax):
 
     ax : mpl_toolkits.mplot3d.axes3d.Axes3D
         Axes object on which the patch is drawn.
+
+    refinement : int, default=15
     """
     if mapping is None:
         mapping = IdentityMapping('Id', dim=3)
 
     map_call = mapping.get_callable_mapping()
-    refinement = 21
-    mesh_grid = np.meshgrid(
-        *[np.linspace(patch.min_coords[i],
-                      patch.max_coords[i],
-                      num=refinement,
-                      endpoint=True) for i in range(3)],
-        indexing='ij',
-        sparse=True
-    )
+    refinement += 1
 
-    XX, YY, ZZ = map_call(*mesh_grid)
+    linspace_0 = np.linspace(patch.min_coords[0], patch.max_coords[0], refinement, endpoint=True)
+    linspace_1 = np.linspace(patch.min_coords[1], patch.max_coords[1], refinement, endpoint=True)
+    linspace_2 = np.linspace(patch.min_coords[2], patch.max_coords[2], refinement, endpoint=True)
 
-    for i in range(0, XX.shape[-1], 2):
-        ax.plot_wireframe(XX[:, :, i], YY[:, :, i], ZZ[:, :, i], color='k', cstride=20, rstride=20)
-    for j in range(0, XX.shape[-2], 2):
-        ax.plot_wireframe(XX[:, j, :], YY[:, j, :], ZZ[:, j, :], color='k', cstride=20, rstride=20)
-    for k in range(0, XX.shape[-3], 2):
-        ax.plot_wireframe(XX[k, :, :], YY[k, :, :], ZZ[k, :, :], color='k',  cstride=20, rstride=20)
+    grid_01 = np.meshgrid(linspace_0, linspace_1, indexing='ij', sparse=True)
+    grid_02 = np.meshgrid(linspace_0, linspace_2, indexing='ij', sparse=True)
+    grid_12 = np.meshgrid(linspace_1, linspace_2, indexing='ij', sparse=True)
+
+    full_00 = np.full((refinement, refinement), linspace_0[0])
+    full_01 = np.full((refinement, refinement), linspace_0[-1])
+    full_10 = np.full((refinement, refinement), linspace_1[0])
+    full_11 = np.full((refinement, refinement), linspace_0[-1])
+    full_20 = np.full((refinement, refinement), linspace_2[0])
+    full_21 = np.full((refinement, refinement), linspace_2[-1])
+
+    mesh_01_0 = map_call(*grid_01, full_20)
+    mesh_01_1 = map_call(*grid_01, full_21)
+
+    mesh_02_0 = map_call(grid_02[0], full_10, grid_02[1])
+    mesh_02_1 = map_call(grid_02[0], full_11, grid_02[1])
+
+    mesh_12_0 = map_call(full_00, *grid_12)
+    mesh_12_1 = map_call(full_01, *grid_12)
+
+    kwargs_plot = {'color': 'c', 'alpha': 0.7}
+
+    ax.plot_surface(*mesh_01_0, **kwargs_plot)
+    ax.plot_surface(*mesh_01_1, **kwargs_plot)
+    ax.plot_surface(*mesh_02_0, **kwargs_plot)
+    ax.plot_surface(*mesh_02_1, **kwargs_plot)
+    ax.plot_surface(*mesh_12_0, **kwargs_plot)
+    ax.plot_surface(*mesh_12_1, **kwargs_plot)
 
 
-def plot_2d_single_patch(patch, mapping, ax):
+def plot_2d_single_patch(patch, mapping, ax, isolines=False, refinement=40):
     """
-    Plot a singe patch in a 2D domain
+    Plots a singe patch in a 2D domain
 
     Parameters
     ----------
@@ -214,20 +244,32 @@ def plot_2d_single_patch(patch, mapping, ax):
 
     ax : matplotlib.axes.Axes
         Axes object on which the patch is drawn.
+
+    isolines : bool, default=False
+        If true also plots some iso-lines
+
+    refinement : int, default=40
     """
     if mapping is None:
         mapping = IdentityMapping('Id', dim=3)
 
+    refinement+=1
     map_call = mapping.get_callable_mapping()
-    refinement = 41
     linspace_0 = np.linspace(patch.min_coords[0], patch.max_coords[0], refinement, endpoint=True)
     linspace_1 = np.linspace(patch.min_coords[1], patch.max_coords[1], refinement, endpoint=True)
+
+    if isolines:
+        mesh_grid = np.meshgrid(linspace_0, linspace_1, indexing='ij')
+
+        XX, YY = map_call(*mesh_grid)
+
+        ax.plot(XX[:, ::5], YY[:, ::5], color='darkgrey')
+        ax.plot(XX[::5, :].T, YY[::5, :].T, color='darkgrey')
 
     X_00, Y_00 = map_call(linspace_0, np.full(refinement, linspace_1[0]))
     X_01, Y_01 = map_call(linspace_0, np.full(refinement, linspace_1[-1]))
     X_10, Y_10 = map_call(np.full(refinement, linspace_0[0]), linspace_1)
     X_11, Y_11 = map_call(np.full(refinement, linspace_0[-1]), linspace_1)
-
 
     ax.plot(X_00, Y_00, 'k')
     ax.plot(X_01, Y_01, 'k')
@@ -235,10 +277,9 @@ def plot_2d_single_patch(patch, mapping, ax):
     ax.plot(X_11, Y_11, 'k')
 
 if __name__ == '__main__':
-
-    from sympde.topology import Square, PolarMapping, Cube
+    from sympde.topology import Square, PolarMapping
     A = Square('A', bounds1=(0, 1), bounds2=(0, np.pi/2))
     F = PolarMapping('F', c1=0, c2=0, rmin=0.5, rmax=1)
     Omega = F(A)
 
-    plot_domain(Omega)
+    plot_domain(Omega, draw=True, isolines=True)
