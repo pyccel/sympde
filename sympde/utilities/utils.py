@@ -103,6 +103,7 @@ def plot_domain(domain, draw=True, isolines=False, refinement=None):
         If true and the domain is 2D, also plots iso-lines.
 
     refinement : int or None
+        Number of straight line segments used to approximate each boundary edge.
         If None, uses 15 for 3D domains and 40 for 2D domains
     """
     pdim = domain.dim if domain.mapping is None else domain.mapping.pdim
@@ -129,19 +130,22 @@ def plot_2d(domain, draw=True, isolines=False, refinement=40):
 
     draw : bool
         if true, plt.show() will be called.
+
+    refinement : int
+        Number of straight line segments used to approximate each boundary edge.
     """
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
     if isinstance(domain.interior, InteriorDomain):
-        plot_2d_single_patch(domain.interior, domain.mapping, ax, isolines=isolines)
+        plot_2d_single_patch(domain.interior, domain.mapping, ax, isolines=isolines, refinement=refinement)
     else:
         if isinstance(domain.mapping, MultiPatchMapping):
             for patch, mapping in domain.mapping.mappings.items():
-                plot_2d_single_patch(patch, mapping, ax, isolines=isolines)
+                plot_2d_single_patch(patch, mapping, ax, isolines=isolines, refinement=refinement)
         else:
             for interior in domain.interior.as_tuple():
-                plot_2d_single_patch(interior, interior.mapping, ax, isolines=isolines)
+                plot_2d_single_patch(interior, interior.mapping, ax, isolines=isolines, refinement=refinement)
 
     ax.set_aspect('equal', adjustable='box')
     ax.set_xlabel('X')
@@ -160,6 +164,9 @@ def plot_3d(domain, draw=True, refinement=15):
 
     draw : bool
         if true, plt.show() will be called.
+
+    refinement : int
+        Number of straight line segments used to approximate each boundary edge.
     """
     mapping = domain.mapping
 
@@ -167,14 +174,14 @@ def plot_3d(domain, draw=True, refinement=15):
     ax = fig.add_subplot(111, projection="3d")
 
     if isinstance(domain.interior, InteriorDomain):
-        plot_3d_single_patch(domain.interior, domain.mapping, ax)
+        plot_3d_single_patch(domain.interior, domain.mapping, ax, refinement=refinement)
     else:
         if isinstance(domain.mapping, MultiPatchMapping):
             for patch, mapping in domain.mapping.mappings.items():
-                plot_3d_single_patch(patch, mapping, ax)
+                plot_3d_single_patch(patch, mapping, ax, refinement=refinement)
         else:
             for interior in domain.interior.as_tuple():
-                plot_3d_single_patch(interior, interior.mapping, ax)
+                plot_3d_single_patch(interior, interior.mapping, ax, refinement=refinement)
 
     ax.set_xlabel('X')
     ax.set_ylabel('Y', rotation='horizontal')
@@ -196,6 +203,7 @@ def plot_3d_single_patch(patch, mapping, ax, refinement=15):
         Axes object on which the patch is drawn.
 
     refinement : int, default=15
+        Number of straight line segments used to approximate each boundary edge.
     """
     if mapping is None:
         mapping = IdentityMapping('Id', dim=3)
@@ -254,6 +262,7 @@ def plot_2d_single_patch(patch, mapping, ax, isolines=False, refinement=40):
         If true also plots some iso-lines
 
     refinement : int, default=40
+        Number of straight line segments used to approximate each boundary edge.
     """
     if mapping is None:
         mapping = IdentityMapping('Id', dim=3)
@@ -287,4 +296,6 @@ if __name__ == '__main__':
     F = PolarMapping('F', c1=0, c2=0, rmin=0.5, rmax=1)
     Omega = F(A)
 
+    from sympde.topology import Cube
+    Omega = Cube()
     plot_domain(Omega, draw=True, isolines=True)
