@@ -126,7 +126,7 @@ class CallableMapping(BasicCallableMapping):
     def jacobian_inv(self, *eta):
         """ Compute the inverse Jacobian matrix, if possible."""
         return self._jacobian_inv(*eta)
-    
+
     #--------------------------------------------------------------------------
     # Symbolic information
     #--------------------------------------------------------------------------
