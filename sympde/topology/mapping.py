@@ -192,10 +192,10 @@ class Mapping(BasicMapping):
 
             if obj._jac is None and obj._inv_jac is None:
                 obj._jac     = Jacobian(obj).subs(list(zip(args, exprs)))
-                obj._inv_jac = obj._jac.inv()
+                obj._inv_jac = obj._jac.inv() if pdim == ldim else None
             elif obj._inv_jac is None:
                 obj._jac     = ImmutableDenseMatrix(sympify(obj._jac)).subs(subs)
-                obj._inv_jac = obj._jac.inv()
+                obj._inv_jac = obj._jac.inv() if pdim == ldim else None
 
             elif obj._jac is None:
                 obj._inv_jac = ImmutableDenseMatrix(sympify(obj._inv_jac)).subs(subs)
