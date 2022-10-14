@@ -267,9 +267,6 @@ class Mapping(BasicMapping):
 
     def set_callable_mapping(self, F):
 
-        if self._callable_map is not None:
-            raise ValueError('Cannot override existing callable mapping')
-
         if not isinstance(F, BasicCallableMapping):
             raise TypeError(
                 f'F must be a BasicCallableMapping, got {type(F)} instead')
