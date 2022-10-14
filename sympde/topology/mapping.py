@@ -1,7 +1,5 @@
 # coding: utf-8
-
-
-
+from abc import ABC, abstractmethod
 from sympy                 import Indexed, IndexedBase, Idx
 from sympy                 import Matrix, ImmutableDenseMatrix
 from sympy                 import Function, Expr
@@ -10,7 +8,6 @@ from sympy                 import cacheit
 from sympy.core            import Basic
 from sympy.core            import Symbol,Integer
 from sympy.core            import Add, Mul, Pow
-
 from sympy.core.numbers    import ImaginaryUnit
 from sympy.core.containers import Tuple
 from sympy                 import S
@@ -26,7 +23,6 @@ from sympde.calculus.core     import PlusInterfaceOperator, MinusInterfaceOperat
 from sympde.calculus.core     import grad, div, curl, laplace #, hessian
 from sympde.calculus.core     import dot, inner, outer, _diff_ops
 from sympde.calculus.core     import has, DiffOperator
-
 from sympde.calculus.matrices import MatrixSymbolicExpr, MatrixElement, SymbolicTrace, Inverse
 from sympde.calculus.matrices import SymbolicDeterminant, Transpose
 
@@ -48,6 +44,7 @@ from .derivatives import LogicalGrad_1d, LogicalGrad_2d, LogicalGrad_3d
 # TODO fix circular dependency between sympde.expr.evaluation and sympde.topology.mapping
 
 __all__ = (
+    'BasicCallableMapping',
     'Contravariant',
     'Covariant',
     'InterfaceMapping',
@@ -86,6 +83,46 @@ def get_logical_test_function(u):
     l_space         = type(space)(space.name, logical_domain, kind=kind)
     el              = l_space.element(u.name)
     return el
+
+#==============================================================================
+class BasicCallableMapping(ABC):
+    """
+    Transformation of coordinates, which can be evaluated.
+
+    F: R^l -> R^p
+    F(eta) = x
+
+    with l <= p
+    """
+    @abstractmethod
+    def __call__(self, *eta):
+        """ Evaluate mapping at location eta. """
+
+    @abstractmethod
+    def jacobian(self, *eta):
+        """ Compute Jacobian matrix at location eta. """
+
+    @abstractmethod
+    def metric(self, *eta):
+        """ Compute components of metric tensor at location eta. """
+
+    @abstractmethod
+    def metric_det(self, *eta):
+        """ Compute determinant of metric tensor at location eta. """
+
+    @property
+    @abstractmethod
+    def ldim(self):
+        """ Number of logical/parametric dimensions in mapping
+            (= number of eta components).
+        """
+
+    @property
+    @abstractmethod
+    def pdim(self):
+        """ Number of physical dimensions in mapping
+            (= number of x components).
+        """
 
 #==============================================================================
 class Mapping(BasicMapping):
@@ -1366,4 +1403,3 @@ class SymbolicExpr(CalculusFunction):
         # TODO: check if we should use 'sympy.sympify(expr)' instead
         else:
             raise NotImplementedError('Cannot translate to Sympy: {}'.format(expr))
-
