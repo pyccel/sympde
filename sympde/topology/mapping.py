@@ -249,6 +249,34 @@ class Mapping(BasicMapping):
 
         return obj
 
+    #--------------------------------------------------------------------------
+    # Callable mapping
+    #--------------------------------------------------------------------------
+    def get_callable_mapping(self):
+        if self._callable_map is None:
+            if self._expressions is None:
+                msg = 'Cannot generate callable mapping without analytical expressions. '\
+                      'A user-defined callable mapping of type `BasicCallableMapping` '\
+                      'can be provided using the method `set_callable_mapping`.'
+                raise ValueError(msg)
+
+            from sympde.topology.callable_mapping import CallableMapping
+            self._callable_map = CallableMapping(self)
+
+        return self._callable_map
+
+    def set_callable_mapping(self, F):
+
+        if self._callable_map is not None:
+            raise ValueError('Cannot override existing callable mapping')
+
+        if not isinstance(F, BasicCallableMapping):
+            raise TypeError(
+                f'F must be a BasicCallableMapping, got {type(F)} instead')
+
+        self._callable_map = F
+
+    #--------------------------------------------------------------------------
     @property
     def name( self ):
         return self._name
@@ -360,13 +388,6 @@ class Mapping(BasicMapping):
         args = (self.name, self.ldim, self.pdim, self._coordinates, self._logical_coordinates,
                 self._expressions, self._constants, self._is_plus, self._is_minus)
         return tuple([a for a in args if a is not None])
-
-    def get_callable_mapping( self ):
-
-        if self._callable_map is None:
-            import sympde.topology.callable_mapping as cm
-            self._callable_map = cm.CallableMapping( self )
-        return self._callable_map
 
     def _eval_subs(self, old, new):
         return self
