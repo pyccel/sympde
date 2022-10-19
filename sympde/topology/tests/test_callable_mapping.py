@@ -486,6 +486,10 @@ def test_user_defined_callable_mapping():
             assert len(eta) == self._ndim
             return np.eye(self._ndim)
 
+        def jacobian_inv(self, *eta):
+            assert len(eta) == self._ndim
+            return np.eye(self._ndim)
+
         def metric(self, *eta):
             assert len(eta) == self._ndim
             return np.eye(self._ndim)

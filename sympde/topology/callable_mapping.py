@@ -64,6 +64,10 @@ class CallableMapping(BasicCallableMapping):
     def jacobian(self, *eta):
         return self._jacobian( *eta )
 
+    def jacobian_inv(self, *eta):
+        """ Compute the inverse Jacobian matrix, if possible."""
+        return self._jacobian_inv(*eta)
+
     def metric(self, *eta):
         return self._metric( *eta )
 
@@ -77,13 +81,6 @@ class CallableMapping(BasicCallableMapping):
     @property
     def pdim(self):
         return self.symbolic_mapping.pdim
-
-    #--------------------------------------------------------------------------
-    # Other methods
-    #--------------------------------------------------------------------------
-    def jacobian_inv(self, *eta):
-        """ Compute the inverse Jacobian matrix, if possible."""
-        return self._jacobian_inv(*eta)
 
     #--------------------------------------------------------------------------
     # Symbolic information
