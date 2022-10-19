@@ -103,6 +103,12 @@ class BasicCallableMapping(ABC):
         """ Compute Jacobian matrix at location eta. """
 
     @abstractmethod
+    def jacobian_inv(self, *eta):
+        """ Compute inverse Jacobian matrix at location eta.
+            An exception should be raised if the matrix is singular.
+        """
+
+    @abstractmethod
     def metric(self, *eta):
         """ Compute components of metric tensor at location eta. """
 
