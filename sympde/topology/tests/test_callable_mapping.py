@@ -512,8 +512,9 @@ def test_user_defined_callable_mapping():
 
     assert F.get_callable_mapping() is f
     assert f(4, 5, 6) == (4, 5, 6)
-    assert np.array_equal(f.jacobian(1, 2, 3), [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-    assert np.array_equal(f.metric(0, 1, 1)  , [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+    assert np.array_equal(f.jacobian(1, 2, 3)     , [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+    assert np.array_equal(f.jacobian_inv(-7, 0, 7), [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+    assert np.array_equal(f.metric(0, 1, 1)       , [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
     assert f.metric_det(-5, 8, -9) == 1.0
     assert f.ldim == 3
     assert f.pdim == 3
