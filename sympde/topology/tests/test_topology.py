@@ -9,6 +9,7 @@ from sympde.topology import Domain, ElementDomain
 from sympde.topology import Area, Mapping
 from sympde.topology import Interface
 from sympde.topology import Line, Square
+from sympde.topology import IdentityMapping
 
 import os
 
@@ -310,6 +311,41 @@ def test_hash():
 
     assert hash_1 != hash_2
 
+#==============================================================================
+def test_domain_without_bnd():  
+
+    OmegaLog1 = Square('OmegaLog1', bounds1 = (0,.5), bounds2 = (0,.5))
+    mapping_1 = IdentityMapping('M1',2)
+    domain_1     = mapping_1(OmegaLog1)
+    OmegaLog2 = Square('OmegaLog2', bounds1 = (0,.5), bounds2 = (.5,1.))
+    mapping_2 = IdentityMapping('M2',2)
+    domain_2     = mapping_2(OmegaLog2)
+    OmegaLog3 = Square('OmegaLog3', bounds1 = (.5,1.), bounds2 = (0,.5))
+    mapping_3 = IdentityMapping('M3',2)
+    domain_3     = mapping_3(OmegaLog3)
+    OmegaLog4 = Square('OmegaLog4', bounds1 = (.5,1.), bounds2 = (.5,1.))
+    mapping_4 = IdentityMapping('M4',2)
+    domain_4     = mapping_4(OmegaLog4)
+
+    domains=[domain_1,domain_2,domain_3,domain_4]
+    domain = domains[0]
+    for p in domains[1:]:
+        domain = domain.join(p, name="domain")
+
+
+    interfaces = [
+        [domain_1.get_boundary(axis=0, ext=+1), domain_3.get_boundary(axis=0, ext=-1),1],
+        [domain_2.get_boundary(axis=0, ext=+1), domain_4.get_boundary(axis=0, ext=-1),1],        
+        [domain_3.get_boundary(axis=0, ext=+1), domain_1.get_boundary(axis=0, ext=-1),1],
+        [domain_4.get_boundary(axis=0, ext=+1), domain_2.get_boundary(axis=0, ext=-1),1],
+        [domain_1.get_boundary(axis=1, ext=+1), domain_2.get_boundary(axis=1, ext=-1),1],
+        [domain_3.get_boundary(axis=1, ext=+1), domain_4.get_boundary(axis=1, ext=-1),1],
+        [domain_2.get_boundary(axis=1, ext=+1), domain_1.get_boundary(axis=1, ext=-1),1],
+        [domain_4.get_boundary(axis=1, ext=+1), domain_3.get_boundary(axis=1, ext=-1),1],
+            ]
+
+    for I in interfaces:
+        domain = domain.join(domain, domain.name, bnd_minus=I[0], bnd_plus=I[1], direction=I[2])
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
