@@ -1,8 +1,12 @@
-from sympde.utilities.utils import lambdify_sympde
-from .mapping import Mapping
 from sympy import Symbol
 
-class CallableMapping:
+from sympde.utilities.utils import lambdify_sympde
+from .mapping import Mapping, BasicCallableMapping
+
+__all__ = ('CallableMapping',)
+
+#==============================================================================
+class CallableMapping(BasicCallableMapping):
 
     def __init__( self, mapping, **kwargs ):
 
@@ -54,27 +58,28 @@ class CallableMapping:
     #--------------------------------------------------------------------------
     # Abstract interface
     #--------------------------------------------------------------------------
-    def __call__( self, *eta ):
+    def __call__(self, *eta):
         return tuple( f( *eta ) for f in self._func_eval)
 
-    def jacobian( self, *eta ):
+    def jacobian(self, *eta):
         return self._jacobian( *eta )
 
-    def jacobian_inv( self, *eta ):
-        return self._jacobian_inv( *eta )
+    def jacobian_inv(self, *eta):
+        """ Compute the inverse Jacobian matrix, if possible."""
+        return self._jacobian_inv(*eta)
 
-    def metric( self, *eta ):
+    def metric(self, *eta):
         return self._metric( *eta )
 
-    def metric_det( self, *eta ):
+    def metric_det(self, *eta):
         return self._metric_det( *eta )
 
     @property
-    def ldim( self ):
+    def ldim(self):
         return self.symbolic_mapping.ldim
 
     @property
-    def pdim( self ):
+    def pdim(self):
         return self.symbolic_mapping.pdim
 
     #--------------------------------------------------------------------------
