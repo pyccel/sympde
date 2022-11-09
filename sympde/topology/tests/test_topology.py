@@ -312,7 +312,7 @@ def test_hash():
     assert hash_1 != hash_2
 
 #==============================================================================
-def test_domain_without_bnd():  
+def test_domain_without_bnd():
 
     OmegaLog1 = Square('OmegaLog1', bounds1 = (0,.5), bounds2 = (0,.5))
     mapping_1 = IdentityMapping('M1',2)
@@ -335,7 +335,7 @@ def test_domain_without_bnd():
 
     interfaces = [
         [domain_1.get_boundary(axis=0, ext=+1), domain_3.get_boundary(axis=0, ext=-1),1],
-        [domain_2.get_boundary(axis=0, ext=+1), domain_4.get_boundary(axis=0, ext=-1),1],        
+        [domain_2.get_boundary(axis=0, ext=+1), domain_4.get_boundary(axis=0, ext=-1),1],
         [domain_3.get_boundary(axis=0, ext=+1), domain_1.get_boundary(axis=0, ext=-1),1],
         [domain_4.get_boundary(axis=0, ext=+1), domain_2.get_boundary(axis=0, ext=-1),1],
         [domain_1.get_boundary(axis=1, ext=+1), domain_2.get_boundary(axis=1, ext=-1),1],
