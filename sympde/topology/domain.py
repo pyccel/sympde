@@ -430,7 +430,10 @@ class Domain(BasicDomain):
 
         # ... boundary
         boundaries = Union(self.boundary, other.boundary).complement(Union(bnd_minus, bnd_plus))
-        boundaries = boundaries.as_tuple()
+        if boundaries is None:
+            boundaries = ()
+        else :
+            boundaries = boundaries.as_tuple()
 
         # ... interiors
         interiors       = Union(self.interior, other.interior)
