@@ -1140,7 +1140,7 @@ class TensorExpr(CalculusFunction):
 
             return ImmutableDenseMatrix(lines)
 
-        elif isinstance(expr, DomainExpression):
+        elif isinstance(expr, DomainExpression) or isinstance(expr, BoundaryExpression):
             # TODO to be removed
             return cls.eval(expr.expr, d_atoms=d_atoms, domain=domain)
 
