@@ -895,10 +895,10 @@ class LogicalExpr(CalculusFunction):
         """."""
 
         from sympde.expr.evaluation import TerminalExpr, DomainExpression
-        from sympde.expr.expr import BilinearForm, LinearForm, BasicForm, Norm
-        from sympde.expr.expr import Integral
+        from sympde.expr.expr import BilinearForm, LinearForm, Norm, Integral
 
-        types = (ScalarFunction, VectorFunction, DifferentialOperator, Trace, Integral)
+        types = (ScalarFunction, VectorFunction, DifferentialOperator,
+                 Trace, Integral, DiffOperator)
 
         mapping   = domain.mapping
         dim       = domain.dim
@@ -909,20 +909,17 @@ class LogicalExpr(CalculusFunction):
         ph_coords = ['x', 'y', 'z']
 
         if not has(expr, types):
-            if has(expr, DiffOperator):
-                return cls( expr, domain, evaluate=False)
-            else:
-                syms = symbols(ph_coords[:dim])
-                if isinstance(mapping, InterfaceMapping):
-                    mapping = mapping.minus
-                    # here we assume that the two mapped domains
-                    # are identical in the interface so we choose one of them
-                Ms   = [mapping[i] for i in range(dim)]
-                expr = expr.subs(list(zip(syms, Ms)))
+            syms = symbols(ph_coords[:dim])
+            if isinstance(mapping, InterfaceMapping):
+                mapping = mapping.minus
+                # here we assume that the two mapped domains
+                # are identical in the interface so we choose one of them
+            Ms   = [mapping[i] for i in range(dim)]
+            expr = expr.subs(list(zip(syms, Ms)))
 
-                if mapping.is_analytical:
-                    expr = expr.subs(list(zip(Ms, mapping.expressions)))
-                return expr
+            if mapping.is_analytical:
+                expr = expr.subs(list(zip(Ms, mapping.expressions)))
+            return expr
 
         if isinstance(expr, Symbol) and expr.name in l_coords:
             return expr
