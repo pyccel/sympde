@@ -14,6 +14,7 @@ from sympy                 import S
 from sympy                 import sqrt, symbols
 from sympy.core.exprtools  import factor_terms
 from sympy.polys.polytools import parallel_poly_from_expr
+from sympy.core.compatibility import is_sequence
 
 from sympde.core              import Constant
 from sympde.core.basic        import BasicMapping
