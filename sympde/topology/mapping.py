@@ -910,7 +910,7 @@ class PushForward(Expr):
 
         kind = get_kind_type(kind)
 
-        if kind in (H1SpaceType(), None):
+        if kind in (H1SpaceType(), UndefinedSpaceType()):
             return expr
 
         J = mapping.jacobian
