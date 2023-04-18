@@ -859,6 +859,74 @@ class Contravariant(MappingApplication):
         return Tuple(*v)
 
 #==============================================================================
+def get_kind_type(kind):
+
+    from .datatype import SpaceType, dtype_space_registry
+
+    if kind is None:
+        kind = 'undefined'
+
+    if isinstance(kind, str):
+        kind_str = kind.lower()
+        assert kind_str in ['h1', 'hcurl', 'hdiv', 'l2', 'undefined']
+        kind_type = dtype_space_registry[kind_str]
+
+    elif isinstance(kind, SpaceType):
+        kind_type = kind
+
+    else:
+        raise TypeError('Expecting kind to be string or SpaceType')
+
+    return kind_type
+
+#==============================================================================
+class PushForward(Expr):
+    is_commutative = False
+
+    def __new__(cls, expr, *, mapping=None, kind='h1', evaluate=False):
+
+        kind = get_kind_type(kind)
+
+        if evaluate:
+            return cls.eval(expr, mapping=mapping, kind=kind)
+
+        obj = Expr.__new__(cls, expr, mapping, kind)
+        return obj
+
+    @property
+    def arg(self):
+        return self.args[0]
+
+    @property
+    def mapping(self):
+        return self.args[1]
+
+    @property
+    def kind(self):
+        return self.args[2]
+
+    @classmethod
+    def eval(cls, expr, mapping, kind):
+
+        kind = get_kind_type(kind)
+
+        if kind in ('h1', None):
+            return expr
+
+        J = mapping.jacobian
+
+        if kind is HcurlSpaceType():
+            return J.inv().T * expr
+
+        if kind is HdivSpaceType():
+            return (J / J.det()) * expr
+
+        if kind is L2SpaceType():
+            return expr / J.det()
+
+        raise ValueError(f'Cannot compute Push-Forward of kind = {kind}')
+
+#==============================================================================
 class LogicalExpr(CalculusFunction):
 
     def __new__(cls, expr, domain, **options):
@@ -898,7 +966,9 @@ class LogicalExpr(CalculusFunction):
         from sympde.expr.expr import BilinearForm, LinearForm, BasicForm, Norm
         from sympde.expr.expr import Integral
 
-        types = (ScalarFunction, VectorFunction, DifferentialOperator, Trace, Integral)
+        # Expression types for which special rules are applied
+        types = (ScalarFunction, VectorFunction, DifferentialOperator,
+                Trace, Integral, PushForward)
 
         mapping   = domain.mapping
         dim       = domain.dim
@@ -971,12 +1041,25 @@ class LogicalExpr(CalculusFunction):
             return newexpr
 
         elif isinstance(expr, (VectorFunction, ScalarFunction)):
-            return PullBack(expr, mapping).expr
+            u       = expr
+            u_hat   = get_logical_test_function(u)
+            space   = u.space
+            mapping = space.domain.mapping
+            kind    = space.kind
+            return PushForward(u_hat, mapping=mapping, kind=kind, evaluate=True)
+
+#        elif isinstance(expr, (VectorFunction, ScalarFunction)):
+#            return PullBack(expr, mapping).expr
 
         elif isinstance(expr, Transpose):
             arg = cls(expr.arg, domain)
             return Transpose(arg)
-            
+
+        elif isinstance(expr, PushForward):
+            # Remove push-forward operation
+            arg = expr.args[0]
+            return cls(arg, domain)
+
         elif isinstance(expr, grad):
             arg = expr.args[0]
             if isinstance(mapping, InterfaceMapping):
@@ -989,40 +1072,65 @@ class LogicalExpr(CalculusFunction):
                 else:
                     raise TypeError(arg)
 
-                arg = type(arg)(cls.eval(a, domain))
+                arg_log = type(arg)(cls.eval(a, domain))
             else:
-                arg = cls.eval(arg, domain)
+                arg_log = cls.eval(arg, domain)
 
-            return mapping.jacobian.inv().T*grad(arg)
+            return PushForward(grad(arg_log), mapping=mapping, kind='hcurl', evaluate=True)
+#            return mapping.jacobian.inv().T * grad(arg_log)
 
         elif isinstance(expr, curl):
+
             arg = expr.args[0]
+
+            # If on interface, select which mapping to use
             if isinstance(mapping, InterfaceMapping):
                 if isinstance(arg, MinusInterfaceOperator):
-                    arg     = arg.args[0]
+                    int_arg = arg.args[0]
                     mapping = mapping.minus
                 elif isinstance(arg, PlusInterfaceOperator):
-                    arg = arg.args[0]
+                    int_arg = arg.args[0]
                     mapping = mapping.plus
                 else:
                     raise TypeError(arg)
 
-            if isinstance(arg, VectorFunction):
-                arg = PullBack(arg, mapping)
-            else:
-                arg = cls.eval(arg, domain)
+                J = mapping.jacobian
+                int_arg_log = cls.eval(int_arg, domain)
+                arg_log = type(expr.args[0])(int_arg_log)
 
-            if isinstance(arg, PullBack) and isinstance(arg.kind, HcurlSpaceType):
-                J   = mapping.jacobian
-                arg = arg.test
-                if isinstance(expr.args[0], (MinusInterfaceOperator, PlusInterfaceOperator)):
-                    arg = type(expr.args[0])(arg)
-                if expr.is_scalar:
-                    return (1/J.det())*curl(arg)
-
-                return (J/J.det())*curl(arg)
             else:
-                raise NotImplementedError('TODO')
+                arg_log = cls.eval(arg, domain)
+
+            return PushForward(curl(arg_log), mapping=mapping, kind='hdiv', evaluate=True)
+
+#        elif isinstance(expr, curl):
+#            arg = expr.args[0]
+#            if isinstance(mapping, InterfaceMapping):
+#                if isinstance(arg, MinusInterfaceOperator):
+#                    arg     = arg.args[0]
+#                    mapping = mapping.minus
+#                elif isinstance(arg, PlusInterfaceOperator):
+#                    arg = arg.args[0]
+#                    mapping = mapping.plus
+#                else:
+#                    raise TypeError(arg)
+#
+#            if isinstance(arg, VectorFunction):
+#                arg = PullBack(arg, mapping)
+#            else:
+#                arg = cls.eval(arg, domain)
+#
+#            if isinstance(arg, PullBack) and isinstance(arg.kind, HcurlSpaceType):
+#                J   = mapping.jacobian
+#                arg = arg.test
+#                if isinstance(expr.args[0], (MinusInterfaceOperator, PlusInterfaceOperator)):
+#                    arg = type(expr.args[0])(arg)
+#                if expr.is_scalar:
+#                    return (1/J.det())*curl(arg)
+#
+#                return (J/J.det())*curl(arg)
+#            else:
+#                raise NotImplementedError('TODO')
 
         elif isinstance(expr, div):
             arg = expr.args[0]
