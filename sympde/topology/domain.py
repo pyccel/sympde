@@ -1,3 +1,4 @@
+from __future__ import annotations
 # coding: utf-8
 
 import numpy as np
@@ -6,6 +7,8 @@ import yaml
 import os
 
 from collections import abc
+from typing import Union as TypeUnion, Optional, List, TYPE_CHECKING
+# Union clashes with core.basic.Union 
 
 from sympy import Integer
 from sympy.core.singleton import Singleton
@@ -22,7 +25,8 @@ from .basic            import Interval, Interface, CornerBoundary, CornerInterfa
 from .basic            import ProductDomain
 
 # TODO fix circular dependency between domain and mapping
-
+if TYPE_CHECKING:
+    from sympde.topology.mapping import Mapping
 # TODO add pdim
 
 iterable_types = (tuple, list, Tuple, Union)
@@ -34,11 +38,31 @@ class Domain(BasicDomain):
     A domain without a boundary is either infinite or periodic.
     A domain can also be constructed from a connectivity, in which case, only the
     name and connectivity need to be passed.
-
     """
 
     def __new__(cls, name, *, interiors=None, boundaries=None, dim=None,
                 connectivity=None, mapping=None, logical_domain=None):
+        """
+        Interiors or connectivity must be given. When the mapping is given and 
+        not None, then logical_domain must be specified as well.cl
+    
+        Parameters
+        ----------
+        name : str
+            Name of the domain
+        interiors : Iterable[InteriorDomain], InteriorDomain or None, optional
+            Interiors that make the domain
+        boundaries : Iterable[Boundary], Boundary or None, optional
+            The boundaries of the domain
+        dim : int, optional
+            Dimenion of the space the domain is in
+        connectivity : Connectivity or None, optional
+            Specifies to what interiors interfaces are connected
+        mapping : Mapping or None, optional
+            If the domain is the image of a mapping, this is it
+        logical_domain : Domain or None, optional
+            The domain is the image of this domain
+        """
         # ...
         if not isinstance(name, str):
             raise TypeError('> name must be a string')
@@ -130,31 +154,39 @@ class Domain(BasicDomain):
         return obj
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.args[0]
 
     @property
-    def interior(self):
+    def interior(self) -> TypeUnion[Union, InteriorDomain]:
+        """Either a Union object containing the interiors or just the interior 
+        domain if there is only one"""
         return self.args[1]
 
     @property
-    def boundary(self):
+    def boundary(self) -> TypeUnion[Union,Boundary]:
+        """Either a Union object containing the boundaries or just a boundary 
+        if there is only one"""
         return self.args[2]
 
     @property
-    def mapping(self):
+    def mapping(self) -> Optional[Mapping]:
+        """The mapping that maps the logical domain to this domain"""
         return self.args[3]
 
     @property
     def logical_domain(self):
+        """The domain is the image of the logical_domain under the mapping"""
         return self._logical_domain
 
     @property
-    def connectivity(self):
+    def connectivity(self) -> Connectivity:
+        """Specifies to what interiors interfaces are connected"""
         return self._connectivity
 
     @property
-    def dim(self):
+    def dim(self) -> int:
+        """Dimension of the space the domain is in"""
         return self._dim
 
     @property
@@ -181,7 +213,7 @@ class Domain(BasicDomain):
             return len(self.interior)
 
     @property
-    def interior_names(self):
+    def interior_names(self) -> List[str]:
         if isinstance(self.interior, InteriorDomain):
             return [self.interior.name]
 
