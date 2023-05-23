@@ -9,7 +9,7 @@ import os
 
 from collections import abc
 from typing import Union as TypeUnion, Optional, List, Dict, Iterable, TYPE_CHECKING
-# Union clashes with core.basic.Union 
+# Union clashes with core.basic.Union
 
 from sympy import Integer
 from sympy.core.singleton import Singleton
@@ -41,12 +41,12 @@ class Domain(BasicDomain):
     name and connectivity need to be passed.
     """
 
-    def __new__(cls, name : str, *, 
-            interiors : TypeUnion[Iterable[InteriorDomain], InteriorDomain, None] = None, 
-            boundaries : TypeUnion[Iterable[Boundary], Boundary, None] = None, 
+    def __new__(cls, name : str, *,
+            interiors : TypeUnion[Iterable[InteriorDomain], InteriorDomain, None] = None,
+            boundaries : TypeUnion[Iterable[Boundary], Boundary, None] = None,
             dim : Optional[int] = None,
-            connectivity : Optional[Connectivity] = None, 
-            mapping : Optional[Mapping] = None, 
+            connectivity : Optional[Connectivity] = None,
+            mapping : Optional[Mapping] = None,
             logical_domain : Optional[Domain] = None):
         """
         Interiors or connectivity must be given. When the mapping is given 
