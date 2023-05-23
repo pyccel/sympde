@@ -1,13 +1,14 @@
-from __future__ import annotations
 # coding: utf-8
+from __future__ import annotations
 
 import numpy as np
 import h5py
 import yaml
 import os
 
+
 from collections import abc
-from typing import Union as TypeUnion, Optional, List, TYPE_CHECKING
+from typing import Union as TypeUnion, Optional, List, Dict, Iterable, TYPE_CHECKING
 # Union clashes with core.basic.Union 
 
 from sympy import Integer
@@ -40,28 +41,33 @@ class Domain(BasicDomain):
     name and connectivity need to be passed.
     """
 
-    def __new__(cls, name, *, interiors=None, boundaries=None, dim=None,
-                connectivity=None, mapping=None, logical_domain=None):
+    def __new__(cls, name : str, *, 
+            interiors : TypeUnion[Iterable[InteriorDomain], InteriorDomain, None] = None, 
+            boundaries : TypeUnion[Iterable[Boundary], Boundary, None] = None, 
+            dim : Optional[int] = None,
+            connectivity : Optional[Connectivity] = None, 
+            mapping : Optional[Mapping] = None, 
+            logical_domain : Optional[Domain] = None):
         """
-        Interiors or connectivity must be given. When the mapping is given and 
-        not None, then logical_domain must be specified as well.cl
+        Interiors or connectivity must be given. When the mapping is given 
+        then logical_domain must be specified as well.
     
         Parameters
         ----------
         name : str
             Name of the domain
         interiors : Iterable[InteriorDomain], InteriorDomain or None, optional
-            Interiors that make the domain
+            Interior domains
         boundaries : Iterable[Boundary], Boundary or None, optional
             The boundaries of the domain
         dim : int, optional
-            Dimenion of the space the domain is in
+            Dimension of the space of the domain
         connectivity : Connectivity or None, optional
-            Specifies to what interiors interfaces are connected
+            Connectivity object with the interfaces of the domain
         mapping : Mapping or None, optional
-            If the domain is the image of a mapping, this is it
+            Maps the logical domain to the physical domain
         logical_domain : Domain or None, optional
-            The domain is the image of this domain
+            Logical domain that is mapped to the physical domain
         """
         # ...
         if not isinstance(name, str):
@@ -171,7 +177,7 @@ class Domain(BasicDomain):
 
     @property
     def mapping(self) -> Optional[Mapping]:
-        """The mapping that maps the logical domain to this domain"""
+        """The mapping that maps the logical domain to the physical domain"""
         return self.args[3]
 
     @property
@@ -181,20 +187,22 @@ class Domain(BasicDomain):
 
     @property
     def connectivity(self) -> Connectivity:
-        """Specifies to what interiors interfaces are connected"""
+        """Contains information about the interfaces"""
         return self._connectivity
 
     @property
     def dim(self) -> int:
-        """Dimension of the space the domain is in"""
+        """Dimension of the space"""
         return self._dim
 
     @property
-    def dtype(self):
+    def dtype(self) -> dict:
+        """Dictionary containing information about domain"""
         return self._dtype
 
     @property
     def interfaces(self):
+        """Interfaces between patches of the domain"""
         return self.connectivity.interfaces
 
     @property
