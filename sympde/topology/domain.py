@@ -181,7 +181,7 @@ class Domain(BasicDomain):
         return self.args[3]
 
     @property
-    def logical_domain(self):
+    def logical_domain(self) -> Domain:
         """The domain is the image of the logical_domain under the mapping"""
         return self._logical_domain
 
@@ -201,8 +201,14 @@ class Domain(BasicDomain):
         return self._dtype
 
     @property
-    def interfaces(self):
-        """Interfaces between patches of the domain"""
+    def interfaces(self) -> TypeUnion[Union, Interface, None]:
+        """
+        Union of the interfaces
+
+        The Union constructor is applied to the interfaces. If there is only 
+        one interface it returns the interface object and None if there is no 
+        interface.
+        """
         return self.connectivity.interfaces
 
     @property
