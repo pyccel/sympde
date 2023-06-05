@@ -6,7 +6,6 @@ import h5py
 import yaml
 import os
 
-
 from collections import abc
 from typing import Union as TypeUnion, Optional, List, Dict, Iterable, TYPE_CHECKING
 # Union clashes with core.basic.Union
@@ -170,7 +169,7 @@ class Domain(BasicDomain):
         return self.args[1]
 
     @property
-    def boundary(self) -> TypeUnion[Union,Boundary]:
+    def boundary(self) -> TypeUnion[Union, Boundary]:
         """Either a Union object containing the boundaries or just a boundary 
         if there is only one"""
         return self.args[2]
