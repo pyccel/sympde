@@ -1,4 +1,5 @@
 # coding: utf-8
+from __future__ import annotations
 
 import numpy as np
 import h5py
@@ -6,6 +7,8 @@ import yaml
 import os
 
 from collections import abc
+from typing import Union as TypeUnion, Optional, List, Dict, Iterable, TYPE_CHECKING
+# Union clashes with core.basic.Union
 
 from sympy import Integer
 from sympy.core.singleton import Singleton
@@ -22,7 +25,8 @@ from .basic            import Interval, Interface, CornerBoundary, CornerInterfa
 from .basic            import ProductDomain
 
 # TODO fix circular dependency between domain and mapping
-
+if TYPE_CHECKING:
+    from sympde.topology.mapping import Mapping
 # TODO add pdim
 
 iterable_types = (tuple, list, Tuple, Union)
@@ -34,11 +38,36 @@ class Domain(BasicDomain):
     A domain without a boundary is either infinite or periodic.
     A domain can also be constructed from a connectivity, in which case, only the
     name and connectivity need to be passed.
-
     """
 
-    def __new__(cls, name, *, interiors=None, boundaries=None, dim=None,
-                connectivity=None, mapping=None, logical_domain=None):
+    def __new__(cls, name : str, *,
+            interiors : TypeUnion[Iterable[InteriorDomain], InteriorDomain, None] = None,
+            boundaries : TypeUnion[Iterable[Boundary], Boundary, None] = None,
+            dim : Optional[int] = None,
+            connectivity : Optional[Connectivity] = None,
+            mapping : Optional[Mapping] = None,
+            logical_domain : Optional[Domain] = None):
+        """
+        Interiors or connectivity must be given. When the mapping is given 
+        then logical_domain must be specified as well.
+    
+        Parameters
+        ----------
+        name : str
+            Name of the domain
+        interiors : Iterable[InteriorDomain], InteriorDomain or None, optional
+            Interior domains
+        boundaries : Iterable[Boundary], Boundary or None, optional
+            The boundaries of the domain
+        dim : int, optional
+            Dimension of the space of the domain
+        connectivity : Connectivity or None, optional
+            Connectivity object with the interfaces of the domain
+        mapping : Mapping or None, optional
+            Maps the logical domain to the physical domain
+        logical_domain : Domain or None, optional
+            Logical domain that is mapped to the physical domain
+        """
         # ...
         if not isinstance(name, str):
             raise TypeError('> name must be a string')
@@ -130,39 +159,55 @@ class Domain(BasicDomain):
         return obj
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.args[0]
 
     @property
-    def interior(self):
+    def interior(self) -> TypeUnion[Union, InteriorDomain]:
+        """Either a Union object containing the interiors or just the interior 
+        domain if there is only one"""
         return self.args[1]
 
     @property
-    def boundary(self):
+    def boundary(self) -> TypeUnion[Union, Boundary]:
+        """Either a Union object containing the boundaries or just a boundary 
+        if there is only one"""
         return self.args[2]
 
     @property
-    def mapping(self):
+    def mapping(self) -> Optional[Mapping]:
+        """The mapping that maps the logical domain to the physical domain"""
         return self.args[3]
 
     @property
-    def logical_domain(self):
+    def logical_domain(self) -> Domain:
+        """The domain is the image of the logical_domain under the mapping"""
         return self._logical_domain
 
     @property
-    def connectivity(self):
+    def connectivity(self) -> Connectivity:
+        """Contains information about the interfaces"""
         return self._connectivity
 
     @property
-    def dim(self):
+    def dim(self) -> int:
+        """Dimension of the space"""
         return self._dim
 
     @property
-    def dtype(self):
+    def dtype(self) -> dict:
+        """Dictionary containing information about domain"""
         return self._dtype
 
     @property
-    def interfaces(self):
+    def interfaces(self) -> TypeUnion[Union, Interface, None]:
+        """
+        Union of the interfaces
+
+        The Union constructor is applied to the interfaces. If there is only 
+        one interface it returns the interface object and None if there is no 
+        interface.
+        """
         return self.connectivity.interfaces
 
     @property
@@ -181,7 +226,7 @@ class Domain(BasicDomain):
             return len(self.interior)
 
     @property
-    def interior_names(self):
+    def interior_names(self) -> List[str]:
         if isinstance(self.interior, InteriorDomain):
             return [self.interior.name]
 
