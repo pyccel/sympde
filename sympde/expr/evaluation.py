@@ -8,6 +8,7 @@ import numpy as np
 from sympy import Abs, S, cacheit
 from sympy import Indexed, Matrix, ImmutableDenseMatrix
 from sympy import expand
+from sympy import exp, sin, cos
 from sympy.core import Basic, Symbol
 from sympy.core import Add, Mul, Pow
 from sympy.core.expr import AtomicExpr
@@ -546,6 +547,10 @@ class TerminalExpr(CalculusFunction):
             base = cls.eval(expr.base, domain=domain)
             exp  = cls.eval(expr.exp, domain=domain)
             return base**exp
+
+        elif isinstance(expr, (exp, sin, cos)): # TODO [YG 12.06.2023]: use generic SymPy type
+            args = [cls.eval(a, domain=domain) for a in expr.args]
+            return type(expr)(*args)
 
         elif isinstance(expr, JacobianSymbol):
             axis = expr.axis
