@@ -544,9 +544,9 @@ class TerminalExpr(CalculusFunction):
             return Abs(cls.eval(expr.args[0], domain=domain))
 
         elif isinstance(expr, Pow):
-            base = cls.eval(expr.base, domain=domain)
-            exp  = cls.eval(expr.exp, domain=domain)
-            return base**exp
+            b = cls.eval(expr.base, domain=domain)
+            e = cls.eval(expr.exp , domain=domain)
+            return b ** e
 
         elif isinstance(expr, (exp, sin, cos)): # TODO [YG 12.06.2023]: use generic SymPy type
             args = [cls.eval(a, domain=domain) for a in expr.args]
