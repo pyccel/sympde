@@ -96,13 +96,15 @@ from functools import reduce
 
 from sympy                    import Indexed, sympify
 from sympy                    import Matrix, ImmutableDenseMatrix
-from sympy                    import cacheit
+from sympy                    import cacheit, conjugate
 from sympy.core               import Basic
 from sympy.core               import Add, Mul, Pow
 from sympy.core.containers    import Tuple
 from sympy.core.singleton     import S
 from sympy.core.decorators    import call_highest_priority
 from sympy.core.compatibility import is_sequence
+
+from math import sqrt
 
 from sympde.core.basic        import CalculusFunction
 from sympde.core.basic        import _coeffs_registery
@@ -266,6 +268,7 @@ def is_scalar(atom):
     """
     return is_constant(atom) or isinstance(atom, ScalarFunction)
 
+
 #==============================================================================
 # TODO add dot(u,u) +2*dot(u,v) + dot(v,v) = dot(u+v,u+v)
 # now we only have dot(u,u) + dot(u,v)+ dot(v,u) + dot(v,v) = dot(u+v,u+v)
@@ -351,9 +354,14 @@ class Dot(BasicOperator):
         args_2 = [i for i in b if not i.is_commutative]
         c2     = [i for i in b if not i in args_2]
 
+
+        c = Mul(*c1)*Mul(*c2)
+        # 1D case where everything is commutative
+        if args_1==[] and args_2==[]:
+            return(c)
+
         a = reduce(mul, args_1)
         b = reduce(mul, args_2)
-        c = Mul(*c1)*Mul(*c2)
 
         if str(a) > str(b):
             a,b = b,a
@@ -780,7 +788,6 @@ class Grad(DiffOperator):
                 raise ArgumentTypeError(msg)
 
         return cls(expr, evaluate=False)
-
 #==============================================================================
 class Curl(DiffOperator):
     """

@@ -207,8 +207,8 @@ class BasicFunctionSpace(Basic):
         return self._regularity
 
     @property
-    def codomain_type(self):
-        return self._codomain_type
+    def codomain_complex(self):
+        return self._codomain_complex
 
     @property
     def coordinates(self):
@@ -442,9 +442,9 @@ class ScalarFunction(Symbol):
     def __new__(cls, space, name):
         if not isinstance(space, ScalarFunctionSpace):
             raise ValueError('Expecting a ScalarFunctionSpace')
-        obj = Expr.__new__(cls)
-        obj._space = space
-        obj._name  = name
+        obj            = Expr.__new__(cls)
+        obj._space     = space
+        obj._name      = name
         return obj
 
     @property

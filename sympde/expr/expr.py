@@ -431,9 +431,9 @@ class BilinearForm(BasicForm):
         # Distinguish between trial and test functions
         trial_functions, test_functions = args
 
-        if trial_functions.space.codomain_complex != test_functions.space.codomain_complex:
+        if trial_functions[0].space.codomain_complex != test_functions[0].space.codomain_complex:
             raise TypeError('Trial space and Test space should both be real.')
-        if trial_functions.space.codomain_complex==False:
+        if trial_functions[0].space.codomain_complex==True:
             raise TypeError('Trial space and Test space should be real. In the complex case, a SesquilinearForm should be called ')
 
 
