@@ -31,6 +31,7 @@ from .basic  import _sanitize_arguments
 
 __all__ = (
     'BilinearForm',
+    'SesquilinearForm',
     'Functional',
     'IntAdd',
     'Integral',

@@ -6,7 +6,7 @@ from itertools import product
 import numpy as np
 
 from sympy import Abs, S, cacheit
-from sympy import Indexed, Matrix, ImmutableDenseMatrix
+from sympy import Indexed, Matrix, ImmutableDenseMatrix, conjugate
 from sympy import expand
 from sympy.core import Basic, Symbol
 from sympy.core import Add, Mul, Pow
@@ -827,6 +827,10 @@ class TerminalExpr(CalculusFunction):
             domain    = expr.domain
             expr      = cls(expr.expr, domain=domain)
             return LogicalExpr(expr, domain=domain)
+
+        elif isinstance(expr, conjugate):
+            expr      = cls(expr.args[0], domain=domain)
+            return conjugate(expr)
 
         return expr
 
