@@ -342,6 +342,9 @@ class Domain(BasicDomain):
 
             connectivity.append(interface)
 
+        if len(domains)==1:
+            return domains[0]
+
         return Domain.join(domains, connectivity, domain_name)
 
 
