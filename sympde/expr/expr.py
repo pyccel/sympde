@@ -334,6 +334,7 @@ class Functional(BasicForm):
 #==============================================================================
 class LinearForm(BasicForm):
     is_linear = True
+    is_sesquilinear   = False
 
     def __new__(cls, arguments, expr, **options):
 
@@ -413,6 +414,7 @@ class LinearForm(BasicForm):
 #==============================================================================
 class BilinearForm(BasicForm):
     is_bilinear = True
+    is_sesquilinear   = False
     _is_symmetric = None
 
     def __new__(cls, arguments, expr, **options):
@@ -434,7 +436,7 @@ class BilinearForm(BasicForm):
 
         if trial_functions[0].space.codomain_complex != test_functions[0].space.codomain_complex:
             raise TypeError('Trial space and Test space should both be real.')
-        if trial_functions[0].space.codomain_complex==True:
+        if trial_functions[0].space.codomain_complex:
             raise TypeError('Trial space and Test space should be real. In the complex case, a SesquilinearForm should be called ')
 
 
@@ -544,14 +546,14 @@ class SesquilinearForm(BasicForm):
 
         # Distinguish between trial and test functions
         trial_functions, test_functions = args
-        if trial_functions.space.codomain_complex != test_functions.space.codomain_complex:
+        if trial_functions[0].space.codomain_complex != test_functions[0].space.codomain_complex:
             raise TypeError('Trial space and Test space should both be complex.')
-        if trial_functions.space.codomain_complex==True:
+        if not trial_functions[0].space.codomain_complex:
             raise TypeError('Trial space and Test space should be complex. In the real case, a BilinearForm should be called ')
 
 
         # Check linearity with respect to trial functions
-        if not is_antilinear_expression(expr, trial_functions):
+        if not is_linear_expression(expr, trial_functions):
             msg = ' Expression is not linear w.r.t trial functions {}'\
                     .format(trial_functions)
             raise UnconsistentLinearExpressionError(msg)
@@ -638,6 +640,7 @@ class SesquilinearForm(BasicForm):
 #==============================================================================
 class Norm(Functional):
     is_norm = True
+    is_sesquilinear   = False
 
     def __new__(cls, expr, domain, kind='l2', evaluate=True, **options):
 #        # ...
