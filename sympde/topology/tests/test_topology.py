@@ -283,6 +283,7 @@ def test_domain_without_bnd():
                     ((1,1,1),(0,1,-1)),
                     ((3,1,1),(2,1,-1))]
     domain = Domain.join(domains, connectivity, 'domain')
+    print(domain)
 
 #==============================================================================
 def test_hash():
