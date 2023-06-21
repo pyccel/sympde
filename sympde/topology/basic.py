@@ -323,14 +323,14 @@ class Boundary(BasicDomain):
 
         raise NotImplementedError('only 2d case is available')
 
-    def join(self, boundary, ort=None):
+    def join(self, boundary, ornt=None):
         from sympde.topology.mapping import InterfaceMapping
         # TODO be careful with '|' in psydac
         if self.mapping and boundary.mapping:
             int_map            = InterfaceMapping(self.mapping , boundary.mapping)
             a,b                = self.logical_domain, boundary.logical_domain
             l_name             = '{l}|{r}'.format(l=a.domain.name, r=b.domain.name)
-            int_logical_domain = Interface(l_name, a,b, ort=ort)
+            int_logical_domain = Interface(l_name, a,b, ornt=ornt)
         else:
             int_map            = None
             int_logical_domain = None
@@ -338,7 +338,7 @@ class Boundary(BasicDomain):
         name               = '{l}|{r}'.format(l=self.domain.name, r=boundary.domain.name)
         interface = Interface(name, self, boundary,
                               mapping=int_map,
-                              logical_domain=int_logical_domain, ort=ort)
+                              logical_domain=int_logical_domain, ornt=ornt)
         return interface
 
     def _sympystr(self, printer):
@@ -442,7 +442,7 @@ class Interface(BasicDomain):
     Examples
 
     """
-    def __new__(cls, name, bnd_minus, bnd_plus, mapping=None, logical_domain=None, ort=None):
+    def __new__(cls, name, bnd_minus, bnd_plus, mapping=None, logical_domain=None, ornt=None):
 
         if not isinstance(name     , str    ): raise TypeError(name)
         if not isinstance(bnd_minus, Boundary): raise TypeError(bnd_minus)
@@ -459,7 +459,7 @@ class Interface(BasicDomain):
             ort = tuple(ort)
 
         assert bnd_minus.axis == bnd_plus.axis
-        obj = Basic.__new__(cls, name, bnd_minus, bnd_plus, ort)
+        obj = Basic.__new__(cls, name, bnd_minus, bnd_plus, ornt)
         obj._mapping        = mapping
         obj._logical_domain = logical_domain
         return obj
@@ -481,7 +481,7 @@ class Interface(BasicDomain):
         return self.args[2]
 
     @property
-    def ort(self):
+    def ornt(self):
         return self.args[3]
 
     @property
