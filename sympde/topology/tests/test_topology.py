@@ -205,7 +205,7 @@ def test_domain_join_square():
 
     print(AB)
     assert AB.interior   == Union(A.interior, B.interior)
-    assert AB.interfaces == Interface('A|B', AB_bnd_minus, AB_bnd_plus, ort=1)
+    assert AB.interfaces == Interface('A|B', AB_bnd_minus, AB_bnd_plus, ornt=1)
     print(AB.connectivity)
     # ...
 
@@ -216,7 +216,7 @@ def test_domain_join_square():
 
     print(ABC)
     assert ABC.interior == Union(A.interior, B.interior, C.interior)
-    assert ABC.interfaces == Union(Interface('A|B', AB_bnd_minus, AB_bnd_plus,ort=1),Interface('B|C', BC_bnd_minus, BC_bnd_plus,ort=1))
+    assert ABC.interfaces == Union(Interface('A|B', AB_bnd_minus, AB_bnd_plus,ornt=1),Interface('B|C', BC_bnd_minus, BC_bnd_plus,ornt=1))
     print(list(ABC.connectivity.items()))
     print('')
     # ...
