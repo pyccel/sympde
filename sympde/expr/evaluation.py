@@ -15,6 +15,7 @@ from sympy.core.expr import AtomicExpr
 from sympy.core.containers import Tuple
 from sympy.simplify.simplify import simplify
 from sympy.functions.elementary.trigonometric import TrigonometricFunction
+from sympy.functions.elementary.hyperbolic import HyperbolicFunction
 
 from sympde.core.basic import _coeffs_registery
 from sympde.core.basic import CalculusFunction
@@ -549,8 +550,7 @@ class TerminalExpr(CalculusFunction):
             e = cls.eval(expr.exp , domain=domain)
             return b ** e
 
-        elif isinstance(expr, (exp, sin, cos)): # TODO [YG 12.06.2023]: use generic SymPy type
-        #elif isinstance(expr, Function): # TODO [YG 12.06.2023]: use generic SymPy type
+        elif isinstance(expr, (TrigonometricFunction,HyperbolicFunction)): # TODO [YG 12.06.2023]: use generic SymPy type
 
             args = [cls.eval(a, domain=domain) for a in expr.args]
             return type(expr)(*args)
