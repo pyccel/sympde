@@ -8,7 +8,7 @@ from sympde.topology import Connectivity, Edge
 from sympde.topology import Domain, ElementDomain
 from sympde.topology import Area, Mapping
 from sympde.topology import Interface
-from sympde.topology import Line, Square
+from sympde.topology import Line, Square, Cube
 from sympde.topology import IdentityMapping
 
 import os
@@ -257,7 +257,7 @@ def test_get_subdomain():
     assert A_pipe_B_pipe_C_2 is ABC
 
 #==============================================================================
-def test_domain_without_bnd():
+def test_2d_domain_without_bnd():
 
     OmegaLog1 = Square('OmegaLog1', bounds1 = (0,.5), bounds2 = (0,.5))
     mapping_1 = IdentityMapping('M1',2)
@@ -285,6 +285,33 @@ def test_domain_without_bnd():
     domain = Domain.join(domains, connectivity, 'domain')
     print(domain)
 
+def test_3d_domain_without_bnd():
+
+    OmegaLog1 = Cube('OmegaLog1', bounds1 = (0,.5), bounds2 = (0,.5), bounds3 = (0,1))
+    mapping_1 = IdentityMapping('M1',2)
+    domain_1     = mapping_1(OmegaLog1)
+    OmegaLog2 = Cube('OmegaLog2', bounds1 = (0,.5), bounds2 = (.5,1.), bounds3 = (0,1))
+    mapping_2 = IdentityMapping('M2',2)
+    domain_2     = mapping_2(OmegaLog2)
+    OmegaLog3 = Cube('OmegaLog3', bounds1 = (.5,1.), bounds2 = (0,.5), bounds3 = (0,1))
+    mapping_3 = IdentityMapping('M3',2)
+    domain_3     = mapping_3(OmegaLog3)
+    OmegaLog4 = Cube('OmegaLog4', bounds1 = (.5,1.), bounds2 = (.5,1.), bounds3 = (0,1))
+    mapping_4 = IdentityMapping('M4',2)
+    domain_4     = mapping_4(OmegaLog4)
+
+    domains=[domain_1,domain_2,domain_3,domain_4]
+
+    connectivity = [((0, 0, 1),(2, 0, -1),(1,1,1)),
+                    ((1,0,1),(3,0,-1),(1,1,1)),
+                    ((2,0,1),(0,0,-1),(1,1,1)),
+                    ((3,0,1),(1,0,-1),(1,1,1)),
+                    ((0,1,1),(1,1,-1),(1,1,1)),
+                    ((2,1,1),(3,1,-1),(1,1,1)),
+                    ((1,1,1),(0,1,-1),(1,1,1)),
+                    ((3,1,1),(2,1,-1),(1,1,1))]
+    domain = Domain.join(domains, connectivity, 'domain')
+    print(domain)
 #==============================================================================
 def test_hash():
     A = Square('A', bounds1=(0, 1), bounds2=(0, 1))

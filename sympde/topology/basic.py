@@ -456,7 +456,7 @@ class Interface(BasicDomain):
                mapping is not None and logical_domain is not None
 
         if bnd_minus.dim == 3:
-            ort = tuple(ort)
+            ornt = tuple(ornt)
 
         assert bnd_minus.axis == bnd_plus.axis
         obj = Basic.__new__(cls, name, bnd_minus, bnd_plus, ornt)
