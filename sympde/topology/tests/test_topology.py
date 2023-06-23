@@ -50,7 +50,7 @@ def test_topology_1():
     D2 = M2(B)
 
     domains = [D1, D2]
-    connectivity = [((0, 0, 1),(1, 0, -1))]
+    connectivity = [((0, 0, 1), (1, 0, -1))]
     Omega = Domain.join(domains, connectivity, 'domain')
 
     interfaces = Omega.interfaces
