@@ -158,7 +158,7 @@ def test_domain_join_line():
 
 
     domains = [A, B]
-    connectivity = [((0, 0, 1),(1, 0, -1))]
+    connectivity = [((0, 0, 1), (1, 0, -1))]
     AB = Domain.join(domains, connectivity, 'AB')
 
     AB_bnd_minus = A.get_boundary(axis=0, ext=1)
