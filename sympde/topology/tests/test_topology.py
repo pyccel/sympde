@@ -229,7 +229,7 @@ def test_get_subdomain():
     # ...
 
     domains = [A, B]
-    connectivity = [((0, 0, 1),(1, 0, -1))]
+    connectivity = [((0, 0, 1), (1, 0, -1))]
     AB = Domain.join(domains, connectivity, 'AB')
 
     # ...
