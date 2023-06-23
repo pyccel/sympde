@@ -407,34 +407,24 @@ class Domain(BasicDomain):
         # ... connectivity
         interfaces = {}
         boundaries = []
-        if dim in [1,2]:
-            for cn in connectivity:
-                bnd_minus = patches[cn[0][0]].get_boundary(axis=cn[0][1], ext=cn[0][2])
-                bnd_plus  = patches[cn[1][0]].get_boundary(axis=cn[1][1], ext=cn[1][2])
-                if dim == 1:
-                    ornt = None
-                else:
-                    ornt = 1 if len(cn) == 2 else cn[2]
-
-                interface = bnd_minus.join(bnd_plus, ornt=ornt)
-                if interface.name in interfaces:
-                    interface = bnd_plus.join(bnd_minus, ornt=ornt)
-                interfaces[interface.name] = interface
-                boundaries.append(bnd_minus)
-                boundaries.append(bnd_plus)
-        elif dim == 3:
-            for cn in connectivity:
-                bnd_minus = patches[cn[0][0]].get_boundary(axis=cn[0][1], ext=cn[0][2])
-                bnd_plus  = patches[cn[1][0]].get_boundary(axis=cn[1][1], ext=cn[1][2])
+        for cn in connectivity:
+            bnd_minus = patches[cn[0][0]].get_boundary(axis=cn[0][1], ext=cn[0][2])
+            bnd_plus  = patches[cn[1][0]].get_boundary(axis=cn[1][1], ext=cn[1][2])
+            if   dim == 1: ornt = None
+            elif dim == 2: ornt = 1 if len(cn) == 2 else cn[2]
+            elif dim == 3:
                 flag = 1 if len(cn) == 2 else cn[2][0]
                 ornt1 = 1 if len(cn) == 2 else cn[2][1]
                 ornt2 = 1 if len(cn) == 2 else cn[2][2]
-                interface          = bnd_minus.join(bnd_plus, ornt=(flag,ornt1,ornt2))
-                if interface.name in interfaces:
-                    interface  = bnd_plus.join(bnd_minus, ornt=(flag,ornt1,ornt2))
-                interfaces[interface.name] = interface
-                boundaries.append(bnd_minus)
-                boundaries.append(bnd_plus)
+                ornt = (flag, ornt1, ornt2)
+
+            interface = bnd_minus.join(bnd_plus, ornt=ornt)
+            if interface.name in interfaces:
+                interface = bnd_plus.join(bnd_minus, ornt=ornt)
+
+            interfaces[interface.name] = interface
+            boundaries.append(bnd_minus)
+            boundaries.append(bnd_plus)
 
         connectivity = Connectivity()
         for k,v in interfaces.items():

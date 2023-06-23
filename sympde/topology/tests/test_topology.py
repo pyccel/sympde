@@ -284,7 +284,9 @@ def test_2d_domain_without_bnd():
                     ((1, 1, 1), (0, 1,-1)),
                     ((3, 1, 1), (2, 1,-1))]
     domain = Domain.join(domains, connectivity, 'domain')
-    print(domain)
+
+    assert len(domain.interior) == 4
+    assert len(domain.interfaces) == 8
 
 def test_3d_domain_without_bnd():
 
@@ -312,7 +314,9 @@ def test_3d_domain_without_bnd():
                     ((1,1,1),(0,1,-1),(1,1,1)),
                     ((3,1,1),(2,1,-1),(1,1,1))]
     domain = Domain.join(domains, connectivity, 'domain')
-    print(domain)
+
+    assert len(domain.interior) == 4
+    assert len(domain.interfaces) == 8
 #==============================================================================
 def test_hash():
     A = Square('A', bounds1=(0, 1), bounds2=(0, 1))
