@@ -1160,7 +1160,7 @@ class TensorExpr(CalculusFunction):
             # ...
 
             # ...
-            if domain is not None and domain.mapping is not None:
+            if domain is not None and hasattr(domain, 'mapping') and domain.mapping is not None:
                 terminal_expr = LogicalExpr(terminal_expr.expr, domain)
                 variables     = [LogicalExpr(e, domain) for e in variables ]
                 trials        = [LogicalExpr(e, domain) for e in trials ]
