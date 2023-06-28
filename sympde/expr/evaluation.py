@@ -1140,7 +1140,7 @@ class TensorExpr(CalculusFunction):
 
             return ImmutableDenseMatrix(lines)
 
-        elif isinstance(expr, DomainExpression) or isinstance(expr, BoundaryExpression):
+        elif isinstance(expr, (DomainExpression, BoundaryExpression)):
             # TODO to be removed
             return cls.eval(expr.expr, d_atoms=d_atoms, domain=domain)
 
@@ -1160,7 +1160,7 @@ class TensorExpr(CalculusFunction):
             # ...
 
             # ...
-            if domain is not None and hasattr(domain, 'mapping') and domain.mapping is not None:
+            if domain is not None and getattr(domain, 'mapping', None):
                 terminal_expr = LogicalExpr(terminal_expr.expr, domain)
                 variables     = [LogicalExpr(e, domain) for e in variables ]
                 trials        = [LogicalExpr(e, domain) for e in trials ]
