@@ -350,7 +350,7 @@ class LinearForm(BasicForm):
         args = _sanitize_arguments(arguments, is_linear=True)
 
         # Check linearity with respect to the given arguments
-        if not is_linear_expression(expr, args):
+        if not (is_linear_expression(expr, args) or is_antilinear_expression(expr, args)):
             msg = 'Expression is not linear w.r.t [{}]'.format(args)
             raise UnconsistentLinearExpressionError(msg)
 
@@ -615,7 +615,7 @@ class SesquilinearForm(BasicForm):
             left, right = self.variables
             a1 = self(left, right)
             a2 = self(right, left)
-            self._is_hermitian = (a1 == a2)
+            self._is_hermitian = (conjugate(a1) == a2)
         return self._is_hermitian
 
     def __call__(self, trials, tests, **kwargs):
@@ -849,6 +849,9 @@ def is_linear_expression(expr, args, integral=True, debug=True):
     if not( (newexpr-left_expr).expand() == 0 or newexpr.expand()==left_expr.expand()):
         # TODO use a warning or exception?
         if debug:
+            a=(newexpr-left_expr).expand()
+            b=newexpr.expand()
+            c=left_expr.expand()
             print('Failed to assert multiplication property')
             print('{} != {}'.format(newexpr, left_expr))
         return False

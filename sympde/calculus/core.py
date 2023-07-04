@@ -513,9 +513,16 @@ class Inner(BasicOperator):
         args_2 = [i for i in b if not i.is_commutative]
         c2     = [i for i in b if not i in args_2]
 
+        # args_2 = [i for args_2 in b if not i.is_commutative]
+        # c2     = [i for i in b if not i in args_2]
+
+        c = Mul(*c1)*Mul(*c2)
+        if args_1==[] and args_2==[]:
+            return(c)
+
+
         a = reduce(mul, args_1)
         b = reduce(mul, args_2)
-        c = Mul(*c1)*Mul(*c2)
 
         if str(a) > str(b):
             a,b = b,a

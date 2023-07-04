@@ -11,7 +11,7 @@ from sympde.topology.space import ScalarFunction
 from sympde.topology.space import VectorFunction, IndexedVectorFunction
 from sympde.topology import Boundary, NormalVector, TangentVector
 from sympde.topology import Trace, trace_0, trace_1
-from sympde.calculus import grad, dot
+from sympde.calculus import grad, dot, inner
 from sympde.core.utils import random_string
 
 from .expr import BilinearForm, LinearForm, SesquilinearForm
