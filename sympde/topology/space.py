@@ -438,6 +438,7 @@ class ScalarFunction(Symbol):
     is_commutative = True
     _space         = None
     _projection_of = None
+    is_complex     = False
 
     def __new__(cls, space, name):
         if not isinstance(space, ScalarFunctionSpace):
@@ -445,6 +446,7 @@ class ScalarFunction(Symbol):
         obj            = Expr.__new__(cls)
         obj._space     = space
         obj._name      = name
+        obj.is_complex = space.codomain_complex
         return obj
 
     @property
@@ -547,12 +549,14 @@ class VectorFunction(Symbol, IndexedBase):
     is_commutative = False
     _space         = None
     _projection_of = None
+    is_complex     = False
 
     def __new__(cls, space, name):
         if not isinstance(space, VectorFunctionSpace):
             raise ValueError('Expecting a VectorFunctionSpace')
         obj        = Expr.__new__(cls)
         obj._space = space
+        obj.is_complex=space.codomain_complex
         obj._name = name
         return obj
 

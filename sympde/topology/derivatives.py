@@ -15,7 +15,7 @@ from sympy import Mul, Add, Pow
 from sympy import S
 from sympy import Indexed
 from sympy import diff
-from sympy import log, conjugate
+from sympy import log, conjugate, Abs
 from sympy import preorder_traversal
 from sympy import cacheit
 from sympy.core.compatibility import is_sequence
@@ -164,6 +164,9 @@ class DifferentialOperator(LinearOperator):
 
         elif isinstance(expr, conjugate):
             return conjugate(cls(expr.args[0], evaluate=True))
+
+        elif isinstance(expr, Abs):
+            return Abs(cls(expr.args[0], evaluate=True))
 
         else:
             msg = '{expr} of type {type}'.format(expr=expr, type=type(expr))

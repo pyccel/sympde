@@ -289,7 +289,8 @@ class Integral(CalculusFunction):
 
 #==============================================================================
 class Functional(BasicForm):
-    is_functional = True
+    is_functional   = True
+    is_sesquilinear = False
 
     def __new__(cls, expr, domain, evaluate=True, **options):
 
