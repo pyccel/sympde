@@ -351,11 +351,16 @@ class LinearForm(BasicForm):
         args = _sanitize_arguments(arguments, is_linear=True)
 
         # Check linearity with respect to the given arguments
-        if not (is_linear_expression(expr, args) or is_antilinear_expression(expr, args)):
-            msg = 'Expression is not linear w.r.t [{}]'.format(args)
-            raise UnconsistentLinearExpressionError(msg)
+        if args[0].is_complex:
+            if not is_antilinear_expression(expr, args):
+                msg = 'Complex case : Expression is not antilinear w.r.t [{}]'.format(args)
+                raise UnconsistentLinearExpressionError(msg)
+        else:
+            if not is_linear_expression(expr, args):
+                msg = 'Real case :Expression is not linear w.r.t [{}]'.format(args)
+                raise UnconsistentLinearExpressionError(msg)
 
-        # Create new object of type LinearForm
+            # Create new object of type LinearForm
         obj = Basic.__new__(cls, args, expr)
 
         # Compute 'domain' property (scalar or tuple)
@@ -555,13 +560,13 @@ class SesquilinearForm(BasicForm):
 
         # Check linearity with respect to trial functions
         if not is_linear_expression(expr, trial_functions):
-            msg = ' Expression is not linear w.r.t trial functions {}'\
+            msg = ' Real Case : Expression is not linear w.r.t trial functions {}'\
                     .format(trial_functions)
             raise UnconsistentLinearExpressionError(msg)
 
         # Check linearity with respect to test functions
-        if not is_linear_expression(expr, test_functions):
-            msg = ' Expression is not linear w.r.t test functions {}'\
+        if not is_antilinear_expression(expr, test_functions):
+            msg = ' Complex Case : Expression is not linear w.r.t test functions {}'\
                     .format(test_functions)
             raise UnconsistentLinearExpressionError(msg)
 
@@ -673,21 +678,21 @@ class Norm(Functional):
             exponent = 2
 
             if not is_vector:
-                expr = expr*expr
+                expr = Inner(expr,expr)
 
             else:
                 if not( expr.shape[1] == 1 ):
                     raise ValueError('Wrong expression for Matrix. must be a row')
 
                 v = Tuple(*expr[:,0])
-                expr = Dot(v, v)
+                expr = Inner(v, v)
 
         elif kind == 'h1'and evaluate :
             exponent = 2
 
             if not is_vector:
                 a    = Grad(expr)
-                expr = Dot(a, a)
+                expr = Inner(a, a)
 
             else:
                 if not( expr.shape[1] == 1 ):
@@ -702,7 +707,7 @@ class Norm(Functional):
 
             if not is_vector:
                 a    = Hessian(expr)
-                expr = Dot(a, a)
+                expr = Inner(a, a)
 
             else:
                 raise NotImplementedError('TODO')

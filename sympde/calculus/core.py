@@ -184,6 +184,17 @@ def is_zero(x):
     else:
         return x == 0
 
+def is_Function_complex(list):
+    res=False
+    for expr in list:
+        if isinstance(expr, (ScalarFunction, VectorFunction)):
+            res = res or expr.is_complex
+        else:
+            res = res or is_Function_complex(expr.args)
+        if res:
+            break
+    return res
+
 #==============================================================================
 class BasicOperator(CalculusFunction):
     """
@@ -513,13 +524,13 @@ class Inner(BasicOperator):
         args_2 = [i for i in b if not i.is_commutative]
         c2     = [i for i in b if not i in args_2]
 
-        # args_2 = [i for args_2 in b if not i.is_commutative]
-        # c2     = [i for i in b if not i in args_2]
+        if is_Function_complex(b):
+            args_2 = [conjugate(i) for i in args_2]
+            c2     = [conjugate(i) for i in c2]
 
         c = Mul(*c1)*Mul(*c2)
         if args_1==[] and args_2==[]:
             return(c)
-
 
         a = reduce(mul, args_1)
         b = reduce(mul, args_2)
