@@ -29,7 +29,7 @@ dependencies = [
 Repository = "https://github.com/pyccel/sympde"
 
 [tool.setuptools.dynamic]
-version = {attr = "package.__version__"}
+version = {attr = "sympde.__version__"}
 
 [tool.setuptools.packages.find]
 include = ["sympde*"]
