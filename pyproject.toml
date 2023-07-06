@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name            = "sympde"
-version         = "0.17.1"
+dynamic         = ["version"]
 description     = "Symbolic calculus for partial differential equations (and variational forms)"
 readme          = "README.rst"
 requires-python = ">= 3.8, < 3.12"
@@ -27,6 +27,9 @@ dependencies = [
 
 [project.urls]
 Repository = "https://github.com/pyccel/sympde"
+
+[tool.setuptools.dynamic]
+version = {attr = "package.__version__"}
 
 [tool.setuptools.packages.find]
 include = ["sympde*"]
