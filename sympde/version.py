@@ -15,7 +15,6 @@ def extract_version() -> str:
     """
     from contextlib import suppress
     from pathlib    import Path
-    from importlib  import metadata
 
     with suppress(FileNotFoundError, StopIteration):
         root_dir = Path(__file__).parent.parent
@@ -24,6 +23,7 @@ def extract_version() -> str:
             version = version_line.split("=")[1].strip("'\"\n ")
             return f"{version}-dev (at {root_dir})"
 
+    import importlib.metadata
     return importlib.metadata.version(__package__)
 
 
