@@ -678,36 +678,40 @@ class Norm(Functional):
             exponent = 2
 
             if not is_vector:
-                expr = Inner(expr,expr)
+                expr = expr * conjugate(expr)
 
             else:
                 if not( expr.shape[1] == 1 ):
                     raise ValueError('Wrong expression for Matrix. must be a row')
 
-                v = Tuple(*expr[:,0])
-                expr = Inner(v, v)
+                args = expr[:, 0]
+                args_conj=[conjugate(i) for i in args]
+                v = Tuple(*args)
+                v_conj = Tuple(*args_conj)
+                expr = Dot(v, v_conj)
 
         elif kind == 'h1'and evaluate :
             exponent = 2
 
             if not is_vector:
                 a    = Grad(expr)
-                expr = Inner(a, a)
+                expr = Dot(a, conjugate(a))
 
             else:
                 if not( expr.shape[1] == 1 ):
                     raise ValueError('Wrong expression for Matrix. must be a row')
-
-                v = Tuple(*expr[:,0])
-                a = Grad(v)
-                expr = Inner(a, a)
+                args = expr[:, 0]
+                args_conj=[conjugate(i) for i in args]
+                v = Tuple(*args)
+                v_conj = Tuple(*args_conj)
+                expr = Dot(Grad(v), Grad(v_conj))
 
         elif kind == 'h2'and evaluate :
             exponent = 2
 
             if not is_vector:
                 a    = Hessian(expr)
-                expr = Inner(a, a)
+                expr = Dot(a, conjugate(a))
 
             else:
                 raise NotImplementedError('TODO')
