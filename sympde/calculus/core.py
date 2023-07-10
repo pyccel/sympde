@@ -184,16 +184,16 @@ def is_zero(x):
     else:
         return x == 0
 
-def is_Function_complex(list):
-    res=False
-    for expr in list:
-        if isinstance(expr, (ScalarFunction, VectorFunction)):
-            res = res or expr.is_complex
-        else:
-            res = res or is_Function_complex(expr.args)
-        if res:
-            break
-    return res
+# def is_Function_complex(list):
+#     res=False
+#     for expr in list:
+#         if isinstance(expr, (ScalarFunction, VectorFunction)):
+#             res = res or expr.is_complex
+#         else:
+#             res = res or is_Function_complex(expr.args)
+#         if res:
+#             break
+#     return res
 
 #==============================================================================
 class BasicOperator(CalculusFunction):
@@ -524,9 +524,9 @@ class Inner(BasicOperator):
         args_2 = [i for i in b if not i.is_commutative]
         c2     = [i for i in b if not i in args_2]
 
-        if is_Function_complex(b):
-            args_2 = [conjugate(i) for i in args_2]
-            c2     = [conjugate(i) for i in c2]
+        # if is_Function_complex(b):
+        #     args_2 = [i if isinstance(i, conjugate) else conjugate(i) for i in args_2]
+        #     c2     = [i if isinstance(i, conjugate) else conjugate(i) for i in c2]
 
         c = Mul(*c1)*Mul(*c2)
         if args_1==[] and args_2==[]:
@@ -535,8 +535,8 @@ class Inner(BasicOperator):
         a = reduce(mul, args_1)
         b = reduce(mul, args_2)
 
-        if str(a) > str(b):
-            a,b = b,a
+        # if str(a) > str(b):
+        #     a,b = b,a
 
         obj = Basic.__new__(cls, a, b)
 
