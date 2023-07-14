@@ -33,7 +33,7 @@ from sympy import Integer, Float
 from sympy import Add, Mul
 from sympy import simplify
 from sympy import S
-from sympy.core.compatibility import is_sequence
+from sympde.old_sympy_utilities import is_sequence
 from sympy import Basic
 from sympy import Indexed, IndexedBase
 

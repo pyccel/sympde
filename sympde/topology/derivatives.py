@@ -18,7 +18,7 @@ from sympy import diff
 from sympy import log
 from sympy import preorder_traversal
 from sympy import cacheit
-from sympy.core.compatibility import is_sequence
+from sympde.old_sympy_utilities import is_sequence
 
 from sympde.core.basic    import CalculusFunction
 from sympde.core.basic    import _coeffs_registery
