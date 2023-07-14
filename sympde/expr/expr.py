@@ -396,7 +396,7 @@ class LinearForm(BasicForm):
         # Make sure that 'values' is always a list
         if len(tests) == 1:
             values = tests[0]
-            if not is_sequence(values):
+            if not is_sequence(values, vector=isinstance(values, VectorFunction)):
                 values = [values]
         else:
             values = tests
@@ -502,8 +502,8 @@ class BilinearForm(BasicForm):
         expr = self._update_free_variables(**kwargs)
 
         # If needed, convert positional arguments to lists
-        if not is_sequence(trials): trials = [trials]
-        if not is_sequence(tests ): tests  = [tests ]
+        if not is_sequence(trials, vector=isinstance(trials, VectorFunction)): trials = [trials]
+        if not is_sequence(tests, vector=isinstance(tests, VectorFunction)): tests  = [tests ]
 
         # Concatenate input values into single list
         values = [*trials, *tests]

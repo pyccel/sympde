@@ -1,3 +1,11 @@
+"""
+Reimplementations of constructs introduced in later versions of Python than
+we support. Also some functions that are needed SymPy-wide and are located
+here for easy import.
+"""
+
+import operator
+from collections import defaultdict
 
 def with_metaclass(meta, *bases):
     """
@@ -52,8 +60,7 @@ class NotIterable:
     """
     pass
 
-
-def iterable(i, exclude=(str, dict, NotIterable)):
+def iterable(i, exclude=(str, dict, NotIterable), vector=False):
     """
     Return a boolean indicating whether ``i`` is SymPy iterable.
     True also indicates that the iterator is finite, e.g. you can
@@ -107,10 +114,13 @@ def iterable(i, exclude=(str, dict, NotIterable)):
     except TypeError:
         return False
     if exclude:
+        #TODO: check why the isinstance(i, exclude) return False
+        if vector:
+            return False
         return not isinstance(i, exclude)
     return True
 
-def is_sequence(i, include=None):
+def is_sequence(i, include=None, *, vector=False):
     """
     Return a boolean indicating whether ``i`` is a sequence in the SymPy
     sense. If anything that fails the test below should be included as
@@ -144,7 +154,7 @@ def is_sequence(i, include=None):
     True
 
     """
-    return (hasattr(i, '__getitem__') and
-            iterable(i) or
-            bool(include) and
-            isinstance(i, include))
+    return ( hasattr(i, '__getitem__') and
+             iterable(i, vector=vector) or
+             bool(include) and
+             isinstance(i, include))

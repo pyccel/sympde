@@ -39,7 +39,7 @@ packages = find_packages()
 
 # Dependencies
 install_requires = [
-    'sympy>=1.2,<1.7',
+    'sympy>=1.2,<1.10',
     'h5py',
     'pytest',
     'pyyaml',
