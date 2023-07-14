@@ -1155,7 +1155,7 @@ def test_area_2d_1():
 
     mu    = Constant('mu'   , is_real=True)
 
-    e = ElementDomain(domain)
+    e = ElementDomain()
     area = Area(e)
 
     V = ScalarFunctionSpace('V', domain)

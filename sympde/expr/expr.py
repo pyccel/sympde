@@ -652,8 +652,9 @@ def linearize(form, fields, trials=None):
     for I in integrals:
 
         g0 = I.expr
-        g1 = I.expr.subs(zip(fields, new_fields)).expand()
-        dg_du = ((g1-g0)/eps).series(eps, 0, 2).subs(eps, 0)
+        g1 = I.expr.subs(zip(fields, new_fields))
+        temp=((g1-g0)/eps).expand()
+        dg_du = (temp).series(eps, 0, 2).subs(eps, 0)
 
         if dg_du:
             new_I = integral(I.domain, dg_du)
