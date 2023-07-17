@@ -58,7 +58,6 @@ class NotIterable:
     calling list() on the instance, for example, would result in
     an infinite loop.
     """
-    pass
 
 def iterable(i, exclude=(str, dict, NotIterable), vector=False):
     """
