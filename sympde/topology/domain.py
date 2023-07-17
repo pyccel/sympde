@@ -470,8 +470,8 @@ class Domain(BasicDomain):
         interfaces   = self.interfaces
         interfaces = (interfaces,) if isinstance(interfaces, Interface) else interfaces
 
-        directions   = {i.plus:i.direction for i in interfaces}
-        directions.update({i.minus:i.direction for i in interfaces})
+        directions   = {i.plus:i.ornt for i in interfaces}
+        directions.update({i.minus:i.ornt for i in interfaces})
 
         boundaries    = {i.minus:i.plus for i in interfaces}
         boundaries.update({value:key for key, value in boundaries.items()})
