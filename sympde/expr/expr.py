@@ -9,8 +9,8 @@ from sympy.core import Basic, S
 from sympy.core import Expr, Add, Mul
 from sympy.core.numbers import Zero as sy_Zero
 from sympy.core.containers import Tuple
-from sympde.old_sympy_utilities import is_sequence
 
+from sympde.old_sympy_utilities import is_sequence
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import Constant
 from sympde.core.utils import random_string
@@ -667,7 +667,7 @@ def linearize(form, fields, trials=None):
 
 #==============================================================================
 def is_linear_expression(expr, args, integral=True, debug=True):
-    """checks if an expression is linear withf respect to the given arguments."""
+    """checks if an expression is linear with respect to the given arguments."""
     # ...
     left_args  = []
     right_args = []
