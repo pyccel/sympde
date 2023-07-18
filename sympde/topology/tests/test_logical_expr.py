@@ -862,9 +862,9 @@ def test_twisted_target_mapping_3d_1():
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
 def teardown_module():
-    from sympy import cache
+    from sympy.core import cache
     cache.clear_cache()
 
 def teardown_function():
-    from sympy import cache
+    from sympy.core import cache
     cache.clear_cache()
