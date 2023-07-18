@@ -25,18 +25,16 @@ from sympy.matrices.dense import MutableDenseMatrix
 from sympy import Mul, Add
 from sympy import postorder_traversal
 from sympy import preorder_traversal
-
 from sympy.core.expr import Expr
 from sympy.core.containers import Tuple
 from sympy import Integer, Float
-
 from sympy import Add, Mul
 from sympy import simplify
 from sympy import S
-from sympde.old_sympy_utilities import is_sequence
 from sympy import Basic
 from sympy import Indexed, IndexedBase
 
+from sympde.old_sympy_utilities import is_sequence
 from .basic import CalculusFunction
 from .basic import _coeffs_registery
 
