@@ -11,13 +11,12 @@ from sympy.core.containers import Tuple
 from sympy import Function
 from sympy import Integer, Float
 from sympy.core.singleton import Singleton
-from sympde.old_sympy_utilities import with_metaclass
 from sympy.core import Add, Mul
 from sympy.core.singleton import S
 
+from sympde.old_sympy_utilities import with_metaclass
 from sympde.core.basic import _coeffs_registery
 from sympde.core import LinearOperator
-
 
 #==============================================================================
 class FormType(with_metaclass(Singleton, Basic)):
