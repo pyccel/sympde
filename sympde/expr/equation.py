@@ -11,10 +11,10 @@ from sympde.topology.space import ScalarFunction
 from sympde.topology.space import VectorFunction, IndexedVectorFunction
 from sympde.topology import Boundary, NormalVector, TangentVector
 from sympde.topology import Trace, trace_0, trace_1
-from sympde.calculus import grad, dot
+from sympde.calculus import grad, dot, inner
 from sympde.core.utils import random_string
 
-from .expr import BilinearForm, LinearForm
+from .expr import BilinearForm, LinearForm, SesquilinearForm
 from .expr import linearize
 from .errors import ( UnconsistentLhsError, UnconsistentRhsError,
                       UnconsistentArgumentsError, UnconsistentBCError )
@@ -192,8 +192,8 @@ class Equation(Basic):
 
     def __new__(cls, lhs, rhs, trials, tests, bc=None, constraint=None):
         # ...
-        if not isinstance(lhs, BilinearForm):
-            raise UnconsistentLhsError('> lhs must be a bilinear')
+        if not isinstance(lhs, (BilinearForm, SesquilinearForm)):
+            raise UnconsistentLhsError('> lhs must be a bilinear or a Sesquilinear')
 
         if not isinstance(rhs, LinearForm):
             raise UnconsistentRhsError('> rhs must be a linear')
@@ -380,7 +380,10 @@ class NewtonIteration(Equation):
 def find(trials, *, forall, lhs, rhs, bc=None, constraint=None):
 
     tests = forall
-    lhs = BilinearForm((trials, tests), lhs)
+    if tests.space.codomain_complex:
+        lhs = SesquilinearForm((trials, tests), lhs)
+    else:
+        lhs = BilinearForm((trials, tests), lhs)
     rhs =   LinearForm(         tests , rhs)
 
     return Equation(lhs, rhs, trials, tests, bc=bc, constraint=constraint)

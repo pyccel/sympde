@@ -5,6 +5,7 @@ from functools import reduce
 
 from sympy import Dummy
 from sympy import Matrix, ImmutableDenseMatrix
+from sympy import conjugate
 from sympy.core import Basic, S
 from sympy.core import Expr, Add, Mul
 from sympy.core.numbers import Zero as sy_Zero
@@ -30,6 +31,7 @@ from .basic  import _sanitize_arguments
 
 __all__ = (
     'BilinearForm',
+    'SesquilinearForm',
     'Functional',
     'IntAdd',
     'Integral',
@@ -287,7 +289,8 @@ class Integral(CalculusFunction):
 
 #==============================================================================
 class Functional(BasicForm):
-    is_functional = True
+    is_functional   = True
+    is_sesquilinear = False
 
     def __new__(cls, expr, domain, evaluate=True, **options):
 
@@ -332,6 +335,7 @@ class Functional(BasicForm):
 #==============================================================================
 class LinearForm(BasicForm):
     is_linear = True
+    is_sesquilinear   = False
 
     def __new__(cls, arguments, expr, **options):
 
@@ -347,11 +351,16 @@ class LinearForm(BasicForm):
         args = _sanitize_arguments(arguments, is_linear=True)
 
         # Check linearity with respect to the given arguments
-        if not is_linear_expression(expr, args):
-            msg = 'Expression is not linear w.r.t [{}]'.format(args)
-            raise UnconsistentLinearExpressionError(msg)
+        if args[0].is_complex:
+            if not is_antilinear_expression(expr, args):
+                msg = 'Complex case : Expression is not antilinear w.r.t [{}]'.format(args)
+                raise UnconsistentLinearExpressionError(msg)
+        else:
+            if not is_linear_expression(expr, args):
+                msg = 'Real case :Expression is not linear w.r.t [{}]'.format(args)
+                raise UnconsistentLinearExpressionError(msg)
 
-        # Create new object of type LinearForm
+            # Create new object of type LinearForm
         obj = Basic.__new__(cls, args, expr)
 
         # Compute 'domain' property (scalar or tuple)
@@ -411,6 +420,7 @@ class LinearForm(BasicForm):
 #==============================================================================
 class BilinearForm(BasicForm):
     is_bilinear = True
+    is_sesquilinear   = False
     _is_symmetric = None
 
     def __new__(cls, arguments, expr, **options):
@@ -429,6 +439,12 @@ class BilinearForm(BasicForm):
 
         # Distinguish between trial and test functions
         trial_functions, test_functions = args
+
+        if trial_functions[0].space.codomain_complex != test_functions[0].space.codomain_complex:
+            raise TypeError('Trial space and Test space should both be real.')
+        if trial_functions[0].space.codomain_complex:
+            raise TypeError('Trial space and Test space should be real. In the complex case, a SesquilinearForm should be called ')
+
 
         # Check linearity with respect to trial functions
         if not is_linear_expression(expr, trial_functions):
@@ -516,8 +532,121 @@ class BilinearForm(BasicForm):
         return expr
 
 #==============================================================================
+class SesquilinearForm(BasicForm):
+    is_sesquilinear = True
+    _is_hermitian   = None
+
+    def __new__(cls, arguments, expr, **options):
+
+        # Trivial case: null expression
+        if expr == 0:
+            return sy_Zero()
+
+        # Check that integral expression is given
+
+        if not expr.atoms(Integral):
+            raise ValueError('Expecting integral Expression')
+
+        # TODO: why do we 'sanitize' here?
+        args = _sanitize_arguments(arguments, is_bilinear=True)
+
+        # Distinguish between trial and test functions
+        trial_functions, test_functions = args
+        if trial_functions[0].space.codomain_complex != test_functions[0].space.codomain_complex:
+            raise TypeError('Trial space and Test space should both be complex.')
+        if not trial_functions[0].space.codomain_complex:
+            raise TypeError('Trial space and Test space should be complex. In the real case, a BilinearForm should be called ')
+
+
+        # Check linearity with respect to trial functions
+        if not is_linear_expression(expr, trial_functions):
+            msg = ' Real Case : Expression is not linear w.r.t trial functions {}'\
+                    .format(trial_functions)
+            raise UnconsistentLinearExpressionError(msg)
+
+        # Check linearity with respect to test functions
+        if not is_antilinear_expression(expr, test_functions):
+            msg = ' Complex Case : Expression is not linear w.r.t test functions {}'\
+                    .format(test_functions)
+            raise UnconsistentLinearExpressionError(msg)
+
+        # Create new object of type SesquilinearForm
+        obj = Basic.__new__(cls, args, expr)
+
+        # Compute 'domain' property (scalar or tuple)
+        # TODO: is this is useful?
+        obj._domain = _get_domain(expr)
+
+        return obj
+
+    @property
+    def variables(self):
+        return self._args[0]
+
+    @property
+    def expr(self):
+        return self._args[1]
+
+    @property
+    def domain(self):
+        return self._domain
+
+    @property
+    def test_functions(self):
+        return self.variables[1]
+
+    @property
+    def trial_functions(self):
+        return self.variables[0]
+
+    @property
+    def test_spaces(self):
+        return [u.space for u in self.test_functions]
+
+    @property
+    def trial_spaces(self):
+        return [u.space for u in self.trial_functions]
+
+    @property
+    def coordinates(self):
+        return self.test_spaces[0].coordinates
+
+    @property
+    def ldim(self):
+        return self.test_spaces[0].ldim
+
+    @property
+    def is_hermitian(self):
+        if self._is_hermitian is None:
+            left, right = self.variables
+            a1 = self(left, right)
+            a2 = self(right, left)
+            self._is_hermitian = (conjugate(a1) == a2)
+        return self._is_hermitian
+
+    def __call__(self, trials, tests, **kwargs):
+
+        # Use free variables if given and available
+        expr = self._update_free_variables(**kwargs)
+
+        # If needed, convert positional arguments to lists
+        if not is_sequence(trials): trials = [trials]
+        if not is_sequence(tests ): tests  = [tests ]
+
+        # Concatenate input values into single list
+        values = [*trials, *tests]
+
+        # Substitute variables with given values in bilinear expression
+        variables = [*self.variables[0], *self.variables[1]]
+        subs      = dict(zip(variables, values))
+        expr, _   = expr._xreplace(subs)
+
+        return expr
+
+#==============================================================================
 class Norm(Functional):
     is_norm = True
+    is_sesquilinear   = False
 
     def __new__(cls, expr, domain, kind='l2', evaluate=True, **options):
 #        # ...
@@ -549,36 +678,40 @@ class Norm(Functional):
             exponent = 2
 
             if not is_vector:
-                expr = expr*expr
+                expr = expr * conjugate(expr)
 
             else:
                 if not( expr.shape[1] == 1 ):
                     raise ValueError('Wrong expression for Matrix. must be a row')
 
-                v = Tuple(*expr[:,0])
-                expr = Dot(v, v)
+                args = expr[:, 0]
+                args_conj=[conjugate(i) for i in args]
+                v = Tuple(*args)
+                v_conj = Tuple(*args_conj)
+                expr = Dot(v, v_conj)
 
         elif kind == 'h1'and evaluate :
             exponent = 2
 
             if not is_vector:
                 a    = Grad(expr)
-                expr = Dot(a, a)
+                expr = Dot(a, conjugate(a))
 
             else:
                 if not( expr.shape[1] == 1 ):
                     raise ValueError('Wrong expression for Matrix. must be a row')
-
-                v = Tuple(*expr[:,0])
-                a = Grad(v)
-                expr = Inner(a, a)
+                args = expr[:, 0]
+                args_conj=[conjugate(i) for i in args]
+                v = Tuple(*args)
+                v_conj = Tuple(*args_conj)
+                expr = Dot(Grad(v), Grad(v_conj))
 
         elif kind == 'h2'and evaluate :
             exponent = 2
 
             if not is_vector:
                 a    = Hessian(expr)
-                expr = Dot(a, a)
+                expr = Dot(a, conjugate(a))
 
             else:
                 raise NotImplementedError('TODO')
@@ -724,6 +857,78 @@ def is_linear_expression(expr, args, integral=True, debug=True):
 
     left_expr = expr.subs(list(zip(args, left_args)))
     left_expr = coeff * left_expr
+    if not( (newexpr-left_expr).expand() == 0 or newexpr.expand()==left_expr.expand()):
+        # TODO use a warning or exception?
+        if debug:
+            a=(newexpr-left_expr).expand()
+            b=newexpr.expand()
+            c=left_expr.expand()
+            print('Failed to assert multiplication property')
+            print('{} != {}'.format(newexpr, left_expr))
+        return False
+    # ...
+
+    return True
+
+#==============================================================================
+def is_antilinear_expression(expr, args, debug=True):
+    """checks if an expression is linear with respect to the given arguments."""
+    # ...
+    left_args  = []
+    right_args = []
+
+    for arg in args:
+        tag    = random_string( 4 )
+
+        if isinstance(arg, ScalarFunction):
+            left  = ScalarFunction(arg.space, name='l_' + tag)
+            right = ScalarFunction(arg.space, name='r_' + tag)
+
+        elif isinstance(arg, VectorFunction):
+            left  = VectorFunction(arg.space, name='l_' + tag)
+            right = VectorFunction(arg.space, name='r_' + tag)
+        else:
+            raise TypeError('argument must be a {Scalar|Vector}Function')
+
+        left_args  += [left]
+        right_args += [right]
+    # ...
+
+    # ... check addition
+    newargs = [left + right for left, right in zip(left_args, right_args)]
+
+    newexpr    = expr.subs(zip(args, newargs))
+    left_expr  = expr.subs(zip(args, left_args))
+    right_expr = expr.subs(zip(args, right_args))
+
+    a = newexpr
+    b = left_expr + right_expr
+
+    if not( (a-b).expand() == 0 or a.expand() == b.expand()):
+        # TODO use a warning or exception?
+        if debug:
+            print('Failed to assert addition property')
+            print('{} != {}'.format(a.expand(), b.expand()))
+        return False
+
+    # ...
+
+    # ... check multiplication
+    tag   = random_string( 4 )
+    coeff = Constant('alpha_' + tag)
+
+    newexpr = expr
+    for arg, left in zip(args, left_args):
+        newarg  = coeff * left
+        newexpr = newexpr.subs(arg, newarg)
+
+    atoms     = list(newexpr.atoms(BasicOperator))
+    subs      = [e.func(*e.args, evaluate=True) for e in atoms]
+    newexpr   = newexpr.subs(zip(atoms, subs))
+
+
+    left_expr = expr.subs(list(zip(args, left_args)))
+    left_expr = conjugate(coeff) * left_expr
     if not( (newexpr-left_expr).expand() == 0 or newexpr.expand()==left_expr.expand()):
         # TODO use a warning or exception?
         if debug:

@@ -135,7 +135,7 @@ class BasicFunctionSpace(Basic):
     _kind       = None
     _regularity = None # TODO pass it as arg to __new__
     _is_broken  = None
-    def __new__(cls, name, domain, shape, kind):
+    def __new__(cls, name, domain, shape, kind, *, codomain_complex=False):
 
         if not isinstance(domain, BasicDomain):
             raise TypeError('> Expecting a BasicDomain object for domain')
@@ -144,7 +144,7 @@ class BasicFunctionSpace(Basic):
         obj._name   = name
         obj._domain = domain
         obj._shape  = shape
-
+        obj._codomain_complex=codomain_complex
         # ...
         if kind is None:
             kind = 'undefined'
@@ -207,6 +207,10 @@ class BasicFunctionSpace(Basic):
         return self._regularity
 
     @property
+    def codomain_complex(self):
+        return self._codomain_complex
+
+    @property
     def coordinates(self):
         return self.domain.coordinates
 
@@ -224,9 +228,9 @@ class ScalarFunctionSpace(BasicFunctionSpace):
     """
     Represents a basic continuous scalar Function space.
     """
-    def __new__(cls, name, domain, kind=None):
+    def __new__(cls, name, domain, kind=None, *, codomain_complex=False):
         shape = 1
-        return BasicFunctionSpace.__new__(cls, name, domain, shape, kind)
+        return BasicFunctionSpace.__new__(cls, name, domain, shape, kind, codomain_complex=codomain_complex)
 
     def element(self, name):
         return ScalarFunction(self, name)
@@ -236,9 +240,9 @@ class VectorFunctionSpace(BasicFunctionSpace):
     """
     Represents a basic continuous vector Function space.
     """
-    def __new__(cls, name, domain, kind=None):
+    def __new__(cls, name, domain, kind=None, *, codomain_complex=False):
         shape = domain.dim
-        return BasicFunctionSpace.__new__(cls, name, domain, shape, kind)
+        return BasicFunctionSpace.__new__(cls, name, domain, shape, kind, codomain_complex=codomain_complex)
 
     def element(self, name):
         return VectorFunction(self, name)
@@ -246,7 +250,7 @@ class VectorFunctionSpace(BasicFunctionSpace):
 #=============================================================================
 class Derham:
     """."""
-    def __init__(self, domain, sequence=None):
+    def __init__(self, domain, sequence=None, *, codomain_complex=False):
         shape = domain.dim
         self._V0  = None
         self._V1  = None
@@ -254,8 +258,8 @@ class Derham:
         self._V3  = None
 
         if shape == 1:
-            spaces = [ScalarFunctionSpace('H1', domain, kind='H1'),
-                      ScalarFunctionSpace('L2', domain, kind='L2')]
+            spaces = [ScalarFunctionSpace('H1', domain, kind='H1', codomain_complex=codomain_complex),
+                      ScalarFunctionSpace('L2', domain, kind='L2', codomain_complex=codomain_complex)]
 
             self._V0  = spaces[0]
             self._V1  = spaces[1]
@@ -264,19 +268,19 @@ class Derham:
             assert sequence is not None
 
             space = sequence[1]
-            spaces = [ScalarFunctionSpace('H1', domain, kind='H1'),
-                      VectorFunctionSpace(space, domain, kind=space),
-                      ScalarFunctionSpace('L2', domain, kind='L2')]
+            spaces = [ScalarFunctionSpace('H1', domain, kind='H1' ,codomain_complex=codomain_complex),
+                      VectorFunctionSpace(space, domain, kind=space, codomain_complex=codomain_complex),
+                      ScalarFunctionSpace('L2', domain, kind='L2', codomain_complex=codomain_complex)]
 
             self._V0  = spaces[0]
             self._V1  = spaces[1]
             self._V2  = spaces[2]
 
         elif shape == 3:
-            spaces = [ScalarFunctionSpace('H1', domain, kind='H1'),
-                      VectorFunctionSpace('Hcurl', domain, kind='Hcurl'),
-                      VectorFunctionSpace('Hdiv', domain, kind='Hdiv'),
-                      ScalarFunctionSpace('L2', domain, kind='L2')]
+            spaces = [ScalarFunctionSpace('H1', domain, kind='H1'      , codomain_complex=codomain_complex),
+                      VectorFunctionSpace('Hcurl', domain, kind='Hcurl', codomain_complex=codomain_complex),
+                      VectorFunctionSpace('Hdiv', domain, kind='Hdiv'  , codomain_complex=codomain_complex),
+                      ScalarFunctionSpace('L2', domain, kind='L2'      , codomain_complex=codomain_complex)]
 
             self._V0  = spaces[0]
             self._V1  = spaces[1]
@@ -434,13 +438,15 @@ class ScalarFunction(Symbol):
     is_commutative = True
     _space         = None
     _projection_of = None
+    is_complex     = False
 
     def __new__(cls, space, name):
         if not isinstance(space, ScalarFunctionSpace):
             raise ValueError('Expecting a ScalarFunctionSpace')
-        obj = Expr.__new__(cls)
-        obj._space = space
-        obj._name  = name
+        obj            = Expr.__new__(cls)
+        obj._space     = space
+        obj._name      = name
+        obj.is_complex = space.codomain_complex
         return obj
 
     @property
@@ -543,12 +549,14 @@ class VectorFunction(Symbol, IndexedBase):
     is_commutative = False
     _space         = None
     _projection_of = None
+    is_complex     = False
 
     def __new__(cls, space, name):
         if not isinstance(space, VectorFunctionSpace):
             raise ValueError('Expecting a VectorFunctionSpace')
         obj        = Expr.__new__(cls)
         obj._space = space
+        obj.is_complex=space.codomain_complex
         obj._name = name
         return obj
 

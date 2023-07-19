@@ -80,7 +80,7 @@ def get_logical_test_function(u):
     kind            = space.kind
     dim             = space.ldim
     logical_domain  = space.domain.logical_domain
-    l_space         = type(space)(space.name, logical_domain, kind=kind)
+    l_space         = type(space)(space.name, logical_domain, kind=kind, codomain_complex=space.codomain_complex)
     el              = l_space.element(u.name)
     return el
 
@@ -895,7 +895,7 @@ class LogicalExpr(CalculusFunction):
         """."""
 
         from sympde.expr.evaluation import TerminalExpr, DomainExpression
-        from sympde.expr.expr import BilinearForm, LinearForm, BasicForm, Norm
+        from sympde.expr.expr import BilinearForm, LinearForm, BasicForm, Norm, SesquilinearForm
         from sympde.expr.expr import Integral
 
         types = (ScalarFunction, VectorFunction, DifferentialOperator, Trace, Integral)
@@ -1220,6 +1220,12 @@ class LogicalExpr(CalculusFunction):
             trials  = [get_logical_test_function(a) for a in expr.trial_functions]
             body    = cls.eval(expr.expr, domain)
             return BilinearForm((trials, tests), body)
+
+        elif isinstance(expr, SesquilinearForm):
+            tests   = [get_logical_test_function(a) for a in expr.test_functions]
+            trials  = [get_logical_test_function(a) for a in expr.trial_functions]
+            body    = cls.eval(expr.expr, domain)
+            return SesquilinearForm((trials, tests), body)
 
         elif isinstance(expr, LinearForm):
             tests   = [get_logical_test_function(a) for a in expr.test_functions]
