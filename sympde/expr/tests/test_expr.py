@@ -1155,7 +1155,7 @@ def test_area_2d_1():
 
     mu    = Constant('mu'   , is_real=True)
 
-    e = ElementDomain(domain)
+    e = ElementDomain()
     area = Area(e)
 
     V = ScalarFunctionSpace('V', domain)
@@ -1896,9 +1896,9 @@ def test_interface_integral_4():
 #==============================================================================
 
 def teardown_module():
-    from sympy import cache
+    from sympy.core import cache
     cache.clear_cache()
 
 def teardown_function():
-    from sympy import cache
+    from sympy.core import cache
     cache.clear_cache()

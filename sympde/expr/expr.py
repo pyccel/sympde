@@ -10,8 +10,8 @@ from sympy.core import Basic, S
 from sympy.core import Expr, Add, Mul
 from sympy.core.numbers import Zero as sy_Zero
 from sympy.core.containers import Tuple
-from sympy.core.compatibility import is_sequence
 
+from sympde.old_sympy_utilities import is_sequence
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import Constant
 from sympde.core.utils import random_string
@@ -405,7 +405,7 @@ class LinearForm(BasicForm):
         # Make sure that 'values' is always a list
         if len(tests) == 1:
             values = tests[0]
-            if not is_sequence(values):
+            if not is_sequence(values, vector=isinstance(values, VectorFunction)):
                 values = [values]
         else:
             values = tests
@@ -518,8 +518,8 @@ class BilinearForm(BasicForm):
         expr = self._update_free_variables(**kwargs)
 
         # If needed, convert positional arguments to lists
-        if not is_sequence(trials): trials = [trials]
-        if not is_sequence(tests ): tests  = [tests ]
+        if not is_sequence(trials, vector=isinstance(trials, VectorFunction)): trials = [trials]
+        if not is_sequence(tests, vector=isinstance(tests, VectorFunction)): tests  = [tests ]
 
         # Concatenate input values into single list
         values = [*trials, *tests]
@@ -785,8 +785,9 @@ def linearize(form, fields, trials=None):
     for I in integrals:
 
         g0 = I.expr
-        g1 = I.expr.subs(zip(fields, new_fields)).expand()
-        dg_du = ((g1-g0)/eps).series(eps, 0, 2).subs(eps, 0)
+        g1 = I.expr.subs(zip(fields, new_fields))
+        temp=((g1-g0)/eps).expand()
+        dg_du = (temp).series(eps, 0, 2).subs(eps, 0)
 
         if dg_du:
             new_I = integral(I.domain, dg_du)

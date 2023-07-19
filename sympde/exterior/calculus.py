@@ -12,7 +12,6 @@ from sympy.core.containers import Tuple
 from sympy import Function
 from sympy import Integer, Float
 from sympy.core.singleton import Singleton
-from sympy.core.compatibility import with_metaclass
 from sympy.core import Add, Mul
 from sympy.core.singleton import S
 
