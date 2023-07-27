@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools >= 64.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name            = "sympde"
+version         = "0.18.0"
+description     = "Symbolic calculus for partial differential equations (and variational forms)"
+readme          = "README.rst"
+requires-python = ">= 3.8, < 3.12"
+license         = {file = "LICENSE"}
+authors         = [{name = "Ahmed Ratnani", email = "ratnaniahmed@gmail.com"}]
+maintainers = [
+    {name = "Yaman Güçlü", email = "yaman.guclu@gmail.com"},
+    {name = "Said Hadjout"},
+]
+keywords     = ["math"]
+classifiers  = ["Programming Language :: Python :: 3"]
+dependencies = [
+    'sympy >= 1.5, < 1.10',
+    'h5py',
+    'pytest',
+    'pyyaml',
+    'numpy',
+    'matplotlib'
+]
+
+[project.urls]
+Repository = "https://github.com/pyccel/sympde"
+
+[tool.setuptools.packages.find]
+include = ["sympde*"]
+namespaces = false
+
+[tool.setuptools.package-data]
+"*" = ["README.rst"]

@@ -75,9 +75,9 @@ def test_derivatives_2d_with_mapping():
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
 def teardown_module():
-    from sympy import cache
+    from sympy.core import cache
     cache.clear_cache()
 
 def teardown_function():
-    from sympy import cache
+    from sympy.core import cache
     cache.clear_cache()
