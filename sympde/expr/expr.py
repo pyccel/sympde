@@ -521,18 +521,7 @@ class SemiNorm(Functional):
     is_norm = True
 
     def __new__(cls, expr, domain, kind='l2', evaluate=True, **options):
-#        # ...
-#        tests = expr.atoms((ScalarFunction, VectorFunction))
-#        if tests:
-#            msg = '> Expecting an Expression without test functions'
-#            raise UnconsistentArgumentsError(msg)
-#
-#        if not isinstance(expr, (Expr, Matrix, ImmutableDenseMatrix)):
-#            msg = '> Expecting Expr, Matrix, ImmutableDenseMatrix'
-#            raise UnconsistentArgumentsError(msg)
-#        # ...
 
-        # ...
         kind = kind.lower()
         if kind not in ['l2', 'h1', 'h2']:
             raise ValueError('> Only L2, H1, H2 norms are available')
@@ -604,18 +593,7 @@ class Norm(Functional):
     is_norm = True
 
     def __new__(cls, expr, domain, kind='l2', evaluate=True, **options):
-#        # ...
-#        tests = expr.atoms((ScalarFunction, VectorFunction))
-#        if tests:
-#            msg = '> Expecting an Expression without test functions'
-#            raise UnconsistentArgumentsError(msg)
-#
-#        if not isinstance(expr, (Expr, Matrix, ImmutableDenseMatrix)):
-#            msg = '> Expecting Expr, Matrix, ImmutableDenseMatrix'
-#            raise UnconsistentArgumentsError(msg)
-#        # ...
 
-        # ...
         kind = kind.lower()
         if kind not in ['l2', 'h1', 'h2']:
             raise ValueError('> Only L2, H1, H2 norms are available')
