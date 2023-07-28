@@ -534,7 +534,7 @@ class SemiNorm(Functional):
 
         # ...
         kind = kind.lower()
-        if not(kind in ['l2', 'h1', 'h2']):
+        if kind not in ['l2', 'h1', 'h2']:
             raise ValueError('> Only L2, H1, H2 norms are available')
         # ...
 
@@ -550,13 +550,13 @@ class SemiNorm(Functional):
             exponent = 2
 
             if not is_vector:
-                expr = expr*expr
+                expr = expr * expr
 
             else:
-                if not( expr.shape[1] == 1 ):
+                if expr.shape[1] != 1:
                     raise ValueError('Wrong expression for Matrix. must be a row')
 
-                v = Tuple(*expr[:,0])
+                v = Tuple(*expr[:, 0])
                 expr = Dot(v, v)
 
         elif kind == 'h1'and evaluate :
@@ -567,10 +567,10 @@ class SemiNorm(Functional):
                 expr = Dot(a, a)
 
             else:
-                if not( expr.shape[1] == 1 ):
+                if expr.shape[1] != 1:
                     raise ValueError('Wrong expression for Matrix. must be a row')
 
-                v = Tuple(*expr[:,0])
+                v = Tuple(*expr[:, 0])
                 a = Grad(v)
                 expr = Inner(a, a)
 
@@ -617,7 +617,7 @@ class Norm(Functional):
 
         # ...
         kind = kind.lower()
-        if not(kind in ['l2', 'h1', 'h2']):
+        if kind not in ['l2', 'h1', 'h2']:
             raise ValueError('> Only L2, H1, H2 norms are available')
         # ...
 
@@ -636,34 +636,34 @@ class Norm(Functional):
                 expr = expr*expr
 
             else:
-                if not( expr.shape[1] == 1 ):
+                if expr.shape[1] != 1:
                     raise ValueError('Wrong expression for Matrix. must be a row')
 
                 v = Tuple(*expr[:,0])
                 expr = Dot(v, v)
 
-        elif kind == 'h1'and evaluate :
+        elif kind == 'h1' and evaluate :
             exponent = 2
 
             if not is_vector:
                 a    = Grad(expr)
-                expr = Dot(a, a) + expr*expr
+                expr = Dot(a, a) + expr * expr
 
             else:
-                if not( expr.shape[1] == 1 ):
+                if expr.shape[1] != 1:
                     raise ValueError('Wrong expression for Matrix. must be a row')
 
-                v = Tuple(*expr[:,0])
+                v = Tuple(*expr[:, 0])
                 a = Grad(v)
                 expr = Inner(a, a) + Dot(v, v)
 
-        elif kind == 'h2'and evaluate :
+        elif kind == 'h2' and evaluate :
             exponent = 2
 
             if not is_vector:
                 a    = Hessian(expr)
                 b    = Grad(expr)
-                expr = Dot(a, a) + Dot(b,b) + expr*expr
+                expr = Dot(a, a) + Dot(b, b) + expr * expr
 
             else:
                 raise NotImplementedError('TODO')
@@ -682,6 +682,7 @@ class Norm(Functional):
     @property
     def kind(self):
         return self._kind
+
 #==============================================================================
 def linearize(form, fields, trials=None):
     """
