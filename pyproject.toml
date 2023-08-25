@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name            = "sympde"
-version         = "0.18.0"
+version         = "0.18.1"
 description     = "Symbolic calculus for partial differential equations (and variational forms)"
 readme          = "README.rst"
 requires-python = ">= 3.8, < 3.12"

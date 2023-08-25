@@ -35,6 +35,7 @@ __all__ = (
     'Integral',
     'LinearExpr',
     'LinearForm',
+    'SemiNorm',
     'Norm',
 #
     '_get_domain',
@@ -516,24 +517,85 @@ class BilinearForm(BasicForm):
         return expr
 
 #==============================================================================
+class SemiNorm(Functional):
+    is_norm = True
+
+    def __new__(cls, expr, domain, kind='l2', evaluate=True, **options):
+
+        kind = kind.lower()
+        if kind not in ['l2', 'h1', 'h2']:
+            raise ValueError('> Only L2, H1, H2 norms are available')
+        # ...
+
+        # ...
+        is_vector = isinstance(expr, (Matrix, ImmutableDenseMatrix, Tuple, list, tuple))
+        if is_vector:
+            expr = ImmutableDenseMatrix(expr)
+        # ...
+
+        # ...
+        exponent = None
+        if kind == 'l2' and evaluate:
+            exponent = 2
+
+            if not is_vector:
+                expr = expr * expr
+
+            else:
+                if expr.shape[1] != 1:
+                    raise ValueError('Wrong expression for Matrix. must be a row')
+
+                v = Tuple(*expr[:, 0])
+                expr = Dot(v, v)
+
+        elif kind == 'h1'and evaluate :
+            exponent = 2
+
+            if not is_vector:
+                a    = Grad(expr)
+                expr = Dot(a, a)
+
+            else:
+                if expr.shape[1] != 1:
+                    raise ValueError('Wrong expression for Matrix. must be a row')
+
+                v = Tuple(*expr[:, 0])
+                a = Grad(v)
+                expr = Inner(a, a)
+
+        elif kind == 'h2'and evaluate :
+            exponent = 2
+
+            if not is_vector:
+                a    = Hessian(expr)
+                expr = Dot(a, a)
+
+            else:
+                raise NotImplementedError('TODO')
+        # ...
+
+        obj = Functional.__new__(cls, expr, domain, evaluate=evaluate)
+        obj._exponent = exponent
+        obj._kind     = kind
+
+        return obj
+
+    @property
+    def exponent(self):
+        return self._exponent
+
+    @property
+    def kind(self):
+        return self._kind
+
+#==============================================================================
 class Norm(Functional):
     is_norm = True
 
     def __new__(cls, expr, domain, kind='l2', evaluate=True, **options):
-#        # ...
-#        tests = expr.atoms((ScalarFunction, VectorFunction))
-#        if tests:
-#            msg = '> Expecting an Expression without test functions'
-#            raise UnconsistentArgumentsError(msg)
-#
-#        if not isinstance(expr, (Expr, Matrix, ImmutableDenseMatrix)):
-#            msg = '> Expecting Expr, Matrix, ImmutableDenseMatrix'
-#            raise UnconsistentArgumentsError(msg)
-#        # ...
 
-        # ...
         kind = kind.lower()
-        if not(kind in ['l2', 'h1', 'h2']):
+        if kind not in ['l2', 'h1', 'h2']:
             raise ValueError('> Only L2, H1, H2 norms are available')
         # ...
 
@@ -552,33 +614,34 @@ class Norm(Functional):
                 expr = expr*expr
 
             else:
-                if not( expr.shape[1] == 1 ):
+                if expr.shape[1] != 1:
                     raise ValueError('Wrong expression for Matrix. must be a row')
 
                 v = Tuple(*expr[:,0])
                 expr = Dot(v, v)
 
-        elif kind == 'h1'and evaluate :
+        elif kind == 'h1' and evaluate :
             exponent = 2
 
             if not is_vector:
                 a    = Grad(expr)
-                expr = Dot(a, a)
+                expr = Dot(a, a) + expr * expr
 
             else:
-                if not( expr.shape[1] == 1 ):
+                if expr.shape[1] != 1:
                     raise ValueError('Wrong expression for Matrix. must be a row')
 
-                v = Tuple(*expr[:,0])
+                v = Tuple(*expr[:, 0])
                 a = Grad(v)
-                expr = Inner(a, a)
+                expr = Inner(a, a) + Dot(v, v)
 
-        elif kind == 'h2'and evaluate :
+        elif kind == 'h2' and evaluate :
             exponent = 2
 
             if not is_vector:
                 a    = Hessian(expr)
-                expr = Dot(a, a)
+                b    = Grad(expr)
+                expr = Dot(a, a) + Dot(b, b) + expr * expr
 
             else:
                 raise NotImplementedError('TODO')
