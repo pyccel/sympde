@@ -1,4 +1,5 @@
 # coding: utf-8
+from __future__ import annotations
 
 import numpy as np
 import h5py
@@ -6,26 +7,30 @@ import yaml
 import os
 
 from collections import abc
+from typing import Union as TypeUnion, Optional, List, Dict, Iterable, TYPE_CHECKING
+# Union clashes with core.basic.Union
 
 from sympy import Integer
 from sympy.core.singleton import Singleton
-from sympy.core.compatibility import with_metaclass, is_sequence
 from sympy.core import Basic, symbols
 from sympy.core.containers import Tuple
 from sympy.tensor import IndexedBase, Indexed
 from sympy.core import Add, Mul, Pow
 from sympy.core.expr import AtomicExpr
 
+from sympde.old_sympy_utilities import is_sequence, with_metaclass
 from sympde.core.basic import CalculusFunction
 from .basic            import BasicDomain, InteriorDomain, Boundary, Union, Connectivity
 from .basic            import Interval, Interface, CornerBoundary, CornerInterface
 from .basic            import ProductDomain
 
 # TODO fix circular dependency between domain and mapping
-
+if TYPE_CHECKING:
+    from sympde.topology.mapping import Mapping
 # TODO add pdim
 
 iterable_types = (tuple, list, Tuple, Union)
+
 #==============================================================================
 class Domain(BasicDomain):
     """
@@ -34,11 +39,36 @@ class Domain(BasicDomain):
     A domain without a boundary is either infinite or periodic.
     A domain can also be constructed from a connectivity, in which case, only the
     name and connectivity need to be passed.
-
     """
 
-    def __new__(cls, name, *, interiors=None, boundaries=None, dim=None,
-                connectivity=None, mapping=None, logical_domain=None):
+    def __new__(cls, name : str, *,
+            interiors : TypeUnion[Iterable[InteriorDomain], InteriorDomain, None] = None,
+            boundaries : TypeUnion[Iterable[Boundary], Boundary, None] = None,
+            dim : Optional[int] = None,
+            connectivity : Optional[Connectivity] = None,
+            mapping : Optional[Mapping] = None,
+            logical_domain : Optional[Domain] = None):
+        """
+        Interiors or connectivity must be given. When the mapping is given 
+        then logical_domain must be specified as well.
+    
+        Parameters
+        ----------
+        name : str
+            Name of the domain
+        interiors : Iterable[InteriorDomain], InteriorDomain or None, optional
+            Interior domains
+        boundaries : Iterable[Boundary], Boundary or None, optional
+            The boundaries of the domain
+        dim : int, optional
+            Dimension of the space of the domain
+        connectivity : Connectivity or None, optional
+            Connectivity object with the interfaces of the domain
+        mapping : Mapping or None, optional
+            Maps the logical domain to the physical domain
+        logical_domain : Domain or None, optional
+            Logical domain that is mapped to the physical domain
+        """
         # ...
         if not isinstance(name, str):
             raise TypeError('> name must be a string')
@@ -130,39 +160,55 @@ class Domain(BasicDomain):
         return obj
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.args[0]
 
     @property
-    def interior(self):
+    def interior(self) -> TypeUnion[Union, InteriorDomain]:
+        """Either a Union object containing the interiors or just the interior 
+        domain if there is only one"""
         return self.args[1]
 
     @property
-    def boundary(self):
+    def boundary(self) -> TypeUnion[Union, Boundary]:
+        """Either a Union object containing the boundaries or just a boundary 
+        if there is only one"""
         return self.args[2]
 
     @property
-    def mapping(self):
+    def mapping(self) -> Optional[Mapping]:
+        """The mapping that maps the logical domain to the physical domain"""
         return self.args[3]
 
     @property
-    def logical_domain(self):
+    def logical_domain(self) -> Domain:
+        """The domain is the image of the logical_domain under the mapping"""
         return self._logical_domain
 
     @property
-    def connectivity(self):
+    def connectivity(self) -> Connectivity:
+        """Contains information about the interfaces"""
         return self._connectivity
 
     @property
-    def dim(self):
+    def dim(self) -> int:
+        """Dimension of the space"""
         return self._dim
 
     @property
-    def dtype(self):
+    def dtype(self) -> dict:
+        """Dictionary containing information about domain"""
         return self._dtype
 
     @property
-    def interfaces(self):
+    def interfaces(self) -> TypeUnion[Union, Interface, None]:
+        """
+        Union of the interfaces
+
+        The Union constructor is applied to the interfaces. If there is only 
+        one interface it returns the interface object and None if there is no 
+        interface.
+        """
         return self.connectivity.interfaces
 
     @property
@@ -181,7 +227,7 @@ class Domain(BasicDomain):
             return len(self.interior)
 
     @property
-    def interior_names(self):
+    def interior_names(self) -> List[str]:
         if isinstance(self.interior, InteriorDomain):
             return [self.interior.name]
 
@@ -200,7 +246,6 @@ class Domain(BasicDomain):
     def get_boundary(self, axis, ext):
         """return boundary by name or (axis, ext)."""
         # ...
-
         if axis is None:
             assert(self.interior.dim == 1)
             axis = 0
@@ -306,137 +351,95 @@ class Domain(BasicDomain):
 
         if dtype == 'None': dtype = None
 
-        if dtype is not None:
-            if isinstance(d_interior, dict):
-                d_interior = [d_interior]
-                dtype      = [dtype]
+        assert dtype is not None
+        assert all(dtype)
+        if isinstance(d_interior, dict):
+            d_interior = [d_interior]
+            dtype      = [dtype]
 
-        if dtype is not None and all(dtype):
-            constructors = [globals()[dt['type']] for dt in dtype]
-            interiors    = [cs(i['name'], **dt['parameters']) for cs,i,dt in zip(constructors, d_interior, dtype)]
-            mappings     = [Mapping(I['mapping'], dim=dim) if I.get('mapping', "None") != "None" else None for I in d_interior]
-            domains      = [mapping(i) if mapping else i for i,mapping in zip(interiors, mappings)]
-            patch_index  = {I.name:ind for ind,I in enumerate(interiors)}
+        constructors = [globals()[dt['type']] for dt in dtype]
+        interiors    = [cs(i['name'], **dt['parameters']) for cs,i,dt in zip(constructors, d_interior, dtype)]
+        mappings     = [Mapping(I['mapping'], dim=dim) if I.get('mapping', "None") != "None" else None for I in d_interior]
+        domains      = [mapping(i) if mapping else i for i,mapping in zip(interiors, mappings)]
+        patch_index  = {I.name:ind for ind,I in enumerate(interiors)}
 
-            boundaries   = []
-            for bd in d_boundary:
-                name = bd['patch']
-                axis = bd['axis']
-                ext  = bd['ext']
-                i    = patch_index[name]
-                bd   = domains[i].get_boundary(axis=int(axis), ext=int(ext))
-                boundaries.append(bd)
+        boundaries   = []
+        for bd in d_boundary:
+            name = bd['patch']
+            axis = bd['axis']
+            ext  = bd['ext']
+            i    = patch_index[name]
+            bd   = domains[i].get_boundary(axis=int(axis), ext=int(ext))
+            boundaries.append(bd)
 
-            interfaces = []
-            for _,(minus, plus) in d_connectivity.items():
-                minus_name = minus['patch']
-                minus_axis = minus['axis']
-                minus_ext  = minus['ext']
-                minus_patch_i = patch_index[minus_name]
-                minus_bd   = domains[minus_patch_i].get_boundary(axis=int(minus_axis), ext=int(minus_ext))
+        connectivity = []
+        for _,(minus, plus) in d_connectivity.items():
+            minus_name = minus['patch']
+            minus_axis = int(minus['axis'])
+            minus_ext  = int(minus['ext'])
+            minus_patch_i = patch_index[minus_name]
 
-                plus_name = plus['patch']
-                plus_axis = plus['axis']
-                plus_ext  = plus['ext']
-                plus_patch_i = patch_index[plus_name]
-                plus_bd   = domains[plus_patch_i].get_boundary(axis=int(plus_axis), ext=int(plus_ext))
+            plus_name = plus['patch']
+            plus_axis = int(plus['axis'])
+            plus_ext  = int(plus['ext'])
+            plus_patch_i = patch_index[plus_name]
+            interface = ((minus_patch_i, minus_axis, minus_ext),(plus_patch_i, plus_axis, plus_ext))
 
-                interfaces.append([minus_bd, plus_bd, 1])
+            connectivity.append(interface)
 
-            domain = domains[0]
-            for p in domains[1:]:
-                domain = domain.join(p, name=domain_name)
+        if len(domains)==1:
+            return domains[0]
 
-            for I in interfaces:
-                domain = domain.join(domain, domain.name, bnd_minus=I[0], bnd_plus=I[1], direction=I[2])
+        return Domain.join(domains, connectivity, domain_name)
 
-            return domain
 
-        # ... create sympde InteriorDomain (s)
-        l_interiors = [Domain(i['name'], dim=dim).interior for i in d_interior]
-        mappings    = [Mapping(i['mapping'], dim=dim) if i['mapping'] != 'None' else None for i in d_interior]
-        l_interiors_index = {I.name:ind for ind,I in enumerate(l_interiors)}
+    @classmethod
+    def join(cls, patches, connectivity, name):
 
-        # create a dict of interiors accessed by name => needed for boundaries
-        d_l_interiors  = {}
-        d_l_boundaries = {}
-        for i in l_interiors:
-            d_l_interiors[i.name] = i
-            d_l_boundaries[i.name] = []
+        assert isinstance(patches, (tuple, list))
+        assert isinstance(connectivity, (tuple, list))
+        assert isinstance(name, str)
 
-        # ... create sympde Boundary (s)
-
-        for desc in d_boundary:
-            name  = desc['name']
-            patch = d_l_interiors[desc['patch']]
-            axis  = desc['axis']
-            ext   = desc['ext']
-
-            if axis == 'None': axis = None
-            if ext  == 'None': ext  = None
-
-            lbnd = Boundary(name, patch, axis=axis, ext=ext)
-            d_l_boundaries[patch.name].append(lbnd)
-        # ...
-
-        subdomains = []
-        for name,M in zip(d_l_interiors, mappings):
-            I = d_l_interiors[name]
-            B = d_l_boundaries[name]
-            D = Domain(I.name, dim=dim, interiors=I, boundaries=B)
-            D = M(D) if M else D
-            subdomains.append(D)
-
-#         ... create connectivity
-        interfaces = []
-        for edge,pair in d_connectivity.items():
-            bnds = []
-            for desc in pair:
-                patch = d_l_interiors[desc['patch']]
-                patch_index = l_interiors_index[patch.name]
-                name  = desc['name']
-                bnd   = Boundary(name, patch)
-                M     = mappings[patch_index]
-                bnd   = M(bnd) if M else bnd
-                bnds.append(bnd)
-
-            interfaces.append(bnds)
-        # ...
-
-        domain = subdomains[0]
-        for p in subdomains[1:]:
-            domain = domain.join(p, name=domain_name)
-
-        for I in interfaces:
-            domain = domain.join(domain, domain.name, bnd_minus=I[0], bnd_plus=I[1])
-
-        return domain
-
-    def join(self, other, name, bnd_minus=None, bnd_plus=None, direction=None):
+        assert all(p.dim==patches[0].dim for p in patches)
+        dim = int(patches[0].dim)
 
         from sympde.topology.mapping import MultiPatchMapping
         # ... connectivity
+        interfaces = {}
+        boundaries = []
+        for cn in connectivity:
+            bnd_minus = patches[cn[0][0]].get_boundary(axis=cn[0][1], ext=cn[0][2])
+            bnd_plus  = patches[cn[1][0]].get_boundary(axis=cn[1][1], ext=cn[1][2])
+            if   dim == 1: ornt = None
+            elif dim == 2: ornt = 1 if len(cn) == 2 else cn[2]
+            elif dim == 3:
+                flag = 1 if len(cn) == 2 else cn[2][0]
+                ornt1 = 1 if len(cn) == 2 else cn[2][1]
+                ornt2 = 1 if len(cn) == 2 else cn[2][2]
+                ornt = (flag, ornt1, ornt2)
+
+            interface = bnd_minus.join(bnd_plus, ornt=ornt)
+            if interface.name in interfaces:
+                interface = bnd_plus.join(bnd_minus, ornt=ornt)
+
+            interfaces[interface.name] = interface
+            boundaries.append(bnd_minus)
+            boundaries.append(bnd_plus)
+
         connectivity = Connectivity()
-
-        if bnd_minus and bnd_plus:
-            interface          = bnd_minus.join(bnd_plus, direction=direction)
-            connectivity[interface.name] = interface
-
-        for k,v in self.connectivity.items():
-            connectivity[k] = v
-
-        for k,v in other.connectivity.items():
+        for k,v in interfaces.items():
             connectivity[k] = v
 
         # ... boundary
-        boundaries = Union(self.boundary, other.boundary).complement(Union(bnd_minus, bnd_plus))
+        boundaries = Union(*[b for p in patches for b in p.boundary]).complement(Union(*boundaries))
         if boundaries is None:
             boundaries = ()
         else :
             boundaries = boundaries.as_tuple()
 
         # ... interiors
-        interiors       = Union(self.interior, other.interior)
+        interiors       = Union(*[p.interior for p in patches])
+
         if all(e.mapping for e in interiors):
             logical_interiors    = Union(*[e.logical_domain for e in interiors])
             logical_boundaries   = [e.logical_domain for e in boundaries]
@@ -467,8 +470,8 @@ class Domain(BasicDomain):
         interfaces   = self.interfaces
         interfaces = (interfaces,) if isinstance(interfaces, Interface) else interfaces
 
-        directions   = {i.plus:i.direction for i in interfaces}
-        directions.update({i.minus:i.direction for i in interfaces})
+        directions   = {i.plus:i.ornt for i in interfaces}
+        directions.update({i.minus:i.ornt for i in interfaces})
 
         boundaries    = {i.minus:i.plus for i in interfaces}
         boundaries.update({value:key for key, value in boundaries.items()})
@@ -608,7 +611,7 @@ class Domain(BasicDomain):
             new_domain = Domain(name=name, interiors=interior, boundaries=boundaries,
                                 mapping=interior.mapping, logical_domain=interior.logical_domain)
             try:
-                previous_domain = previous_domain.join(new_domain, name=f"{previous_domain.name}|{new_domain.name}")
+                previous_domain = Domain.join([previous_domain,new_domain], [], name=f"{previous_domain.name}|{new_domain.name}")
             except NameError:
                 previous_domain = new_domain
 

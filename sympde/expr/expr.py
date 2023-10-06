@@ -9,8 +9,8 @@ from sympy.core import Basic, S
 from sympy.core import Expr, Add, Mul
 from sympy.core.numbers import Zero as sy_Zero
 from sympy.core.containers import Tuple
-from sympy.core.compatibility import is_sequence
 
+from sympde.old_sympy_utilities import is_sequence
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import Constant
 from sympde.core.utils import random_string
@@ -35,6 +35,7 @@ __all__ = (
     'Integral',
     'LinearExpr',
     'LinearForm',
+    'SemiNorm',
     'Norm',
 #
     '_get_domain',
@@ -396,7 +397,7 @@ class LinearForm(BasicForm):
         # Make sure that 'values' is always a list
         if len(tests) == 1:
             values = tests[0]
-            if not is_sequence(values):
+            if not is_sequence(values, vector=isinstance(values, VectorFunction)):
                 values = [values]
         else:
             values = tests
@@ -502,8 +503,8 @@ class BilinearForm(BasicForm):
         expr = self._update_free_variables(**kwargs)
 
         # If needed, convert positional arguments to lists
-        if not is_sequence(trials): trials = [trials]
-        if not is_sequence(tests ): tests  = [tests ]
+        if not is_sequence(trials, vector=isinstance(trials, VectorFunction)): trials = [trials]
+        if not is_sequence(tests, vector=isinstance(tests, VectorFunction)): tests  = [tests ]
 
         # Concatenate input values into single list
         values = [*trials, *tests]
@@ -516,24 +517,85 @@ class BilinearForm(BasicForm):
         return expr
 
 #==============================================================================
+class SemiNorm(Functional):
+    is_norm = True
+
+    def __new__(cls, expr, domain, kind='l2', evaluate=True, **options):
+
+        kind = kind.lower()
+        if kind not in ['l2', 'h1', 'h2']:
+            raise ValueError('> Only L2, H1, H2 norms are available')
+        # ...
+
+        # ...
+        is_vector = isinstance(expr, (Matrix, ImmutableDenseMatrix, Tuple, list, tuple))
+        if is_vector:
+            expr = ImmutableDenseMatrix(expr)
+        # ...
+
+        # ...
+        exponent = None
+        if kind == 'l2' and evaluate:
+            exponent = 2
+
+            if not is_vector:
+                expr = expr * expr
+
+            else:
+                if expr.shape[1] != 1:
+                    raise ValueError('Wrong expression for Matrix. must be a row')
+
+                v = Tuple(*expr[:, 0])
+                expr = Dot(v, v)
+
+        elif kind == 'h1'and evaluate :
+            exponent = 2
+
+            if not is_vector:
+                a    = Grad(expr)
+                expr = Dot(a, a)
+
+            else:
+                if expr.shape[1] != 1:
+                    raise ValueError('Wrong expression for Matrix. must be a row')
+
+                v = Tuple(*expr[:, 0])
+                a = Grad(v)
+                expr = Inner(a, a)
+
+        elif kind == 'h2'and evaluate :
+            exponent = 2
+
+            if not is_vector:
+                a    = Hessian(expr)
+                expr = Dot(a, a)
+
+            else:
+                raise NotImplementedError('TODO')
+        # ...
+
+        obj = Functional.__new__(cls, expr, domain, evaluate=evaluate)
+        obj._exponent = exponent
+        obj._kind     = kind
+
+        return obj
+
+    @property
+    def exponent(self):
+        return self._exponent
+
+    @property
+    def kind(self):
+        return self._kind
+
+#==============================================================================
 class Norm(Functional):
     is_norm = True
 
     def __new__(cls, expr, domain, kind='l2', evaluate=True, **options):
-#        # ...
-#        tests = expr.atoms((ScalarFunction, VectorFunction))
-#        if tests:
-#            msg = '> Expecting an Expression without test functions'
-#            raise UnconsistentArgumentsError(msg)
-#
-#        if not isinstance(expr, (Expr, Matrix, ImmutableDenseMatrix)):
-#            msg = '> Expecting Expr, Matrix, ImmutableDenseMatrix'
-#            raise UnconsistentArgumentsError(msg)
-#        # ...
 
-        # ...
         kind = kind.lower()
-        if not(kind in ['l2', 'h1', 'h2']):
+        if kind not in ['l2', 'h1', 'h2']:
             raise ValueError('> Only L2, H1, H2 norms are available')
         # ...
 
@@ -552,33 +614,34 @@ class Norm(Functional):
                 expr = expr*expr
 
             else:
-                if not( expr.shape[1] == 1 ):
+                if expr.shape[1] != 1:
                     raise ValueError('Wrong expression for Matrix. must be a row')
 
                 v = Tuple(*expr[:,0])
                 expr = Dot(v, v)
 
-        elif kind == 'h1'and evaluate :
+        elif kind == 'h1' and evaluate :
             exponent = 2
 
             if not is_vector:
                 a    = Grad(expr)
-                expr = Dot(a, a)
+                expr = Dot(a, a) + expr * expr
 
             else:
-                if not( expr.shape[1] == 1 ):
+                if expr.shape[1] != 1:
                     raise ValueError('Wrong expression for Matrix. must be a row')
 
-                v = Tuple(*expr[:,0])
+                v = Tuple(*expr[:, 0])
                 a = Grad(v)
-                expr = Inner(a, a)
+                expr = Inner(a, a) + Dot(v, v)
 
-        elif kind == 'h2'and evaluate :
+        elif kind == 'h2' and evaluate :
             exponent = 2
 
             if not is_vector:
                 a    = Hessian(expr)
-                expr = Dot(a, a)
+                b    = Grad(expr)
+                expr = Dot(a, a) + Dot(b, b) + expr * expr
 
             else:
                 raise NotImplementedError('TODO')
@@ -652,8 +715,9 @@ def linearize(form, fields, trials=None):
     for I in integrals:
 
         g0 = I.expr
-        g1 = I.expr.subs(zip(fields, new_fields)).expand()
-        dg_du = ((g1-g0)/eps).series(eps, 0, 2).subs(eps, 0)
+        g1 = I.expr.subs(zip(fields, new_fields))
+        temp=((g1-g0)/eps).expand()
+        dg_du = (temp).series(eps, 0, 2).subs(eps, 0)
 
         if dg_du:
             new_I = integral(I.domain, dg_du)

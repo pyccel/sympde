@@ -222,7 +222,7 @@ def plot_3d_single_patch(patch, mapping, ax, refinement=15):
     full_00 = np.full((refinement, refinement), linspace_0[0])
     full_01 = np.full((refinement, refinement), linspace_0[-1])
     full_10 = np.full((refinement, refinement), linspace_1[0])
-    full_11 = np.full((refinement, refinement), linspace_0[-1])
+    full_11 = np.full((refinement, refinement), linspace_1[-1])
     full_20 = np.full((refinement, refinement), linspace_2[0])
     full_21 = np.full((refinement, refinement), linspace_2[-1])
 

@@ -1155,7 +1155,7 @@ def test_area_2d_1():
 
     mu    = Constant('mu'   , is_real=True)
 
-    e = ElementDomain(domain)
+    e = ElementDomain()
     area = Area(e)
 
     V = ScalarFunctionSpace('V', domain)
@@ -1688,9 +1688,9 @@ def test_interface_integral_1():
     A = Square('A')
     B = Square('B')
 
-    domain = A.join(B, name = 'domain',
-                bnd_minus = A.get_boundary(axis=0, ext=1),
-                bnd_plus  = B.get_boundary(axis=0, ext=-1))
+    domains = [A, B]
+    connectivity = [((0, 0, 1),(1, 0, -1))]
+    domain = Domain.join(domains, connectivity, 'domain')
     # ...
 
     x,y = domain.coordinates
@@ -1752,9 +1752,10 @@ def test_interface_integral_2():
     A = Square('A')
     B = Square('B')
 
-    domain = A.join(B, name = 'domain',
-                bnd_minus = A.get_boundary(axis=0, ext=1),
-                bnd_plus  = B.get_boundary(axis=0, ext=-1))
+
+    domains = [A, B]
+    connectivity = [((0, 0, 1),(1, 0, -1))]
+    domain = Domain.join(domains, connectivity, 'domain')
     # ...
 
     x,y = domain.coordinates
@@ -1794,14 +1795,10 @@ def test_interface_integral_3():
     B = Square('B')
     C = Square('C')
 
-    AB = A.join(B, name = 'AB',
-               bnd_minus = A.get_boundary(axis=0, ext=1),
-               bnd_plus  = B.get_boundary(axis=0, ext=-1))
 
-    domain = AB.join(C, name = 'domain',
-               bnd_minus = B.get_boundary(axis=0, ext=1),
-               bnd_plus  = C.get_boundary(axis=0, ext=-1))
-    # ...
+    domains = [A, B, C]
+    connectivity = [((0, 0, 1),(1, 0, -1)),((1,0,1),(2,0,-1))]
+    domain = Domain.join(domains, connectivity, 'domain')
 
     x,y = domain.coordinates
 
@@ -1841,9 +1838,9 @@ def test_interface_integral_4():
     A = Square('A')
     B = Square('B')
 
-    domain = A.join(B, name = 'AB',
-               bnd_minus = A.get_boundary(axis=0, ext=1),
-               bnd_plus  = B.get_boundary(axis=0, ext=-1))
+    domains = [A, B]
+    connectivity = [((0, 0, 1),(1, 0, -1))]
+    domain = Domain.join(domains, connectivity, 'AB')
 
     x,y = domain.coordinates
     assert all([x.name == 'x1', y.name == 'x2'])
@@ -1899,9 +1896,9 @@ def test_interface_integral_4():
 #==============================================================================
 
 def teardown_module():
-    from sympy import cache
+    from sympy.core import cache
     cache.clear_cache()
 
 def teardown_function():
-    from sympy import cache
+    from sympy.core import cache
     cache.clear_cache()

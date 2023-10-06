@@ -221,9 +221,9 @@ def test_logical_expr_2d_2():
     D1 = M1(A)
     D2 = M2(B)
 
-    domain = D1.join(D2, name = 'domain',
-               bnd_minus = D1.get_boundary(axis=0, ext=1),
-               bnd_plus  = D2.get_boundary(axis=0, ext=-1))
+    domains = [D1, D2]
+    connectivity = [((0, 0, 1),(1, 0, -1))]
+    domain = Domain.join(domains, connectivity, 'domain')
 
 
     V1 = ScalarFunctionSpace('V1', domain, kind='h1')
@@ -274,9 +274,10 @@ def test_logical_expr_2d_3():
     D1 = M1(A)
     D2 = M2(B)
 
-    domain = D1.join(D2, name = 'domain',
-               bnd_minus = D1.get_boundary(axis=0, ext=1),
-               bnd_plus  = D2.get_boundary(axis=0, ext=-1))
+
+    domains = [D1, D2]
+    connectivity = [((0, 0, 1),(1, 0, -1))]
+    domain = Domain.join(domains, connectivity, 'domain')
 
     V = VectorFunctionSpace('V', domain, kind='hcurl')
 
@@ -861,9 +862,9 @@ def test_twisted_target_mapping_3d_1():
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
 def teardown_module():
-    from sympy import cache
+    from sympy.core import cache
     cache.clear_cache()
 
 def teardown_function():
-    from sympy import cache
+    from sympy.core import cache
     cache.clear_cache()

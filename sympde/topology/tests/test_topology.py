@@ -8,7 +8,7 @@ from sympde.topology import Connectivity, Edge
 from sympde.topology import Domain, ElementDomain
 from sympde.topology import Area, Mapping
 from sympde.topology import Interface
-from sympde.topology import Line, Square
+from sympde.topology import Line, Square, Cube
 from sympde.topology import IdentityMapping
 
 import os
@@ -34,48 +34,9 @@ def test_interior_domain():
     assert( D.todict() == [{'name': 'D1', 'mapping':'None'},
                            {'name': 'D2', 'mapping':'None'}] )
 
+
 #==============================================================================
 def test_topology_1():
-    # ... create a domain with 2 subdomains A and B
-    A = InteriorDomain('A', dim=2)
-    B = InteriorDomain('B', dim=2)
-
-    connectivity = Connectivity()
-
-    bnd_A_1 = Boundary('Gamma_1', A)
-    bnd_A_2 = Boundary('Gamma_2', A)
-    bnd_A_3 = Boundary('Gamma_3', A)
-
-    bnd_B_1 = Boundary('Gamma_1', B)
-    bnd_B_2 = Boundary('Gamma_2', B)
-    bnd_B_3 = Boundary('Gamma_3', B)
-
-    mapping    = Mapping('M', dim=2)
-
-    interiors  = [A, B]
-    boundaries = [bnd_A_2, bnd_A_3, bnd_B_1, bnd_B_3]
-
-    lOmega = Domain('Omega',
-                   interiors=interiors,
-                   boundaries=boundaries,
-                   connectivity=connectivity)
-
-    Omega = mapping(lOmega)
-    Omega = Omega.join(Omega, name=Omega.name, bnd_minus=mapping(bnd_A_1), bnd_plus=mapping(bnd_B_2))
-
-    interfaces = Omega.interfaces
-    assert(isinstance(interfaces, Interface))
-
-    # export
-    Omega.export('omega.h5')
-    # ...
-
-    # read it again and check that it has the same description as Omega
-    D = Domain.from_file('omega.h5')
-    assert( D.todict() == Omega.todict() )
-
-#==============================================================================
-def test_topology_2():
 
     # ... create a domain with 2 subdomains D1 and D2
     A = Square('A')
@@ -88,9 +49,9 @@ def test_topology_2():
     D1 = M1(A)
     D2 = M2(B)
 
-    Omega = D1.join(D2, name = 'Omega',
-               bnd_minus = D1.get_boundary(axis=0, ext=1),
-               bnd_plus  = D2.get_boundary(axis=0, ext=-1))
+    domains = [D1, D2]
+    connectivity = [((0, 0, 1), (1, 0, -1))]
+    Omega = Domain.join(domains, connectivity, 'domain')
 
     interfaces = Omega.interfaces
     assert(isinstance(interfaces, Interface))
@@ -195,28 +156,27 @@ def test_domain_join_line():
     AB_bnd_minus = A.get_boundary(axis=0, ext=1)
     AB_bnd_plus  = B.get_boundary(axis=0, ext=-1)
 
-    AB = A.join(B, name = 'AB',
-               bnd_minus = AB_bnd_minus,
-               bnd_plus  = AB_bnd_plus)
 
+    domains = [A, B]
+    connectivity = [((0, 0, 1), (1, 0, -1))]
+    AB = Domain.join(domains, connectivity, 'AB')
 
-    print(AB)
+    AB_bnd_minus = A.get_boundary(axis=0, ext=1)
+    AB_bnd_plus  = B.get_boundary(axis=0, ext=-1)
+
+    BC_bnd_minus = B.get_boundary(axis=0, ext=1)
+    BC_bnd_plus  = C.get_boundary(axis=0, ext=-1)
+
     assert AB.interior   == Union(A.interior, B.interior)
     assert AB.interfaces == Interface('A|B', AB_bnd_minus, AB_bnd_plus)
     print(AB.connectivity)
     print('')
     # ...
 
-    # ...
+    domains = [A, B, C]
+    connectivity = [((0, 0, 1), (1, 0, -1)), ((1, 0, 1), (2, 0, -1))]
+    ABC = Domain.join(domains, connectivity, 'ABC')
 
-    BC_bnd_minus = B.get_boundary(axis=0, ext=1)
-    BC_bnd_plus  = C.get_boundary(axis=0, ext=-1)
-
-    ABC = AB.join(C, name = 'ABC',
-               bnd_minus = BC_bnd_minus,
-               bnd_plus  = BC_bnd_plus)
-
-    print(ABC)
     assert ABC.interior == Union(A.interior, B.interior, C.interior)
     assert ABC.interfaces == Union(Interface('A|B', AB_bnd_minus, AB_bnd_plus),Interface('B|C', BC_bnd_minus, BC_bnd_plus))
     print(list(ABC.connectivity.items()))
@@ -232,29 +192,32 @@ def test_domain_join_square():
     C = Square('C')
     # ...
 
-    # ...
+
+    domains = [A, B]
+    connectivity = [((0, 0, 1), (1, 0, -1))]
+    AB = Domain.join(domains, connectivity, 'AB')
+
     AB_bnd_minus = A.get_boundary(axis=0, ext=1)
     AB_bnd_plus  = B.get_boundary(axis=0, ext=-1)
 
-    AB = A.join(B, name = 'AB',
-               bnd_minus = AB_bnd_minus,
-               bnd_plus  = AB_bnd_plus)
-
-    print(AB)
-    assert AB.interior   == Union(A.interior, B.interior)
-    assert AB.interfaces == Interface('A|B', AB_bnd_minus, AB_bnd_plus)
-    print(AB.connectivity)
-    # ...
     BC_bnd_minus = B.get_boundary(axis=0, ext=1)
     BC_bnd_plus  = C.get_boundary(axis=0, ext=-1)
 
-    ABC = AB.join(C, name = 'ABC',
-               bnd_minus = BC_bnd_minus,
-               bnd_plus  = BC_bnd_plus)
+    print(AB)
+    assert AB.interior   == Union(A.interior, B.interior)
+    assert AB.interfaces == Interface('A|B', AB_bnd_minus, AB_bnd_plus, ornt=1)
+    print(AB.connectivity)
+    # ...
+
+    domains = [A, B, C]
+    connectivity = [((0, 0, 1),(1, 0, -1)), ((1, 0, 1), (2, 0, -1))]
+    ABC = Domain.join(domains, connectivity, 'ABC')
+
 
     print(ABC)
     assert ABC.interior == Union(A.interior, B.interior, C.interior)
-    assert ABC.interfaces == Union(Interface('A|B', AB_bnd_minus, AB_bnd_plus),Interface('B|C', BC_bnd_minus, BC_bnd_plus))
+    assert ABC.interfaces == Union(Interface('A|B', AB_bnd_minus, AB_bnd_plus, ornt=1),
+                                   Interface('B|C', BC_bnd_minus, BC_bnd_plus, ornt=1))
     print(list(ABC.connectivity.items()))
     print('')
     # ...
@@ -266,21 +229,15 @@ def test_get_subdomain():
     C = Square('C')
     # ...
 
-    # ...
-    AB_bnd_minus = A.get_boundary(axis=0, ext=1)
-    AB_bnd_plus  = B.get_boundary(axis=0, ext=-1)
-
-    AB = A.join(B, name = 'AB',
-               bnd_minus = AB_bnd_minus,
-               bnd_plus  = AB_bnd_plus)
+    domains = [A, B]
+    connectivity = [((0, 0, 1), (1, 0, -1))]
+    AB = Domain.join(domains, connectivity, 'AB')
 
     # ...
-    BC_bnd_minus = B.get_boundary(axis=0, ext=1)
-    BC_bnd_plus  = C.get_boundary(axis=0, ext=-1)
 
-    ABC = AB.join(C, name = 'ABC',
-               bnd_minus = BC_bnd_minus,
-               bnd_plus  = BC_bnd_plus)
+    domains = [A, B, C]
+    connectivity = [((0, 0, 1), (1, 0, -1)), ((1, 0, 1), (2, 0, -1))]
+    ABC = Domain.join(domains, connectivity, 'ABC')
 
     A_1 = AB.get_subdomain('A')
     A_2 = ABC.get_subdomain('A')
@@ -300,19 +257,8 @@ def test_get_subdomain():
 
     assert A_pipe_B_pipe_C_2 is ABC
 
-
 #==============================================================================
-def test_hash():
-    A = Square('A', bounds1=(0, 1), bounds2=(0, 1))
-    hash_1 = hash(A)
-
-    A = Square('A', bounds1=(0, 1), bounds2=(1, 2))
-    hash_2 = hash(A)
-
-    assert hash_1 != hash_2
-
-#==============================================================================
-def test_domain_without_bnd():
+def test_2d_domain_without_bnd():
 
     OmegaLog1 = Square('OmegaLog1', bounds1 = (0,.5), bounds2 = (0,.5))
     mapping_1 = IdentityMapping('M1',2)
@@ -328,31 +274,65 @@ def test_domain_without_bnd():
     domain_4     = mapping_4(OmegaLog4)
 
     domains=[domain_1,domain_2,domain_3,domain_4]
-    domain = domains[0]
-    for p in domains[1:]:
-        domain = domain.join(p, name="domain")
 
+    connectivity = [((0, 0, 1), (2, 0,-1)),
+                    ((1, 0, 1), (3, 0,-1)),
+                    ((2, 0, 1), (0, 0,-1)),
+                    ((3, 0, 1), (1, 0,-1)),
+                    ((0, 1, 1), (1, 1,-1)),
+                    ((2, 1, 1), (3, 1,-1)),
+                    ((1, 1, 1), (0, 1,-1)),
+                    ((3, 1, 1), (2, 1,-1))]
+    domain = Domain.join(domains, connectivity, 'domain')
 
-    interfaces = [
-        [domain_1.get_boundary(axis=0, ext=+1), domain_3.get_boundary(axis=0, ext=-1),1],
-        [domain_2.get_boundary(axis=0, ext=+1), domain_4.get_boundary(axis=0, ext=-1),1],
-        [domain_3.get_boundary(axis=0, ext=+1), domain_1.get_boundary(axis=0, ext=-1),1],
-        [domain_4.get_boundary(axis=0, ext=+1), domain_2.get_boundary(axis=0, ext=-1),1],
-        [domain_1.get_boundary(axis=1, ext=+1), domain_2.get_boundary(axis=1, ext=-1),1],
-        [domain_3.get_boundary(axis=1, ext=+1), domain_4.get_boundary(axis=1, ext=-1),1],
-        [domain_2.get_boundary(axis=1, ext=+1), domain_1.get_boundary(axis=1, ext=-1),1],
-        [domain_4.get_boundary(axis=1, ext=+1), domain_3.get_boundary(axis=1, ext=-1),1],
-            ]
+    assert len(domain.interior) == 4
+    assert len(domain.interfaces) == 8
 
-    for I in interfaces:
-        domain = domain.join(domain, domain.name, bnd_minus=I[0], bnd_plus=I[1], direction=I[2])
+def test_3d_domain_without_bnd():
+
+    OmegaLog1 = Cube('OmegaLog1', bounds1 = (0,.5), bounds2 = (0,.5), bounds3 = (0,1))
+    mapping_1 = IdentityMapping('M1',2)
+    domain_1     = mapping_1(OmegaLog1)
+    OmegaLog2 = Cube('OmegaLog2', bounds1 = (0,.5), bounds2 = (.5,1.), bounds3 = (0,1))
+    mapping_2 = IdentityMapping('M2',2)
+    domain_2     = mapping_2(OmegaLog2)
+    OmegaLog3 = Cube('OmegaLog3', bounds1 = (.5,1.), bounds2 = (0,.5), bounds3 = (0,1))
+    mapping_3 = IdentityMapping('M3',2)
+    domain_3     = mapping_3(OmegaLog3)
+    OmegaLog4 = Cube('OmegaLog4', bounds1 = (.5,1.), bounds2 = (.5,1.), bounds3 = (0,1))
+    mapping_4 = IdentityMapping('M4',2)
+    domain_4     = mapping_4(OmegaLog4)
+
+    domains=[domain_1,domain_2,domain_3,domain_4]
+
+    connectivity = [((0, 0, 1),(2, 0, -1),(1,1,1)),
+                    ((1,0,1),(3,0,-1),(1,1,1)),
+                    ((2,0,1),(0,0,-1),(1,1,1)),
+                    ((3,0,1),(1,0,-1),(1,1,1)),
+                    ((0,1,1),(1,1,-1),(1,1,1)),
+                    ((2,1,1),(3,1,-1),(1,1,1)),
+                    ((1,1,1),(0,1,-1),(1,1,1)),
+                    ((3,1,1),(2,1,-1),(1,1,1))]
+    domain = Domain.join(domains, connectivity, 'domain')
+
+    assert len(domain.interior) == 4
+    assert len(domain.interfaces) == 8
+#==============================================================================
+def test_hash():
+    A = Square('A', bounds1=(0, 1), bounds2=(0, 1))
+    hash_1 = hash(A)
+
+    A = Square('A', bounds1=(0, 1), bounds2=(1, 2))
+    hash_2 = hash(A)
+
+    assert hash_1 != hash_2
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
 
 def teardown_module():
-    from sympy import cache
+    from sympy.core import cache
     cache.clear_cache()
 
     # Remove output file generated by test_topology_1()
@@ -361,5 +341,5 @@ def teardown_module():
         os.remove(fname)
 
 def teardown_function():
-    from sympy import cache
+    from sympy.core import cache
     cache.clear_cache()
