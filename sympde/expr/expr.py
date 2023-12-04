@@ -351,11 +351,11 @@ class LinearForm(BasicForm):
         if not is_linear_expression(expr, args):
             print(expr)
             print(args)
-            msg = 'Expression is not linear w.r.t [{}]'.format(args)
-            if not ignore_linearity_errors:
-                raise UnconsistentLinearExpressionError(msg)
-            else:
+            msg = f'Expression is not linear w.r.t. [{args}]'
+            if ignore_linearity_errors:
                 print(msg)
+            else:
+                raise UnconsistentLinearExpressionError(msg)
 
         # Create new object of type LinearForm
         obj = Basic.__new__(cls, args, expr)
@@ -438,22 +438,20 @@ class BilinearForm(BasicForm):
 
         # Check linearity with respect to trial functions
         if not is_linear_expression(expr, trial_functions):
-            msg = ' Expression is not linear w.r.t trial functions {}'\
-                    .format(trial_functions)
-            if not ignore_linearity_errors:
-                raise UnconsistentLinearExpressionError(msg)
-            else:
+            msg = f'Expression is not linear w.r.t. trial functions [{trial_functions}]'
+            if ignore_linearity_errors:
                 print(msg)
+            else:
+                raise UnconsistentLinearExpressionError(msg)
 
 
         # Check linearity with respect to test functions
         if not is_linear_expression(expr, test_functions):
-            msg = ' Expression is not linear w.r.t test functions {}'\
-                    .format(test_functions)
-            if not ignore_linearity_errors:
-                raise UnconsistentLinearExpressionError(msg)
-            else:
+            msg = f'Expression is not linear w.r.t. test functions [{test_functions}]'
+            if ignore_linearity_errors:
                 print(msg)
+            else:
+                raise UnconsistentLinearExpressionError(msg)
 
         # Create new object of type BilinearForm
         obj = Basic.__new__(cls, args, expr)
