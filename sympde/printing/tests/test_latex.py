@@ -26,6 +26,27 @@ def test_latex_ncube():
     assert(latex(cube) == r'(-1,1) \times (0,2) \times (4,5)')
 
 #==============================================================================
+def test_latex_space():
+
+    # ...
+    domain = Line(bounds=[-1,1])
+    V = ScalarFunctionSpace('V', domain)
+    assert(latex(V) == r'\mathcal{V}')
+    # ...
+
+    # ...
+    domain = Square(bounds1=(-1, 1), bounds2=(0, 2))
+    W = ScalarFunctionSpace('W', domain)
+    assert(latex(W) == r'\mathcal{W}')
+    # ...
+
+    # ...
+    domain = Cube(bounds1=(-1, 1), bounds2=(0, 2), bounds3=(4, 5))
+    X = ScalarFunctionSpace('X', domain)
+    assert(latex(X) == r'\mathcal{X}')
+    # ...
+
+#==============================================================================
 def test_latex_1d():
 
     DIM = 1
@@ -317,4 +338,4 @@ def teardown_function():
 
 #######################################################
 if __name__ == '__main__':
-    test_latex_ncube()
+    test_latex_space()

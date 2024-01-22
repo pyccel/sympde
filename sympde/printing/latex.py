@@ -14,6 +14,7 @@ from sympde.topology.derivatives import get_index_derivatives
 from sympde.topology.derivatives import get_atom_derivatives
 from sympde.topology.space import ProductSpace
 from sympde.topology.space import ScalarFunction, VectorFunction
+from sympde.topology.space import ScalarFunctionSpace, VectorFunctionSpace
 
 #==============================================================================
 class LatexPrinter(LatexPrinterSympy):
@@ -112,6 +113,14 @@ class LatexPrinter(LatexPrinterSympy):
 
     def _print_TangentVector(self, expr):
         return r'\mathbf{t}'
+    # ...
+
+    # ...
+    def _print_ScalarFunctionSpace(self, expr):
+        return r'\mathcal{' + expr.name + '}'
+
+    def _print_VectorFunctionSpace(self, expr):
+        return r'\mathcal{' + expr.name + '}'
     # ...
 
     # ...
