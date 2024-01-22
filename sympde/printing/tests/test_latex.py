@@ -26,24 +26,59 @@ def test_latex_ncube():
     assert(latex(cube) == r'(-1,1) \times (0,2) \times (4,5)')
 
 #==============================================================================
-def test_latex_space():
+def test_latex_space_1():
 
-    # ...
     domain = Line(bounds=[-1,1])
-    V = ScalarFunctionSpace('V', domain)
-    assert(latex(V) == r'\mathcal{V}')
+
+    # ...
+    assert(latex(ScalarFunctionSpace('V', domain)) == 'V')
+    assert(latex(ScalarFunctionSpace(r'\mathcal{W}', domain)) == r'\mathcal{W}')
     # ...
 
     # ...
-    domain = Square(bounds1=(-1, 1), bounds2=(0, 2))
-    W = ScalarFunctionSpace('W', domain)
-    assert(latex(W) == r'\mathcal{W}')
+    H1 = ScalarFunctionSpace('H1', domain, kind="H1")
+    assert(latex(H1) == r'H^1')
     # ...
 
     # ...
-    domain = Cube(bounds1=(-1, 1), bounds2=(0, 2), bounds3=(4, 5))
-    X = ScalarFunctionSpace('X', domain)
-    assert(latex(X) == r'\mathcal{X}')
+    L2 = ScalarFunctionSpace('L2', domain, kind="L2")
+    assert(latex(L2) == r'L_2')
+    # ...
+
+    # ...
+    Hcurl = VectorFunctionSpace('Hcurl', domain, kind="Hcurl")
+    assert(latex(Hcurl) == 'H(curl)')
+    # ...
+
+    # ...
+    Hdiv = VectorFunctionSpace('Hdiv', domain, kind="Hdiv")
+    assert(latex(Hdiv) == 'H(div)')
+    # ...
+
+#==============================================================================
+def test_latex_space_2():
+
+    DIM = 2
+    domain = Domain('Omega', dim=DIM)
+
+    # ...
+    H1 = ScalarFunctionSpace('H1', domain, kind="H1")
+    assert(latex(H1) == r'H^1')
+    # ...
+
+    # ...
+    L2 = ScalarFunctionSpace('L2', domain, kind="L2")
+    assert(latex(L2) == r'L_2')
+    # ...
+
+    # ...
+    Hcurl = VectorFunctionSpace('Hcurl', domain, kind="Hcurl")
+    assert(latex(Hcurl) == 'H(curl)')
+    # ...
+
+    # ...
+    Hdiv = VectorFunctionSpace('Hdiv', domain, kind="Hdiv")
+    assert(latex(Hdiv) == 'H(div)')
     # ...
 
 #==============================================================================
@@ -336,6 +371,7 @@ def teardown_function():
 
 
 
-#######################################################
-if __name__ == '__main__':
-    test_latex_space()
+########################################################
+#if __name__ == '__main__':
+#    test_latex_space_1()
+#    test_latex_space_2()

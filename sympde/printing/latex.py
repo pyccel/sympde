@@ -15,6 +15,10 @@ from sympde.topology.derivatives import get_atom_derivatives
 from sympde.topology.space import ProductSpace
 from sympde.topology.space import ScalarFunction, VectorFunction
 from sympde.topology.space import ScalarFunctionSpace, VectorFunctionSpace
+from sympde.topology.datatype import H1SpaceType
+from sympde.topology.datatype import HcurlSpaceType
+from sympde.topology.datatype import HdivSpaceType
+from sympde.topology.datatype import L2SpaceType
 
 #==============================================================================
 class LatexPrinter(LatexPrinterSympy):
@@ -117,10 +121,22 @@ class LatexPrinter(LatexPrinterSympy):
 
     # ...
     def _print_ScalarFunctionSpace(self, expr):
-        return r'\mathcal{' + expr.name + '}'
+        domain = expr.domain
+        txt = self._print(domain)
+        if isinstance(expr.kind, H1SpaceType):
+            return r'H^1'
+        elif isinstance(expr.kind, L2SpaceType):
+            return 'L_2'
+        else:
+            return translate(expr.name)
 
     def _print_VectorFunctionSpace(self, expr):
-        return r'\mathcal{' + expr.name + '}'
+        if isinstance(expr.kind, HcurlSpaceType):
+            return 'H(curl)'
+        elif isinstance(expr.kind, HdivSpaceType):
+            return 'H(div)'
+        else:
+            return translate(expr.name)
     # ...
 
     # ...
