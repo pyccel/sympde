@@ -8,7 +8,7 @@ from sympy.printing.latex import translate
 from sympy import Indexed, IndexedBase, Matrix, ImmutableDenseMatrix
 
 from sympde.topology import NormalVector, TangentVector
-from sympde.topology import Line, Square, Cube, Domain
+from sympde.topology import Line, Square, Cube, Domain, NCubeInterior
 from sympde.topology.derivatives import sort_partial_derivatives
 from sympde.topology.derivatives import get_index_derivatives
 from sympde.topology.derivatives import get_atom_derivatives
@@ -152,6 +152,27 @@ class LatexPrinter(LatexPrinterSympy):
     # ...
 
     # ...
+    def _print_Line(self, expr):
+        return self._print_NCubeInterior(expr)
+
+    def _print_Square(self, expr):
+        return self._print_NCubeInterior(expr)
+
+    def _print_Cube(self, expr):
+        return self._print_NCubeInterior(expr)
+
+    def _print_NCubeInterior(self, expr):
+        min_coords = [int(x) if isinstance(x, float) and x.is_integer() else x for x in expr.min_coords]
+        max_coords = [int(x) if isinstance(x, float) and x.is_integer() else x for x in expr.max_coords]
+
+        pattern = lambda xmin, xmax: '({xmin},{xmax})'.format(xmin=xmin, xmax=xmax)
+
+        domain = pattern(min_coords[0], max_coords[0])
+        for (xmin,xmax) in zip(min_coords[1:], max_coords[1:]):
+            domain += r' \times ' + pattern(xmin, xmax)
+
+        return domain
+
     def _print_Integral(self, expr):
 
         if expr.is_domain_integral:
@@ -165,9 +186,9 @@ class LatexPrinter(LatexPrinterSympy):
             dx = r'~ds'
 
         domain = self._print(expr.domain)
-        expr   = self._print(expr.expr)
-
         integral = r'\int_{' + domain + '}'
+
+        expr   = self._print(expr.expr)
 
         return '{integral} {expr} {dx}'.format(integral=integral,
                                                expr=expr,

@@ -2,6 +2,9 @@
 
 from sympy import sin, cos, pi
 
+from sympde.topology import Line
+from sympde.topology import Square
+from sympde.topology import Cube
 from sympde.calculus import grad, dot, inner, rot, div
 #from sympde.topology import (dx, dy, dz)
 from sympde.topology import Domain, Boundary
@@ -12,6 +15,15 @@ from sympde.exterior import d, wedge, ip, jp, delta, hodge
 from sympde.exterior import DifferentialForm
 from sympde.printing.latex import latex
 
+#==============================================================================
+def test_latex_ncube():
+    line = Line(bounds=[-1,1])
+    square = Square(bounds1=(-1, 1), bounds2=(0, 2))
+    cube = Cube(bounds1=(-1, 1), bounds2=(0, 2), bounds3=(4, 5))
+
+    assert(latex(line) == '(-1,1)')
+    assert(latex(square) == r'(-1,1) \times (0,2)')
+    assert(latex(cube) == r'(-1,1) \times (0,2) \times (4,5)')
 
 #==============================================================================
 def test_latex_1d():
@@ -28,7 +40,7 @@ def test_latex_1d():
 #    F = element_of(V, name='F')
 
     int_0 = lambda expr: integral(domain , expr)
-    
+
     assert(latex(grad(v)) == r'\nabla{v}')
     assert(latex(dot(grad(v), grad(u))) == r'\nabla{u} \cdot \nabla{v}')
 
@@ -57,7 +69,7 @@ def test_latex_2d_1():
     v = element_of(V, name='v')
     u = element_of(V, name='u')
 #    F = element_of(V, name='F')
-    
+
     int_0 = lambda expr: integral(domain , expr)
 
     assert(latex(grad(v)) == r'\nabla{v}')
@@ -118,7 +130,7 @@ def test_latex_3d_1():
 #    F = element_of(V, name='F')
 
     int_0 = lambda expr: integral(domain , expr)
-    
+
     assert(latex(grad(v)) == r'\nabla{v}')
     assert(latex(dot(grad(v), grad(u))) == r'\nabla{u} \cdot \nabla{v}')
 
@@ -148,7 +160,7 @@ def test_latex_3d_2():
     u = element_of(V, name='u')
 
     int_0 = lambda expr: integral(domain , expr)
-    
+
     assert(latex(v) == r'\mathbf{v}')
     assert(latex(inner(grad(v), grad(u))) == r'\nabla{\mathbf{u}} : \nabla{\mathbf{v}}')
 
@@ -181,7 +193,7 @@ def test_latex_2d_3():
 
     int_0 = lambda expr: integral(domain , expr)
     int_1 = lambda expr: integral(B1, expr)
-    
+
     # ...
     expr = dot(grad(v), grad(u))
     a_0 = BilinearForm((v,u), int_0(expr))
@@ -238,7 +250,7 @@ def test_latex_2d_5():
     F  = element_of(W1, 'F')
 
     int_0 = lambda expr: integral(domain , expr)
-    
+
     # ...
     l1 = LinearForm(w1, int_0(dot(w1, F)))
 
@@ -301,3 +313,8 @@ def teardown_function():
     from sympy.core import cache
     cache.clear_cache()
 
+
+
+#######################################################
+if __name__ == '__main__':
+    test_latex_ncube()
