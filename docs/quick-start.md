@@ -23,7 +23,7 @@ An $H^1$-conforming variational formulation of the previous problem reads
 ```
 where $V \subset H^1(\Omega)$, 
 $a(u,v) := \int_{\Omega} \nabla u \cdot \nabla v ~ d\Omega$, and
-$l(v) := \int_{\Omega} f v ~ d\Omega.
+$l(v) := \int_{\Omega} f v ~ d\Omega$.
 
 The associated Python code can be found [here](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d/poisson_dir.py)
 
@@ -167,7 +167,3 @@ sympde notation | Mathematical notion
 `BoundaryIntegral(f)` | integral over a boundary, *i.e.* $(f, \Gamma) \mapsto \int_{\Gamma} f ~d\partial\Omega$
 `PathIntegral(F)`     | integral over an oriented path, *i.e.* $(\mathbf{F}, C) \mapsto \int_{C} \mathbf{F} \cdot d\mathbf{s}$
 `SurfaceIntegral(F)`  | integral over an oriented surface, *i.e.* $(\mathbf{F}, S) \mapsto \int_{S} \mathbf{F} \cdot d\mathbf{S}$
-
-<a id="sympde-examples"></a>
-## Examples
-
