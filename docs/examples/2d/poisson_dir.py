@@ -15,13 +15,11 @@ u,v = [element_of(V, name=i) for i in ['u', 'v']]
 a = BilinearForm((u,v), integral(domain , dot(grad(v), grad(u))))
 
 # linear form
-l = LinearForm(v, integral(domain, 4*v))
-
-# boundary condition
-B_dirichlet_0 = domain.boundary
+f = 4
+l = LinearForm(v, integral(domain, f*v))
 
 # Dirichlet boundary conditions
-bc = [EssentialBC(u, 0, B_dirichlet_0)]
+bc = [EssentialBC(u, 0, domain.boundary)]
 
 # Variational problem
 equation   = find(u, forall=v, lhs=a(u, v), rhs=l(v), bc=bc)

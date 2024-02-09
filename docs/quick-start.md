@@ -2,7 +2,6 @@
 
 - [Your first code using SymPDE](#sympde-poisson-0)
 - [SymPDE concepts and their mathematical meaning](#sympde-concepts)
-- [Examples](#sympde-examples)
 
 <a id="sympde-poisson-0"></a>
 ## Your first code using SymPDE 
@@ -24,7 +23,7 @@ An $H^1$-conforming variational formulation of the previous problem reads
 ```
 where $V \subset H^1(\Omega)$, 
 $a(u,v) := \int_{\Omega} \nabla u \cdot \nabla v ~ d\Omega$, and
-$l(v) := \int_{\Omega} f v ~ d\Omega + \int_{\Gamma_N} g v ~ d\Gamma$.
+$l(v) := \int_{\Omega} f v ~ d\Omega.
 
 The associated Python code can be found [here](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d/poisson_dir.py)
 
@@ -36,7 +35,9 @@ The structure of the code is as follows,
 3. Create elements from this function space. These elements will denote the test and trial functions.
 4. Create the Bilinear and Linear forms, $a$ and $l$ respectively.
 5. Create Essential Boundary Conditions.
-6. Create the variational problem as an Equation.
+6. Create the variational problem.
+
+Most of the time, you will need to follow the same steps, with some minor variants depending on the problem you're considering. More examples can be found [here](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples.md)
 
 <a id="sympde-concepts"></a>
 ## SymPDE concepts and their mathematical meaning

@@ -34,6 +34,7 @@ for a global installation.
 - [Quick-start Guide](https://github.com/pyccel/sympde/blob/devel-documentation/docs/quickstart.md)
 - [Topology Concepts](https://github.com/pyccel/sympde/blob/devel-documentation/docs/topology.md)
 - [Function Spaces](https://github.com/pyccel/sympde/blob/devel-documentation/docs/space.md)
+- [Examples](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples.md)
 - [Algebraic and differential operators evalution rules](https://github.com/pyccel/sympde/blob/devel-documentation/docs/rules.md)
 
 ## Developer Documentation
