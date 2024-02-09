@@ -71,4 +71,57 @@ sympde notation | Mathematical notion
 `Pi_V := Projector(V, 'commuting')`   | Commuting projector onto the typed function space $\mathcal{V}$  
 `Pi_V(expr)`                          | Commuting projection of the expression \texttt{expr} onto the typed function space $\mathcal{V}$  
 
+## Atomic variables
 
+sympde notation | Mathematical notion 
+--- | ---
+`ScalarFunction(V, 'u')`    |  $u \in \mathcal{V}$
+`VectorFunction(W, 'w')`    |  $\mathbf{w} \in \mathcal{W}$
+`Constant('mu', real=True)` | constant number $\mu \in \mathbb{R}$ 
+`int`                       | integer number 
+`float`                     | floating-point number
+
+## Algebraic operators 
+
+sympde notation | Mathematical notion 
+--- | ---
+`dot(u, v)`    | $\mathbf{u} \cdot \mathbf{v}$   
+`inner(u, v)`  | $\mathbf{u} : \mathbf{v}$       
+`cross(u, v)`  | $\mathbf{u} \times \mathbf{v}$  
+`outer(u, v)`  | $\mathbf{u} \otimes \mathbf{v}$  
+
+## Differential operators 
+
+boldface font is used for vector functions/expressions
+
+sympde notation | Mathematical notion 
+--- | ---
+`dx(u)`, `dy(u)` or `dz(u)`   |  $\partial_x u$,~ $\partial_y u$~ or~ $\partial_z u$                               
+`grad(u)`                     |  $\nabla u$~ or~ $\nabla \mathbf{u}$                                               
+`div(u)`                      |  $\nabla \cdot \mathbf{u}$                                                         
+`curl(u)`                     |  $\nabla \times \mathbf{u}$                                                        
+`rot(u) `                     |  2D rotational $\nabla \times u$                                                   
+`convect(a, u)`               |  $\left( \mathbf{a} \cdot \nabla \right) \mathbf{u}$                               
+`trace(u)`                    |  trace $\gamma(u)$                                                                 
+`Dn(u)`                       |  normal derivative $\partial_{\mathbf{n}} u$                                       
+`D(u)`                        |  Strain tensor $\frac{1}{2}\left(\nabla \mathbf{u} + \nabla \mathbf{u}^T \right) $ 
+`laplace(u)`                  |  Laplace $\Delta u$                                                                
+`hessian(u)`                  |  Hessian $H(u)$                                                                    
+`bracket(u,v)`                |  Poisson Bracket $[u,v]$                                                           
+              
+## Additional operators
+
+sympde notation | Mathematical notion 
+--- | ---
+`jump(u)`      |  jump of $u$, \textit{i.e.} $[u]$                            
+`avg(u)`       |  average of $u$, \textit{i.e.} $\langle u \rangle$           
+`conv(K,u)`    |  convolution of $u$ with a kernel $K$, \textit{i.e.} $K * u$ 
+
+## Integral operators 
+
+sympde notation | Mathematical notion 
+--- | ---
+`DomainIntegral(f)`   | integral over a domain, \textit{i.e.} $(f, \Omega) \mapsto \int_{\Omega} f ~d\Omega$
+`BoundaryIntegral(f)` | integral over a boundary, \textit{i.e.} $(f, \Gamma) \mapsto \int_{\Gamma} f ~d\partial\Omega$
+`PathIntegral(F)`     | integral over an oriented path, \textit{i.e.} $(\mathbf{F}, C) \mapsto \int_{C} \mathbf{F} \cdot d\mathbf{s}$
+`SurfaceIntegral(F)`  | integral over an oriented surface, \textit{i.e.} $(\mathbf{F}, S) \mapsto \int_{S} \mathbf{F} \cdot d\mathbf{S}$
