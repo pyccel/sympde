@@ -1,6 +1,66 @@
-# Topological concepts
+# Quick-Start
 
-## Domain concepts and their mathematical meaning
+- [Your first code using SymPDE](#sympde-poisson-0)
+- [SymPDE concepts and their mathematical meaning](#sympde-concepts)
+- [Examples](#sympde-examples)
+
+<a id="sympde-poisson-0"></a>
+## Your first code using SymPDE 
+We first start by writing our first example using SymPDE. We consider the Poisson problem.
+
+```python
+from sympde.calculus import grad, dot
+from sympde.topology import ScalarFunctionSpace
+from sympde.topology import element_of
+from sympde.topology import NormalVector
+from sympde.topology import Square
+from sympde.topology import Union
+from sympde.expr     import BilinearForm, LinearForm, integral
+from sympde.expr     import Norm, SemiNorm
+from sympde.expr     import find, EssentialBC
+
+domain = Square()
+
+B_dirichlet_0 = Union(*[domain.get_boundary(**kw) for kw in dir_zero_boundary])
+B_dirichlet_i = Union(*[domain.get_boundary(**kw) for kw in dir_nonzero_boundary])
+B_dirichlet   = Union(B_dirichlet_0, B_dirichlet_i)
+B_neumann = domain.boundary.complement(B_dirichlet)
+
+V  = ScalarFunctionSpace('V', domain)
+u  = element_of(V, name='u')
+v  = element_of(V, name='v')
+nn = NormalVector('nn')
+
+# Bilinear form a: V x V --> R
+a = BilinearForm((u, v), integral(domain, dot(grad(u), grad(v))))
+
+# Linear form l: V --> R
+l0 = LinearForm(v, integral(domain, f * v))
+if B_neumann:
+    l1 = LinearForm(v, integral(B_neumann, v * dot(grad(solution), nn)))
+    l  = LinearForm(v, l0(v) + l1(v))
+else:
+    l = l0
+
+# Dirichlet boundary conditions
+bc = []
+if B_dirichlet_0:  bc += [EssentialBC(u,        0, B_dirichlet_0)]
+if B_dirichlet_i:  bc += [EssentialBC(u, solution, B_dirichlet_i)]
+
+# Variational model
+equation = find(u, forall=v, lhs=a(u, v), rhs=l(v), bc=bc)
+
+# Error norms
+error  = u - solution
+l2norm =     Norm(error, domain, kind='l2')
+h1norm = SemiNorm(error, domain, kind='h1')
+```
+
+
+<a id="sympde-concepts"></a>
+## SymPDE concepts and their mathematical meaning
+
+### Domain
 
 sympde notation | Mathematical notion 
 --- | ---
@@ -20,7 +80,7 @@ sympde notation | Mathematical notion
 `ElementArea(Omega)` | Area of an abstract element of a domain $\Omega$ 
 `Area(A)` | Area of an expression of topological domain notions 
 
-## Mapping concepts their mathematical meaning  
+### Mapping
 
 sympde notation | Mathematical notion 
 --- | ---
@@ -34,7 +94,7 @@ sympde notation | Mathematical notion
 `Covariant(F, v)` | action of the covariant matrix of $\mathbf{F}$ on $\mathbf{v}$, *i.e.* $\left( \mathcal{D}\_\mathbf{F} \right)^{-T} \mathbf{v}$
 `Contravariant(F, v)` | action of the contravariant matrix of $\mathbf{F}$ on $\mathbf{v}$, *i.e.* $\frac{1}{J_\mathbf{F}} \mathcal{D}\_\mathbf{F} \mathbf{v}$
 
-## Function spaces and their mathematical meaning
+### Function spaces
 
 sympde notation | Mathematical notion 
 --- | ---
@@ -45,7 +105,7 @@ sympde notation | Mathematical notion
 `element_of_space(W, 'w')`          | vector function $\mathbf{w} \in \mathcal{W}$  
 `element_of_space(V*W, ['v', 'w'])` | $\left(v,\mathbf{w}\right) \in \mathcal{V} \times \mathcal{W}$ 
 
-### Function space types
+#### Function space types
 sympde notation | Mathematical notion 
 --- | ---
 `H1SpaceType`    | $H^1$    
@@ -53,7 +113,7 @@ sympde notation | Mathematical notion
 `HdivSpaceType`  | ${H}{\mbox{div}}$  
 `L2SpaceType`    | $L^2$    
 
-### Declaration of typed function spaces
+#### Typed function spaces
 
 sympde notation | Mathematical notion 
 --- | ---
@@ -62,7 +122,7 @@ sympde notation | Mathematical notion
 `VectorFunctionSpace('V2', Omega, kind='Hdiv') ` | vector function space $\mathcal{V}\_2 \subseteq H(\mbox{div}, \Omega)$  
 `ScalarFunctionSpace('V3', Omega, kind='L2')`    | scalar function space $\mathcal{V}\_3 \subseteq L^2(\Omega)$    
 
-## Projections and their mathematical meaning
+### Projections
 
 sympde notation | Mathematical notion 
 --- | ---
@@ -71,7 +131,7 @@ sympde notation | Mathematical notion
 `Pi_V := Projector(V, 'commuting')`   | Commuting projector onto the typed function space $\mathcal{V}$  
 `Pi_V(expr)`                          | Commuting projection of the expression `expr` onto the typed function space $\mathcal{V}$  
 
-## Atomic variables
+### Atomic variables
 
 sympde notation | Mathematical notion 
 --- | ---
@@ -81,7 +141,7 @@ sympde notation | Mathematical notion
 `int`                       | integer number 
 `float`                     | floating-point number
 
-## Algebraic operators 
+### Algebraic operators 
 
 sympde notation | Mathematical notion 
 --- | ---
@@ -90,7 +150,7 @@ sympde notation | Mathematical notion
 `cross(u, v)`  | $\mathbf{u} \times \mathbf{v}$  
 `outer(u, v)`  | $\mathbf{u} \otimes \mathbf{v}$  
 
-## Differential operators 
+### Differential operators 
 
 boldface font is used for vector functions/expressions
 
@@ -109,7 +169,7 @@ sympde notation | Mathematical notion
 `hessian(u)`                  |  Hessian $H(u)$                                                                    
 `bracket(u,v)`                |  Poisson Bracket $[u,v]$                                                           
               
-## Additional operators
+### Additional operators
 
 sympde notation | Mathematical notion 
 --- | ---
@@ -117,7 +177,7 @@ sympde notation | Mathematical notion
 `avg(u)`       |  average of $u$, *i.e.* $\langle u \rangle$           
 `conv(K,u)`    |  convolution of $u$ with a kernel $K$, *i.e.* $K * u$ 
 
-## Integral operators 
+### Integral operators 
 
 sympde notation | Mathematical notion 
 --- | ---
@@ -125,3 +185,7 @@ sympde notation | Mathematical notion
 `BoundaryIntegral(f)` | integral over a boundary, *i.e.* $(f, \Gamma) \mapsto \int_{\Gamma} f ~d\partial\Omega$
 `PathIntegral(F)`     | integral over an oriented path, *i.e.* $(\mathbf{F}, C) \mapsto \int_{C} \mathbf{F} \cdot d\mathbf{s}$
 `SurfaceIntegral(F)`  | integral over an oriented surface, *i.e.* $(\mathbf{F}, S) \mapsto \int_{S} \mathbf{F} \cdot d\mathbf{S}$
+
+<a id="sympde-examples"></a>
+## Examples
+
