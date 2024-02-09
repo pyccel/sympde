@@ -67,9 +67,9 @@ sympde notation | Mathematical notion
 sympde notation | Mathematical notion 
 --- | ---
 `P_V := Projector(V)`                 | Projector onto the function space $\mathcal{V}$  
-`P_V(expr)`                           | Projection of the expression \texttt{expr} onto the function space $\mathcal{V}$  
+`P_V(expr)`                           | Projection of the expression `expr` onto the function space $\mathcal{V}$  
 `Pi_V := Projector(V, 'commuting')`   | Commuting projector onto the typed function space $\mathcal{V}$  
-`Pi_V(expr)`                          | Commuting projection of the expression \texttt{expr} onto the typed function space $\mathcal{V}$  
+`Pi_V(expr)`                          | Commuting projection of the expression `expr` onto the typed function space $\mathcal{V}$  
 
 ## Atomic variables
 
@@ -96,8 +96,8 @@ boldface font is used for vector functions/expressions
 
 sympde notation | Mathematical notion 
 --- | ---
-`dx(u)`, `dy(u)` or `dz(u)`   |  $\partial_x u$,~ $\partial_y u$~ or~ $\partial_z u$                               
-`grad(u)`                     |  $\nabla u$~ or~ $\nabla \mathbf{u}$                                               
+`dx(u)`, `dy(u)` or `dz(u)`   |  $\partial_x u$, $\partial_y u$ or $\partial_z u$                               
+`grad(u)`                     |  $\nabla u$ or $\nabla \mathbf{u}$                                               
 `div(u)`                      |  $\nabla \cdot \mathbf{u}$                                                         
 `curl(u)`                     |  $\nabla \times \mathbf{u}$                                                        
 `rot(u) `                     |  2D rotational $\nabla \times u$                                                   
