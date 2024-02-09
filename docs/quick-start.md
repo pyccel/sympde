@@ -6,9 +6,37 @@
 
 <a id="sympde-poisson-0"></a>
 ## Your first code using SymPDE 
-We first start by writing our first example using SymPDE. We consider the Poisson problem with homogeneous Dirichlet boundary conditions. The associated Python code can be found [here](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d/poisson_dir.py)
+We first start by writing our first example using SymPDE. We consider the Poisson problem with homogeneous Dirichlet boundary conditions. 
 
+```math
+\begin{align}
+  - \nabla^2 u = f \quad \text{in~$\Omega$}, \quad \quad 
+  u = 0            \quad \text{on~$\partial \Omega$}. 
+\end{align}
+```
+with $\Omega := (0,1)^2$ and
 
+An $H^1$-conforming variational formulation of the previous problem reads
+```math
+\begin{align}
+  \text{find $u \in V$ such that} \quad a(u,v) = l(v) \quad \forall v \in V,
+\end{align}
+```
+where $V \subset H^1(\Omega)$, 
+$a(u,v) := \int_{\Omega} \nabla u \cdot \nabla v ~ d\Omega$, and
+$l(v) := \int_{\Omega} f v ~ d\Omega + \int_{\Gamma_N} g v ~ d\Gamma$.
+
+The associated Python code can be found [here](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d/poisson_dir.py)
+
+This very simple Python code reflects well the abstract mathematical framework needed for variational formulations.
+The structure of the code is as follows,
+
+1. Create a domain.
+2. Create a space of *scalar* functions over the domain.
+3. Create elements from this function space. These elements will denote the test and trial functions.
+4. Create the Bilinear and Linear forms.
+5. Create Essential Boundary Conditions.
+6. Create the variational problem as an Equation.
 
 <a id="sympde-concepts"></a>
 ## SymPDE concepts and their mathematical meaning
