@@ -6,7 +6,8 @@
 
 <a id="sympde-poisson-0"></a>
 ## Your first code using SymPDE 
-We first start by writing our first example using SymPDE. We consider the Poisson problem with homogeneous Dirichlet boundary conditions. 
+We first start by writing our first example using SymPDE.
+Let $\Omega := (0,1)^2$. We consider the Poisson problem with homogeneous Dirichlet boundary conditions.  
 
 ```math
 \begin{align}
@@ -14,7 +15,6 @@ We first start by writing our first example using SymPDE. We consider the Poisso
   u = 0            \quad \text{on~$\partial \Omega$}. 
 \end{align}
 ```
-with $\Omega := (0,1)^2$ and
 
 An $H^1$-conforming variational formulation of the previous problem reads
 ```math
@@ -34,7 +34,7 @@ The structure of the code is as follows,
 1. Create a domain.
 2. Create a space of *scalar* functions over the domain.
 3. Create elements from this function space. These elements will denote the test and trial functions.
-4. Create the Bilinear and Linear forms.
+4. Create the Bilinear and Linear forms, $a$ and $l$ respectively.
 5. Create Essential Boundary Conditions.
 6. Create the variational problem as an Equation.
 
