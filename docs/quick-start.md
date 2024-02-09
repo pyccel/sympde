@@ -9,7 +9,7 @@ sympde notation | Mathematical notion
 `Interval('I', coordinate=x)`  | an abstract (interior) interval $I \subset \mathbb{R}$, with the coordinate $x$
 `Union(A, B, C)`  | union of domains $A \cup B \cup C$
 `ProductDomain(A, B)`  | product of two domains $A \times B$
-`Indicator(A)`  | Indicator/characteristic function on $A$, \textit{i.e.} $\mathbf{1}\_A$
+`Indicator(A)`  | Indicator/characteristic function on $A$, *i.e.* $\mathbf{1}\_A$
 `Line('Omega')`    | an abstract line segment, $\Omega \subset \mathbb{R}$, having one interval as interior domain
 `Square('Omega')`  | an abstract square, $\Omega \subset \mathbb{R}^2$, having one interior domain as product of two intervals 
 `Cube('Omega')`    | an abstract cube, $\Omega \subset \mathbb{R}^3$, having one interior domain as product of three intervals 
@@ -31,8 +31,8 @@ sympde notation | Mathematical notion
 `F.covariant`     | the covariant matrix $\left( \mathcal{D}\_\mathbf{F} \right)^{-T}$
 `F.contravariant` | the contravariant matrix $\frac{1}{J_\mathbf{F}} \mathcal{D}\_\mathbf{F}$ 
 `F.hessian`       | the hessian matrix $\mathcal{H}\_\mathbf{F}$
-`Covariant(F, v)` | action of the covariant matrix of $\mathbf{F}$ on $\mathbf{v}$, \textit{i.e.} $\left( \mathcal{D}\_\mathbf{F} \right)^{-T} \mathbf{v}$
-`Contravariant(F, v)` | action of the contravariant matrix of $\mathbf{F}$ on $\mathbf{v}$, \textit{i.e.} $\frac{1}{J_\mathbf{F}} \mathcal{D}\_\mathbf{F} \mathbf{v}$
+`Covariant(F, v)` | action of the covariant matrix of $\mathbf{F}$ on $\mathbf{v}$, *i.e.* $\left( \mathcal{D}\_\mathbf{F} \right)^{-T} \mathbf{v}$
+`Contravariant(F, v)` | action of the contravariant matrix of $\mathbf{F}$ on $\mathbf{v}$, *i.e.* $\frac{1}{J_\mathbf{F}} \mathcal{D}\_\mathbf{F} \mathbf{v}$
 
 ## Function spaces and their mathematical meaning
 
@@ -40,10 +40,10 @@ sympde notation | Mathematical notion
 --- | ---
 `ScalarFunctionSpace('V', Omega)`     | scalar function space $\mathcal{V}$
 `VectorFunctionSpace('W', Omega)`     | vector function space $\mathbf{\mathcal{W}}$
-`ProductSpace(V, W)}` or `V*W`        | product of spaces, \textit{i.e.} $\mathcal{V} \times \mathcal{W}$
-`element\_of\_space(V, 'v')`          | scalar function $v \in \mathcal{V}$ 
-`element\_of\_space(W, 'w')`          | vector function $\mathbf{w} \in \mathcal{W}$  
-`element\_of\_space(V*W, ['v', 'w'])` | $\left(v,\mathbf{w}\right) \in \mathcal{V} \times \mathcal{W}$ 
+`ProductSpace(V, W)}` or `V*W`        | product of spaces, *i.e.* $\mathcal{V} \times \mathcal{W}$
+`element_of_space(V, 'v')`          | scalar function $v \in \mathcal{V}$ 
+`element_of_space(W, 'w')`          | vector function $\mathbf{w} \in \mathcal{W}$  
+`element_of_space(V*W, ['v', 'w'])` | $\left(v,\mathbf{w}\right) \in \mathcal{V} \times \mathcal{W}$ 
 
 ### Function space types
 sympde notation | Mathematical notion 
@@ -113,15 +113,15 @@ sympde notation | Mathematical notion
 
 sympde notation | Mathematical notion 
 --- | ---
-`jump(u)`      |  jump of $u$, \textit{i.e.} $[u]$                            
-`avg(u)`       |  average of $u$, \textit{i.e.} $\langle u \rangle$           
-`conv(K,u)`    |  convolution of $u$ with a kernel $K$, \textit{i.e.} $K * u$ 
+`jump(u)`      |  jump of $u$, *i.e.* $[u]$                            
+`avg(u)`       |  average of $u$, *i.e.* $\langle u \rangle$           
+`conv(K,u)`    |  convolution of $u$ with a kernel $K$, *i.e.* $K * u$ 
 
 ## Integral operators 
 
 sympde notation | Mathematical notion 
 --- | ---
-`DomainIntegral(f)`   | integral over a domain, \textit{i.e.} $(f, \Omega) \mapsto \int_{\Omega} f ~d\Omega$
-`BoundaryIntegral(f)` | integral over a boundary, \textit{i.e.} $(f, \Gamma) \mapsto \int_{\Gamma} f ~d\partial\Omega$
-`PathIntegral(F)`     | integral over an oriented path, \textit{i.e.} $(\mathbf{F}, C) \mapsto \int_{C} \mathbf{F} \cdot d\mathbf{s}$
-`SurfaceIntegral(F)`  | integral over an oriented surface, \textit{i.e.} $(\mathbf{F}, S) \mapsto \int_{S} \mathbf{F} \cdot d\mathbf{S}$
+`DomainIntegral(f)`   | integral over a domain, *i.e.* $(f, \Omega) \mapsto \int_{\Omega} f ~d\Omega$
+`BoundaryIntegral(f)` | integral over a boundary, *i.e.* $(f, \Gamma) \mapsto \int_{\Gamma} f ~d\partial\Omega$
+`PathIntegral(F)`     | integral over an oriented path, *i.e.* $(\mathbf{F}, C) \mapsto \int_{C} \mathbf{F} \cdot d\mathbf{s}$
+`SurfaceIntegral(F)`  | integral over an oriented surface, *i.e.* $(\mathbf{F}, S) \mapsto \int_{S} \mathbf{F} \cdot d\mathbf{S}$
