@@ -19,3 +19,17 @@ sympde notation | Mathematical notion
 `DomainArea(Omega)` | Area of an abstract domain $\Omega$ 
 `ElementArea(Omega)` | Area of an abstract element of a domain $\Omega$ 
 `Area(A)` | Area of an expression of topological domain notions 
+
+## Mapping concepts their mathematical meaning  
+
+sympde notation | Mathematical notion 
+--- | ---
+`Mapping('F', n)` | a mapping functor $\mathbf{F}\_{\Omega} := \left( \mathbf{F}, \Omega \right): \Omega \rightarrow \mathbb{R}^n$
+`F[i]`            | $i^{th}$ physical coordinate from $\{x,y,z\}$
+`F.jacobian`      | the jacobian matrix $\mathcal{D}\_\mathbf{F}$
+`F.det\_jacobian` | determinant of the jacobian matrix, $J_\mathbf{F}:= \mathrm{det} ~\mathcal{D}\_\mathbf{F}$
+`F.covariant`     | the covariant matrix $\left( \mathcal{D}\_\mathbf{F} \right)^{-T}$
+`F.contravariant` | the contravariant matrix $\frac{1}{J_\mathbf{F}} \mathcal{D}\_\mathbf{F}$ 
+`F.hessian`       | the hessian matrix $\mathcal{H}\_\mathbf{F}$
+`Covariant(F, v)` | action of the covariant matrix of $\mathbf{F}$ on $\mathbf{v}$, \textit{i.e.} $\left( \mathcal{D}\_\mathbf{F} \right)^{-T} \mathbf{v}$
+`Contravariant(F, v)` | action of the contravariant matrix of $\mathbf{F}$ on $\mathbf{v}$, \textit{i.e.} $\frac{1}{J_\mathbf{F}} \mathcal{D}\_\mathbf{F} \mathbf{v}$
