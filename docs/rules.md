@@ -4,10 +4,10 @@
 
 Rule ID | symbolic expression | evaluation 
 --- | --- | ---
-`[OG1]` | $\texttt{grad}(f+g)$ | $\texttt{grad}(f) + \texttt{grad}(g)$ 
-`[OG2]` | $\texttt{grad}(\alpha ~ f)$ | $\alpha~\texttt{grad}(f)$ 
-`[OG3]` | $\texttt{grad}(f ~ g)$ | $f~\texttt{grad}(g) + g~\texttt{grad}(f)$ 
-`[OG4]` | $\texttt{grad}(\frac{f}{g})$ | $-\frac{f}{g^2}~\texttt{grad}(g) + \frac{1}{g}~\texttt{grad}(f)$ 
-`[OG5]` | $\texttt{grad}(F+G)$ | $\texttt{grad}(F) + \texttt{grad}(G)$ 
-`[OG6]` | $\texttt{grad}(\alpha ~ F)$ | $\alpha~\texttt{grad}(F)$ 
-`[OG7]` | $\texttt{grad}(\texttt{dot}(F, G))$ | $\texttt{convect}(F, G) + \texttt{convect}(G, F) + \texttt{cross}(F, \symcurl(G)) - \texttt{cross}(\symcurl(F), G)$ 
+`[OG1]` | $\mathrm{grad}(f+g)$ | $\mathrm{grad}(f) + \mathrm{grad}(g)$ 
+`[OG2]` | $\mathrm{grad}(\alpha ~ f)$ | $\alpha~\mathrm{grad}(f)$ 
+`[OG3]` | $\mathrm{grad}(f ~ g)$ | $f~\mathrm{grad}(g) + g~\mathrm{grad}(f)$ 
+`[OG4]` | $\mathrm{grad}(\frac{f}{g})$ | $-\frac{f}{g^2}~\mathrm{grad}(g) + \frac{1}{g}~\mathrm{grad}(f)$ 
+`[OG5]` | $\mathrm{grad}(F+G)$ | $\mathrm{grad}(F) + \mathrm{grad}(G)$ 
+`[OG6]` | $\mathrm{grad}(\alpha ~ F)$ | $\alpha~\mathrm{grad}(F)$ 
+`[OG7]` | $\mathrm{grad}(\mathrm{dot}(F, G))$ | $\mathrm{convect}(F, G) + \mathrm{convect}(G, F) + \mathrm{cross}(F, \mathrm{curl}(G)) - \mathrm{cross}(\mathrm{curl}(F), G)$ 
