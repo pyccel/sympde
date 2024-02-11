@@ -3,8 +3,8 @@
 - [Linear Problems](#linear-problems)
   - [Mixed FEM for the Poisson problem](#linear-mixed-poisson)
   - [Mixed FEM for the Stokes problem](#linear-mixed-stokes)
-  - [$H(curl, \Omega)$ Elliptic Problem](#linear-elliptic-curl)
-  - [$H(div, \Omega)$ Elliptic Problem](#linear-elliptic-div)
+  - [Elliptic-curl Problem](#linear-elliptic-curl)
+  - [Elliptic-div Problem](#linear-elliptic-div)
 - [Nonlinear Problems](#nonlinear-problems)
   - [Nonlinear 2D Poisson Problem](#nonlinear-poisson-2d)
   - [1D Burgers Problem](#nonlinear-burgers-1d)
@@ -166,19 +166,19 @@ $$
 For the variational formulation, we take the dot product of the first equation with $v$ and integrate over the whole domain
 
 $$
-\int_{\Omega} (-\Delta \mathbf{u} + \nabla p)\cdot \mathbf{v} \dd \mathbf{x} = \int_{\Omega}\nabla \mathbf{u}:\nabla \mathbf{v} \dd \mathbf{x} + \int_{\Omega} \nabla p \cdot \mathbf{v} \dd \mathbf{x} = \int_{\Omega} \mathbf{f}\cdot \mathbf{v} \dd \mathbf{x}
+\int_{\Omega} (-\Delta \mathbf{u} + \nabla p)\cdot \mathbf{v} ~\mathrm{d} \mathbf{x} = \int_{\Omega}\nabla \mathbf{u}:\nabla \mathbf{v} ~\mathrm{d} \mathbf{x} + \int_{\Omega} \nabla p \cdot \mathbf{v} ~\mathrm{d} \mathbf{x} = \int_{\Omega} \mathbf{f}\cdot \mathbf{v} ~\mathrm{d} \mathbf{x}
 $$
 
 The integration by parts is performed component by component. We impose the essential boundary condition $ \mathbf{v}=0$ on $\partial\Omega$, and we denote by
 
 $$
-\int_{\Omega}\nabla \mathbf{u}:\nabla \mathbf{v} \dd \mathbf{x} =\sum_{i=1}^3 \int_{\Omega}\nabla u_i\cdot\nabla v_i \dd \mathbf{x} =\sum_{i,j=1}^3 \int_{\Omega}\partial_j u_i\partial_j v_i \dd \mathbf{x} .
+\int_{\Omega}\nabla \mathbf{u}:\nabla \mathbf{v} ~\mathrm{d} \mathbf{x} =\sum_{i=1}^3 \int_{\Omega}\nabla u_i\cdot\nabla v_i ~\mathrm{d} \mathbf{x} =\sum_{i,j=1}^3 \int_{\Omega}\partial_j u_i\partial_j v_i ~\mathrm{d} \mathbf{x} .
 $$
 
 We now need to deal with the constraint $\nabla\cdot \mathbf{u}=0$. The theoretical framework for saddle point problems requires that the corresponding bilinear form is the same as the second one appearing in the first part of the variational formulation. To this aim we multiply  $\nabla\cdot \mathbf{u}=0$ by a scalar test function (which will be associated to $p$) and integrate on the full domain, with an integration by parts in order to get the same bilinear form as in the first equation
 
 $$
-\int_{\Omega} \nabla\cdot \mathbf{u} \,q \dd \mathbf{x}= - \int_{\Omega} \mathbf{u}\cdot \nabla q\dd \mathbf{x}=0,
+\int_{\Omega} \nabla\cdot \mathbf{u} \,q ~\mathrm{d} \mathbf{x}= - \int_{\Omega} \mathbf{u}\cdot \nabla q~\mathrm{d} \mathbf{x}=0,
 $$
 
 using that $q=0$ on the boundary as an essential boundary condition.
@@ -190,9 +190,9 @@ $$
 \begin{align}
 \left\{
   \begin{array}{llll}
-    \int_{\Omega}\nabla \mathbf{u}:\nabla \mathbf{v} \dd \mathbf{x} &+ \int_{\Omega} \nabla p \cdot \mathbf{v} \dd \mathbf{x}
-    &= \int_{\Omega} \mathbf{f}\cdot \mathbf{v} \dd \mathbf{x}, & \forall \mathbf{v}\in H_0^1(\Omega)^3 \\
-    \int_{\Omega} \mathbf{u}\cdot \nabla q\dd \mathbf{x} & &=0, & \forall p\in H^1_0(\Omega)
+    \int_{\Omega}\nabla \mathbf{u}:\nabla \mathbf{v} ~\mathrm{d} \mathbf{x} &+ \int_{\Omega} \nabla p \cdot \mathbf{v} ~\mathrm{d} \mathbf{x}
+    &= \int_{\Omega} \mathbf{f}\cdot \mathbf{v} ~\mathrm{d} \mathbf{x}, & \forall \mathbf{v}\in H_0^1(\Omega)^3 \\
+    \int_{\Omega} \mathbf{u}\cdot \nabla q~\mathrm{d} \mathbf{x} & &=0, & \forall p\in H^1_0(\Omega)
   \end{array}
   \right.
 \end{align}
@@ -238,16 +238,16 @@ equation = find((u, p), forall=(v, q), lhs=a((u, p), (v, q)), rhs=l(v, q), bc=bc
 #### Second mixed formulation of the Stokes problem
 
 Another possibility to obtained a well posed variational formulation, is to integrate by parts the
-$ \int_{\Omega} \nabla p \cdot \mathbf{v} \dd \mathbf{x}$ term in the first formulation:
+$ \int_{\Omega} \nabla p \cdot \mathbf{v} ~\mathrm{d} \mathbf{x}$ term in the first formulation:
 
 $$ 
-\int_{\Omega} \nabla p \cdot \mathbf{v} \dd \mathbf{x} = - \int_{\Omega} p \nabla \cdot \mathbf{v} \dd \mathbf{x} + \int_{\partial\Omega} p \mathbf{v} \cdot \mathbf{n}\dd \sigma= -\int_{\Omega} p \,\nabla \cdot \mathbf{v} \dd \mathbf{x} ,
+\int_{\Omega} \nabla p \cdot \mathbf{v} ~\mathrm{d} \mathbf{x} = - \int_{\Omega} p \nabla \cdot \mathbf{v} ~\mathrm{d} \mathbf{x} + \int_{\partial\Omega} p \mathbf{v} \cdot \mathbf{n}~\mathrm{d} \sigma= -\int_{\Omega} p \,\nabla \cdot \mathbf{v} ~\mathrm{d} \mathbf{x} ,
 $$
 
  using here $p=0$ as a natural boundary condition. Note that in the other variational formulation the same boundary condition was essential. In this case, for the second variational formulation, we just multiply $\nabla\cdot \mathbf{u}=0$ by $q$ and integrate. No integration by parts is needed in this case.
 
 $$
-\int_{\Omega} \nabla \cdot \mathbf{u}\, q \dd \mathbf{x} =0.
+\int_{\Omega} \nabla \cdot \mathbf{u}\, q ~\mathrm{d} \mathbf{x} =0.
 $$
 
 This then leads to the following variational formulation:
@@ -258,17 +258,17 @@ $$
 \begin{align}
 \left\{
   \begin{array}{llll}
-    \int_{\Omega}\nabla \mathbf{u}:\nabla \mathbf{v} \dd \mathbf{x} &- \int_{\Omega}  p \, \nabla\cdot \mathbf{v} \dd \mathbf{x}
-    &= \int_{\Omega} \mathbf{f}\cdot \mathbf{v} \dd \mathbf{x}, &\forall \mathbf{v}\in H^1(\Omega)^3
+    \int_{\Omega}\nabla \mathbf{u}:\nabla \mathbf{v} ~\mathrm{d} \mathbf{x} &- \int_{\Omega}  p \, \nabla\cdot \mathbf{v} ~\mathrm{d} \mathbf{x}
+    &= \int_{\Omega} \mathbf{f}\cdot \mathbf{v} ~\mathrm{d} \mathbf{x}, &\forall \mathbf{v}\in H^1(\Omega)^3
     \\
-    \int_{\Omega}  \nabla\cdot\mathbf{u}\, q\dd \mathbf{x} & &=0,  &\forall q\in L^2(\Omega)
+    \int_{\Omega}  \nabla\cdot\mathbf{u}\, q~\mathrm{d} \mathbf{x} & &=0,  &\forall q\in L^2(\Omega)
   \end{array}
   \right.
 \end{align}
 $$
 
 <a id="linear-elliptic-curl"></a>
-### $H(curl, \Omega)$ Elliptic Problem
+### Elliptic-curl Problem
 
 Let $\Omega \subset \mathbb{R}^d$ be an open Liptschitz bounded set, and we look for the solution of the following problem
 
@@ -278,13 +278,13 @@ $$
   \begin{array}{rl}
     \nabla \times \nabla \times \mathbf{u} + \mu \mathbf{u} &= \mathbf{f}, \quad \Omega 
     \\
-    \mathbf{u} \times \nn &= 0, \quad \partial\Omega
+    \mathbf{u} \times \mathbf{n} &= 0, \quad \partial\Omega
   \end{array} \right.
 \end{align}
 $$
 
 where $\mathbf{f} \in \mathbf{L}^2(\Omega)$,  $\mu \in L^\infty(\Omega)$ and there exists $\mu_0 > 0$ such that $\mu \geq \mu_0$ almost everywhere.
-We take the Hilbert space $V := \Hcurlzero$, in which case the variational formulation writes 
+We take the Hilbert space $V := \mathbf{H}\_0(\mbox{curl}, \Omega)$, in which case the variational formulation writes 
 
 Find $\mathbf{u} \in V$ such that
 
@@ -302,10 +302,10 @@ l(\mathbf{v}) &:= \int_{\Omega} \mathbf{v} \cdot \mathbf{f}, & \forall \mathbf{v
 \end{align}
 $$
 
-We recall that in $\Hcurlzero$, the bilinear form $a$ is equivalent to the inner product and is therefor continuous and coercive. Hence, our abstract theory applies and there exists a unique solution to the problem \eqref{eq:abs_var_elliptic_hcurl}.
+We recall that in $\mathbf{H}\_0(\mbox{curl}, \Omega)$, the bilinear form $a$ is equivalent to the inner product and is therefor continuous and coercive. Hence, our abstract theory applies and there exists a unique solution to the problem \eqref{eq:abs_var_elliptic_hcurl}.
 
 <a id="linear-elliptic-div"></a>
-### $H(div, \Omega)$ Elliptic Problem
+### Elliptic-div Problem
 
 Let $\Omega \subset \mathbb{R}^d$ be an open Liptschitz bounded set, and we look for the solution of the following problem
 
@@ -315,13 +315,13 @@ $$
   \begin{array}{rl}
     - \nabla \nabla \cdot \mathbf{u} + \mu \mathbf{u} &= \mathbf{f}, \quad \Omega 
     \\
-    \mathbf{u} \times \nn &= 0, \quad \partial\Omega
+    \mathbf{u} \times \mathbf{n} &= 0, \quad \partial\Omega
   \end{array} \right.
 \end{align}
 $$
 
 where $\mathbf{f} \in \mathbf{L}^2(\Omega)$,  $\mu \in L^\infty(\Omega)$ and there exists $\mu_0 > 0$ such that $\mu \geq \mu_0$ almost everywhere.
-We take the Hilbert space $V := \Hdivzero$, in which case the variational formulation corresponding to \eqref{eq:elliptic_hdiv} writes 
+We take the Hilbert space $V := \mathbf{H}\_0(\mbox{div}, \Omega)$, in which case the variational formulation corresponding to \eqref{eq:elliptic_hdiv} writes 
 
 
 Find $\mathbf{u} \in V$ such that
@@ -345,7 +345,7 @@ l(\mathbf{v}) &:= \int_{\Omega} \mathbf{v} \cdot \mathbf{f}, & \forall \mathbf{v
 \end{align}
 $$
 
-We recall that in $\Hdivzero$, the bilinear form $a$ is equivalent to the inner product and is therefor continuous and coercive. Hence, our abstract theory applies and there exists a unique solution to the problem \eqref{eq:abs_var_elliptic_hdiv}.
+We recall that in $\mathbf{H}\_0(\mbox{div}, \Omega)$, the bilinear form $a$ is equivalent to the inner product and is therefor continuous and coercive. Hence, our abstract theory applies and there exists a unique solution to the problem \eqref{eq:abs_var_elliptic_hdiv}.
 
 **TODO - compute exact solution and associated rhs**
   
