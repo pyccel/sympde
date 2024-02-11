@@ -29,7 +29,7 @@ $$
 \end{align}
 $$
 
-Using that $\Delta p = \nabla\cdot\nabla p$, we set $ \mathbf{u}=\nabla p$, then the Poisson equation \ref{eq:abs_poisson_mixed} can be written equivalently
+Using that $\Delta p = \nabla\cdot\nabla p$, we set $ \mathbf{u}=\nabla p$, then the Poisson equation can be written equivalently
 
 $$ \mathbf{u}=-\nabla p, ~~~ \nabla\cdot \mathbf{u}= f.$$
 
@@ -302,7 +302,7 @@ l(\mathbf{v}) &:= \int_{\Omega} \mathbf{v} \cdot \mathbf{f}, & \forall \mathbf{v
 \end{align}
 $$
 
-We recall that in $\mathbf{H}\_0(\mbox{curl}, \Omega)$, the bilinear form $a$ is equivalent to the inner product and is therefor continuous and coercive. Hence, our abstract theory applies and there exists a unique solution to the problem \eqref{eq:abs_var_elliptic_hcurl}.
+We recall that in $\mathbf{H}\_0(\mbox{curl}, \Omega)$, the bilinear form $a$ is equivalent to the inner product and is therefor continuous and coercive. Hence, our abstract theory applies and there exists a unique solution to the problem.
 
 <a id="linear-elliptic-div"></a>
 ### Elliptic-div Problem
@@ -321,7 +321,7 @@ $$
 $$
 
 where $\mathbf{f} \in \mathbf{L}^2(\Omega)$,  $\mu \in L^\infty(\Omega)$ and there exists $\mu_0 > 0$ such that $\mu \geq \mu_0$ almost everywhere.
-We take the Hilbert space $V := \mathbf{H}\_0(\mbox{div}, \Omega)$, in which case the variational formulation corresponding to \eqref{eq:elliptic_hdiv} writes 
+We take the Hilbert space $V := \mathbf{H}\_0(\mbox{div}, \Omega)$, in which case the variational formulation writes 
 
 
 Find $\mathbf{u} \in V$ such that
@@ -345,7 +345,7 @@ l(\mathbf{v}) &:= \int_{\Omega} \mathbf{v} \cdot \mathbf{f}, & \forall \mathbf{v
 \end{align}
 $$
 
-We recall that in $\mathbf{H}\_0(\mbox{div}, \Omega)$, the bilinear form $a$ is equivalent to the inner product and is therefor continuous and coercive. Hence, our abstract theory applies and there exists a unique solution to the problem \eqref{eq:abs_var_elliptic_hdiv}.
+We recall that in $\mathbf{H}\_0(\mbox{div}, \Omega)$, the bilinear form $a$ is equivalent to the inner product and is therefor continuous and coercive. Hence, our abstract theory applies and there exists a unique solution.
 
 **TODO - compute exact solution and associated rhs**
   
