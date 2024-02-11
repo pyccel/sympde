@@ -25,7 +25,7 @@ As a first example, we consider the Poisson equation
 
 $$
 \begin{align}
-  - \nabla^2 u = f \quad \text{in~$\Omega$}, \quad \quad 
+  \- \nabla^2 u = f \quad \text{in~$\Omega$}, \quad \quad 
   u = 0            \quad \text{on~$\Gamma_D$}, \quad \quad 
   \partial_n u = g \quad \text{on~$\Gamma_N$}.
 \end{align}
@@ -39,11 +39,11 @@ $$
 \end{align}
 $$
 
-where $V \subset H^1(\Omega)$, 
+where 
 
-$a(u,v) := \int_{\Omega} \nabla u \cdot \nabla v ~ d\Omega$, and
-
-$l(v) := \int_{\Omega} f v ~ d\Omega + \int_{\Gamma_N} g v ~ d\Gamma$.
+- $V \subset H^1(\Omega)$, 
+- $a(u,v) := \int_{\Omega} \nabla u \cdot \nabla v ~ d\Omega$, and
+- $l(v) := \int_{\Omega} f v ~ d\Omega + \int_{\Gamma_N} g v ~ d\Gamma$.
 
 <a id="linear-biharmonic"></a>
 ### The Biharmonic problem
