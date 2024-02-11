@@ -1,17 +1,173 @@
 # Examples
 
 - [Linear Problems](#linear-problems)
+  - [The Poisson problem](#linear-poisson)
+  - [The Biharmonic problem](#linear-biharmonic)
+  - [The Vector Poisson problem](#linear-vector-poisson)
+  - [The Stabilized advection-diffusion equation](#linear-stabilized-advection-diffusion)
   - [Mixed FEM for the Poisson problem](#linear-mixed-poisson)
   - [Mixed FEM for the Stokes problem](#linear-mixed-stokes)
   - [Elliptic-curl Problem](#linear-elliptic-curl)
   - [Elliptic-div Problem](#linear-elliptic-div)
+  - [Linear Elasticity Problem](#linear-elasticity)
 - [Nonlinear Problems](#nonlinear-problems)
   - [Nonlinear 2D Poisson Problem](#nonlinear-poisson-2d)
   - [1D Burgers Problem](#nonlinear-burgers-1d)
-
+  - [The streamfunction-velocity formulation of the steady-state Navier-Stokes equations for incompressible fluids](#nonlinear-navier-stokes-streamfunction-velocity)
 
 <a id="linear-problems"></a>
 ## Linear Problems
+
+<a id="linear-poisson"></a>
+### The Poisson problem
+
+As a first example, we consider the Poisson equation
+
+$$
+\begin{align}
+  - \nabla^2 u = f \quad \text{in~$\Omega$}, \quad \quad 
+  u = 0            \quad \text{on~$\Gamma_D$}, \quad \quad 
+  \partial_n u = g \quad \text{on~$\Gamma_N$}.
+\end{align}
+$$
+
+An $H^1$-conforming variational formulation of reads
+
+$$
+\begin{align}
+  \text{find $u \in V$ such that} \quad a(u,v) = l(v) \quad \forall v \in V,
+\end{align}
+$$
+
+where $V \subset H^1(\Omega)$, 
+
+$a(u,v) := \int_{\Omega} \nabla u \cdot \nabla v ~ d\Omega$, and
+
+$l(v) := \int_{\Omega} f v ~ d\Omega + \int_{\Gamma_N} g v ~ d\Gamma$.
+
+<a id="linear-biharmonic"></a>
+### The Biharmonic problem
+
+We consider the (inhomogeneous) biharmonic equation with homogeneous essential boundary conditions,
+
+$$
+\begin{align}
+  \nabla^2 \nabla^2  u = f       \quad \text{in $\Omega$}         , \quad \quad 
+  u = 0                          \quad \text{on $\partial \Omega$}, \quad \quad
+  \nabla u \cdot \mathbf{n} = 0  \quad \text{on $\partial \Omega$}.
+  \label{eq:biharmonic-strong}
+\end{align}
+$$
+
+An $H^2$-conforming variational formulation of \eqref{eq:biharmonic-strong} reads 
+
+$$
+\begin{align}
+  \text{find $u \in V$ such that} \quad a(u,v) = l(v) \quad \forall v \in V,
+  \label{eq:biharmonic-vf}
+\end{align}
+$$
+
+where $V \subset H^2(\Omega)$, 
+$a(u,v) := \int_{\Omega} \nabla^2 u ~ \nabla^2 v ~ d\Omega$, and
+$l(v) := \int_{\Omega} f v ~ d\Omega$.
+
+The implementation of this model with SymPDE is given in Python code \ref{code:sym-bilaplacian}.
+
+<a id="linear-vector-poisson"></a>
+### Vector Poisson's equation 
+
+In this example we consider the vector Poisson equation with homogeneous Dirichlet boundary conditions, where the domain is the unit square $\Omega := (0,1) \times (0,1)$:
+
+$$
+\begin{align}
+  - \nabla^2 \mathbf{u} = \mathbf{f} \quad \mbox{in} ~ \Omega, \quad \quad 
+  \mathbf{u} = 0            \quad \mbox{on} ~ \partial \Omega.
+  \label{eq:vector-poisson-strong}
+\end{align}
+$$
+
+The corresponding variational formulation of \eqref{eq:vector-poisson-strong}, using $\mathbf{H}^1$ formulation, \textit{i.e.} all components are in $H^1$, reads 
+
+$$
+\begin{align}
+  \text{find $\mathbf{u} \in V$ such that} \quad 
+  a(\mathbf{u},\mathbf{v}) = l(\mathbf{v}) \quad \forall \mathbf{v} \in V,
+  \label{eq:vector-poisson-vf}
+\end{align}
+$$
+
+where $V \subset \mathbf{H}_0^1(\Omega)$, 
+$a(\mathbf{u},\mathbf{v}) := \int_{\Omega} \nabla \mathbf{u} : \nabla \mathbf{v} ~ d\Omega$, and
+$l(\mathbf{v}) := \int_{\Omega} \mathbf{f} \cdot \mathbf{v} ~ d\Omega$.
+
+The associated formal model is given in Python code \ref{code:vector-poisson}.
+
+<a id="linear-stabilized-advection-diffusion"></a>
+### Stabilized advection-diffusion equation
+
+We consider the advection-diffusion problem consisting of finding a scalar-valued function $u$ such that
+
+$$
+\begin{align}
+  \begin{cases}
+    - \kappa \nabla^2 u + \mathbf{b} \cdot \nabla u = f &\text{in $\Omega$}, \\
+    u = 0                                               &\text{on $\partial \Omega$}.
+  \end{cases}
+  \label{eq:adv-diff-strong}
+\end{align}
+$$
+
+A variational formulation of \eqref{eq:adv-diff-strong} reads
+
+$$
+\begin{align}
+  \text{find $u \in V$ such that} \quad a(u,v) = l(v) \quad \forall v \in V,
+  \label{eq:adv-diff-vf}
+\end{align}
+$$
+
+where $V \subset H_0^1(\Omega)$, 
+$a(u,v) := \int_{\Omega} \left( \kappa \nabla u \cdot \nabla v + \left( \mathbf{b} \cdot \nabla u \right) v \right) d\Omega$,
+and $l(v) := \int_{\Omega} f v~d\Omega$.
+
+In the sequel we consider two different stabilization methods, leading to formulations of the form
+
+$$
+\begin{align}
+  \text{find $u \in V$ such that} \quad 
+  a(u,v) + a_s(u,v) = l(v) + l_s(v) \quad \forall v \in V,
+  \label{eq:adv-diff-stab-vf}
+\end{align}
+$$
+
+where $a_s$ and $l_s$ are additional terms depending on the stabilization method.
+The streamline upwind Petrov-Galerkin (SUPG) method is given by~\eqref{eq:adv-diff-stab-supg}, while \eqref{eq:adv-diff-stab-gls} describes the Galerkin least squares (GLS) method, where we introduced the differential operator $L(u) := - \kappa \nabla^2 u + \mathbf{b} \cdot \nabla u$.
+Notice that in these formulations $\tau$~stands for a piecewise function that is constant on each element of the tessellation associated to the computational domain~$\Omega$.
+More details can be found in~\cite{FRANCA20061560}.
+
+$$
+\begin{align}
+    a_s(u,v) = \int_{\Omega} \tau ~ L(u) ~ \left( \mathbf{b} \cdot \nabla v \right) ~d\Omega 
+    \quad \mbox{and} \quad
+    l_s(v) = \int_{\Omega} \tau ~ f ~ \left( \mathbf{b} \cdot \nabla v \right) ~d\Omega 
+  && \text{[SUPG]}
+  \label{eq:adv-diff-stab-supg}
+\end{align}
+$$
+
+$$
+\begin{align}
+    a_s(u,v) = \int_{\Omega} \tau ~ L(u) ~ L(v) ~d\Omega 
+    \quad \mbox{and} \quad
+    l_s(v) = \int_{\Omega} \tau ~ f ~ L(v) ~d\Omega 
+  && \text{[GLS]}
+  \label{eq:adv-diff-stab-gls}
+\end{align}
+$$
+
+The formal model for the stabilized advection-diffusion equation is given in Python code~\ref{code:adv-diff-stab}.
+
 
 <a id="linear-mixed-poisson"></a>
 ### Mixed FEM for the Poisson problem
@@ -348,7 +504,12 @@ $$
 We recall that in $\mathbf{H}\_0(\mbox{div}, \Omega)$, the bilinear form $a$ is equivalent to the inner product and is therefor continuous and coercive. Hence, our abstract theory applies and there exists a unique solution.
 
 **TODO - compute exact solution and associated rhs**
-  
+
+<a id="linear-elasticity"></a>
+### Linear Elasticity Problem 
+
+**TODO**
+
 
 <a id="nonlinear-problems"></a>
 ## Nonlinear Problems
@@ -653,3 +814,85 @@ Fprime = linearize(F, u, trials=du)
 # Variational problem
 newton = find(du, forall=v, lhs=Fprime(du, v,u=uk), rhs=-F(v,u=uk))
 ```
+
+<a id="nonlinear-navier-stokes-streamfunction-velocity"></a>
+### The streamfunction-velocity formulation of the steady-state Navier-Stokes equations for incompressible fluids
+
+The steady-state Navier Stokes problem for an incompressible fluid, with homogeneous Dirichlet boundary conditions (``no slip'' condition), is defined as
+
+$$
+\begin{equation}
+\left\{
+\begin{aligned}
+        \left( \mathbf{u} \cdot \nabla \right) \mathbf{u} + \nabla p - 2 \nabla \cdot \left( \frac{1}{R_e} D\left( \mathbf{u} \right) \right) &= \mathbf{f} && \text{in $\Omega$},
+  \\
+        \nabla \cdot \mathbf{u} &= 0 && \text{in $\Omega$},
+  \\
+        \mathbf{u} &= 0 && \text{on $\partial\Omega$},
+  \label{eq:steady-navier-stokes}
+\end{aligned}
+\right.
+\end{equation}
+$$
+
+where $R_e$ is the Reynolds number and $D\left( \mathbf{u} \right) := \frac{1}{2}\left( \nabla \mathbf{u} + \nabla \mathbf{u}^T \right)$ is the strain rate tensor.
+The weak formulation for~\eqref{eq:steady-navier-stokes} reads
+
+$$
+\begin{align}
+  \text{find $\mathbf{u} \in W$ such that} \quad 
+  a(\mathbf{u},\mathbf{v}) + b(\mathbf{u},\mathbf{v};\mathbf{u}) = l(\mathbf{v}) \quad
+  \forall \mathbf{v} \in W
+  \label{eq:steady-navier-stokes-vf}
+\end{align}
+$$
+
+where $W \subset \{ \mathbf{v} \in \mathbf{H}_0^1(\Omega): \nabla \cdot \mathbf{v} = 0 \}$ and
+
+$$
+\begin{align*}
+  a(\mathbf{u}, \mathbf{v}) := \frac{2}{R_e} \int_{\Omega} D\left( \mathbf{u} \right) : D\left(\mathbf{v} \right) ~d\Omega,
+  \quad
+  b(\mathbf{u}, \mathbf{v}; \mathbf{w}) := \int_{\Omega} \left( \left( \mathbf{w} \cdot \nabla \right) \mathbf{u} \right) \cdot \mathbf{v} ~d\Omega,
+  \quad
+  l(\mathbf{v}) := \int_{\Omega} \mathbf{f} \cdot \mathbf{v} ~d\Omega.
+%  \label{}
+\end{align*}
+$$
+
+When $\Omega$ is a simply connected 2D domain, there exists a unique function $\psi$ such that $\mathbf{u} = \boldsymbol{\nabla} \times \psi:= \left( \partial_y \psi, - \partial_x \psi \right)$;
+substituting this expression for $\mathbf{u}$ into \eqref{eq:steady-navier-stokes} leads to the so-called ``streamfunction-velocity formulation'' of the steady-state Navier-Stokes equations for an incompressible fluid.
+For more details we refer the reader to \cite{TAGLIABUE2014277}.
+The variational formulation is then given by:
+
+$$
+\begin{align}
+  \text{find $\psi \in V$ such that} \quad 
+  a(\psi,\phi) + b(\psi,\phi;\psi) = l(\phi)
+  \quad \forall \phi \in V,
+  \label{eq:steady-streamfunction-velocity-vf}
+\end{align}
+$$
+
+where $V \subset H^2(\Omega)$ and  
+
+$$
+\begin{align*}
+  a(\psi, \phi) := \int_{\Omega} D\left( \boldsymbol{\nabla} \times \psi \right) : D\left(\boldsymbol{\nabla} \times \phi \right) ~d\Omega,  
+  \quad
+  b(\psi, \phi; \xi) := \int_{\Omega} \left( \left(\boldsymbol{\nabla} \times \xi \cdot \nabla \right) \boldsymbol{\nabla} \times \psi \right) \cdot \boldsymbol{\nabla} \times \phi ~d\Omega,
+  \quad
+  l(\phi) := \int_{\Omega} \mathbf{f} \cdot \boldsymbol{\nabla} \times \phi ~d\Omega.
+%  \label{}
+\end{align*}
+$$
+
+%As in the previous example, one can use a Picard method, by considering $\xi$ as a \texttt{Field} in Eq. \ref{eq:steady-streamfunction-velocity-vf-a}, which will lead to the Python code described in \ref{code:steady-streamfunction-velocity-picard}. %, or consider $a$ as a \texttt{LinearForm} where $\xi = \psi$ are \texttt{Field} objects, and use the \texttt{NewtonIteration} constructor to get a \texttt{BilinearForm}, as described in the Python code \ref{code:steady-streamfunction-velocity-newton}.
+
+
+#### Linearization of the streamfunction-velocity linear form
+
+In the sequel, we use SymPDE to linearize the streamfunction-velocity formulation, starting from a \texttt{LinearForm}.
+As presented in the previous example, we shall write our weak formulation as a linear form where the velocity $\mathbf{u}$ (\textit{i.e.} \texttt{u}) is considered as a \textit{field}, which is implemented in Python code \ref{code:steady-navier-stokes-nl}.
+Using the function \texttt{linearize} allows us to construct the bilinear form associated to the linearization of the given linear form, around the field \texttt{psi}, see Python code \ref{code:steady-streamfunction-velocity-lin}.
+To get an \texttt{Equation}, the user can add the left-hand-side for the Navier-Stokes equation to the linear form, the appropriate essential boundary conditions, then use the \texttt{NewtonIteration} as presented in the previous example.
