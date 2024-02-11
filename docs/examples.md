@@ -51,7 +51,6 @@ where
 - [Poisson on a square domain with Homogeneous and Neumann Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d_poisson_dir0_neu.py)
 - [Poisson on a square domain with Homogeneous, Inhomogeneous and Neumann Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d_poisson_dir_neu.py)
 
-
 <a id="linear-biharmonic"></a>
 ### The Biharmonic problem
 
@@ -62,7 +61,6 @@ $$
   \nabla^2 \nabla^2  u = f       \quad \text{in $\Omega$}         , \quad \quad 
   u = 0                          \quad \text{on $\partial \Omega$}, \quad \quad
   \nabla u \cdot \mathbf{n} = 0  \quad \text{on $\partial \Omega$}.
-  \label{eq:biharmonic-strong}
 \end{align}
 $$
 
@@ -71,7 +69,6 @@ An $H^2$-conforming variational formulation reads
 $$
 \begin{align}
   \text{find $u \in V$ such that} \quad a(u,v) = l(v) \quad \forall v \in V,
-  \label{eq:biharmonic-vf}
 \end{align}
 $$
 
