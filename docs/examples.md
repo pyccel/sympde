@@ -188,12 +188,6 @@ Let $v \in \mathcal{V}$ be a function test, we have by integrating by parts the 
 
 $$
 \begin{align}
-\langle v, u^{n+1}  \rangle 
-\end{align}
-$$
-
-$$
-\begin{align}
 \langle v, u^{n+1}  \rangle + \Delta t ~ \theta~ \langle v, u^{n+1} \partial_x u^{n+1}  \rangle + \Delta t ~ \theta~\nu \langle \frac{\partial v}{\partial x}, \frac{\partial u^{n+1}}{\partial x}  \rangle = \langle v, f^n \rangle
 \end{align}
 $$
@@ -206,10 +200,7 @@ We consider the following linear form
 
 $$
 \begin{align}
-G(v;u,w) := \langle v, u  \rangle 
-+ \Delta t ~ \theta~ \langle v, w \partial_x u  \rangle
-+ \Delta t ~ \theta~\nu \langle \frac{\partial v}{\partial x}, \frac{\partial u}{\partial x}  \rangle
-, \quad \forall u,v,w \in \mathcal{V}
+G(v;u,w) := \langle v, u  \rangle + \Delta t ~ \theta~ \langle v, w \partial_x u  \rangle + \Delta t ~ \theta~\nu \langle \frac{\partial v}{\partial x}, \frac{\partial u}{\partial x}  \rangle , \quad \forall u,v,w \in \mathcal{V}
 \end{align}
 $$
 
