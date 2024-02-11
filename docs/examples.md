@@ -48,11 +48,13 @@ $$
 \begin{align}
 \left\{ 
 \begin{array}{llll}
-  \int_{\Omega} \mathbf{u}\cdot \mathbf{v} \mathrm{d} \mathbf{x} &- \int_{\Omega} p\,\nabla\cdot \mathbf{v} \mathrm{d} \mathbf{x} &=0, & \forall \mathbf{v}\in H(\mathrm{div},\Omega) \\
-  - \int_{\Omega} \nabla\cdot\mathbf{u} \, q \mathrm{d} \mathbf{x} &  &= - \int_{\Omega} f q \mathrm{d} \mathbf{x}, & \forall q\in L^2(\Omega)
+  \int_{\Omega} \mathbf{u}\cdot \mathbf{v}~\mathrm{d} \mathbf{x} &- \int_{\Omega} p\,\nabla\cdot \mathbf{v}~\mathrm{d} \mathbf{x} &=0, & \forall \mathbf{v}\in H(\mathrm{div},\Omega) \\
+  - \int_{\Omega} \nabla\cdot\mathbf{u} \, q ~\mathrm{d} \mathbf{x} &  &= - \int_{\Omega} f q ~\mathrm{d} \mathbf{x}, & \forall q\in L^2(\Omega)
 \end{array} \right.
 \end{align}
 $$
+
+todo
 
 ```python
 # ... abstract model
