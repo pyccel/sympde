@@ -120,8 +120,7 @@ Newton method writes
 
 $$
 \begin{align}
-\mbox{Find } u_{n+1} \in \mathcal{V}\_h, \mbox{such that}
-
+\mbox{Find } u_{n+1} \in \mathcal{V}\_h, \mbox{such that} \\
 F^{\prime}(\delta u,v; u_n) = - F(v;u_n), \quad \forall v \in \mathcal{V}, \\ 
 u_{n+1} := u_{n} + \delta u, \quad \delta u \in \mathcal{V}
 \end{align}
