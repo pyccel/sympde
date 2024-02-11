@@ -11,6 +11,7 @@ $$
 \\
 u = 0, \partial \Omega
 $$
+
 where $\Omega$ denotes the unit square.
 
 For testing, we shall take a function $u$ that fulfills the boundary condition, the compute $f$ as
@@ -25,13 +26,11 @@ $$
 \int_{\Omega} (1+u^2) \nabla u \cdot \nabla v ~ d\Omega = \int_{\Omega} f v ~d\Omega, \quad \forall v \in \mathcal{V}
 $$
 
-
 For the sack of generality, we shall consider the linear form
 
 $$
 G(v;u,w) := \int_{\Omega} (1+w^2) \nabla u \cdot \nabla v ~ d\Omega, \quad \forall u,v,w \in \mathcal{V}
 $$
-
 
 Our problem is then
 
