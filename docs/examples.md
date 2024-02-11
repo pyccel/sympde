@@ -72,11 +72,15 @@ $$
 \end{align}
 $$
 
-where $V \subset H^2(\Omega)$, 
-$a(u,v) := \int_{\Omega} \nabla^2 u ~ \nabla^2 v ~ d\Omega$, and
-$l(v) := \int_{\Omega} f v ~ d\Omega$.
+where 
 
-The implementation of this model with SymPDE is given in Python code.
+- $V \subset H^2(\Omega)$, 
+- $a(u,v) := \int_{\Omega} \nabla^2 u ~ \nabla^2 v ~ d\Omega$, and
+- $l(v) := \int_{\Omega} f v ~ d\Omega$.
+
+#### Examples
+
+- [Biharmonic equation on a square domain with Homogeneous Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d_biharmonic_dir0.py)
 
 <a id="linear-vector-poisson"></a>
 ### Vector Poisson's equation 
@@ -85,9 +89,8 @@ In this example we consider the vector Poisson equation with homogeneous Dirichl
 
 $$
 \begin{align}
-  - \nabla^2 \mathbf{u} = \mathbf{f} \quad \mbox{in} ~ \Omega, \quad \quad 
+  \- \nabla^2 \mathbf{u} = \mathbf{f} \quad \mbox{in} ~ \Omega, \quad \quad 
   \mathbf{u} = 0            \quad \mbox{on} ~ \partial \Omega.
-  \label{eq:vector-poisson-strong}
 \end{align}
 $$
 
@@ -97,15 +100,18 @@ $$
 \begin{align}
   \text{find $\mathbf{u} \in V$ such that} \quad 
   a(\mathbf{u},\mathbf{v}) = l(\mathbf{v}) \quad \forall \mathbf{v} \in V,
-  \label{eq:vector-poisson-vf}
 \end{align}
 $$
 
-where $V \subset \mathbf{H}_0^1(\Omega)$, 
-$a(\mathbf{u},\mathbf{v}) := \int_{\Omega} \nabla \mathbf{u} : \nabla \mathbf{v} ~ d\Omega$, and
-$l(\mathbf{v}) := \int_{\Omega} \mathbf{f} \cdot \mathbf{v} ~ d\Omega$.
+where 
 
-The associated formal model is given in Python code.
+- $V \subset \mathbf{H}\_0^1(\Omega)$, 
+- $a(\mathbf{u},\mathbf{v}) := \int_{\Omega} \nabla \mathbf{u} : \nabla \mathbf{v} ~ d\Omega$, and
+- $l(\mathbf{v}) := \int_{\Omega} \mathbf{f} \cdot \mathbf{v} ~ d\Omega$.
+
+#### Examples
+
+- [Vector Poisson on a cube domain with Homogeneous Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/3d_vector_poisson_dir0.py)
 
 <a id="linear-stabilized-advection-diffusion"></a>
 ### Stabilized advection-diffusion equation
