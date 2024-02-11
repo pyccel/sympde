@@ -4,9 +4,6 @@
 
 ### Mixed FEM Poisson
 
-
-$\newcommand{\dd}{\,{\rm d}}$
-
 Let $\Omega \subset \mathbb{R}^3$ and consider the Poisson problem
 
 $$
@@ -31,7 +28,7 @@ In order to get a mixed variational formulation, we first take the dot product o
 
 $$
 \begin{align}
-\int_{\Omega} \mathbf{u}\cdot \mathbf{v}\dd \mathbf{x} -\int_{\Omega} p\,\nabla\cdot \mathbf{v}\dd \mathbf{x} + \int_{\partial\Omega} p \,  \mathbf{v}\cdot \mathbf{n}\dd \sigma = \int_{\Omega} \mathbf{u}\cdot \mathbf{v}\dd \mathbf{x} -\int_{\Omega} p\,\nabla\cdot \mathbf{v}\dd \mathbf{x}=0,
+\int_{\Omega} \mathbf{u}\cdot \mathbf{v}~\mathrm{d} \mathbf{x} -\int_{\Omega} p\,\nabla\cdot \mathbf{v}~\mathrm{d} \mathbf{x} + \int_{\partial\Omega} p \,  \mathbf{v}\cdot \mathbf{n}~\mathrm{d} \sigma = \int_{\Omega} \mathbf{u}\cdot \mathbf{v}~\mathrm{d} \mathbf{x} -\int_{\Omega} p\,\nabla\cdot \mathbf{v}~\mathrm{d} \mathbf{x}=0,
 \end{align}
 $$
 
@@ -39,7 +36,7 @@ using $p=0$ as a natural boundary condition. Then multiplying the second equatio
 
 $$
 \begin{align}
-\int_{\Omega} \nabla\cdot\mathbf{u} \, q \dd \mathbf{x} = \int_{\Omega} f q \dd \mathbf{x}.
+\int_{\Omega} \nabla\cdot\mathbf{u} \, q ~\mathrm{d} \mathbf{x} = \int_{\Omega} f q ~\mathrm{d} \mathbf{x}.
 \end{align}
 $$
 
@@ -51,8 +48,8 @@ $$
 \begin{align}
 \left\{ 
 \begin{array}{llll}
-  \int_{\Omega} \mathbf{u}\cdot \mathbf{v}\dd \mathbf{x} &- \int_{\Omega} p\,\nabla\cdot \mathbf{v}\dd \mathbf{x} &=0, & \forall \mathbf{v}\in H(\operatorname{div},\Omega) \\
-  - \int_{\Omega} \nabla\cdot\mathbf{u} \, q \dd \mathbf{x} &  &= - \int_{\Omega} f q \dd \mathbf{x}, & \forall q\in L^2(\Omega)
+  \int_{\Omega} \mathbf{u}\cdot \mathbf{v}~\mathrm{d} \mathbf{x} &- \int_{\Omega} p\,\nabla\cdot \mathbf{v}~\mathrm{d} \mathbf{x} &=0, & \forall \mathbf{v}\in H(\operatorname{div},\Omega) \\
+  - \int_{\Omega} \nabla\cdot\mathbf{u} \, q ~\mathrm{d} \mathbf{x} &  &= - \int_{\Omega} f q ~\mathrm{d} \mathbf{x}, & \forall q\in L^2(\Omega)
 \end{array} \right.
 \end{align}
 $$
@@ -96,7 +93,7 @@ Here, we get an alternative formulation by not integrating by parts, the mixed t
 
 $$
 \begin{align}
-\int_{\Omega} \mathbf{u}\cdot \mathbf{v}\dd \mathbf{x} +\int_{\Omega} \nabla p \cdot \mathbf{v}\dd \mathbf{x}=0,
+\int_{\Omega} \mathbf{u}\cdot \mathbf{v}~\mathrm{d} \mathbf{x} +\int_{\Omega} \nabla p \cdot \mathbf{v}~\mathrm{d} \mathbf{x}=0,
 \end{align}
 $$
 
@@ -104,7 +101,7 @@ and the second, removing immediately the boundary term due to the essential boun
 
 $$
 \begin{align}
-\int_{\Omega}\nabla \cdot\mathbf{u}  \, q \dd \mathbf{x} = -\int_{\Omega}  \mathbf{u} \cdot \nabla q  \dd \mathbf{x} = \int_{\Omega} f q \dd \mathbf{x},
+\int_{\Omega}\nabla \cdot\mathbf{u}  \, q ~\mathrm{d} \mathbf{x} = -\int_{\Omega}  \mathbf{u} \cdot \nabla q  ~\mathrm{d} \mathbf{x} = \int_{\Omega} f q ~\mathrm{d} \mathbf{x},
 \end{align}
 $$
 
@@ -116,8 +113,8 @@ $$
 \begin{align}
 \left\{ 
 \begin{array}{llll}
-  \int_{\Omega} \mathbf{u}\cdot \mathbf{v}\dd \mathbf{x} &+ \int_{\Omega} \nabla p \cdot \mathbf{v}\dd \mathbf{x} &=0, & \forall \mathbf{v}\in L^2(\Omega)^3 \\
-  \int_{\Omega}  \mathbf{u} \cdot \nabla q  \dd \mathbf{x} & & = -\int_{\Omega} f q \dd \mathbf{x}, & \forall q\in H^1_0(\Omega)
+  \int_{\Omega} \mathbf{u}\cdot \mathbf{v}~\mathrm{d} \mathbf{x} &+ \int_{\Omega} \nabla p \cdot \mathbf{v}~\mathrm{d} \mathbf{x} &=0, & \forall \mathbf{v}\in L^2(\Omega)^3 \\
+  \int_{\Omega}  \mathbf{u} \cdot \nabla q  ~\mathrm{d} \mathbf{x} & & = -\int_{\Omega} f q ~\mathrm{d} \mathbf{x}, & \forall q\in H^1_0(\Omega)
 \end{array} \right.
 \end{align}
 $$
@@ -126,7 +123,7 @@ $$
 Note that this formulation actually contains the classical variational formulation for the Poisson equation. Indeed for $q\in H^1_0(\Omega)$, $\nabla q \in L^2(\Omega)^3$ can be used as a test function in the first equation. And plugging this into the second we get
 
 $$
-\int_{\Omega}  \nabla p \cdot \nabla q  \dd \mathbf{x}  = \int_{\Omega} f q \dd \mathbf{x}, \quad \forall q\in H^1_0(\Omega).
+\int_{\Omega}  \nabla p \cdot \nabla q  ~\mathrm{d} \mathbf{x}  = \int_{\Omega} f q ~\mathrm{d} \mathbf{x}, \quad \forall q\in H^1_0(\Omega).
 $$
 
 ```python
