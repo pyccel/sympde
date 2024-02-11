@@ -7,9 +7,11 @@
 In this section, we consider the non-linear Poisson problem:
 
 $$
+\begin{align}
 -\nabla \cdot \left( (1+u^2) \nabla u \right) = f, \Omega
 \\
 u = 0, \partial \Omega
+\end{align}
 $$
 
 where $\Omega$ denotes the unit square.
