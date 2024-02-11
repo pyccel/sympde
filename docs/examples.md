@@ -189,12 +189,19 @@ Let $v \in \mathcal{V}$ be a function test, we have by integrating by parts the 
 $$
 \begin{align}
 \langle v, u^{n+1}  \rangle 
+\end{align}
+$$
+
+$$
+\begin{align}
+\langle v, u^{n+1}  \rangle 
 + \Delta t ~ \theta~ \langle v, u^{n+1} \partial_x u^{n+1}  \rangle
 + \Delta t ~ \theta~\nu \langle \frac{\partial v}{\partial x}, \frac{\partial u^{n+1}}{\partial x}  \rangle
 =
 \langle v, f^n \rangle
 \end{align}
 $$
+
 The previous weak formulation is still nonlinear with respect to $u^{n+1}$. We shall then follow the same strategy as for the previous chapter on nonlinear Poisson problem.
 
 The strategy is to define the left hand side as a **LinearForm** with respect to $v$, then linearize it around $u^{n+1}$. We therefor can use either Picard or Newton method to treat the nonlinearity.
@@ -280,6 +287,7 @@ picard = find(u, forall=v, lhs=g(v, u=u,w=uk), rhs=l(v))
 #### Newton Method
 
 Let's define 
+
 $$
 F(v;u) := G(v;u,u) -l(v), \quad \forall v \in \mathcal{V}
 $$
