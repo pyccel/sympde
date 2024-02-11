@@ -1,5 +1,139 @@
 # Examples
 
+## Linear Problems
+
+### Mixed FEM Poisson
+
+
+$\newcommand{\dd}{\,{\rm d}}$
+
+Let $\Omega \subset \mathbb{R}^3$ and consider the Poisson problem
+
+$$
+\begin{align}
+  \left\{ 
+  \begin{array}{clr}
+    -\Delta p & =f & ,~\Omega    \\
+    p         & =0 & ,~\partial \Omega
+  \end{array} \right.
+  \label{eq:abs_poisson_mixed}
+\end{align}
+$$
+
+Using that $\Delta p = \nabla\cdot\nabla p$, we set $ \mathbf{u}=\nabla p$, then the Poisson equation \ref{eq:abs_poisson_mixed} can be written equivalently
+
+$$ \mathbf{u}=-\nabla p, ~~~ \nabla\cdot \mathbf{u}= f.$$
+
+#### First mixed formulation of the Poisson problem
+
+Instead of having one unknown, we now have two, along with the above two equations.
+In order to get a mixed variational formulation, we first take the dot product of the first one by $ \mathbf{v}$ and integrate by parts
+
+$$
+\begin{align}
+\int_{\Omega} \mathbf{u}\cdot \mathbf{v}\dd \mathbf{x} -\int_{\Omega} p\,\nabla\cdot \mathbf{v}\dd \mathbf{x} + \int_{\partial\Omega} p \,  \mathbf{v}\cdot \mathbf{n}\dd \sigma = \int_{\Omega} \mathbf{u}\cdot \mathbf{v}\dd \mathbf{x} -\int_{\Omega} p\,\nabla\cdot \mathbf{v}\dd \mathbf{x}=0,
+\end{align}
+$$
+
+using $p=0$ as a natural boundary condition. Then multiplying the second equation by $q$ and integrating yields
+
+$$
+\begin{align}
+\int_{\Omega} \nabla\cdot\mathbf{u} \, q \dd \mathbf{x} = \int_{\Omega} f q \dd \mathbf{x}.
+\end{align}
+$$
+
+No integration by parts is necessary here. And we thus get the following mixed variational formulation:
+
+Find $(\mathbf{u},p) \in H(\operatorname{div},\Omega)\times L^2(\Omega)$ such that
+
+$$
+\begin{align}
+\left\{ 
+\begin{array}{llll}
+  \int_{\Omega} \mathbf{u}\cdot \mathbf{v}\dd \mathbf{x} &- \int_{\Omega} p\,\nabla\cdot \mathbf{v}\dd \mathbf{x} &=0, & \forall \mathbf{v}\in H(\operatorname{div},\Omega) \\
+  - \int_{\Omega} \nabla\cdot\mathbf{u} \, q \dd \mathbf{x} &  &= - \int_{\Omega} f q \dd \mathbf{x}, & \forall q\in L^2(\Omega)
+\end{array} \right.
+\end{align}
+$$
+
+```python
+# ... abstract model
+domain = Square()
+
+V1 = VectorFunctionSpace('V1', domain, kind='Hdiv')
+V2 = ScalarFunctionSpace('V2', domain, kind='L2')
+X  = ProductSpace(V1, V2)
+
+x,y = domain.coordinates
+
+# rhs
+f0 = -2*x*(1-x) -2*y*(1-y)
+# analytical solution
+u  = x*(1-x)*y*(1-y)
+
+F = element_of(V2, name='F')
+
+p,q = [element_of(V1, name=i) for i in ['p', 'q']]
+u,v = [element_of(V2, name=i) for i in ['u', 'v']]
+
+int_0 = lambda expr: integral(domain , expr)
+
+a  = BilinearForm(((p,u),(q,v)), int_0(dot(p,q) + div(q)*u + div(p)*v) )
+l  = LinearForm((q,v), int_0(f0*v))
+
+# ...
+error = F-u
+l2norm_F = Norm(error, domain, kind='l2')
+
+# ...
+equation = find([p,u], forall=[q,v], lhs=a((p,u),(q,v)), rhs=l(q,v))
+```
+
+#### Second mixed formulation of the Poisson problem
+
+Here, we get an alternative formulation by not integrating by parts, the mixed term in the first formulation but in the second. The first formulation simply becomes
+
+$$
+\begin{align}
+\int_{\Omega} \mathbf{u}\cdot \mathbf{v}\dd \mathbf{x} +\int_{\Omega} \nabla p \cdot \mathbf{v}\dd \mathbf{x}=0,
+\end{align}
+$$
+
+and the second, removing immediately the boundary term due to the essential boundary condition $q=0$
+
+$$
+\begin{align}
+\int_{\Omega}\nabla \cdot\mathbf{u}  \, q \dd \mathbf{x} = -\int_{\Omega}  \mathbf{u} \cdot \nabla q  \dd \mathbf{x} = \int_{\Omega} f q \dd \mathbf{x},
+\end{align}
+$$
+
+which leads to the variational formulation
+
+Find $(\mathbf{u},p) \in L^2(\Omega)^3 \times H^1_0(\Omega)$ such that
+
+$$
+\begin{align}
+\left\{ 
+\begin{array}{llll}
+  \int_{\Omega} \mathbf{u}\cdot \mathbf{v}\dd \mathbf{x} &+ \int_{\Omega} \nabla p \cdot \mathbf{v}\dd \mathbf{x} &=0, & \forall \mathbf{v}\in L^2(\Omega)^3 \\
+  \int_{\Omega}  \mathbf{u} \cdot \nabla q  \dd \mathbf{x} & & = -\int_{\Omega} f q \dd \mathbf{x}, & \forall q\in H^1_0(\Omega)
+\end{array} \right.
+\end{align}
+$$
+
+
+Note that this formulation actually contains the classical variational formulation for the Poisson equation. Indeed for $q\in H^1_0(\Omega)$, $\nabla q \in L^2(\Omega)^3$ can be used as a test function in the first equation. And plugging this into the second we get
+
+$$
+\int_{\Omega}  \nabla p \cdot \nabla q  \dd \mathbf{x}  = \int_{\Omega} f q \dd \mathbf{x}, \quad \forall q\in H^1_0(\Omega).
+$$
+
+```python
+# TODO
+```
+
+
 ## Nonlinear Problems
 
 ### Nonlinear Poisson in 2D
