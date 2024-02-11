@@ -136,11 +136,15 @@ $$
 \end{align}
 $$
 
-where $V \subset H_0^1(\Omega)$, 
-$a(u,v) := \int_{\Omega} \left( \kappa \nabla u \cdot \nabla v + \left( \mathbf{b} \cdot \nabla u \right) v \right) d\Omega$,
-and $l(v) := \int_{\Omega} f v~d\Omega$.
+where 
 
-The formal model for the stabilized advection-diffusion equation is given in Python code.
+- $V \subset H_0^1(\Omega)$, 
+- $a(u,v) := \int_{\Omega} \left( \kappa \nabla u \cdot \nabla v + \left( \mathbf{b} \cdot \nabla u \right) v \right) d\Omega$,
+- $l(v) := \int_{\Omega} f v~d\Omega$.
+
+#### Examples
+
+- [Advection Diffusion problem on a square domain with Homogeneous Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d_advection_diffusion_dir0.py)
 
 <a id="linear-stabilized-advection-diffusion"></a>
 ### Stabilized advection-diffusion equation
