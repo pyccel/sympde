@@ -48,7 +48,7 @@ $$
 \begin{align}
 \left\{ 
 \begin{array}{llll}
-  - \int_{\Omega} \nabla\cdot\mathbf{u} \, q ~\mathrm{d} \mathbf{x} &  &= - \int_{\Omega} f q ~\mathrm{d} \mathbf{x}, & \forall q\in L^2(\Omega)
+  - \int_{\Omega} \nabla\cdot\mathbf{u} \, q ~\mathrm{d} \mathbf{x} &  &= - \int_{\Omega} f q ~\mathrm{d} \mathbf{x}, & 
 \end{array} \right.
 \end{align}
 $$
