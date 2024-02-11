@@ -59,7 +59,7 @@ $$
 \end{align}
 $$
 
-An $H^2$-conforming variational formulation of \eqref{eq:biharmonic-strong} reads 
+An $H^2$-conforming variational formulation reads 
 
 $$
 \begin{align}
@@ -72,7 +72,7 @@ where $V \subset H^2(\Omega)$,
 $a(u,v) := \int_{\Omega} \nabla^2 u ~ \nabla^2 v ~ d\Omega$, and
 $l(v) := \int_{\Omega} f v ~ d\Omega$.
 
-The implementation of this model with SymPDE is given in Python code \ref{code:sym-bilaplacian}.
+The implementation of this model with SymPDE is given in Python code.
 
 <a id="linear-vector-poisson"></a>
 ### Vector Poisson's equation 
@@ -87,7 +87,7 @@ $$
 \end{align}
 $$
 
-The corresponding variational formulation of \eqref{eq:vector-poisson-strong}, using $\mathbf{H}^1$ formulation, \textit{i.e.} all components are in $H^1$, reads 
+The corresponding variational formulation, using $\mathbf{H}^1$ formulation, *i.e.* all components are in $H^1$, reads 
 
 $$
 \begin{align}
@@ -101,7 +101,7 @@ where $V \subset \mathbf{H}_0^1(\Omega)$,
 $a(\mathbf{u},\mathbf{v}) := \int_{\Omega} \nabla \mathbf{u} : \nabla \mathbf{v} ~ d\Omega$, and
 $l(\mathbf{v}) := \int_{\Omega} \mathbf{f} \cdot \mathbf{v} ~ d\Omega$.
 
-The associated formal model is given in Python code \ref{code:vector-poisson}.
+The associated formal model is given in Python code.
 
 <a id="linear-stabilized-advection-diffusion"></a>
 ### Stabilized advection-diffusion equation
@@ -118,7 +118,7 @@ $$
 \end{align}
 $$
 
-A variational formulation of \eqref{eq:adv-diff-strong} reads
+A variational formulation reads
 
 $$
 \begin{align}
@@ -166,7 +166,7 @@ $$
 \end{align}
 $$
 
-The formal model for the stabilized advection-diffusion equation is given in Python code~\ref{code:adv-diff-stab}.
+The formal model for the stabilized advection-diffusion equation is given in Python code.
 
 
 <a id="linear-mixed-poisson"></a>
@@ -836,7 +836,7 @@ $$
 $$
 
 where $R_e$ is the Reynolds number and $D\left( \mathbf{u} \right) := \frac{1}{2}\left( \nabla \mathbf{u} + \nabla \mathbf{u}^T \right)$ is the strain rate tensor.
-The weak formulation for~\eqref{eq:steady-navier-stokes} reads
+The weak formulation reads
 
 $$
 \begin{align}
