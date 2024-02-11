@@ -4,6 +4,7 @@
   - [The Poisson problem](#linear-poisson)
   - [The Biharmonic problem](#linear-biharmonic)
   - [The Vector Poisson problem](#linear-vector-poisson)
+  - [The advection-diffusion equation](#linear-advection-diffusion)
   - [The Stabilized advection-diffusion equation](#linear-stabilized-advection-diffusion)
   - [Mixed FEM for the Poisson problem](#linear-mixed-poisson)
   - [Mixed FEM for the Stokes problem](#linear-mixed-stokes)
@@ -85,7 +86,7 @@ where
 <a id="linear-vector-poisson"></a>
 ### Vector Poisson's equation 
 
-In this example we consider the vector Poisson equation with homogeneous Dirichlet boundary conditions, where the domain is the unit square $\Omega := (0,1) \times (0,1)$:
+In this example we consider the vector Poisson equation with homogeneous Dirichlet boundary conditions:
 
 $$
 \begin{align}
@@ -113,6 +114,34 @@ where
 
 - [Vector Poisson on a cube domain with Homogeneous Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/3d_vector_poisson_dir0.py)
 
+<a id="linear-advection-diffusion"></a>
+### Advection-diffusion equation
+
+We consider the advection-diffusion problem consisting of finding a scalar-valued function $u$ such that
+
+$$
+\begin{align}
+  \begin{cases}
+    - \kappa \nabla^2 u + \mathbf{b} \cdot \nabla u = f &\text{in $\Omega$}, \\
+    u = 0                                               &\text{on $\partial \Omega$}.
+  \end{cases}
+\end{align}
+$$
+
+A variational formulation reads
+
+$$
+\begin{align}
+  \text{find $u \in V$ such that} \quad a(u,v) = l(v) \quad \forall v \in V,
+\end{align}
+$$
+
+where $V \subset H_0^1(\Omega)$, 
+$a(u,v) := \int_{\Omega} \left( \kappa \nabla u \cdot \nabla v + \left( \mathbf{b} \cdot \nabla u \right) v \right) d\Omega$,
+and $l(v) := \int_{\Omega} f v~d\Omega$.
+
+The formal model for the stabilized advection-diffusion equation is given in Python code.
+
 <a id="linear-stabilized-advection-diffusion"></a>
 ### Stabilized advection-diffusion equation
 
@@ -124,7 +153,6 @@ $$
     - \kappa \nabla^2 u + \mathbf{b} \cdot \nabla u = f &\text{in $\Omega$}, \\
     u = 0                                               &\text{on $\partial \Omega$}.
   \end{cases}
-  \label{eq:adv-diff-strong}
 \end{align}
 $$
 
@@ -133,7 +161,6 @@ A variational formulation reads
 $$
 \begin{align}
   \text{find $u \in V$ such that} \quad a(u,v) = l(v) \quad \forall v \in V,
-  \label{eq:adv-diff-vf}
 \end{align}
 $$
 
@@ -147,7 +174,6 @@ $$
 \begin{align}
   \text{find $u \in V$ such that} \quad 
   a(u,v) + a_s(u,v) = l(v) + l_s(v) \quad \forall v \in V,
-  \label{eq:adv-diff-stab-vf}
 \end{align}
 $$
 
@@ -162,7 +188,6 @@ $$
     \quad \mbox{and} \quad
     l_s(v) = \int_{\Omega} \tau ~ f ~ \left( \mathbf{b} \cdot \nabla v \right) ~d\Omega 
   && \text{[SUPG]}
-  \label{eq:adv-diff-stab-supg}
 \end{align}
 $$
 
@@ -172,7 +197,6 @@ $$
     \quad \mbox{and} \quad
     l_s(v) = \int_{\Omega} \tau ~ f ~ L(v) ~d\Omega 
   && \text{[GLS]}
-  \label{eq:adv-diff-stab-gls}
 \end{align}
 $$
 
@@ -191,7 +215,6 @@ $$
     -\Delta p & =f & ,~\Omega    \\
     p         & =0 & ,~\partial \Omega
   \end{array} \right.
-  \label{eq:abs_poisson_mixed}
 \end{align}
 $$
 
@@ -323,7 +346,6 @@ $$
       \mathbf{u}               = 0   & \mbox{on} ~ \partial \Omega,
     \end{array}
     \right.
-    \label{eq:stokes}
 \end{align}
 $$
 
@@ -495,7 +517,6 @@ Find $\mathbf{u} \in V$ such that
 $$
 \begin{align}
   a(\mathbf{u},\mathbf{v}) = l(\mathbf{v}) \quad \forall \mathbf{v} \in V 
-\label{eq:abs_var_elliptic_hdiv}
 \end{align}
 $$
 
@@ -839,7 +860,6 @@ $$
         \nabla \cdot \mathbf{u} &= 0 && \text{in $\Omega$},
   \\
         \mathbf{u} &= 0 && \text{on $\partial\Omega$},
-  \label{eq:steady-navier-stokes}
 \end{aligned}
 \right.
 \end{equation}
@@ -853,7 +873,6 @@ $$
   \text{find $\mathbf{u} \in W$ such that} \quad 
   a(\mathbf{u},\mathbf{v}) + b(\mathbf{u},\mathbf{v};\mathbf{u}) = l(\mathbf{v}) \quad
   \forall \mathbf{v} \in W
-  \label{eq:steady-navier-stokes-vf}
 \end{align}
 $$
 
@@ -866,7 +885,6 @@ $$
   b(\mathbf{u}, \mathbf{v}; \mathbf{w}) := \int_{\Omega} \left( \left( \mathbf{w} \cdot \nabla \right) \mathbf{u} \right) \cdot \mathbf{v} ~d\Omega,
   \quad
   l(\mathbf{v}) := \int_{\Omega} \mathbf{f} \cdot \mathbf{v} ~d\Omega.
-%  \label{}
 \end{align*}
 $$
 
@@ -880,7 +898,6 @@ $$
   \text{find $\psi \in V$ such that} \quad 
   a(\psi,\phi) + b(\psi,\phi;\psi) = l(\phi)
   \quad \forall \phi \in V,
-  \label{eq:steady-streamfunction-velocity-vf}
 \end{align}
 $$
 
@@ -893,7 +910,6 @@ $$
   b(\psi, \phi; \xi) := \int_{\Omega} \left( \left(\boldsymbol{\nabla} \times \xi \cdot \nabla \right) \boldsymbol{\nabla} \times \psi \right) \cdot \boldsymbol{\nabla} \times \phi ~d\Omega,
   \quad
   l(\phi) := \int_{\Omega} \mathbf{f} \cdot \boldsymbol{\nabla} \times \phi ~d\Omega.
-%  \label{}
 \end{align*}
 $$
 
