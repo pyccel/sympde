@@ -82,7 +82,7 @@ sympde notation | Mathematical notion
 --- | ---
 `ScalarFunctionSpace('V', Omega)`     | scalar function space $\mathcal{V}$
 `VectorFunctionSpace('W', Omega)`     | vector function space $\mathbf{\mathcal{W}}$
-`ProductSpace(V, W)}` or `V*W`        | product of spaces, *i.e.* $\mathcal{V} \times \mathcal{W}$
+`ProductSpace(V, W)` or `V*W`        | product of spaces, *i.e.* $\mathcal{V} \times \mathcal{W}$
 `element_of_space(V, 'v')`          | scalar function $v \in \mathcal{V}$ 
 `element_of_space(W, 'w')`          | vector function $\mathbf{w} \in \mathcal{W}$  
 `element_of_space(V*W, ['v', 'w'])` | $\left(v,\mathbf{w}\right) \in \mathcal{V} \times \mathcal{W}$ 
