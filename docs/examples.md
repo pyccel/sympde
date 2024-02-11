@@ -1,7 +1,16 @@
 # Examples
 
+- [Linear Problems](#linear-problems)
+  - [Mixed FEM Poisson](#linear-mixed-fem)
+- [Nonlinear Problems](#nonlinear-problems)
+  - [Nonlinear 2D Poisson Problem](#nonlinear-poisson-2d)
+  - [1D Burgers Problem](#nonlinear-burgers-1d)
+
+
+<a id="linear-problems"></a>
 ## Linear Problems
 
+<a id="linear-mixed-fem"></a>
 ### Mixed FEM Poisson
 
 Let $\Omega \subset \mathbb{R}^3$ and consider the Poisson problem
@@ -132,8 +141,10 @@ $$
 ```
 
 
+<a id="nonlinear-problems"></a>
 ## Nonlinear Problems
 
+<a id="nonlinear-poisson-2d"></a>
 ### Nonlinear Poisson in 2D
 
 In this section, we consider the non-linear Poisson problem:
@@ -279,6 +290,7 @@ bc = [EssentialBC(du, 0, B_dirichlet_0)]
 equation   = find(du, forall=v, lhs=Fprime(du, v,u=un), rhs=-F(v,u=un), bc=bc)
 ```
 
+<a id="nonlinear-burgers-1d"></a>
 ### 1D Burgers equation
 
 We consider the 1d Burgers equation
