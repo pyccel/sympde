@@ -45,6 +45,13 @@ where
 - $a(u,v) := \int_{\Omega} \nabla u \cdot \nabla v ~ d\Omega$, and
 - $l(v) := \int_{\Omega} f v ~ d\Omega + \int_{\Gamma_N} g v ~ d\Gamma$.
 
+#### Examples
+
+- [Poisson on a square domain with Homogeneous Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d_poisson_dir0.py)
+- [Poisson on a square domain with Homogeneous and Neumann Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d_poisson_dir0_neu.py)
+- [Poisson on a square domain with Homogeneous, Inhomogeneous and Neumann Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d_poisson_dir_neu.py)
+
+
 <a id="linear-biharmonic"></a>
 ### The Biharmonic problem
 

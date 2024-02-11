@@ -25,7 +25,7 @@ where $V \subset H^1(\Omega)$,
 $a(u,v) := \int_{\Omega} \nabla u \cdot \nabla v ~ d\Omega$, and
 $l(v) := \int_{\Omega} f v ~ d\Omega$.
 
-The associated Python code can be found [here](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d/poisson_dir.py)
+The associated Python code can be found [here](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d_poisson_dir0.py)
 
 This very simple Python code reflects well the abstract mathematical framework needed for variational formulations.
 The structure of the code is as follows,
