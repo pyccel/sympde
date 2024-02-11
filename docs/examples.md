@@ -8,9 +8,9 @@ In this section, we consider the non-linear Poisson problem:
 
 $$
 \begin{align}
--\nabla \cdot \left( (1+u^2) \nabla u \right) = f, \Omega
+-\nabla \cdot \left( (1+u^2) \nabla u \right) &= f, \Omega
 \\
-u = 0, \partial \Omega
+u &= 0, \partial \Omega
 \end{align}
 $$
 
@@ -37,8 +37,10 @@ $$
 Our problem is then
 
 $$
+\begin{align}
 \mbox{Find } u \in \mathcal{V}, \mbox{such that}\\
 G(v;u,u) = l(v), \quad \forall v \in \mathcal{V}
+\end{align}
 $$
 
 where
@@ -80,12 +82,13 @@ f = 2*pi**2*(sin(pi*x)**2*sin(pi*y)**2 + 1)*sin(pi*x)*sin(pi*y) - 2*pi**2*sin(pi
 # Linear form l: V --> R
 l = LinearForm(v, integral(domain, f * v))
 ```
-#### 4. Picard iteration
+#### 4.1. Picard iteration
 
 $$
-\mbox{Find } u_{n+1} \in \mathcal{V}\_h, \mbox{such that} 
-
+\begin{align}
+\mbox{Find } u_{n+1} \in \mathcal{V}\_h, \mbox{such that}\\ 
 G(v;u_{n+1},u_n) = l(v), \quad \forall v \in \mathcal{V}\_h
+\end{align}
 $$
 
 The Picard iteration for our problem can be created this way
@@ -106,7 +109,7 @@ equation   = find(u, forall=v, lhs=a(u, v), rhs=l(v), bc=bc)
 error  = u - solution
 l2norm = Norm(error, domain, kind='l2')
 ```
-#### 5. Newton iteration
+#### 4.2. Newton iteration
 Let's define 
 
 $$
@@ -116,10 +119,12 @@ $$
 Newton method writes
 
 $$
+\begin{align}
 \mbox{Find } u_{n+1} \in \mathcal{V}\_h, \mbox{such that}
 
 F^{\prime}(\delta u,v; u_n) = - F(v;u_n), \quad \forall v \in \mathcal{V}, \\ 
 u_{n+1} := u_{n} + \delta u, \quad \delta u \in \mathcal{V}
+\end{align}
 $$
 
 ##### Computing $F^{\prime}$ the derivative of $F$
