@@ -149,29 +149,6 @@ where
 <a id="linear-stabilized-advection-diffusion"></a>
 ### Stabilized advection-diffusion equation
 
-We consider the advection-diffusion problem consisting of finding a scalar-valued function $u$ such that
-
-$$
-\begin{align}
-  \begin{cases}
-    - \kappa \nabla^2 u + \mathbf{b} \cdot \nabla u = f &\text{in $\Omega$}, \\
-    u = 0                                               &\text{on $\partial \Omega$}.
-  \end{cases}
-\end{align}
-$$
-
-A variational formulation reads
-
-$$
-\begin{align}
-  \text{find $u \in V$ such that} \quad a(u,v) = l(v) \quad \forall v \in V,
-\end{align}
-$$
-
-where $V \subset H_0^1(\Omega)$, 
-$a(u,v) := \int_{\Omega} \left( \kappa \nabla u \cdot \nabla v + \left( \mathbf{b} \cdot \nabla u \right) v \right) d\Omega$,
-and $l(v) := \int_{\Omega} f v~d\Omega$.
-
 In the sequel we consider two different stabilization methods, leading to formulations of the form
 
 $$
@@ -182,9 +159,8 @@ $$
 $$
 
 where $a_s$ and $l_s$ are additional terms depending on the stabilization method.
-The streamline upwind Petrov-Galerkin (SUPG) method is given by~\eqref{eq:adv-diff-stab-supg}, while \eqref{eq:adv-diff-stab-gls} describes the Galerkin least squares (GLS) method, where we introduced the differential operator $L(u) := - \kappa \nabla^2 u + \mathbf{b} \cdot \nabla u$.
-Notice that in these formulations $\tau$~stands for a piecewise function that is constant on each element of the tessellation associated to the computational domain~$\Omega$.
-More details can be found in~\cite{FRANCA20061560}.
+
+The streamline upwind Petrov-Galerkin (SUPG) method is given by
 
 $$
 \begin{align}
@@ -195,6 +171,8 @@ $$
 \end{align}
 $$
 
+while the Galerkin least squares (GLS) method is as follows, 
+
 $$
 \begin{align}
     a_s(u,v) = \int_{\Omega} \tau ~ L(u) ~ L(v) ~d\Omega 
@@ -204,7 +182,13 @@ $$
 \end{align}
 $$
 
-The formal model for the stabilized advection-diffusion equation is given in Python code.
+where we introduced the differential operator $L(u) := - \kappa \nabla^2 u + \mathbf{b} \cdot \nabla u$.
+
+Notice that in these formulations $\tau$ stands for a piecewise function that is constant on each element of the tessellation associated to the computational domain $\Omega$.
+
+#### Examples
+
+- [Stabilized Advection Diffusion problem on a square domain with Homogeneous Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d_stabilized_advection_diffusion_dir0.py)
 
 
 <a id="linear-mixed-poisson"></a>
