@@ -82,7 +82,8 @@ l = LinearForm(v, integral(domain, f * v))
 #### 4. Picard iteration
 
 $$
-\mbox{Find } u_{n+1} \in \mathcal{V}\_h, \mbox{such that}\\
+\mbox{Find } u_{n+1} \in \mathcal{V}\_h, \mbox{such that} 
+
 G(v;u_{n+1},u_n) = l(v), \quad \forall v \in \mathcal{V}\_h
 $$
 
@@ -106,14 +107,17 @@ l2norm = Norm(error, domain, kind='l2')
 ```
 #### 5. Newton iteration
 Let's define 
+
 $$
 F(v;u) := G(v;u,u) -l(v), \quad \forall v \in \mathcal{V}
 $$
 
 Newton method writes
+
 $$
-\mbox{Find } u_{n+1} \in \mathcal{V}\_h, \mbox{such that}\\
-F^{\prime}(\delta u,v; u_n) = - F(v;u_n), \quad \forall v \in \mathcal{V} \\
+\mbox{Find } u_{n+1} \in \mathcal{V}\_h, \mbox{such that}
+
+F^{\prime}(\delta u,v; u_n) = - F(v;u_n), \quad \forall v \in \mathcal{V}, \\ 
 u_{n+1} := u_{n} + \delta u, \quad \delta u \in \mathcal{V}
 $$
 
