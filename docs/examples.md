@@ -194,11 +194,7 @@ $$
 
 $$
 \begin{align}
-\langle v, u^{n+1}  \rangle 
-+ \Delta t ~ \theta~ \langle v, u^{n+1} \partial_x u^{n+1}  \rangle
-+ \Delta t ~ \theta~\nu \langle \frac{\partial v}{\partial x}, \frac{\partial u^{n+1}}{\partial x}  \rangle
-=
-\langle v, f^n \rangle
+\langle v, u^{n+1}  \rangle + \Delta t ~ \theta~ \langle v, u^{n+1} \partial_x u^{n+1}  \rangle + \Delta t ~ \theta~\nu \langle \frac{\partial v}{\partial x}, \frac{\partial u^{n+1}}{\partial x}  \rangle = \langle v, f^n \rangle
 \end{align}
 $$
 
