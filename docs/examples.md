@@ -49,11 +49,38 @@ where
 - $a(u,v) := \int_{\Omega} \nabla u \cdot \nabla v ~ d\Omega$,
 - $l(v) := \int_{\Omega} f v ~ d\Omega + \int_{\Gamma_N} g v ~ d\Gamma$.
 
+#### The Poisson equation with weak imposition of Dirichlet conditions
+
+In this example, we consider the following Poisson problem
+
+$$
+\begin{align}
+  \- \nabla^2 u = f \quad \text{in~$\Omega$}, \quad \quad 
+  u = g            \quad \text{on~$\partial \Omega$}.
+\end{align}
+$$
+
+The variational formulation writes
+
+$$
+\begin{align}
+  \text{find $u \in V$ such that} \quad a(u,v) = l(v) \quad \forall v \in V,
+\end{align}
+$$
+
+where 
+
+- $V \subset H^1(\Omega)$, 
+- $a(u,v) := \int_{\Omega} \nabla u \cdot \nabla v ~ d\Omega + \int_{\partial \Omega} \left( \kappa u v - u \partial_n v - v \partial_n u \right)~d\partial\Omega $,
+- $l(v) := \int_{\Omega} f v ~ d\Omega + \int_{\partial\Omega} \left( \kappa g v - g \partial_n v \right) ~ d\Gamma$.
+
+
 #### Examples
 
 - [Poisson on a square domain with Homogeneous Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d_poisson_dir0.py)
 - [Poisson on a square domain with Homogeneous and Neumann Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d_poisson_dir0_neu.py)
 - [Poisson on a square domain with Homogeneous, Inhomogeneous and Neumann Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d_poisson_dir_neu.py)
+- [Poisson equation on a square with weak imposition of Dirichlet conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d_poisson_nitsche_diri.py)
 
 <a id="linear-biharmonic"></a>
 ### The Biharmonic problem
@@ -904,7 +931,7 @@ $$
 \end{align}
 $$
 
-An $H^1$-conforming variational formulation of reads
+The variational formulation reads
 
 $$
 \begin{align}
