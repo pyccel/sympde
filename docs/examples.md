@@ -46,7 +46,7 @@ $$
 where 
 
 - $V \subset H^1(\Omega)$, 
-- $a(u,v) := \int_{\Omega} \nabla u \cdot \nabla v ~ d\Omega$, and
+- $a(u,v) := \int_{\Omega} \nabla u \cdot \nabla v ~ d\Omega$,
 - $l(v) := \int_{\Omega} f v ~ d\Omega + \int_{\Gamma_N} g v ~ d\Gamma$.
 
 #### Examples
@@ -79,7 +79,7 @@ $$
 where 
 
 - $V \subset H^2(\Omega)$, 
-- $a(u,v) := \int_{\Omega} \nabla^2 u ~ \nabla^2 v ~ d\Omega$, and
+- $a(u,v) := \int_{\Omega} \nabla^2 u ~ \nabla^2 v ~ d\Omega$,
 - $l(v) := \int_{\Omega} f v ~ d\Omega$.
 
 #### Examples
@@ -110,7 +110,7 @@ $$
 where 
 
 - $V \subset \mathbf{H}\_0^1(\Omega)$, 
-- $a(\mathbf{u},\mathbf{v}) := \int_{\Omega} \nabla \mathbf{u} : \nabla \mathbf{v} ~ d\Omega$, and
+- $a(\mathbf{u},\mathbf{v}) := \int_{\Omega} \nabla \mathbf{u} : \nabla \mathbf{v} ~ d\Omega$,
 - $l(\mathbf{v}) := \int_{\Omega} \mathbf{f} \cdot \mathbf{v} ~ d\Omega$.
 
 #### Examples
@@ -915,8 +915,8 @@ $$
 where 
 
 - $V \subset H^1(\Omega)$, 
-- $a(u,v) := \int_{\Omega} \nabla u \cdot \nabla v ~ d\Omega + \int_{\mathcal{I}} \left( \kappa [\\![ u ]\\!] ~ [\\![ v ]\\!] - [\\![ u ]\\!] ~ \partial_n v - \partial_n u ~ [\\![ v ]\\!] \right) ~ d\mathcal{I} $, and
-- $l(v) := \int_{\Omega} f v ~ d\Omega + \int_{\Gamma_N} g v ~ d\Gamma$.
+- $a(u,v) := \int_{\Omega} \nabla u \cdot \nabla v ~ d\Omega + \int_{\mathcal{I}} \left( \kappa [\\![ u ]\\!] ~ [\\![ v ]\\!] - [\\![ u ]\\!] ~ \partial_n v - \partial_n u ~ [\\![ v ]\\!] \right) ~ d\mathcal{I} $, 
+- $l(v) := \int_{\Omega} f v ~ d\Omega ~ d\Gamma$.
 
 #### Examples
 
