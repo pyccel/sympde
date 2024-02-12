@@ -245,7 +245,7 @@ $$
 
 #### Examples
 
-- [Poisson problem with mixed (first) formulation on a square domain with Homogeneous Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d_poisson_mixed_v1_dir_0.py)
+- [Poisson problem with mixed (first) formulation on a square domain with Homogeneous Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d_poisson_mixed_v1_dir0.py)
 
 #### Second mixed formulation of the Poisson problem
 
@@ -288,7 +288,7 @@ $$
 
 #### Examples
 
-- [Poisson problem with mixed (second) formulation on a square domain with Homogeneous Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d_poisson_mixed_v2_dir_0.py)
+- [Poisson problem with mixed (second) formulation on a square domain with Homogeneous Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d_poisson_mixed_v2_dir0.py)
 
 <a id="linear-mixed-stokes"></a>
 ### Mixed FEM for the Stokes problem 
@@ -346,7 +346,7 @@ $$
 
 #### Examples
 
-- [Stokes problem with mixed (first) formulation on a square domain with Homogeneous Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d_stokes_mixed_v1_dir_0.py)
+- [Stokes problem with mixed (first) formulation on a square domain with Homogeneous Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d_stokes_mixed_v1_dir0.py)
 
 #### Second mixed formulation of the Stokes problem
 
@@ -382,7 +382,7 @@ $$
 
 #### Examples
 
-- [Stokes problem with mixed (second) formulation on a square domain with Homogeneous Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d_stokes_mixed_v2_dir_0.py)
+- [Stokes problem with mixed (second) formulation on a square domain with Homogeneous Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d_stokes_mixed_v2_dir0.py)
 
 <a id="linear-elliptic-curl"></a>
 ### Elliptic-curl Problem
@@ -435,7 +435,7 @@ We recall that in $\mathbf{H}\_0(\mbox{curl}, \Omega)$, the bilinear form $a$ is
 
 #### Examples
 
-- [Elliptic-curl problem on a cubic domain with Homogeneous Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/3d_elliptic_curl_dir_0.py)
+- [Elliptic-curl problem on a cubic domain with Homogeneous Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/3d_elliptic_curl_dir0.py)
 
 <a id="linear-elliptic-div"></a>
 ### Elliptic-div Problem
@@ -481,7 +481,7 @@ We recall that in $\mathbf{H}\_0(\mbox{div}, \Omega)$, the bilinear form $a$ is 
 
 #### Examples
 
-- [Elliptic-div problem on a cubic domain with Homogeneous Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/3d_elliptic_div_dir_0.py)
+- [Elliptic-div problem on a cubic domain with Homogeneous Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/3d_elliptic_div_dir0.py)
 
 <a id="linear-elasticity"></a>
 ### Linear Elasticity Problem 
