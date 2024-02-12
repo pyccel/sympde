@@ -419,7 +419,23 @@ l(\mathbf{v}) &:= \int_{\Omega} \mathbf{v} \cdot \mathbf{f}, & \forall \mathbf{v
 \end{align}
 $$
 
+where 
+
+$$
+\begin{align}
+\left\{ 
+\begin{array}{rll}
+a(\mathbf{u}, \mathbf{v}) &:= \int_{\Omega} \nabla \times \mathbf{u} \cdot \nabla \times \mathbf{v} + \int_{\Omega} \mu \mathbf{u} \cdot \mathbf{v}, & \forall \mathbf{u}, \mathbf{v} \in V  \\
+l(\mathbf{v}) &:= \int_{\Omega} \mathbf{v} \cdot \mathbf{f}, & \forall \mathbf{v} \in V  
+\end{array} \right.
+\end{align}
+$$
+
 We recall that in $\mathbf{H}\_0(\mbox{curl}, \Omega)$, the bilinear form $a$ is equivalent to the inner product and is therefor continuous and coercive. Hence, our abstract theory applies and there exists a unique solution to the problem.
+
+#### Examples
+
+- [Elliptic-curl problem on a cubic domain with Homogeneous Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/3d_elliptic_curl_dir_0.py)
 
 <a id="linear-elliptic-div"></a>
 ### Elliptic-div Problem
@@ -463,7 +479,9 @@ $$
 
 We recall that in $\mathbf{H}\_0(\mbox{div}, \Omega)$, the bilinear form $a$ is equivalent to the inner product and is therefor continuous and coercive. Hence, our abstract theory applies and there exists a unique solution.
 
-**TODO - compute exact solution and associated rhs**
+#### Examples
+
+- [Elliptic-div problem on a cubic domain with Homogeneous Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/3d_elliptic_div_dir_0.py)
 
 <a id="linear-elasticity"></a>
 ### Linear Elasticity Problem 
