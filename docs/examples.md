@@ -315,7 +315,7 @@ $$
 \int_{\Omega} (-\Delta \mathbf{u} + \nabla p)\cdot \mathbf{v} ~\mathrm{d} \mathbf{x} = \int_{\Omega}\nabla \mathbf{u}:\nabla \mathbf{v} ~\mathrm{d} \mathbf{x} + \int_{\Omega} \nabla p \cdot \mathbf{v} ~\mathrm{d} \mathbf{x} = \int_{\Omega} \mathbf{f}\cdot \mathbf{v} ~\mathrm{d} \mathbf{x}
 $$
 
-The integration by parts is performed component by component. We impose the essential boundary condition $ \mathbf{v}=0$ on $\partial\Omega$, and we denote by
+The integration by parts is performed component by component. We impose the essential boundary condition $\mathbf{v}=0$ on $\partial\Omega$, and we denote by
 
 $$
 \int_{\Omega}\nabla \mathbf{u}:\nabla \mathbf{v} ~\mathrm{d} \mathbf{x} =\sum_{i=1}^3 \int_{\Omega}\nabla u_i\cdot\nabla v_i ~\mathrm{d} \mathbf{x} =\sum_{i,j=1}^3 \int_{\Omega}\partial_j u_i\partial_j v_i ~\mathrm{d} \mathbf{x} .
@@ -344,42 +344,9 @@ $$
 \end{align}
 $$
 
-```python
-# ... abstract model
-domain = Square()
-x, y   = domain.coordinates
+#### Examples
 
-V1 = VectorFunctionSpace('V1', domain, kind='H1')
-V2 = ScalarFunctionSpace('V2', domain, kind='L2')
-X  = ProductSpace(V1, V2)
-
-# ... Exact solution
-fx = -x**2*(x - 1)**2*(24*y - 12) - 4*y*(x**2 + 4*x*(x - 1) + (x - 1)**2)*(2*y**2 - 3*y + 1) - 2*pi*cos(2*pi*x)
-fy = 4*x*(2*x**2 - 3*x + 1)*(y**2 + 4*y*(y - 1) + (y - 1)**2) + y**2*(24*x - 12)*(y - 1)**2 + 2*pi*cos(2*pi*y)
-f  = Tuple(fx, fy)
-
-ux = x**2*(-x + 1)**2*(4*y**3 - 6*y**2 + 2*y)
-uy =-y**2*(-y + 1)**2*(4*x**3 - 6*x**2 + 2*x)
-ue = Tuple(ux, uy)
-pe = -sin(2*pi*x) + sin(2*pi*y)
-# ...
-
-u, v = elements_of(V1, names='u, v')
-p, q = elements_of(V2, names='p, q')
-
-x, y  = domain.coordinates
-int_0 = lambda expr: integral(domain , expr)
-
-a  = BilinearForm(((u, p), (v, q)), int_0(inner(grad(u), grad(v)) - div(u)*q - p*div(v)) )
-l  = LinearForm((v, q), int_0(dot(f, v)))
-
-# Dirichlet boundary conditions are given in the form u = g where g may be
-# just 0 (hence homogeneous BCs are prescribed) or a symbolic expression
-# g(x, y) that represents the boundary data. Here we use the exact solution
-bc = EssentialBC(u, 0, domain.boundary)
-
-equation = find((u, p), forall=(v, q), lhs=a((u, p), (v, q)), rhs=l(v, q), bc=bc)
-```
+- [Stokes problem with mixed (first) formulation on a square domain with Homogeneous Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d_stokes_mixed_v1_dir_0.py)
 
 #### Second mixed formulation of the Stokes problem
 
