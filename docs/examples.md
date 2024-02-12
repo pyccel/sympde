@@ -188,7 +188,7 @@ Notice that in these formulations $\tau$ stands for a piecewise function that is
 
 #### Examples
 
-- [Stabilized Advection Diffusion problem on a square domain with Homogeneous Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d_stabilized_advection_diffusion_dir0.py)
+- [Stabilized Advection Diffusion problem on a square domain with Homogeneous Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d_advection_diffusion_stabilized_dir0.py)
 
 
 <a id="linear-mixed-poisson"></a>
