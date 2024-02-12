@@ -11,7 +11,7 @@ domain = Square()
 x, y   = domain.coordinates
 
 V1 = VectorFunctionSpace('V1', domain, kind='H1')
-V2 = ScalarFunctionSpace('V2', domain, kind='H1')
+V2 = ScalarFunctionSpace('V2', domain, kind='L2')
 
 # rhs
 fx = -x**2*(x - 1)**2*(24*y - 12) - 4*y*(x**2 + 4*x*(x - 1) + (x - 1)**2)*(2*y**2 - 3*y + 1) - 2*pi*cos(2*pi*x)
@@ -22,7 +22,7 @@ u, v = elements_of(V1, names='u, v')
 p, q = elements_of(V2, names='p, q')
 
 # bilinear form
-a  = BilinearForm(((u, p), (v, q)), integral(domain, inner(grad(u), grad(v)) + dot(grad(p), v) + dot(u, grad(q)) ) )
+a  = BilinearForm(((u, p), (v, q)), integral(domain, inner(grad(u), grad(v)) - div(u)*q - p*div(v)) )
 
 # linear form
 l  = LinearForm((v, q), integral(domain, dot(f, v)))

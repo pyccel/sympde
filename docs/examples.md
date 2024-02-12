@@ -351,7 +351,7 @@ $$
 #### Second mixed formulation of the Stokes problem
 
 Another possibility to obtained a well posed variational formulation, is to integrate by parts the
-$ \int_{\Omega} \nabla p \cdot \mathbf{v} ~\mathrm{d} \mathbf{x}$ term in the first formulation:
+$\int_{\Omega} \nabla p \cdot \mathbf{v} ~\mathrm{d} \mathbf{x}$ term in the first formulation:
 
 $$ 
 \int_{\Omega} \nabla p \cdot \mathbf{v} ~\mathrm{d} \mathbf{x} = - \int_{\Omega} p \nabla \cdot \mathbf{v} ~\mathrm{d} \mathbf{x} + \int_{\partial\Omega} p \mathbf{v} \cdot \mathbf{n}~\mathrm{d} \sigma= -\int_{\Omega} p ~ \nabla \cdot \mathbf{v} ~\mathrm{d} \mathbf{x} ,
@@ -379,6 +379,10 @@ $$
   \right.
 \end{align}
 $$
+
+#### Examples
+
+- [Stokes problem with mixed (second) formulation on a square domain with Homogeneous Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d_stokes_mixed_v2_dir_0.py)
 
 <a id="linear-elliptic-curl"></a>
 ### Elliptic-curl Problem
