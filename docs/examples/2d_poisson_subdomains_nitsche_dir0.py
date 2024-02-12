@@ -17,6 +17,8 @@ domain = Domain.join(subdomains, connectivity, 'domain')
 # internal interafaces of the domain
 I = domain.interfaces
 
+kappa = Constant('kappa', is_real=True)
+
 V = ScalarFunctionSpace('V', domain)
 
 x,y = domain.coordinates
@@ -24,14 +26,10 @@ x,y = domain.coordinates
 u,v = [element_of(V, name=i) for i in ['u', 'v']]
 
 # bilinear form
-kappa = Constant('kappa')
-
-expr_I = ( - jump(u) * jump(Dn(v))
-           + kappa * jump(u) * jump(v)
-           + plus(Dn(u)) * minus(v)
-           + minus(Dn(u)) * plus(v) )
-a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v)))
-                      + integral(I,      expr_I))
+a = BilinearForm((u,v),
+                   integral(domain, dot(grad(u),grad(v)))
+                 + integral(I, kappa * jump(u)*jump(v) - Dn(u)*jump(v) - jump(u)*Dn(v))
+                )
 
 # linear form
 f = 4
