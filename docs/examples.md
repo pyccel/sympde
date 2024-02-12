@@ -890,8 +890,8 @@ We shall denote by $\mathcal{I}$ the set of all internal interfaces of $\Omega$.
 
 We shall also need the following operators
 
-- The jump of the function $u$, defined as $[u] := u|\_{\Omega_{i_1}} -  u|\_{\Omega_{i_2}}$ for two adjacent subdomains $\Omega_{i_1}$ and $\Omega_{i_2}$
-- The average of the function $u$, defined as ${u} := \frac{1}{2} \left( u|\_{\Omega_{i_1}} +  u|\_{\Omega_{i_2}} \right)$ for two adjacent subdomains $\Omega_{i_1}$ and $\Omega_{i_2}$
+- The jump of the function $u$, defined as $[\\![ u ]\\!] := u|\_{\Omega_{i_1}} -  u|\_{\Omega_{i_2}}$ for two adjacent subdomains $\Omega_{i_1}$ and $\Omega_{i_2}$
+- The average of the function $u$, defined as $\{u\} := \frac{1}{2} \left( u|\_{\Omega_{i_1}} +  u|\_{\Omega_{i_2}} \right)$ for two adjacent subdomains $\Omega_{i_1}$ and $\Omega_{i_2}$
 
 We consider the Poisson equation
 
@@ -899,8 +899,8 @@ $$
 \begin{align}
   \- \nabla^2 u = f \quad \text{in~$\Omega$}, \quad \quad 
   u = 0            \quad \text{on~$\partial \Omega$}, \quad \quad 
-   [\![ u ]\!] = 0 \quad \text{on~$\mathcal{I}$}, \quad \quad
-   [\![\partial_n u ]\!] = 0 \quad \text{on~$\mathcal{I}$}.
+   [\\![ u ]\\!] = 0 \quad \text{on~$\mathcal{I}$}, \quad \quad
+   [\\![\partial_n u ]\\!] = 0 \quad \text{on~$\mathcal{I}$}.
 \end{align}
 $$
 
