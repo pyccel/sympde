@@ -217,7 +217,7 @@ In order to get a mixed variational formulation, we first take the dot product o
 
 $$
 \begin{align}
-\int_{\Omega} \mathbf{u}\cdot \mathbf{v}~\mathrm{d} \mathbf{x} -\int_{\Omega} p\,\nabla\cdot \mathbf{v}~\mathrm{d} \mathbf{x} + \int_{\partial\Omega} p \,  \mathbf{v}\cdot \mathbf{n}~\mathrm{d} \sigma = \int_{\Omega} \mathbf{u}\cdot \mathbf{v}~\mathrm{d} \mathbf{x} -\int_{\Omega} p\,\nabla\cdot \mathbf{v}~\mathrm{d} \mathbf{x}=0,
+\int_{\Omega} \mathbf{u}\cdot \mathbf{v}~\mathrm{d} \mathbf{x} -\int_{\Omega} p ~ \nabla\cdot \mathbf{v}~\mathrm{d} \mathbf{x} + \int_{\partial\Omega} p ~  \mathbf{v}\cdot \mathbf{n}~\mathrm{d} \sigma = \int_{\Omega} \mathbf{u}\cdot \mathbf{v}~\mathrm{d} \mathbf{x} -\int_{\Omega} p ~ \nabla\cdot \mathbf{v}~\mathrm{d} \mathbf{x}=0,
 \end{align}
 $$
 
@@ -225,7 +225,7 @@ using $p=0$ as a natural boundary condition. Then multiplying the second equatio
 
 $$
 \begin{align}
-\int_{\Omega} \nabla\cdot\mathbf{u} \, q ~\mathrm{d} \mathbf{x} = \int_{\Omega} f q ~\mathrm{d} \mathbf{x}.
+\int_{\Omega} \nabla\cdot\mathbf{u} ~ q ~\mathrm{d} \mathbf{x} = \int_{\Omega} f q ~\mathrm{d} \mathbf{x}.
 \end{align}
 $$
 
@@ -237,45 +237,15 @@ $$
 \begin{align}
 \left\{ 
 \begin{array}{llll}
-  \int_{\Omega} \mathbf{u}\cdot \mathbf{v}~\mathrm{d} \mathbf{x} &- \int_{\Omega} p\,\nabla\cdot \mathbf{v}~\mathrm{d} \mathbf{x} &=0, & \forall \mathbf{v}\in H(\mathrm{div},\Omega) \\
-  \int_{\Omega} \nabla\cdot\mathbf{u} \, q ~\mathrm{d} \mathbf{x} &  &= \int_{\Omega} f q ~\mathrm{d} \mathbf{x}, & \forall q\in L^2(\Omega)
+  \int_{\Omega} \mathbf{u}\cdot \mathbf{v}~\mathrm{d} \mathbf{x} &- \int_{\Omega} p ~ \nabla\cdot \mathbf{v}~\mathrm{d} \mathbf{x} &=0, & \forall \mathbf{v}\in H(\mathrm{div},\Omega) \\
+  \int_{\Omega} \nabla\cdot\mathbf{u} ~ q ~\mathrm{d} \mathbf{x} &  &= \int_{\Omega} f q ~\mathrm{d} \mathbf{x}, & \forall q\in L^2(\Omega)
 \end{array} \right.
 \end{align}
 $$
 
+#### Examples
 
-```python
-# ... abstract model
-domain = Square()
-
-V1 = VectorFunctionSpace('V1', domain, kind='Hdiv')
-V2 = ScalarFunctionSpace('V2', domain, kind='L2')
-X  = ProductSpace(V1, V2)
-
-x,y = domain.coordinates
-
-# rhs
-f0 = -2*x*(1-x) -2*y*(1-y)
-# analytical solution
-u  = x*(1-x)*y*(1-y)
-
-F = element_of(V2, name='F')
-
-p,q = [element_of(V1, name=i) for i in ['p', 'q']]
-u,v = [element_of(V2, name=i) for i in ['u', 'v']]
-
-int_0 = lambda expr: integral(domain , expr)
-
-a  = BilinearForm(((p,u),(q,v)), int_0(dot(p,q) + div(q)*u + div(p)*v) )
-l  = LinearForm((q,v), int_0(f0*v))
-
-# ...
-error = F-u
-l2norm_F = Norm(error, domain, kind='l2')
-
-# ...
-equation = find([p,u], forall=[q,v], lhs=a((p,u),(q,v)), rhs=l(q,v))
-```
+- [Poisson problem with mixed (first) formulation on a square domain with Homogeneous Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d_poisson_mixed_v1_dir_0.py)
 
 #### Second mixed formulation of the Poisson problem
 
@@ -291,7 +261,7 @@ and the second, removing immediately the boundary term due to the essential boun
 
 $$
 \begin{align}
-\int_{\Omega}\nabla \cdot\mathbf{u}  \, q ~\mathrm{d} \mathbf{x} = -\int_{\Omega}  \mathbf{u} \cdot \nabla q  ~\mathrm{d} \mathbf{x} = \int_{\Omega} f q ~\mathrm{d} \mathbf{x},
+\int_{\Omega}\nabla \cdot\mathbf{u}  ~ q ~\mathrm{d} \mathbf{x} = -\int_{\Omega}  \mathbf{u} \cdot \nabla q  ~\mathrm{d} \mathbf{x} = \int_{\Omega} f q ~\mathrm{d} \mathbf{x},
 \end{align}
 $$
 
@@ -316,9 +286,9 @@ $$
 \int_{\Omega}  \nabla p \cdot \nabla q  ~\mathrm{d} \mathbf{x}  = \int_{\Omega} f q ~\mathrm{d} \mathbf{x}, \quad \forall q\in H^1_0(\Omega).
 $$
 
-```python
-# TODO
-```
+#### Examples
+
+- [Poisson problem with mixed (second) formulation on a square domain with Homogeneous Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d_poisson_mixed_v2_dir_0.py)
 
 <a id="linear-mixed-stokes"></a>
 ### Mixed FEM for the Stokes problem 
@@ -354,7 +324,7 @@ $$
 We now need to deal with the constraint $\nabla\cdot \mathbf{u}=0$. The theoretical framework for saddle point problems requires that the corresponding bilinear form is the same as the second one appearing in the first part of the variational formulation. To this aim we multiply  $\nabla\cdot \mathbf{u}=0$ by a scalar test function (which will be associated to $p$) and integrate on the full domain, with an integration by parts in order to get the same bilinear form as in the first equation
 
 $$
-\int_{\Omega} \nabla\cdot \mathbf{u} \,q ~\mathrm{d} \mathbf{x}= - \int_{\Omega} \mathbf{u}\cdot \nabla q~\mathrm{d} \mathbf{x}=0,
+\int_{\Omega} \nabla\cdot \mathbf{u} ~ q ~\mathrm{d} \mathbf{x}= - \int_{\Omega} \mathbf{u}\cdot \nabla q~\mathrm{d} \mathbf{x}=0,
 $$
 
 using that $q=0$ on the boundary as an essential boundary condition.
@@ -417,13 +387,13 @@ Another possibility to obtained a well posed variational formulation, is to inte
 $ \int_{\Omega} \nabla p \cdot \mathbf{v} ~\mathrm{d} \mathbf{x}$ term in the first formulation:
 
 $$ 
-\int_{\Omega} \nabla p \cdot \mathbf{v} ~\mathrm{d} \mathbf{x} = - \int_{\Omega} p \nabla \cdot \mathbf{v} ~\mathrm{d} \mathbf{x} + \int_{\partial\Omega} p \mathbf{v} \cdot \mathbf{n}~\mathrm{d} \sigma= -\int_{\Omega} p \,\nabla \cdot \mathbf{v} ~\mathrm{d} \mathbf{x} ,
+\int_{\Omega} \nabla p \cdot \mathbf{v} ~\mathrm{d} \mathbf{x} = - \int_{\Omega} p \nabla \cdot \mathbf{v} ~\mathrm{d} \mathbf{x} + \int_{\partial\Omega} p \mathbf{v} \cdot \mathbf{n}~\mathrm{d} \sigma= -\int_{\Omega} p ~ \nabla \cdot \mathbf{v} ~\mathrm{d} \mathbf{x} ,
 $$
 
  using here $p=0$ as a natural boundary condition. Note that in the other variational formulation the same boundary condition was essential. In this case, for the second variational formulation, we just multiply $\nabla\cdot \mathbf{u}=0$ by $q$ and integrate. No integration by parts is needed in this case.
 
 $$
-\int_{\Omega} \nabla \cdot \mathbf{u}\, q ~\mathrm{d} \mathbf{x} =0.
+\int_{\Omega} \nabla \cdot \mathbf{u} ~ q ~\mathrm{d} \mathbf{x} =0.
 $$
 
 This then leads to the following variational formulation:
@@ -434,10 +404,10 @@ $$
 \begin{align}
 \left\{
   \begin{array}{llll}
-    \int_{\Omega}\nabla \mathbf{u}:\nabla \mathbf{v} ~\mathrm{d} \mathbf{x} &- \int_{\Omega}  p \, \nabla\cdot \mathbf{v} ~\mathrm{d} \mathbf{x}
+    \int_{\Omega}\nabla \mathbf{u}:\nabla \mathbf{v} ~\mathrm{d} \mathbf{x} &- \int_{\Omega}  p ~ \nabla\cdot \mathbf{v} ~\mathrm{d} \mathbf{x}
     &= \int_{\Omega} \mathbf{f}\cdot \mathbf{v} ~\mathrm{d} \mathbf{x}, &\forall \mathbf{v}\in H^1(\Omega)^3
     \\
-    \int_{\Omega}  \nabla\cdot\mathbf{u}\, q~\mathrm{d} \mathbf{x} & &=0,  &\forall q\in L^2(\Omega)
+    \int_{\Omega}  \nabla\cdot\mathbf{u} ~ q~\mathrm{d} \mathbf{x} & &=0,  &\forall q\in L^2(\Omega)
   \end{array}
   \right.
 \end{align}
