@@ -516,7 +516,54 @@ We recall that in $\mathbf{H}\_0(\mbox{div}, \Omega)$, the bilinear form $a$ is 
 <a id="linear-elasticity"></a>
 ### Linear Elasticity Problem 
 
-**TODO**
+Analysis of deformable structures is essential in engineering, with the equations of linear elasticity being fundamental in this field. In this section, we present the variational formulation of linear elasticity equations using the principle of virtual work.
+
+#### The PDE problem
+The governing equations for small elastic deformations of a body \( \Omega \) can be expressed as:
+\[
+\begin{align}
+    -\nabla \cdot \sigma(u) &= f & \text{in } \Omega \\
+    \sigma(u) &= \lambda \text{tr}(\epsilon(u))I + 2 \mu \epsilon(u)
+\end{align}
+\]
+where \( \sigma \) is the stress tensor, \( f \) represents the body force per unit volume, \( \lambda \) and \( \mu \) are Lamé's elasticity parameters for the material, \( I \) denotes the identity tensor, and \( \epsilon \) is the symmetric strain tensor. The displacement vector field is denoted by \( u \).
+
+By substituting \( \epsilon(u) \) into \( \sigma \), we obtain:
+\[
+\sigma(u) = \lambda (\nabla \cdot u)I + \mu(\nabla u + (\nabla u)^T)
+\]
+
+#### The Variational Formulation
+The variational formulation of the linear elasticity equations involves forming the inner product of the PDE with a vector test function \( v \in \hat{V} \) and integrating over the domain \( \Omega \). This yields:
+\[
+\int_{\Omega} \sigma : \nabla v \, \mathrm{d} x = \int_{\Omega} f \cdot v \, \mathrm{d} x
+\]
+Integrating the term \( \nabla \cdot \sigma \cdot v \) by parts, considering boundary conditions, we obtain:
+\[
+\int_{\Omega} \sigma : \nabla v \, \mathrm{d} x = \int_{\Omega} f \cdot v \, \mathrm{d} x + \int_{\partial \Omega_T} T \cdot v \, \mathrm{d} s
+\]
+where \( T \) represents the traction vector on the part \( \partial \Omega_T \) of the boundary where it's prescribed.
+
+This leads to the variational formulation: Find \( u \in V \) such that
+\[
+a(u, v) = L(v) \quad \forall v \in \hat{V}
+\]
+where
+\[
+\begin{align}
+    a(u, v) &= \int_{\Omega} \sigma(u) : \nabla v \, \mathrm{d} x \\
+    L(v) &= \int_{\Omega} f \cdot v \, \mathrm{d} x + \int_{\partial \Omega_T} T \cdot v \, \mathrm{d} s
+\end{align}
+\]
+This formulation can be alternatively expressed as:
+\[
+a(u, v) = \int_{\Omega} \sigma(u) : \epsilon(v) \, \mathrm{d} x
+\]
+where \( \epsilon(v) = \frac{1}{2} (\nabla v + (\nabla v)^T) \) is the symmetric strain tensor.
+
+This variational formulation is essential for solving linear elasticity problems numerically using methods like the finite element method (FEM).
+
+- [Linear Elasticity problem on a cubic domain](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/3d_linear_elasticity.py)
 
 
 <a id="nonlinear-problems"></a>
