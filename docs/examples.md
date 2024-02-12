@@ -915,7 +915,7 @@ $$
 where 
 
 - $V \subset H^1(\Omega)$, 
-- $a(u,v) := \int_{\Omega} \nabla u \cdot \nabla v ~ d\Omega$, and
+- $a(u,v) := \int_{\Omega} \nabla u \cdot \nabla v ~ d\Omega - \int_{\mathcal{I}} \kappa [\\![ u ]\\!] ~ [\\![ v ]\\!] - [\\![ u ]\\!] ~ \partial_n v - \partial_n u ~ [\\![ v ]\\!]~ d\mathcal{I} $, and
 - $l(v) := \int_{\Omega} f v ~ d\Omega + \int_{\Gamma_N} g v ~ d\Gamma$.
 
 #### Examples
