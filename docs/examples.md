@@ -15,6 +15,9 @@
   - [Nonlinear 2D Poisson Problem](#nonlinear-poisson-2d)
   - [1D Burgers Problem](#nonlinear-burgers-1d)
   - [The streamfunction-velocity formulation of the steady-state Navier-Stokes equations for incompressible fluids](#nonlinear-navier-stokes-streamfunction-velocity)
+- [Subdomains](#subdomains)
+  - [The Poisson problem using Nitsche method](#subdomains-linear-poisson)
+
 
 <a id="linear-problems"></a>
 ## Linear Problems
@@ -869,3 +872,53 @@ In the sequel, we use SymPDE to linearize the streamfunction-velocity formulatio
 As presented in the previous example, we shall write our weak formulation as a linear form where the velocity $\mathbf{u}$ (\textit{i.e.} \texttt{u}) is considered as a \textit{field}, which is implemented in Python code \ref{code:steady-navier-stokes-nl}.
 Using the function \texttt{linearize} allows us to construct the bilinear form associated to the linearization of the given linear form, around the field \texttt{psi}, see Python code \ref{code:steady-streamfunction-velocity-lin}.
 To get an \texttt{Equation}, the user can add the left-hand-side for the Navier-Stokes equation to the linear form, the appropriate essential boundary conditions, then use the \texttt{NewtonIteration} as presented in the previous example.
+
+
+<a id="subdomains"></a>
+## Subdomains 
+
+<a id="subdomains-linear-poisson"></a>
+### The Poisson problem using Nitsche method
+
+In this section, we consider a domain $\Omega$ which a union of multiple subdomain, *i.e.*
+
+$$
+\Omega := \bigcup_{i=1}^n \Omega_i, \quad \Omega_i \bigcap \Omega_j = \emptyset, ~ i \neq j  
+$$
+
+We shall denote by $\mathcal{I}$ the set of all internal interfaces of $\Omega$.
+
+We shall also need the following operators
+
+- The jump of the function $u$, defined as $[u] := u|\_{\Omega_{i_1}} -  u|\_{\Omega_{i_2}}$ for two adjacent subdomains $\Omega_{i_1}$ and $\Omega_{i_2}$
+- The average of the function $u$, defined as ${u} := \frac{1}{2} \left( u|\_{\Omega_{i_1}} +  u|\_{\Omega_{i_2}} \right)$ for two adjacent subdomains $\Omega_{i_1}$ and $\Omega_{i_2}$
+
+We consider the Poisson equation
+
+$$
+\begin{align}
+  \- \nabla^2 u = f \quad \text{in~$\Omega$}, \quad \quad 
+  u = 0            \quad \text{on~$\partial \Omega$}, \quad \quad 
+   [\![ u ]\!] = 0 \quad \text{on~$\mathcal{I}$}, \quad \quad
+   [\![\partial_n u ]\!] = 0 \quad \text{on~$\mathcal{I}$}.
+\end{align}
+$$
+
+An $H^1$-conforming variational formulation of reads
+
+$$
+\begin{align}
+  \text{find $u \in V$ such that} \quad a(u,v) = l(v) \quad \forall v \in V,
+\end{align}
+$$
+
+where 
+
+- $V \subset H^1(\Omega)$, 
+- $a(u,v) := \int_{\Omega} \nabla u \cdot \nabla v ~ d\Omega$, and
+- $l(v) := \int_{\Omega} f v ~ d\Omega + \int_{\Gamma_N} g v ~ d\Gamma$.
+
+#### Examples
+
+- [Poisson on a square with two subdomains and Homogeneous Boundary Conditions](https://github.com/pyccel/sympde/blob/devel-documentation/docs/examples/2d_poisson_subdomains_nitsche_dir0.py)
+
