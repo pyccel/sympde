@@ -345,6 +345,49 @@ class Matrix(MatrixSymbolicExpr):
         return hash((self.name, self.args))
 
 
+class Vector(MatrixSymbolicExpr):
+
+    def __new__(cls, *args, **options):
+        name = options.pop('name')
+        if name is None:
+            raise ValueError('Expecting a name keyword.')
+
+        if not( len(args) == 1 ):
+            raise ValueError('Expecting one argument.')
+
+        _args = args[0]
+        if not isinstance(_args, list):
+            raise TypeError('Expecting a list.')
+
+        # make _args a Tuple
+        _args = Tuple(*_args)
+
+        args = (_args, args[1:])
+
+        obj = Expr.__new__(cls, *args)
+        obj._name = name
+
+        return obj
+
+    @property
+    def name(self):
+        return self._name
+
+    def __getitem__(self, key):
+        try:
+            i = key
+            return self.args[0][i]
+        except:
+            # TODO ARA do we keep returning a MatrixElement?
+            return MatrixElement(self, key)
+
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        return '{}'.format(sstr(self.name))
+
+    def __hash__(self):
+        return hash((self.name, self.args))
+
 
 
 Basic._constructor_postprocessor_mapping[MatrixSymbolicExpr] = {
