@@ -19,12 +19,12 @@ from sympde.core              import Constant
 from sympde.core.basic        import BasicMapping
 from sympde.core.basic        import CalculusFunction
 from sympde.core.basic        import _coeffs_registery
+from sympde.core.matrices     import MatrixSymbolicExpr, MatrixElement, SymbolicTrace, Inverse
+from sympde.core.matrices     import SymbolicDeterminant, Transpose
 from sympde.calculus.core     import PlusInterfaceOperator, MinusInterfaceOperator
 from sympde.calculus.core     import grad, div, curl, laplace #, hessian
 from sympde.calculus.core     import dot, inner, outer, _diff_ops
 from sympde.calculus.core     import has, DiffOperator
-from sympde.calculus.matrices import MatrixSymbolicExpr, MatrixElement, SymbolicTrace, Inverse
-from sympde.calculus.matrices import SymbolicDeterminant, Transpose
 
 from .basic       import BasicDomain, Union, InteriorDomain
 from .basic       import Boundary, Connectivity, Interface
@@ -976,7 +976,7 @@ class LogicalExpr(CalculusFunction):
         elif isinstance(expr, Transpose):
             arg = cls(expr.arg, domain)
             return Transpose(arg)
-            
+
         elif isinstance(expr, grad):
             arg = expr.args[0]
             if isinstance(mapping, InterfaceMapping):
@@ -1117,7 +1117,7 @@ class LogicalExpr(CalculusFunction):
 
             elif dim == 3:
                 lgrad_arg = LogicalGrad_3d(arg)
-            
+
             grad_arg = Covariant(mapping, lgrad_arg)
             expr = grad_arg[0]
             return expr
@@ -1243,7 +1243,7 @@ class LogicalExpr(CalculusFunction):
             domain  = domain.logical_domain
             det     = TerminalExpr(sqrt((J.T*J).det()), domain=domain)
             return DomainExpression(domain, ImmutableDenseMatrix([[newexpr*det]]))
-            
+
         elif isinstance(expr, Function):
             args = [cls.eval(a, domain) for a in expr.args]
             return type(expr)(*args)
