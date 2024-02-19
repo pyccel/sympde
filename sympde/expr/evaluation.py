@@ -22,6 +22,8 @@ from sympde.core.algebra import (Dot_1d,
 from sympde.core.utils import random_string
 from sympde.core.matrices import SymbolicDeterminant, Inverse, Transpose
 from sympde.core.matrices import MatSymbolicPow, MatrixElement, SymbolicTrace
+from sympde.core.matrices import Matrix as SympdeMatrix
+from sympde.core.matrices import Vector as SympdeVector
 
 from sympde.calculus import jump, avg, minus, plus
 from sympde.calculus import Jump, is_zero
@@ -613,6 +615,12 @@ class TerminalExpr(CalculusFunction):
 
         elif isinstance(expr, Inverse):
             return cls.eval(expr.arg, domain=domain).inv()
+
+        elif isinstance(expr, SympdeMatrix):
+            return ImmutableDenseMatrix(expr.args[0])
+
+        elif isinstance(expr, SympdeVector):
+            return ImmutableDenseMatrix([expr.args[0]])
 
         elif isinstance(expr, ScalarFunction):
             return expr
