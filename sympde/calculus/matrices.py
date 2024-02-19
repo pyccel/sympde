@@ -1,5 +1,6 @@
 from sympy                 import Expr, S
 from sympy                 import Add, Mul, Pow
+from sympy                 import Tuple
 from sympy                 import sympify
 from sympy.core.decorators import call_highest_priority
 from sympde.core.basic     import _coeffs_registery, Basic
@@ -288,6 +289,63 @@ class MatrixElement(Expr):
     def _sympystr(self, printer):
         sstr = printer.doprint
         return '{}[{}]'.format(sstr(self.args[0]),sstr(self.args[1]))
+
+class Matrix(MatrixSymbolicExpr):
+
+    def __new__(cls, *args, **options):
+        name = options.pop('name')
+        if name is None:
+            raise ValueError('Expecting a name keyword.')
+
+        if not( len(args) == 1 ):
+            raise ValueError('Expecting one argument.')
+
+        _args = args[0]
+        if not isinstance(_args, list):
+            raise TypeError('Expecting a list.')
+
+        for _ in _args:
+            if not isinstance(_, list):
+                raise TypeError('args components must be a list.')
+
+        sizes = [len(_) for _ in _args]
+        if not( len(set(sizes)) == 1):
+            raise ValueError('Wrong matrix size')
+
+        # make _args a Tuple of Tuples
+        newargs = []
+        for _ in _args:
+            a = Tuple(*_)
+            newargs.append(a)
+        _args = Tuple(*newargs)
+
+        args = (_args, args[1:])
+
+        obj = Expr.__new__(cls, *args)
+        obj._name = name
+
+        return obj
+
+    @property
+    def name(self):
+        return self._name
+
+    def __getitem__(self, key):
+        try:
+            i,j = key
+            return self.args[0][i][j]
+        except:
+            return MatrixElement(self, key)
+
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        return '{}'.format(sstr(self.name))
+
+    def __hash__(self):
+        return hash((self.name, self.args))
+
+
+
 
 Basic._constructor_postprocessor_mapping[MatrixSymbolicExpr] = {
     "Mul": [lambda x: MatSymbolicMul(*x.args)],
