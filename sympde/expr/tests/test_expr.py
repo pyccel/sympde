@@ -1397,26 +1397,25 @@ def test_norm_2d_1():
     print('')
     # ...
 
-##==============================================================================
-## TODO ARA to be fixed
-#def test_norm_2d_2():
-#
-#    domain = Domain('Omega', dim=2)
-#    x,y = domain.coordinates
-#
-#    V = VectorFunctionSpace('V', domain)
-#    F = element_of(V, 'F')
-#
-#    # ...
-#    f = Vector([sin(pi*x)*sin(pi*y), sin(pi*x)*sin(pi*y)], name='f')
-#    expr = Vector([F[0]-f[0], F[1]-f[1]], name='expr')
-#    l2_norm_u = Norm(expr, domain, kind='l2')
-#    h1_norm_u = Norm(expr, domain, kind='h1')
-#
-#    print('> l2 norm = ', TerminalExpr(l2_norm_u, domain))
-#    print('> h1 norm = ', TerminalExpr(h1_norm_u, domain))
-#    print('')
-#    # ...
+#==============================================================================
+def test_norm_2d_2():
+
+    domain = Domain('Omega', dim=2)
+    x,y = domain.coordinates
+
+    V = VectorFunctionSpace('V', domain)
+    F = element_of(V, 'F')
+
+    # ...
+    f = Vector([sin(pi*x)*sin(pi*y), sin(pi*x)*sin(pi*y)], name='f')
+    expr = Vector([F[0]-f[0], F[1]-f[1]], name='expr')
+    l2_norm_u = Norm(expr, domain, kind='l2')
+    h1_norm_u = Norm(expr, domain, kind='h1')
+
+    print('> l2 norm = ', TerminalExpr(l2_norm_u, domain))
+    print('> h1 norm = ', TerminalExpr(h1_norm_u, domain))
+    print('')
+    # ...
 
 #==============================================================================
 # this test checks some properties of bilinear forms
