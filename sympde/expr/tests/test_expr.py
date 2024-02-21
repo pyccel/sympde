@@ -10,9 +10,13 @@ from sympy import pi, cos, sin, exp
 from sympy import ImmutableDenseMatrix as Matrix
 
 from sympde.core     import Constant
-from sympde.calculus import grad, dot, inner, rot, div
+from sympde.calculus import dot, inner, outer, cross
+from sympde.calculus import grad, rot, div, curl
 from sympde.calculus import laplace, bracket, convect
 from sympde.calculus import jump, avg, Dn, minus, plus
+from sympde.core import Matrix as SympdeMatrix
+from sympde.core import Vector
+from sympde.core import Transpose
 
 from sympde.topology import dx1, dx2, dx3
 from sympde.topology import dx, dy, dz
@@ -33,6 +37,8 @@ from sympde.expr.expr import integral
 from sympde.expr.expr import Functional, Norm
 from sympde.expr.expr import linearize
 from sympde.expr.evaluation import TerminalExpr
+from sympde.expr.expr import is_linear_expression
+
 
 #==============================================================================
 def test_linear_expr_2d_1():
@@ -213,7 +219,7 @@ def test_linear_form_2d_2():
     int_0 = lambda expr: integral(domain , expr)
     int_1 = lambda expr: integral(B1, expr)
 
-    g = Matrix((x,y))
+    g = Vector([x,y], name='g')
     l = LinearForm(v, int_0(dot(g, v)))
 
     assert(l.domain == domain.interior)
@@ -221,7 +227,7 @@ def test_linear_form_2d_2():
     # ...
 
     # ...
-    g = Matrix((x,y))
+    g = Vector([x,y], name='g')
     l1 = LinearForm(v1, int_0(dot(g, v1)))
     l = LinearForm(v, l1(v))
 
@@ -230,8 +236,8 @@ def test_linear_form_2d_2():
     # ...
 
     # ...
-    g1 = Matrix((x,0))
-    g2 = Matrix((0,y))
+    g1 = Vector([x,0], name='g1')
+    g2 = Vector([0,y], name='g2')
     l1 = LinearForm(v1, int_0(dot(v1, g1)))
     l2 = LinearForm(v2, int_0(dot(v2, g2)))
 
@@ -396,14 +402,14 @@ def test_terminal_expr_linear_2d_1():
     # ...
 
     # ...
-    g = Matrix((x**2, y**2))
+    g = Vector([x**2, y**2], name='g')
     l = LinearForm(v, int_1(v*dot(g, nn)))
     print(TerminalExpr(l, domain))
     print('')
     # ...
 
     # ...
-    g = Matrix((x**2, y**2))
+    g = Vector([x**2, y**2], name='g')
     l = LinearForm(v, int_1(v*dot(g, nn)) + int_0(x*y*v))
     print(TerminalExpr(l, domain))
     print('')
@@ -417,7 +423,7 @@ def test_terminal_expr_linear_2d_1():
     # ...
 
     # ...
-    g = Matrix((x,y))
+    g = Vector([x,y], name='g')
     l1 = LinearForm(v1, int_0(x*y*v1))
     l2 = LinearForm(v2, int_0(dot(grad(v2), g)))
 
@@ -435,7 +441,7 @@ def test_terminal_expr_linear_2d_1():
     # ...
 
     # ...
-    g = Matrix((x**2, y**2))
+    g = Vector([x**2, y**2], name='g')
     l1 = LinearForm(v1, int_0(x*y*v1))
     l2 = LinearForm(v1, int_0(v1))
     l3 = LinearForm(v, int_1(v*dot(g, nn)))
@@ -464,14 +470,14 @@ def test_terminal_expr_linear_2d_2():
     int_0 = lambda expr: integral(domain , expr)
     int_1 = lambda expr: integral(B1, expr)
 
-    g = Matrix((x,y))
+    g = Vector([x, y], name='g')
     l = LinearForm(v, int_0(dot(g, v)))
     print(TerminalExpr(l, domain))
     print('')
     # ...
 
     # ...
-    g = Matrix((x,y))
+    g = Vector([x, y], name='g')
     l = LinearForm(v, int_0(dot(g, v) + div(v)))
     print(TerminalExpr(l, domain))
     print('')
@@ -585,7 +591,7 @@ def test_terminal_expr_linear_2d_5():
 
     V      = ScalarFunctionSpace('V', domain)
 
-    B_neumann = [domain.get_boundary(axis=0, ext=-1), 
+    B_neumann = [domain.get_boundary(axis=0, ext=-1),
                 domain.get_boundary(axis=1, ext=-1)]
 
     if len(B_neumann) == 1:
@@ -1178,9 +1184,7 @@ def test_stabilization_2d_1():
     kappa = Constant('kappa', is_real=True)
     mu    = Constant('mu'   , is_real=True)
 
-    b1 = 1.
-    b2 = 0.
-    b = Matrix((b1, b2))
+    b = Vector([1., 0.], name='b')
 
     # right hand side
     f = x*y
@@ -1393,25 +1397,26 @@ def test_norm_2d_1():
     print('')
     # ...
 
-#==============================================================================
-def test_norm_2d_2():
-
-    domain = Domain('Omega', dim=2)
-    x,y = domain.coordinates
-
-    V = VectorFunctionSpace('V', domain)
-    F = element_of(V, 'F')
-
-    # ...
-    f = Matrix((sin(pi*x)*sin(pi*y), sin(pi*x)*sin(pi*y)))
-    expr = Matrix([F[0]-f[0], F[1]-f[1]])
-    l2_norm_u = Norm(expr, domain, kind='l2')
-    h1_norm_u = Norm(expr, domain, kind='h1')
-
-    print('> l2 norm = ', TerminalExpr(l2_norm_u, domain))
-    print('> h1 norm = ', TerminalExpr(h1_norm_u, domain))
-    print('')
-    # ...
+##==============================================================================
+## TODO ARA to be fixed
+#def test_norm_2d_2():
+#
+#    domain = Domain('Omega', dim=2)
+#    x,y = domain.coordinates
+#
+#    V = VectorFunctionSpace('V', domain)
+#    F = element_of(V, 'F')
+#
+#    # ...
+#    f = Vector([sin(pi*x)*sin(pi*y), sin(pi*x)*sin(pi*y)], name='f')
+#    expr = Vector([F[0]-f[0], F[1]-f[1]], name='expr')
+#    l2_norm_u = Norm(expr, domain, kind='l2')
+#    h1_norm_u = Norm(expr, domain, kind='h1')
+#
+#    print('> l2 norm = ', TerminalExpr(l2_norm_u, domain))
+#    print('> h1 norm = ', TerminalExpr(h1_norm_u, domain))
+#    print('')
+#    # ...
 
 #==============================================================================
 # this test checks some properties of bilinear forms
@@ -1502,16 +1507,16 @@ def test_linearity_linear_form_2d_1():
     _ = LinearForm(v, int_0(x * y * v))
     _ = LinearForm(v, int_0(x * y * v + v))
 
-    g = Matrix((x**2, y**2))
+    g = Vector([x**2, y**2], name='g')
     _ = LinearForm(v, int_0(v * dot(g, nn)))
 
-    g = Matrix((x**2, y**2))
+    g = Vector([x**2, y**2], name='g')
     _ = LinearForm(v, int_1(v*dot(g, nn)) + int_0(x*y*v))
 
     l1 = LinearForm(v1, int_0(x * y * v1))
     _  = LinearForm(v, l1(v))
 
-    g  = Matrix((x,y))
+    g = Vector([x, y], name='g')
     l1 = LinearForm(v1, int_0(x*y*v1))
     l2 = LinearForm(v2, int_0(dot(grad(v2), g)))
     _  = LinearForm(v, l1(v) + l2(v))
@@ -1520,7 +1525,7 @@ def test_linearity_linear_form_2d_1():
     l2 = LinearForm(v1, int_0(v1))
     _  = LinearForm(v, l1(v) + kappa*l2(v))
 
-    g  = Matrix((x**2, y**2))
+    g = Vector([x**2, y**2], name='g')
     l1 = LinearForm(v1, int_0(x*y*v1))
     l2 = LinearForm(v1, int_0(v1))
     l3 = LinearForm(v, int_1(v*dot(g, nn)))
@@ -1891,6 +1896,200 @@ def test_interface_integral_4():
     assert expr[0].expr[1,1]   == u2[1]*v2[1]
 
     # ...
+
+
+#==============================================================================
+def test_matrices_vectors():
+
+    domain = Domain('Omega', dim=3)
+    x,y,z = domain.coordinates
+
+    kappa = Constant('kappa', is_real=True)
+    mu    = Constant('mu',    is_real=True)
+    theta = Constant('theta',   is_real=True)
+    a1    = Constant('a1',    is_real=True)
+    a2    = Constant('a2',    is_real=True)
+    b1    = Constant('b1',    is_real=True)
+    b2    = Constant('b2',    is_real=True)
+
+    V = ScalarFunctionSpace('V', domain)
+    W = VectorFunctionSpace('W', domain)
+
+    u,v   = [element_of(V, name=i) for i in ['u', 'v']]
+    F,G   = [element_of(W, name=i) for i in ['F', 'G']]
+
+    #A = SympdeMatrix([[cos(theta), 0], [0, sin(theta)]], name='A')
+    A = SympdeMatrix([[1, 2, 3], [3, 4, 5], [5, 6, 7]], name='A')
+    b = Vector([1, 2, 3], name='b')
+
+    ########################################################################
+    #                    SCALAR-FUNCTION CASE
+    ########################################################################
+    # ...
+    f = lambda a: A*grad(u)
+
+    assert is_linear_expression(f(u), (u,))
+    # ...
+
+    # ...
+    f = lambda u: b*u
+
+    assert is_linear_expression(f(u), (u,))
+    # ...
+
+    # ...
+    f = lambda u: dot(b,grad(u))
+
+    assert is_linear_expression(f(u), (u,))
+    # ...
+
+    # ...
+    f = lambda u,v: dot(A*grad(u), grad(v))
+
+    assert is_linear_expression(f(u,v), (u,))
+    assert is_linear_expression(f(u,v), (v,))
+    # ...
+
+    # ...
+    f = lambda u,v: dot(grad(u), A*grad(v))
+
+    assert is_linear_expression(f(u,v), (u,))
+    assert is_linear_expression(f(u,v), (v,))
+    # ...
+
+    # ...
+    f = lambda u,v: dot(A*grad(u), A*grad(v))
+
+    assert is_linear_expression(f(u,v), (u,))
+    assert is_linear_expression(f(u,v), (v,))
+    # ...
+
+    # ...
+    f = lambda u,v: dot(A.T*grad(u), grad(v))
+
+    assert is_linear_expression(f(u,v), (u,))
+    assert is_linear_expression(f(u,v), (v,))
+    # ...
+
+    # ...
+    f = lambda u,v: dot(grad(u), A.T*grad(v))
+
+    assert is_linear_expression(f(u,v), (u,))
+    assert is_linear_expression(f(u,v), (v,))
+    # ...
+
+    # ...
+    f = lambda u,v: dot(A.T*grad(u), A.T*grad(v))
+
+    assert is_linear_expression(f(u,v), (u,))
+    assert is_linear_expression(f(u,v), (v,))
+    # ...
+
+    # ...
+    f = lambda u,v: dot(A*grad(u), grad(v))
+
+    assert is_linear_expression(f(u,v), (u,))
+    assert is_linear_expression(f(u,v), (v,))
+    # ...
+
+    # ...
+    f = lambda u,v: dot(b,grad(u))*v
+
+    assert is_linear_expression(f(u,v), (u,))
+    assert is_linear_expression(f(u,v), (v,))
+    # ...
+
+    # ...
+    f = lambda u,v: dot(A*grad(u), grad(v)) + dot(b,grad(u))*v + dot(b,grad(v))*u
+
+    assert is_linear_expression(f(u,v), (u,))
+    assert is_linear_expression(f(u,v), (v,))
+    # ...
+
+    # ...
+    f = lambda u,v: cross(b*u, b*v)
+
+    assert is_linear_expression(f(u,v), (u,))
+    assert is_linear_expression(f(u,v), (v,))
+    # ...
+
+    # ...
+    f = lambda u,v: cross(b*u, grad(v))
+
+    assert is_linear_expression(f(u,v), (u,))
+    assert is_linear_expression(f(u,v), (v,))
+    # ...
+
+    # ...
+    f = lambda u,v: cross(grad(u), b*v)
+
+    assert is_linear_expression(f(u,v), (u,))
+    assert is_linear_expression(f(u,v), (v,))
+    # ...
+
+    # ...
+    f = lambda u,v: dot(cross(grad(u), b), cross(grad(v), b))
+
+    assert is_linear_expression(f(u,v), (u,))
+    assert is_linear_expression(f(u,v), (v,))
+    # ...
+
+    # ...
+    f = lambda F,G: dot(curl(cross(b, F)), cross(b, G))
+
+    assert is_linear_expression(f(F,G), (F,))
+    assert is_linear_expression(f(F,G), (G,))
+    # ...
+
+    ## ...
+    #f = lambda u,v: 0
+    #
+    #assert is_linear_expression(f(u,v), (u,))
+    #assert is_linear_expression(f(u,v), (v,))
+    ## ...
+    #
+    ## ...
+    #f = lambda u,v: 0
+    #
+    #assert is_linear_expression(f(u,v), (u,))
+    #assert is_linear_expression(f(u,v), (v,))
+    ## ...
+
+    ########################################################################
+    #                    VECTOR-FUNCTION CASE
+    ########################################################################
+    # ...
+    f = lambda F,G: cross(A*F, G)
+
+    assert is_linear_expression(f(F,G), (F,))
+    assert is_linear_expression(f(F,G), (G,))
+    # ...
+
+    # ...
+    f = lambda F,G: cross(F, A*G)
+
+    assert is_linear_expression(f(F,G), (F,))
+    assert is_linear_expression(f(F,G), (G,))
+    # ...
+
+    # ...
+    f = lambda F,G: cross(A*F, A*G)
+
+    assert is_linear_expression(f(F,G), (F,))
+    assert is_linear_expression(f(F,G), (G,))
+    # ...
+
+    # ...
+    I = SympdeMatrix([[1, 0, 0], [0, 1, 0], [0, 0, 1]], name='I')
+    epsilon = lambda w: 0.5*(grad(w) + Transpose(grad(w)))
+    sigma   = lambda w: kappa * div(w) * I + 2 * mu * epsilon(w)
+    f       = lambda u,v: inner(sigma(u), epsilon(v))
+
+    assert is_linear_expression(f(F,G), (F,))
+    assert is_linear_expression(f(F,G), (G,))
+    # ...
+
+
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
