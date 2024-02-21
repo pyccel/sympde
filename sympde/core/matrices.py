@@ -344,6 +344,12 @@ class Matrix(MatrixSymbolicExpr):
     def __hash__(self):
         return hash((self.name, self.args))
 
+    def __eq__(self, a):
+        if isinstance(a, Matrix):
+            eq = self.name == a.name
+            return eq
+        return False
+
 
 class Vector(MatrixSymbolicExpr):
 
@@ -387,6 +393,12 @@ class Vector(MatrixSymbolicExpr):
 
     def __hash__(self):
         return hash((self.name, self.args))
+
+    def __eq__(self, a):
+        if isinstance(a, Matrix):
+            eq = self.name == a.name
+            return eq
+        return False
 
 
 
