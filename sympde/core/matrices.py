@@ -5,6 +5,9 @@ from sympy                 import sympify
 from sympy.core.decorators import call_highest_priority
 from sympde.core.basic     import _coeffs_registery, Basic
 
+from sympy import ImmutableDenseMatrix
+
+
 class MatrixSymbolicExpr(Expr):
     is_commutative = False
     _op_priority   = 20.0
@@ -350,6 +353,9 @@ class Matrix(MatrixSymbolicExpr):
             return eq
         return False
 
+    def to_sympy(self):
+        return ImmutableDenseMatrix(self.args[0])
+
 
 class Vector(MatrixSymbolicExpr):
 
@@ -400,6 +406,9 @@ class Vector(MatrixSymbolicExpr):
             return eq
         return False
 
+    def to_sympy(self):
+        _args = [[_] for _ in self.args[0]]
+        return ImmutableDenseMatrix(_args)
 
 
 Basic._constructor_postprocessor_mapping[MatrixSymbolicExpr] = {
