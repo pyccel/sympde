@@ -617,10 +617,11 @@ class TerminalExpr(CalculusFunction):
             return cls.eval(expr.arg, domain=domain).inv()
 
         elif isinstance(expr, SympdeMatrix):
-            return ImmutableDenseMatrix(expr.args[0])
+            return expr.to_sympy()
 
         elif isinstance(expr, SympdeVector):
-            return ImmutableDenseMatrix([expr.args[0]])
+#            return ImmutableDenseMatrix([expr.args[0]])
+            return expr.to_sympy()
 
         elif isinstance(expr, ScalarFunction):
             return expr
