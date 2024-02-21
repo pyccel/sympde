@@ -22,6 +22,8 @@ from sympde.topology import Boundary, Interface, Domain, InteriorDomain
 from sympde.topology.space import ScalarFunction
 from sympde.topology.space import VectorFunction
 from sympde.topology.space import Trace, trace_0, trace_1
+from sympde.core.matrices import Matrix as SympdeMatrix
+from sympde.core.matrices import Vector
 
 from .errors import UnconsistentLinearExpressionError
 from .basic  import BasicForm
@@ -538,9 +540,12 @@ class SemiNorm(Functional):
         # ...
 
         # ...
-        is_vector = isinstance(expr, (Matrix, ImmutableDenseMatrix, Tuple, list, tuple))
+        is_vector = isinstance(expr, (Vector, SympdeMatrix, Matrix, ImmutableDenseMatrix, Tuple, list, tuple))
         if is_vector:
-            expr = ImmutableDenseMatrix(expr)
+            if isinstance(expr, (Vector, SympdeMatrix)):
+                expr = expr.to_sympy()
+            else:
+                expr = ImmutableDenseMatrix(expr)
         # ...
 
         # ...
@@ -610,9 +615,12 @@ class Norm(Functional):
         # ...
 
         # ...
-        is_vector = isinstance(expr, (Matrix, ImmutableDenseMatrix, Tuple, list, tuple))
+        is_vector = isinstance(expr, (Vector, SympdeMatrix, Matrix, ImmutableDenseMatrix, Tuple, list, tuple))
         if is_vector:
-            expr = ImmutableDenseMatrix(expr)
+            if isinstance(expr, (Vector, SympdeMatrix)):
+                expr = expr.to_sympy()
+            else:
+                expr = ImmutableDenseMatrix(expr)
         # ...
 
         # ...
