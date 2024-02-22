@@ -23,6 +23,8 @@ from sympde.old_sympy_utilities import is_sequence
 from sympde.core.basic    import CalculusFunction
 from sympde.core.basic    import _coeffs_registery
 from sympde.core.basic    import BasicMapping
+from sympde.core.matrices import Vector
+from sympde.core.matrices import Matrix as SympdeMatrix
 from sympde.core.algebra  import LinearOperator
 from sympde.calculus.core import minus, plus
 from sympde.calculus.core import has
@@ -82,6 +84,10 @@ class DifferentialOperator(LinearOperator):
             args = [cls(i, evaluate=True) for i in expr]
             args = Tuple(*args)
             return Matrix([args])
+        elif isinstance(expr, Vector):
+            args = [[cls(_, evaluate=True)] for _ in expr.args[0]]
+            return ImmutableDenseMatrix(args)
+
         elif isinstance(expr, (Matrix, ImmutableDenseMatrix)):
             newexpr = Matrix.zeros(*expr.shape)
             for i in range(expr.shape[0]):

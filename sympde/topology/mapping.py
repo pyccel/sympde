@@ -21,6 +21,8 @@ from sympde.core.basic        import CalculusFunction
 from sympde.core.basic        import _coeffs_registery
 from sympde.core.matrices     import MatrixSymbolicExpr, MatrixElement, SymbolicTrace, Inverse
 from sympde.core.matrices     import SymbolicDeterminant, Transpose
+from sympde.core.matrices     import Vector
+from sympde.core.matrices     import Matrix as SympdeMatrix
 from sympde.calculus.core     import PlusInterfaceOperator, MinusInterfaceOperator
 from sympde.calculus.core     import grad, div, curl, laplace #, hessian
 from sympde.calculus.core     import dot, inner, outer, _diff_ops
@@ -797,7 +799,10 @@ class Covariant(MappingApplication):
             the covariant transformation
         """
 
-        if not isinstance(v, (tuple, list, Tuple, ImmutableDenseMatrix, Matrix)):
+        if isinstance(v, (Vector, SympdeMatrix)):
+            v = v.to_sympy()
+
+        elif not isinstance(v, (tuple, list, Tuple, ImmutableDenseMatrix, Matrix)):
             raise TypeError('> Expecting a tuple, list, Tuple, Matrix')
 
         assert F.pdim == F.ldim
@@ -849,7 +854,10 @@ class Contravariant(MappingApplication):
         if not isinstance(F, Mapping):
             raise TypeError('> Expecting a Mapping')
 
-        if not isinstance(v, (tuple, list, Tuple, ImmutableDenseMatrix, Matrix)):
+        if isinstance(v, (Vector, SympdeMatrix)):
+            v = v.to_sympy()
+
+        elif not isinstance(v, (tuple, list, Tuple, ImmutableDenseMatrix, Matrix)):
             raise TypeError('> Expecting a tuple, list, Tuple, Matrix')
 
         M = Jacobian(F)

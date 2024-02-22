@@ -4,7 +4,6 @@
 
 import pytest
 
-from sympy.core.containers import Tuple
 from sympy import Function
 from sympy import pi, cos, sin, exp
 from sympy import ImmutableDenseMatrix as Matrix
@@ -17,6 +16,7 @@ from sympde.calculus import jump, avg, Dn, minus, plus
 from sympde.core import Matrix as SympdeMatrix
 from sympde.core import Vector
 from sympde.core import Transpose
+from sympde.core import Vector
 
 from sympde.topology import dx1, dx2, dx3
 from sympde.topology import dx, dy, dz
@@ -88,7 +88,7 @@ def test_linear_expr_2d_2():
     u,u1,u2 = [element_of(V, name=i) for i in ['u', 'u1', 'u2']]
     v,v1,v2 = [element_of(V, name=i) for i in ['v', 'v1', 'v2']]
 
-    g = Tuple(x,y)
+    g = Vector([x,y], name='g')
     l = LinearExpr(v, dot(g, v))
     print(l)
     print(l.expr)
@@ -99,8 +99,8 @@ def test_linear_expr_2d_2():
     # ...
 
     # ...
-    g1 = Tuple(x,0)
-    g2 = Tuple(0,y)
+    g1 = Vector([x,0], name='g1')
+    g2 = Vector([0,y], name='g2')
     l = LinearExpr((v1,v2), dot(g1, v1) + dot(g2, v2))
     print(l)
     print(l.expr)
@@ -138,7 +138,7 @@ def test_linear_form_2d_1():
     # ...
 
     # ...
-    g  = Tuple(x**2, y**2)
+    g = Vector([x**2, y**2], name='g')
     l  = LinearForm(v, int_1(v*dot(g, nn)))
     print(l)
 
@@ -148,7 +148,7 @@ def test_linear_form_2d_1():
     # ...
 
     # ...
-    g = Tuple(x**2, y**2)
+    g = Vector([x**2, y**2], name='g')
     l = LinearForm(v, int_1(v*dot(g, nn)) + int_0(x*y*v))
 
     assert(len(l.domain.args) == 2)
@@ -168,7 +168,7 @@ def test_linear_form_2d_1():
     # ...
 
     # ...
-    g = Tuple(x,y)
+    g = Vector([x,y], name='g')
     l1 = LinearForm(u1, int_0(x*y*u1))
     l2 = LinearForm(u2, int_0(dot(grad(u2), g)))
 
@@ -485,14 +485,14 @@ def test_terminal_expr_linear_2d_2():
 
     # TODO
 #    # ...
-#    g = Tuple(x**2, y**2)
+#    g = Vector([x**2,y**2], name='g')
 #    l = LinearForm(v, v*trace_1(g, B1))
 #    print(TerminalExpr(l))
 #    print('')
 #    # ...
 #
 #    # ...
-#    g = Tuple(x**2, y**2)
+#    g = Vector([x**2,y**2], name='g')
 #    l = LinearForm(v, v*trace_1(g, B1) + x*y*v)
 #    print(TerminalExpr(l))
 #    print('')
@@ -506,7 +506,7 @@ def test_terminal_expr_linear_2d_2():
 #    # ...
 #
 #    # ...
-#    g = Tuple(x,y)
+#    g = Vector([x,y], name='g')
 #    l1 = LinearForm(v1, x*y*v1)
 #    l2 = LinearForm(v2, dot(grad(v2), g))
 #
@@ -524,7 +524,7 @@ def test_terminal_expr_linear_2d_2():
 #    # ...
 #
 #    # ...
-#    g = Tuple(x**2, y**2)
+#    g = Vector([x**2,y**2], name='g')
 #    l1 = LinearForm(v1, x*y*v1)
 #    l2 = LinearForm(v1, v1)
 #    l3 = LinearForm(v, v*trace_1(g, B1))
