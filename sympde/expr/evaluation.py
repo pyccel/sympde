@@ -636,8 +636,10 @@ class TerminalExpr(CalculusFunction):
                 raise ValueError('Expecting one argument.')
 
             v = expr.args[0]
-            if not isinstance(v, ScalarFunction):
-                raise TypeError('Expecting a ScalarFunction.')
+            if not isinstance(v, (ScalarFunction, minus, plus)):
+                raise TypeError('Expecting a ScalarFunction, PlusInterfaceOperator or MinusInterfaceOperator')
+
+            v = cls.eval(v, domain=domain)
 
             nn = NormalVector('nn')
             return cls.eval(dot(grad(v),nn), domain=domain)
