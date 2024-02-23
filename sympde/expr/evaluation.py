@@ -27,7 +27,9 @@ from sympde.core.matrices import Vector as SympdeVector
 
 from sympde.calculus import jump, avg, minus, plus
 from sympde.calculus import Jump, is_zero
+from sympde.calculus import grad, dot
 from sympde.calculus.core import _generic_ops, _diff_ops
+from sympde.calculus.core import NormalDerivative
 
 from sympde.topology.basic   import BasicDomain, Union, Interval
 from sympde.topology.basic   import Boundary, Interface
@@ -628,6 +630,17 @@ class TerminalExpr(CalculusFunction):
 
         elif isinstance(expr, VectorFunction):
             return ImmutableDenseMatrix([[expr[i]] for i in range(dim)])
+
+        elif isinstance(expr, NormalDerivative):
+            if not len(expr.args) == 1:
+                raise ValueError('Expecting one argument.')
+
+            v = expr.args[0]
+            if not isinstance(v, ScalarFunction):
+                raise TypeError('Expecting a ScalarFunction.')
+
+            nn = NormalVector('nn')
+            return cls.eval(dot(grad(v),nn), domain=domain)
 
         elif isinstance(expr, (minus, plus)):
             newexpr = cls.eval(expr.args[0], domain=domain)
