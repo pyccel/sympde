@@ -49,9 +49,9 @@ class Domain(BasicDomain):
             mapping : Optional[Mapping] = None,
             logical_domain : Optional[Domain] = None):
         """
-        Interiors or connectivity must be given. When the mapping is given 
+        Interiors or connectivity must be given. When the mapping is given
         then logical_domain must be specified as well.
-    
+
         Parameters
         ----------
         name : str
@@ -165,13 +165,13 @@ class Domain(BasicDomain):
 
     @property
     def interior(self) -> TypeUnion[Union, InteriorDomain]:
-        """Either a Union object containing the interiors or just the interior 
+        """Either a Union object containing the interiors or just the interior
         domain if there is only one"""
         return self.args[1]
 
     @property
     def boundary(self) -> TypeUnion[Union, Boundary]:
-        """Either a Union object containing the boundaries or just a boundary 
+        """Either a Union object containing the boundaries or just a boundary
         if there is only one"""
         return self.args[2]
 
@@ -205,8 +205,8 @@ class Domain(BasicDomain):
         """
         Union of the interfaces
 
-        The Union constructor is applied to the interfaces. If there is only 
-        one interface it returns the interface object and None if there is no 
+        The Union constructor is applied to the interfaces. If there is only
+        one interface it returns the interface object and None if there is no
         interface.
         """
         return self.connectivity.interfaces
@@ -1004,4 +1004,52 @@ def split(domain, value):
     else:
         raise NotImplementedError('TODO')
 
+#==============================================================================
+def meshgrid(*xi, name=None):
+    """
+    Return a Domain that is the union of small lines/squares/cubes from coordinate vectors.
 
+    Parameters
+    ----------
+    x1, x2,..., xn : array_like
+        1-D arrays representing the coordinates of a grid.
+    """
+
+    ndim = len(xi)
+    assert ndim in (1,2,3)
+
+    if ndim in (1,3):
+        raise NotImplementedError('ndim = 1,3 not yet implemented.')
+
+    if name is None:
+        name = 'domain'
+
+    subdomains = []
+    connectivities = []
+
+    if ndim == 2:
+        xs, ys = xi
+        nx = len(xs); ny = len(ys)
+
+        index = lambda i,j: i*(ny-1) + j
+
+        # create subdomains
+        for i in range(nx-1):
+            for j in range(ny-1):
+                _name = '{name}_{i}{j}'.format(name=name, i=i, j=j)
+                subdomain = Square(_name, bounds1=(xs[i], xs[i+1]), bounds2=(ys[j], ys[j+1]))
+                subdomains.append(subdomain)
+
+        # connectivity along the x axis
+        for i in range(nx-2):
+            for j in range(ny-1):
+                connectivity = ((index(i,j),0,1),(index(i+1,j),0,-1))
+                connectivities.append(connectivity)
+
+        # connectivity along the y axis
+        for i in range(nx-1):
+            for j in range(ny-2):
+                connectivity = ((index(i,j),1,1),(index(i,j+1),1,-1))
+                connectivities.append(connectivity)
+
+    return Domain.join(subdomains, connectivities, name)
