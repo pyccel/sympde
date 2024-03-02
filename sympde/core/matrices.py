@@ -406,8 +406,8 @@ class Vector(MatrixSymbolicExpr):
         return False
 
     def to_sympy(self):
-        _args = [[_] for _ in self.args[0]]
-        return ImmutableDenseMatrix(_args)
+        args = [[a] for a in self.args[0]]
+        return ImmutableDenseMatrix(args)
 
 
 Basic._constructor_postprocessor_mapping[MatrixSymbolicExpr] = {
