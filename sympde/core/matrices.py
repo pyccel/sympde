@@ -296,44 +296,29 @@ class MatrixElement(Expr):
         return '{}[{}]'.format(sstr(self.args[0]),sstr(self.args[1]))
 
 class Matrix(MatrixSymbolicExpr):
+    def __new__(cls, mat, *, name):
+        if not isinstance(mat, list):
+            raise TypeError('Positional argument `mat` should be a list of lists.')
 
-    def __new__(cls, *args, **options):
-        name = options.pop('name')
-        if name is None:
-            raise ValueError('Expecting a name keyword.')
+        for row in mat:
+            if not isinstance(row, list):
+                raise TypeError('Each row of `mat` should be a list.')
 
-        if not( len(args) == 1 ):
-            raise ValueError('Expecting one argument.')
+        row_sizes = {len(row) for row in mat}
+        if len(row_sizes) != 1:
+            raise ValueError('Each row of `mat` should have the same length.')
 
-        _args = args[0]
-        if not isinstance(_args, list):
-            raise TypeError('Expecting a list.')
+        if not isinstance(name, str):
+            raise TypeError('Keyword-only argument `name` must be a string.')
 
-        for _ in _args:
-            if not isinstance(_, list):
-                raise TypeError('args components must be a list.')
-
-        sizes = [len(_) for _ in _args]
-        if not( len(set(sizes)) == 1):
-            raise ValueError('Wrong matrix size')
-
-        # make _args a Tuple of Tuples
-        newargs = []
-        for _ in _args:
-            a = Tuple(*_)
-            newargs.append(a)
-        _args = Tuple(*newargs)
-
-        args = (_args, args[1:])
-
-        obj = Expr.__new__(cls, *args)
-        obj._name = name
-
+        # Call constructor of base class Expr with immutable arguments
+        new_mat = Tuple(*[Tuple(*row) for row in mat])
+        obj = Expr.__new__(cls, new_mat, name)
         return obj
 
     @property
     def name(self):
-        return self._name
+        return self.args[1]
 
     def __getitem__(self, key):
         i,j = key
@@ -362,31 +347,21 @@ class Matrix(MatrixSymbolicExpr):
 
 class Vector(MatrixSymbolicExpr):
 
-    def __new__(cls, *args, **options):
-        name = options.pop('name')
-        if name is None:
-            raise ValueError('Expecting a name keyword.')
+    def __new__(cls, vec, *, name):
+        if not isinstance(vec, list):
+            raise TypeError('Positional argument `vec` should be a list.')
 
-        if not( len(args) == 1 ):
-            raise ValueError('Expecting one argument.')
+        if not isinstance(name, str):
+            raise TypeError('Keyword-only argument `name` must be a string.')
 
-        _args = args[0]
-        if not isinstance(_args, list):
-            raise TypeError('Expecting a list.')
-
-        # make _args a Tuple
-        _args = Tuple(*_args)
-
-        args = (_args, args[1:])
-
-        obj = Expr.__new__(cls, *args)
-        obj._name = name
-
+        # Call constructor of base class Expr with immutable arguments
+        new_vec = Tuple(*vec)
+        obj = Expr.__new__(cls, new_vec, name)
         return obj
 
     @property
     def name(self):
-        return self._name
+        return self.args[1]
 
     def __getitem__(self, key):
         i = key
