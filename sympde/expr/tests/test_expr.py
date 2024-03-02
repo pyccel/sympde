@@ -1914,8 +1914,8 @@ def test_matrices_vectors():
     V = ScalarFunctionSpace('V', domain)
     W = VectorFunctionSpace('W', domain)
 
-    u,v   = [element_of(V, name=i) for i in ['u', 'v']]
-    F,G   = [element_of(W, name=i) for i in ['F', 'G']]
+    u, v   = elements_of(V, names='u, v')
+    F, G   = elements_of(W, names='F, G')
 
     #A = SympdeMatrix([[cos(theta), 0], [0, sin(theta)]], name='A')
     A = SympdeMatrix([[1, 2, 3], [3, 4, 5], [5, 6, 7]], name='A')
