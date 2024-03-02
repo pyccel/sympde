@@ -337,7 +337,7 @@ class Matrix(MatrixSymbolicExpr):
         try:
             i,j = key
             return self.args[0][i][j]
-        except:
+        except (ValueError,IndexError):
             return MatrixElement(self, key)
 
     def _sympystr(self, printer):
@@ -389,8 +389,7 @@ class Vector(MatrixSymbolicExpr):
         try:
             i = key
             return self.args[0][i]
-        except:
-            # TODO ARA do we keep returning a MatrixElement?
+        except (ValueError,IndexError):
             return MatrixElement(self, key)
 
     def _sympystr(self, printer):
