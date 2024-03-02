@@ -85,7 +85,7 @@ class DifferentialOperator(LinearOperator):
             args = Tuple(*args)
             return Matrix([args])
         elif isinstance(expr, Vector):
-            args = [[cls(_, evaluate=True)] for _ in expr.args[0]]
+            args = [[cls(a, evaluate=True)] for a in expr.args[0]]
             return ImmutableDenseMatrix(args)
 
         elif isinstance(expr, (Matrix, ImmutableDenseMatrix)):
