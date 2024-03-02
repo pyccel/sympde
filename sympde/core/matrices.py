@@ -1,8 +1,14 @@
 from sympy                 import Expr, S
 from sympy                 import Add, Mul, Pow
+from sympy                 import Tuple
 from sympy                 import sympify
 from sympy.core.decorators import call_highest_priority
 from sympde.core.basic     import _coeffs_registery, Basic
+
+from sympy import ImmutableDenseMatrix
+
+import functools
+
 
 class MatrixSymbolicExpr(Expr):
     is_commutative = False
@@ -288,6 +294,106 @@ class MatrixElement(Expr):
     def _sympystr(self, printer):
         sstr = printer.doprint
         return '{}[{}]'.format(sstr(self.args[0]),sstr(self.args[1]))
+
+class Matrix(MatrixSymbolicExpr):
+    def __new__(cls, mat, *, name):
+        if not isinstance(mat, list):
+            raise TypeError('Positional argument `mat` should be a list of lists.')
+
+        for row in mat:
+            if not isinstance(row, list):
+                raise TypeError('Each row of `mat` should be a list.')
+
+        row_sizes = {len(row) for row in mat}
+        if len(row_sizes) != 1:
+            raise ValueError('Each row of `mat` should have the same length.')
+
+        if not isinstance(name, str):
+            raise TypeError('Keyword-only argument `name` must be a string.')
+
+        # Call constructor of base class Expr with immutable arguments
+        new_mat = Tuple(*[Tuple(*row) for row in mat])
+        obj = Expr.__new__(cls, new_mat, name)
+        return obj
+
+    @property
+    def name(self):
+        return self.args[1]
+
+    def __getitem__(self, key):
+        i,j = key
+        return self.args[0][i][j]
+
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        return '{}'.format(sstr(self.name))
+
+    def __hash__(self):
+        return hash((self.name, self.args))
+
+    def __eq__(self, other):
+        if not isinstance(other, Matrix):
+            return False
+
+        if not self.name == other.name:
+            return False
+
+        result = all(x == y for x, y in zip(self.args[0], other.args[0]))
+        return result
+
+    def to_sympy(self):
+        return ImmutableDenseMatrix(self.args[0])
+
+
+class Vector(MatrixSymbolicExpr):
+
+    def __new__(cls, vec, *, name):
+        if not isinstance(vec, list):
+            raise TypeError('Positional argument `vec` should be a list.')
+
+        if not isinstance(name, str):
+            raise TypeError('Keyword-only argument `name` must be a string.')
+
+        # Call constructor of base class Expr with immutable arguments
+        new_vec = Tuple(*vec)
+        obj = Expr.__new__(cls, new_vec, name)
+        return obj
+
+    @property
+    def name(self):
+        return self.args[1]
+
+    def __getitem__(self, key):
+        i = key
+        return self.args[0][i]
+
+    def _sympystr(self, printer):
+        sstr = printer.doprint
+        return '{}'.format(sstr(self.name))
+
+    def __hash__(self):
+        return hash((self.name, self.args))
+
+    def __eq__(self, other):
+        # TODO BUG
+        # We should check that other is a Vector
+        # right now, there is a problem when using Cross
+        # see the linearity test of
+        # f = lambda u,v: cross(b*u, b*v)
+        # where b is a Vector
+        if not isinstance(other, Vector):
+            return False
+
+        if not self.name == other.name:
+            return False
+
+        result = self.args[0] == other.args[0]
+        return result
+
+    def to_sympy(self):
+        args = [[a] for a in self.args[0]]
+        return ImmutableDenseMatrix(args)
+
 
 Basic._constructor_postprocessor_mapping[MatrixSymbolicExpr] = {
     "Mul": [lambda x: MatSymbolicMul(*x.args)],

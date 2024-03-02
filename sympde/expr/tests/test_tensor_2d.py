@@ -2,9 +2,9 @@
 
 # TODO: - add assert to every test
 
-from sympy.core.containers import Tuple
 
 from sympde.core     import Constant
+from sympde.core     import Vector
 from sympde.calculus import grad, dot, curl, div
 #from sympde.calculus import laplace
 #from sympde.topology import dx
@@ -112,7 +112,7 @@ def test_tensorize_2d_3():
 
     bx = Constant('bx')
     by = Constant('by')
-    b  = Tuple(bx, by)
+    b = Vector([bx,by], name='b')
 
     expr = integral(domain, dot(b, grad(v)) * dot(b, grad(u)))
     a = BilinearForm((u,v), expr)

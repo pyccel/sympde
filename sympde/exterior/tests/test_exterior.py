@@ -2,7 +2,6 @@
 
 
 from sympy import symbols
-from sympy import Tuple
 from sympy import Matrix
 from sympy import srepr
 from sympy import Symbol
