@@ -620,7 +620,6 @@ class TerminalExpr(CalculusFunction):
             return expr.to_sympy()
 
         elif isinstance(expr, SympdeVector):
-#            return ImmutableDenseMatrix([expr.args[0]])
             return expr.to_sympy()
 
         elif isinstance(expr, ScalarFunction):
