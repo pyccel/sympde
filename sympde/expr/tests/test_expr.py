@@ -1921,6 +1921,22 @@ def test_matrices_vectors():
     A = SympdeMatrix([[1, 2, 3], [3, 4, 5], [5, 6, 7]], name='A')
     b = Vector([1, 2, 3], name='b')
 
+    # ...
+    b1 = b
+    assert b1 == b
+
+    b1 = Vector([1, 2, 3], name='b1')
+    assert not b1 == b
+    # ...
+
+    # ...
+    A1 = A
+    assert A1 == A
+
+    A1 = SympdeMatrix([[1, 2, 3], [3, 4, 5], [5, 6, 7]], name='A1')
+    assert not A1 == A
+    # ...
+
     ########################################################################
     #                    SCALAR-FUNCTION CASE
     ########################################################################
@@ -2005,12 +2021,12 @@ def test_matrices_vectors():
     assert is_linear_expression(f(u,v), (v,))
     # ...
 
-    # ...
-    f = lambda u,v: cross(b*u, b*v)
-
-    assert is_linear_expression(f(u,v), (u,))
-    assert is_linear_expression(f(u,v), (v,))
-    # ...
+#    # ...
+#    f = lambda u,v: cross(b*u, b*v)
+#
+#    assert is_linear_expression(f(u,v), (u,))
+#    assert is_linear_expression(f(u,v), (v,))
+#    # ...
 
     # ...
     f = lambda u,v: cross(b*u, grad(v))

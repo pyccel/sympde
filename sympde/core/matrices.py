@@ -7,6 +7,8 @@ from sympde.core.basic     import _coeffs_registery, Basic
 
 from sympy import ImmutableDenseMatrix
 
+import functools
+
 
 class MatrixSymbolicExpr(Expr):
     is_commutative = False
@@ -344,11 +346,15 @@ class Matrix(MatrixSymbolicExpr):
     def __hash__(self):
         return hash((self.name, self.args))
 
-    def __eq__(self, a):
-        if isinstance(a, Matrix):
-            eq = self.name == a.name
-            return eq
-        return False
+    def __eq__(self, other):
+        if not isinstance(other, Matrix):
+            return False
+
+        if not self.name == other.name:
+            return False
+
+        result = all(x == y for x, y in zip(self.args[0], other.args[0]))
+        return result
 
     def to_sympy(self):
         return ImmutableDenseMatrix(self.args[0])
@@ -393,11 +399,21 @@ class Vector(MatrixSymbolicExpr):
     def __hash__(self):
         return hash((self.name, self.args))
 
-    def __eq__(self, a):
-        if isinstance(a, Matrix):
-            eq = self.name == a.name
-            return eq
-        return False
+    def __eq__(self, other):
+        # TODO BUG
+        # We should check that other is a Vector
+        # right now, there is a problem when using Cross
+        # see the linearity test of
+        # f = lambda u,v: cross(b*u, b*v)
+        # where b is a Vector
+        if not isinstance(other, Vector):
+            return False
+
+        if not self.name == other.name:
+            return False
+
+        result = self.args[0] == other.args[0]
+        return result
 
     def to_sympy(self):
         args = [[a] for a in self.args[0]]
