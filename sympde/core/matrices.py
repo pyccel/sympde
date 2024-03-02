@@ -334,11 +334,8 @@ class Matrix(MatrixSymbolicExpr):
         return self._name
 
     def __getitem__(self, key):
-        try:
-            i,j = key
-            return self.args[0][i][j]
-        except (ValueError,IndexError):
-            return MatrixElement(self, key)
+        i,j = key
+        return self.args[0][i][j]
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -386,11 +383,8 @@ class Vector(MatrixSymbolicExpr):
         return self._name
 
     def __getitem__(self, key):
-        try:
-            i = key
-            return self.args[0][i]
-        except (ValueError,IndexError):
-            return MatrixElement(self, key)
+        i = key
+        return self.args[0][i]
 
     def _sympystr(self, printer):
         sstr = printer.doprint
