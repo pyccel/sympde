@@ -1937,6 +1937,12 @@ def test_matrices_vectors():
     assert not A1 == A
     # ...
 
+    # ... some tests on cross operator & vectors
+    assert cross(b,b)     == 0
+    assert cross(b*u,b*u) == 0
+    assert cross(b*u,b*v) == 0
+    # ...
+
     ########################################################################
     #                    SCALAR-FUNCTION CASE
     ########################################################################
@@ -2021,12 +2027,12 @@ def test_matrices_vectors():
     assert is_linear_expression(f(u,v), (v,))
     # ...
 
-#    # ...
-#    f = lambda u,v: cross(b*u, b*v)
-#
-#    assert is_linear_expression(f(u,v), (u,))
-#    assert is_linear_expression(f(u,v), (v,))
-#    # ...
+    # ...
+    f = lambda u,v: cross(b*u, b*v)
+
+    assert is_linear_expression(f(u,v), (u,))
+    assert is_linear_expression(f(u,v), (v,))
+    # ...
 
     # ...
     f = lambda u,v: cross(b*u, grad(v))

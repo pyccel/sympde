@@ -428,6 +428,14 @@ class Cross(BasicOperator):
             a,b = b,a
             c   = -c
 
+        # after simplifications, the expression can be reduced to 0 in some cases
+        # here's an example;
+        # if b is a Vector and u and v are scalar functions,
+        # we should have the following
+        # cross(b*u,b*v) = u*v*cross(b,b) = 0
+        if a == b:
+            return S.Zero
+
         obj = Basic.__new__(cls, a, b)
 
         return c*obj
