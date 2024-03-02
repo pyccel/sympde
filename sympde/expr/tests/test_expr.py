@@ -1882,8 +1882,8 @@ def test_interface_integral_4():
 
     assert len(expr) == 1
     assert expr[0].target == B.get_boundary(axis=0, ext=-1)
-    assert expr[0].expr[0,0]   == u2[0]*v2[0]
-    assert expr[0].expr[1,1]   == u2[1]*v2[1]
+    assert expr[0].expr[0,0] == u2[0]*v2[0]
+    assert expr[0].expr[1,1] == u2[1]*v2[1]
 
     a2 = BilinearForm((u2,v2), integral(I, dot(minus(u2),minus(v2))))
 
@@ -1891,11 +1891,9 @@ def test_interface_integral_4():
 
     assert len(expr) == 1
     assert expr[0].target == A.get_boundary(axis=0, ext=1)
-    assert expr[0].expr[0,0]   == u2[0]*v2[0]
-    assert expr[0].expr[1,1]   == u2[1]*v2[1]
-
+    assert expr[0].expr[0,0] == u2[0]*v2[0]
+    assert expr[0].expr[1,1] == u2[1]*v2[1]
     # ...
-
 
 #==============================================================================
 def test_matrices_vectors():
@@ -1905,7 +1903,7 @@ def test_matrices_vectors():
 
     kappa = Constant('kappa', is_real=True)
     mu    = Constant('mu',    is_real=True)
-    theta = Constant('theta',   is_real=True)
+    theta = Constant('theta', is_real=True)
     a1    = Constant('a1',    is_real=True)
     a2    = Constant('a2',    is_real=True)
     b1    = Constant('b1',    is_real=True)
@@ -1914,8 +1912,8 @@ def test_matrices_vectors():
     V = ScalarFunctionSpace('V', domain)
     W = VectorFunctionSpace('W', domain)
 
-    u, v   = elements_of(V, names='u, v')
-    F, G   = elements_of(W, names='F, G')
+    u, v  = elements_of(V, names='u, v')
+    F, G  = elements_of(W, names='F, G')
 
     #A = SympdeMatrix([[cos(theta), 0], [0, sin(theta)]], name='A')
     A = SympdeMatrix([[1, 2, 3], [3, 4, 5], [5, 6, 7]], name='A')
@@ -2109,7 +2107,6 @@ def test_matrices_vectors():
     assert is_linear_expression(f(F,G), (F,))
     assert is_linear_expression(f(F,G), (G,))
     # ...
-
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
