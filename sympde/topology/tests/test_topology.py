@@ -10,8 +10,10 @@ from sympde.topology import Area, Mapping
 from sympde.topology import Interface
 from sympde.topology import Line, Square, Cube
 from sympde.topology import IdentityMapping
+from sympde.topology import meshgrid
 
 import os
+import numpy as np
 
 base_dir = os.path.dirname(os.path.realpath(__file__))
 topo_dir = os.path.join(base_dir, 'data')
@@ -326,6 +328,41 @@ def test_hash():
     hash_2 = hash(A)
 
     assert hash_1 != hash_2
+
+#==============================================================================
+def test_meshgrid_1d():
+
+    x1 = np.linspace(0., 1., 5)
+
+    domain = meshgrid(x1)
+
+    assert len(domain.interior) == 4
+    assert len(domain.interfaces) == 3
+
+#==============================================================================
+def test_meshgrid_2d():
+
+    x1 = np.linspace(0., 1., 3)
+    x2 = np.linspace(0., 1., 4)
+
+    domain = meshgrid(x1, x2)
+
+    assert len(domain.interior) == 6
+    assert len(domain.interfaces) == 7
+
+#==============================================================================
+def test_meshgrid_3d():
+
+    x1 = np.linspace(0., 1., 3)
+    x2 = np.linspace(0., 1., 4)
+    x3 = np.linspace(0., 1., 5)
+
+    domain = meshgrid(x1, x2, x3)
+
+    assert len(domain.interior) == 24
+    assert len(domain.interfaces) == 46
+
+
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE

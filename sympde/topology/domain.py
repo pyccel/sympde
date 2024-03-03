@@ -1018,16 +1018,30 @@ def meshgrid(*xi, name=None):
     ndim = len(xi)
     assert ndim in (1,2,3)
 
-    if ndim in (1,3):
-        raise NotImplementedError('ndim = 1,3 not yet implemented.')
-
     if name is None:
         name = 'domain'
 
     subdomains = []
     connectivities = []
 
-    if ndim == 2:
+    if ndim == 1:
+        xs, = xi
+        nx = len(xs)
+
+        index = lambda i: i
+
+        # create subdomains
+        for i in range(nx-1):
+            _name = '{name}_{i}'.format(name=name, i=i)
+            subdomain = Line(_name, bounds=(xs[i], xs[i+1]))
+            subdomains.append(subdomain)
+
+        # connectivity along the x axis
+        for i in range(nx-2):
+            connectivity = ((index(i),0,1),(index(i+1),0,-1))
+            connectivities.append(connectivity)
+
+    elif ndim == 2:
         xs, ys = xi
         nx = len(xs); ny = len(ys)
 
@@ -1051,5 +1065,43 @@ def meshgrid(*xi, name=None):
             for j in range(ny-2):
                 connectivity = ((index(i,j),1,1),(index(i,j+1),1,-1))
                 connectivities.append(connectivity)
+
+    elif ndim == 3:
+        xs, ys, zs = xi
+        nx = len(xs); ny = len(ys); nz = len(zs)
+
+        index = lambda i,j,k: (i*(ny-1) + j)*(nz-1) + k
+
+        # create subdomains
+        for i in range(nx-1):
+            for j in range(ny-1):
+                for k in range(nz-1):
+                    _name = '{name}_{i}{j}{k}'.format(name=name, i=i, j=j, k=k)
+                    subdomain = Cube(_name,
+                                     bounds1=(xs[i], xs[i+1]),
+                                     bounds2=(ys[j], ys[j+1]),
+                                     bounds3=(zs[k], zs[k+1]))
+                    subdomains.append(subdomain)
+
+        # connectivity along the x axis
+        for i in range(nx-2):
+            for j in range(ny-1):
+                for k in range(nz-1):
+                    connectivity = ((index(i,j,k),0,1),(index(i+1,j,k),0,-1))
+                    connectivities.append(connectivity)
+
+        # connectivity along the y axis
+        for i in range(nx-1):
+            for j in range(ny-2):
+                for k in range(nz-1):
+                    connectivity = ((index(i,j,k),1,1),(index(i,j+1,k),1,-1))
+                    connectivities.append(connectivity)
+
+        # connectivity along the z axis
+        for i in range(nx-1):
+            for j in range(ny-1):
+                for k in range(nz-2):
+                    connectivity = ((index(i,j,k),2,1),(index(i,j,k+1),2,-1))
+                    connectivities.append(connectivity)
 
     return Domain.join(subdomains, connectivities, name)
