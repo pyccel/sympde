@@ -496,6 +496,7 @@ def test_calculus_2d_4():
     assert(plus(a*u) == a*plus(u))
     # ...
 
+#==============================================================================
 def test_calculus_2d_5():
 
     DIM = 2
@@ -532,10 +533,10 @@ def test_calculus_2d_5():
     assert(plus(u+v)      == plus(u) + plus(v))
     assert(plus(a*u)      == a*plus(u))
     assert(div(plus(u+v)) == div(plus(u)) + div(plus(v)))
+
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
-
 def teardown_module():
     from sympy.core import cache
     cache.clear_cache()
@@ -543,13 +544,3 @@ def teardown_module():
 def teardown_function():
     from sympy.core import cache
     cache.clear_cache()
-
-#test_calculus_2d_1()
-#test_calculus_2d_2()
-#test_calculus_2d_3()
-#test_calculus_2d_4()
-#test_calculus_3d()
-
-#test_calculus_3d_3()
-#test_calculus_3d_4()
-#test_calculus_3d_5()
