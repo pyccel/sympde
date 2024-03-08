@@ -211,32 +211,53 @@ class MatrixConstant(BasicConstant):
         return IndexedElement(self, key)
 
 #==============================================================================
-class Constant(BasicConstant):
-    def __new__(cls, name, *, shape=None, dtype=None, value=None):
-        if value is None:
-            assert dtype in (int, float, complex)
+def constant(name, shape=None, dtype=None, value=None):
+    if value is None:
+        assert dtype in (int, float, complex)
 
-            if (shape == 0) or (shape is None):
-                return ScalarConstant.__new__(cls, name, dtype=dtype)
-            elif isinstance(shape, int):
-                return VectorConstant.__new__(cls, name, shape=shape, dtype=dtype)
+        if (shape == 0) or (shape is None):
+            return ScalarConstant(name, dtype=dtype)
+        elif isinstance(shape, int):
+            return VectorConstant(name, shape=shape, dtype=dtype)
+        elif isinstance(shape, (tuple, list)):
+            return MatrixConstant(name, shape=shape, dtype=dtype)
+        else:
+            raise ValueError('Wrong arguments')
+    else:
+        if isinstance(value, (int, float, complex)):
+            assert (shape == 0) or (shape is None)
+            return ScalarConstant(name, dtype=dtype, value=value)
+        elif isinstance(value, (tuple, list)):
+            if isinstance(shape, int):
+                return VectorConstant(name, shape=shape, dtype=dtype, value=value)
             elif isinstance(shape, (tuple, list)):
-                return MatrixConstant.__new__(cls, name, shape=shape, dtype=dtype)
+                return MatrixConstant(name, shape=shape, dtype=dtype, value=value)
             else:
                 raise ValueError('Wrong arguments')
         else:
-            if isinstance(value, (int, float, complex)):
-                assert (shape == 0) or (shape is None)
-                return ScalarConstant.__new__(cls, name, dtype=dtype, value=value)
-            elif isinstance(value, (tuple, list)):
-                if isinstance(shape, int):
-                    return VectorConstant.__new__(cls, name, shape=shape, dtype=dtype, value=value)
-                elif isinstance(shape, (tuple, list)):
-                    return MatrixConstant.__new__(cls, name, shape=shape, dtype=dtype, value=value)
-                else:
-                    raise ValueError('Wrong arguments')
-            else:
-                raise ValueError('Wrong arguments')
+            raise ValueError('Wrong arguments')
+
+#==============================================================================
+# TODO to be removed
+class Constant(Symbol):
+    """
+    Represents a constant symbol.
+
+    Examples
+
+    """
+    _label = ''
+    is_number = True
+    def __new__(cls, *args, **kwargs):
+        label = kwargs.pop('label', '')
+
+        obj = Symbol.__new__(cls, *args, **kwargs)
+        obj._label = label
+        return obj
+
+    @property
+    def label(self):
+        return self._label
 
 #==============================================================================
 class CalculusFunction(Function):
@@ -256,4 +277,6 @@ class BasicDerivable(Basic):
     pass
 
 #==============================================================================
-_coeffs_registery = (int, float, complex, Number, NumberSymbol, Constant)
+_coeffs_registery = (int, float, complex, Number, NumberSymbol,
+                     Constant,
+                     ScalarConstant, VectorConstant, MatrixConstant)
