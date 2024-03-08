@@ -9,7 +9,7 @@ from sympy import Function
 from sympy import pi, cos, sin, exp
 from sympy import ImmutableDenseMatrix as Matrix
 
-from sympde.core     import Constant
+from sympde.core     import constant
 from sympde.calculus import grad, dot, inner, rot, div
 from sympde.calculus import laplace, bracket, convect
 from sympde.calculus import jump, avg, Dn, minus, plus
@@ -40,8 +40,8 @@ def test_linear_expr_2d_1():
     domain = Domain('Omega', dim=2)
     x,y = domain.coordinates
 
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
+    kappa = constant('kappa', dtype=float)
+    mu    = constant('mu'   , dtype=float)
 
     V = ScalarFunctionSpace('V', domain)
 
@@ -74,8 +74,8 @@ def test_linear_expr_2d_2():
     domain = Domain('Omega', dim=2)
     x,y = domain.coordinates
 
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
+    kappa = constant('kappa', dtype=float)
+    mu    = constant('mu'   , dtype=float)
 
     V = VectorFunctionSpace('V', domain)
 
@@ -112,8 +112,8 @@ def test_linear_form_2d_1():
 
     x,y = domain.coordinates
 
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
+    kappa = constant('kappa', dtype=float)
+    mu    = constant('mu'   , dtype=float)
     nn    = NormalVector('nn')
 
     V = ScalarFunctionSpace('V', domain)
@@ -178,9 +178,9 @@ def test_linear_form_2d_1():
     tau   = element_of(V, name='tau')
     sigma = element_of(V, name='sigma')
 
-    Re    = Constant('Re', real=True)
-    dt    = Constant('dt', real=True)
-    alpha = Constant('alpha', real=True)
+    Re    = constant('Re', dtype=float)
+    dt    = constant('dt', dtype=float)
+    alpha = constant('alpha', dtype=float)
 
     l1 = LinearForm(tau, int_0(bracket(pn, wn)*tau - 1./Re * dot(grad(tau), grad(wn))))
 
@@ -201,8 +201,8 @@ def test_linear_form_2d_2():
 
     x,y = domain.coordinates
 
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
+    kappa = constant('kappa', dtype=float)
+    mu    = constant('mu'   , dtype=float)
 
     V = VectorFunctionSpace('V', domain)
 
@@ -249,8 +249,8 @@ def test_bilinear_form_2d_1():
 
     x,y = domain.coordinates
 
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
+    kappa = constant('kappa', dtype=float)
+    mu    = constant('mu'   , dtype=float)
     nn    = NormalVector('nn')
 
     V = ScalarFunctionSpace('V', domain)
@@ -320,8 +320,8 @@ def test_bilinear_form_2d_2():
 
     x,y = domain.coordinates
 
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
+    kappa = constant('kappa', dtype=float)
+    mu    = constant('mu'   , dtype=float)
 
     V = VectorFunctionSpace('V', domain)
 
@@ -370,8 +370,8 @@ def test_terminal_expr_linear_2d_1():
 
     x,y = domain.coordinates
 
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
+    kappa = constant('kappa', dtype=float)
+    mu    = constant('mu'   , dtype=float)
     nn    = NormalVector('nn')
 
     V = ScalarFunctionSpace('V', domain)
@@ -452,8 +452,8 @@ def test_terminal_expr_linear_2d_2():
 
     x,y = domain.coordinates
 
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
+    kappa = constant('kappa', dtype=float)
+    mu    = constant('mu'   , dtype=float)
 
     V = VectorFunctionSpace('V', domain)
 
@@ -535,8 +535,8 @@ def test_terminal_expr_linear_2d_3():
 
     x,y = domain.coordinates
 
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
+    kappa = constant('kappa', dtype=float)
+    mu    = constant('mu'   , dtype=float)
     nn    = NormalVector('nn')
 
     V = ScalarFunctionSpace('V', domain)
@@ -562,8 +562,8 @@ def test_terminal_expr_linear_2d_4():
 
     x,y = domain.coordinates
 
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
+    kappa = constant('kappa', dtype=float)
+    mu    = constant('mu'   , dtype=float)
 
     V = ScalarFunctionSpace('V', domain)
 
@@ -585,7 +585,7 @@ def test_terminal_expr_linear_2d_5():
 
     V      = ScalarFunctionSpace('V', domain)
 
-    B_neumann = [domain.get_boundary(axis=0, ext=-1), 
+    B_neumann = [domain.get_boundary(axis=0, ext=-1),
                 domain.get_boundary(axis=1, ext=-1)]
 
     if len(B_neumann) == 1:
@@ -632,9 +632,9 @@ def test_terminal_expr_bilinear_2d_1():
 
     x,y = domain.coordinates
 
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
-    eps   = Constant('eps', real=True)
+    kappa = constant('kappa', dtype=float)
+    mu    = constant('mu'   , dtype=float)
+    eps   = constant('eps', dtype=float)
     nn    = NormalVector('nn')
 
     V = ScalarFunctionSpace('V', domain)
@@ -736,8 +736,8 @@ def test_terminal_expr_bilinear_2d_2():
 
     x,y = domain.coordinates
 
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
+    kappa = constant('kappa', dtype=float)
+    mu    = constant('mu'   , dtype=float)
     nn    = NormalVector('nn')
 
     V = VectorFunctionSpace('V', domain)
@@ -776,8 +776,8 @@ def test_terminal_expr_bilinear_2d_3():
     v = element_of(V, name='v')
     u = element_of(V, name='u')
 
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
+    kappa = constant('kappa', dtype=float)
+    mu    = constant('mu'   , dtype=float)
     nn    = NormalVector('nn')
 
     int_0 = lambda expr: integral(domain , expr)
@@ -909,7 +909,7 @@ def test_linearize_expr_2d_1():
     v1 = element_of(V1, name='v1')
     w1 = element_of(W1, name='w1')
 
-    alpha = Constant('alpha')
+    alpha = constant('alpha', dtype=float)
 
     F = element_of(V1, name='F')
     G = element_of(W1, 'G')
@@ -967,7 +967,7 @@ def test_linearize_expr_2d_2():
 
     v1 = element_of(V1, name='v1')
 
-    alpha = Constant('alpha')
+    alpha = constant('alpha', dtype=float)
 
     F = element_of(V1, name='F')
     G = element_of(V1, name='G')
@@ -1153,7 +1153,7 @@ def test_area_2d_1():
     domain = Domain('Omega', dim=2)
     x,y = domain.coordinates
 
-    mu    = Constant('mu'   , is_real=True)
+    mu    = constant('mu', dtype=float)
 
     e = ElementDomain()
     area = Area(e)
@@ -1175,8 +1175,8 @@ def test_stabilization_2d_1():
     domain = Domain('Omega', dim=2)
     x,y = domain.coordinates
 
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
+    kappa = constant('kappa', dtype=float)
+    mu    = constant('mu'   , dtype=float)
 
     b1 = 1.
     b2 = 0.
@@ -1261,8 +1261,8 @@ def test_user_function_2d_1():
     domain = Domain('Omega', dim=2)
     x,y = domain.coordinates
 
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
+    kappa = constant('kappa', dtype=float)
+    mu    = constant('mu'   , dtype=float)
 
     # right hand side
     f = Function('f')
@@ -1297,8 +1297,8 @@ def test_functional_2d_1():
     domain = Domain('Omega', dim=2)
     x,y = domain.coordinates
 
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
+    kappa = constant('kappa', dtype=float)
+    mu    = constant('mu'   , dtype=float)
 
     V = ScalarFunctionSpace('V', domain)
     F = element_of(V, name='F')
@@ -1422,8 +1422,8 @@ def test_bilinear_form_2d_3():
 
     x,y = domain.coordinates
 
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
+    kappa = constant('kappa', dtype=float)
+    mu    = constant('mu'   , dtype=float)
 
     V = ScalarFunctionSpace('V', domain)
 
@@ -1452,8 +1452,8 @@ def test_bilinear_form_2d_4():
 
     x,y = domain.coordinates
 
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
+    kappa = constant('kappa', dtype=float)
+    mu    = constant('mu'   , dtype=float)
 
     V = VectorFunctionSpace('V', domain)
 
@@ -1482,8 +1482,8 @@ def test_linearity_linear_form_2d_1():
 
     x,y = domain.coordinates
 
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
+    kappa = constant('kappa', dtype=float)
+    mu    = constant('mu'   , dtype=float)
     nn    = NormalVector('nn')
 
     V = ScalarFunctionSpace('V', domain)
@@ -1567,9 +1567,9 @@ def test_linearity_bilinear_form_2d_1():
 
     x,y = domain.coordinates
 
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
-    eps   = Constant('eps', real=True)
+    kappa = constant('kappa', dtype=float)
+    mu    = constant('mu'   , dtype=float)
+    eps   = constant('eps', dtype=float)
     nn    = NormalVector('nn')
 
     V = ScalarFunctionSpace('V', domain)
@@ -1718,7 +1718,7 @@ def test_interface_integral_1():
 #                          + integral(I,      jump(u) * jump(v)))
 
     # Nitsch
-    kappa = Constant('kappa')
+    kappa = constant('kappa', dtype=float)
     expr_I = ( - jump(u) * jump(Dn(v))
                + kappa * jump(u) * jump(v)
                + plus(Dn(u)) * minus(v)

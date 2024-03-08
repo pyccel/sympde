@@ -5,7 +5,7 @@ from sympy import Tuple
 from sympy import Matrix
 from sympy import srepr
 
-from sympde.core import Constant
+from sympde.core import constant
 from sympde.calculus import grad, dot, inner
 from sympde.topology import Domain, element_of
 from sympde.topology import get_index_derivatives_atom
@@ -41,8 +41,8 @@ def test_partial_derivatives_1():
     F,u,v,w = [element_of(V, name=i) for i in ['F', 'u', 'v', 'w']]
     uvw = Tuple(u,v,w)
 
-    alpha = Constant('alpha')
-    beta = Constant('beta')
+    alpha = constant('alpha', dtype=float)
+    beta = constant('beta', dtype=float)
     # ...
 
     assert(dx(x**2) == 2*x)
@@ -85,8 +85,8 @@ def test_partial_derivatives_2():
     V = ScalarFunctionSpace('V', mapped_domain)
     F = element_of(V, name='F')
 
-    alpha = Constant('alpha')
-    beta = Constant('beta')
+    alpha = constant('alpha', dtype=float)
+    beta = constant('beta', dtype=float)
     # ...
 
     # ...

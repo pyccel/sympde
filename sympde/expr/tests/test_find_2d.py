@@ -3,7 +3,7 @@
 from sympy import cos
 #from sympy import exp
 
-from sympde.core     import Constant
+from sympde.core     import constant
 from sympde.calculus import grad, dot
 #from sympde.topology import dx, dy
 from sympde.topology import ScalarFunctionSpace
@@ -29,14 +29,14 @@ def test_find_2d_1():
 
     x,y = domain.coordinates
 
-    alpha = Constant('alpha')
-    kappa = Constant('kappa', real=True)
-    eps   = Constant('eps', real=True)
+    alpha = constant('alpha', dtype=float)
+    kappa = constant('kappa', dtype=float)
+    eps   = constant('eps', dtype=float)
 
     B1 = Boundary(r'\Gamma_1', domain)
     B2 = Boundary(r'\Gamma_2', domain)
     B3 = Boundary(r'\Gamma_3', domain)
-    
+
     int_0 = lambda expr: integral(domain , expr)
     int_1 = lambda expr: integral(B1, expr)
     int_2 = lambda expr: integral(B2, expr)

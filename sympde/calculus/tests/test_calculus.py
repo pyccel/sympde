@@ -6,7 +6,7 @@ from sympy import Function
 from sympy import Integer, Float, Rational
 from sympy import expand
 
-from sympde.core     import Constant
+from sympde.core     import constant
 from sympde.calculus import grad, dot, inner, outer, cross, rot, curl, div
 from sympde.calculus import laplace, hessian, bracket, convect, D, conv
 from sympde.calculus import ArgumentTypeError
@@ -23,7 +23,7 @@ def test_Dot(dim):
     domain  = Domain('Omega', dim=dim)
     W       = VectorFunctionSpace('W', domain)
     a, b, c = elements_of(W, names='a, b, c')
-    r       = Constant('r')
+    r       = constant('r', dtype=float)
 
     # Commutativity (symmetry)
     assert dot(a, b) == dot(b, a)
@@ -53,7 +53,7 @@ def test_Cross(dim):
     domain  = Domain('Omega', dim=dim)
     W       = VectorFunctionSpace('W', domain)
     a, b, c = elements_of(W, names='a, b, c')
-    r       = Constant('r')
+    r       = constant('r', dtype=float)
 
     # Anti-commutativity (anti-symmetry)
     assert cross(a, b) == -cross(b, a)
@@ -82,7 +82,7 @@ def test_Inner(dim):
     domain  = Domain('Omega', dim=dim)
     W       = VectorFunctionSpace('W', domain)
     a, b, c = elements_of(W, names='a, b, c')
-    r       = Constant('r')
+    r       = constant('r', dtype=float)
 
     # Commutativity
     assert inner(a, b) == inner(b, a)
@@ -112,7 +112,7 @@ def test_Outer(dim):
     domain  = Domain('Omega', dim=dim)
     W       = VectorFunctionSpace('W', domain)
     a, b, c = elements_of(W, names='a, b, c')
-    r       = Constant('r')
+    r       = constant('r', dtype=float)
 
     # Not commutative
     assert outer(a, b) != outer(b, a)
@@ -140,7 +140,7 @@ def test_zero_derivative():
     assert grad(Integer(1))     == 0  # sympy Integer
     assert grad(Float(2.3))     == 0  # sympy Float
     assert grad(Rational(6, 7)) == 0  # sympy Rational
-    assert grad(Constant('a'))  == 0  # sympde Constant
+    assert grad(constant('a', dtype=float))  == 0  # sympde Constant
 
     assert laplace(1)              == 0  # native int
     assert laplace(2.3)            == 0  # native float
@@ -148,7 +148,7 @@ def test_zero_derivative():
     assert laplace(Integer(1))     == 0  # sympy Integer
     assert laplace(Float(2.3))     == 0  # sympy Float
     assert laplace(Rational(6, 7)) == 0  # sympy Rational
-    assert laplace(Constant('a'))  == 0  # sympde Constant
+    assert laplace(constant('a', dtype=float))  == 0  # sympde Constant
 
     assert hessian(1)              == 0  # native int
     assert hessian(2.3)            == 0  # native float
@@ -156,7 +156,7 @@ def test_zero_derivative():
     assert hessian(Integer(1))     == 0  # sympy Integer
     assert hessian(Float(2.3))     == 0  # sympy Float
     assert hessian(Rational(6, 7)) == 0  # sympy Rational
-    assert hessian(Constant('a'))  == 0  # sympde Constant
+    assert hessian(constant('a', dtype=float))  == 0  # sympde Constant
 
     # 2D convection of constant scalar field
     domain = Domain('Omega', dim=2)
@@ -169,7 +169,7 @@ def test_zero_derivative():
     assert convect(F, Integer(1))     == 0  # sympy Integer
     assert convect(F, Float(2.3))     == 0  # sympy Float
     assert convect(F, Rational(6, 7)) == 0  # sympy Rational
-    assert convect(F, Constant('a'))  == 0  # sympde Constant
+    assert convect(F, constant('a', dtype=float))  == 0  # sympde Constant
 
     # 3D convection of constant scalar field
     domain = Domain('Omega', dim=3)
@@ -182,7 +182,7 @@ def test_zero_derivative():
     assert convect(G, Integer(1))     == 0  # sympy Integer
     assert convect(G, Float(2.3))     == 0  # sympy Float
     assert convect(G, Rational(6, 7)) == 0  # sympy Rational
-    assert convect(G, Constant('a'))  == 0  # sympde Constant
+    assert convect(G, constant('a', dtype=float))  == 0  # sympde Constant
 
     # Poisson's bracket in 2D
     domain = Domain('Omega', dim=2)
@@ -195,7 +195,7 @@ def test_zero_derivative():
     assert bracket(u, Integer(1))     == 0  # sympy Integer
     assert bracket(u, Float(2.3))     == 0  # sympy Float
     assert bracket(u, Rational(6, 7)) == 0  # sympy Rational
-    assert bracket(u, Constant('a'))  == 0  # sympde Constant
+    assert bracket(u, constant('a', dtype=float))  == 0  # sympde Constant
 
     assert bracket(1             , u) == 0  # native int
     assert bracket(2.3           , u) == 0  # native float
@@ -203,7 +203,7 @@ def test_zero_derivative():
     assert bracket(Integer(1)    , u) == 0  # sympy Integer
     assert bracket(Float(2.3)    , u) == 0  # sympy Float
     assert bracket(Rational(6, 7), u) == 0  # sympy Rational
-    assert bracket(Constant('a') , u) == 0  # sympde Constant
+    assert bracket(constant('a', dtype=float) , u) == 0  # sympde Constant
 
 #==============================================================================
 def test_calculus_2d_1():
@@ -212,7 +212,7 @@ def test_calculus_2d_1():
     V = ScalarFunctionSpace('V', domain)
     W = VectorFunctionSpace('W', domain)
 
-    alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
+    alpha, beta, gamma = [constant(i, dtype=float) for i in ['alpha','beta','gamma']]
 
     f, g, h = elements_of(V, names='f, g, h')
     F, G, H = elements_of(W, names='F, G, H')
@@ -278,7 +278,7 @@ def test_calculus_2d_2():
 
     W = VectorFunctionSpace('W', domain)
 
-    alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
+    alpha, beta, gamma = [constant(i, dtype=float) for i in ['alpha','beta','gamma']]
 
     F, G, H = elements_of(W, names='F, G, H')
 
@@ -295,7 +295,7 @@ def test_calculus_2d_3():
 
     V = ScalarFunctionSpace('V', domain)
 
-    alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
+    alpha, beta, gamma = [constant(i, dtype=float) for i in ['alpha','beta','gamma']]
 
     f, g = elements_of(V, names='f, g')
     K = Function('K')(x,y)
@@ -313,7 +313,7 @@ def test_calculus_3d():
     V = ScalarFunctionSpace('V', domain)
     W = VectorFunctionSpace('W', domain)
 
-    alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
+    alpha, beta, gamma = [constant(i, dtype=float) for i in ['alpha','beta','gamma']]
 
     f, g, h = elements_of(V, names='f, g, h')
     F, G, H = elements_of(W, names='F, G, H')
@@ -430,7 +430,7 @@ def test_calculus_3d_4():
 
     W = VectorFunctionSpace('W', domain)
 
-    alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
+    alpha, beta, gamma = [constant(i, dtype=float) for i in ['alpha','beta','gamma']]
 
     F, G, H = elements_of(W, names='F, G, H')
 
@@ -445,7 +445,7 @@ def test_calculus_3d_5():
 
     W = VectorFunctionSpace('W', domain)
 
-    alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
+    alpha, beta, gamma = [constant(i, dtype=float) for i in ['alpha','beta','gamma']]
 
     F, G, H = elements_of(W, names='F, G, H')
 
@@ -469,7 +469,7 @@ def test_calculus_2d_4():
 
     u, v = elements_of(V, names='u, v')
 
-    a = Constant('a', is_real=True)
+    a = constant('a', dtype=float)
 
     # ... jump operator
     assert(jump(u+v) == jump(u) + jump(v))
@@ -505,7 +505,7 @@ def test_calculus_2d_5():
 
     u, v = elements_of(V, names='u, v')
 
-    a = Constant('a', is_real=True)
+    a = constant('a', dtype=float)
 
     # ... jump operator
     assert(jump(u+v) == jump(u) + jump(v))

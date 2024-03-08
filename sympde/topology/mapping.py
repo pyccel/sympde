@@ -15,7 +15,7 @@ from sympy                 import sqrt, symbols
 from sympy.core.exprtools  import factor_terms
 from sympy.polys.polytools import parallel_poly_from_expr
 
-from sympde.core              import Constant
+from sympde.core              import constant
 from sympde.core.basic        import BasicMapping
 from sympde.core.basic        import CalculusFunction
 from sympde.core.basic        import _coeffs_registery
@@ -220,8 +220,8 @@ class Mapping(BasicMapping):
             # ...
 
             constants        = list(set(args.free_symbols) - set(lcoords))
-            constants_values = {a.name:Constant(a.name) for a in constants}
-            # subs constants as Constant objects instead of Symbol
+            constants_values = {a.name:constant(a.name, dtype=float) for a in constants}
+            # subs constants as sympde constant objects instead of Symbol
             constants_values.update( kwargs )
             d = {a:constants_values[a.name] for a in constants}
             args = args.subs(d)
@@ -976,7 +976,7 @@ class LogicalExpr(CalculusFunction):
         elif isinstance(expr, Transpose):
             arg = cls(expr.arg, domain)
             return Transpose(arg)
-            
+
         elif isinstance(expr, grad):
             arg = expr.args[0]
             if isinstance(mapping, InterfaceMapping):
@@ -1117,7 +1117,7 @@ class LogicalExpr(CalculusFunction):
 
             elif dim == 3:
                 lgrad_arg = LogicalGrad_3d(arg)
-            
+
             grad_arg = Covariant(mapping, lgrad_arg)
             expr = grad_arg[0]
             return expr
@@ -1243,7 +1243,7 @@ class LogicalExpr(CalculusFunction):
             domain  = domain.logical_domain
             det     = TerminalExpr(sqrt((J.T*J).det()), domain=domain)
             return DomainExpression(domain, ImmutableDenseMatrix([[newexpr*det]]))
-            
+
         elif isinstance(expr, Function):
             args = [cls.eval(a, domain) for a in expr.args]
             return type(expr)(*args)

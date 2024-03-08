@@ -6,7 +6,7 @@ from sympy.core.containers import Tuple
 from sympy import pi, cos, sin
 from sympy import ImmutableDenseMatrix as Matrix
 
-from sympde.core        import Constant
+from sympde.core        import constant
 from sympde.calculus    import grad, dot, inner
 from sympde.calculus    import laplace, bracket
 from sympde.topology    import ScalarFunctionSpace, VectorFunctionSpace
@@ -36,9 +36,9 @@ def test_equation_2d_1():
 
     x,y = domain.coordinates
 
-    alpha = Constant('alpha')
-    kappa = Constant('kappa', real=True)
-    eps   = Constant('eps', real=True)
+    alpha = constant('alpha', dtype=float)
+    kappa = constant('kappa', dtype=float)
+    eps   = constant('eps', dtype=float)
     nn    = NormalVector('nn')
 
     B1 = Boundary(r'\Gamma_1', domain)
@@ -48,7 +48,7 @@ def test_equation_2d_1():
     int_0 = lambda expr: integral(domain , expr)
     int_1 = lambda expr: integral(B1, expr)
     int_2 = lambda expr: integral(B2, expr)
-    
+
     # ... bilinear/linear forms
     expr = dot(grad(v), grad(u))
     a1 = BilinearForm((v,u), int_0(expr))
@@ -164,12 +164,12 @@ def test_equation_2d_2():
     tau   = element_of(V, name='tau')
     sigma = element_of(V, name='sigma')
 
-    Re    = Constant('Re', real=True)
-    dt    = Constant('dt', real=True)
-    alpha = Constant('alpha', real=True)
+    Re    = constant('Re', dtype=float)
+    dt    = constant('dt', dtype=float)
+    alpha = constant('alpha', dtype=float)
 
     int_0 = lambda expr: integral(domain , expr)
-    
+
     s  = BilinearForm((tau,sigma), int_0(dot(grad(tau), grad(sigma))))
     m  = BilinearForm((tau,sigma), int_0(tau*sigma))
     b1 = BilinearForm((tau,dw), int_0(bracket(pn, dw) * tau))
@@ -202,7 +202,7 @@ def test_equation_2d_3():
     x,y = domain.coordinates
 
     B1 = Boundary(r'\Gamma_1', domain)
-    
+
     int_0 = lambda expr: integral(domain , expr)
     int_1 = lambda expr: integral(B1, expr)
 
@@ -235,7 +235,7 @@ def test_equation_2d_4():
     x,y = domain.coordinates
 
     B1 = Boundary(r'\Gamma_1', domain)
-    
+
     int_0 = lambda expr: integral(domain , expr)
     int_1 = lambda expr: integral(B1, expr)
 
@@ -283,7 +283,7 @@ def test_equation_2d_5():
     p,q = [element_of(V, name=i) for i in ['p', 'q']]
 
     int_0 = lambda expr: integral(domain , expr)
-    
+
     a0 = BilinearForm((v,u), int_0(inner(grad(v), grad(u))))
     print('     a0 done.')
     a1 = BilinearForm((q,p), int_0(p*q))
@@ -317,8 +317,8 @@ def test_equation_2d_6():
     domain = Square()
     x,y = domain.coordinates
 
-    kappa = Constant('kappa', is_real=True)
-    mu    = Constant('mu'   , is_real=True)
+    kappa = constant('kappa', dtype=float)
+    mu    = constant('mu'   , dtype=float)
 
     b1 = 1.
     b2 = 0.
@@ -335,7 +335,7 @@ def test_equation_2d_6():
     u,v = [element_of(V, name=i) for i in ['u', 'v']]
 
     int_0 = lambda expr: integral(domain , expr)
-    
+
     # ...
     expr = kappa * dot(grad(u), grad(v)) + dot(b, grad(u)) * v
     a = BilinearForm((v,u), int_0(expr))

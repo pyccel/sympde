@@ -1,6 +1,5 @@
 # coding: utf-8
 
-from sympde.core     import Constant
 from sympde.calculus import grad, dot
 from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
 from sympde.topology import element_of

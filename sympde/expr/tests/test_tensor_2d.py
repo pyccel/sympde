@@ -4,7 +4,7 @@
 
 from sympy.core.containers import Tuple
 
-from sympde.core     import Constant
+from sympde.core     import constant
 from sympde.calculus import grad, dot, curl, div
 #from sympde.calculus import laplace
 #from sympde.topology import dx
@@ -23,7 +23,7 @@ def test_tensorize_2d_1():
 
     domain = Domain('Omega', dim=2)
 
-    mu    = Constant('mu'   , is_real=True)
+    mu    = constant('mu', dtype=float)
 
     V = ScalarFunctionSpace('V', domain)
     u, v = elements_of(V, names='u, v')
@@ -67,7 +67,7 @@ def test_tensorize_2d_1_mapping():
 
     domain = M(Domain('Omega', dim=DIM))
 
-#    mu    = Constant('mu'   , is_real=True)
+#    mu    = constant('mu', dtype=float)
 
     V = ScalarFunctionSpace('V', domain)
     u, v = elements_of(V, names='u, v')
@@ -94,7 +94,7 @@ def test_tensorize_2d_2_mapping():
     V = VectorFunctionSpace('V', domain)
     u, v = elements_of(V, names='u, v')
 
-    c = Constant('c')
+    c = constant('c', dtype=float)
 
     int_0 = lambda expr: integral(domain , expr)
 
@@ -110,8 +110,8 @@ def test_tensorize_2d_3():
     V = ScalarFunctionSpace('V', domain)
     u, v = elements_of(V, names='u,v')
 
-    bx = Constant('bx')
-    by = Constant('by')
+    bx = constant('bx', dtype=float)
+    by = constant('by', dtype=float)
     b  = Tuple(bx, by)
 
     expr = integral(domain, dot(b, grad(v)) * dot(b, grad(u)))

@@ -12,7 +12,7 @@ from sympy.core.containers import Tuple
 
 from sympde.old_sympy_utilities import is_sequence
 from sympde.core.basic import CalculusFunction
-from sympde.core.basic import Constant
+from sympde.core.basic import constant
 from sympde.core.utils import random_string
 from sympde.calculus import Dot, Inner, BasicOperator
 from sympde.calculus import Grad, Hessian
@@ -716,7 +716,7 @@ def linearize(form, fields, trials=None):
 
     # ...
 
-    eps        = Constant('eps_' + random_string(4))
+    eps        = constant('eps_' + random_string(4), dtype=float)
     new_fields = [field + eps*trial for field, trial in zip(fields, trials)]
 
     integrals     = form.expr.args if isinstance(form.expr, Add) else [form.expr]
@@ -783,7 +783,7 @@ def is_linear_expression(expr, args, integral=True, debug=True):
 
     # ... check multiplication
     tag   = random_string( 4 )
-    coeff = Constant('alpha_' + tag)
+    coeff = constant('alpha_' + tag, dtype=float)
 
     newexpr = expr
     for arg, left in zip(args, left_args):

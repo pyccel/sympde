@@ -92,6 +92,7 @@ class ScalarConstant(BasicConstant):
         obj.is_integer = dtype == int
         obj.is_real    = dtype == float
         obj.is_complex = dtype == complex
+        obj.is_commutative = True
 
         return obj
 

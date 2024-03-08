@@ -3,7 +3,7 @@
 from sympy.core import Expr
 from sympy.core.containers import Tuple
 
-from sympde.core.basic     import Constant
+from sympde.core.basic     import ScalarConstant, VectorConstant, MatrixConstant
 from sympde.topology.space import ScalarFunction
 from sympde.topology.space import VectorFunction
 
@@ -79,7 +79,9 @@ class BasicExpr(Expr):
     # TODO use .atoms
     @property
     def constants(self):
-        ls = self.expr.atoms(Constant)
+        ls = (list(self.expr.atoms(ScalarConstant)) +
+              list(self.expr.atoms(VectorConstant)) +
+              list(self.expr.atoms(MatrixConstant)))
         # no redanduncy
         return tuple(ls)
 
@@ -111,7 +113,9 @@ class BasicForm(Expr):
     # TODO use .atoms
     @property
     def constants(self):
-        ls = self.expr.atoms(Constant)
+        ls = (list(self.expr.atoms(ScalarConstant)) +
+              list(self.expr.atoms(VectorConstant)) +
+              list(self.expr.atoms(MatrixConstant)))
         # no redanduncy
         return tuple(ls)
 

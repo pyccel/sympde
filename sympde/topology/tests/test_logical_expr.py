@@ -5,7 +5,7 @@ from sympy import Matrix
 from sympy import expand
 from sympy import cos, sin, sqrt, pi
 
-from sympde.core     import Constant
+from sympde.core     import constant
 from sympde.calculus import grad, dot, inner, rot, div
 from sympde.calculus import laplace, bracket, convect
 from sympde.calculus import jump, avg, Dn, minus, plus
@@ -36,7 +36,7 @@ def test_logical_expr_1d_1():
     M = Mapping('M', dim=dim)
     domain = M(Domain('Omega', dim=dim))
 
-    alpha = Constant('alpha')
+    alpha = constant('alpha', dtype=float)
 
     V = ScalarFunctionSpace('V', domain, kind='h1')
 
@@ -152,7 +152,7 @@ def test_logical_expr_2d_1():
     M = Mapping('M', dim=dim)
     domain = M(Domain('Omega', dim=dim))
 
-    alpha = Constant('alpha')
+    alpha = constant('alpha', dtype=float)
 
     V = ScalarFunctionSpace('V', domain, kind='h1')
     W = VectorFunctionSpace('V', domain, kind='h1')
@@ -371,7 +371,7 @@ def test_logical_expr_3d_1():
     M = Mapping('M', dim=dim)
     domain = M(Domain('Omega', dim=dim))
 
-    alpha = Constant('alpha')
+    alpha = constant('alpha', dtype=float)
 
     V = ScalarFunctionSpace('V', domain, kind='h1')
 
@@ -629,7 +629,7 @@ def test_polar_mapping_2d_1():
     x1, x2 = symbols('x1, x2')
 
     constants = ['c1', 'c2', 'rmax', 'rmin']
-    c1, c2, rmax, rmin = [Constant(i) for i in constants]
+    c1, c2, rmax, rmin = [constant(i, dtype=float) for i in constants]
 
     M = PolarMapping('M', dim=dim)
 
@@ -659,7 +659,7 @@ def test_target_mapping_2d_1():
     x1, x2 = symbols('x1, x2')
 
     constants = ['c1', 'c2', 'D', 'k']
-    c1, c2, D, k = [Constant(i) for i in constants]
+    c1, c2, D, k = [constant(i, dtype=float) for i in constants]
 
     M = TargetMapping('M', dim=dim)
 
@@ -691,7 +691,7 @@ def test_czarny_mapping_2d_1():
     x1, x2 = symbols('x1, x2')
 
     constants = ['c2', 'eps', 'b']
-    c2, eps, b = [Constant(i) for i in constants]
+    c2, eps, b = [constant(i, dtype=float) for i in constants]
 
     M = CzarnyMapping('M', dim=dim)
 
@@ -728,7 +728,7 @@ def test_collela_mapping_2d_1():
     x1, x2 = symbols('x1, x2')
 
     constants = ['eps', 'k1', 'k2']
-    eps, k1, k2 = [Constant(i) for i in constants]
+    eps, k1, k2 = [constant(i, dtype=float) for i in constants]
 
     M = CollelaMapping2D('M', dim)
 
@@ -764,7 +764,7 @@ def test_torus_mapping_3d_1():
     dim = 3
 
     x1, x2, x3 = symbols('x1, x2, x3')
-    R0 = Constant('R0')
+    R0 = constant('R0', dtype=float)
 
     M = TorusMapping('M', dim=dim)
 
@@ -815,7 +815,7 @@ def test_twisted_target_mapping_3d_1():
     x1, x2, x3 = symbols('x1, x2, x3')
 
     constants = ['c1', 'c2', 'c3', 'D', 'k']
-    c1, c2, c3, D, k = [Constant(i) for i in constants]
+    c1, c2, c3, D, k = [constant(i, dtype=float) for i in constants]
 
     M = TwistedTargetMapping('M', dim=dim)
 

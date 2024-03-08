@@ -7,7 +7,7 @@ from sympy import Matrix
 from sympy import srepr
 from sympy import Symbol
 
-from sympde import Constant
+from sympde import constant
 
 from sympde.exterior import d, wedge, ip, jp, delta, hodge
 from sympde.exterior import DifferentialForm
@@ -21,7 +21,7 @@ from sympde.exterior import FourFormType, FiveFormType, SixFormType
 def test_type_inference_1():
 
     x, y, z = symbols('x y z')
-    a = Constant('a')
+    a = constant('a', dtype=float)
 #    n = Symbol('n')
     n = 3
 
