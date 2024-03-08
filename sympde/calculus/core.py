@@ -23,7 +23,7 @@ naturally give 0
 >>> V = ScalarFunctionSpace('V', domain)
 >>> W = VectorFunctionSpace('W', domain)
 
->>> alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
+>>> alpha, beta, gamma = [constant(i, dtype=float) for i in ['alpha','beta','gamma']]
 
 >>> f,g,h = [element_of(V, name=i) for i in ['f','g','h']]
 >>> F,G,H = [element_of(W, i) for i in ['F','G','H']]
@@ -102,10 +102,12 @@ from sympy.core               import Add, Mul, Pow
 from sympy.core.containers    import Tuple
 from sympy.core.singleton     import S
 from sympy.core.decorators    import call_highest_priority
+from sympy                    import Symbol, Number, NumberSymbol
 
 from sympde.old_sympy_utilities import is_sequence
 from sympde.core.basic        import CalculusFunction
 from sympde.core.basic        import _coeffs_registery
+from sympde.core.basic        import ScalarConstant
 from sympde.topology.space    import ScalarFunction, VectorFunction
 from sympde.topology.domain   import NormalVector, MinusNormalVector, PlusNormalVector
 from sympde.topology.datatype import H1SpaceType, HcurlSpaceType
@@ -267,6 +269,37 @@ def is_scalar(atom):
     return is_constant(atom) or isinstance(atom, ScalarFunction)
 
 #==============================================================================
+def _split_mul_args(expr, number=False, scalar=False):
+    """
+    splits a Mul expression with respect to specified arguments.
+    this functions assumes that expr is Mul.
+    Return:
+        a dictionary
+    """
+    if scalar:
+        number = True
+
+    d = {}
+    if number:
+        args = []
+        for i in expr.args:
+            if isinstance(i, (int, float, complex, Number, NumberSymbol, ScalarConstant)):
+                args.append(i)
+        d['number'] = args
+
+    if scalar:
+        args = []
+        for i in expr.args:
+            if isinstance(i, (ScalarFunction)):
+                args.append(i)
+        d['scalar'] = args
+
+    values = [i for values in d.values() for i in values]
+    d['other'] = [i for i in expr.args if not i in values]
+    return d
+
+
+#==============================================================================
 # TODO add dot(u,u) +2*dot(u,v) + dot(v,v) = dot(u+v,u+v)
 # now we only have dot(u,u) + dot(u,v)+ dot(v,u) + dot(v,v) = dot(u+v,u+v)
 # add dot(u,v) = dot(v,u)
@@ -287,7 +320,7 @@ class Dot(BasicOperator):
 
     This operator implements the properties of addition and multiplication
 
-    >>> from sympde.core import Constant
+    >>> from sympde.core import constant
     >>> from sympde.topology import Domain
     >>> from sympde.topology import VectorFunctionSpace
     >>> from sympde.topology import VectorFunction
@@ -297,7 +330,7 @@ class Dot(BasicOperator):
     >>> u,u1,u2 = [VectorFunction(V, name=i) for i in ['u', 'u1', 'u2']]
     >>> v,v1,v2 = [VectorFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
-    >>> alpha = Constant('alpha', is_real=True)
+    >>> alpha = constant('alpha', dtype=float)
 
     >>> dot(u1+u2,v1)
     Dot(u1, v1) + Dot(u2, v1)
@@ -336,31 +369,32 @@ class Dot(BasicOperator):
             a = reduce(add, a, S.Zero)
             return a+b
 
+        c1 = 1
         if isinstance(arg1, Mul):
-            a = arg1.args
-        else:
-            a = [arg1]
+            d = _split_mul_args(arg1, scalar=True)
+            numbers = reduce(mul, d['number'], 1)
+            scalars = reduce(mul, d['scalar'], 1)
+            others  = reduce(mul, d['other'], 1)
+            c1 = numbers * scalars
+            arg1  = others
 
+        c2 = 1
         if isinstance(arg2, Mul):
-            b = arg2.args
-        else:
-            b = [arg2]
+            d = _split_mul_args(arg2, scalar=True)
+            numbers = reduce(mul, d['number'], 1)
+            scalars = reduce(mul, d['scalar'], 1)
+            others  = reduce(mul, d['other'], 1)
+            c2 = numbers * scalars
+            arg2  = others
 
-        args_1 = [i for i in a if not i.is_commutative]
-        c1     = [i for i in a if not i in args_1]
-        args_2 = [i for i in b if not i.is_commutative]
-        c2     = [i for i in b if not i in args_2]
+        c = c1*c2
 
-        a = reduce(mul, args_1)
-        b = reduce(mul, args_2)
-        c = Mul(*c1)*Mul(*c2)
+        if str(arg1) > str(arg2):
+            arg1,arg2 = arg2,arg1
 
-        if str(a) > str(b):
-            a,b = b,a
+        obj = Basic.__new__(cls, arg1, arg2)
 
-        obj = Basic.__new__(cls, a, b)
-
-        if a == b:
+        if arg1 == arg2:
             obj.is_real     = True
             obj.is_positive = True
 
@@ -596,7 +630,7 @@ class Convect(BasicOperator):
     >>> domain = Domain('Omega', dim=2)
     >>> V = ScalarFunctionSpace('V', domain)
     >>> W = VectorFunctionSpace('W', domain)
-    >>> alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
+    >>> alpha, beta, gamma = [constant(i, dtype=float) for i in ['alpha','beta','gamma']]
     >>> f,g,h = [element_of(V, name=i) for i in ['f','g','h']]
     >>> F,G,H = [element_of(W, i) for i in ['F','G','H']]
 
@@ -673,7 +707,7 @@ class Grad(DiffOperator):
     Examples
 
 
-    >>> from sympde.core import Constant
+    >>> from sympde.core import constant
     >>> from sympde.topology import Domain
     >>> from sympde.topology import VectorFunctionSpace
     >>> from sympde.topology import VectorFunction
@@ -683,7 +717,7 @@ class Grad(DiffOperator):
     >>> u,u1,u2 = [ScalarFunction(V, name=i) for i in ['u', 'u1', 'u2']]
     >>> v,v1,v2 = [ScalarFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
-    >>> alpha = Constant('alpha', is_real=True)
+    >>> alpha = constant('alpha', dtype=float)
 
     >>> grad(u1+u2,v1)
     Grad(u1, v1) + Grad(u2, v1)
@@ -791,7 +825,7 @@ class Curl(DiffOperator):
     Examples
 
 
-    >>> from sympde.core import Constant
+    >>> from sympde.core import constant
     >>> from sympde.topology import Domain
     >>> from sympde.topology import VectorFunctionSpace
     >>> from sympde.topology import VectorFunction
@@ -801,7 +835,7 @@ class Curl(DiffOperator):
     >>> u,u1,u2 = [VectorFunction(V, name=i) for i in ['u', 'u1', 'u2']]
     >>> v,v1,v2 = [VectorFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
-    >>> alpha = Constant('alpha', is_real=True)
+    >>> alpha = constant('alpha', dtype=float)
 
     >>> curl(u1+u2,v1)
     Curl(u1, v1) + Curl(u2, v1)
@@ -880,7 +914,7 @@ class Rot(DiffOperator):
     Examples
 
 
-    >>> from sympde.core import Constant
+    >>> from sympde.core import constant
     >>> from sympde.topology import Domain
     >>> from sympde.topology import VectorFunctionSpace
     >>> from sympde.topology import VectorFunction
@@ -890,7 +924,7 @@ class Rot(DiffOperator):
     >>> u,u1,u2 = [ScalarFunction(V, name=i) for i in ['u', 'u1', 'u2']]
     >>> v,v1,v2 = [ScalarFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
-    >>> alpha = Constant('alpha', is_real=True)
+    >>> alpha = constant('alpha', dtype=float)
 
     >>> rot(u1+u2,v1)
     Rot(u1, v1) + Rot(u2, v1)
@@ -960,7 +994,7 @@ class Div(DiffOperator):
     Examples
 
 
-    >>> from sympde.core import Constant
+    >>> from sympde.core import constant
     >>> from sympde.topology import Domain
     >>> from sympde.topology import VectorFunctionSpace
     >>> from sympde.topology import VectorFunction
@@ -970,7 +1004,7 @@ class Div(DiffOperator):
     >>> u,u1,u2 = [VectorFunction(V, name=i) for i in ['u', 'u1', 'u2']]
     >>> v,v1,v2 = [VectorFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
-    >>> alpha = Constant('alpha', is_real=True)
+    >>> alpha = constant('alpha', dtype=float)
 
     >>> div(u1+u2,v1)
     Div(u1, v1) + Div(u2, v1)
@@ -1066,7 +1100,7 @@ class Laplace(DiffOperator):
     Examples
 
 
-    >>> from sympde.core import Constant
+    >>> from sympde.core import constant
     >>> from sympde.topology import Domain
     >>> from sympde.topology import VectorFunctionSpace
     >>> from sympde.topology import VectorFunction
@@ -1076,7 +1110,7 @@ class Laplace(DiffOperator):
     >>> u,u1,u2 = [ScalarFunction(V, name=i) for i in ['u', 'u1', 'u2']]
     >>> v,v1,v2 = [ScalarFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
-    >>> alpha = Constant('alpha', is_real=True)
+    >>> alpha = constant('alpha', dtype=float)
 
     >>> laplace(u1+u2,v1)
     Laplace(u1, v1) + Laplace(u2, v1)
@@ -1151,7 +1185,7 @@ class Hessian(DiffOperator):
     Examples
 
 
-    >>> from sympde.core import Constant
+    >>> from sympde.core import constant
     >>> from sympde.topology import Domain
     >>> from sympde.topology import VectorFunctionSpace
     >>> from sympde.topology import VectorFunction
@@ -1161,7 +1195,7 @@ class Hessian(DiffOperator):
     >>> u,u1,u2 = [ScalarFunction(V, name=i) for i in ['u', 'u1', 'u2']]
     >>> v,v1,v2 = [ScalarFunction(V, name=i) for i in ['v', 'v1', 'v2']]
 
-    >>> alpha = Constant('alpha', is_real=True)
+    >>> alpha = constant('alpha', dtype=float)
 
     >>> hessian(u1+u2,v1)
     Hessian(u1, v1) + Hessian(u2, v1)
