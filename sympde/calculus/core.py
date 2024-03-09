@@ -818,7 +818,6 @@ class Curl(DiffOperator):
 
         return r
 
-
     @classmethod
     def eval(cls, expr):
 
@@ -973,6 +972,7 @@ class Div(DiffOperator):
     """
     is_commutative = True
     is_scalar      = True
+    _unevaluated_types  = (ScalarFunction, VectorFunction)
 
     def __new__(cls, expr, **options):
         # (Try to) sympify args first
@@ -990,53 +990,40 @@ class Div(DiffOperator):
     @classmethod
     def eval(cls, expr):
 
+        if is_constant(expr):
+            return S.Zero
 
-        types = (VectorFunction, ScalarFunction)
-        if not has(expr, types):
-            if expr.is_number:
-                return S.Zero
-            return cls(expr, evaluate=False)
+        if isinstance(expr, Curl):
+            return S.Zero
 
-        if isinstance(expr, Add):
-            a = [i for i in expr.args if has(i, types)]
-            b = [i for i in expr.args if i not in a]
-            a = [cls(i) for i in a]
-            b = cls(expr.func(*b))
-            return reduce(add, a) + b
-
-        elif isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if a.is_number]
-            vectors = [a for a in expr.args if not(a in coeffs)]
-
-            a = Mul(*coeffs)
-
-            b = S.One
-            if vectors:
-                if len(vectors) == 2:
-                    a,b = vectors
-                    # TODO remove try/except using regularity from space
-                    try:
-                        if isinstance(a, (Tuple, VectorFunction)):
-                            f = b ; F = a
-                            return f*Div(F) + Dot(F, grad(f))
-
-                        elif isinstance(b, (Tuple, VectorFunction)):
-                            f = a ; F = b
-                            return f*Div(F) + Dot(F, grad(f))
-
-                    except:
-                        return cls(expr.func(*vectors), evaluate=False)
-
-                b = cls(expr.func(*vectors), evaluate=False)
-
-            return a*b
-
-        elif isinstance(expr, Cross):
+        if isinstance(expr, Cross):
             a,b = expr._args
             return Dot(b, Curl(a)) - Dot(a, Curl(b))
 
-        elif isinstance(expr, Curl):
-            return S.Zero
+        if isinstance(expr, cls._unevaluated_types):
+            return cls(expr, evaluate=False)
+
+        if isinstance(expr, Add):
+            args = [cls(i, evaluate=True) for i in expr.args]
+            return reduce(add, args, S.Zero)
+
+        elif isinstance(expr, Mul):
+            d = _collect_mul_expr(expr, number=True, scalar=True, vector=False, matrix=False)
+
+            number = reduce(mul, d['number'], S.One)
+            scalar = reduce(mul, d['scalar'], S.One)
+            other  = reduce(mul, d['other'], S.One)
+
+            u = number*scalar
+            F = other
+
+            d_u  = Grad(u, evaluate=True)
+            d_F  = cls(F, evaluate=True)
+
+            return expand(u * d_F + Dot(d_u, F))
+
+        elif isinstance(expr, Pow):
+            raise NotImplementedError('{}'.format(type(expr)))
 
         # ... check consistency between space type and the operator
         if _is_sympde_atom(expr):
