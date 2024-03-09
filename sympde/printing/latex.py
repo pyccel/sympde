@@ -35,9 +35,6 @@ class LatexPrinter(LatexPrinterSympy):
         u,v = [self._print(i) for i in expr.args]
         return r'[' + u + ',' + v + ']'
 
-    def _print_Convect(self, expr):
-        raise NotImplementedError('TODO')
-
     def _print_StrainTensor(self, expr):
         return r'\mathrm{D}\left( ' + self._print(expr.args[0]) + r' \right)'
 

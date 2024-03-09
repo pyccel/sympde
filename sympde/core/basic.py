@@ -37,6 +37,7 @@ class IndexedElement(Expr):
 #==============================================================================
 class BasicConstant(Expr):
     is_commutative = False
+    is_number = False
     _op_priority   = 20.0
     _shape = None
 
@@ -62,7 +63,6 @@ class BasicConstant(Expr):
 
 #==============================================================================
 class ScalarConstant(BasicConstant):
-    is_number = True
 
     def __new__(cls, *args, **options):
         assert len(args) == 1
@@ -89,10 +89,11 @@ class ScalarConstant(BasicConstant):
         obj._value = value
         obj._dtype = dtype
         obj._shape = 1
-        obj.is_integer = dtype == int
-        obj.is_real    = dtype == float
-        obj.is_complex = dtype == complex
+        obj.is_integer     = dtype == int
+        obj.is_real        = dtype == float
+        obj.is_complex     = dtype == complex
         obj.is_commutative = True
+        obj.is_number      = True
 
         return obj
 
@@ -239,28 +240,6 @@ def constant(name, shape=None, dtype=None, value=None):
             raise ValueError('Wrong arguments')
 
 #==============================================================================
-# TODO to be removed
-class Constant(Symbol):
-    """
-    Represents a constant symbol.
-
-    Examples
-
-    """
-    _label = ''
-    is_number = True
-    def __new__(cls, *args, **kwargs):
-        label = kwargs.pop('label', '')
-
-        obj = Symbol.__new__(cls, *args, **kwargs)
-        obj._label = label
-        return obj
-
-    @property
-    def label(self):
-        return self._label
-
-#==============================================================================
 class CalculusFunction(Function):
     """this class is needed to distinguish between functions and calculus
     functions when manipulating our expressions"""
@@ -279,5 +258,4 @@ class BasicDerivable(Basic):
 
 #==============================================================================
 _coeffs_registery = (int, float, complex, Number, NumberSymbol,
-                     Constant,
                      ScalarConstant, VectorConstant, MatrixConstant)

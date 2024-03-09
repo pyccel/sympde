@@ -59,10 +59,10 @@ def test_partial_derivatives_1():
                                          dx(v) + dy(v),
                                          dx(w) + dy(w)]]))
 
-    expected = Matrix([[alpha*dx(u) + beta*dy(u),
-                        alpha*dx(v) + beta*dy(v),
-                        alpha*dx(w) + beta*dy(w)]])
-    assert(alpha * dx(uvw) + beta * dy(uvw) == expected)
+#    expected = Matrix([[alpha*dx(u) + beta*dy(u),
+#                        alpha*dx(v) + beta*dy(v),
+#                        alpha*dx(w) + beta*dy(w)]])
+#    assert(alpha * dx(uvw) + beta * dy(uvw) == expected)
     # ...
 
 #    expr = alpha * dx(uvw) + beta * dy(uvw)

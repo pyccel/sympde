@@ -94,6 +94,7 @@ rot properties
 from operator  import mul, add
 from functools import reduce
 
+from sympy                    import expand
 from sympy                    import Indexed, sympify
 from sympy                    import Matrix, ImmutableDenseMatrix
 from sympy                    import cacheit
@@ -107,7 +108,7 @@ from sympy                    import Symbol, Number, NumberSymbol
 from sympde.old_sympy_utilities import is_sequence
 from sympde.core.basic        import CalculusFunction
 from sympde.core.basic        import _coeffs_registery
-from sympde.core.basic        import ScalarConstant
+from sympde.core.basic        import ScalarConstant, VectorConstant, MatrixConstant
 from sympde.topology.space    import ScalarFunction, VectorFunction
 from sympde.topology.domain   import NormalVector, MinusNormalVector, PlusNormalVector
 from sympde.topology.datatype import H1SpaceType, HcurlSpaceType
@@ -120,7 +121,6 @@ __all__ = (
     'BasicOperator',
     'BasicOperatorAdd',
     'Bracket',
-    'Convect',
     'Convolution',
     'Cross',
     'Curl',
@@ -153,7 +153,6 @@ __all__ = (
     'avg',
     'bracket',
     'conv',
-    'convect',
     'cross',
     'curl',
     'div',
@@ -191,6 +190,9 @@ class BasicOperator(CalculusFunction):
     """
 
     _op_priority   = 10.005
+    _unconsistent_types = ()
+    _unevaluated_types = ()
+
     def __hash__(self):
         return hash(self.args)
 
@@ -269,28 +271,95 @@ def is_scalar(atom):
     return is_constant(atom) or isinstance(atom, ScalarFunction)
 
 #==============================================================================
-def _split_mul_args(expr, number=False, scalar=False):
+def _collect_mul_expr(expr, number=False, scalar=False, vector=False, matrix=False):
+    """
+    """
+    dtypes = {}
+    dtypes['number'] = (int, float, complex, Number, NumberSymbol)
+    dtypes['scalar'] = (ScalarConstant, ScalarFunction)
+    dtypes['vector'] = (VectorConstant, VectorFunction)
+    dtypes['matrix'] = (MatrixConstant,)
+
+    d = {}
+
+    # ...
+    if number:
+        types = dtypes['number']
+        args = []
+        for i in expr.args:
+            if isinstance(i, types):
+                args.append(i)
+            elif isinstance(i, Pow):
+                flag = isinstance(i.base, types)
+                flag = flag and isinstance(i.exp , types)
+                if flag:
+                    args.append(i)
+        d['number'] = args
+    # ...
+
+    # ...
+    if scalar:
+        types = dtypes['scalar']
+        args = []
+        for i in expr.args:
+            if isinstance(i, types):
+                args.append(i)
+            elif isinstance(i, Pow):
+                flag = isinstance(i.base, types) or isinstance(i.base, dtypes['number'])
+                flag = flag and ( isinstance(i.exp , types) or isinstance(i.exp, dtypes['number']) )
+                if flag:
+                    args.append(i)
+        d['scalar'] = args
+    # ...
+
+    # ...
+    if vector:
+        types = dtypes['vector']
+        d['vector'] = [i for i in expr.args if isinstance(i, types)]
+    # ...
+
+    # ...
+    if matrix:
+        types = dtypes['matrix']
+        d['matrix'] = [i for i in expr.args if isinstance(i, types)]
+    # ...
+
+    # ...
+    values = [i for values in d.values() for i in values]
+    d['other'] = [i for i in expr.args if not i in values]
+    # ...
+
+    return d
+
+#==============================================================================
+def _split_mul_args(expr, number=False, scalar=False, constant=False):
     """
     splits a Mul expression with respect to specified arguments.
     this functions assumes that expr is Mul.
     Return:
         a dictionary
     """
-    if scalar:
+    if scalar or constant:
         number = True
 
     d = {}
     if number:
+        types = (int, float, complex, Number, NumberSymbol)
         args = []
         for i in expr.args:
-            if isinstance(i, (int, float, complex, Number, NumberSymbol, ScalarConstant)):
+            if isinstance(i, types):
                 args.append(i)
         d['number'] = args
 
     if scalar:
+        types = [ScalarConstant]
+        if not constant:
+            types.append(ScalarFunction)
+        types = tuple(types)
+
         args = []
         for i in expr.args:
-            if isinstance(i, (ScalarFunction)):
+            if isinstance(i, types):
                 args.append(i)
         d['scalar'] = args
 
@@ -298,6 +367,22 @@ def _split_mul_args(expr, number=False, scalar=False):
     d['other'] = [i for i in expr.args if not i in values]
     return d
 
+#==============================================================================
+def _split_mul_expr(expr, number=False, scalar=False, constant=False):
+    """
+    splits a Mul expression into two Mul expression: the first expression
+    contains arguments that are filtered through the provided flags, while the
+    second expression contains the other arguments.
+    """
+    d = _split_mul_args(expr, number=number, scalar=scalar, constant=constant)
+
+    numbers = reduce(mul, d['number'], S.One)
+    scalars = reduce(mul, d['scalar'], S.One)
+    others  = reduce(mul, d['other'], S.One)
+    c = numbers * scalars
+    arg  = others
+
+    return c, arg
 
 #==============================================================================
 # TODO add dot(u,u) +2*dot(u,v) + dot(v,v) = dot(u+v,u+v)
@@ -343,49 +428,40 @@ class Dot(BasicOperator):
     is_commutative = True
     is_real        = False
     is_positive    = False
+    _unconsistent_types = (int, float, complex, ScalarConstant, MatrixConstant)
+    _unevaluated_types  = (VectorConstant, VectorFunction)
+
     def __new__(cls, arg1, arg2, **options):
-        # (Try to) sympify args first
+        _eval = True
 
         # If one argument is the zero vector, return 0
         if is_zero(arg1) or is_zero(arg2):
             return S.Zero
 
-        types = (VectorFunction, ScalarFunction)
-        if isinstance(arg1, Add):
-            a = [i for i in arg1.args if has(i, types)]
-            b = [i for i in arg1.args if i not in a]
+        if isinstance(arg1, cls._unconsistent_types):
+            raise TypeError('arg1 must be of a vector type, given {}'.format(type(arg1)))
 
-            a = [cls(i, arg2) for i in a]
-            b = cls(arg1.func(*b), arg2)
-            a = reduce(add, a, S.Zero)
-            return a+b
+        if isinstance(arg2, cls._unconsistent_types):
+            raise TypeError('arg2 must be of a vector type, given {}'.format(type(arg2)))
+
+        if isinstance(arg1, cls._unevaluated_types) and  isinstance(arg2, cls._unevaluated_types):
+            _eval = False
+
+        if isinstance(arg1, Add):
+            args = [cls(i, arg2, evaluate=_eval) for i in arg1.args]
+            return reduce(add, args, S.Zero)
 
         if isinstance(arg2, Add):
-            a = [i for i in arg2.args if has(i, types)]
-            b = [i for i in arg2.args if i not in a]
-
-            a = [cls(arg1, i) for i in a]
-            b = cls(arg1, arg2.func(*b))
-            a = reduce(add, a, S.Zero)
-            return a+b
+            args = [cls(arg1, i, evaluate=_eval) for i in arg2.args]
+            return reduce(add, args, S.Zero)
 
         c1 = 1
         if isinstance(arg1, Mul):
-            d = _split_mul_args(arg1, scalar=True)
-            numbers = reduce(mul, d['number'], 1)
-            scalars = reduce(mul, d['scalar'], 1)
-            others  = reduce(mul, d['other'], 1)
-            c1 = numbers * scalars
-            arg1  = others
+            c1, arg1 = _split_mul_expr(arg1, scalar=True)
 
         c2 = 1
         if isinstance(arg2, Mul):
-            d = _split_mul_args(arg2, scalar=True)
-            numbers = reduce(mul, d['number'], 1)
-            scalars = reduce(mul, d['scalar'], 1)
-            others  = reduce(mul, d['other'], 1)
-            c2 = numbers * scalars
-            arg2  = others
+            c2, arg2 = _split_mul_expr(arg2, scalar=True)
 
         c = c1*c2
 
@@ -394,14 +470,9 @@ class Dot(BasicOperator):
 
         obj = Basic.__new__(cls, arg1, arg2)
 
-        if arg1 == arg2:
-            obj.is_real     = True
-            obj.is_positive = True
-
         return c*obj
 
 #==============================================================================
-#TODO add cross(u,v) + cross(v,u) = 0
 class Cross(BasicOperator):
     """
     This operator represents the cross product between two expressions,
@@ -409,8 +480,11 @@ class Cross(BasicOperator):
     """
     is_scalar      = False
     is_commutative = False
+    _unconsistent_types = (int, float, complex, ScalarConstant, MatrixConstant)
+    _unevaluated_types  = (VectorConstant, VectorFunction)
 
     def __new__(cls, arg1, arg2, **options):
+        _eval = True
 
         # Operator is anti-commutative, hence cross(u, u) = 0
         if arg1 == arg2:
@@ -420,49 +494,38 @@ class Cross(BasicOperator):
         if is_zero(arg1) or is_zero(arg2):
             return S.Zero
 
-        types = (VectorFunction, ScalarFunction)
-        if isinstance(arg1, Add):
-            a = [i for i in arg1.args if has(i, types)]
-            b = [i for i in arg1.args if i not in a]
+        if isinstance(arg1, cls._unconsistent_types):
+            raise TypeError('arg1 must be of a vector type, given {}'.format(type(arg1)))
 
-            a = [cls(i, arg2) for i in a]
-            b = cls(arg1.func(*b), arg2)
-            a = reduce(add, a, S.Zero)
-            return a+b
+        if isinstance(arg2, cls._unconsistent_types):
+            raise TypeError('arg2 must be of a vector type, given {}'.format(type(arg2)))
+
+        if isinstance(arg1, cls._unevaluated_types) and  isinstance(arg2, cls._unevaluated_types):
+            _eval = False
+
+        if isinstance(arg1, Add):
+            args = [cls(i, arg2, evaluate=_eval) for i in arg1.args]
+            return reduce(add, args, S.Zero)
 
         if isinstance(arg2, Add):
-            a = [i for i in arg2.args if has(i, types)]
-            b = [i for i in arg2.args if i not in a]
+            args = [cls(arg1, i, evaluate=_eval) for i in arg2.args]
+            return reduce(add, args, S.Zero)
 
-            a = [cls(arg1, i) for i in a]
-            b = cls(arg1, arg2.func(*b))
-            a = reduce(add, a, S.Zero)
-            return a+b
-
+        c1 = 1
         if isinstance(arg1, Mul):
-            a = arg1.args
-        else:
-            a = [arg1]
+            c1, arg1 = _split_mul_expr(arg1, scalar=True)
 
+        c2 = 1
         if isinstance(arg2, Mul):
-            b = arg2.args
-        else:
-            b = [arg2]
+            c2, arg2 = _split_mul_expr(arg2, scalar=True)
 
-        args_1 = [i for i in a if not i.is_commutative]
-        c1     = [i for i in a if not i in args_1]
-        args_2 = [i for i in b if not i.is_commutative]
-        c2     = [i for i in b if not i in args_2]
+        c = c1*c2
 
-        a = reduce(mul, args_1)
-        b = reduce(mul, args_2)
-        c = Mul(*c1)*Mul(*c2)
-
-        if str(a) > str(b):
-            a,b = b,a
+        if str(arg1) > str(arg2):
+            arg1,arg2 = arg2,arg1
             c   = -c
 
-        obj = Basic.__new__(cls, a, b)
+        obj = Basic.__new__(cls, arg1, arg2)
 
         return c*obj
 
@@ -498,59 +561,47 @@ class Inner(BasicOperator):
     is_commutative = True
     is_real        = False
     is_positive    = False
+    _unconsistent_types = (int, float, complex, ScalarConstant, MatrixConstant)
+    _unevaluated_types  = (VectorConstant, VectorFunction)
+
     def __new__(cls, arg1, arg2, **options):
-        # (Try to) sympify args first
+        _eval = True
 
         # If one argument is the zero vector, return 0
         if is_zero(arg1) or is_zero(arg2):
             return S.Zero
 
-        types = (VectorFunction, ScalarFunction)
-        if isinstance(arg1, Add):
-            a = [i for i in arg1.args if has(i, types)]
-            b = [i for i in arg1.args if i not in a]
+        if isinstance(arg1, cls._unconsistent_types):
+            raise TypeError('arg1 must be of a vector type, given {}'.format(type(arg1)))
 
-            a = [cls(i, arg2) for i in a]
-            b = cls(arg1.func(*b), arg2)
-            a = reduce(add, a, S.Zero)
-            return a+b
+        if isinstance(arg2, cls._unconsistent_types):
+            raise TypeError('arg2 must be of a vector type, given {}'.format(type(arg2)))
+
+        if isinstance(arg1, cls._unevaluated_types) and  isinstance(arg2, cls._unevaluated_types):
+            _eval = False
+
+        if isinstance(arg1, Add):
+            args = [cls(i, arg2, evaluate=_eval) for i in arg1.args]
+            return reduce(add, args, S.Zero)
 
         if isinstance(arg2, Add):
-            a = [i for i in arg2.args if has(i, types)]
-            b = [i for i in arg2.args if i not in a]
+            args = [cls(arg1, i, evaluate=_eval) for i in arg2.args]
+            return reduce(add, args, S.Zero)
 
-            a = [cls(arg1, i) for i in a]
-            b = cls(arg1, arg2.func(*b))
-            a = reduce(add, a, S.Zero)
-            return a+b
-
+        c1 = 1
         if isinstance(arg1, Mul):
-            a = arg1.args
-        else:
-            a = [arg1]
+            c1, arg1 = _split_mul_expr(arg1, scalar=True)
 
+        c2 = 1
         if isinstance(arg2, Mul):
-            b = arg2.args
-        else:
-            b = [arg2]
+            c2, arg2 = _split_mul_expr(arg2, scalar=True)
 
-        args_1 = [i for i in a if not i.is_commutative]
-        c1     = [i for i in a if not i in args_1]
-        args_2 = [i for i in b if not i.is_commutative]
-        c2     = [i for i in b if not i in args_2]
+        c = c1*c2
 
-        a = reduce(mul, args_1)
-        b = reduce(mul, args_2)
-        c = Mul(*c1)*Mul(*c2)
+        if str(arg1) > str(arg2):
+            arg1,arg2 = arg2,arg1
 
-        if str(a) > str(b):
-            a,b = b,a
-
-        obj = Basic.__new__(cls, a, b)
-
-        if a == b:
-            obj.is_real     = True
-            obj.is_positive = True
+        obj = Basic.__new__(cls, arg1, arg2)
 
         return c*obj
 
@@ -563,136 +614,46 @@ class Outer(BasicOperator):
 
 
     """
-
     is_scalar      = False
     is_commutative = False
+    _unconsistent_types = (int, float, complex, ScalarConstant, MatrixConstant)
+    _unevaluated_types  = (VectorConstant, VectorFunction)
 
     def __new__(cls, arg1, arg2, **options):
-        # (Try to) sympify args first
+        _eval = True
+
         # If one argument is the zero vector, return 0
         if is_zero(arg1) or is_zero(arg2):
             return S.Zero
 
-        types = (VectorFunction, ScalarFunction)
-        if isinstance(arg1, Add):
-            a = [i for i in arg1.args if has(i, types)]
-            b = [i for i in arg1.args if i not in a]
+        if isinstance(arg1, cls._unconsistent_types):
+            raise TypeError('arg1 must be of a vector type, given {}'.format(type(arg1)))
 
-            a = [cls(i, arg2) for i in a]
-            b = cls(arg1.func(*b), arg2)
-            a = reduce(add, a, S.Zero)
-            return a+b
+        if isinstance(arg2, cls._unconsistent_types):
+            raise TypeError('arg2 must be of a vector type, given {}'.format(type(arg2)))
+
+        if isinstance(arg1, cls._unevaluated_types) and  isinstance(arg2, cls._unevaluated_types):
+            _eval = False
+
+        if isinstance(arg1, Add):
+            args = [cls(i, arg2, evaluate=_eval) for i in arg1.args]
+            return reduce(add, args, S.Zero)
 
         if isinstance(arg2, Add):
-            a = [i for i in arg2.args if has(i, types)]
-            b = [i for i in arg2.args if i not in a]
+            args = [cls(arg1, i, evaluate=_eval) for i in arg2.args]
+            return reduce(add, args, S.Zero)
 
-            a = [cls(arg1, i) for i in a]
-            b = cls(arg1, arg2.func(*b))
-            a = reduce(add, a, S.Zero)
-            return a+b
-
+        c1 = 1
         if isinstance(arg1, Mul):
-            a = arg1.args
-        else:
-            a = [arg1]
+            c1, arg1 = _split_mul_expr(arg1, scalar=True)
 
+        c2 = 1
         if isinstance(arg2, Mul):
-            b = arg2.args
-        else:
-            b = [arg2]
+            c2, arg2 = _split_mul_expr(arg2, scalar=True)
 
-        args_1 = [i for i in a if not i.is_commutative]
-        c1     = [i for i in a if not i in args_1]
-        args_2 = [i for i in b if not i.is_commutative]
-        c2     = [i for i in b if not i in args_2]
+        c = c1*c2
 
-        a = reduce(mul, args_1)
-        b = reduce(mul, args_2)
-        c = Mul(*c1)*Mul(*c2)
-
-        obj = Basic.__new__(cls, a, b)
-
-        return c*obj
-
-#==============================================================================
-# TODO add it to evaluation
-# Convect(F, G) = dot(F, nabla) G
-class Convect(BasicOperator):
-    r"""
-    This operator represents the convection operator defined as
-    :math:`convect(F, G) := (F \cdot \\nabla) G`.
-
-    This operator implements the properties of addition and multiplication
-
-    Examples
-
-    >>> domain = Domain('Omega', dim=2)
-    >>> V = ScalarFunctionSpace('V', domain)
-    >>> W = VectorFunctionSpace('W', domain)
-    >>> alpha, beta, gamma = [constant(i, dtype=float) for i in ['alpha','beta','gamma']]
-    >>> f,g,h = [element_of(V, name=i) for i in ['f','g','h']]
-    >>> F,G,H = [element_of(W, i) for i in ['F','G','H']]
-
-    >>> convect(F+G, H)
-    convect(F,H) + convect(G,H)
-
-    >>> convect(alpha*F,H)
-    alpha*convect(F,H)
-
-    >>> convect(F,alpha*H)
-    alpha*convect(F,H)
-    """
-    is_scalar      = False
-    is_commutative = False
-
-    def __new__(cls, arg1, arg2, **options):
-        # (Try to) sympify args first
-
-        arg1 , arg2 = sympify(arg1), sympify(arg2)
-        # If one argument is the zero vector, return 0
-        if is_zero(arg1) or arg2.is_number:
-            return S.Zero
-
-        types = (VectorFunction, ScalarFunction)
-        if isinstance(arg1, Add):
-            a = [i for i in arg1.args if has(i, types)]
-            b = [i for i in arg1.args if i not in a]
-
-            a = [cls(i, arg2) for i in a]
-            b = cls(arg1.func(*b), arg2)
-            a = reduce(add, a, S.Zero)
-            return a+b
-
-        if isinstance(arg2, Add):
-            a = [i for i in arg2.args if has(i, types)]
-            b = [i for i in arg2.args if i not in a]
-
-            a = [cls(arg1, i) for i in a]
-            b = cls(arg1, arg2.func(*b))
-            a = reduce(add, a, S.Zero)
-            return a+b
-
-        if isinstance(arg1, Mul):
-            a = arg1.args
-        else:
-            a = [arg1]
-
-        if isinstance(arg2, Mul):
-            b = arg2.args
-        else:
-            b = [arg2]
-
-        args_1 = [i for i in a if not i.is_commutative]
-        c1     = [i for i in a if not i in args_1]
-        args_2 = [i for i in b if not i.is_commutative]
-        c2     = [i for i in b if not i in args_2]
-
-        a = reduce(mul, args_1)
-        b = reduce(mul, args_2)
-        c = Mul(*c1)*Mul(*c2)
-
-        obj = Basic.__new__(cls, a, b)
+        obj = Basic.__new__(cls, arg1, arg2)
 
         return c*obj
 
@@ -730,6 +691,8 @@ class Grad(DiffOperator):
     """
     is_scalar      = False
     is_commutative = False
+    _unevaluated_types  = (ScalarFunction, VectorFunction)
+
     def __new__(cls, expr, **options):
         # (Try to) sympify args first
 
@@ -745,56 +708,28 @@ class Grad(DiffOperator):
 
     @classmethod
     def eval(cls, expr):
-        types = (VectorFunction, ScalarFunction)
-        if not has(expr, types):
-            if expr.is_number:
-                return S.Zero
+        if is_constant(expr):
+            return S.Zero
+
+        if isinstance(expr, cls._unevaluated_types):
             return cls(expr, evaluate=False)
 
         if isinstance(expr, Add):
-            a = [i for i in expr.args if has(i, types)]
-            b = [i for i in expr.args if i not in a]
-            a = [cls(i) for i in a]
-            b = cls(expr.func(*b))
-            return reduce(add, a) + b
+            args = [cls(i, evaluate=True) for i in expr.args]
+            return reduce(add, args, S.Zero)
 
         elif isinstance(expr, Mul):
+            c, expr = _split_mul_expr(expr, scalar=True, constant=True)
+            if isinstance(expr, Mul):
+                a1 = expr.args[0]
+                a2 = expr.func(*expr.args[1:])
 
-            commutative           = [a for a in expr.args if a.is_commutative]
-            non_commutative       = [a for a in expr.args if not a in commutative]
+                d_a1  = cls(expr.args[0], evaluate=True)
+                d_a2  = cls(expr.func(*expr.args[1:]), evaluate=True)
 
-            coeffs                = [a for a in commutative if a.is_number]
-            commutative_free_expr = [a for a in commutative if not a in coeffs and not has(a, types)]
-            commutative           = [a for a in commutative if not a in commutative_free_expr+coeffs]
-
-
-            a  = reduce(mul, coeffs, S.One)
-            b1 = reduce(mul, commutative_free_expr, S.One)
-            b2 = reduce(mul, commutative, S.One)
-            b3 = reduce(mul, non_commutative, S.One)
-
-            if not b3 == 1:
-                b = cls( b1*b2*b3, evaluate=False)
-                return a*b
-            elif not b1 == 1:
-
-                d_b1  = cls(b1, evaluate=False)
-                d_b2  = cls(b2, evaluate=True)
-
-                return a * b1 * d_b2 + a * d_b1 * b2
-            elif not  b2 == 1:
-                if not isinstance(b2, Mul):
-                    return a * cls(b2, evaluate=True)
-                else:
-                    arg1 = b2.args[0]
-                    arg2 = b2.func(*b2.args[1:])
-
-                    d_arg1  = cls(b2.args[0], evaluate=True)
-                    d_arg2  = cls(b2.func(*b2.args[1:]), evaluate=True)
-
-                return a * arg1 * d_arg2 + a * d_arg1 * arg2
+                return expand(c * a1 * d_a2 + c * d_a1 * a2)
             else:
-                return S.Zero
+                return c * cls(expr, evaluate=True)
 
         elif isinstance(expr, Pow):  # TODO: fix this for the case where e is not a number
             b = expr.base
@@ -846,6 +781,7 @@ class Curl(DiffOperator):
 
     is_scalar      = False
     is_commutative = False
+    _unevaluated_types  = (ScalarFunction, VectorFunction)
 
     def __new__(cls, expr, **options):
         # (Try to) sympify args first
@@ -868,31 +804,48 @@ class Curl(DiffOperator):
     @classmethod
     def eval(cls, expr):
 
-        types = (VectorFunction, ScalarFunction)
-        if not has(expr, types):
-            if expr.is_number:
-                return S.Zero
+        if is_constant(expr):
+            return S.Zero
+
+        if isinstance(expr, Grad):
+            return S.Zero
+
+        if isinstance(expr, cls._unevaluated_types):
             return cls(expr, evaluate=False)
 
         if isinstance(expr, Add):
-            a = [i for i in expr.args if has(i, types)]
-            b = [i for i in expr.args if i not in a]
-            a = [cls(i) for i in a]
-            b = cls(expr.func(*b))
-            return reduce(add, a) + b
+            args = [cls(i, evaluate=True) for i in expr.args]
+            return reduce(add, args, S.Zero)
 
         elif isinstance(expr, Mul):
+            d = _collect_mul_expr(expr, number=True, scalar=True, vector=False, matrix=False)
 
-            coeffs  = [a for a in expr.args if a.is_number]
-            vectors = [a for a in expr.args if not(a in coeffs)]
+            number = reduce(mul, d['number'], S.One)
+            scalar = reduce(mul, d['scalar'], S.One)
+            other  = reduce(mul, d['other'], S.One)
 
-            a = Mul(*coeffs)
-            b = cls(expr.func(*vectors), evaluate=False)
+            u = number*scalar
+            F = other
 
-            return a*b
+            d_u  = Grad(u, evaluate=True)
+            d_F  = cls(F, evaluate=True)
 
-        elif isinstance(expr, Grad):
-            return S.Zero
+            return u * d_F + Cross(d_u, F)
+#            return expand(u * d_F + Cross(d_u, F))
+
+        elif isinstance(expr, Pow):  # TODO: fix this for the case where e is not a number
+            b = expr.base
+            e = expr.exp
+            print('b = ', b)
+            print('e = ', e)
+            import sys; sys.exit(0)
+            a = cls(b)
+            expr = expr.func(b, e-1)
+            if isinstance(a, Add):
+                expr = reduce(add, [e*expr*i for i in a.args])
+            else:
+                expr = e*a*expr
+            return expr
 
         # ... check consistency between space type and the operator
         if _is_sympde_atom(expr):
@@ -1852,7 +1805,7 @@ class PlusInterfaceOperator(BasicOperator):
 
 #==============================================================================
 
-_generic_ops  = (Dot, Cross, Inner, Outer, Convect, Convolution)
+_generic_ops  = (Dot, Cross, Inner, Outer, Convolution)
 
 _diff_ops  = (Grad, Curl, Rot, Div,
               Bracket, Laplace, Hessian)
@@ -1869,7 +1822,6 @@ curl = Curl
 rot = Rot
 div = Div
 
-convect = Convect
 bracket = Bracket
 laplace = Laplace
 hessian = Hessian
