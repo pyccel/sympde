@@ -31,23 +31,10 @@ class LatexPrinter(LatexPrinterSympy):
     def _print_Rot(self, expr):
         return r'\mathrm{rot} ' + self._print(expr.args[0])
 
-    def _print_Bracket(self, expr):
-        u,v = [self._print(i) for i in expr.args]
-        return r'[' + u + ',' + v + ']'
-
-    def _print_StrainTensor(self, expr):
-        return r'\mathrm{D}\left( ' + self._print(expr.args[0]) + r' \right)'
-
     def _print_Convolution(self, expr):
         left = self._print(expr.args[0])
         right = self._print(expr.args[1])
         return left + r' \ast ' + right
-
-    def _print_Laplace(self, expr):
-        return r'\nabla^2' + self._print(expr.args[0])
-
-    def _print_Hessian(self, expr):
-        return r'\mathrm{hess}( ' + self._print(expr.args[0]) + ' )'
 
     def _print_DifferentialOperator(self, expr):
         coord = self._print(expr.coordinate)

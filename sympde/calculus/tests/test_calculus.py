@@ -8,7 +8,7 @@ from sympy import expand
 
 from sympde.core     import constant
 from sympde.calculus import grad, dot, inner, outer, cross, rot, curl, div
-from sympde.calculus import laplace, hessian, bracket, convect, D, conv
+from sympde.calculus import laplace, hessian, bracket, convect, conv
 from sympde.calculus import ArgumentTypeError
 from sympde.calculus import jump, avg, Dn, minus, plus
 from sympde.topology import Domain

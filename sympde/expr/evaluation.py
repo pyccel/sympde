@@ -52,15 +52,9 @@ from sympde.topology.derivatives import dx1, dx2, dx3
 from sympde.topology.derivatives import (Grad_1d, Div_1d,
                                          Grad_2d, Curl_2d, Rot_2d, Div_2d,
                                          Grad_3d, Curl_3d, Div_3d)
-from sympde.topology.derivatives import Bracket_2d
-from sympde.topology.derivatives import Laplace_1d, Laplace_2d, Laplace_3d
-from sympde.topology.derivatives import Hessian_1d, Hessian_2d, Hessian_3d
 from sympde.topology.derivatives import (LogicalGrad_1d, LogicalDiv_1d,
                                          LogicalGrad_2d, LogicalCurl_2d, LogicalRot_2d, LogicalDiv_2d,
                                          LogicalGrad_3d, LogicalCurl_3d, LogicalDiv_3d)
-from sympde.topology.derivatives import LogicalBracket_2d
-from sympde.topology.derivatives import LogicalLaplace_1d, LogicalLaplace_2d, LogicalLaplace_3d
-from sympde.topology.derivatives import LogicalHessian_1d, LogicalHessian_2d, LogicalHessian_3d
 
 from .basic import BasicExpr, BasicForm
 from .expr  import BilinearForm

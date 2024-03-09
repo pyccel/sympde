@@ -15,7 +15,7 @@ from sympde.core.basic import CalculusFunction
 from sympde.core.basic import constant
 from sympde.core.utils import random_string
 from sympde.calculus import Dot, Inner, BasicOperator
-from sympde.calculus import Grad, Hessian
+from sympde.calculus import Grad
 from sympde.topology import BasicDomain, Union
 from sympde.topology import NormalVector
 from sympde.topology import Boundary, Interface, Domain, InteriorDomain
@@ -577,6 +577,7 @@ class SemiNorm(Functional):
             exponent = 2
 
             if not is_vector:
+                # TODO ARA
                 a    = Hessian(expr)
                 expr = Dot(a, a)
 
@@ -649,6 +650,7 @@ class Norm(Functional):
             exponent = 2
 
             if not is_vector:
+                # TODO ARA
                 a    = Hessian(expr)
                 b    = Grad(expr)
                 expr = Dot(a, a) + Dot(b, b) + expr * expr

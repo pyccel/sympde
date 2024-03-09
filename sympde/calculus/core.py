@@ -59,13 +59,6 @@ curl properties
 >>> assert( curl(alpha*f) == alpha*curl(f) )
 >>> assert( curl(alpha*f + beta*g) == alpha*curl(f) + beta*curl(g)  )
 
-laplace properties
-^^^^^^^^^^^^^^^^^^
-
->>> assert( laplace(f+g) == laplace(f) + laplace(g) )
->>> assert( laplace(alpha*f) == alpha*laplace(f) )
->>> assert( laplace(alpha*f + beta*g) == alpha*laplace(f) + beta*laplace(g)  )
-
 divergence properties
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -120,7 +113,6 @@ __all__ = (
     'Average',
     'BasicOperator',
     'BasicOperatorAdd',
-    'Bracket',
     'Convolution',
     'Cross',
     'Curl',
@@ -128,16 +120,13 @@ __all__ = (
     'Div',
     'Dot',
     'Grad',
-    'Hessian',
     'Inner',
     'Jump',
-    'Laplace',
     'MinusInterfaceOperator',
     'NormalDerivative',
     'Outer',
     'PlusInterfaceOperator',
     'Rot',
-    'StrainTensor',
 #
     'add_basicop',
     'has',
@@ -145,7 +134,6 @@ __all__ = (
     'is_scalar',
     'is_zero',
 #
-    'D',
     'Dn',
     '_diff_ops',
     '_generic_ops',
@@ -161,7 +149,9 @@ __all__ = (
     'hessian',
     'inner',
     'jump',
+    'convect',
     'laplace',
+    'D',
     'minus',
     'outer',
     'plus',
@@ -1047,246 +1037,6 @@ class Div(DiffOperator):
         return cls(expr, evaluate=False)
 
 #==============================================================================
-class Laplace(DiffOperator):
-    """
-    Represents a generic Laplace operator, without knowledge of the dimension.
-
-    This operator implements the properties of addition and multiplication
-
-    Examples
-
-
-    >>> from sympde.core import constant
-    >>> from sympde.topology import Domain
-    >>> from sympde.topology import VectorFunctionSpace
-    >>> from sympde.topology import VectorFunction
-
-    >>> domain = Domain('Omega', dim=2)
-    >>> V = ScalarFunctionSpace('V', domain)
-    >>> u,u1,u2 = [ScalarFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    >>> v,v1,v2 = [ScalarFunction(V, name=i) for i in ['v', 'v1', 'v2']]
-
-    >>> alpha = constant('alpha', dtype=float)
-
-    >>> laplace(u1+u2,v1)
-    Laplace(u1, v1) + Laplace(u2, v1)
-
-    >>> laplace(alpha*u1)
-    alpha*Laplace(u1)
-    """
-
-    is_scalar      = True
-    is_commutative = True
-    def __new__(cls, expr, **options):
-        # (Try to) sympify args first
-
-        if options.pop('evaluate', True):
-            r = cls.eval(sympify(expr))
-        else:
-            r = None
-
-        if r is None:
-            return Basic.__new__(cls, expr, **options)
-        else:
-            return r
-
-    @classmethod
-    def eval(cls, expr):
-
-        types = (VectorFunction, ScalarFunction)
-        if not has(expr, types):
-            if expr.is_number:
-                return S.Zero
-            return cls(expr, evaluate=False)
-
-        if isinstance(expr, Add):
-            a = [i for i in expr.args if has(i, types)]
-            b = [i for i in expr.args if i not in a]
-            a = [cls(i) for i in a]
-            b = cls(expr.func(*b))
-            return reduce(add, a) + b
-
-        elif isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if a.is_number]
-            vectors = [a for a in expr.args if not(a in coeffs)]
-
-            a = Mul(*coeffs)
-
-            if len(vectors) == 2:
-                f,g = vectors
-                b = f*cls(g) + g*cls(f) + 2 * Dot(Grad(f), Grad(g))
-
-            else:
-                b = cls(Mul(*vectors), evaluate=False)
-
-            return a*b
-
-        # ... check consistency between space type and the operator
-        # TODO add appropriate space types
-        if _is_sympde_atom(expr):
-            if not isinstance(expr.space.kind, UndefinedSpaceType):
-                msg = '> Wrong space kind, given {}'.format(expr.space.kind)
-                raise ArgumentTypeError(msg)
-        # ...
-
-        return cls(expr, evaluate=False)
-
-#==============================================================================
-class Hessian(DiffOperator):
-    """
-    Represents a generic Hessian operator, without knowledge of the dimension.
-
-    This operator implements the properties of addition and multiplication
-
-    Examples
-
-
-    >>> from sympde.core import constant
-    >>> from sympde.topology import Domain
-    >>> from sympde.topology import VectorFunctionSpace
-    >>> from sympde.topology import VectorFunction
-
-    >>> domain = Domain('Omega', dim=2)
-    >>> V = ScalarFunctionSpace('V', domain)
-    >>> u,u1,u2 = [ScalarFunction(V, name=i) for i in ['u', 'u1', 'u2']]
-    >>> v,v1,v2 = [ScalarFunction(V, name=i) for i in ['v', 'v1', 'v2']]
-
-    >>> alpha = constant('alpha', dtype=float)
-
-    >>> hessian(u1+u2,v1)
-    Hessian(u1, v1) + Hessian(u2, v1)
-
-    >>> hessian(alpha*u1)
-    alpha*Hessian(u1)
-    """
-
-    is_scalar      = False
-    is_commutative = False
-
-    def __new__(cls, expr, **options):
-        # (Try to) sympify args first
-
-        if options.pop('evaluate', True):
-            r = cls.eval(sympify(expr))
-        else:
-            r = None
-
-        if r is None:
-            return Basic.__new__(cls, expr, **options)
-        else:
-            return r
-
-    @classmethod
-    def eval(cls, expr):
-
-        types = (VectorFunction, ScalarFunction)
-        if not has(expr, types):
-            if expr.is_number:
-                return S.Zero
-            return cls(expr, evaluate=False)
-
-        if isinstance(expr, Add):
-            a = [i for i in expr.args if has(i, types)]
-            b = [i for i in expr.args if i not in a]
-            a = [cls(i) for i in a]
-            b = cls(expr.func(*b))
-            return reduce(add, a) + b
-
-        elif isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if a.is_number]
-            vectors = [a for a in expr.args if not(a in coeffs)]
-
-            a = Mul(*coeffs)
-            b = cls(Mul(*vectors), evaluate=False)
-
-            return a*b
-
-        # ... check consistency between space type and the operator
-        # TODO add appropriate space types
-        if _is_sympde_atom(expr):
-            if not isinstance(expr.space.kind, UndefinedSpaceType):
-                msg = '> Wrong space kind, given {}'.format(expr.space.kind)
-                raise ArgumentTypeError(msg)
-        # ...
-
-        return cls(expr, evaluate=False)
-
-#==============================================================================
-class Bracket(DiffOperator):
-    """
-    This operator represents the Poisson bracket between two expressions.
-    """
-
-    is_scalar      = True
-    is_commutative = True
-
-    def __new__(cls, arg1, arg2, **options):
-
-
-        if options.pop('evaluate', True):
-            return cls.eval(sympify(arg1), sympify(arg2))
-        else:
-            return Basic.__new__(cls, arg1, arg2, **options)
-
-    @classmethod
-    def eval(cls, arg1, arg2):
-
-        # Operator is anti-commutative, hence [u, u] = 0
-
-        if arg1.is_number or arg2.is_number:
-            return S.Zero
-
-        if arg1 == arg2:
-            return S.Zero
-
-        # Recursive application of differentiation rules to both arguments
-        for expr, args in (arg1, lambda a: (a, arg2)), \
-                          (arg2, lambda a: (arg1, a)):
-
-            # Derivative of sum: d(a+b+c) = da + db + dc
-            if isinstance(expr, Add):
-                return Add(*[cls.eval(*args(a)) for a in expr.args])
-
-            # Derivative of product: d(a*b*c) = da * (b*c) + a * d(b*c)
-            elif isinstance(expr, Mul):
-                coeffs = [a for a in expr.args if isinstance(a, _coeffs_registery)]
-                fields = [a for a in expr.args if a not in coeffs]
-
-                terms  = []
-                for i in range(len(fields)):
-                    factors = [(cls.eval(*args(f)) if i == j else f)
-                               for j, f in enumerate(fields)]
-                    terms.append(Mul(*factors))
-
-                a = Mul(*coeffs)
-                b = Add(*terms )
-
-                return Mul(a, b)
-
-            # Derivative of constant: d(const) = 0
-            elif isinstance(expr, _coeffs_registery):
-                return S.Zero
-
-        # Automatic evaluation to canonical form: reorder arguments by using
-        # anti-commutativity property [v, u] = -[u, v] and stop recursion.
-        if str(arg1) > str(arg2):
-            return -cls(arg2, arg1, evaluate=False)
-
-        # Stop recursion
-        return cls(arg1, arg2, evaluate=False)
-
-#==============================================================================
-# TODO improve
-class StrainTensor(Grad):
-    """
-    This operator represents the strain tensor (grad(u) + transpose(grad(u)))/2
-    """
-
-    def _sympystr(self, printer):
-        sstr = printer.doprint
-        return '{D}({arg})'.format(D=sstr('D'), arg=sstr(self.args[0]))
-
-#==============================================================================
 class Convolution(BasicOperator):
     """
     Represents a generic Convolution operator, without knowledge of the dimension.
@@ -1810,8 +1560,7 @@ class PlusInterfaceOperator(BasicOperator):
 
 _generic_ops  = (Dot, Cross, Inner, Outer, Convolution)
 
-_diff_ops  = (Grad, Curl, Rot, Div,
-              Bracket, Laplace, Hessian)
+_diff_ops  = (Grad, Curl, Rot, Div)
 
 # ... alias for ufl compatibility
 # user friendly functions
@@ -1825,10 +1574,11 @@ curl = Curl
 rot = Rot
 div = Div
 
-bracket = Bracket
-laplace = Laplace
-hessian = Hessian
-D       = StrainTensor
+convect = lambda a,u: dot(a, grad(u))
+laplace = lambda _: div(grad(_))
+D       = lambda w: (grad(w) + Transpose(grad(w))) / 2
+hessian = None # TODO to be defined
+bracket = None # TODO to be defined
 conv    = Convolution
 
 jump  = Jump
@@ -1849,4 +1599,3 @@ def add_basicop(expr):
 Basic._constructor_postprocessor_mapping[BasicOperator] = {
     "Add": [add_basicop],
 }
-
