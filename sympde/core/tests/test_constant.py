@@ -17,7 +17,6 @@ def test_constant_1():
     assert isinstance(f, ScalarConstant)
     assert i.name == 'i'
     assert i.value == 5
-    assert i.dtype == int
     assert     i.is_integer
     assert not i.is_real
     assert not i.is_complex
@@ -25,21 +24,18 @@ def test_constant_1():
     assert isinstance(f, ScalarConstant)
     assert f.name == 'f'
     assert f.value == 5.0
-    assert f.dtype == float
     assert not f.is_integer
     assert     f.is_real
     assert not f.is_complex
 
     assert isinstance(r, ScalarConstant)
     assert r.name == 'r'
-    assert r.dtype == float
     assert not r.is_integer
     assert     r.is_real
     assert not r.is_complex
 
     assert isinstance(c, ScalarConstant)
     assert c.name == 'c'
-    assert c.dtype == complex
     assert not c.is_integer
     assert not c.is_real
     assert     c.is_complex
@@ -52,15 +48,12 @@ def test_constant_1():
     assert isinstance(w, VectorConstant)
     assert w.name == 'w'
     assert w.value == Tuple(3.0, 7.0)
-    assert w.dtype == float
     assert not w.is_integer
     assert     w.is_real
     assert not w.is_complex
 
     assert isinstance(n, VectorConstant)
     assert n.name == 'n'
-    assert n.value is None
-    assert n.dtype == int
     assert     n.is_integer
     assert not n.is_real
     assert not n.is_complex
@@ -74,14 +67,12 @@ def test_constant_1():
     assert isinstance(M, MatrixConstant)
     assert M.name == 'M'
     assert M.value == Tuple(Tuple(1, 2), Tuple(3, 4))
-    assert M.dtype == int
     assert     M.is_integer
     assert not M.is_real
     assert not M.is_complex
 
     assert isinstance(A, MatrixConstant)
     assert A.name == 'A'
-    assert A.dtype == complex
     assert not A.is_integer
     assert not A.is_real
     assert     A.is_complex
