@@ -10,6 +10,13 @@ from sympy.core   import Symbol
 from sympy.tensor import IndexedBase
 
 #==============================================================================
+class NoneValue(Symbol):
+    """
+    Represents a None symbol.
+    """
+    pass
+
+#==============================================================================
 class IndexedElement(Expr):
     is_number = True
 
@@ -46,16 +53,16 @@ class BasicConstant(Expr):
         return self.args[0]
 
     @property
-    def value(self):
-        return self._value
+    def shape(self):
+        return self.args[1]
 
     @property
     def dtype(self):
-        return self._dtype
+        return self.args[2]
 
     @property
-    def shape(self):
-        return self._shape
+    def value(self):
+        return self.args[3]
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -65,33 +72,22 @@ class BasicConstant(Expr):
 class ScalarConstant(BasicConstant):
 
     def __new__(cls, *args, **options):
-        assert len(args) == 1
+        name  = args[0]
+        shape = args[1]
+        dtype = args[2]
+        value = args[3]
 
-        name = args[0]
-        if not isinstance(name, str):
-            raise TypeError('Keyword-only argument `name` must be a string.')
+        if dtype == int:
+            dtype = 'int'
+        elif dtype == float:
+            dtype = 'float'
+        elif dtype == complex:
+            dtype = 'complex'
 
-        value = options.pop('value', None)
-        dtype = options.pop('dtype', None)
-
-        if value is None:
-            if dtype is None:
-                raise ValueError('dtype must be provided, since value is not  available.')
-        else:
-            if not dtype is None:
-                value = dtype(value)
-            else:
-                dtype = type(value)
-
-        assert dtype in (int, float, complex)
-
-        obj = Expr.__new__(cls, name)
-        obj._value = value
-        obj._dtype = dtype
-        obj._shape = 1
-        obj.is_integer     = dtype == int
-        obj.is_real        = dtype == float
-        obj.is_complex     = dtype == complex
+        obj = Expr.__new__(cls, name, shape, dtype, value)
+        obj.is_integer     = dtype == 'int'
+        obj.is_real        = dtype == 'float'
+        obj.is_complex     = dtype == 'complex'
         obj.is_commutative = True
         obj.is_number      = True
 
@@ -101,48 +97,22 @@ class ScalarConstant(BasicConstant):
 class VectorConstant(BasicConstant):
 
     def __new__(cls, *args, **options):
-        assert len(args) == 1
+        name  = args[0]
+        shape = args[1]
+        dtype = args[2]
+        value = args[3]
 
-        name = args[0]
-        if not isinstance(name, str):
-            raise TypeError('Keyword-only argument `name` must be a string.')
+        if dtype == int:
+            dtype = 'int'
+        elif dtype == float:
+            dtype = 'float'
+        elif dtype == complex:
+            dtype = 'complex'
 
-        value = options.pop('value', None)
-        dtype = options.pop('dtype', None)
-        shape = options.pop('shape', None)
-
-        if value is None:
-            if dtype is None:
-                raise ValueError('dtype must be provided, since value is not  available.')
-            if shape is None:
-                raise ValueError('shape must be provided, since value is not  available.')
-
-            assert isinstance(shape, int)
-            assert dtype in (int, float, complex)
-        else:
-            assert isinstance(value, (tuple, list))
-            if not len({type(_) for _ in value}) == 1:
-                raise ValueError('Elements of value must be of the same type.')
-
-            if not dtype is None:
-                value = [dtype(_) for _ in value]
-            else:
-                dtype = type(value[0])
-
-            if not shape is None:
-                assert shape == len(value)
-            else:
-                shape = len(value)
-
-            value = Tuple(*value)
-
-        obj = Expr.__new__(cls, name)
-        obj._value = value
-        obj._dtype = dtype
-        obj._shape = shape
-        obj.is_integer = dtype == int
-        obj.is_real    = dtype == float
-        obj.is_complex = dtype == complex
+        obj = Expr.__new__(cls, name, shape, dtype, value)
+        obj.is_integer = dtype == 'int'
+        obj.is_real    = dtype == 'float'
+        obj.is_complex = dtype == 'complex'
 
         return obj
 
@@ -154,55 +124,22 @@ class VectorConstant(BasicConstant):
 class MatrixConstant(BasicConstant):
 
     def __new__(cls, *args, **options):
-        assert len(args) == 1
+        name  = args[0]
+        shape = args[1]
+        dtype = args[2]
+        value = args[3]
 
-        name = args[0]
-        if not isinstance(name, str):
-            raise TypeError('Keyword-only argument `name` must be a string.')
+        if dtype == int:
+            dtype = 'int'
+        elif dtype == float:
+            dtype = 'float'
+        elif dtype == complex:
+            dtype = 'complex'
 
-        value = options.pop('value', None)
-        dtype = options.pop('dtype', None)
-        shape = options.pop('shape', None)
-
-        if value is None:
-            if dtype is None:
-                raise ValueError('dtype must be provided, since value is not  available.')
-            if shape is None:
-                raise ValueError('shape must be provided, since value is not  available.')
-
-            assert isinstance(shape, (tuple, list))
-            assert dtype in (int, float, complex)
-        else:
-            assert isinstance(value, (tuple, list))
-            for row in value:
-                if not isinstance(row, (tuple, list)):
-                    raise TypeError('Each row of `mat` should be a list or a tuple.')
-
-            row_sizes = {len(row) for row in value}
-            if len(row_sizes) != 1:
-                raise ValueError('Each row of `value` should have the same length.')
-
-            if not dtype is None:
-                value = [[dtype(_) for _ in row] for row in value]
-            else:
-                dtype = type(value[0][0])
-
-            _shape = (len(value), len(value[0]))
-            if not shape is None:
-                shape = tuple(shape)
-                assert shape == _shape
-            else:
-                shape = _shape
-
-            value = Tuple(*[Tuple(*row) for row in value])
-
-        obj = Expr.__new__(cls, name)
-        obj._value = value
-        obj._dtype = dtype
-        obj._shape = shape
-        obj.is_integer = dtype == int
-        obj.is_real    = dtype == float
-        obj.is_complex = dtype == complex
+        obj = Expr.__new__(cls, name, shape, dtype, value)
+        obj.is_integer = dtype == 'int'
+        obj.is_real    = dtype == 'float'
+        obj.is_complex = dtype == 'complex'
 
         return obj
 
@@ -213,31 +150,90 @@ class MatrixConstant(BasicConstant):
         return IndexedElement(self, key)
 
 #==============================================================================
+# TODO ARA must check consistency between shape and value
 def constant(name, shape=None, dtype=None, value=None):
-    if value is None:
-        assert dtype in (int, float, complex)
+    if not isinstance(name, str):
+        raise TypeError('Keyword-only argument `name` must be a string.')
 
-        if (shape == 0) or (shape is None):
-            return ScalarConstant(name, dtype=dtype)
-        elif isinstance(shape, int):
-            return VectorConstant(name, shape=shape, dtype=dtype)
-        elif isinstance(shape, (tuple, list)):
-            return MatrixConstant(name, shape=shape, dtype=dtype)
-        else:
-            raise ValueError('Wrong arguments')
+    if value is None and dtype is None:
+        raise ValueError('dtype must be provided, since value is not  available.')
+
+    # ... check validity and set default arguments values
+    if value is None:
+        # scalar case
+        if shape is None:
+            shape = 0
+
+        value = NoneValue('None')
+
+        if not isinstance(shape, (int, tuple, list)):
+            raise TypeError('shape must be an integer, tuple or list, but was given {}'.format(type(shape)))
     else:
         if isinstance(value, (int, float, complex)):
-            assert (shape == 0) or (shape is None)
-            return ScalarConstant(name, dtype=dtype, value=value)
+            # scalar case
+            if dtype is None:
+                dtype = type(value)
+            elif not (dtype in (int, float, complex)):
+                raise TypeError('dtype must be (int, float, complex), but {} was given'.format(dtype))
+
+            # cast type
+            value = dtype(value)
+
+            # set default value for shape
+            shape = 0
+
         elif isinstance(value, (tuple, list)):
-            if isinstance(shape, int):
-                return VectorConstant(name, shape=shape, dtype=dtype, value=value)
-            elif isinstance(shape, (tuple, list)):
-                return MatrixConstant(name, shape=shape, dtype=dtype, value=value)
+            if not len({type(_) for _ in value}) == 1:
+                raise ValueError('Elements of value must be of the same type.')
+
+            if isinstance(value[0], (int, float, complex)):
+                # vector case
+                if dtype is None:
+                    dtype = type(value[0])
+                elif not (dtype in (int, float, complex)):
+                    raise TypeError('dtype must be (int, float, complex), but {} was given'.format(dtype))
+
+                # cast type
+                value = [dtype(_) for _ in value]
+                value = Tuple(*value)
+
+                # set default value for shape
+                shape = len(value)
+
+            elif isinstance(value[0], (tuple, list)):
+                # matrix case
+                for row in value:
+                    if not isinstance(row, (tuple, list)):
+                        raise TypeError('Each row of `mat` should be a list or a tuple.')
+
+                row_sizes = {len(row) for row in value}
+                if len(row_sizes) != 1:
+                    raise ValueError('Each row of `value` should have the same length.')
+
+                if dtype is None:
+                    dtype = type(value[0][0])
+                elif not (dtype in (int, float, complex)):
+                    raise TypeError('dtype must be (int, float, complex), but {} was given'.format(dtype))
+
+                # cast type
+                value = [[dtype(_) for _ in row] for row in value]
+                value = Tuple(*[Tuple(*row) for row in value])
+
+                # set default value for shape
+                shape = (len(value), len(value[0]))
+
             else:
-                raise ValueError('Wrong arguments')
-        else:
-            raise ValueError('Wrong arguments')
+                raise TypeError('Elements must be (int, float, complex) or (tuple, list).')
+    # ...
+
+    if isinstance(shape, int) and shape == 0:
+        return ScalarConstant(name, shape, dtype, value)
+    elif isinstance(shape, int) and shape > 0:
+        return VectorConstant(name, shape, dtype, value)
+    elif isinstance(shape, (tuple, list)) and len(shape) == 2:
+        return MatrixConstant(name, shape, dtype, value)
+    else:
+        raise ValueError('Wrong arguments, shape = {}'.format(shape))
 
 #==============================================================================
 class CalculusFunction(Function):

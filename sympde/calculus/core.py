@@ -342,25 +342,43 @@ def _split_mul_args(expr, number=False, scalar=False, constant=False):
     if scalar or constant:
         number = True
 
+    dtypes = {}
+    dtypes['number'] = (int, float, complex, Number, NumberSymbol)
+    if constant:
+        dtypes['scalar'] = (ScalarConstant,)
+        dtypes['vector'] = (VectorConstant,)
+    else:
+        dtypes['scalar'] = (ScalarConstant, ScalarFunction)
+        dtypes['vector'] = (VectorConstant, VectorFunction)
+    # TODO must be treated as scalar & vector
+    dtypes['matrix'] = (MatrixConstant,)
+
     d = {}
     if number:
-        types = (int, float, complex, Number, NumberSymbol)
+        types = dtypes['number']
         args = []
         for i in expr.args:
             if isinstance(i, types):
                 args.append(i)
+            elif isinstance(i, Pow):
+                flag = isinstance(i.base, types)
+                flag = flag and isinstance(i.exp , types)
+                if flag:
+                    args.append(i)
         d['number'] = args
 
     if scalar:
-        types = [ScalarConstant]
-        if not constant:
-            types.append(ScalarFunction)
-        types = tuple(types)
+        types = dtypes['scalar']
 
         args = []
         for i in expr.args:
             if isinstance(i, types):
                 args.append(i)
+            elif isinstance(i, Pow):
+                flag = isinstance(i.base, types) or isinstance(i.base, dtypes['number'])
+                flag = flag and ( isinstance(i.exp , types) or isinstance(i.exp, dtypes['number']) )
+                if flag:
+                    args.append(i)
         d['scalar'] = args
 
     values = [i for values in d.values() for i in values]
@@ -830,22 +848,10 @@ class Curl(DiffOperator):
             d_u  = Grad(u, evaluate=True)
             d_F  = cls(F, evaluate=True)
 
-            return u * d_F + Cross(d_u, F)
-#            return expand(u * d_F + Cross(d_u, F))
+            return expand(u * d_F + Cross(d_u, F))
 
-        elif isinstance(expr, Pow):  # TODO: fix this for the case where e is not a number
-            b = expr.base
-            e = expr.exp
-            print('b = ', b)
-            print('e = ', e)
-            import sys; sys.exit(0)
-            a = cls(b)
-            expr = expr.func(b, e-1)
-            if isinstance(a, Add):
-                expr = reduce(add, [e*expr*i for i in a.args])
-            else:
-                expr = e*a*expr
-            return expr
+        elif isinstance(expr, Pow):
+            raise NotImplementedError('{}'.format(type(expr)))
 
         # ... check consistency between space type and the operator
         if _is_sympde_atom(expr):
