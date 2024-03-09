@@ -893,6 +893,7 @@ class Rot(DiffOperator):
 
     is_scalar      = False
     is_commutative = False
+    _unevaluated_types  = (ScalarFunction, VectorFunction)
 
     def __new__(cls, expr, **options):
         # (Try to) sympify args first
@@ -910,27 +911,36 @@ class Rot(DiffOperator):
     @classmethod
     def eval(cls, expr):
 
-        types = (VectorFunction, ScalarFunction)
-        if not has(expr, types):
-            if expr.is_number:
-                return S.Zero
+        if is_constant(expr):
+            return S.Zero
+
+        if isinstance(expr, Grad):
+            return S.Zero
+
+        if isinstance(expr, cls._unevaluated_types):
             return cls(expr, evaluate=False)
 
         if isinstance(expr, Add):
-            a = [i for i in expr.args if has(i, types)]
-            b = [i for i in expr.args if i not in a]
-            a = [cls(i) for i in a]
-            b = cls(expr.func(*b))
-            return reduce(add, a) + b
+            args = [cls(i, evaluate=True) for i in expr.args]
+            return reduce(add, args, S.Zero)
 
         elif isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if a.is_number]
-            vectors = [a for a in expr.args if not(a in coeffs)]
+            d = _collect_mul_expr(expr, number=True, scalar=True, vector=False, matrix=False)
 
-            a = Mul(*coeffs)
-            b = cls(expr.func(*vectors), evaluate=False)
+            number = reduce(mul, d['number'], S.One)
+            scalar = reduce(mul, d['scalar'], S.One)
+            other  = reduce(mul, d['other'], S.One)
 
-            return a*b
+            u = number*scalar
+            F = other
+
+            d_u  = Grad(u, evaluate=True)
+            d_F  = cls(F, evaluate=True)
+
+            return expand(u * d_F + Cross(d_u, F))
+
+        elif isinstance(expr, Pow):
+            raise NotImplementedError('{}'.format(type(expr)))
 
         # ... check consistency between space type and the operator
         # TODO add appropriate space types
