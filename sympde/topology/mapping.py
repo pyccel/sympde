@@ -20,7 +20,7 @@ from sympde.core.basic        import BasicMapping
 from sympde.core.basic        import CalculusFunction
 from sympde.core.basic        import _coeffs_registery
 from sympde.calculus.core     import PlusInterfaceOperator, MinusInterfaceOperator
-from sympde.calculus.core     import grad, div, curl, laplace #, hessian
+from sympde.calculus.core     import grad, div, curl
 from sympde.calculus.core     import dot, inner, outer, _diff_ops
 from sympde.calculus.core     import has, DiffOperator
 from sympde.calculus.matrices import MatrixSymbolicExpr, MatrixElement, SymbolicTrace, Inverse
@@ -1052,27 +1052,6 @@ class LogicalExpr(CalculusFunction):
                 return SymbolicTrace(mapping.jacobian.inv().T*grad(arg.test))
             else:
                 raise NotImplementedError('TODO')
-
-        elif isinstance(expr, laplace):
-            arg = expr.args[0]
-            v   = cls.eval(grad(arg), domain)
-            v   = mapping.jacobian.inv().T*grad(v)
-            return SymbolicTrace(v)
-
-#        elif isinstance(expr, hessian):
-#           arg = expr.args[0]
-#            if isinstance(mapping, InterfaceMapping):
-#                if isinstance(arg, MinusInterfaceOperator):
-#                    arg     = arg.args[0]
-#                    mapping = mapping.minus
-#                elif isinstance(arg, PlusInterfaceOperator):
-#                    arg = arg.args[0]
-#                    mapping = mapping.plus
-#                else:
-#                    raise TypeError(arg)
-#            v   = cls.eval(grad(expr.args[0]), domain)
-#            v   = mapping.jacobian.inv().T*grad(v)
-#            return v
 
         elif isinstance(expr, (dot, inner, outer)):
             args = [cls.eval(arg, domain) for arg in expr.args]
