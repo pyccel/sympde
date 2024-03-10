@@ -3,9 +3,12 @@
 # TODO add action of diff operators on sympy known functions
 
 from itertools   import groupby
+from functools import reduce
+from operator  import mul, add
 
 import numpy as np
 
+from sympy                    import expand
 from sympy import Basic
 from sympy import Symbol
 from sympy import Expr
@@ -26,6 +29,8 @@ from sympde.core.basic    import BasicMapping
 from sympde.core.algebra  import LinearOperator
 from sympde.calculus.core import minus, plus
 from sympde.calculus.core import has
+from sympde.calculus.core import is_constant
+from sympde.calculus.core import _split_mul_expr
 
 from .space   import ScalarFunction, VectorFunction, IndexedVectorFunction
 
@@ -51,8 +56,12 @@ class DifferentialOperator(LinearOperator):
     @classmethod
     @cacheit
     def eval(cls, expr):
+        print('>>> ', expr, type(expr))
 
         types = (VectorFunction, ScalarFunction, DifferentialOperator)
+
+        if is_constant(expr):
+            return S.Zero
 
         if isinstance(expr, _logical_partial_derivatives):
             atom    = get_atom_logical_derivatives(expr)
@@ -78,16 +87,19 @@ class DifferentialOperator(LinearOperator):
             args = [cls(expr[i], evaluate=False) for i in range(0, n)]
             args = Tuple(*args)
             return Matrix([args])
+
         elif isinstance(expr, (list, tuple, Tuple)):
             args = [cls(i, evaluate=True) for i in expr]
             args = Tuple(*args)
             return Matrix([args])
+
         elif isinstance(expr, (Matrix, ImmutableDenseMatrix)):
             newexpr = Matrix.zeros(*expr.shape)
             for i in range(expr.shape[0]):
                 for j in range(expr.shape[1]):
                     newexpr[i,j] = cls(expr[i,j], evaluate=True)
             return type(expr)(newexpr)
+
         elif isinstance(expr, (IndexedVectorFunction, DifferentialOperator)):
             return cls(expr, evaluate=False)
 
@@ -99,6 +111,30 @@ class DifferentialOperator(LinearOperator):
 
         elif isinstance(expr, Indexed) and isinstance(expr.base, BasicMapping):
             return cls(expr, evaluate=False)
+
+        elif isinstance(expr, Add):
+            args = [cls(a, evaluate=True) for a in expr.args]
+            return reduce(add, args, S.Zero)
+
+        elif isinstance(expr, Mul):
+            c, expr = _split_mul_expr(expr, scalar=True, constant=True)
+            if isinstance(expr, Mul):
+                a1 = expr.args[0]
+                a2 = expr.func(*expr.args[1:])
+
+                d_a1  = cls(expr.args[0], evaluate=True)
+                d_a2  = cls(expr.func(*expr.args[1:]), evaluate=True)
+
+                return expand(c * a1 * d_a2 + c * d_a1 * a2)
+            else:
+                return c * cls(expr, evaluate=True)
+
+        elif isinstance(expr, Pow):
+            b = expr.base
+            e = expr.exp
+            v = (log(b)*cls(e, evaluate=True) + e*cls(b, evaluate=True)/b) * b**e
+            return v
+
         elif not has(expr, types):
             if expr.is_number:
                 return S.Zero
@@ -115,53 +151,6 @@ class DifferentialOperator(LinearOperator):
                         return expr_prime + diff(expr, x)
                 return diff(expr, x)
 
-
-        if isinstance(expr, Add):
-            args = [cls(a, evaluate=True) for a in expr.args]
-            v    = Add(*args)
-            return v
-
-        elif isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
-            vectors = [a for a in expr.args if not(a in coeffs)]
-
-            c = S.One
-            if coeffs:
-                c = Mul(*coeffs)
-
-            V = S.Zero
-            if vectors:
-                if len(vectors) == 1:
-                    # do we need to use Mul?
-                    V = cls(vectors[0], evaluate=True)
-
-                elif len(vectors) == 2:
-                    a = vectors[0]
-                    b = vectors[1]
-
-                    fa = cls(a, evaluate=True)
-                    fb = cls(b, evaluate=True)
-
-                    V = a * fb + fa * b
-
-                else:
-                    a = vectors[0]
-                    b = Mul(*vectors[1:])
-
-                    fa = cls(a, evaluate=True)
-                    fb = cls(b, evaluate=True)
-
-                    V = a * fb + fa * b
-
-            v = Mul(c, V)
-            return v
-
-        elif isinstance(expr, Pow):
-            b = expr.base
-            e = expr.exp
-            v = (log(b)*cls(e, evaluate=True) + e*cls(b, evaluate=True)/b) * b**e
-            return v
-
         else:
             msg = '{expr} of type {type}'.format(expr=expr, type=type(expr))
             raise NotImplementedError(msg)
@@ -170,6 +159,7 @@ class DifferentialOperator(LinearOperator):
         sstr = printer.doprint
         args = ','.join(sstr(i) for i in self.args)
         return 'd{}({})'.format(sstr(self.coordinate), args)
+
 #==============================================================================
 class dx(DifferentialOperator):
     coordinate = 'x'

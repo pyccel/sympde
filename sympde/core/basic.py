@@ -8,6 +8,22 @@ from sympy        import Tuple
 from sympy.core   import Basic
 from sympy.core   import Symbol
 from sympy.tensor import IndexedBase
+from sympy.core.singleton import Singleton
+from sympde.old_sympy_utilities import with_metaclass
+
+#==============================================================================
+class BasicType(with_metaclass(Singleton, Basic)):
+    """Base class representing types"""
+    pass
+
+class IntegerType(BasicType):
+    name = 'int'
+
+class RealType(BasicType):
+    name = 'float'
+
+class ComplexType(BasicType):
+    name = 'complex'
 
 #==============================================================================
 class NoneValue(Symbol):
@@ -46,7 +62,32 @@ class BasicConstant(Expr):
     is_commutative = False
     is_number = False
     _op_priority   = 20.0
-    _shape = None
+
+    def __new__(cls, *args, **options):
+        name  = args[0]
+        shape = args[1]
+        dtype = args[2]
+        value = args[3]
+
+        is_integer = False
+        is_real    = False
+        is_complex = False
+        if dtype == int:
+            dtype = IntegerType()
+            is_integer = True
+        elif dtype == float:
+            dtype = RealType()
+            is_real = True
+        elif dtype == complex:
+            dtype = ComplexType()
+            is_complex = True
+
+        obj = Expr.__new__(cls, name, shape, dtype, value)
+        obj.is_integer     = is_integer
+        obj.is_real        = is_real
+        obj.is_complex     = is_complex
+
+        return obj
 
     @property
     def name(self):
@@ -68,26 +109,19 @@ class BasicConstant(Expr):
         sstr = printer.doprint
         return '{}'.format(sstr(self.name))
 
+#    def _hashable_content(self):
+#        return (self.name,) + (self.dtype,) + tuple(sorted(self.assumptions0.items()))
+#
+#    @property
+#    def assumptions0(self):
+#        return {key: value for key, value
+#                in self._assumptions.items() if value is not None}
+
 #==============================================================================
 class ScalarConstant(BasicConstant):
 
     def __new__(cls, *args, **options):
-        name  = args[0]
-        shape = args[1]
-        dtype = args[2]
-        value = args[3]
-
-        if dtype == int:
-            dtype = 'int'
-        elif dtype == float:
-            dtype = 'float'
-        elif dtype == complex:
-            dtype = 'complex'
-
-        obj = Expr.__new__(cls, name, shape, dtype, value)
-        obj.is_integer     = dtype == 'int'
-        obj.is_real        = dtype == 'float'
-        obj.is_complex     = dtype == 'complex'
+        obj = BasicConstant.__new__(cls, *args, **options)
         obj.is_commutative = True
         obj.is_number      = True
 
@@ -96,52 +130,12 @@ class ScalarConstant(BasicConstant):
 #==============================================================================
 class VectorConstant(BasicConstant):
 
-    def __new__(cls, *args, **options):
-        name  = args[0]
-        shape = args[1]
-        dtype = args[2]
-        value = args[3]
-
-        if dtype == int:
-            dtype = 'int'
-        elif dtype == float:
-            dtype = 'float'
-        elif dtype == complex:
-            dtype = 'complex'
-
-        obj = Expr.__new__(cls, name, shape, dtype, value)
-        obj.is_integer = dtype == 'int'
-        obj.is_real    = dtype == 'float'
-        obj.is_complex = dtype == 'complex'
-
-        return obj
-
     def __getitem__(self, key):
         assert isinstance(key, (int, Number, Symbol))
         return IndexedElement(self, key)
 
 #==============================================================================
 class MatrixConstant(BasicConstant):
-
-    def __new__(cls, *args, **options):
-        name  = args[0]
-        shape = args[1]
-        dtype = args[2]
-        value = args[3]
-
-        if dtype == int:
-            dtype = 'int'
-        elif dtype == float:
-            dtype = 'float'
-        elif dtype == complex:
-            dtype = 'complex'
-
-        obj = Expr.__new__(cls, name, shape, dtype, value)
-        obj.is_integer = dtype == 'int'
-        obj.is_real    = dtype == 'float'
-        obj.is_complex = dtype == 'complex'
-
-        return obj
 
     def __getitem__(self, key):
         assert isinstance(key, (tuple, list))
