@@ -80,7 +80,6 @@ def test_constant_1():
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
-
 def teardown_module():
     from sympy.core import cache
     cache.clear_cache()
