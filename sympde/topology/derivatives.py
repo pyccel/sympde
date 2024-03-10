@@ -21,12 +21,14 @@ from sympy import diff
 from sympy import log
 from sympy import preorder_traversal
 from sympy import cacheit
+from sympy import Function, Derivative
 from sympde.old_sympy_utilities import is_sequence
 
 from sympde.core.basic    import CalculusFunction
 from sympde.core.basic    import _coeffs_registery
 from sympde.core.basic    import BasicMapping
 from sympde.core.algebra  import LinearOperator
+from sympde.core.utils    import random_string
 from sympde.calculus.core import minus, plus
 from sympde.calculus.core import has
 from sympde.calculus.core import is_constant
@@ -56,7 +58,6 @@ class DifferentialOperator(LinearOperator):
     @classmethod
     @cacheit
     def eval(cls, expr):
-        print('>>> ', expr, type(expr))
 
         types = (VectorFunction, ScalarFunction, DifferentialOperator)
 
@@ -135,11 +136,21 @@ class DifferentialOperator(LinearOperator):
             v = (log(b)*cls(e, evaluate=True) + e*cls(b, evaluate=True)/b) * b**e
             return v
 
-        elif not has(expr, types):
-            if expr.is_number:
-                return S.Zero
+        elif isinstance(expr, Expr):
+            if has(expr, types):
+                x = Symbol(cls.coordinate)
+                atoms  = list(expr.atoms(ScalarFunction))
+                atoms += list(expr.atoms(VectorFunction))
+                for u in atoms:
+                    f = Function(random_string(5))
+                    expr = expr.subs(u, f(x))
+                    expr = cls(expr, evaluate=True)
+                    expr = expr.subs(f(x), u)
+                    expr = expr.subs(Derivative(u, x), cls(u, evaluate=False))
 
-            elif isinstance(expr, Expr):
+                return expr
+
+            else:
                 x = Symbol(cls.coordinate)
                 if cls.logical:
                     M = expr.atoms(Mapping)
@@ -152,6 +163,7 @@ class DifferentialOperator(LinearOperator):
                 return diff(expr, x)
 
         else:
+            print('>>>> ', isinstance(expr, Expr))
             msg = '{expr} of type {type}'.format(expr=expr, type=type(expr))
             raise NotImplementedError(msg)
 

@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from sympy        import Atom, Expr
+from sympy        import Atom, Expr, AtomicExpr
 from sympy        import Function
 from sympy        import Number
 from sympy        import NumberSymbol
@@ -58,7 +58,7 @@ class IndexedElement(Expr):
             return '{}[{}]'.format(sstr(var),sstr(key))
 
 #==============================================================================
-class BasicConstant(Expr):
+class BasicConstant(AtomicExpr):
     is_commutative = False
     is_number = False
     _op_priority   = 20.0
@@ -82,7 +82,7 @@ class BasicConstant(Expr):
             dtype = ComplexType()
             is_complex = True
 
-        obj = Expr.__new__(cls, name, shape, dtype, value)
+        obj = AtomicExpr.__new__(cls, name, shape, dtype, value)
         obj.is_integer     = is_integer
         obj.is_real        = is_real
         obj.is_complex     = is_complex
@@ -104,6 +104,10 @@ class BasicConstant(Expr):
     @property
     def value(self):
         return self.args[3]
+
+    @property
+    def free_symbols(self):
+        return {self}
 
     def _sympystr(self, printer):
         sstr = printer.doprint
