@@ -8,6 +8,7 @@ import numpy as np
 from sympy import Abs, S, cacheit
 from sympy import Indexed, Matrix, ImmutableDenseMatrix
 from sympy import expand
+from sympy import sqrt, symbols
 from sympy.core import Basic, Symbol
 from sympy.core import Add, Mul, Pow
 from sympy.core.expr import AtomicExpr
@@ -24,6 +25,10 @@ from sympde.core.utils import random_string
 from sympde.calculus import jump, avg, minus, plus
 from sympde.calculus import Jump, is_zero
 from sympde.calculus.core import _generic_ops, _diff_ops
+from sympde.calculus.core     import grad, div, curl
+from sympde.calculus.core     import dot, inner, outer, _diff_ops
+from sympde.calculus.core     import has, DiffOperator
+from sympde.calculus.core     import PlusInterfaceOperator, MinusInterfaceOperator
 from sympde.calculus.matrices import SymbolicDeterminant, Inverse, Transpose
 from sympde.calculus.matrices import MatSymbolicPow, MatrixElement, SymbolicTrace
 
@@ -33,6 +38,12 @@ from sympde.topology.basic   import InteriorDomain
 from sympde.topology.domain  import NormalVector, TangentVector, NCube, NCubeInterior
 from sympde.topology.mapping import JacobianSymbol, InterfaceMapping, MultiPatchMapping, JacobianInverseSymbol
 from sympde.topology.mapping import PullBack
+from sympde.topology.mapping import Covariant, Contravariant, Mapping
+from sympde.topology.mapping import get_logical_test_function
+from sympde.topology.datatype    import HcurlSpaceType, H1SpaceType, L2SpaceType, HdivSpaceType, UndefinedSpaceType
+from sympde.topology.derivatives import DifferentialOperator
+from sympde.topology.derivatives import get_index_logical_derivatives_atom
+from sympde.topology.derivatives import get_index_derivatives_atom
 
 # TODO fix circular dependency between sympde.expr.evaluation and sympde.topology.mapping
 
