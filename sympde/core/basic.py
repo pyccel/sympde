@@ -61,7 +61,7 @@ class IndexedElement(Expr):
 class BasicConstant(AtomicExpr):
     is_commutative = False
     is_number = False
-    _op_priority   = 20.0
+    _op_priority   = 10.0
 
     def __new__(cls, *args, **options):
         name  = args[0]
@@ -113,13 +113,11 @@ class BasicConstant(AtomicExpr):
         sstr = printer.doprint
         return '{}'.format(sstr(self.name))
 
-#    def _hashable_content(self):
-#        return (self.name,) + (self.dtype,) + tuple(sorted(self.assumptions0.items()))
-#
-#    @property
-#    def assumptions0(self):
-#        return {key: value for key, value
-#                in self._assumptions.items() if value is not None}
+    def _hashable_content(self):
+        return (self.name, self.shape, self.dtype, self.value)
+
+    def __hash__(self):
+        return hash(self._hashable_content())
 
 #==============================================================================
 class ScalarConstant(BasicConstant):
