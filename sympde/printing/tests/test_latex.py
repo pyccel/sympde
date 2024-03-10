@@ -8,8 +8,6 @@ from sympde.topology import Domain, Boundary
 from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
 from sympde.topology import element_of
 from sympde.expr     import BilinearForm, LinearForm, integral
-from sympde.exterior import d, wedge, ip, jp, delta, hodge
-from sympde.exterior import DifferentialForm
 from sympde.printing.latex import latex
 
 
@@ -28,7 +26,7 @@ def test_latex_1d():
 #    F = element_of(V, name='F')
 
     int_0 = lambda expr: integral(domain , expr)
-    
+
     assert(latex(grad(v)) == r'\nabla{v}')
     assert(latex(dot(grad(v), grad(u))) == r'\nabla{u} \cdot \nabla{v}')
 
@@ -57,7 +55,7 @@ def test_latex_2d_1():
     v = element_of(V, name='v')
     u = element_of(V, name='u')
 #    F = element_of(V, name='F')
-    
+
     int_0 = lambda expr: integral(domain , expr)
 
     assert(latex(grad(v)) == r'\nabla{v}')
@@ -118,7 +116,7 @@ def test_latex_3d_1():
 #    F = element_of(V, name='F')
 
     int_0 = lambda expr: integral(domain , expr)
-    
+
     assert(latex(grad(v)) == r'\nabla{v}')
     assert(latex(dot(grad(v), grad(u))) == r'\nabla{u} \cdot \nabla{v}')
 
@@ -148,7 +146,7 @@ def test_latex_3d_2():
     u = element_of(V, name='u')
 
     int_0 = lambda expr: integral(domain , expr)
-    
+
     assert(latex(v) == r'\mathbf{v}')
     assert(latex(inner(grad(v), grad(u))) == r'\nabla{\mathbf{u}} : \nabla{\mathbf{v}}')
 
@@ -181,7 +179,7 @@ def test_latex_2d_3():
 
     int_0 = lambda expr: integral(domain , expr)
     int_1 = lambda expr: integral(B1, expr)
-    
+
     # ...
     expr = dot(grad(v), grad(u))
     a_0 = BilinearForm((v,u), int_0(expr))
@@ -238,7 +236,7 @@ def test_latex_2d_5():
     F  = element_of(W1, 'F')
 
     int_0 = lambda expr: integral(domain , expr)
-    
+
     # ...
     l1 = LinearForm(w1, int_0(dot(w1, F)))
 
@@ -252,42 +250,6 @@ def test_latex_2d_5():
     print(latex(l2))
     print('')
     # ...
-
-#==============================================================================
-def test_latex_ec_3d_1():
-
-    n = 3
-
-    # ...
-    u_0 = DifferentialForm('u_0', index=0, dim=n)
-    v_0 = DifferentialForm('v_0', index=0, dim=n)
-
-    u_1 = DifferentialForm('u_1', index=1, dim=n)
-    v_1 = DifferentialForm('v_1', index=1, dim=n)
-
-    u_2 = DifferentialForm('u_2', index=2, dim=n)
-    v_2 = DifferentialForm('v_2', index=2, dim=n)
-
-    u_3 = DifferentialForm('u_3', index=3, dim=n)
-    v_3 = DifferentialForm('v_3', index=3, dim=n)
-    # ...
-
-    # ...
-    domain = Domain('Omega', dim=3)
-    V = VectorFunctionSpace('V', domain)
-
-    beta = element_of(V, 'beta')
-    # ...
-
-    print(latex(u_0))
-    print(latex(d(u_0)))
-    print(latex(d(delta(u_3))))
-    print(latex(d(delta(u_2)) + delta(d(u_2))))
-    print(latex(wedge(u_0, u_1)))
-
-    print(latex(ip(beta,u_1)))
-    print(latex(hodge(u_1)))
-    print(latex(jp(beta,u_1)))
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE

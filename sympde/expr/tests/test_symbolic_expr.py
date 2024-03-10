@@ -5,8 +5,8 @@ from sympde.topology import Domain, ScalarFunctionSpace, element_of
 from sympde.topology import dx, dy, dz
 from sympde.topology import dx1, dx2, dx3
 from sympde.topology import Mapping, Jacobian
-from sympde.topology import LogicalExpr
-from sympde.topology import SymbolicExpr
+from sympde.expr import LogicalExpr
+from sympde.expr import SymbolicExpr
 
 #==============================================================================
 def test_derivatives_2d_without_mapping():
