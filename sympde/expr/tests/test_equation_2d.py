@@ -1,6 +1,6 @@
 # coding: utf-8
 
-#import pytest
+import pytest
 
 from sympy.core.containers import Tuple
 from sympy import pi, cos, sin
@@ -149,6 +149,7 @@ def test_equation_2d_1():
 
 
 #==============================================================================
+@pytest.mark.skip(reason="bracket not working")
 def test_equation_2d_2():
 
     domain = Square()

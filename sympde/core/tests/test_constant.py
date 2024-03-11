@@ -14,25 +14,25 @@ def test_constant_1():
     r = constant('r', dtype=float)    # undefined real constant
     c = constant('c', dtype=complex)  # undefined complex constant
 
-    assert isinstance(f, ScalarConstant)
+    assert isinstance(i, ScalarConstant)
     assert i.name == 'i'
     assert i.value == 5
-    assert     i.is_integer
-    assert not i.is_real
-    assert not i.is_complex
+    assert i.is_integer
+    assert i.is_real
+    assert i.is_complex
 
     assert isinstance(f, ScalarConstant)
     assert f.name == 'f'
     assert f.value == 5.0
     assert not f.is_integer
     assert     f.is_real
-    assert not f.is_complex
+    assert     f.is_complex
 
     assert isinstance(r, ScalarConstant)
     assert r.name == 'r'
     assert not r.is_integer
     assert     r.is_real
-    assert not r.is_complex
+    assert     r.is_complex
 
     assert isinstance(c, ScalarConstant)
     assert c.name == 'c'
@@ -50,13 +50,13 @@ def test_constant_1():
     assert w.value == Tuple(3.0, 7.0)
     assert not w.is_integer
     assert     w.is_real
-    assert not w.is_complex
+    assert     w.is_complex
 
     assert isinstance(n, VectorConstant)
     assert n.name == 'n'
-    assert     n.is_integer
-    assert not n.is_real
-    assert not n.is_complex
+    assert n.is_integer
+    assert n.is_real
+    assert n.is_complex
     # ...
 
     # ...
@@ -67,9 +67,9 @@ def test_constant_1():
     assert isinstance(M, MatrixConstant)
     assert M.name == 'M'
     assert M.value == Tuple(Tuple(1, 2), Tuple(3, 4))
-    assert     M.is_integer
-    assert not M.is_real
-    assert not M.is_complex
+    assert M.is_integer
+    assert M.is_real
+    assert M.is_complex
 
     assert isinstance(A, MatrixConstant)
     assert A.name == 'A'

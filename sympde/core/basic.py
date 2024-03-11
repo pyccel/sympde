@@ -1,5 +1,6 @@
 # coding: utf-8
 
+from sympy        import cacheit
 from sympy        import Atom, Expr, AtomicExpr
 from sympy        import Function
 from sympy        import Number
@@ -8,22 +9,6 @@ from sympy        import Tuple
 from sympy.core   import Basic
 from sympy.core   import Symbol
 from sympy.tensor import IndexedBase
-from sympy.core.singleton import Singleton
-from sympde.old_sympy_utilities import with_metaclass
-
-#==============================================================================
-class BasicType(with_metaclass(Singleton, Basic)):
-    """Base class representing types"""
-    pass
-
-class IntegerType(BasicType):
-    name = 'int'
-
-class RealType(BasicType):
-    name = 'float'
-
-class ComplexType(BasicType):
-    name = 'complex'
 
 #==============================================================================
 class NoneValue(Symbol):
@@ -58,52 +43,30 @@ class IndexedElement(Expr):
             return '{}[{}]'.format(sstr(var),sstr(key))
 
 #==============================================================================
-class BasicConstant(AtomicExpr):
-    is_commutative = False
-    is_number = False
-    _op_priority   = 10.0
+#class BasicConstant(AtomicExpr, Boolean):
+#class BasicConstant(AtomicExpr):
+class BasicConstant(Symbol):
+#    _op_priority    = 10.0
 
-    def __new__(cls, *args, **options):
-        name  = args[0]
-        shape = args[1]
-        dtype = args[2]
-        value = args[3]
+    __slots__ = ('name', 'shape', 'value')
 
-        is_integer = False
-        is_real    = False
-        is_complex = False
-        if dtype == int:
-            dtype = IntegerType()
-            is_integer = True
-        elif dtype == float:
-            dtype = RealType()
-            is_real = True
-        elif dtype == complex:
-            dtype = ComplexType()
-            is_complex = True
-
-        obj = AtomicExpr.__new__(cls, name, shape, dtype, value)
-        obj.is_integer     = is_integer
-        obj.is_real        = is_real
-        obj.is_complex     = is_complex
+    def __new__(cls, name, shape, value, **assumptions):
+        obj = Symbol.__new__(cls, name, **assumptions)
+        obj.shape = shape
+        obj.value = value
 
         return obj
 
-    @property
-    def name(self):
-        return self.args[0]
+    def __getnewargs_ex__(self):
+        return ((self.name, self.shape, self.value), self.assumptions0)
+
+    def _hashable_content(self):
+        # Note: user-specified assumptions not hashed, just derived ones
+        return (self.name, self.shape, self.value) + tuple(sorted(self.assumptions0.items()))
 
     @property
-    def shape(self):
-        return self.args[1]
-
-    @property
-    def dtype(self):
-        return self.args[2]
-
-    @property
-    def value(self):
-        return self.args[3]
+    def _diff_wrt(self):
+        return True
 
     @property
     def free_symbols(self):
@@ -113,21 +76,9 @@ class BasicConstant(AtomicExpr):
         sstr = printer.doprint
         return '{}'.format(sstr(self.name))
 
-    def _hashable_content(self):
-        return (self.name, self.shape, self.dtype, self.value)
-
-    def __hash__(self):
-        return hash(self._hashable_content())
-
 #==============================================================================
 class ScalarConstant(BasicConstant):
-
-    def __new__(cls, *args, **options):
-        obj = BasicConstant.__new__(cls, *args, **options)
-        obj.is_commutative = True
-        obj.is_number      = True
-
-        return obj
+    pass
 
 #==============================================================================
 class VectorConstant(BasicConstant):
@@ -222,12 +173,22 @@ def constant(name, shape=None, dtype=None, value=None):
                 raise TypeError('Elements must be (int, float, complex) or (tuple, list).')
     # ...
 
+    assumptions = {}
+    if dtype == int:
+        assumptions['integer'] = True
+    elif dtype == float:
+        assumptions['real'] = True
+    elif dtype == complex:
+        assumptions['complex'] = True
+    else:
+        raise NotImplementedError('')
+
     if isinstance(shape, int) and shape == 0:
-        return ScalarConstant(name, shape, dtype, value)
+        return ScalarConstant(name, shape, value, **assumptions)
     elif isinstance(shape, int) and shape > 0:
-        return VectorConstant(name, shape, dtype, value)
+        return VectorConstant(name, shape, value, **assumptions)
     elif isinstance(shape, (tuple, list)) and len(shape) == 2:
-        return MatrixConstant(name, shape, dtype, value)
+        return MatrixConstant(name, shape, value, **assumptions)
     else:
         raise ValueError('Wrong arguments, shape = {}'.format(shape))
 

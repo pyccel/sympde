@@ -3,7 +3,7 @@
 from sympy.core import Expr
 from sympy.core.containers import Tuple
 
-from sympde.core.basic     import ScalarConstant, VectorConstant, MatrixConstant
+from sympde.core.basic     import BasicConstant
 from sympde.topology.space import ScalarFunction
 from sympde.topology.space import VectorFunction
 
@@ -76,14 +76,16 @@ class BasicExpr(Expr):
             fields = tuple(atoms)
         return fields
 
-    # TODO use .atoms
     @property
     def constants(self):
-        ls = (list(self.expr.atoms(ScalarConstant)) +
-              list(self.expr.atoms(VectorConstant)) +
-              list(self.expr.atoms(MatrixConstant)))
+        ls = self.expr.atoms(BasicConstant)
         # no redanduncy
         return tuple(ls)
+#        ls = (list(self.expr.atoms(ScalarConstant)) +
+#              list(self.expr.atoms(VectorConstant)) +
+#              list(self.expr.atoms(MatrixConstant)))
+#        # no redanduncy
+#        return tuple(ls)
 
 #==============================================================================
 # TODO check unicity of domain in __new__

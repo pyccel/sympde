@@ -4,6 +4,7 @@ from operator  import mul, add
 from functools import reduce
 
 from sympy import Dummy
+from sympy import Symbol
 from sympy import Matrix, ImmutableDenseMatrix
 from sympy.core import Basic, S
 from sympy.core import Expr, Add, Mul
@@ -715,7 +716,6 @@ def linearize(form, fields, trials=None):
                 raise TypeError('> Expecting a {Scalar|Vector}Function', trial)
     else:
         trials = [x.space.element(x.name + '_trial_' + random_string(4)) for x in fields]
-
     # ...
 
     eps        = constant('eps_' + random_string(4), dtype=float)

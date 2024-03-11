@@ -1578,7 +1578,7 @@ convect = lambda a,u: dot(a, grad(u))
 laplace = lambda _: div(grad(_))
 D       = lambda w: (grad(w) + Transpose(grad(w))) / 2
 hessian = None # TODO to be defined
-bracket = None # TODO to be defined
+bracket = lambda u,v: dot(grad(u), rot(v))
 conv    = Convolution
 
 jump  = Jump
