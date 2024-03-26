@@ -210,7 +210,6 @@ def test_logical_expr_2d_1():
     # ...
 
 #==============================================================================
-@pytest.mark.skip(reason="Slow code")
 def test_symbolic_expr_2d_1():
     dim    = 2
     M      = Mapping('M', dim=dim)
@@ -340,7 +339,6 @@ def test_logical_expr_3d_1():
     # ...
 
 #==============================================================================
-@pytest.mark.skip(reason="Slow code")
 def test_logical_expr_3d_2():
 
     dim   = 3
@@ -363,7 +361,6 @@ def test_logical_expr_3d_2():
     assert e == dot(J.inv().T*grad(u), J.inv().T*grad(v))
 
 #==============================================================================
-@pytest.mark.skip(reason="Slow code")
 def test_logical_expr_3d_3():
 
     dim    = 3
@@ -386,7 +383,6 @@ def test_logical_expr_3d_3():
     assert e == dot(J/J.det()*curl(u), J/J.det()*curl(v))
 
 #==============================================================================
-@pytest.mark.skip(reason="Slow code")
 def test_logical_expr_3d_4():
 
     dim    = 3
@@ -484,7 +480,6 @@ def test_symbolic_expr_3d_1():
     # ...
 
 #==============================================================================
-@pytest.mark.skip(reason="Slow code")
 def test_identity_mapping_2d_1():
     dim = 2
 
@@ -494,23 +489,22 @@ def test_identity_mapping_2d_1():
 
     domain = M(Domain('Omega', dim=dim))
 
-    assert(not( M[0] == x1 ))
-    assert(not( M[1] == x2 ))
+    assert not( M[0] == x1 )
+    assert not( M[1] == x2 )
 
-    assert(LogicalExpr(M[0], domain) == x1)
-    assert(LogicalExpr(M[1], domain) == x2)
+    assert LogicalExpr(M[0], domain) == x1
+    assert LogicalExpr(M[1], domain) == x2
 
-    assert(LogicalExpr(dx1(M[0]), domain) == 1)
-    assert(LogicalExpr(dx1(M[1]), domain) == 0)
+    assert LogicalExpr(dx1(M[0]), domain) == 1
+    assert LogicalExpr(dx1(M[1]), domain) == 0
 
-    assert(LogicalExpr(dx2(M[0]), domain) == 0)
-    assert(LogicalExpr(dx2(M[1]), domain) == 1)
+    assert LogicalExpr(dx2(M[0]), domain) == 0
+    assert LogicalExpr(dx2(M[1]), domain) == 1
 
     expected = Matrix([[1, 0], [0, 1]])
-    assert( Jacobian(M) == expected )
+    assert LogicalExpr(Jacobian(M), domain) == expected
 
 #==============================================================================
-@pytest.mark.skip(reason="Slow code")
 def test_identity_mapping_2d_2():
     dim    = 2
     M      = IdentityMapping('F', dim=dim)
@@ -521,12 +515,11 @@ def test_identity_mapping_2d_2():
     u = element_of(V, name='u')
 
     # ...
-    assert(LogicalExpr(dx(u), domain) == dx1(u))
-    assert(LogicalExpr(dy(u), domain) == dx2(u))
+    assert LogicalExpr(dx(u), domain) == dx1(u)
+    assert LogicalExpr(dy(u), domain) == dx2(u)
     # ...
 
 #==============================================================================
-@pytest.mark.skip(reason="Slow code")
 def test_polar_mapping_2d_1():
     dim = 2
 
@@ -539,25 +532,29 @@ def test_polar_mapping_2d_1():
 
     domain = M(Domain('Omega', dim=dim))
 
-    assert(not( M[0] == x1 ))
-    assert(not( M[1] == x2 ))
+    assert not( M[0] == x1 )
+    assert not( M[1] == x2 )
 
-    assert(LogicalExpr(M[0], domain) == c1 + (rmax*x1 + rmin*(-x1 + 1))*cos(x2))
-    assert(LogicalExpr(M[1], domain) == c2 + (rmax*x1 + rmin*(-x1 + 1))*sin(x2))
+    expected = c1 + (rmax*x1 + rmin*(-x1 + 1))*cos(x2)
+    assert expand(LogicalExpr(M[0], domain)) == expand(expected)
+    expected = c2 + (rmax*x1 + rmin*(-x1 + 1))*sin(x2)
+    assert expand(LogicalExpr(M[1], domain)) == expand(expected)
 
-    assert(LogicalExpr(dx1(M[0]), domain) == (rmax - rmin)*cos(x2))
-    assert(LogicalExpr(dx1(M[1]), domain) == (rmax - rmin)*sin(x2))
+    expected = (rmax - rmin)*cos(x2)
+    assert expand(LogicalExpr(dx1(M[0]), domain)) == expand(expected)
+    expected = (rmax - rmin)*sin(x2)
+    assert expand(LogicalExpr(dx1(M[1]), domain)) == expand(expected)
 
     expected = -(rmax*x1 + rmin*(-x1 + 1))*sin(x2)
-    assert(expand(LogicalExpr(dx2(M[0]), domain)) == expand(expected))
-    assert(LogicalExpr(dx2(M[1]), domain) == (rmax*x1 + rmin*(-x1 + 1))*cos(x2))
+    assert expand(LogicalExpr(dx2(M[0]), domain)) == expand(expected)
+    expected = (rmax*x1 + rmin*(-x1 + 1))*cos(x2)
+    assert expand(LogicalExpr(dx2(M[1]), domain)) == expand(expected)
 
     expected = Matrix([[(rmax - rmin)*cos(x2), -(rmax*x1 + rmin*(-x1 + 1))*sin(x2)],
                        [(rmax - rmin)*sin(x2), (rmax*x1 + rmin*(-x1 + 1))*cos(x2)]])
-    assert(expand(LogicalExpr(Jacobian(M), domain)) == expand(expected))
+    assert expand(LogicalExpr(Jacobian(M), domain)) == expand(expected)
 
 #==============================================================================
-@pytest.mark.skip(reason="Slow code")
 def test_target_mapping_2d_1():
     dim = 2
 
@@ -570,27 +567,32 @@ def test_target_mapping_2d_1():
 
     domain = M(Domain('Omega', dim=dim))
 
-    assert(not( M[0] == x1 ))
-    assert(not( M[1] == x2 ))
+    assert not( M[0] == x1 )
+    assert not( M[1] == x2 )
 
-    assert(LogicalExpr(M[0], domain) == -D*x1**2 + c1 + x1*(-k + 1)*cos(x2))
-    assert(LogicalExpr(M[1], domain) == c2 + x1*(k + 1)*sin(x2))
+    expected = -D*x1**2 + c1 + x1*(-k + 1)*cos(x2)
+    assert expand(LogicalExpr(M[0], domain)) == expand(expected)
+    expected = c2 + x1*(k + 1)*sin(x2)
+    assert expand(LogicalExpr(M[1], domain)) == expand(expected)
 
-    assert(LogicalExpr(dx1(M[0]), domain) == -2*D*x1 + (-k + 1)*cos(x2))
-    assert(LogicalExpr(dx1(M[1]), domain) == (k + 1)*sin(x2))
+    expected = -2*D*x1 + (-k + 1)*cos(x2)
+    assert expand(LogicalExpr(dx1(M[0]), domain)) == expand(expected)
+    expected = (k + 1)*sin(x2)
+    assert expand(LogicalExpr(dx1(M[1]), domain)) == expand(expected)
 
-    assert(LogicalExpr(dx2(M[0]), domain) == -x1*(-k + 1)*sin(x2))
-    assert(LogicalExpr(dx2(M[1]), domain) == x1*(k + 1)*cos(x2))
+    expected = -x1*(-k + 1)*sin(x2)
+    assert expand(LogicalExpr(dx2(M[0]), domain)) == expand(expected)
+    expected = x1*(k + 1)*cos(x2)
+    assert expand(LogicalExpr(dx2(M[1]), domain)) == expand(expected)
 
     expected = Matrix([[-2*D*x1 + (-k + 1)*cos(x2),
                         -x1*(-k + 1)*sin(x2)],
                        [(k + 1)*sin(x2),
                         x1*(k + 1)*cos(x2)]])
 
-    assert( Jacobian(M) == expected )
+    assert expand(Jacobian(M)) == expand(expected)
 
 #==============================================================================
-@pytest.mark.skip(reason="Slow code")
 def test_czarny_mapping_2d_1():
     dim = 2
 
@@ -603,32 +605,31 @@ def test_czarny_mapping_2d_1():
 
     domain = M(Domain('Omega', dim=dim))
 
-    assert(not( M[0] == x1 ))
-    assert(not( M[1] == x2 ))
+    assert not( M[0] == x1 )
+    assert not( M[1] == x2 )
 
     expected =  (-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 1)/eps
-    assert(LogicalExpr(M[0], domain) == expected)
+    assert expand(LogicalExpr(M[0], domain)) == expand(expected)
     expected =  b*x1*sin(x2)/(sqrt(-eps**2/4 + 1)*(-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 2)) + c2
-    assert(LogicalExpr(M[1], domain) == expected)
+    assert expand(LogicalExpr(M[1], domain)) == expand(expected)
 
     expected =  -cos(x2)/sqrt(eps*(eps + 2*x1*cos(x2)) + 1)
-    assert(LogicalExpr(dx1(M[0]), domain) == expected)
+    assert expand(LogicalExpr(dx1(M[0]), domain)) == expand(expected)
     expected =  b*(eps*x1*sin(x2)*cos(x2)/(sqrt(-eps**2/4 + 1)*sqrt(eps*(eps + 2*x1*cos(x2)) + 1)*(-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 2)**2) + sin(x2)/(sqrt(-eps**2/4 + 1)*(-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 2)))
-    assert((LogicalExpr(dx1(M[1]), domain) - expected).expand() == 0)
+    assert expand(LogicalExpr(dx1(M[1]), domain)) == expand(expected)
 
     expected =  x1*sin(x2)/sqrt(eps*(eps + 2*x1*cos(x2)) + 1)
-    assert(LogicalExpr(dx2(M[0]), domain) == expected)
+    assert expand(LogicalExpr(dx2(M[0]), domain)) == expand(expected)
     expected =  b*x1*(-eps*x1*sin(x2)**2/(sqrt(eps*(eps + 2*x1*cos(x2)) + 1)*(-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 2)**2) + cos(x2)/(-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 2))/sqrt(-eps**2/4 + 1)
-    assert((LogicalExpr(dx2(M[1]), domain) - expected).expand() == 0)
+    assert expand(LogicalExpr(dx2(M[1]), domain)) == expand(expected)
 
     expected =  Matrix([[-cos(x2)/sqrt(eps*(eps + 2*x1*cos(x2)) + 1),
                          x1*sin(x2)/sqrt(eps*(eps + 2*x1*cos(x2)) + 1)],
                         [b*(eps*x1*sin(x2)*cos(x2)/(sqrt(-eps**2/4 + 1)*sqrt(eps*(eps + 2*x1*cos(x2)) + 1)*(-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 2)**2) + sin(x2)/(sqrt(-eps**2/4 + 1)*(-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 2))),
                          b*x1*(-eps*x1*sin(x2)**2/(sqrt(eps*(eps + 2*x1*cos(x2)) + 1)*(-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 2)**2) + cos(x2)/(-sqrt(eps*(eps + 2*x1*cos(x2)) + 1) + 2))/sqrt(-eps**2/4 + 1)]])
-    assert( all(e.expand().is_zero for e in ( Jacobian(M) - expected)) )
+    assert expand(Jacobian(M)) == expand(expected)
 
 #==============================================================================
-@pytest.mark.skip(reason="Slow code")
 def test_collela_mapping_2d_1():
     dim = 2
 
@@ -641,33 +642,31 @@ def test_collela_mapping_2d_1():
 
     domain = M(Domain('Omega', dim=dim))
 
-    assert(not( M[0] == x1 ))
-    assert(not( M[1] == x2 ))
+    assert not( M[0] == x1 )
+    assert not( M[1] == x2 )
 
     expected = 2.0*eps*sin(2.0*k1*pi*x1)*sin(2.0*k2*pi*x2) + 2.0*x1 - 1.0
-    assert(LogicalExpr(M[0], domain) == expected)
+    assert expand(LogicalExpr(M[0], domain)) == expand(expected)
     expected = 2.0*eps*sin(2.0*k1*pi*x1)*sin(2.0*k2*pi*x2) + 2.0*x2 - 1.0
-    assert(LogicalExpr(M[1], domain) == expected)
+    assert expand(LogicalExpr(M[1], domain)) == expand(expected)
 
     expected = 4.0*eps*k1*pi*sin(2.0*k2*pi*x2)*cos(2.0*k1*pi*x1) + 2.0
-    assert(LogicalExpr(dx1(M[0]), domain) == expected)
+    assert expand(LogicalExpr(dx1(M[0]), domain)) == expand(expected)
     expected = 4.0*eps*k1*pi*sin(2.0*k2*pi*x2)*cos(2.0*k1*pi*x1)
-    assert(LogicalExpr(dx1(M[1]), domain) == expected)
+    assert expand(LogicalExpr(dx1(M[1]), domain)) == expand(expected)
 
     expected = 4.0*eps*k2*pi*sin(2.0*k1*pi*x1)*cos(2.0*k2*pi*x2)
-    assert(LogicalExpr(dx2(M[0]), domain) == expected)
+    assert expand(LogicalExpr(dx2(M[0]), domain)) == expand(expected)
     expected = 4.0*eps*k2*pi*sin(2.0*k1*pi*x1)*cos(2.0*k2*pi*x2) + 2.0
-    assert(LogicalExpr(dx2(M[1]), domain) == expected)
+    assert expand(LogicalExpr(dx2(M[1]), domain)) == expand(expected)
 
     expected = Matrix([[4.0*eps*k1*pi*sin(2.0*k2*pi*x2)*cos(2.0*k1*pi*x1) + 2.0,
                         4.0*eps*k2*pi*sin(2.0*k1*pi*x1)*cos(2.0*k2*pi*x2)],
                        [4.0*eps*k1*pi*sin(2.0*k2*pi*x2)*cos(2.0*k1*pi*x1),
                         4.0*eps*k2*pi*sin(2.0*k1*pi*x1)*cos(2.0*k2*pi*x2) + 2.0]])
-
-    assert(( Jacobian(M) == expected ))
+    assert expand(Jacobian(M)) == expand(expected)
 
 #==============================================================================
-@pytest.mark.skip(reason="Slow code")
 def test_torus_mapping_3d_1():
     dim = 3
 
@@ -678,46 +677,44 @@ def test_torus_mapping_3d_1():
 
     domain = M(Domain('Omega', dim=dim))
 
-    assert(not( M[0] == x1 ))
-    assert(not( M[1] == x2 ))
-    assert(not( M[2] == x3 ))
+    assert not( M[0] == x1 )
+    assert not( M[1] == x2 )
+    assert not( M[2] == x3 )
 
     expected = (R0 + x1*cos(x2))*cos(x3)
-    assert(LogicalExpr(M[0], domain) == expected)
+    assert expand(LogicalExpr(M[0], domain)) == expand(expected)
     expected = (R0 + x1*cos(x2))*sin(x3)
-    assert(LogicalExpr(M[1], domain) == expected)
+    assert expand(LogicalExpr(M[1], domain)) == expand(expected)
     expected = x1*sin(x2)
-    assert(LogicalExpr(M[2], domain) == expected)
+    assert expand(LogicalExpr(M[2], domain)) == expand(expected)
 
     expected = cos(x2)*cos(x3)
-    assert(LogicalExpr(dx1(M[0]), domain) == expected)
+    assert expand(LogicalExpr(dx1(M[0]), domain)) == expand(expected)
     expected = sin(x3)*cos(x2)
-    assert(LogicalExpr(dx1(M[1]), domain) == expected)
+    assert expand(LogicalExpr(dx1(M[1]), domain)) == expand(expected)
     expected = sin(x2)
-    assert(LogicalExpr(dx1(M[2]), domain) == expected)
+    assert expand(LogicalExpr(dx1(M[2]), domain)) == expand(expected)
 
     expected = -x1*sin(x2)*cos(x3)
-    assert(LogicalExpr(dx2(M[0]), domain) == expected)
+    assert expand(LogicalExpr(dx2(M[0]), domain)) == expand(expected)
     expected = -x1*sin(x2)*sin(x3)
-    assert(LogicalExpr(dx2(M[1]), domain) == expected)
+    assert expand(LogicalExpr(dx2(M[1]), domain)) == expand(expected)
     expected = x1*cos(x2)
-    assert(LogicalExpr(dx2(M[2]), domain) == expected)
+    assert expand(LogicalExpr(dx2(M[2]), domain)) == expand(expected)
 
     expected = -(R0 + x1*cos(x2))*sin(x3)
-    assert(expand(LogicalExpr(dx3(M[0]), domain)) == expand(expected))
+    assert expand(LogicalExpr(dx3(M[0]), domain)) == expand(expected)
     expected = (R0 + x1*cos(x2))*cos(x3)
-    assert(LogicalExpr(dx3(M[1]), domain) == expected)
+    assert expand(LogicalExpr(dx3(M[1]), domain)) == expand(expected)
     expected = 0
-    assert(LogicalExpr(dx3(M[2]), domain) == expected)
+    assert expand(LogicalExpr(dx3(M[2]), domain)) == expand(expected)
 
     expected = Matrix([[cos(x2)*cos(x3),-x1*sin(x2)*cos(x3),-(R0+x1*cos(x2))*sin(x3)],
                        [sin(x3)*cos(x2),-x1*sin(x2)*sin(x3),(R0+x1*cos(x2))*cos(x3)],
                        [sin(x2), x1*cos(x2), 0]])
-
-    assert( all(e.expand().is_zero for e in ( Jacobian(M) - expected)) )
+    assert expand(Jacobian(M)) == expand(expected)
 
 #==============================================================================
-@pytest.mark.skip(reason="Slow code")
 def test_twisted_target_mapping_3d_1():
     dim = 3
 
@@ -730,42 +727,42 @@ def test_twisted_target_mapping_3d_1():
 
     domain = M(Domain('Omega', dim=dim))
 
-    assert(not( M[0] == x1 ))
-    assert(not( M[1] == x2 ))
-    assert(not( M[2] == x3 ))
+    assert not( M[0] == x1 )
+    assert not( M[1] == x2 )
+    assert not( M[2] == x3 )
 
     expected = -D*x1**2 + c1 + x1*(-k + 1)*cos(x2)
-    assert(LogicalExpr(M[0], domain) == expected)
+    assert expand(LogicalExpr(M[0], domain)) == expand(expected)
     expected = c2 + x1*(k + 1)*sin(x2)
-    assert(LogicalExpr(M[1], domain) == expected)
+    assert expand(LogicalExpr(M[1], domain)) == expand(expected)
     expected = c3 + x1**2*x3*sin(2*x2)
-    assert(LogicalExpr(M[2], domain) == expected)
+    assert expand(LogicalExpr(M[2], domain)) == expand(expected)
 
     expected = -2*D*x1 + (-k + 1)*cos(x2)
-    assert(LogicalExpr(dx1(M[0]), domain) == expected)
+    assert expand(LogicalExpr(dx1(M[0]), domain)) == expand(expected)
     expected = (k + 1)*sin(x2)
-    assert(LogicalExpr(dx1(M[1]), domain) == expected)
+    assert expand(LogicalExpr(dx1(M[1]), domain)) == expand(expected)
     expected = 2*x1*x3*sin(2*x2)
-    assert(LogicalExpr(dx1(M[2]), domain) == expected)
+    assert expand(LogicalExpr(dx1(M[2]), domain)) == expand(expected)
 
     expected = -x1*(-k + 1)*sin(x2)
-    assert(LogicalExpr(dx2(M[0]), domain) == expected)
+    assert expand(LogicalExpr(dx2(M[0]), domain)) == expand(expected)
     expected = x1*(k + 1)*cos(x2)
-    assert(LogicalExpr(dx2(M[1]), domain) == expected)
+    assert expand(LogicalExpr(dx2(M[1]), domain)) == expand(expected)
     expected = 2*x1**2*x3*cos(2*x2)
-    assert(LogicalExpr(dx2(M[2]), domain) == expected)
+    assert expand(LogicalExpr(dx2(M[2]), domain)) == expand(expected)
 
     expected = 0
-    assert(expand(LogicalExpr(dx3(M[0]), domain)) == expand(expected))
+    assert expand(LogicalExpr(dx3(M[0]), domain)) == expand(expected)
     expected = 0
-    assert(LogicalExpr(dx3(M[1]), domain) == expected)
+    assert expand(LogicalExpr(dx3(M[1]), domain)) == expand(expected)
     expected = x1**2*sin(2*x2)
-    assert(LogicalExpr(dx3(M[2]), domain) == expected)
+    assert expand(LogicalExpr(dx3(M[2]), domain)) == expand(expected)
 
     expected = Matrix([[-2*D*x1 + (-k + 1)*cos(x2), -x1*(-k + 1)*sin(x2), 0],
                        [(k + 1)*sin(x2),             x1*(k + 1)*cos(x2), 0],
                        [2*x1*x3*sin(2*x2),           2*x1**2*x3*cos(2*x2), x1**2*sin(2*x2)]])
-    assert( Jacobian(M) == expected )
+    assert expand(Jacobian(M)) == expand(expected)
 
 #==============================================================================
 def test_logical_expr_2d_2():

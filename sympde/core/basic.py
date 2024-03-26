@@ -184,6 +184,8 @@ def constant(name, shape=None, dtype=None, value=None):
         raise NotImplementedError('')
 
     if isinstance(shape, int) and shape == 0:
+        assumptions['number'] = True
+        assumptions['commutative'] = True
         return ScalarConstant(name, shape, value, **assumptions)
     elif isinstance(shape, int) and shape > 0:
         return VectorConstant(name, shape, value, **assumptions)

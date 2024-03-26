@@ -168,7 +168,6 @@ class Mapping(BasicMapping):
             ldim = dim
             pdim = dim
 
-
         obj = IndexedBase.__new__(cls, name, shape=pdim)
 
         if not evaluate:
@@ -186,19 +185,25 @@ class Mapping(BasicMapping):
 
             _coordinates = [Symbol(u) for u in coordinates]
 
-        obj._name                = name
-        obj._ldim                = ldim
-        obj._pdim                = pdim
-        obj._coordinates         = tuple(_coordinates)
-        obj._jacobian            = kwargs.pop('jacobian', JacobianSymbol(obj))
-        obj._is_minus            = None
-        obj._is_plus             = None
+        obj._name        = name
+        obj._ldim        = ldim
+        obj._pdim        = pdim
+        obj._coordinates = tuple(_coordinates)
+        obj._jacobian    = kwargs.pop('jacobian', JacobianSymbol(obj))
+        obj._is_minus    = None
+        obj._is_plus     = None
+        obj._metric      = None
+        obj._metric_det  = None
 
         lcoords = ['x1', 'x2', 'x3'][:ldim]
         lcoords = [Symbol(i) for i in lcoords]
         obj._logical_coordinates = Tuple(*lcoords)
         # ...
+
+        # case of analytical mapping
         if not( obj._expressions is None ):
+            pdim = obj.pdim
+            ldim = obj.ldim
             coords = ['x', 'y', 'z'][:pdim]
 
             # ...
@@ -244,7 +249,6 @@ class Mapping(BasicMapping):
             else:
                 obj._jac     = ImmutableDenseMatrix(sympify(obj._jac)).subs(subs)
                 obj._inv_jac = ImmutableDenseMatrix(sympify(obj._inv_jac)).subs(subs)
-
         else:
             obj._jac     = Jacobian(obj)
 
@@ -336,10 +340,14 @@ class Mapping(BasicMapping):
 
     @property
     def metric_expr( self ):
+        if self._metric is None:
+            self.initialize()
         return self._metric
 
     @property
     def metric_det_expr( self ):
+        if self._metric_det is None:
+            self.initialize()
         return self._metric_det
 
     @property
@@ -800,6 +808,8 @@ class Covariant(MappingApplication):
 
         assert F.pdim == F.ldim
 
+#        M = compute_inverse_matrix(Jacobian(F))
+#        M   = M.T
         M   = Jacobian(F).inv().T
         dim = F.pdim
 
@@ -855,3 +865,19 @@ class Contravariant(MappingApplication):
         v = Matrix(v)
         v = M*v
         return Tuple(*v)
+
+#==============================================================================
+def compute_inverse_matrix(A):
+    nrows = 2
+    ncols = 2
+
+    if nrows == 2 and ncols == 2:
+        a = A[0,0] ; b = A[0,1] ; c = A[1,0] ; d = A[1,1]
+        det = a*d -b*c
+        inv = [[d,-b], [-c,a]]
+        inv = Tuple(*[Tuple(*row) for row in inv])
+        inv = Matrix(inv) / det
+
+        return inv
+    else:
+        raise NotImplementedError('TODO')
