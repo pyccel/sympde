@@ -3,6 +3,10 @@
 from sympy        import cacheit
 from sympy        import Atom, Expr, AtomicExpr
 from sympy        import Function
+from sympy        import Add
+from sympy        import Mul
+from sympy        import Pow
+from sympy        import Integer
 from sympy        import Number
 from sympy        import NumberSymbol
 from sympy        import Tuple
@@ -81,11 +85,53 @@ class ScalarConstant(BasicConstant):
     pass
 
 #==============================================================================
+# TODO do we need to add __radd__ ?
 class VectorConstant(BasicConstant):
 
     def __getitem__(self, key):
         assert isinstance(key, (int, Number, Symbol))
         return IndexedElement(self, key)
+
+    def __add__(self, other):
+#        print('>>> ', type(other))
+        if not isinstance(other, (VectorConstant, Add, Mul)):
+            msg = 'Type mismatch, expecting (VectorConstant, Add, Mul) given {}'.format(type(other))
+            raise UnconsistentVectorError(msg)
+
+        if isinstance(other, VectorConstant):
+            assert self.shape == other.shape
+
+        elif isinstance(other, Add):
+            # check that Add arguments are all of VectorConstant type
+            for arg in other.args:
+                assert isinstance(arg, VectorConstant)
+            # check that Add arguments have the same shape
+            shapes = {_.shape for _ in other.args}
+            if len(shapes) > 1:
+                raise UnconsistentVectorError('Unconsistent shapes')
+
+            assert self.shape == list(shapes)[0]
+
+        elif isinstance(other, Mul):
+            vectors = [i for i in other.args if isinstance(i, VectorConstant)]
+            others  = [i for i in other.args if not i in vectors]
+            if len(vectors) > 1:
+                raise UnconsistentVectorError('can not multiply vectors.')
+            assert len(vectors) == 1
+            assert self.shape == list(vectors)[0].shape
+
+            for arg in others:
+#                print('+++ ', type(arg))
+                # the following allows any valid expression, including Pox
+                atoms = list(arg.atoms())
+                for atom in atoms:
+                    assert isinstance(atom, (Symbol, NumberSymbol, Number, ScalarConstant))
+
+        return Add(self, other)
+
+    def __mul__(self, other):
+        assert isinstance(other, (Symbol, NumberSymbol, Number, ScalarConstant))
+        return Mul(other, self)
 
 #==============================================================================
 class MatrixConstant(BasicConstant):
@@ -209,6 +255,14 @@ class BasicMapping(IndexedBase):
 
 #==============================================================================
 class BasicDerivable(Basic):
+    pass
+
+#==============================================================================
+class BasicError(Exception):
+    def __init__(self,*args,**kwargs):
+        Exception.__init__(self,*args,**kwargs)
+
+class UnconsistentVectorError(BasicError):
     pass
 
 #==============================================================================

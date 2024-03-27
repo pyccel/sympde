@@ -1,9 +1,15 @@
+import pytest
+
 from sympde.core import constant
 from sympde.core import ScalarConstant
 from sympde.core import VectorConstant
 from sympde.core import MatrixConstant
+from sympde.core import UnconsistentVectorError
 
+from sympy import Symbol
 from sympy import Tuple
+from sympy import pi
+from sympy import expand
 
 #==============================================================================
 def test_constant_1():
@@ -76,6 +82,48 @@ def test_constant_1():
     assert not A.is_integer
     assert not A.is_real
     assert     A.is_complex
+
+#==============================================================================
+def test_constant_2():
+
+    # ...
+    alpha = constant('alpha', dtype=float)
+    n     = constant('n',     dtype=int)
+
+    A = constant('A', shape=2, dtype=float)
+    B = constant('B', shape=2, dtype=float)
+    C = constant('C', shape=2, dtype=float)
+
+    A3 = constant('A3', shape=3, dtype=float)
+
+    constants = [Symbol('x'),
+                 3,
+                 pi,
+                 2.2,
+                 constant('c1', dtype=float), constant('c2', value=5.)]
+    # ...
+
+    # ...
+    assert A + B == B + A
+    assert (A + B) + C == A + (B + C)
+    assert A + B/alpha == B/alpha + A
+    assert A + B/alpha**2 == B/alpha**2 + A
+    assert A + B/alpha**n == B/alpha**n + A
+
+    for c in constants:
+        assert expand(c * (A+B)) == c*A + c*B
+        assert A + c*B == c*B + A
+        for i in [1, 2, constant('n', dtype=int)]:
+            assert A + B/c**i == B/c**i + A
+
+    with pytest.raises(UnconsistentVectorError):
+        expr = A + 3
+        expr = A - 3
+        expr = A * B
+        expr = A * 3 * B
+        expr = A * B * C
+        expr = A * 3 * B * C
+    # ...
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
