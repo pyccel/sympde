@@ -334,7 +334,7 @@ class Functional(BasicForm):
 class LinearForm(BasicForm):
     is_linear = True
 
-    def __new__(cls, arguments, expr, ignore_linearity_errors=False, **options):
+    def __new__(cls, arguments, expr, check_linearity=True, ignore_linearity_errors=False, **options):
 
         # Trivial case: null expression
         if expr == 0:
@@ -348,7 +348,7 @@ class LinearForm(BasicForm):
         args = _sanitize_arguments(arguments, is_linear=True)
 
         # Check linearity with respect to the given arguments
-        if not is_linear_expression(expr, args):
+        if check_linearity and not is_linear_expression(expr, args):
             print(expr)
             print(args)
             msg = f'Expression is not linear w.r.t. [{args}]'
@@ -419,7 +419,7 @@ class BilinearForm(BasicForm):
     is_bilinear = True
     _is_symmetric = None
 
-    def __new__(cls, arguments, expr, ignore_linearity_errors=False, **options):
+    def __new__(cls, arguments, expr, check_linearity=True, ignore_linearity_errors=False, **options):
 
         # Trivial case: null expression
         if expr == 0:
@@ -437,7 +437,7 @@ class BilinearForm(BasicForm):
         trial_functions, test_functions = args
 
         # Check linearity with respect to trial functions
-        if not is_linear_expression(expr, trial_functions):
+        if check_linearity and not is_linear_expression(expr, trial_functions):
             msg = f'Expression is not linear w.r.t. trial functions [{trial_functions}]'
             if ignore_linearity_errors:
                 print(msg)
@@ -446,7 +446,7 @@ class BilinearForm(BasicForm):
 
 
         # Check linearity with respect to test functions
-        if not is_linear_expression(expr, test_functions):
+        if check_linearity and not is_linear_expression(expr, test_functions):
             msg = f'Expression is not linear w.r.t. test functions [{test_functions}]'
             if ignore_linearity_errors:
                 print(msg)
