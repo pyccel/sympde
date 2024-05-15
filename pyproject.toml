@@ -17,7 +17,7 @@ maintainers = [
 keywords     = ["math"]
 classifiers  = ["Programming Language :: Python :: 3"]
 dependencies = [
-    'sympy >= 1.5, <= 1.12',
+    'sympy >= 1.5, < 1.10',
     'h5py',
     'pytest',
     'pyyaml',
