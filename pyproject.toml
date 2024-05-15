@@ -7,7 +7,7 @@ name            = "sympde"
 version         = "0.18.3"
 description     = "Symbolic calculus for partial differential equations (and variational forms)"
 readme          = "README.rst"
-requires-python = ">= 3.8, <= 3.12.2"
+requires-python = ">= 3.8, < 3.13"
 license         = {file = "LICENSE"}
 authors         = [{name = "Ahmed Ratnani", email = "ratnaniahmed@gmail.com"}]
 maintainers = [
