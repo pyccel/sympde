@@ -5,12 +5,13 @@ from sympy import Matrix
 from sympy.tensor import IndexedBase
 from sympy import symbols, simplify
 
+from sympde.core.matrices import Vector
 from sympde.topology import Mapping, MappedDomain
 from sympde.topology import dx, dy, dz
 from sympde.topology import dx1, dx2, dx3
 from sympde.topology import Domain
-
 from sympde.topology.mapping import Jacobian, Covariant, Contravariant
+
 # ...
 def test_mapping_1d():
     print('============ test_mapping_1d ==============')
@@ -41,7 +42,7 @@ def test_mapping_2d():
     F = Mapping('F', dim=dim)
 
     a,b = symbols('a b')
-    ab = Tuple(a, b)
+    ab = Vector([a, b], name='ab')
 
     assert(F.name == 'F')
 
@@ -81,7 +82,7 @@ def test_mapping_3d():
     F = Mapping('F', dim=dim)
 
     a,b,c = symbols('a b c')
-    abc = Tuple(a, b, c)
+    abc = Vector([a, b, c], name='abc')
 
     assert(F.name == 'F')
 
