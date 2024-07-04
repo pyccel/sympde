@@ -23,11 +23,11 @@ from sympde.core.basic import CalculusFunction
 from .basic            import BasicDomain, InteriorDomain, Boundary, Union, Connectivity
 from .basic            import Interval, Interface, CornerBoundary, CornerInterface
 from .basic            import ProductDomain
-
+from sympde.topology.abstract_mapping import AbstractMapping
 # TODO fix circular dependency between domain and mapping
-if TYPE_CHECKING:
-    from sympde.topology.mapping import Mapping
-# TODO add pdim
+'''if TYPE_CHECKING:
+    from sympde.topology.abstract_mapping import AbstractMapping
+# TODO add pdim'''
 
 iterable_types = (tuple, list, Tuple, Union)
 
@@ -46,7 +46,7 @@ class Domain(BasicDomain):
             boundaries : TypeUnion[Iterable[Boundary], Boundary, None] = None,
             dim : Optional[int] = None,
             connectivity : Optional[Connectivity] = None,
-            mapping : Optional[Mapping] = None,
+            mapping : Optional[AbstractMapping] = None,
             logical_domain : Optional[Domain] = None):
         """
         Interiors or connectivity must be given. When the mapping is given 
@@ -176,7 +176,7 @@ class Domain(BasicDomain):
         return self.args[2]
 
     @property
-    def mapping(self) -> Optional[Mapping]:
+    def mapping(self) -> Optional[AbstractMapping]:
         """The mapping that maps the logical domain to the physical domain"""
         return self.args[3]
 
@@ -337,7 +337,7 @@ class Domain(BasicDomain):
         if not(ext == '.h5'):
             raise ValueError('> Only h5 files are supported')
         # ...
-        from sympde.topology.mapping import Mapping, MultiPatchMapping
+        from sympde.topology.symbolic_mapping import AnalyticMapping, MultiPatchMapping
 
         h5  = h5py.File( filename, mode='r' )
         yml = yaml.load( h5['topology.yml'][()], Loader=yaml.SafeLoader )
@@ -348,7 +348,7 @@ class Domain(BasicDomain):
         d_interior     = yml['interior']
         d_boundary     = yml['boundary']
         d_connectivity = yml['connectivity']
-
+        
         if dtype == 'None': dtype = None
 
         assert dtype is not None
@@ -356,10 +356,10 @@ class Domain(BasicDomain):
         if isinstance(d_interior, dict):
             d_interior = [d_interior]
             dtype      = [dtype]
-
+                
         constructors = [globals()[dt['type']] for dt in dtype]
         interiors    = [cs(i['name'], **dt['parameters']) for cs,i,dt in zip(constructors, d_interior, dtype)]
-        mappings     = [Mapping(I['mapping'], dim=dim) if I.get('mapping', "None") != "None" else None for I in d_interior]
+        mappings     = [AnalyticMapping(I['mapping'], dim=dim) if I.get('mapping', "None") != "None" else None for I in d_interior]
         domains      = [mapping(i) if mapping else i for i,mapping in zip(interiors, mappings)]
         patch_index  = {I.name:ind for ind,I in enumerate(interiors)}
 
@@ -403,7 +403,7 @@ class Domain(BasicDomain):
         assert all(p.dim==patches[0].dim for p in patches)
         dim = int(patches[0].dim)
 
-        from sympde.topology.mapping import MultiPatchMapping
+        from sympde.topology.symbolic_mapping import MultiPatchMapping
         # ... connectivity
         interfaces = {}
         boundaries = []

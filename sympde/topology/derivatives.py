@@ -29,6 +29,8 @@ from sympde.calculus.core import has
 
 from .space   import ScalarFunction, VectorFunction, IndexedVectorFunction
 
+from .symbolic_mapping import AnalyticMapping, Jacobian
+
 #==============================================================================
 class DifferentialOperator(LinearOperator):
     """
@@ -106,7 +108,7 @@ class DifferentialOperator(LinearOperator):
             elif isinstance(expr, Expr):
                 x = Symbol(cls.coordinate)
                 if cls.logical:
-                    M = expr.atoms(Mapping)
+                    M = expr.atoms(AnalyticMapping)
                     if len(M)>0:
                         M = list(M)[0]
                         expr_primes = [diff(expr, M[i]) for i in range(M.pdim)]
@@ -1288,5 +1290,5 @@ def get_max_logical_partial_derivatives(expr, F=None):
             if v > d[k]: d[k] = v
     return d
 
-from .mapping import Mapping, Jacobian
+
 
