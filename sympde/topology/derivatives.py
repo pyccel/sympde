@@ -29,7 +29,7 @@ from sympde.calculus.core import has
 
 from .space   import ScalarFunction, VectorFunction, IndexedVectorFunction
 
-from .symbolic_mapping import AnalyticMapping, Jacobian
+
 
 #==============================================================================
 class DifferentialOperator(LinearOperator):
@@ -1291,4 +1291,4 @@ def get_max_logical_partial_derivatives(expr, F=None):
     return d
 
 
-
+from .symbolic_mapping import AnalyticMapping, Jacobian
