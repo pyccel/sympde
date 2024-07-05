@@ -398,7 +398,7 @@ class AnalyticMapping(BasicMapping,AbstractMapping):
         
     def jacobian_inv_eval( self, *args ):
         if all(isinstance(arg, (int, float, Symbol, np.ndarray)) for arg in args):
-            return self._jacobian_evaluate(*args)
+            return self._jacobian_inv_evaluate(*args)
         else:
             raise TypeError("Invalid arguments for jacobian_inv_eval") 
     
