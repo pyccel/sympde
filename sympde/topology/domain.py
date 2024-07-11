@@ -463,7 +463,7 @@ class Domain(BasicDomain):
         # the multi-patch domain
         Omega = Domain.join(patches=patches, connectivity=connectivity, name='Omega')
         
-        """        
+        """
 
         assert isinstance(patches, (tuple, list))
         assert isinstance(connectivity, (tuple, list))
