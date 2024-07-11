@@ -827,7 +827,7 @@ class NCube(Domain):
             raise ValueError("Min coordinates must be smaller than max")
 
         coord_names = 'x1:{}'.format(dim + 1)
-        coordinates = symbols(coord_names)
+        coordinates = symbols(coord_names, real=True)
 
         # Choose which type to use:
         #   a) if dim <= 3, use Line, Square or Cube;
