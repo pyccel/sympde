@@ -50,7 +50,7 @@ from .abstract_mapping import AbstractMapping
 # TODO fix circular dependency between sympde.expr.evaluation and sympde.topology.mapping
 
 __all__ = (
-    'AnalyticMapping',
+    'BaseAnalyticMapping',
     'Contravariant',
     'Covariant',
     'InterfaceMapping',
@@ -172,9 +172,9 @@ def lambdify_sympde(variables, expr):
     
     
 #==============================================================================
-class AnalyticMapping(BasicMapping,AbstractMapping):
+class BaseAnalyticMapping(BasicMapping,AbstractMapping):
     """
-    Represents a AnalyticMapping object.
+    Represents a BaseAnalyticMapping object.
 
     Examples
 
@@ -486,7 +486,7 @@ class AnalyticMapping(BasicMapping,AbstractMapping):
         self._is_minus = minus
 
     def copy(self):
-        obj = AnalyticMapping(self.name,
+        obj = BaseAnalyticMapping(self.name,
                      ldim=self.ldim,
                      pdim=self.pdim,
                      evaluate=False)
@@ -522,21 +522,21 @@ class AnalyticMapping(BasicMapping,AbstractMapping):
     
     
 #==============================================================================
-class InverseMapping(AnalyticMapping):
+class InverseMapping(BaseAnalyticMapping):
     def __new__(cls, mapping):
-        assert isinstance(mapping, AnalyticMapping)
+        assert isinstance(mapping, BaseAnalyticMapping)
         name     = mapping.name
         ldim     = mapping.ldim
         pdim     = mapping.pdim
         coords   = mapping.logical_coordinates
         jacobian = mapping.jacobian.inv()
-        return AnalyticMapping.__new__(cls, name, ldim=ldim, pdim=pdim, coordinates=coords, jacobian=jacobian)
+        return BaseAnalyticMapping.__new__(cls, name, ldim=ldim, pdim=pdim, coordinates=coords, jacobian=jacobian)
 
 #==============================================================================
 class JacobianSymbol(MatrixSymbolicExpr):
     _axis = None
     def __new__(cls, mapping, axis=None):
-        assert isinstance(mapping, AnalyticMapping)
+        assert isinstance(mapping, BaseAnalyticMapping)
         if axis is not None:
             assert isinstance(axis, (int, Integer))
         obj = MatrixSymbolicExpr.__new__(cls, mapping)
@@ -564,7 +564,7 @@ class JacobianSymbol(MatrixSymbolicExpr):
         return hash(self._hashable_content())
 
     def _eval_subs(self, old, new):
-        if isinstance(new, AnalyticMapping):
+        if isinstance(new, BaseAnalyticMapping):
             if self.axis is not None:
                 obj = JacobianSymbol(new, self.axis)
             else:
@@ -583,7 +583,7 @@ class JacobianInverseSymbol(MatrixSymbolicExpr):
     _axis = None
     is_Matrix     = False
     def __new__(cls, mapping, axis=None):
-        assert isinstance(mapping, AnalyticMapping)
+        assert isinstance(mapping, BaseAnalyticMapping)
         if axis is not None:
             assert isinstance(axis, int)
         obj = MatrixSymbolicExpr.__new__(cls, mapping)
@@ -615,21 +615,21 @@ class JacobianInverseSymbol(MatrixSymbolicExpr):
             return 'Jacobian({})**(-1)'.format(sstr(self.mapping.name))
 
 #==============================================================================
-class InterfaceMapping(AnalyticMapping):
+class InterfaceMapping(BaseAnalyticMapping):
     """
     InterfaceMapping is used to represent a mapping in the interface.
 
     Attributes
     ----------
-    minus : AnalyticMapping
+    minus : BaseAnalyticMapping
         the mapping on the negative direction of the interface
-    plus  : AnalyticMapping
+    plus  : BaseAnalyticMapping
         the mapping on the positive direction of the interface
     """
 
     def __new__(cls, minus, plus):
-        assert isinstance(minus, AnalyticMapping)
-        assert isinstance(plus,  AnalyticMapping)
+        assert isinstance(minus, BaseAnalyticMapping)
+        assert isinstance(plus,  BaseAnalyticMapping)
         minus = minus.copy()
         plus  = plus.copy()
 
@@ -637,7 +637,7 @@ class InterfaceMapping(AnalyticMapping):
         plus.set_plus_minus(plus=True)
 
         name = '{}|{}'.format(str(minus.name), str(plus.name))
-        obj  = AnalyticMapping.__new__(cls, name, ldim=minus.ldim, pdim=minus.pdim)
+        obj  = BaseAnalyticMapping.__new__(cls, name, ldim=minus.ldim, pdim=minus.pdim)
         obj._minus = minus
         obj._plus  = plus
         return obj
@@ -663,7 +663,7 @@ class InterfaceMapping(AnalyticMapping):
         return self
 
 #==============================================================================
-class MultiPatchMapping(AnalyticMapping):
+class MultiPatchMapping(BaseAnalyticMapping):
 
     def __new__(cls, dic):
         assert isinstance( dic, dict)
@@ -712,25 +712,31 @@ class MappedDomain(BasicDomain):
         assert(isinstance(mapping,AbstractMapping))
         assert(isinstance(logical_domain, BasicDomain))
         if isinstance(logical_domain, Domain):
+            print("logical_domain=Domain")
             kwargs = dict(
             dim            = logical_domain._dim,
             mapping        = mapping,
             logical_domain = logical_domain)
             boundaries     = logical_domain.boundary
             interiors      = logical_domain.interior
+            print("logical_domain.interior :", logical_domain.interior)
+            print("type(logical_domain.interior)", type(logical_domain.interior))
 
             if isinstance(interiors, Union):
+                print("interiors = Union")
                 kwargs['interiors'] = Union(*[mapping(a) for a in interiors.args])
             else:
                 kwargs['interiors'] = mapping(interiors)
 
             if isinstance(boundaries, Union):
+                print("interiors = Union")
                 kwargs['boundaries'] = [mapping(a) for a in boundaries.args]
             elif boundaries:
                 kwargs['boundaries'] = mapping(boundaries)
 
             interfaces =  logical_domain.connectivity.interfaces
             if interfaces:
+                print("interfaces")
                 if isinstance(interfaces, Union):
                     interfaces = interfaces.args
                 else:
@@ -741,6 +747,7 @@ class MappedDomain(BasicDomain):
                 kwargs['connectivity'] = Connectivity(connectivity)
 
             name = '{}({})'.format(str(mapping.name), str(logical_domain.name))
+            print("return Domain(name,**kwargs)")
             return Domain(name, **kwargs)
 
         elif isinstance(logical_domain, NCubeInterior):
@@ -859,7 +866,7 @@ class Jacobian(MappingApplication):
 
         Parameters:
         ----------
-         F: AnalyticMapping
+         F: BaseAnalyticMapping
             mapping object
 
         Returns:
@@ -868,8 +875,8 @@ class Jacobian(MappingApplication):
             the jacobian matrix
         """
 
-        if not isinstance(F, AnalyticMapping):
-            raise TypeError('> Expecting a AnalyticMapping object')
+        if not isinstance(F, BaseAnalyticMapping):
+            raise TypeError('> Expecting a BaseAnalyticMapping object')
 
         if F.jacobian_expr is not None:
             return F.jacobian_expr
@@ -907,7 +914,7 @@ class Covariant(MappingApplication):
 
         Parameters:
         ----------
-         F: AnalyticMapping
+         F: BaseAnalyticMapping
             mapping object
 
          v: <tuple|list|Tuple|ImmutableDenseMatrix|Matrix>
@@ -956,7 +963,7 @@ class Contravariant(MappingApplication):
 
         Parameters:
         ----------
-         F: AnalyticMapping
+         F: BaseAnalyticMapping
             mapping object
 
          v: <tuple|list|Tuple|ImmutableDenseMatrix|Matrix>
@@ -968,8 +975,8 @@ class Contravariant(MappingApplication):
             the contravariant transformation
         """
 
-        if not isinstance(F, AnalyticMapping):
-            raise TypeError('> Expecting a AnalyticMapping')
+        if not isinstance(F, BaseAnalyticMapping):
+            raise TypeError('> Expecting a BaseAnalyticMapping')
 
         if not isinstance(v, (tuple, list, Tuple, ImmutableDenseMatrix, Matrix)):
             raise TypeError('> Expecting a tuple, list, Tuple, Matrix')
@@ -1461,7 +1468,7 @@ class SymbolicExpr(CalculusFunction):
 
         elif isinstance(expr, Indexed):
             base = expr.base
-            if isinstance(base, AnalyticMapping):
+            if isinstance(base, BaseAnalyticMapping):
                 if expr.indices[0] == 0:
                     name = 'x'
                 elif expr.indices[0] == 1:
@@ -1506,7 +1513,7 @@ class SymbolicExpr(CalculusFunction):
                     code += k*n
             return cls.eval(atom, code=code)
 
-        elif isinstance(expr, AnalyticMapping):
+        elif isinstance(expr, BaseAnalyticMapping):
             return Symbol(expr.name)
 
         # ... this must be done here, otherwise codegen for FEM will not work

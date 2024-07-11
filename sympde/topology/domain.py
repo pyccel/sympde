@@ -337,7 +337,7 @@ class Domain(BasicDomain):
         if not(ext == '.h5'):
             raise ValueError('> Only h5 files are supported')
         # ...
-        from sympde.topology.symbolic_mapping import AnalyticMapping, MultiPatchMapping
+        from sympde.topology import BaseAnalyticMapping, MultiPatchMapping
 
         h5  = h5py.File( filename, mode='r' )
         yml = yaml.load( h5['topology.yml'][()], Loader=yaml.SafeLoader )
@@ -359,7 +359,7 @@ class Domain(BasicDomain):
                 
         constructors = [globals()[dt['type']] for dt in dtype]
         interiors    = [cs(i['name'], **dt['parameters']) for cs,i,dt in zip(constructors, d_interior, dtype)]
-        mappings     = [AnalyticMapping(I['mapping'], dim=dim) if I.get('mapping', "None") != "None" else None for I in d_interior]
+        mappings     = [BaseAnalyticMapping(I['mapping'], dim=dim) if I.get('mapping', "None") != "None" else None for I in d_interior]
         domains      = [mapping(i) if mapping else i for i,mapping in zip(interiors, mappings)]
         patch_index  = {I.name:ind for ind,I in enumerate(interiors)}
 
@@ -403,7 +403,7 @@ class Domain(BasicDomain):
         assert all(p.dim==patches[0].dim for p in patches)
         dim = int(patches[0].dim)
 
-        from sympde.topology.symbolic_mapping import MultiPatchMapping
+        from sympde.sympde.topology.base_analytic_mapping import MultiPatchMapping
         # ... connectivity
         interfaces = {}
         boundaries = []

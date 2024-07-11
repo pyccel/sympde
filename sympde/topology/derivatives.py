@@ -108,7 +108,7 @@ class DifferentialOperator(LinearOperator):
             elif isinstance(expr, Expr):
                 x = Symbol(cls.coordinate)
                 if cls.logical:
-                    M = expr.atoms(AnalyticMapping)
+                    M = expr.atoms(BaseAnalyticMapping)
                     if len(M)>0:
                         M = list(M)[0]
                         expr_primes = [diff(expr, M[i]) for i in range(M.pdim)]
@@ -1291,4 +1291,4 @@ def get_max_logical_partial_derivatives(expr, F=None):
     return d
 
 
-from .symbolic_mapping import AnalyticMapping, Jacobian
+from .base_analytic_mapping import BaseAnalyticMapping, Jacobian

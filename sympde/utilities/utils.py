@@ -6,7 +6,7 @@ from mpl_toolkits.mplot3d import *
 import matplotlib.pyplot as plt
 
 from sympde.topology import InteriorDomain, MultiPatchMapping
-from sympde.topology.analytical_mappings import TorusMapping, IdentityMapping
+from sympde.topology.analytic_mappings import TorusMapping, IdentityMapping
 
 
 
