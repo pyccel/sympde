@@ -712,24 +712,19 @@ class MappedDomain(BasicDomain):
         assert(isinstance(mapping,AbstractMapping))
         assert(isinstance(logical_domain, BasicDomain))
         if isinstance(logical_domain, Domain):
-            print("logical_domain=Domain")
             kwargs = dict(
             dim            = logical_domain._dim,
             mapping        = mapping,
             logical_domain = logical_domain)
             boundaries     = logical_domain.boundary
             interiors      = logical_domain.interior
-            print("logical_domain.interior :", logical_domain.interior)
-            print("type(logical_domain.interior)", type(logical_domain.interior))
 
             if isinstance(interiors, Union):
-                print("interiors = Union")
                 kwargs['interiors'] = Union(*[mapping(a) for a in interiors.args])
             else:
                 kwargs['interiors'] = mapping(interiors)
 
             if isinstance(boundaries, Union):
-                print("interiors = Union")
                 kwargs['boundaries'] = [mapping(a) for a in boundaries.args]
             elif boundaries:
                 kwargs['boundaries'] = mapping(boundaries)
