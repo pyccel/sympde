@@ -23,10 +23,10 @@ from sympde.core.basic import CalculusFunction
 from .basic            import BasicDomain, InteriorDomain, Boundary, Union, Connectivity
 from .basic            import Interval, Interface, CornerBoundary, CornerInterface
 from .basic            import ProductDomain
-from sympde.topology.abstract_mapping import AbstractMapping
+from sympde.topology.abstract_mapping import BaseMapping
 # TODO fix circular dependency between domain and mapping
 '''if TYPE_CHECKING:
-    from sympde.topology.abstract_mapping import AbstractMapping
+    from sympde.topology.abstract_mapping import BaseMapping
 # TODO add pdim'''
 
 iterable_types = (tuple, list, Tuple, Union)
@@ -46,7 +46,7 @@ class Domain(BasicDomain):
             boundaries : TypeUnion[Iterable[Boundary], Boundary, None] = None,
             dim : Optional[int] = None,
             connectivity : Optional[Connectivity] = None,
-            mapping : Optional[AbstractMapping] = None,
+            mapping : Optional[BaseMapping] = None,
             logical_domain : Optional[Domain] = None):
         """
         Interiors or connectivity must be given. When the mapping is given 
@@ -176,7 +176,7 @@ class Domain(BasicDomain):
         return self.args[2]
 
     @property
-    def mapping(self) -> Optional[AbstractMapping]:
+    def mapping(self) -> Optional[BaseMapping]:
         """The mapping that maps the logical domain to the physical domain"""
         return self.args[3]
 

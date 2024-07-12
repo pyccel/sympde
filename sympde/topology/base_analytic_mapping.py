@@ -43,7 +43,7 @@ from .derivatives import LogicalGrad_1d, LogicalGrad_2d, LogicalGrad_3d
 import itertools as it
 from sympy import lambdify
 
-from .abstract_mapping import AbstractMapping
+from .abstract_mapping import BaseMapping
 
 
 # TODO fix circular dependency between sympde.topology.domain and sympde.topology.mapping
@@ -172,7 +172,7 @@ def lambdify_sympde(variables, expr):
     
     
 #==============================================================================
-class BaseAnalyticMapping(BasicMapping,AbstractMapping):
+class BaseAnalyticMapping(BasicMapping,BaseMapping):
     """
     Represents a BaseAnalyticMapping object.
 
@@ -709,7 +709,7 @@ class MappedDomain(BasicDomain):
 
     @cacheit
     def __new__(cls, mapping, logical_domain):
-        assert(isinstance(mapping,AbstractMapping))
+        assert(isinstance(mapping,BaseMapping))
         assert(isinstance(logical_domain, BasicDomain))
         if isinstance(logical_domain, Domain):
             kwargs = dict(

@@ -3,14 +3,14 @@ from sympy import IndexedBase
 
 __all__ = (
     'MappingMeta',
-    'AbstractMapping',
+    'BaseMapping',
 )
 
 class MappingMeta(ABCMeta,type(IndexedBase)):
     pass
 
 #==============================================================================
-class AbstractMapping(ABC,metaclass=MappingMeta):
+class BaseMapping(IndexedBase):
     """
     Transformation of coordinates, which can be evaluated.
 
