@@ -448,17 +448,29 @@ class Domain(BasicDomain):
         ext_0 = -1
         ext_1 = +1
     
-        # The connectivity list in 2D
+        # A connectivity list in 2D
         connectivity = [((Omega_0, axis_0, ext_0), (Omega_1, axis_0, ext_1),  1),
                         ((Omega_1, axis_1, ext_0), (Omega_3, axis_1, ext_1), -1),
                         ((Omega_0, axis_1, ext_0), (Omega_2, axis_1, ext_1),  1),
                         ((Omega_2, axis_0, ext_0), (Omega_3, axis_0, ext_1), -1)]
 
-        # The connectivity list in 3D
+        # alternative option (passing interface patches by their indices in the patches list):
+        connectivity = [((0, axis_0, ext_0), (1, axis_0, ext_1),  1),
+                        ((1, axis_1, ext_0), (3, axis_1, ext_1), -1),
+                        ((0, axis_1, ext_0), (2, axis_1, ext_1),  1),
+                        ((2, axis_0, ext_0), (3, axis_0, ext_1), -1)]
+
+        # A connectivity list in 3D
         connectivity = [((Omega_0, axis_0, ext_1), (Omega_1, axis_0, ext_0), ( 1,  1,  1)),
                         ((Omega_0, axis_1, ext_1), (Omega_2, axis_1, ext_0), ( 1, -1,  1)),
                         ((Omega_1, axis_1, ext_1), (Omega_3, axis_1, ext_0), (-1,  1, -1)),
                         ((Omega_2, axis_0, ext_1), (Omega_3, axis_0, ext_0), (-1,  1,  1))]
+
+        # alternative option (passing interface patches by their indices in the patches list):
+        connectivity = [((0, axis_0, ext_1), (1, axis_0, ext_0), ( 1,  1,  1)),
+                        ((0, axis_1, ext_1), (2, axis_1, ext_0), ( 1, -1,  1)),
+                        ((1, axis_1, ext_1), (3, axis_1, ext_0), (-1,  1, -1)),
+                        ((2, axis_0, ext_1), (3, axis_0, ext_0), (-1,  1,  1))]
 
         # the multi-patch domain
         Omega = Domain.join(patches=patches, connectivity=connectivity, name='Omega')
