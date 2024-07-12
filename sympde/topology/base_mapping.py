@@ -19,37 +19,42 @@ class BaseMapping(IndexedBase):
 
     with l <= p
     """
-    @abstractmethod
+    def __init__(self, name, ldim, pdim):
+        self._name = name
+        self._ldim = ldim
+        self._pdim = pdim
+
     def __call__(self, *args):
         """ Evaluate mapping at either a list of nd-arrays or the full domain."""
-
-    @abstractmethod
+        pass
+    
     def jacobian_eval( self, *args ):
         """ Compute Jacobian matrix at the list of nd-arrays. """
+        pass 
 
-    @abstractmethod
     def jacobian_inv_eval( self, *args ):
         """ Compute inverse Jacobian matrix at the list of nd-arrays.
             An exception should be raised if the matrix is singular.
         """
-
-    @abstractmethod
+        pass
+    
     def metric_eval( self, *args ):
         """ Compute components of metric tensor at list of nd-arrays. """
-
-    @abstractmethod
+        pass
+    
     def metric_det_eval( self, *args ):
         """ Compute determinant of metric tensor at the list of nd-arrays. """
-
+        pass
+    
     @property
-    @abstractmethod
     def ldim( self ):
         """ Number of logical/parametric dimensions in mapping
             (= number of eta components).
         """
-
+        pass
+    
     @property
-    @abstractmethod
     def pdim( self ):
         """ Number of physical dimensions in mapping
-            (= number of x components)."""
+            (= number of x components).""" 
+        pass

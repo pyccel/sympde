@@ -86,6 +86,11 @@ class InteriorDomain(BasicDomain):
     def mapping(self):
         return self._mapping
 
+    @mapping.setter 
+    def mapping(self, value):
+        self._mapping = value
+
+
     @property
     def logical_domain(self):
         return self._logical_domain

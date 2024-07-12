@@ -23,10 +23,10 @@ from sympde.core.basic import CalculusFunction
 from .basic            import BasicDomain, InteriorDomain, Boundary, Union, Connectivity
 from .basic            import Interval, Interface, CornerBoundary, CornerInterface
 from .basic            import ProductDomain
-from sympde.topology.abstract_mapping import BaseMapping
+from sympde.topology.base_mapping import BaseMapping
 # TODO fix circular dependency between domain and mapping
 '''if TYPE_CHECKING:
-    from sympde.topology.abstract_mapping import BaseMapping
+    from sympde.topology.base_mapping import BaseMapping
 # TODO add pdim'''
 
 iterable_types = (tuple, list, Tuple, Union)
@@ -179,6 +179,13 @@ class Domain(BasicDomain):
     def mapping(self) -> Optional[BaseMapping]:
         """The mapping that maps the logical domain to the physical domain"""
         return self.args[3]
+
+    @mapping.setter
+    def mapping(self, value: BaseMapping) -> None:
+        if len(self.args) > 3:
+            self.args[3] = value
+        else:
+            raise TypeError("can not set mapping")
 
     @property
     def logical_domain(self) -> Domain:
@@ -359,7 +366,8 @@ class Domain(BasicDomain):
                 
         constructors = [globals()[dt['type']] for dt in dtype]
         interiors    = [cs(i['name'], **dt['parameters']) for cs,i,dt in zip(constructors, d_interior, dtype)]
-        mappings     = [BaseAnalyticMapping(I['mapping'], dim=dim) if I.get('mapping', "None") != "None" else None for I in d_interior]
+        mappings     = [BaseMapping(I['mapping'], dim=dim) if I.get('mapping', "None") != "None" else None for I in d_interior]
+        print("mappings:",mappings)
         domains      = [mapping(i) if mapping else i for i,mapping in zip(interiors, mappings)]
         patch_index  = {I.name:ind for ind,I in enumerate(interiors)}
 
