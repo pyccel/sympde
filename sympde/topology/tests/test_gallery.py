@@ -1,7 +1,6 @@
 # coding: utf-8
 
 from sympy.abc import x,y,z
-from sympy import Tuple
 from sympy import symbols
 
 x1, x2, x3 = symbols('x1, x2, x3', real=True)

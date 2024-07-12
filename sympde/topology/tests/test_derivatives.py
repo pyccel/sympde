@@ -1,11 +1,11 @@
 # coding: utf-8
 
 from sympy import symbols
-from sympy import Tuple
 from sympy import Matrix
 from sympy import srepr
 
 from sympde.core import Constant
+from sympde.core import Vector
 from sympde.calculus import grad, dot, inner
 from sympde.topology import Domain, element_of
 from sympde.topology import get_index_derivatives_atom
@@ -25,6 +25,7 @@ def indices_as_str(a):
 
 
 # ...
+# TODO ARA add more tests for sympde/Vector and Matrix
 def test_partial_derivatives_1():
     print('============ test_partial_derivatives_1 ==============')
 
@@ -39,7 +40,7 @@ def test_partial_derivatives_1():
     V = ScalarFunctionSpace('V', mapped_domain)
 
     F,u,v,w = [element_of(V, name=i) for i in ['F', 'u', 'v', 'w']]
-    uvw = Tuple(u,v,w)
+    uvw = Vector([u,v,w], name='uvw')
 
     alpha = Constant('alpha')
     beta = Constant('beta')
@@ -54,14 +55,14 @@ def test_partial_derivatives_1():
     assert(dz(y**2) == 0)
 
     assert(dx(x*F) == F + x*dx(F))
-    assert(dx(uvw) == Matrix([[dx(u), dx(v), dx(w)]]))
-    assert(dx(uvw) + dy(uvw) == Matrix([[dx(u) + dy(u),
-                                         dx(v) + dy(v),
-                                         dx(w) + dy(w)]]))
+    assert(dx(uvw) == Matrix([[dx(u)], [dx(v)], [dx(w)]]))
+    assert(dx(uvw) + dy(uvw) == Matrix([[dx(u) + dy(u)],
+                                        [dx(v) + dy(v)],
+                                        [dx(w) + dy(w)]]))
 
-    expected = Matrix([[alpha*dx(u) + beta*dy(u),
-                        alpha*dx(v) + beta*dy(v),
-                        alpha*dx(w) + beta*dy(w)]])
+    expected = Matrix([[alpha*dx(u) + beta*dy(u)],
+                       [alpha*dx(v) + beta*dy(v)],
+                       [alpha*dx(w) + beta*dy(w)]])
     assert(alpha * dx(uvw) + beta * dy(uvw) == expected)
     # ...
 
