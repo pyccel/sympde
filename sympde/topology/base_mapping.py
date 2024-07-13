@@ -19,10 +19,32 @@ class BaseMapping(IndexedBase):
 
     with l <= p
     """
-    def __init__(self, name, ldim, pdim):
-        self._name = name
-        self._ldim = ldim
-        self._pdim = pdim
+    def __new__(self, name, **kwargs):
+        ldim        = kwargs.pop('ldim', cls._ldim)
+        pdim        = kwargs.pop('pdim', cls._pdim)
+
+        dims = [dim, ldim, pdim]
+        
+        for i,d in enumerate(dims):
+            if isinstance(d, (tuple, list, Tuple, Matrix, ImmutableDenseMatrix)):
+                if not len(d) == 1:
+                    raise ValueError('> Expecting a tuple, list, Tuple of length 1')
+                dims[i] = d[0]
+
+        dim, ldim, pdim = dims
+
+        if dim is None:
+            assert ldim is not None
+            assert pdim is not None
+            assert pdim >= ldim
+        else:
+            ldim = dim
+            pdim = dim
+
+        self._name                = name
+        self._ldim                = ldim
+        self._pdim                = pdim
+
 
     def __call__(self, *args):
         """ Evaluate mapping at either a list of nd-arrays or the full domain."""
