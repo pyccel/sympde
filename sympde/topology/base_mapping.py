@@ -19,7 +19,12 @@ class BaseMapping(IndexedBase):
 
     with l <= p
     """
-    def __new__(self, name, **kwargs):
+    
+    _ldim         = None
+    _pdim         = None
+
+    
+    def __new__(cls, name, dim=None, **kwargs):
         ldim        = kwargs.pop('ldim', cls._ldim)
         pdim        = kwargs.pop('pdim', cls._pdim)
 
@@ -41,6 +46,8 @@ class BaseMapping(IndexedBase):
             ldim = dim
             pdim = dim
 
+        
+        
         self._name                = name
         self._ldim                = ldim
         self._pdim                = pdim
