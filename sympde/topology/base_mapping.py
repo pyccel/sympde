@@ -1,5 +1,5 @@
 from abc import ABC, ABCMeta, abstractmethod
-from sympy import IndexedBase
+from sympy import IndexedBase, Matrix, ImmutableDenseMatrix
 
 __all__ = (
     'MappingMeta',
@@ -20,8 +20,9 @@ class BaseMapping(IndexedBase):
     with l <= p
     """
     
-    _ldim         = None
-    _pdim         = None
+    _name = None
+    _ldim = None
+    _pdim = None
 
     
     def __new__(cls, name, dim=None, **kwargs):
@@ -46,11 +47,11 @@ class BaseMapping(IndexedBase):
             ldim = dim
             pdim = dim
 
+        obj = IndexedBase.__new__(cls, name, shape=pdim)
         
-        
-        self._name                = name
-        self._ldim                = ldim
-        self._pdim                = pdim
+        obj._name                = name
+        obj._ldim                = ldim
+        obj._pdim                = pdim
 
 
     def __call__(self, *args):
