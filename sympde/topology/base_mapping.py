@@ -1,5 +1,6 @@
 from abc import ABC, ABCMeta, abstractmethod
 from sympy import IndexedBase, Matrix, ImmutableDenseMatrix
+from sympy.core.containers import Tuple
 
 __all__ = (
     'MappingMeta',
@@ -52,6 +53,8 @@ class BaseMapping(IndexedBase):
         obj._name                = name
         obj._ldim                = ldim
         obj._pdim                = pdim
+        
+        return obj
 
 
     def __call__(self, *args):
