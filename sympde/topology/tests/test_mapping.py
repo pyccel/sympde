@@ -1,11 +1,13 @@
 # coding: utf-8
 
+import numpy as np
+
 from sympy.core.containers import Tuple
 from sympy import Matrix
 from sympy.tensor import IndexedBase
 from sympy import symbols, simplify
 
-from sympde.topology import Mapping, MappedDomain
+from sympde.topology import Mapping, MappedDomain, AffineMapping
 from sympde.topology import dx, dy, dz
 from sympde.topology import dx1, dx2, dx3
 from sympde.topology import Domain
@@ -124,6 +126,23 @@ def test_mapping_2d_2():
 
     dim   = 2
     F      = Mapping('F', dim=dim)
+    domain = Domain('Omega', dim=dim)
+    D      = F(domain)
+
+def test_AffineMapping():
+    print('============ test_AffineMapping ==============')
+
+    dim   = 2
+    alpha = np.pi/2
+    c1    = 0.2
+    c2    = 1.5
+
+    F =  AffineMapping(
+        name='F', dim=2, c1=c1, c2=c2,
+        a11=np.cos(alpha), a12=-np.sin(alpha),
+        a21=np.sin(alpha), a22=np.cos(alpha),
+    )
+
     domain = Domain('Omega', dim=dim)
     D      = F(domain)
 

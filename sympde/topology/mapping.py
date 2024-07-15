@@ -84,6 +84,13 @@ def get_logical_test_function(u):
     el              = l_space.element(u.name)
     return el
 
+import numpy as np
+
+def numpy_to_native_python(a):
+    if isinstance(a, np.generic):
+        return a.item()
+    return a
+
 #==============================================================================
 class BasicCallableMapping(ABC):
     """
@@ -223,7 +230,7 @@ class Mapping(BasicMapping):
             constants_values = {a.name:Constant(a.name) for a in constants}
             # subs constants as Constant objects instead of Symbol
             constants_values.update( kwargs )
-            d = {a:constants_values[a.name] for a in constants}
+            d = {a:numpy_to_native_python(constants_values[a.name]) for a in constants}
             args = args.subs(d)
 
             obj._expressions = args
