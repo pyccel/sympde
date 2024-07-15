@@ -130,7 +130,7 @@ def test_mapping_2d_2():
     D      = F(domain)
 
 def test_AffineMapping():
-    print('============ test_mapping_2d_2 ==============')
+    print('============ test_AffineMapping ==============')
 
     dim   = 2
     alpha = np.pi/2
