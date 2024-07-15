@@ -223,7 +223,7 @@ class Mapping(BasicMapping):
             constants_values = {a.name:Constant(a.name) for a in constants}
             # subs constants as Constant objects instead of Symbol
             constants_values.update( kwargs )
-            d = {a:constants_values[a.name] for a in constants}
+            d = {a:float(constants_values[a.name]) for a in constants}
             args = args.subs(d)
 
             obj._expressions = args
