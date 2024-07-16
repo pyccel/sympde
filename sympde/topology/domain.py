@@ -425,7 +425,7 @@ class Domain(BasicDomain):
         Notes
         -----
         The orientations are specified in the same manner as in GeoPDES, see e.g.
-        https://github.com/rafavzqz/geopdes/blob/master/geopdes/doc/geo_specs_mp_v21.txt#L193-L237
+        <https://github.com/rafavzqz/geopdes/blob/master/geopdes/doc/geo_specs_mp_v21.txt#L193-L237>
         and 
         T. Dokken, E. Quak, V. Skytt. Requirements from Isogeometric Analysis for changes in product design ontologies, 2010.
 
