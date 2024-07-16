@@ -1890,6 +1890,40 @@ def test_interface_integral_4():
     assert expr[0].expr[0,0]   == u2[0]*v2[0]
     assert expr[0].expr[1,1]   == u2[1]*v2[1]
 
+
+#==============================================================================
+def test_terminal_expressions_for_navier_stokes():
+
+    domain = Square()
+    x, y   = domain.coordinates
+
+    mu = 1
+    ux = cos(y*pi)
+    uy = x*(x-1)
+    ue = Matrix([[ux], [uy]])
+    pe = sin(pi*y)
+    # ...
+
+    # Verify that div(u) = 0
+    assert (ux.diff(x) + uy.diff(y)).simplify() == 0
+
+    # ... Compute right-hand side
+    from sympde.calculus import laplace, grad
+    from sympde.expr     import TerminalExpr
+
+    a = TerminalExpr(-mu*laplace(ue), domain)
+    b = TerminalExpr(    grad(ue), domain)
+    c = TerminalExpr(    grad(pe), domain)
+    
+    f = (a + b.T*ue + c).simplify()
+
+    fx = -mu*(ux.diff(x, 2) + ux.diff(y, 2)) + ux*ux.diff(x) + uy*ux.diff(y) + pe.diff(x)
+    fy = -mu*(uy.diff(x, 2) + uy.diff(y, 2)) + ux*uy.diff(x) + uy*uy.diff(y) + pe.diff(y)
+
+    assert (f[0]-fx).simplify() == 0
+    assert (f[1]-fy).simplify() == 0
+    
+
     # ...
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
