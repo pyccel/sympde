@@ -411,7 +411,8 @@ class Domain(BasicDomain):
             and 
             - In 2D, ornt is an integer that can take the value of 1 or -1
             - In 3D, ornt is a tuple of 3 integers that can take the value of 1 or -1
-            TODO: specify how these orientations are defined -- also not clear in the example below
+            (see below for more details)
+            
         
         name : str
             name of the domain
@@ -423,14 +424,13 @@ class Domain(BasicDomain):
 
         Notes
         -----
-        The information about the connectivity is based on the format presented in the paper:
+        The orientations are specified in the same manner as in GeoPDES, see e.g.
+        https://github.com/rafavzqz/geopdes/blob/master/geopdes/doc/geo_specs_mp_v21.txt#L193-L237
+        and 
         T. Dokken, E. Quak, V. Skytt. Requirements from Isogeometric Analysis for changes in product design ontologies, 2010.
 
         Example
         -------
-
-        TODO: check that this example is correct (in particular, that the orientations make sense)
-        
         # list of patches (mapped domains)
         Omega_0 = F0(A)
         Omega_1 = F1(A)
