@@ -1908,9 +1908,6 @@ def test_terminal_expressions_for_navier_stokes():
     assert (ux.diff(x) + uy.diff(y)).simplify() == 0
 
     # ... Compute right-hand side
-    from sympde.calculus import laplace, grad
-    from sympde.expr     import TerminalExpr
-
     a = TerminalExpr(-mu*laplace(ue), domain)
     b = TerminalExpr(    grad(ue), domain)
     c = TerminalExpr(    grad(pe), domain)
@@ -1920,6 +1917,10 @@ def test_terminal_expressions_for_navier_stokes():
     fx = -mu*(ux.diff(x, 2) + ux.diff(y, 2)) + ux*ux.diff(x) + uy*ux.diff(y) + pe.diff(x)
     fy = -mu*(uy.diff(x, 2) + uy.diff(y, 2)) + ux*uy.diff(x) + uy*uy.diff(y) + pe.diff(y)
 
+    # [MCP 18.07.2024] for now, this test fails here because f is essentially 0: this should be fixed
+    print(f'a = {a}')
+    print(f'b = {b}')
+    print(f'f = {f}')
     assert (f[0]-fx).simplify() == 0
     assert (f[1]-fy).simplify() == 0
     
