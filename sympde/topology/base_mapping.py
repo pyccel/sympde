@@ -1,8 +1,9 @@
 from abc import ABC, ABCMeta, abstractmethod
 from sympy import IndexedBase, Matrix, ImmutableDenseMatrix
 from sympy.core.containers import Tuple
-from .basic            import BasicDomain, InteriorDomain, Boundary, Union, Connectivity, Interface
-from .domain import Domain, NCubeInterior
+from .basic       import BasicDomain, Union, InteriorDomain
+from .basic       import Boundary, Connectivity, Interface
+from .domain      import Domain, NCubeInterior
 
 __all__ = (
     'MappingMeta',
