@@ -23,9 +23,8 @@ from sympde.core.basic import CalculusFunction
 from .basic            import BasicDomain, InteriorDomain, Boundary, Union, Connectivity
 from .basic            import Interval, Interface, CornerBoundary, CornerInterface
 from .basic            import ProductDomain
-from sympde.topology.base_mapping import BaseMapping
 # TODO fix circular dependency between domain and mapping
-'''if TYPE_CHECKING:
+if TYPE_CHECKING:
     from sympde.topology.base_mapping import BaseMapping
 # TODO add pdim'''
 
@@ -344,7 +343,7 @@ class Domain(BasicDomain):
         if not(ext == '.h5'):
             raise ValueError('> Only h5 files are supported')
         # ...
-        from sympde.topology import BaseAnalyticMapping, MultiPatchMapping
+        from sympde.topology import BaseMapping
 
         h5  = h5py.File( filename, mode='r' )
         yml = yaml.load( h5['topology.yml'][()], Loader=yaml.SafeLoader )
