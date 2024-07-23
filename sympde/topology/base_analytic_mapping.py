@@ -703,70 +703,7 @@ class MultiPatchMapping(BaseAnalyticMapping):
         mappings = (sstr(i) for i in self.mappings.values())
         return 'MultiPatchMapping({})'.format(', '.join(mappings))
 
-#==============================================================================
-class MappedDomain(BasicDomain):
-    """."""
 
-    @cacheit
-    def __new__(cls, mapping, logical_domain):
-        assert(isinstance(mapping,BaseMapping))
-        assert(isinstance(logical_domain, BasicDomain))
-        if isinstance(logical_domain, Domain):
-            kwargs = dict(
-            dim            = logical_domain._dim,
-            mapping        = mapping,
-            logical_domain = logical_domain)
-            boundaries     = logical_domain.boundary
-            interiors      = logical_domain.interior
-
-            if isinstance(interiors, Union):
-                kwargs['interiors'] = Union(*[mapping(a) for a in interiors.args])
-            else:
-                kwargs['interiors'] = mapping(interiors)
-
-            if isinstance(boundaries, Union):
-                kwargs['boundaries'] = [mapping(a) for a in boundaries.args]
-            elif boundaries:
-                kwargs['boundaries'] = mapping(boundaries)
-
-            interfaces =  logical_domain.connectivity.interfaces
-            if interfaces:
-                print("interfaces")
-                if isinstance(interfaces, Union):
-                    interfaces = interfaces.args
-                else:
-                    interfaces = [interfaces]
-                connectivity = {}
-                for e in interfaces:
-                    connectivity[e.name] = Interface(e.name, mapping(e.minus), mapping(e.plus))
-                kwargs['connectivity'] = Connectivity(connectivity)
-
-            name = '{}({})'.format(str(mapping.name), str(logical_domain.name))
-            print("return Domain(name,**kwargs)")
-            return Domain(name, **kwargs)
-
-        elif isinstance(logical_domain, NCubeInterior):
-            name  = logical_domain.name
-            dim   = logical_domain.dim
-            dtype = logical_domain.dtype
-            min_coords = logical_domain.min_coords
-            max_coords = logical_domain.max_coords
-            name = '{}({})'.format(str(mapping.name), str(name))
-            return NCubeInterior(name, dim, dtype, min_coords, max_coords, mapping, logical_domain)
-        elif isinstance(logical_domain, InteriorDomain):
-            name  = logical_domain.name
-            dim   = logical_domain.dim
-            dtype = logical_domain.dtype
-            name = '{}({})'.format(str(mapping.name), str(name))
-            return InteriorDomain(name, dim, dtype, mapping, logical_domain)
-        elif isinstance(logical_domain, Boundary):
-            name   = logical_domain.name
-            axis   = logical_domain.axis
-            ext    = logical_domain.ext
-            domain = mapping(logical_domain.domain)
-            return Boundary(name, domain, axis, ext, mapping, logical_domain)
-        else:
-            raise NotImplementedError('TODO')
 #==============================================================================
 class SymbolicWeightedVolume(Expr):
     """

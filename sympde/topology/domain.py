@@ -367,7 +367,6 @@ class Domain(BasicDomain):
         constructors = [globals()[dt['type']] for dt in dtype]
         interiors    = [cs(i['name'], **dt['parameters']) for cs,i,dt in zip(constructors, d_interior, dtype)]
         mappings     = [BaseMapping(I['mapping'], dim=dim) if I.get('mapping', "None") != "None" else None for I in d_interior]
-        print("mappings:",mappings)
         domains      = [mapping(i) if mapping else i for i,mapping in zip(interiors, mappings)]
         patch_index  = {I.name:ind for ind,I in enumerate(interiors)}
 
