@@ -43,7 +43,7 @@ from .derivatives import LogicalGrad_1d, LogicalGrad_2d, LogicalGrad_3d
 import itertools as it
 from sympy import lambdify
 
-from .base_mapping import BaseMapping
+from .base_mapping import BaseMapping, MappedDomain
 
 
 # TODO fix circular dependency between sympde.topology.domain and sympde.topology.mapping

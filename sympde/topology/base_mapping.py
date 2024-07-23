@@ -1,5 +1,6 @@
 from abc import ABC, ABCMeta, abstractmethod
 from sympy import IndexedBase, Matrix, ImmutableDenseMatrix
+from sympy                 import cacheit
 from sympy.core.containers import Tuple
 from .basic       import BasicDomain, Union, InteriorDomain
 from .basic       import Boundary, Connectivity, Interface
