@@ -143,7 +143,6 @@ class MappedDomain(BasicDomain):
                 kwargs['connectivity'] = Connectivity(connectivity)
 
             name = '{}({})'.format(str(mapping.name), str(logical_domain.name))
-            print("return Domain(name,**kwargs)")
             return Domain(name, **kwargs)
 
         elif isinstance(logical_domain, NCubeInterior):
