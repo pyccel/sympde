@@ -156,6 +156,7 @@ class Domain(BasicDomain):
         obj._dtype          = dtype
         obj._dim            = dim
         obj._logical_domain = logical_domain
+        obj._mapping = mapping
         return obj
 
     @property
@@ -177,14 +178,12 @@ class Domain(BasicDomain):
     @property
     def mapping(self) -> Optional[BaseMapping]:
         """The mapping that maps the logical domain to the physical domain"""
-        return self.args[3]
-
+        return self._mapping
+    
     @mapping.setter
-    def mapping(self, value: BaseMapping) -> None:
-        if len(self.args) > 3:
-            self.args[3] = value
-        else:
-            raise TypeError("can not set mapping")
+    def mapping(self, value: BaseMapping):
+        """Set the mapping that maps the logical domain to the physical domain"""
+        self._mapping = value
 
     @property
     def logical_domain(self) -> Domain:
