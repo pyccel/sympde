@@ -1925,6 +1925,24 @@ def test_terminal_expressions_for_navier_stokes():
     assert (f[1]-fy).simplify() == 0
     
 
+def test_terminal_expressions_with_div_free_fields():
+
+    domain = Square()
+    x, y   = domain.coordinates
+
+    ux =  sin(pi * x) * cos(pi * y)
+    uy = -cos(pi * x) * sin(pi * y)
+
+    # Verify that div(u) = 0
+    assert (ux.diff(x) + uy.diff(y)).simplify() == 0
+
+    vx = x**2*(-x + 1)**2*(4*y**3 - 6*y**2 + 2*y)
+    vy =-y**2*(-y + 1)**2*(4*x**3 - 6*x**2 + 2*x)
+
+    # Verify that div(v) = 0
+    assert (vx.diff(x) + vy.diff(y)).simplify() == 0
+
+
     # ...
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
