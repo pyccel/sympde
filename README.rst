@@ -39,6 +39,27 @@ From sources
     python3 -m pip install --user -e .
 
 
+For developers
+**************
+
+Because many important features of sympde are only tested in psydac, new PRs 
+must also be tested against the test suite of psydac. This can be done by opening
+a PR in psydac where the only change consists of installing the corresponding 
+branch of sympde.
+
+For instance to test a new sympde branch called ``my_feature``, the following
+lines can be used in the file ``.github/workflows/continuous-integration.yml`` of psydac:
+
+.. code-block:: YAML
+
+      - name: Download a development version of sympde
+        working-directory: /tmp
+        run: |
+          wget https://github.com/pyccel/sympde/archive/refs/heads/my_feature.zip
+          unzip ./my_feature.zip
+          python3 -m pip install ./sympde-my_feature        
+
+
 .. |build-status| image:: https://travis-ci.com/pyccel/sympde.svg?branch=master
     :alt: build status
     :scale: 100%
