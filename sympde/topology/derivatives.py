@@ -1291,4 +1291,4 @@ def get_max_logical_partial_derivatives(expr, F=None):
     return d
 
 
-from .base_analytic_mapping import BaseAnalyticMapping, Jacobian
+from .base_mapping import BaseMapping, Jacobian

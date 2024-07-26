@@ -31,7 +31,7 @@ from sympde.topology.basic   import BasicDomain, Union, Interval
 from sympde.topology.basic   import Boundary, Interface
 from sympde.topology.basic   import InteriorDomain
 from sympde.topology.domain  import NormalVector, TangentVector, NCube, NCubeInterior
-from sympde.topology.base_analytic_mapping import JacobianSymbol, InterfaceMapping, MultiPatchMapping, JacobianInverseSymbol, LogicalExpr, PullBack
+from sympde.topology import JacobianSymbol, InterfaceMapping, MultiPatchMapping, JacobianInverseSymbol, LogicalExpr, PullBack
 
 
 # TODO fix circular dependency between sympde.expr.evaluation and sympde.topology.mapping

@@ -329,7 +329,7 @@ class Boundary(BasicDomain):
         raise NotImplementedError('only 2d case is available')
 
     def join(self, boundary, ornt=None):
-        from sympde.sympde.topology.base_analytic_mapping import InterfaceMapping
+        from sympde.sympde.topology.base_mapping import InterfaceMapping
         # TODO be careful with '|' in psydac
         if self.mapping and boundary.mapping:
             int_map            = InterfaceMapping(self.mapping , boundary.mapping)
