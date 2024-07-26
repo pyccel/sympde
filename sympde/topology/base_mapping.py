@@ -1,7 +1,5 @@
 # coding: utf-8
-
-from abc import ABCMeta
-
+from abc import ABC, abstractmethod
 from sympy                 import Indexed, IndexedBase, Idx
 from sympy                 import Matrix, ImmutableDenseMatrix
 from sympy                 import Function, Expr
@@ -24,13 +22,13 @@ from sympde.calculus.core     import PlusInterfaceOperator, MinusInterfaceOperat
 from sympde.calculus.core     import grad, div, curl, laplace #, hessian
 from sympde.calculus.core     import dot, inner, outer, _diff_ops
 from sympde.calculus.core     import has, DiffOperator
-from sympde.calculus.matrices import MatrixSymbolicExpr, MatrixElement, SymbolicTrace
+from sympde.calculus.matrices import MatrixSymbolicExpr, MatrixElement, SymbolicTrace, Inverse
 from sympde.calculus.matrices import SymbolicDeterminant, Transpose
 
 from .basic       import BasicDomain, Union, InteriorDomain
 from .basic       import Boundary, Connectivity, Interface
-from .domain                      import Domain, NCubeInterior
-from .domain                      import NormalVector
+from .domain      import Domain, NCubeInterior
+from .domain      import NormalVector
 from .space       import ScalarFunction, VectorFunction, IndexedVectorFunction
 from .space       import Trace
 from .datatype    import HcurlSpaceType, H1SpaceType, L2SpaceType, HdivSpaceType, UndefinedSpaceType
@@ -41,9 +39,10 @@ from .derivatives import _logical_partial_derivatives
 from .derivatives import get_atom_logical_derivatives, get_index_logical_derivatives_atom
 from .derivatives import LogicalGrad_1d, LogicalGrad_2d, LogicalGrad_3d
 
+# TODO fix circular dependency between sympde.topology.domain and sympde.topology.mapping
+# TODO fix circular dependency between sympde.expr.evaluation and sympde.topology.mapping
+
 __all__ = (
-    'MappingMeta',
-    'BaseMapping',
     'Contravariant',
     'Covariant',
     'InterfaceMapping',
@@ -60,9 +59,6 @@ __all__ = (
     'SymbolicWeightedVolume',
     'get_logical_test_function',
 )
-
-class MappingMeta(ABCMeta,type(IndexedBase)):
-    pass
 
 #==============================================================================
 @cacheit
@@ -89,19 +85,15 @@ def get_logical_test_function(u):
 #==============================================================================
 class BaseMapping(IndexedBase):
     """
-    Transformation of coordinates, which can be evaluated.
+    Represents a BaseMapping object.
 
-    F: R^l -> R^p
-    F(eta) = x
+    Examples
 
-    with l <= p
     """
-    
     _expressions  = None # used for analytical mapping
     _jac          = None
     _inv_jac      = None
     _constants    = None
-    _callable_map = None
     _ldim         = None
     _pdim         = None
 
@@ -208,20 +200,14 @@ class BaseMapping(IndexedBase):
 
         else:
             obj._jac     = Jacobian(obj)
-            obj._func_eval = None 
-            obj._jac_eval = None
-            obj._inv_jac_eval = None
-            obj._metric_eval = None
-            obj._metric_det_eval = None
 
         obj._metric     = obj._jac.T*obj._jac
         obj._metric_det = obj._metric.det()
-        
+
         return obj
 
+ 
     #--------------------------------------------------------------------------
-    #Abstract Interface : 
-    
     @property
     def name( self ):
         return self._name
@@ -233,8 +219,6 @@ class BaseMapping(IndexedBase):
     @property
     def pdim( self ):
         return self._pdim
-    
-    #--------------------------------------------------------------------------
 
     @property
     def coordinates( self ):
@@ -249,6 +233,10 @@ class BaseMapping(IndexedBase):
             return self._logical_coordinates[0]
         else:
             return self._logical_coordinates
+
+    def __call__(self, domain):
+        assert(isinstance(domain, BasicDomain))
+        return MappedDomain(self, domain)
 
     @property
     def jacobian( self ):
@@ -338,104 +326,7 @@ class BaseMapping(IndexedBase):
     def _sympystr(self, printer):
         sstr = printer.doprint
         return sstr(self.name)
-    
-    #--------------------------------------------------------------------------
-    #Abstract Interface : heritage methods 
-    
-    def __call__(self, *args):
-        """ Evaluate mapping at either a list of nd-arrays or the full domain."""
-        if len(args) == 1 and isinstance(args[0], BasicDomain):
-            domain=args[0]
-            assert(isinstance(domain, BasicDomain))
-            return MappedDomain(self, domain)
-        else:
-            pass
-            
-    
-    def jacobian_eval( self, *args ):
-        """ Compute Jacobian matrix at the list of nd-arrays. """
-        pass 
 
-    def jacobian_inv_eval( self, *args ):
-        """ Compute inverse Jacobian matrix at the list of nd-arrays.
-            An exception should be raised if the matrix is singular.
-        """
-        pass
-    
-    def metric_eval( self, *args ):
-        """ Compute components of metric tensor at list of nd-arrays. """
-        pass
-    
-    def metric_det_eval( self, *args ):
-        """ Compute determinant of metric tensor at the list of nd-arrays. """
-        pass
-    
-    
-#==============================================================================
-class MappedDomain(BasicDomain):
-    """."""
-
-    @cacheit
-    def __new__(cls, mapping, logical_domain):
-        assert(isinstance(mapping,BaseMapping))
-        assert(isinstance(logical_domain, BasicDomain))
-        if isinstance(logical_domain, Domain):
-            kwargs = dict(
-            dim            = logical_domain._dim,
-            mapping        = mapping,
-            logical_domain = logical_domain)
-            boundaries     = logical_domain.boundary
-            interiors      = logical_domain.interior
-
-            if isinstance(interiors, Union):
-                kwargs['interiors'] = Union(*[mapping(a) for a in interiors.args])
-            else:
-                kwargs['interiors'] = mapping(interiors)
-
-            if isinstance(boundaries, Union):
-                kwargs['boundaries'] = [mapping(a) for a in boundaries.args]
-            elif boundaries:
-                kwargs['boundaries'] = mapping(boundaries)
-
-            interfaces =  logical_domain.connectivity.interfaces
-            if interfaces:
-                print("interfaces")
-                if isinstance(interfaces, Union):
-                    interfaces = interfaces.args
-                else:
-                    interfaces = [interfaces]
-                connectivity = {}
-                for e in interfaces:
-                    connectivity[e.name] = Interface(e.name, mapping(e.minus), mapping(e.plus))
-                kwargs['connectivity'] = Connectivity(connectivity)
-
-            name = '{}({})'.format(str(mapping.name), str(logical_domain.name))
-            return Domain(name, **kwargs)
-
-        elif isinstance(logical_domain, NCubeInterior):
-            name  = logical_domain.name
-            dim   = logical_domain.dim
-            dtype = logical_domain.dtype
-            min_coords = logical_domain.min_coords
-            max_coords = logical_domain.max_coords
-            name = '{}({})'.format(str(mapping.name), str(name))
-            return NCubeInterior(name, dim, dtype, min_coords, max_coords, mapping, logical_domain)
-        elif isinstance(logical_domain, InteriorDomain):
-            name  = logical_domain.name
-            dim   = logical_domain.dim
-            dtype = logical_domain.dtype
-            name = '{}({})'.format(str(mapping.name), str(name))
-            return InteriorDomain(name, dim, dtype, mapping, logical_domain)
-        elif isinstance(logical_domain, Boundary):
-            name   = logical_domain.name
-            axis   = logical_domain.axis
-            ext    = logical_domain.ext
-            domain = mapping(logical_domain.domain)
-            return Boundary(name, domain, axis, ext, mapping, logical_domain)
-        else:
-            raise NotImplementedError('TODO')
-        
-        
 #==============================================================================
 class InverseMapping(BaseMapping):
     def __new__(cls, mapping):
@@ -618,7 +509,68 @@ class MultiPatchMapping(BaseMapping):
         mappings = (sstr(i) for i in self.mappings.values())
         return 'MultiPatchMapping({})'.format(', '.join(mappings))
 
+#==============================================================================
+class MappedDomain(BasicDomain):
+    """."""
 
+    @cacheit
+    def __new__(cls, mapping, logical_domain):
+        assert(isinstance(mapping, BaseMapping))
+        assert(isinstance(logical_domain, BasicDomain))
+        if isinstance(logical_domain, Domain):
+            kwargs = dict(
+            dim            = logical_domain._dim,
+            mapping        = mapping,
+            logical_domain = logical_domain)
+            boundaries     = logical_domain.boundary
+            interiors      = logical_domain.interior
+
+            if isinstance(interiors, Union):
+                kwargs['interiors'] = Union(*[mapping(a) for a in interiors.args])
+            else:
+                kwargs['interiors'] = mapping(interiors)
+
+            if isinstance(boundaries, Union):
+                kwargs['boundaries'] = [mapping(a) for a in boundaries.args]
+            elif boundaries:
+                kwargs['boundaries'] = mapping(boundaries)
+
+            interfaces =  logical_domain.connectivity.interfaces
+            if interfaces:
+                if isinstance(interfaces, Union):
+                    interfaces = interfaces.args
+                else:
+                    interfaces = [interfaces]
+                connectivity = {}
+                for e in interfaces:
+                    connectivity[e.name] = Interface(e.name, mapping(e.minus), mapping(e.plus))
+                kwargs['connectivity'] = Connectivity(connectivity)
+
+            name = '{}({})'.format(str(mapping.name), str(logical_domain.name))
+            return Domain(name, **kwargs)
+
+        elif isinstance(logical_domain, NCubeInterior):
+            name  = logical_domain.name
+            dim   = logical_domain.dim
+            dtype = logical_domain.dtype
+            min_coords = logical_domain.min_coords
+            max_coords = logical_domain.max_coords
+            name = '{}({})'.format(str(mapping.name), str(name))
+            return NCubeInterior(name, dim, dtype, min_coords, max_coords, mapping, logical_domain)
+        elif isinstance(logical_domain, InteriorDomain):
+            name  = logical_domain.name
+            dim   = logical_domain.dim
+            dtype = logical_domain.dtype
+            name = '{}({})'.format(str(mapping.name), str(name))
+            return InteriorDomain(name, dim, dtype, mapping, logical_domain)
+        elif isinstance(logical_domain, Boundary):
+            name   = logical_domain.name
+            axis   = logical_domain.axis
+            ext    = logical_domain.ext
+            domain = mapping(logical_domain.domain)
+            return Boundary(name, domain, axis, ext, mapping, logical_domain)
+        else:
+            raise NotImplementedError('TODO')
 #==============================================================================
 class SymbolicWeightedVolume(Expr):
     """
@@ -721,7 +673,7 @@ class Jacobian(MappingApplication):
          expr : ImmutableDenseMatrix
             the jacobian matrix
         """
-
+        
         if not isinstance(F, BaseMapping):
             raise TypeError('> Expecting a BaseMapping object')
 

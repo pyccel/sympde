@@ -53,7 +53,9 @@ class DifferentialOperator(LinearOperator):
     @classmethod
     @cacheit
     def eval(cls, expr):
-
+        print(type(expr),expr)
+        if isinstance(expr,Indexed):
+            print(type(expr.base))
         types = (VectorFunction, ScalarFunction, DifferentialOperator)
 
         if isinstance(expr, _logical_partial_derivatives):
@@ -108,6 +110,8 @@ class DifferentialOperator(LinearOperator):
             elif isinstance(expr, Expr):
                 x = Symbol(cls.coordinate)
                 if cls.logical:
+
+                    exit()
                     M = expr.atoms(BaseAnalyticMapping)
                     if len(M)>0:
                         M = list(M)[0]
@@ -954,6 +958,7 @@ class LogicalGrad_2d(GradBasic):
             return
 
         u  = _args[0]
+
         du = (dx1(u), dx2(u))
 
         if isinstance(du[0], (Tuple, Matrix, ImmutableDenseMatrix)):
