@@ -53,9 +53,6 @@ class DifferentialOperator(LinearOperator):
     @classmethod
     @cacheit
     def eval(cls, expr):
-        print(type(expr),expr)
-        if isinstance(expr,Indexed):
-            print(type(expr.base))
         types = (VectorFunction, ScalarFunction, DifferentialOperator)
 
         if isinstance(expr, _logical_partial_derivatives):
@@ -101,7 +98,7 @@ class DifferentialOperator(LinearOperator):
         elif isinstance(expr, (minus, plus)):
             return cls(expr, evaluate=False)
 
-        elif isinstance(expr, Indexed) and isinstance(expr.base, BasicMapping):
+        elif isinstance(expr, Indexed) and isinstance(expr.base, BaseMapping):
             return cls(expr, evaluate=False)
         elif not has(expr, types):
             if expr.is_number:
@@ -111,8 +108,8 @@ class DifferentialOperator(LinearOperator):
                 x = Symbol(cls.coordinate)
                 if cls.logical:
 
-                    exit()
-                    M = expr.atoms(BaseAnalyticMapping)
+
+                    M = expr.atoms(BaseMapping)
                     if len(M)>0:
                         M = list(M)[0]
                         expr_primes = [diff(expr, M[i]) for i in range(M.pdim)]

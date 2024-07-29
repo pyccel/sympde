@@ -121,7 +121,6 @@ class BaseMapping(IndexedBase):
             ldim = dim
             pdim = dim
 
-
         obj = IndexedBase.__new__(cls, name, shape=pdim)
 
         if not evaluate:
