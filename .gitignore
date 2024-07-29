@@ -111,3 +111,6 @@ doc/utils/*.png
 
 # Swap files
 *.swp
+
+__gpyccel__/*
+__psydac__/*
