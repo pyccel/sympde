@@ -1890,6 +1890,59 @@ def test_interface_integral_4():
     assert expr[0].expr[0,0]   == u2[0]*v2[0]
     assert expr[0].expr[1,1]   == u2[1]*v2[1]
 
+
+#==============================================================================
+def test_terminal_expressions_for_navier_stokes():
+
+    domain = Square()
+    x, y   = domain.coordinates
+
+    mu = 1
+    ux = cos(y*pi)
+    uy = x*(x-1)
+    ue = Matrix([[ux], [uy]])
+    pe = sin(pi*y)
+    # ...
+
+    # Verify that div(u) = 0
+    assert (ux.diff(x) + uy.diff(y)).simplify() == 0
+
+    # ... Compute right-hand side
+    a = TerminalExpr(-mu*laplace(ue), domain)
+    b = TerminalExpr(    grad(ue), domain)
+    c = TerminalExpr(    grad(pe), domain)
+    
+    f = (a + b.T*ue + c).simplify()
+
+    fx = -mu*(ux.diff(x, 2) + ux.diff(y, 2)) + ux*ux.diff(x) + uy*ux.diff(y) + pe.diff(x)
+    fy = -mu*(uy.diff(x, 2) + uy.diff(y, 2)) + ux*uy.diff(x) + uy*uy.diff(y) + pe.diff(y)
+
+    # [MCP 18.07.2024] for now, this test fails here because f is essentially 0: this should be fixed
+    print(f'a = {a}')
+    print(f'b = {b}')
+    print(f'f = {f}')
+    assert (f[0]-fx).simplify() == 0
+    assert (f[1]-fy).simplify() == 0
+    
+
+def test_terminal_expressions_with_div_free_fields():
+
+    domain = Square()
+    x, y   = domain.coordinates
+
+    ux =  sin(pi * x) * cos(pi * y)
+    uy = -cos(pi * x) * sin(pi * y)
+
+    # Verify that div(u) = 0
+    assert (ux.diff(x) + uy.diff(y)).simplify() == 0
+
+    vx = x**2*(-x + 1)**2*(4*y**3 - 6*y**2 + 2*y)
+    vy =-y**2*(-y + 1)**2*(4*x**3 - 6*x**2 + 2*x)
+
+    # Verify that div(v) = 0
+    assert (vx.diff(x) + vy.diff(y)).simplify() == 0
+
+
     # ...
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
