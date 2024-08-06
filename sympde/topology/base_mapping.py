@@ -309,7 +309,6 @@ class BaseMapping(IndexedBase):
         obj._inv_jac             = self._inv_jac
         obj._metric              = self._metric
         obj._metric_det          = self._metric_det
-        obj.__callable_map       = self._callable_map
         obj._is_plus             = self._is_plus
         obj._is_minus            = self._is_minus
         return obj
@@ -490,10 +489,6 @@ class MultiPatchMapping(BaseMapping):
     def pdim(self):
         return list(self.mappings.values())[0].pdim
 
-    @property
-    def is_analytical(self):
-        return all(e.is_analytical for e in self.mappings.values())
-
     def _eval_subs(self, old, new):
         return self
 
@@ -611,6 +606,7 @@ class PullBack(Expr):
             assert mapping is not None
         else:
             mapping = space.domain.mapping
+
 
         J = mapping.jacobian
         if isinstance(kind, (UndefinedSpaceType, H1SpaceType)):
@@ -1126,7 +1122,6 @@ class LogicalExpr(CalculusFunction):
         elif isinstance(expr, Integral):
             domain  = expr.domain
             mapping = domain.mapping
-
 
             assert domain is not None
 

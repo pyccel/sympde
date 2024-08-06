@@ -408,7 +408,7 @@ class Domain(BasicDomain):
         assert all(p.dim==patches[0].dim for p in patches)
         dim = int(patches[0].dim)
 
-        from sympde.sympde.topology.base_mapping import MultiPatchMapping
+        from sympde.topology.base_mapping import MultiPatchMapping
         # ... connectivity
         interfaces = {}
         boundaries = []
