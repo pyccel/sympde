@@ -62,7 +62,7 @@ Similarly, to test an unreleased version of SymPDE called ``v0.18.4-trunk``, one
     'sympde @ https://github.com/pyccel/sympde/archive/refs/tags/v0.18.4-trunk.zip',
 
 Do not forget the comma at the end of the line, as this is an item in a list.
-Also, please notice the use of the words ``head`` and ``tags`` in the path: the former is used for branches, while the latter is used for tags (which may or may not correspond to GitHub releases).
+Also, pay attention to the words ``head`` and ``tags`` in the path: the former is used for Git branches, the latter is used for Git tags (which may or may not correspond to GitHub releases).
 
 
 .. |CI status| image:: https://github.com/pyccel/sympde/actions/workflows/continuous-integration.yml/badge.svg?branch=master&event=push
