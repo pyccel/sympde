@@ -65,7 +65,7 @@ Do not forget the comma at the end of the line, as this is an item in a list.
 Also, please notice the use of the words ``head`` and ``tags`` in the path: the former is used for branches, while the latter is used for tags (which may or may not correspond to GitHub releases).
 
 
-.. |unit tests| image:: https://github.com/pyccel/sympde/actions/workflows/continuous-integration.yml/badge.svg?branch=version-0.19&event=push
+.. |unit tests| image:: https://github.com/pyccel/sympde/actions/workflows/continuous-integration.yml/badge.svg?branch=master&event=push
     :alt: build status
     :scale: 100%
     :target:  https://github.com/pyccel/sympde/actions/workflows/continuous-integration.yml
