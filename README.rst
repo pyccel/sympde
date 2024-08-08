@@ -1,7 +1,7 @@
 SymPDE
 ======
 
-|build-status|  |binder|  |docs|
+|CI status|  |binder|  |docs|
 
 **SymPDE** is a symbolic calculus library for partial differential equations and variational forms.
 It can be used to have similar capabilities as the fenics_ project, by extending and writing your own *printing* functions.
@@ -65,8 +65,8 @@ Do not forget the comma at the end of the line, as this is an item in a list.
 Also, please notice the use of the words ``head`` and ``tags`` in the path: the former is used for branches, while the latter is used for tags (which may or may not correspond to GitHub releases).
 
 
-.. |unit tests| image:: https://github.com/pyccel/sympde/actions/workflows/continuous-integration.yml/badge.svg?branch=master&event=push
-    :alt: build status
+.. |CI status| image:: https://github.com/pyccel/sympde/actions/workflows/continuous-integration.yml/badge.svg?branch=master&event=push
+    :alt: CI status
     :scale: 100%
     :target:  https://github.com/pyccel/sympde/actions/workflows/continuous-integration.yml
 
