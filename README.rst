@@ -1,9 +1,10 @@
-sympde
+SymPDE
 ======
 
 |build-status|  |binder|  |docs|
 
-**sympde** is a Symbolic calculus library for partial differential equations and variational forms. It can be used to have similar capabilities as the fenics_ project, by extending and writing your own *printing* functions.
+**SymPDE** is a symbolic calculus library for partial differential equations and variational forms.
+It can be used to have similar capabilities as the fenics_ project, by extending and writing your own *printing* functions.
 
 An example of use can be found in psydac_ or gelato_. 
 
@@ -42,23 +43,16 @@ From sources
 For developers
 **************
 
-Because many important features of sympde are only tested in psydac, new PRs 
-must also be tested against the test suite of psydac. This can be done by opening
-a PR in psydac where the only change consists of installing the corresponding 
-branch of sympde.
+Because many important features of SymPDE are only tested in Psydac, new PRs should also be tested against the test suite of Psydac.
+This can be done by opening a PR in Psydac where the only change consists of installing the corresponding branch of SymPDE by modifying the line corresponding to `sympde` in the `pyproject.yaml` file.
 
-For instance to test a new sympde branch called ``my_feature``, the following
-lines can be used in the file ``.github/workflows/continuous-integration.yml`` of psydac:
+For instance, to test a new SymPDE branch called ``my_feature``, one should write
 
-.. code-block:: YAML
+.. code-block:: TOML
+    :linenos:
 
-      - name: Download a development version of sympde
-        working-directory: /tmp
-        run: |
-          wget https://github.com/pyccel/sympde/archive/refs/heads/my_feature.zip
-          unzip ./my_feature.zip
-          python3 -m pip install ./sympde-my_feature        
-
+    # Our packages from PyPi
+    'sympde @ https://github.com/pyccel/sympde/archive/refs/heads/my_feature.zip',
 
 .. |build-status| image:: https://travis-ci.com/pyccel/sympde.svg?branch=master
     :alt: build status
