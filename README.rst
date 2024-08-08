@@ -61,6 +61,8 @@ Similarly, to test an unreleased version of SymPDE called ``v0.18.4-trunk``, one
     # Our packages from PyPi
     'sympde @ https://github.com/pyccel/sympde/archive/refs/tags/v0.18.4-trunk.zip',
 
+Do not forget the comma at the end of the line, as this is an item in a list.
+Also, please notice the use of the words ``head`` and ``tags`` in the path: the former is used for branches, while the latter is used for tags (which may or may not correspond to GitHub releases).
 
 .. |build-status| image:: https://travis-ci.com/pyccel/sympde.svg?branch=master
     :alt: build status
