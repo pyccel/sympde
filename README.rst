@@ -49,14 +49,14 @@ To achieve this, one just needs to modify the line corresponding to ``sympde`` i
 
 For instance, to test a new SymPDE branch called ``my_feature``, one should write
 
-.. code-block:: TOML
+.. code-block:: python
 
     # Our packages from PyPi
     'sympde @ https://github.com/pyccel/sympde/archive/refs/heads/my_feature.zip',
 
 Similarly, to test an unreleased version of SymPDE called ``v0.18.4-trunk``, one should write
 
-.. code-block:: TOML
+.. code-block:: python
 
     # Our packages from PyPi
     'sympde @ https://github.com/pyccel/sympde/archive/refs/tags/v0.18.4-trunk.zip',
