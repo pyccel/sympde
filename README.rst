@@ -64,10 +64,11 @@ Similarly, to test an unreleased version of SymPDE called ``v0.18.4-trunk``, one
 Do not forget the comma at the end of the line, as this is an item in a list.
 Also, please notice the use of the words ``head`` and ``tags`` in the path: the former is used for branches, while the latter is used for tags (which may or may not correspond to GitHub releases).
 
-.. |build-status| image:: https://travis-ci.com/pyccel/sympde.svg?branch=master
+
+.. |unit tests| image:: https://github.com/pyccel/sympde/actions/workflows/continuous-integration.yml/badge.svg?branch=version-0.19&event=push
     :alt: build status
     :scale: 100%
-    :target:  https://travis-ci.com/pyccel/sympde
+    :target:  https://github.com/pyccel/sympde/actions/workflows/continuous-integration.yml
 
 .. |docs| image:: https://readthedocs.org/projects/sympde/badge/?version=latest
     :alt: Documentation Status
