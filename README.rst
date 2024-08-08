@@ -44,15 +44,23 @@ For developers
 **************
 
 Because many important features of SymPDE are only tested in Psydac, new PRs should also be tested against the test suite of Psydac.
-This can be done by opening a PR in Psydac where the only change consists of installing the corresponding branch of SymPDE by modifying the line corresponding to `sympde` in the `pyproject.yaml` file.
+This can be done by opening a PR in Psydac, where the only change consists of installing the corresponding branch of SymPDE.
+To achieve this, one just needs to modify the line corresponding to ``sympde`` in the ``pyproject.yaml`` file.
 
 For instance, to test a new SymPDE branch called ``my_feature``, one should write
 
 .. code-block:: TOML
-    :linenos:
 
     # Our packages from PyPi
     'sympde @ https://github.com/pyccel/sympde/archive/refs/heads/my_feature.zip',
+
+Similarly, to test an unreleased version of SymPDE called ``v0.18.4-trunk``, one should write
+
+.. code-block:: TOML
+
+    # Our packages from PyPi
+    'sympde @ https://github.com/pyccel/sympde/archive/refs/tags/v0.18.4-trunk.zip',
+
 
 .. |build-status| image:: https://travis-ci.com/pyccel/sympde.svg?branch=master
     :alt: build status
