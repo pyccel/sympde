@@ -66,14 +66,13 @@ Also, pay attention to the words ``head`` and ``tags`` in the path: the former i
 
 
 .. |CI status| image:: https://github.com/pyccel/sympde/actions/workflows/continuous-integration.yml/badge.svg?branch=master&event=push
-    :alt: CI status
-    :scale: 100%
-    :target:  https://github.com/pyccel/sympde/actions/workflows/continuous-integration.yml
+   :alt: CI status
+   :target: https://github.com/pyccel/sympde/actions/workflows/continuous-integration.yml
 
 .. |docs| image:: https://readthedocs.org/projects/sympde/badge/?version=latest
-    :alt: Documentation Status
-    :scale: 100%
-    :target: http://sympde.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
+   :target: http://sympde.readthedocs.io/en/latest/?badge=latest
 
 .. |binder| image:: https://mybinder.org/badge_logo.svg
-    :target: https://mybinder.org/v2/gh/pyccel/sympde/master
+   :alt: Run notebooks in Binder
+   :target: https://mybinder.org/v2/gh/pyccel/sympde/master
