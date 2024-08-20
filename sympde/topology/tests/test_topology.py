@@ -261,16 +261,16 @@ def test_get_subdomain():
 def test_2d_domain_without_bnd():
 
     OmegaLog1 = Square('OmegaLog1', bounds1 = (0,.5), bounds2 = (0,.5))
-    mapping_1 = IdentityMapping('M1',2)
+    mapping_1 = IdentityMapping('M1', dim=2)
     domain_1     = mapping_1(OmegaLog1)
     OmegaLog2 = Square('OmegaLog2', bounds1 = (0,.5), bounds2 = (.5,1.))
-    mapping_2 = IdentityMapping('M2',2)
+    mapping_2 = IdentityMapping('M2', dim=2)
     domain_2     = mapping_2(OmegaLog2)
     OmegaLog3 = Square('OmegaLog3', bounds1 = (.5,1.), bounds2 = (0,.5))
-    mapping_3 = IdentityMapping('M3',2)
+    mapping_3 = IdentityMapping('M3', dim=2)
     domain_3     = mapping_3(OmegaLog3)
     OmegaLog4 = Square('OmegaLog4', bounds1 = (.5,1.), bounds2 = (.5,1.))
-    mapping_4 = IdentityMapping('M4',2)
+    mapping_4 = IdentityMapping('M4', dim=2)
     domain_4     = mapping_4(OmegaLog4)
 
     domains=[domain_1,domain_2,domain_3,domain_4]
@@ -291,16 +291,16 @@ def test_2d_domain_without_bnd():
 def test_3d_domain_without_bnd():
 
     OmegaLog1 = Cube('OmegaLog1', bounds1 = (0,.5), bounds2 = (0,.5), bounds3 = (0,1))
-    mapping_1 = IdentityMapping('M1',2)
+    mapping_1 = IdentityMapping('M1', dim=2)
     domain_1     = mapping_1(OmegaLog1)
     OmegaLog2 = Cube('OmegaLog2', bounds1 = (0,.5), bounds2 = (.5,1.), bounds3 = (0,1))
-    mapping_2 = IdentityMapping('M2',2)
+    mapping_2 = IdentityMapping('M2', dim=2)
     domain_2     = mapping_2(OmegaLog2)
     OmegaLog3 = Cube('OmegaLog3', bounds1 = (.5,1.), bounds2 = (0,.5), bounds3 = (0,1))
-    mapping_3 = IdentityMapping('M3',2)
+    mapping_3 = IdentityMapping('M3', dim=2)
     domain_3     = mapping_3(OmegaLog3)
     OmegaLog4 = Cube('OmegaLog4', bounds1 = (.5,1.), bounds2 = (.5,1.), bounds3 = (0,1))
-    mapping_4 = IdentityMapping('M4',2)
+    mapping_4 = IdentityMapping('M4', dim=2)
     domain_4     = mapping_4(OmegaLog4)
 
     domains=[domain_1,domain_2,domain_3,domain_4]

@@ -85,7 +85,7 @@ class TargetMapping(BaseAnalyticMapping):
     _ldim        = 2
     _pdim        = 2
 
-    def __new__(cls, name='M', **kwargs):
+    def __new__(cls, name='M',  **kwargs):
         
         obj = super().__new__(cls, name, **kwargs)
         
@@ -123,6 +123,7 @@ class CollelaMapping2D(BaseAnalyticMapping):
 
     _ldim = 2
     _pdim = 2
+    
     _expressions = {'x': 'a * (x1 + eps / (2*pi) * sin(2*pi*x1) * sin(2*pi*x2))',
                     'y': 'b * (x2 + eps / (2*pi) * sin(2*pi*x1) * sin(2*pi*x2))'}
 
