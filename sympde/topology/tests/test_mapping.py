@@ -1,23 +1,25 @@
 # coding: utf-8
 
+import numpy as np
+
 from sympy.core.containers import Tuple
 from sympy import Matrix
 from sympy.tensor import IndexedBase
 from sympy import symbols, simplify
 
-from sympde.topology import Mapping, MappedDomain
+from sympde.topology import BaseMapping, MappedDomain, AffineMapping
 from sympde.topology import dx, dy, dz
 from sympde.topology import dx1, dx2, dx3
 from sympde.topology import Domain
 
-from sympde.topology.mapping import Jacobian, Covariant, Contravariant
+from sympde.topology.base_mapping import Jacobian, Covariant, Contravariant
 # ...
 def test_mapping_1d():
     print('============ test_mapping_1d ==============')
 
     dim = 1
 
-    F = Mapping('F', dim=dim)
+    F = BaseMapping('F', dim=dim)
 
     assert(F.name == 'F')
 
@@ -38,7 +40,7 @@ def test_mapping_2d():
 
     dim = 2
 
-    F = Mapping('F', dim=dim)
+    F = BaseMapping('F', dim=dim)
 
     a,b = symbols('a b')
     ab = Tuple(a, b)
@@ -78,7 +80,7 @@ def test_mapping_3d():
 
     dim = 3
 
-    F = Mapping('F', dim=dim)
+    F = BaseMapping('F', dim=dim)
 
     a,b,c = symbols('a b c')
     abc = Tuple(a, b, c)
@@ -123,7 +125,25 @@ def test_mapping_2d_2():
     print('============ test_mapping_2d_2 ==============')
 
     dim   = 2
-    F      = Mapping('F', dim=dim)
+    F      = BaseMapping('F', dim=dim)
+    domain = Domain('Omega', dim=dim)
+    D      = F(domain)
+    
+# ...
+def test_AffineMapping():
+    print('============ test_AffineMapping ==============')
+
+    dim   = 2
+    alpha = np.pi/2
+    c1    = 0.2
+    c2    = 1.5
+
+    F =  AffineMapping(
+        name='F', dim=2, c1=c1, c2=c2,
+        a11=np.cos(alpha), a12=-np.sin(alpha),
+        a21=np.sin(alpha), a22=np.cos(alpha),
+    )
+
     domain = Domain('Omega', dim=dim)
     D      = F(domain)
 
@@ -138,4 +158,10 @@ def teardown_module():
 def teardown_function():
     from sympy.core import cache
     cache.clear_cache()
-
+    
+if __name__ == '__main__' :
+    test_mapping_1d()
+    test_mapping_2d()
+    test_mapping_3d()
+    test_mapping_2d_2()
+    test_AffineMapping()

@@ -38,6 +38,7 @@ from .derivatives import get_atom_derivatives, get_index_derivatives_atom
 from .derivatives import _logical_partial_derivatives
 from .derivatives import get_atom_logical_derivatives, get_index_logical_derivatives_atom
 from .derivatives import LogicalGrad_1d, LogicalGrad_2d, LogicalGrad_3d
+import numpy as np
 
 # TODO fix circular dependency between sympde.topology.domain and sympde.topology.mapping
 # TODO fix circular dependency between sympde.expr.evaluation and sympde.topology.mapping
@@ -58,6 +59,7 @@ __all__ = (
     'SymbolicExpr',
     'SymbolicWeightedVolume',
     'get_logical_test_function',
+    'numpy_to_native_python',
 )
 
 #==============================================================================
@@ -81,6 +83,11 @@ def get_logical_test_function(u):
     l_space         = type(space)(space.name, logical_domain, kind=kind)
     el              = l_space.element(u.name)
     return el
+
+def numpy_to_native_python(a):
+    if isinstance(a, np.generic):
+        return a.item()
+    return a
 
 #==============================================================================
 class BaseMapping(IndexedBase):
@@ -173,7 +180,7 @@ class BaseMapping(IndexedBase):
             constants_values = {a.name:Constant(a.name) for a in constants}
             # subs constants as Constant objects instead of Symbol
             constants_values.update( kwargs )
-            d = {a:constants_values[a.name] for a in constants}
+            d = {a:numpy_to_native_python(constants_values[a.name]) for a in constants}
             args = args.subs(d)
 
             obj._expressions = args
