@@ -400,6 +400,87 @@ class Domain(BasicDomain):
 
     @classmethod
     def join(cls, patches, connectivity, name):
+        """
+        creates a multipatch domain by joining two or more patches in 2D or 3D
+
+        Parameters
+        ----------
+        patches : list
+            list of patches
+
+        connectivity : list
+            list of interfaces, identified by a tuple of 2 boundaries and an orientation: (bound_minus, bound_plus, ornt)
+            where 
+            - each boundary is identified by a tuple of 3 integers: (patch, axis, ext)
+              with patches given as objects (or by their indices in the patches list)
+            and 
+            - In 2D, ornt is an integer that can take the value of 1 or -1
+            - In 3D, ornt is a tuple of 3 integers that can take the value of 1 or -1
+            (see below for more details)
+            
+        
+        name : str
+            name of the domain
+
+        Returns
+        -------
+        domain : Domain
+            multipatch domain
+
+        Notes
+        -----
+        The orientations are specified in the same manner as in GeoPDES, see e.g.
+        <https://github.com/rafavzqz/geopdes/blob/master/geopdes/doc/geo_specs_mp_v21.txt#L193-L237>
+        and 
+        T. Dokken, E. Quak, V. Skytt. Requirements from Isogeometric Analysis for changes in product design ontologies, 2010.
+
+        Example
+        -------
+        # list of patches (mapped domains)
+        Omega_0 = F0(A)
+        Omega_1 = F1(A)
+        Omega_2 = F2(A)
+        Omega_3 = F3(A)
+
+        patches = [Omega_0, Omega_1, Omega_2, Omega_3]
+        
+        # integers representing the axes 
+        axis_0 = 0
+        axis_1 = 1
+        axis_2 = 2
+
+        # integers representing the extremities: left (-1) or right (+1)
+        ext_0 = -1
+        ext_1 = +1
+    
+        # A connectivity list in 2D
+        connectivity = [((Omega_0, axis_0, ext_0), (Omega_1, axis_0, ext_1),  1),
+                        ((Omega_1, axis_1, ext_0), (Omega_3, axis_1, ext_1), -1),
+                        ((Omega_0, axis_1, ext_0), (Omega_2, axis_1, ext_1),  1),
+                        ((Omega_2, axis_0, ext_0), (Omega_3, axis_0, ext_1), -1)]
+
+        # alternative option (passing interface patches by their indices in the patches list):
+        connectivity = [((0, axis_0, ext_0), (1, axis_0, ext_1),  1),
+                        ((1, axis_1, ext_0), (3, axis_1, ext_1), -1),
+                        ((0, axis_1, ext_0), (2, axis_1, ext_1),  1),
+                        ((2, axis_0, ext_0), (3, axis_0, ext_1), -1)]
+
+        # A connectivity list in 3D
+        connectivity = [((Omega_0, axis_0, ext_1), (Omega_1, axis_0, ext_0), ( 1,  1,  1)),
+                        ((Omega_0, axis_1, ext_1), (Omega_2, axis_1, ext_0), ( 1, -1,  1)),
+                        ((Omega_1, axis_1, ext_1), (Omega_3, axis_1, ext_0), (-1,  1, -1)),
+                        ((Omega_2, axis_0, ext_1), (Omega_3, axis_0, ext_0), (-1,  1,  1))]
+
+        # alternative option (passing interface patches by their indices in the patches list):
+        connectivity = [((0, axis_0, ext_1), (1, axis_0, ext_0), ( 1,  1,  1)),
+                        ((0, axis_1, ext_1), (2, axis_1, ext_0), ( 1, -1,  1)),
+                        ((1, axis_1, ext_1), (3, axis_1, ext_0), (-1,  1, -1)),
+                        ((2, axis_0, ext_1), (3, axis_0, ext_0), (-1,  1,  1))]
+
+        # the multi-patch domain
+        Omega = Domain.join(patches=patches, connectivity=connectivity, name='Omega')
+        
+        """
 
         assert isinstance(patches, (tuple, list))
         assert isinstance(connectivity, (tuple, list))
@@ -409,12 +490,21 @@ class Domain(BasicDomain):
         dim = int(patches[0].dim)
 
         from sympde.topology.base_mapping import MultiPatchMapping
+
+        patch_given_by_indices = (len(connectivity) > 0 and isinstance(connectivity[0][0][0], int))
+
         # ... connectivity
         interfaces = {}
         boundaries = []
         for cn in connectivity:
-            bnd_minus = patches[cn[0][0]].get_boundary(axis=cn[0][1], ext=cn[0][2])
-            bnd_plus  = patches[cn[1][0]].get_boundary(axis=cn[1][1], ext=cn[1][2])
+            if patch_given_by_indices:
+                patch_minus = patches[cn[0][0]]
+                patch_plus  = patches[cn[1][0]]
+            else:
+                patch_minus = cn[0][0]
+                patch_plus  = cn[1][0]
+            bnd_minus = patch_minus.get_boundary(axis=cn[0][1], ext=cn[0][2])
+            bnd_plus  =  patch_plus.get_boundary(axis=cn[1][1], ext=cn[1][2])
             if   dim == 1: ornt = None
             elif dim == 2: ornt = 1 if len(cn) == 2 else cn[2]
             elif dim == 3:
@@ -755,7 +845,7 @@ class NCube(Domain):
             raise ValueError("Min coordinates must be smaller than max")
 
         coord_names = 'x1:{}'.format(dim + 1)
-        coordinates = symbols(coord_names)
+        coordinates = symbols(coord_names)  # [MCP 24.07.2024] we should be able to pass real=True but requires additional testing as it breaks some calls to TerminalExpr
 
         # Choose which type to use:
         #   a) if dim <= 3, use Line, Square or Cube;
