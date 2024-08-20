@@ -1,5 +1,21 @@
 from .base_analytic_mapping import BaseAnalyticMapping
 
+__all__ = (
+    'IdentityMapping',
+    'AffineMapping',
+    'PolarMapping',
+    'TargetMapping',
+    'CzarnyMapping',
+    'CollelaMapping2D',
+    'CollelaMapping3D',
+    'TorusMapping',
+    'TorusSurfaceMapping',
+    'TwistedTargetSurfaceMapping',
+    'TwistedTargetMapping',
+    'SphericalMapping',
+    'TransposedPolarMapping'
+)
+
 class IdentityMapping(BaseAnalyticMapping):
     """
     Represents an identity 1D/2D/3D BaseAnalyticMapping object.
@@ -10,7 +26,13 @@ class IdentityMapping(BaseAnalyticMapping):
     _expressions = {'x': 'x1',
                     'y': 'x2',
                     'z': 'x3'}
-
+    
+    def __new__(cls, name='M', dim=3, **kwargs):
+        
+        obj = super().__new__(cls, name, dim, **kwargs)
+        
+        return obj
+    
 #==============================================================================
 class AffineMapping(BaseAnalyticMapping):
     """
@@ -20,9 +42,15 @@ class AffineMapping(BaseAnalyticMapping):
 
     """
     _expressions = {'x': 'c1 + a11*x1 + a12*x2 + a13*x3',
-                    'y': 'c2 + a21*x1 + a22*x2 + a23*x3',
-                    'z': 'c3 + a31*x1 + a32*x2 + a33*x3'}
-
+                        'y': 'c2 + a21*x1 + a22*x2 + a23*x3',
+                        'z': 'c3 + a31*x1 + a32*x2 + a33*x3'}
+    
+    def __new__(cls, name='M', dim=3, **kwargs):
+        
+        obj = super().__new__(cls, name, dim, **kwargs)
+        
+        return obj
+    
 #==============================================================================
 class PolarMapping(BaseAnalyticMapping):
     """
@@ -36,6 +64,12 @@ class PolarMapping(BaseAnalyticMapping):
 
     _ldim        = 2
     _pdim        = 2
+    
+    def __new__(cls, name='M', **kwargs):
+        
+        obj = super().__new__(cls, name, **kwargs)
+        
+        return obj
 
 #==============================================================================
 class TargetMapping(BaseAnalyticMapping):
@@ -51,6 +85,12 @@ class TargetMapping(BaseAnalyticMapping):
     _ldim        = 2
     _pdim        = 2
 
+    def __new__(cls, name='M', **kwargs):
+        
+        obj = super().__new__(cls, name, **kwargs)
+        
+        return obj
+    
 #==============================================================================
 class CzarnyMapping(BaseAnalyticMapping):
     """
@@ -66,24 +106,53 @@ class CzarnyMapping(BaseAnalyticMapping):
     _ldim        = 2
     _pdim        = 2
 
+    def __new__(cls, name='M', **kwargs):
+        
+        obj = super().__new__(cls, name, **kwargs)
+        
+        return obj
+    
 #==============================================================================
 class CollelaMapping2D(BaseAnalyticMapping):
+    """
+    Represents a CollelaMapping 2D BaseAnalyticMapping object.
+
+    Examples
+
+    """
 
     _ldim = 2
     _pdim = 2
     _expressions = {'x': 'a * (x1 + eps / (2*pi) * sin(2*pi*x1) * sin(2*pi*x2))',
                     'y': 'b * (x2 + eps / (2*pi) * sin(2*pi*x1) * sin(2*pi*x2))'}
 
+    def __new__(cls, name='M', **kwargs):
+        
+        obj = super().__new__(cls, name, **kwargs)
+        
+        return obj
+    
 #==============================================================================
 class CollelaMapping3D(BaseAnalyticMapping):
+    """
+    Represents a CollelaMapping 3D BaseAnalyticMapping object.
 
-        _expressions = {'x': 'k1*(x1 + eps*sin(2.*pi*x1)*sin(2.*pi*x2))',
-                        'y': 'k2*(x2 + eps*sin(2.*pi*x1)*sin(2.*pi*x2))',
-                        'z': 'k3*x3'}
+    Examples
 
-        _ldim        = 3
-        _pdim        = 3
+    """
+    _expressions = {'x': 'k1*(x1 + eps*sin(2.*pi*x1)*sin(2.*pi*x2))',
+                    'y': 'k2*(x2 + eps*sin(2.*pi*x1)*sin(2.*pi*x2))',
+                    'z': 'k3*x3'}
 
+    _ldim        = 3
+    _pdim        = 3
+
+    def __new__(cls, name='M', **kwargs):
+        
+        obj = super().__new__(cls, name, **kwargs)
+        
+        return obj
+    
 #==============================================================================
 class TorusMapping(BaseAnalyticMapping):
     """
@@ -101,6 +170,12 @@ class TorusMapping(BaseAnalyticMapping):
 
     _ldim        = 3
     _pdim        = 3
+
+    def __new__(cls, name='M', **kwargs):
+        
+        obj = super().__new__(cls, name, **kwargs)
+        
+        return obj
 
 #==============================================================================
 # TODO [YG, 07.10.2022]: add test in sympde/topology/tests/test_logical_expr.py
@@ -120,6 +195,12 @@ class TorusSurfaceMapping(BaseAnalyticMapping):
     _ldim        = 2
     _pdim        = 3
 
+    def __new__(cls, name='M', **kwargs):
+        
+        obj = super().__new__(cls, name, **kwargs)
+        
+        return obj
+
 #==============================================================================
 # TODO [YG, 07.10.2022]: add test in sympde/topology/tests/test_logical_expr.py
 class TwistedTargetSurfaceMapping(BaseAnalyticMapping):
@@ -134,6 +215,12 @@ class TwistedTargetSurfaceMapping(BaseAnalyticMapping):
     _ldim        = 2
     _pdim        = 3
 
+    def __new__(cls, name='M', **kwargs):
+        
+        obj = super().__new__(cls, name, **kwargs)
+        
+        return obj
+
 #==============================================================================
 class TwistedTargetMapping(BaseAnalyticMapping):
     """
@@ -146,6 +233,12 @@ class TwistedTargetMapping(BaseAnalyticMapping):
 
     _ldim        = 3
     _pdim        = 3
+
+    def __new__(cls, name='M', **kwargs):
+        
+        obj = super().__new__(cls, name, **kwargs)
+        
+        return obj
 
 #==============================================================================
 class SphericalMapping(BaseAnalyticMapping):
@@ -164,14 +257,35 @@ class SphericalMapping(BaseAnalyticMapping):
 
     _ldim        = 3
     _pdim        = 3
+    
+    def __new__(cls, name='M', **kwargs):
+        
+        obj = super().__new__(cls, name, **kwargs)
+        
+        return obj
 
+#==============================================================================
 class Collela3D( BaseAnalyticMapping ):
+    #maybe remove this class ???
+    """
+    Represents a Collela 3D BaseAnalyticMapping object.
+
+    Examples
+
+    """
 
     _expressions = {'x':'2.*(x1 + 0.1*sin(2.*pi*x1)*sin(2.*pi*x2)) - 1.',
                     'y':'2.*(x2 + 0.1*sin(2.*pi*x1)*sin(2.*pi*x2)) - 1.',
                     'z':'2.*x3  - 1.'}
+
     
+    def __new__(cls, name='M', dim=3, **kwargs):
+        
+        obj = super().__new__(cls, name, dim, **kwargs)
+        
+        return obj
     
+#==============================================================================
 class TransposedPolarMapping( BaseAnalyticMapping ):
     """
     Represents a Transposed (x1 <> x2) Polar 2D Mapping object (Annulus).
@@ -185,15 +299,8 @@ class TransposedPolarMapping( BaseAnalyticMapping ):
     _ldim        = 2
     _pdim        = 2
     
-class TransposedPolarMapping( BaseAnalyticMapping ):
-    """
-    Represents a Transposed (x1 <> x2) Polar 2D Mapping object (Annulus).
-
-    Examples
-
-    """
-    _expressions = {'x': 'c1 + (rmin*(1-x2)+rmax*x2)*cos(x1)',
-                    'y': 'c2 + (rmin*(1-x2)+rmax*x2)*sin(x1)'}
-
-    _ldim        = 2
-    _pdim        = 2
+    def __new__(cls, name='M', **kwargs):
+        
+        obj = super().__new__(cls, name, **kwargs)
+        
+        return obj
