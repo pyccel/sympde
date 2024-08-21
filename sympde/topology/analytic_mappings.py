@@ -13,7 +13,8 @@ __all__ = (
     'TwistedTargetSurfaceMapping',
     'TwistedTargetMapping',
     'SphericalMapping',
-    'TransposedPolarMapping'
+    'TransposedPolarMapping',
+    'Collela3D'
 )
 
 class IdentityMapping(BaseAnalyticMapping):
