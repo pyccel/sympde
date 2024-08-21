@@ -11,7 +11,7 @@ ATOL = 1e-15
 #==============================================================================
 def test_identity_mapping_1d():
 
-    F = IdentityMapping('F', dim=1)
+    f = IdentityMapping('F', dim=1)
 
     assert f.ldim == 1
     assert f.pdim == 1
@@ -28,7 +28,7 @@ def test_identity_mapping_1d():
 
 def test_identity_mapping_2d():
 
-    F = IdentityMapping('F', dim=2)
+    f = IdentityMapping('F', dim=2)
 
     assert f.ldim == 2
     assert f.pdim == 2
@@ -50,7 +50,7 @@ def test_identity_mapping_2d():
 
 def test_identity_mapping_3d():
 
-    F = IdentityMapping('F', dim=3)
+    f = IdentityMapping('F', dim=3)
 
     assert f.ldim == 3
     assert f.pdim == 3
@@ -79,7 +79,7 @@ def test_affine_mapping_1d():
     # x = 1 - x1
     params = {'c1': 1, 'a11': -1}
 
-    F = AffineMapping('F', **params, dim=1)
+    f = AffineMapping('F', **params, dim=1)
 
     assert f.ldim == 1
     assert f.pdim == 1
@@ -102,7 +102,7 @@ def test_affine_mapping_2d():
 
     params = dict(c1=c1, c2=c2, a11=a11, a12=a12, a21=a21, a22=a22)
 
-    F = AffineMapping('F', **params, dim=2)
+    f = AffineMapping('F', **params, dim=2)
 
     assert f.ldim == 2
     assert f.pdim == 2
@@ -142,7 +142,7 @@ def test_affine_mapping_3d():
             a21=a21, a22=a22, a23=a23,
             a31=a31, a32=a32, a33=a33,)
 
-    F = AffineMapping('F', **params, dim=3)
+    f = AffineMapping('F', **params, dim=3)
 
     assert f.ldim == 3
     assert f.pdim == 3
@@ -186,8 +186,7 @@ def test_polar_mapping():
 
     params = dict(c1=c1, c2=c2, rmin=rmin, rmax=rmax)
 
-    F = PolarMapping('F', **params)
-    f = F.get_callable_mapping()
+    f = PolarMapping('F', **params)
 
     assert f.ldim == 2
     assert f.pdim == 2
@@ -226,7 +225,7 @@ def test_polar_mapping():
 
 def test_identity_mapping_array_1d():
 
-    F = IdentityMapping('F', dim=1)
+    f = IdentityMapping('F', dim=1)
 
     assert f.ldim == 1
     assert f.pdim == 1
@@ -241,7 +240,7 @@ def test_identity_mapping_array_1d():
 
 def test_identity_mapping_array_2d():
 
-    F = IdentityMapping('F', dim=2)
+    f = IdentityMapping('F', dim=2)
 
     assert f.ldim == 2
     assert f.pdim == 2
@@ -265,7 +264,7 @@ def test_identity_mapping_array_2d():
 
 def test_identity_mapping_array_3d():
 
-    F = IdentityMapping('F', dim=3)
+    f = IdentityMapping('F', dim=3)
 
     assert f.ldim == 3
     assert f.pdim == 3
@@ -295,7 +294,7 @@ def test_affine_mapping_array_1d():
     # x = 1 - x1
     params = {'c1': 1, 'a11': -1}
 
-    F = AffineMapping('F', **params, dim=1)
+    f = AffineMapping('F', **params, dim=1)
 
     assert f.ldim == 1
     assert f.pdim == 1
@@ -316,7 +315,7 @@ def test_affine_mapping_array_2d():
 
     params = dict(c1=c1, c2=c2, a11=a11, a12=a12, a21=a21, a22=a22)
 
-    F = AffineMapping('F', **params, dim=2)
+    f = AffineMapping('F', **params, dim=2)
 
     assert f.ldim == 2
     assert f.pdim == 2
@@ -365,7 +364,7 @@ def test_affine_mapping_array_3d():
             a21=a21, a22=a22, a23=a23,
             a31=a31, a32=a32, a33=a33,)
 
-    F = AffineMapping('F', **params, dim=3)
+    f = AffineMapping('F', **params, dim=3)
 
     assert f.ldim == 3
     assert f.pdim == 3
@@ -418,7 +417,7 @@ def test_polar_mapping_array():
 
     params = dict(c1=c1, c2=c2, rmin=rmin, rmax=rmax)
 
-    F = PolarMapping('F', **params)
+    f = PolarMapping('F', **params)
 
     assert f.ldim == 2
     assert f.pdim == 2
