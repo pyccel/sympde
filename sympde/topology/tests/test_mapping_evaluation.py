@@ -12,7 +12,6 @@ ATOL = 1e-15
 def test_identity_mapping_1d():
 
     F = IdentityMapping('F', dim=1)
-    f = F.get_callable_mapping()
 
     assert f.ldim == 1
     assert f.pdim == 1
@@ -30,7 +29,6 @@ def test_identity_mapping_1d():
 def test_identity_mapping_2d():
 
     F = IdentityMapping('F', dim=2)
-    f = F.get_callable_mapping()
 
     assert f.ldim == 2
     assert f.pdim == 2
@@ -53,7 +51,6 @@ def test_identity_mapping_2d():
 def test_identity_mapping_3d():
 
     F = IdentityMapping('F', dim=3)
-    f = F.get_callable_mapping()
 
     assert f.ldim == 3
     assert f.pdim == 3
@@ -83,7 +80,6 @@ def test_affine_mapping_1d():
     params = {'c1': 1, 'a11': -1}
 
     F = AffineMapping('F', **params, dim=1)
-    f = F.get_callable_mapping()
 
     assert f.ldim == 1
     assert f.pdim == 1
@@ -107,7 +103,6 @@ def test_affine_mapping_2d():
     params = dict(c1=c1, c2=c2, a11=a11, a12=a12, a21=a21, a22=a22)
 
     F = AffineMapping('F', **params, dim=2)
-    f = F.get_callable_mapping()
 
     assert f.ldim == 2
     assert f.pdim == 2
@@ -148,7 +143,6 @@ def test_affine_mapping_3d():
             a31=a31, a32=a32, a33=a33,)
 
     F = AffineMapping('F', **params, dim=3)
-    f = F.get_callable_mapping()
 
     assert f.ldim == 3
     assert f.pdim == 3
@@ -233,7 +227,6 @@ def test_polar_mapping():
 def test_identity_mapping_array_1d():
 
     F = IdentityMapping('F', dim=1)
-    f = F.get_callable_mapping()
 
     assert f.ldim == 1
     assert f.pdim == 1
@@ -249,7 +242,6 @@ def test_identity_mapping_array_1d():
 def test_identity_mapping_array_2d():
 
     F = IdentityMapping('F', dim=2)
-    f = F.get_callable_mapping()
 
     assert f.ldim == 2
     assert f.pdim == 2
@@ -274,7 +266,6 @@ def test_identity_mapping_array_2d():
 def test_identity_mapping_array_3d():
 
     F = IdentityMapping('F', dim=3)
-    f = F.get_callable_mapping()
 
     assert f.ldim == 3
     assert f.pdim == 3
@@ -305,7 +296,6 @@ def test_affine_mapping_array_1d():
     params = {'c1': 1, 'a11': -1}
 
     F = AffineMapping('F', **params, dim=1)
-    f = F.get_callable_mapping()
 
     assert f.ldim == 1
     assert f.pdim == 1
@@ -327,7 +317,6 @@ def test_affine_mapping_array_2d():
     params = dict(c1=c1, c2=c2, a11=a11, a12=a12, a21=a21, a22=a22)
 
     F = AffineMapping('F', **params, dim=2)
-    f = F.get_callable_mapping()
 
     assert f.ldim == 2
     assert f.pdim == 2
@@ -377,7 +366,6 @@ def test_affine_mapping_array_3d():
             a31=a31, a32=a32, a33=a33,)
 
     F = AffineMapping('F', **params, dim=3)
-    f = F.get_callable_mapping()
 
     assert f.ldim == 3
     assert f.pdim == 3
@@ -431,7 +419,6 @@ def test_polar_mapping_array():
     params = dict(c1=c1, c2=c2, rmin=rmin, rmax=rmax)
 
     F = PolarMapping('F', **params)
-    f = F.get_callable_mapping()
 
     assert f.ldim == 2
     assert f.pdim == 2
@@ -469,7 +456,8 @@ def test_polar_mapping_array():
     assert np.allclose(f.metric_det  (xx1, xx2), G_det, rtol=RTOL, atol=ATOL)
 
 #==============================================================================
-def test_user_defined_callable_mapping():
+#not sure if this test should still exist as there are no more callable mappings. 
+'''def test_user_defined_callable_mapping():
 
     class UserIdentity(BasicCallableMapping):
         """ Identity in N dimensions.
@@ -517,4 +505,4 @@ def test_user_defined_callable_mapping():
     assert np.array_equal(f.metric(0, 1, 1)       , [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
     assert f.metric_det(-5, 8, -9) == 1.0
     assert f.ldim == 3
-    assert f.pdim == 3
+    assert f.pdim == 3'''
