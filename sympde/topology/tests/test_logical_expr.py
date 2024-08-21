@@ -631,7 +631,7 @@ def test_polar_mapping_2d_1():
     constants = ['c1', 'c2', 'rmax', 'rmin']
     c1, c2, rmax, rmin = [Constant(i) for i in constants]
 
-    M = PolarMapping('M', dim=dim)
+    M = PolarMapping('M')
 
     domain = M(Domain('Omega', dim=dim))
 
@@ -661,7 +661,7 @@ def test_target_mapping_2d_1():
     constants = ['c1', 'c2', 'D', 'k']
     c1, c2, D, k = [Constant(i) for i in constants]
 
-    M = TargetMapping('M', dim=dim)
+    M = TargetMapping('M')
 
     domain = M(Domain('Omega', dim=dim))
 
@@ -693,7 +693,7 @@ def test_czarny_mapping_2d_1():
     constants = ['c2', 'eps', 'b']
     c2, eps, b = [Constant(i) for i in constants]
 
-    M = CzarnyMapping('M', dim=dim)
+    M = CzarnyMapping('M')
 
     domain = M(Domain('Omega', dim=dim))
 
@@ -730,7 +730,7 @@ def test_collela_mapping_2d_1():
     constants = ['eps', 'k1', 'k2']
     eps, k1, k2 = [Constant(i) for i in constants]
 
-    M = CollelaMapping2D('M', dim)
+    M = CollelaMapping2D('M')
 
     domain = M(Domain('Omega', dim=dim))
 
@@ -766,7 +766,7 @@ def test_torus_mapping_3d_1():
     x1, x2, x3 = symbols('x1, x2, x3')
     R0 = Constant('R0')
 
-    M = TorusMapping('M', dim=dim)
+    M = TorusMapping('M')
 
     domain = M(Domain('Omega', dim=dim))
 
@@ -817,7 +817,7 @@ def test_twisted_target_mapping_3d_1():
     constants = ['c1', 'c2', 'c3', 'D', 'k']
     c1, c2, c3, D, k = [Constant(i) for i in constants]
 
-    M = TwistedTargetMapping('M', dim=dim)
+    M = TwistedTargetMapping('M')
 
     domain = M(Domain('Omega', dim=dim))
 
