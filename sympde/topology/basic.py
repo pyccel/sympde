@@ -88,6 +88,7 @@ class InteriorDomain(BasicDomain):
 
     @mapping.setter 
     def mapping(self, value):
+        assert(isinstance(value, BaseMapping))
         self._mapping = value
 
 

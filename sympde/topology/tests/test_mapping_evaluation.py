@@ -1,8 +1,6 @@
 import numpy as np
 
-from sympde.topology.mapping            import Mapping, BasicCallableMapping
-from sympde.topology.analytical_mapping import IdentityMapping, AffineMapping
-from sympde.topology.analytical_mapping import PolarMapping
+from sympde.topology.analytic_mappings import IdentityMapping, AffineMapping, PolarMapping
 
 # Tolerance for testing float equality
 RTOL = 1e-15
@@ -453,55 +451,3 @@ def test_polar_mapping_array():
     assert np.allclose(f.jacobian_inv(xx1, xx2), J_inv, rtol=RTOL, atol=ATOL)
     assert np.allclose(f.metric      (xx1, xx2), G    , rtol=RTOL, atol=ATOL)
     assert np.allclose(f.metric_det  (xx1, xx2), G_det, rtol=RTOL, atol=ATOL)
-
-#==============================================================================
-#not sure if this test should still exist as there are no more callable mappings. 
-'''def test_user_defined_callable_mapping():
-
-    class UserIdentity(BasicCallableMapping):
-        """ Identity in N dimensions.
-        """
-
-        def __init__(self, ndim):
-            self._ndim = ndim
-
-        def __call__(self, *eta):
-            assert len(eta) == self._ndim
-            return eta
-
-        def jacobian(self, *eta):
-            assert len(eta) == self._ndim
-            return np.eye(self._ndim)
-
-        def jacobian_inv(self, *eta):
-            assert len(eta) == self._ndim
-            return np.eye(self._ndim)
-
-        def metric(self, *eta):
-            assert len(eta) == self._ndim
-            return np.eye(self._ndim)
-
-        def metric_det(self, *eta):
-            assert len(eta) == self._ndim
-            return 1.0
-
-        @property
-        def ldim(self):
-            return self._ndim
-
-        @property
-        def pdim(self):
-            return self._ndim
-
-    F = Mapping('F', ldim = 3, pdim = 3) # Declare undefined symbolic mapping
-    f = UserIdentity(3)        # Create user-defined callable mapping
-    F.set_callable_mapping(f)  # Attach callable mapping to symbolic mapping
-
-    assert F.get_callable_mapping() is f
-    assert f(4, 5, 6) == (4, 5, 6)
-    assert np.array_equal(f.jacobian(1, 2, 3)     , [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-    assert np.array_equal(f.jacobian_inv(-7, 0, 7), [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-    assert np.array_equal(f.metric(0, 1, 1)       , [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-    assert f.metric_det(-5, 8, -9) == 1.0
-    assert f.ldim == 3
-    assert f.pdim == 3'''

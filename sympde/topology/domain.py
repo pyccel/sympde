@@ -353,7 +353,7 @@ class Domain(BasicDomain):
         d_interior     = yml['interior']
         d_boundary     = yml['boundary']
         d_connectivity = yml['connectivity']
-        
+
         if dtype == 'None': dtype = None
 
         assert dtype is not None
@@ -361,7 +361,7 @@ class Domain(BasicDomain):
         if isinstance(d_interior, dict):
             d_interior = [d_interior]
             dtype      = [dtype]
-                
+
         constructors = [globals()[dt['type']] for dt in dtype]
         interiors    = [cs(i['name'], **dt['parameters']) for cs,i,dt in zip(constructors, d_interior, dtype)]
         mappings     = [BaseMapping(I['mapping'], dim=dim) if I.get('mapping', "None") != "None" else None for I in d_interior]
@@ -489,8 +489,6 @@ class Domain(BasicDomain):
         assert all(p.dim==patches[0].dim for p in patches)
         dim = int(patches[0].dim)
 
-        from sympde.topology.base_mapping import MultiPatchMapping
-
         patch_given_by_indices = (len(connectivity) > 0 and isinstance(connectivity[0][0][0], int))
 
         # ... connectivity
@@ -542,6 +540,7 @@ class Domain(BasicDomain):
             for k,v in connectivity.items():
                 logical_connectivity[v.logical_domain.name] = v.logical_domain
 
+            from sympde.topology.base_mapping import MultiPatchMapping
             mapping        = MultiPatchMapping({e.logical_domain: e.mapping for e in interiors})
             logical_domain = Domain(name,
                             interiors=logical_interiors,

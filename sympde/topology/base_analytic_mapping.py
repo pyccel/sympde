@@ -20,7 +20,6 @@ __all__ = (
 
 
 
-
 def lambdify_sympde(variables, expr):
     """
     Custom lambify function that covers the
@@ -98,8 +97,8 @@ def lambdify_sympde(variables, expr):
                 result[multi_index] = scalar_functions[multi_index](*XYZ)
             return result
         return f_vec_v
-    
-    
+
+
 #==============================================================================
 class BaseAnalyticMapping(BaseMapping):
     """
@@ -124,11 +123,9 @@ class BaseAnalyticMapping(BaseMapping):
         
         return obj
 
-    
     #--------------------------------------------------------------------------
     #Abstract Interface : 
-    
-    
+
     def _evaluate_domain( self, domain ):
         assert(isinstance(domain, BasicDomain))
         return MappedDomain(self, domain)
@@ -154,7 +151,7 @@ class BaseAnalyticMapping(BaseMapping):
             for X in Xs:
                 assert np.shape(X) == Xshape
             return self._jac_eval( *Xs ) 
-        
+   
     def _jacobian_inv_evaluate( self, *Xs ):
         #int, float or numpy arrays 
         if self._inv_jac_eval is None:
@@ -193,8 +190,7 @@ class BaseAnalyticMapping(BaseMapping):
             return self._evaluate(*args)
         else:
             raise TypeError("Invalid arguments for __call__")
-        
-        
+
     def jacobian_eval( self, *args ):
         if all(isinstance(arg, (int, float, Symbol, np.ndarray)) for arg in args):
             return self._jacobian_evaluate(*args)
@@ -212,12 +208,10 @@ class BaseAnalyticMapping(BaseMapping):
             return self._metric_evaluate(*args)
         else:
             raise TypeError("Invalid arguments for metric_eval") 
-            
-    
+
     def metric_det_eval( self, *args ):
         if all(isinstance(arg, (int, float, Symbol, np.ndarray)) for arg in args):
             return self._metric_det_evaluate(*args)
         else:
             raise TypeError("Invalid arguments for metric_det_eval")
-    
-    
+

@@ -12,7 +12,7 @@ from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
 from sympde.topology import elements_of
 from sympde.topology import Boundary
 from sympde.topology import Domain
-from sympde.topology import Mapping
+from sympde.topology import BaseMapping
 
 from sympde.expr.expr import BilinearForm, integral
 from sympde.expr.evaluation import TensorExpr
@@ -59,11 +59,11 @@ def test_tensorize_2d_2():
     # ...
 
 #==============================================================================
-def test_tensorize_2d_1_mapping():
+def test_tensorize_2d_1_BaseMapping():
 
     DIM = 2
 
-    M = Mapping('Map', dim=DIM)
+    M = BaseMapping('Map', dim=DIM)
 
     domain = M(Domain('Omega', dim=DIM))
 
@@ -85,10 +85,10 @@ def test_tensorize_2d_1_mapping():
     # ...
 
 #==============================================================================
-def test_tensorize_2d_2_mapping():
+def test_tensorize_2d_2_BaseMapping():
 
     DIM = 2
-    M = Mapping('M', dim=DIM)
+    M = BaseMapping('M', dim=DIM)
     domain = M(Domain('Omega', dim=DIM))
 
     V = VectorFunctionSpace('V', domain)

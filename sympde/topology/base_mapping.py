@@ -14,6 +14,7 @@ from sympy                 import S
 from sympy                 import sqrt, symbols
 from sympy.core.exprtools  import factor_terms
 from sympy.polys.polytools import parallel_poly_from_expr
+import numpy as np
 
 from sympde.core              import Constant
 from sympde.core.basic        import CalculusFunction
@@ -38,12 +39,13 @@ from .derivatives import get_atom_derivatives, get_index_derivatives_atom
 from .derivatives import _logical_partial_derivatives
 from .derivatives import get_atom_logical_derivatives, get_index_logical_derivatives_atom
 from .derivatives import LogicalGrad_1d, LogicalGrad_2d, LogicalGrad_3d
-import numpy as np
+
 
 # TODO fix circular dependency between sympde.topology.domain and sympde.topology.mapping
 # TODO fix circular dependency between sympde.expr.evaluation and sympde.topology.mapping
 
 __all__ = (
+    'BaseMapping',
     'Contravariant',
     'Covariant',
     'InterfaceMapping',
@@ -614,7 +616,6 @@ class PullBack(Expr):
         else:
             mapping = space.domain.mapping
 
-
         J = mapping.jacobian
         if isinstance(kind, (UndefinedSpaceType, H1SpaceType)):
             expr = el
@@ -675,7 +676,7 @@ class Jacobian(MappingApplication):
          expr : ImmutableDenseMatrix
             the jacobian matrix
         """
-        
+
         if not isinstance(F, BaseMapping):
             raise TypeError('> Expecting a BaseMapping object')
 

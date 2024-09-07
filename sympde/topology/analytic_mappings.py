@@ -165,14 +165,15 @@ class SphericalMapping(BaseAnalyticMapping):
     _ldim        = 3
     _pdim        = 3
 
-class Collela3D( BaseAnalyticMapping ):
+#==============================================================================
+class Collela3D(BaseAnalyticMapping):
 
     _expressions = {'x':'2.*(x1 + 0.1*sin(2.*pi*x1)*sin(2.*pi*x2)) - 1.',
                     'y':'2.*(x2 + 0.1*sin(2.*pi*x1)*sin(2.*pi*x2)) - 1.',
                     'z':'2.*x3  - 1.'}
-    
-    
-class TransposedPolarMapping( BaseAnalyticMapping ):
+
+#==============================================================================   
+class TransposedPolarMapping(BaseAnalyticMapping):
     """
     Represents a Transposed (x1 <> x2) Polar 2D Mapping object (Annulus).
 
@@ -184,8 +185,9 @@ class TransposedPolarMapping( BaseAnalyticMapping ):
 
     _ldim        = 2
     _pdim        = 2
-    
-class TransposedPolarMapping( BaseAnalyticMapping ):
+
+#==============================================================================    
+class TransposedPolarMapping(BaseAnalyticMapping):
     """
     Represents a Transposed (x1 <> x2) Polar 2D Mapping object (Annulus).
 
