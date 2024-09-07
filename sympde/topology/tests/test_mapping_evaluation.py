@@ -18,10 +18,10 @@ def test_identity_mapping_1d():
 
     for x1 in x1_pts:
         assert f(x1)              == (x1,)
-        assert f.jacobian(x1)     == 1.0
-        assert f.jacobian_inv(x1) == 1.0
-        assert f.metric(x1)       == 1.0
-        assert f.metric_det(x1)   == 1.0
+        assert f.jacobian_eval(x1)     == 1.0
+        assert f.jacobian_inv_eval(x1) == 1.0
+        assert f.metric_eval(x1)       == 1.0
+        assert f.metric_det_eval(x1)   == 1.0
 
 
 def test_identity_mapping_2d():
@@ -40,10 +40,10 @@ def test_identity_mapping_2d():
     for x1 in x1_pts:
         for x2 in x2_pts:
             assert f(x1, x2) == (x1, x2)
-            assert np.array_equal(f.jacobian    (x1, x2), I)
-            assert np.array_equal(f.jacobian_inv(x1, x2), I)
-            assert np.array_equal(f.metric      (x1, x2), I)
-            assert f.metric_det(x1, x2) == 1.0
+            assert np.array_equal(f.jacobian_eval    (x1, x2), I)
+            assert np.array_equal(f.jacobian_inv_eval(x1, x2), I)
+            assert np.array_equal(f.metric_eval      (x1, x2), I)
+            assert f.metric_det_eval(x1, x2) == 1.0
 
 
 def test_identity_mapping_3d():
@@ -65,10 +65,10 @@ def test_identity_mapping_3d():
         for x2 in x2_pts:
             for x3 in x3_pts:
                 assert f(x1, x2, x3) == (x1, x2, x3)
-                assert np.array_equal(f.jacobian    (x1, x2, x3), I)
-                assert np.array_equal(f.jacobian_inv(x1, x2, x3), I)
-                assert np.array_equal(f.metric      (x1, x2, x3), I)
-                assert f.metric_det(x1, x2, x3) == 1.0
+                assert np.array_equal(f.jacobian_eval    (x1, x2, x3), I)
+                assert np.array_equal(f.jacobian_inv_eval(x1, x2, x3), I)
+                assert np.array_equal(f.metric_eval      (x1, x2, x3), I)
+                assert f.metric_det_eval(x1, x2, x3) == 1.0
 
 
 #------------------------------------------------------------------------------
@@ -87,10 +87,10 @@ def test_affine_mapping_1d():
     assert f(1  ) == (0  ,)
 
     for x1 in [0, 0.5, 1]:
-        assert f.jacobian(x1)     == -1
-        assert f.jacobian_inv(x1) == -1
-        assert f.metric(x1)       ==  1
-        assert f.metric_det(x1)   ==  1
+        assert f.jacobian_eval(x1)     == -1
+        assert f.jacobian_inv_eval(x1) == -1
+        assert f.metric_eval(x1)       ==  1
+        assert f.metric_det_eval(x1)   ==  1
 
 
 def test_affine_mapping_2d():
@@ -121,10 +121,10 @@ def test_affine_mapping_2d():
             x = c1 + a11 * x1 + a12 * x2
             y = c2 + a21 * x1 + a22 * x2
             assert f(x1, x2) == (x, y)
-            assert np.array_equal(f.jacobian    (x1, x2), J    )
-            assert np.array_equal(f.jacobian_inv(x1, x2), J_inv)
-            assert np.array_equal(f.metric      (x1, x2), G    )
-            assert f.metric_det(x1, x2) == G_det
+            assert np.array_equal(f.jacobian_eval    (x1, x2), J    )
+            assert np.array_equal(f.jacobian_inv_eval(x1, x2), J_inv)
+            assert np.array_equal(f.metric_eval      (x1, x2), G    )
+            assert f.metric_det_eval(x1, x2) == G_det
 
 
 def test_affine_mapping_3d():
@@ -170,10 +170,10 @@ def test_affine_mapping_3d():
                 y = c2 + a21 * x1 + a22 * x2 + a23 * x3
                 z = c3 + a31 * x1 + a32 * x2 + a33 * x3
                 assert np.allclose(f(x1, x2, x3), (x, y, z), rtol=RTOL, atol=ATOL)
-                assert np.array_equal(f.jacobian    (x1, x2, x3), J    )
-                assert np.array_equal(f.jacobian_inv(x1, x2, x3), J_inv)
-                assert np.array_equal(f.metric      (x1, x2, x3), G    )
-                assert f.metric_det(x1, x2, x3) == G_det
+                assert np.array_equal(f.jacobian_eval    (x1, x2, x3), J    )
+                assert np.array_equal(f.jacobian_inv_eval(x1, x2, x3), J_inv)
+                assert np.array_equal(f.metric_eval      (x1, x2, x3), G    )
+                assert f.metric_det_eval(x1, x2, x3) == G_det
 
 
 #------------------------------------------------------------------------------
@@ -212,10 +212,10 @@ def test_polar_mapping():
                      [-J[1][0] / J_det,  J[0][0] / J_det]]
 
             assert f(x1, x2) == (x, y)
-            assert np.allclose(f.jacobian    (x1, x2), J    , rtol=RTOL, atol=ATOL)
-            assert np.allclose(f.jacobian_inv(x1, x2), J_inv, rtol=RTOL, atol=ATOL)
-            assert np.allclose(f.metric      (x1, x2), G    , rtol=RTOL, atol=ATOL)
-            assert np.allclose(f.metric_det  (x1, x2), G_det, rtol=RTOL, atol=ATOL)
+            assert np.allclose(f.jacobian_eval    (x1, x2), J    , rtol=RTOL, atol=ATOL)
+            assert np.allclose(f.jacobian_inv_eval(x1, x2), J_inv, rtol=RTOL, atol=ATOL)
+            assert np.allclose(f.metric_eval      (x1, x2), G    , rtol=RTOL, atol=ATOL)
+            assert np.allclose(f.metric_det_eval  (x1, x2), G_det, rtol=RTOL, atol=ATOL)
 
 
 #------------------------------------------------------------------------------
@@ -231,10 +231,10 @@ def test_identity_mapping_array_1d():
     x1 = np.array([-0.7, 0.5, 33])
 
     assert np.array_equal(f(x1)[0], x1)
-    assert np.array_equal(f.jacobian(x1), np.ones((1, 1, 3)))
-    assert np.array_equal(f.jacobian_inv(x1),np.ones((1, 1, 3)))
-    assert np.array_equal(f.metric(x1), np.ones((1, 1, 3)))
-    assert np.array_equal(f.metric_det(x1), np.ones(3))
+    assert np.array_equal(f.jacobian_eval(x1), np.ones((1, 1, 3)))
+    assert np.array_equal(f.jacobian_inv_eval(x1),np.ones((1, 1, 3)))
+    assert np.array_equal(f.metric_eval(x1), np.ones((1, 1, 3)))
+    assert np.array_equal(f.metric_det_eval(x1), np.ones(3))
 
 def test_identity_mapping_array_2d():
 
@@ -254,10 +254,10 @@ def test_identity_mapping_array_2d():
 
     assert np.array_equal(r1, xx1)
     assert np.array_equal(r2, xx2)
-    assert np.array_equal(f.jacobian    (xx1, xx2), I)
-    assert np.array_equal(f.jacobian_inv(xx1, xx2), I)
-    assert np.array_equal(f.metric      (xx1, xx2), I)
-    assert np.array_equal(f.metric_det  (xx1, xx2), np.ones((3, 3)))
+    assert np.array_equal(f.jacobian_eval    (xx1, xx2), I)
+    assert np.array_equal(f.jacobian_inv_eval(xx1, xx2), I)
+    assert np.array_equal(f.metric_eval      (xx1, xx2), I)
+    assert np.array_equal(f.metric_det_eval  (xx1, xx2), np.ones((3, 3)))
 
 
 def test_identity_mapping_array_3d():
@@ -280,10 +280,10 @@ def test_identity_mapping_array_3d():
     assert np.array_equal(r1, xx1)
     assert np.array_equal(r2, xx2)
     assert np.array_equal(r3, xx3)
-    assert np.array_equal(f.jacobian    (xx1, xx2, xx3), I)
-    assert np.array_equal(f.jacobian_inv(xx1, xx2, xx3), I)
-    assert np.array_equal(f.metric      (xx1, xx2, xx3), I)
-    assert np.array_equal(f.metric_det  (xx1, xx2, xx3), np.ones((2, 2, 2)))
+    assert np.array_equal(f.jacobian_eval    (xx1, xx2, xx3), I)
+    assert np.array_equal(f.jacobian_inv_eval(xx1, xx2, xx3), I)
+    assert np.array_equal(f.metric_eval      (xx1, xx2, xx3), I)
+    assert np.array_equal(f.metric_det_eval  (xx1, xx2, xx3), np.ones((2, 2, 2)))
 
 
 #------------------------------------------------------------------------------
@@ -300,10 +300,10 @@ def test_affine_mapping_array_1d():
     x1 = np.array([0, 0.5, 1])
 
     assert np.array_equal(f(x1)[0], [1, 0.5, 0])
-    assert np.array_equal(f.jacobian(x1), [[[-1, -1, -1]]])
-    assert np.array_equal(f.jacobian_inv(x1), [[[-1, -1, -1]]])
-    assert np.array_equal(f.metric(x1), [[[1, 1, 1]]])
-    assert np.array_equal(f.metric_det(x1), [1, 1, 1])
+    assert np.array_equal(f.jacobian_eval(x1), [[[-1, -1, -1]]])
+    assert np.array_equal(f.jacobian_inv_eval(x1), [[[-1, -1, -1]]])
+    assert np.array_equal(f.metric_eval(x1), [[[1, 1, 1]]])
+    assert np.array_equal(f.metric_det_eval(x1), [1, 1, 1])
 
 
 def test_affine_mapping_array_2d():
@@ -343,10 +343,10 @@ def test_affine_mapping_array_2d():
 
     assert np.array_equal(r1, x)
     assert np.array_equal(r2, y)
-    assert np.array_equal(f.jacobian    (xx1, xx2), J    )
-    assert np.array_equal(f.jacobian_inv(xx1, xx2), J_inv)
-    assert np.array_equal(f.metric      (xx1, xx2), G    )
-    assert np.array_equal(f.metric_det  (xx1, xx2), G_det)
+    assert np.array_equal(f.jacobian_eval    (xx1, xx2), J    )
+    assert np.array_equal(f.jacobian_inv_eval(xx1, xx2), J_inv)
+    assert np.array_equal(f.metric_eval      (xx1, xx2), G    )
+    assert np.array_equal(f.metric_det_eval  (xx1, xx2), G_det)
 
 
 def test_affine_mapping_array_3d():
@@ -401,10 +401,10 @@ def test_affine_mapping_array_3d():
     assert np.allclose(r1, x, rtol=RTOL, atol=ATOL)
     assert np.allclose(r2, y, rtol=RTOL, atol=ATOL)
     assert np.allclose(r3, z, rtol=RTOL, atol=ATOL)
-    assert np.array_equal(f.jacobian    (xx1, xx2, xx3), J    )
-    assert np.array_equal(f.jacobian_inv(xx1, xx2, xx3), J_inv)
-    assert np.array_equal(f.metric      (xx1, xx2, xx3), G    )
-    assert np.array_equal(f.metric_det  (xx1, xx2, xx3), G_det)
+    assert np.array_equal(f.jacobian_eval    (xx1, xx2, xx3), J    )
+    assert np.array_equal(f.jacobian_inv_eval(xx1, xx2, xx3), J_inv)
+    assert np.array_equal(f.metric_eval      (xx1, xx2, xx3), G    )
+    assert np.array_equal(f.metric_det_eval  (xx1, xx2, xx3), G_det)
 
 
 #------------------------------------------------------------------------------
@@ -447,7 +447,7 @@ def test_polar_mapping_array():
 
     assert np.array_equal(r1, x)
     assert np.array_equal(r2, y)
-    assert np.allclose(f.jacobian    (xx1, xx2), J    , rtol=RTOL, atol=ATOL)
-    assert np.allclose(f.jacobian_inv(xx1, xx2), J_inv, rtol=RTOL, atol=ATOL)
-    assert np.allclose(f.metric      (xx1, xx2), G    , rtol=RTOL, atol=ATOL)
-    assert np.allclose(f.metric_det  (xx1, xx2), G_det, rtol=RTOL, atol=ATOL)
+    assert np.allclose(f.jacobian_eval    (xx1, xx2), J    , rtol=RTOL, atol=ATOL)
+    assert np.allclose(f.jacobian_inv_eval(xx1, xx2), J_inv, rtol=RTOL, atol=ATOL)
+    assert np.allclose(f.metric_eval      (xx1, xx2), G    , rtol=RTOL, atol=ATOL)
+    assert np.allclose(f.metric_det_eval  (xx1, xx2), G_det, rtol=RTOL, atol=ATOL)
