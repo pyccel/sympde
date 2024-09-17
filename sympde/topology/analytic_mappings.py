@@ -69,20 +69,22 @@ class CzarnyMapping(BaseAnalyticMapping):
 #==============================================================================
 class CollelaMapping2D(BaseAnalyticMapping):
 
+    _expressions = {'x': '2.*(x1 + eps*sin(2.*pi*k1*x1)*sin(2.*pi*k2*x2)) - 1.',
+                    'y': '2.*(x2 + eps*sin(2.*pi*k1*x1)*sin(2.*pi*k2*x2)) - 1.'}
+
     _ldim = 2
     _pdim = 2
-    _expressions = {'x': 'a * (x1 + eps / (2*pi) * sin(2*pi*x1) * sin(2*pi*x2))',
-                    'y': 'b * (x2 + eps / (2*pi) * sin(2*pi*x1) * sin(2*pi*x2))'}
+
 
 #==============================================================================
 class CollelaMapping3D(BaseAnalyticMapping):
 
-        _expressions = {'x': 'k1*(x1 + eps*sin(2.*pi*x1)*sin(2.*pi*x2))',
-                        'y': 'k2*(x2 + eps*sin(2.*pi*x1)*sin(2.*pi*x2))',
-                        'z': 'k3*x3'}
+    _expressions = {'x': 'k1*(x1 + eps*sin(2.*pi*x1)*sin(2.*pi*x2))',
+                    'y': 'k2*(x2 + eps*sin(2.*pi*x1)*sin(2.*pi*x2))',
+                    'z': 'k3*x3'}
 
-        _ldim        = 3
-        _pdim        = 3
+    _ldim        = 3
+    _pdim        = 3
 
 #==============================================================================
 class TorusMapping(BaseAnalyticMapping):
