@@ -157,11 +157,11 @@ class BaseAnalyticMapping(BaseMapping):
             raise TypeError("not a callable object")
         else :
             assert len(Xs)==self.ldim
-            Xshape = np.shape(Xs[0]) 
+            Xshape = np.shape(Xs[0])
             for X in Xs:
                 assert np.shape(X) == Xshape
             return  self._inv_jac_eval(*Xs)
-        
+
     def _metric_evaluate( self, *Xs ):
         if self._metric_eval is None:
             raise TypeError("not a callable object")
@@ -194,7 +194,7 @@ class BaseAnalyticMapping(BaseMapping):
         if all(isinstance(arg, (int, float, Symbol, np.ndarray)) for arg in args):
             return self._jacobian_evaluate(*args)
         else:
-            raise TypeError("Invalid arguments for jacobian_eval")      
+            raise TypeError("Invalid arguments for jacobian_eval")
 
     def jacobian_inv_eval( self, *args ):
         if all(isinstance(arg, (int, float, Symbol, np.ndarray)) for arg in args):
