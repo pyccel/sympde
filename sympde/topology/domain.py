@@ -26,7 +26,7 @@ from .basic            import ProductDomain
 # TODO fix circular dependency between domain and mapping
 if TYPE_CHECKING:
     from sympde.topology.base_mapping import BaseMapping
-# TODO add pdim'''
+# TODO add pdim
 
 iterable_types = (tuple, list, Tuple, Union)
 
@@ -179,7 +179,7 @@ class Domain(BasicDomain):
     def mapping(self) -> Optional[BaseMapping]:
         """The mapping that maps the logical domain to the physical domain"""
         return self._mapping
-    
+
     @mapping.setter
     def mapping(self, value: BaseMapping):
         """Set the mapping that maps the logical domain to the physical domain"""
@@ -342,7 +342,7 @@ class Domain(BasicDomain):
         if not(ext == '.h5'):
             raise ValueError('> Only h5 files are supported')
         # ...
-        from sympde.topology import BaseMapping
+        from sympde.topology.base_mapping import BaseMapping
 
         h5  = h5py.File( filename, mode='r' )
         yml = yaml.load( h5['topology.yml'][()], Loader=yaml.SafeLoader )

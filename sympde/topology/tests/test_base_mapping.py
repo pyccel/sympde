@@ -7,10 +7,11 @@ from sympy import Matrix
 from sympy.tensor import IndexedBase
 from sympy import symbols, simplify
 
-from sympde.topology import BaseMapping, MappedDomain, AffineMapping
-from sympde.topology import dx, dy, dz
-from sympde.topology import dx1, dx2, dx3
-from sympde.topology import Domain
+from sympde.topology.domain            import Domain
+from sympde.topology.base_mapping      import BaseMapping, MappedDomain
+from sympde.topology.analytic_mappings import AffineMapping
+from sympde.topology.derivatives       import dx, dy, dz
+from sympde.topology.derivatives       import dx1, dx2, dx3
 
 from sympde.topology.base_mapping import Jacobian, Covariant, Contravariant
 # ...
@@ -128,7 +129,7 @@ def test_mapping_2d_2():
     F      = BaseMapping('F', dim=dim)
     domain = Domain('Omega', dim=dim)
     D      = F(domain)
-    
+
 # ...
 def test_AffineMapping():
     print('============ test_AffineMapping ==============')

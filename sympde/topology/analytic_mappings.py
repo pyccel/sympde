@@ -174,21 +174,7 @@ class Collela3D(BaseAnalyticMapping):
                     'y':'2.*(x2 + 0.1*sin(2.*pi*x1)*sin(2.*pi*x2)) - 1.',
                     'z':'2.*x3  - 1.'}
 
-#==============================================================================   
-class TransposedPolarMapping(BaseAnalyticMapping):
-    """
-    Represents a Transposed (x1 <> x2) Polar 2D Mapping object (Annulus).
-
-    Examples
-
-    """
-    _expressions = {'x': 'c1 + (rmin*(1-x2)+rmax*x2)*cos(x1)',
-                    'y': 'c2 + (rmin*(1-x2)+rmax*x2)*sin(x1)'}
-
-    _ldim        = 2
-    _pdim        = 2
-
-#==============================================================================    
+#==============================================================================
 class TransposedPolarMapping(BaseAnalyticMapping):
     """
     Represents a Transposed (x1 <> x2) Polar 2D Mapping object (Annulus).

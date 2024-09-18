@@ -8,6 +8,8 @@ from sympy.core import Basic, Symbol, Expr
 from sympy.core.containers import Tuple
 from sympy.tensor import IndexedBase
 
+from sympde.topology.base_mapping import BaseMapping
+
 #==============================================================================
 class BasicDomain(Basic):
     _dim         = None
@@ -85,12 +87,6 @@ class InteriorDomain(BasicDomain):
     @property
     def mapping(self):
         return self._mapping
-
-    @mapping.setter 
-    def mapping(self, value):
-        assert(isinstance(value, BaseMapping))
-        self._mapping = value
-
 
     @property
     def logical_domain(self):

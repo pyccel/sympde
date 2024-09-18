@@ -214,7 +214,7 @@ class BaseMapping(IndexedBase):
 
         return obj
 
- 
+
     #--------------------------------------------------------------------------
     @property
     def name( self ):
