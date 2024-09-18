@@ -14,9 +14,9 @@ from sympy                 import S
 from sympy                 import sqrt, symbols
 from sympy.core.exprtools  import factor_terms
 from sympy.polys.polytools import parallel_poly_from_expr
+import numpy as np
 
 from sympde.core              import Constant
-from sympde.core.basic        import BasicMapping
 from sympde.core.basic        import CalculusFunction
 from sympde.core.basic        import _coeffs_registery
 from sympde.calculus.core     import PlusInterfaceOperator, MinusInterfaceOperator
@@ -40,11 +40,12 @@ from .derivatives import _logical_partial_derivatives
 from .derivatives import get_atom_logical_derivatives, get_index_logical_derivatives_atom
 from .derivatives import LogicalGrad_1d, LogicalGrad_2d, LogicalGrad_3d
 
+
 # TODO fix circular dependency between sympde.topology.domain and sympde.topology.mapping
 # TODO fix circular dependency between sympde.expr.evaluation and sympde.topology.mapping
 
 __all__ = (
-    'BasicCallableMapping',
+    'BaseMapping',
     'Contravariant',
     'Covariant',
     'InterfaceMapping',
@@ -60,6 +61,7 @@ __all__ = (
     'SymbolicExpr',
     'SymbolicWeightedVolume',
     'get_logical_test_function',
+    'numpy_to_native_python',
 )
 
 #==============================================================================
@@ -84,63 +86,15 @@ def get_logical_test_function(u):
     el              = l_space.element(u.name)
     return el
 
-import numpy as np
-
 def numpy_to_native_python(a):
     if isinstance(a, np.generic):
         return a.item()
     return a
 
 #==============================================================================
-class BasicCallableMapping(ABC):
+class BaseMapping(IndexedBase):
     """
-    Transformation of coordinates, which can be evaluated.
-
-    F: R^l -> R^p
-    F(eta) = x
-
-    with l <= p
-    """
-    @abstractmethod
-    def __call__(self, *eta):
-        """ Evaluate mapping at location eta. """
-
-    @abstractmethod
-    def jacobian(self, *eta):
-        """ Compute Jacobian matrix at location eta. """
-
-    @abstractmethod
-    def jacobian_inv(self, *eta):
-        """ Compute inverse Jacobian matrix at location eta.
-            An exception should be raised if the matrix is singular.
-        """
-
-    @abstractmethod
-    def metric(self, *eta):
-        """ Compute components of metric tensor at location eta. """
-
-    @abstractmethod
-    def metric_det(self, *eta):
-        """ Compute determinant of metric tensor at location eta. """
-
-    @property
-    @abstractmethod
-    def ldim(self):
-        """ Number of logical/parametric dimensions in mapping
-            (= number of eta components).
-        """
-
-    @property
-    @abstractmethod
-    def pdim(self):
-        """ Number of physical dimensions in mapping
-            (= number of x components).
-        """
-
-#==============================================================================
-class Mapping(BasicMapping):
-    """
-    Represents a Mapping object.
+    Represents a BaseMapping object.
 
     Examples
 
@@ -149,7 +103,6 @@ class Mapping(BasicMapping):
     _jac          = None
     _inv_jac      = None
     _constants    = None
-    _callable_map = None
     _ldim         = None
     _pdim         = None
 
@@ -176,7 +129,6 @@ class Mapping(BasicMapping):
         else:
             ldim = dim
             pdim = dim
-
 
         obj = IndexedBase.__new__(cls, name, shape=pdim)
 
@@ -262,29 +214,6 @@ class Mapping(BasicMapping):
 
         return obj
 
-    #--------------------------------------------------------------------------
-    # Callable mapping
-    #--------------------------------------------------------------------------
-    def get_callable_mapping(self):
-        if self._callable_map is None:
-            if self._expressions is None:
-                msg = 'Cannot generate callable mapping without analytical expressions. '\
-                      'A user-defined callable mapping of type `BasicCallableMapping` '\
-                      'can be provided using the method `set_callable_mapping`.'
-                raise ValueError(msg)
-
-            from sympde.topology.callable_mapping import CallableMapping
-            self._callable_map = CallableMapping(self)
-
-        return self._callable_map
-
-    def set_callable_mapping(self, F):
-
-        if not isinstance(F, BasicCallableMapping):
-            raise TypeError(
-                f'F must be a BasicCallableMapping, got {type(F)} instead')
-
-        self._callable_map = F
 
     #--------------------------------------------------------------------------
     @property
@@ -372,7 +301,7 @@ class Mapping(BasicMapping):
         self._is_minus = minus
 
     def copy(self):
-        obj = Mapping(self.name,
+        obj = BaseMapping(self.name,
                      ldim=self.ldim,
                      pdim=self.pdim,
                      evaluate=False)
@@ -389,7 +318,6 @@ class Mapping(BasicMapping):
         obj._inv_jac             = self._inv_jac
         obj._metric              = self._metric
         obj._metric_det          = self._metric_det
-        obj.__callable_map       = self._callable_map
         obj._is_plus             = self._is_plus
         obj._is_minus            = self._is_minus
         return obj
@@ -407,21 +335,21 @@ class Mapping(BasicMapping):
         return sstr(self.name)
 
 #==============================================================================
-class InverseMapping(Mapping):
+class InverseMapping(BaseMapping):
     def __new__(cls, mapping):
-        assert isinstance(mapping, Mapping)
+        assert isinstance(mapping, BaseMapping)
         name     = mapping.name
         ldim     = mapping.ldim
         pdim     = mapping.pdim
         coords   = mapping.logical_coordinates
         jacobian = mapping.jacobian.inv()
-        return Mapping.__new__(cls, name, ldim=ldim, pdim=pdim, coordinates=coords, jacobian=jacobian)
+        return BaseMapping.__new__(cls, name, ldim=ldim, pdim=pdim, coordinates=coords, jacobian=jacobian)
 
 #==============================================================================
 class JacobianSymbol(MatrixSymbolicExpr):
     _axis = None
     def __new__(cls, mapping, axis=None):
-        assert isinstance(mapping, Mapping)
+        assert isinstance(mapping, BaseMapping)
         if axis is not None:
             assert isinstance(axis, (int, Integer))
         obj = MatrixSymbolicExpr.__new__(cls, mapping)
@@ -449,7 +377,7 @@ class JacobianSymbol(MatrixSymbolicExpr):
         return hash(self._hashable_content())
 
     def _eval_subs(self, old, new):
-        if isinstance(new, Mapping):
+        if isinstance(new, BaseMapping):
             if self.axis is not None:
                 obj = JacobianSymbol(new, self.axis)
             else:
@@ -468,7 +396,7 @@ class JacobianInverseSymbol(MatrixSymbolicExpr):
     _axis = None
     is_Matrix     = False
     def __new__(cls, mapping, axis=None):
-        assert isinstance(mapping, Mapping)
+        assert isinstance(mapping, BaseMapping)
         if axis is not None:
             assert isinstance(axis, int)
         obj = MatrixSymbolicExpr.__new__(cls, mapping)
@@ -500,21 +428,21 @@ class JacobianInverseSymbol(MatrixSymbolicExpr):
             return 'Jacobian({})**(-1)'.format(sstr(self.mapping.name))
 
 #==============================================================================
-class InterfaceMapping(Mapping):
+class InterfaceMapping(BaseMapping):
     """
     InterfaceMapping is used to represent a mapping in the interface.
 
     Attributes
     ----------
-    minus : Mapping
+    minus : BaseMapping
         the mapping on the negative direction of the interface
-    plus  : Mapping
+    plus  : BaseMapping
         the mapping on the positive direction of the interface
     """
 
     def __new__(cls, minus, plus):
-        assert isinstance(minus, Mapping)
-        assert isinstance(plus,  Mapping)
+        assert isinstance(minus, BaseMapping)
+        assert isinstance(plus,  BaseMapping)
         minus = minus.copy()
         plus  = plus.copy()
 
@@ -522,7 +450,7 @@ class InterfaceMapping(Mapping):
         plus.set_plus_minus(plus=True)
 
         name = '{}|{}'.format(str(minus.name), str(plus.name))
-        obj  = Mapping.__new__(cls, name, ldim=minus.ldim, pdim=minus.pdim)
+        obj  = BaseMapping.__new__(cls, name, ldim=minus.ldim, pdim=minus.pdim)
         obj._minus = minus
         obj._plus  = plus
         return obj
@@ -548,7 +476,7 @@ class InterfaceMapping(Mapping):
         return self
 
 #==============================================================================
-class MultiPatchMapping(Mapping):
+class MultiPatchMapping(BaseMapping):
 
     def __new__(cls, dic):
         assert isinstance( dic, dict)
@@ -570,10 +498,6 @@ class MultiPatchMapping(Mapping):
     def pdim(self):
         return list(self.mappings.values())[0].pdim
 
-    @property
-    def is_analytical(self):
-        return all(e.is_analytical for e in self.mappings.values())
-
     def _eval_subs(self, old, new):
         return self
 
@@ -594,7 +518,7 @@ class MappedDomain(BasicDomain):
 
     @cacheit
     def __new__(cls, mapping, logical_domain):
-        assert(isinstance(mapping, Mapping))
+        assert(isinstance(mapping, BaseMapping))
         assert(isinstance(logical_domain, BasicDomain))
         if isinstance(logical_domain, Domain):
             kwargs = dict(
@@ -744,7 +668,7 @@ class Jacobian(MappingApplication):
 
         Parameters:
         ----------
-         F: Mapping
+         F: BaseMapping
             mapping object
 
         Returns:
@@ -753,8 +677,8 @@ class Jacobian(MappingApplication):
             the jacobian matrix
         """
 
-        if not isinstance(F, Mapping):
-            raise TypeError('> Expecting a Mapping object')
+        if not isinstance(F, BaseMapping):
+            raise TypeError('> Expecting a BaseMapping object')
 
         if F.jacobian_expr is not None:
             return F.jacobian_expr
@@ -792,7 +716,7 @@ class Covariant(MappingApplication):
 
         Parameters:
         ----------
-         F: Mapping
+         F: BaseMapping
             mapping object
 
          v: <tuple|list|Tuple|ImmutableDenseMatrix|Matrix>
@@ -841,7 +765,7 @@ class Contravariant(MappingApplication):
 
         Parameters:
         ----------
-         F: Mapping
+         F: BaseMapping
             mapping object
 
          v: <tuple|list|Tuple|ImmutableDenseMatrix|Matrix>
@@ -853,8 +777,8 @@ class Contravariant(MappingApplication):
             the contravariant transformation
         """
 
-        if not isinstance(F, Mapping):
-            raise TypeError('> Expecting a Mapping')
+        if not isinstance(F, BaseMapping):
+            raise TypeError('> Expecting a BaseMapping')
 
         if not isinstance(v, (tuple, list, Tuple, ImmutableDenseMatrix, Matrix)):
             raise TypeError('> Expecting a tuple, list, Tuple, Matrix')
@@ -1207,7 +1131,6 @@ class LogicalExpr(CalculusFunction):
             domain  = expr.domain
             mapping = domain.mapping
 
-
             assert domain is not None
 
             if expr.is_domain_integral:
@@ -1346,7 +1269,7 @@ class SymbolicExpr(CalculusFunction):
 
         elif isinstance(expr, Indexed):
             base = expr.base
-            if isinstance(base, Mapping):
+            if isinstance(base, BaseMapping):
                 if expr.indices[0] == 0:
                     name = 'x'
                 elif expr.indices[0] == 1:
@@ -1391,7 +1314,7 @@ class SymbolicExpr(CalculusFunction):
                     code += k*n
             return cls.eval(atom, code=code)
 
-        elif isinstance(expr, Mapping):
+        elif isinstance(expr, BaseMapping):
             return Symbol(expr.name)
 
         # ... this must be done here, otherwise codegen for FEM will not work

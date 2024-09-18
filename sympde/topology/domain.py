@@ -23,10 +23,9 @@ from sympde.core.basic import CalculusFunction
 from .basic            import BasicDomain, InteriorDomain, Boundary, Union, Connectivity
 from .basic            import Interval, Interface, CornerBoundary, CornerInterface
 from .basic            import ProductDomain
-
 # TODO fix circular dependency between domain and mapping
 if TYPE_CHECKING:
-    from sympde.topology.mapping import Mapping
+    from sympde.topology.base_mapping import BaseMapping
 # TODO add pdim
 
 iterable_types = (tuple, list, Tuple, Union)
@@ -46,7 +45,7 @@ class Domain(BasicDomain):
             boundaries : TypeUnion[Iterable[Boundary], Boundary, None] = None,
             dim : Optional[int] = None,
             connectivity : Optional[Connectivity] = None,
-            mapping : Optional[Mapping] = None,
+            mapping : Optional[BaseMapping] = None,
             logical_domain : Optional[Domain] = None):
         """
         Interiors or connectivity must be given. When the mapping is given 
@@ -157,6 +156,7 @@ class Domain(BasicDomain):
         obj._dtype          = dtype
         obj._dim            = dim
         obj._logical_domain = logical_domain
+        obj._mapping = mapping
         return obj
 
     @property
@@ -176,9 +176,14 @@ class Domain(BasicDomain):
         return self.args[2]
 
     @property
-    def mapping(self) -> Optional[Mapping]:
+    def mapping(self) -> Optional[BaseMapping]:
         """The mapping that maps the logical domain to the physical domain"""
-        return self.args[3]
+        return self._mapping
+
+    @mapping.setter
+    def mapping(self, value: BaseMapping):
+        """Set the mapping that maps the logical domain to the physical domain"""
+        self._mapping = value
 
     @property
     def logical_domain(self) -> Domain:
@@ -337,7 +342,7 @@ class Domain(BasicDomain):
         if not(ext == '.h5'):
             raise ValueError('> Only h5 files are supported')
         # ...
-        from sympde.topology.mapping import Mapping, MultiPatchMapping
+        from sympde.topology.base_mapping import BaseMapping
 
         h5  = h5py.File( filename, mode='r' )
         yml = yaml.load( h5['topology.yml'][()], Loader=yaml.SafeLoader )
@@ -359,7 +364,7 @@ class Domain(BasicDomain):
 
         constructors = [globals()[dt['type']] for dt in dtype]
         interiors    = [cs(i['name'], **dt['parameters']) for cs,i,dt in zip(constructors, d_interior, dtype)]
-        mappings     = [Mapping(I['mapping'], dim=dim) if I.get('mapping', "None") != "None" else None for I in d_interior]
+        mappings     = [BaseMapping(I['mapping'], dim=dim) if I.get('mapping', "None") != "None" else None for I in d_interior]
         domains      = [mapping(i) if mapping else i for i,mapping in zip(interiors, mappings)]
         patch_index  = {I.name:ind for ind,I in enumerate(interiors)}
 
@@ -486,7 +491,6 @@ class Domain(BasicDomain):
 
         patch_given_by_indices = (len(connectivity) > 0 and isinstance(connectivity[0][0][0], int))
 
-        from sympde.topology.mapping import MultiPatchMapping
         # ... connectivity
         interfaces = {}
         boundaries = []
@@ -536,6 +540,7 @@ class Domain(BasicDomain):
             for k,v in connectivity.items():
                 logical_connectivity[v.logical_domain.name] = v.logical_domain
 
+            from sympde.topology.base_mapping import MultiPatchMapping
             mapping        = MultiPatchMapping({e.logical_domain: e.mapping for e in interiors})
             logical_domain = Domain(name,
                             interiors=logical_interiors,

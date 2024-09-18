@@ -4,7 +4,7 @@ from sympy import sympify
 from sympde.topology import Domain, ScalarFunctionSpace, element_of
 from sympde.topology import dx, dy, dz
 from sympde.topology import dx1, dx2, dx3
-from sympde.topology import Mapping, Jacobian
+from sympde.topology import BaseMapping, Jacobian
 from sympde.topology import LogicalExpr
 from sympde.topology import SymbolicExpr
 
@@ -43,7 +43,7 @@ def test_derivatives_2d_without_mapping():
 def test_derivatives_2d_with_mapping():
 
     dim = 2
-    M = Mapping('M', dim=dim)
+    M = BaseMapping('M', dim=dim)
     O = M(Domain('Omega', dim=dim))
     V = ScalarFunctionSpace('V', O, kind='h1')
     u = element_of(V, 'u')

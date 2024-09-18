@@ -29,6 +29,7 @@ from sympde.calculus.core import has
 
 from .space   import ScalarFunction, VectorFunction, IndexedVectorFunction
 
+
 #==============================================================================
 class DifferentialOperator(LinearOperator):
     """
@@ -51,7 +52,6 @@ class DifferentialOperator(LinearOperator):
     @classmethod
     @cacheit
     def eval(cls, expr):
-
         types = (VectorFunction, ScalarFunction, DifferentialOperator)
 
         if isinstance(expr, _logical_partial_derivatives):
@@ -97,7 +97,7 @@ class DifferentialOperator(LinearOperator):
         elif isinstance(expr, (minus, plus)):
             return cls(expr, evaluate=False)
 
-        elif isinstance(expr, Indexed) and isinstance(expr.base, BasicMapping):
+        elif isinstance(expr, Indexed) and isinstance(expr.base, BaseMapping):
             return cls(expr, evaluate=False)
         elif not has(expr, types):
             if expr.is_number:
@@ -106,7 +106,7 @@ class DifferentialOperator(LinearOperator):
             elif isinstance(expr, Expr):
                 x = Symbol(cls.coordinate)
                 if cls.logical:
-                    M = expr.atoms(Mapping)
+                    M = expr.atoms(BaseMapping)
                     if len(M)>0:
                         M = list(M)[0]
                         expr_primes = [diff(expr, M[i]) for i in range(M.pdim)]
@@ -1288,5 +1288,5 @@ def get_max_logical_partial_derivatives(expr, F=None):
             if v > d[k]: d[k] = v
     return d
 
-from .mapping import Mapping, Jacobian
 
+from .base_mapping import BaseMapping, Jacobian

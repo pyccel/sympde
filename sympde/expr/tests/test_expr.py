@@ -16,7 +16,7 @@ from sympde.calculus import jump, avg, Dn, minus, plus
 
 from sympde.topology import dx1, dx2, dx3
 from sympde.topology import dx, dy, dz
-from sympde.topology import Mapping
+from sympde.topology import BaseMapping
 from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
 from sympde.topology import element_of, elements_of
 from sympde.topology import InteriorDomain, Union
@@ -867,7 +867,7 @@ def test_terminal_expr_bilinear_2d_4():
 def test_terminal_expr_bilinear_3d_1():
 
     domain = Domain('Omega', dim=3)
-    M      = Mapping('M', dim=3)
+    M      = BaseMapping('M', dim=3)
 
     mapped_domain = M(domain)
 

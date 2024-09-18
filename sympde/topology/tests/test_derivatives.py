@@ -12,7 +12,7 @@ from sympde.topology import get_index_derivatives_atom
 from sympde.topology import get_max_partial_derivatives
 from sympde.topology import ScalarFunctionSpace
 from sympde.topology import (dx, dy, dz)
-from sympde.topology import Mapping
+from sympde.topology import BaseMapping
 
 
 def indices_as_str(a):
@@ -30,7 +30,7 @@ def test_partial_derivatives_1():
 
     # ...
     domain = Domain('Omega', dim=2)
-    M      = Mapping('M', dim=2)
+    M      = BaseMapping('M', dim=2)
 
     mapped_domain = M(domain)
 
@@ -78,7 +78,7 @@ def test_partial_derivatives_2():
 
     # ...
     domain = Domain('Omega', dim=2)
-    M      = Mapping('M', dim=2)
+    M      = BaseMapping('M', dim=2)
 
     mapped_domain = M(domain)
 

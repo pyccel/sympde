@@ -6,7 +6,7 @@ from sympde.topology import InteriorDomain, Union
 from sympde.topology import Boundary, NormalVector, TangentVector
 from sympde.topology import Connectivity, Edge
 from sympde.topology import Domain, ElementDomain
-from sympde.topology import Area, Mapping
+from sympde.topology import Area, BaseMapping
 from sympde.topology import Interface
 from sympde.topology import Line, Square, Cube
 from sympde.topology import IdentityMapping
@@ -43,8 +43,8 @@ def test_topology_1():
     B = Square('B')
     # ...
 
-    M1 = Mapping('M1', dim=2)
-    M2 = Mapping('M2', dim=2)
+    M1 = BaseMapping('M1', dim=2)
+    M2 = BaseMapping('M2', dim=2)
 
     D1 = M1(A)
     D2 = M2(B)

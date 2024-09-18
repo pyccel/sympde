@@ -1,8 +1,8 @@
-from .mapping import Mapping
+from .base_analytic_mapping import BaseAnalyticMapping
 
-class IdentityMapping(Mapping):
+class IdentityMapping(BaseAnalyticMapping):
     """
-    Represents an identity 1D/2D/3D Mapping object.
+    Represents an identity 1D/2D/3D BaseAnalyticMapping object.
 
     Examples
 
@@ -12,9 +12,9 @@ class IdentityMapping(Mapping):
                     'z': 'x3'}
 
 #==============================================================================
-class AffineMapping(Mapping):
+class AffineMapping(BaseAnalyticMapping):
     """
-    Represents a 1D/2D/3D Affine Mapping object.
+    Represents a 1D/2D/3D Affine BaseAnalyticMapping object.
 
     Examples
 
@@ -24,9 +24,9 @@ class AffineMapping(Mapping):
                     'z': 'c3 + a31*x1 + a32*x2 + a33*x3'}
 
 #==============================================================================
-class PolarMapping(Mapping):
+class PolarMapping(BaseAnalyticMapping):
     """
-    Represents a Polar 2D Mapping object (Annulus).
+    Represents a Polar 2D BaseAnalyticMapping object (Annulus).
 
     Examples
 
@@ -38,9 +38,9 @@ class PolarMapping(Mapping):
     _pdim        = 2
 
 #==============================================================================
-class TargetMapping(Mapping):
+class TargetMapping(BaseAnalyticMapping):
     """
-    Represents a Target 2D Mapping object.
+    Represents a Target 2D BaseAnalyticMapping object.
 
     Examples
 
@@ -52,9 +52,9 @@ class TargetMapping(Mapping):
     _pdim        = 2
 
 #==============================================================================
-class CzarnyMapping(Mapping):
+class CzarnyMapping(BaseAnalyticMapping):
     """
-    Represents a Czarny 2D Mapping object.
+    Represents a Czarny 2D BaseAnalyticMapping object.
 
     Examples
 
@@ -67,19 +67,27 @@ class CzarnyMapping(Mapping):
     _pdim        = 2
 
 #==============================================================================
-class CollelaMapping2D(Mapping):
-    """
-    Represents a Collela 2D Mapping object.
+class CollelaMapping2D(BaseAnalyticMapping):
 
-    """
     _expressions = {'x': '2.*(x1 + eps*sin(2.*pi*k1*x1)*sin(2.*pi*k2*x2)) - 1.',
                     'y': '2.*(x2 + eps*sin(2.*pi*k1*x1)*sin(2.*pi*k2*x2)) - 1.'}
 
-    _ldim        = 2
-    _pdim        = 2
+    _ldim = 2
+    _pdim = 2
+
 
 #==============================================================================
-class TorusMapping(Mapping):
+class CollelaMapping3D(BaseAnalyticMapping):
+
+    _expressions = {'x': 'k1*(x1 + eps*sin(2.*pi*x1)*sin(2.*pi*x2))',
+                    'y': 'k2*(x2 + eps*sin(2.*pi*x1)*sin(2.*pi*x2))',
+                    'z': 'k3*x3'}
+
+    _ldim        = 3
+    _pdim        = 3
+
+#==============================================================================
+class TorusMapping(BaseAnalyticMapping):
     """
     Parametrization of a torus (or a portion of it) of major radius R0, using
     toroidal coordinates (x1, x2, x3) = (r, theta, phi), where:
@@ -98,7 +106,7 @@ class TorusMapping(Mapping):
 
 #==============================================================================
 # TODO [YG, 07.10.2022]: add test in sympde/topology/tests/test_logical_expr.py
-class TorusSurfaceMapping(Mapping):
+class TorusSurfaceMapping(BaseAnalyticMapping):
     """
     3D surface obtained by "slicing" the torus above at r = a.
     The parametrization uses the coordinates (x1, x2) = (theta, phi), where:
@@ -116,7 +124,7 @@ class TorusSurfaceMapping(Mapping):
 
 #==============================================================================
 # TODO [YG, 07.10.2022]: add test in sympde/topology/tests/test_logical_expr.py
-class TwistedTargetSurfaceMapping(Mapping):
+class TwistedTargetSurfaceMapping(BaseAnalyticMapping):
     """
     3D surface obtained by "twisting" the TargetMapping out of the (x, y) plane
 
@@ -129,7 +137,7 @@ class TwistedTargetSurfaceMapping(Mapping):
     _pdim        = 3
 
 #==============================================================================
-class TwistedTargetMapping(Mapping):
+class TwistedTargetMapping(BaseAnalyticMapping):
     """
     3D volume obtained by "extruding" the TwistedTargetSurfaceMapping along z.
 
@@ -142,7 +150,7 @@ class TwistedTargetMapping(Mapping):
     _pdim        = 3
 
 #==============================================================================
-class SphericalMapping(Mapping):
+class SphericalMapping(BaseAnalyticMapping):
     """
     Parametrization of a sphere (or a portion of it) using spherical
     coordinates (x1, x2, x3) = (r, theta, phi), where:
@@ -158,3 +166,24 @@ class SphericalMapping(Mapping):
 
     _ldim        = 3
     _pdim        = 3
+
+#==============================================================================
+class Collela3D(BaseAnalyticMapping):
+
+    _expressions = {'x':'2.*(x1 + 0.1*sin(2.*pi*x1)*sin(2.*pi*x2)) - 1.',
+                    'y':'2.*(x2 + 0.1*sin(2.*pi*x1)*sin(2.*pi*x2)) - 1.',
+                    'z':'2.*x3  - 1.'}
+
+#==============================================================================
+class TransposedPolarMapping(BaseAnalyticMapping):
+    """
+    Represents a Transposed (x1 <> x2) Polar 2D Mapping object (Annulus).
+
+    Examples
+
+    """
+    _expressions = {'x': 'c1 + (rmin*(1-x2)+rmax*x2)*cos(x1)',
+                    'y': 'c2 + (rmin*(1-x2)+rmax*x2)*sin(x1)'}
+
+    _ldim        = 2
+    _pdim        = 2

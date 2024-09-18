@@ -9,7 +9,7 @@ from sympde.core     import Constant
 from sympde.calculus import grad, dot, inner, rot, div
 from sympde.calculus import laplace, bracket, convect
 from sympde.calculus import jump, avg, Dn, minus, plus
-from sympde.topology import Domain, Mapping, Square
+from sympde.topology import Domain, BaseMapping, Square
 from sympde.topology import dx, dy
 from sympde.topology import dx1, dx2, dx3
 from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
@@ -27,13 +27,13 @@ from sympde.topology import TwistedTargetMapping
 from sympde.expr     import BilinearForm, integral
 from sympde.calculus import grad, div, curl, dot
 
-from sympde.topology.mapping import Jacobian
+from sympde.topology.base_mapping import Jacobian
 
 #==============================================================================
 def test_logical_expr_1d_1():
     dim = 1
 
-    M = Mapping('M', dim=dim)
+    M = BaseMapping('M', dim=dim)
     domain = M(Domain('Omega', dim=dim))
 
     alpha = Constant('alpha')
@@ -80,7 +80,7 @@ def test_logical_expr_1d_1():
 def test_symbolic_expr_1d_1():
     dim = 1
 
-    M = Mapping('M', dim=dim)
+    M = BaseMapping('M', dim=dim)
     domain = M(Domain('Omega', dim=dim))
 
     V = ScalarFunctionSpace('V', domain, kind='h1')
@@ -149,7 +149,7 @@ def test_symbolic_expr_1d_1():
 def test_logical_expr_2d_1():
     dim = 2
 
-    M = Mapping('M', dim=dim)
+    M = BaseMapping('M', dim=dim)
     domain = M(Domain('Omega', dim=dim))
 
     alpha = Constant('alpha')
@@ -215,8 +215,8 @@ def test_logical_expr_2d_2():
     A = Square('A')
     B = Square('B')
 
-    M1 = Mapping('M1', dim=dim)
-    M2 = Mapping('M2', dim=dim)
+    M1 = BaseMapping('M1', dim=dim)
+    M2 = BaseMapping('M2', dim=dim)
 
     D1 = M1(A)
     D2 = M2(B)
@@ -268,8 +268,8 @@ def test_logical_expr_2d_3():
     A = Square('A')
     B = Square('B')
 
-    M1 = Mapping('M1', dim=dim)
-    M2 = Mapping('M2', dim=dim)
+    M1 = BaseMapping('M1', dim=dim)
+    M2 = BaseMapping('M2', dim=dim)
 
     D1 = M1(A)
     D2 = M2(B)
@@ -292,7 +292,7 @@ def test_logical_expr_2d_3():
 #==============================================================================
 def test_symbolic_expr_2d_1():
     dim    = 2
-    M      = Mapping('M', dim=dim)
+    M      = BaseMapping('M', dim=dim)
     domain = M(Domain('Omega', dim=dim))
 
     V = ScalarFunctionSpace('V', domain, kind='h1')
@@ -368,7 +368,7 @@ def test_symbolic_expr_2d_1():
 def test_logical_expr_3d_1():
     dim = 3
 
-    M = Mapping('M', dim=dim)
+    M = BaseMapping('M', dim=dim)
     domain = M(Domain('Omega', dim=dim))
 
     alpha = Constant('alpha')
@@ -421,7 +421,7 @@ def test_logical_expr_3d_2():
 
     dim   = 3
     domain = Domain('Omega', dim=dim)
-    M      = Mapping('M', dim=dim)
+    M      = BaseMapping('M', dim=dim)
 
     mapped_domain = M(domain)
 
@@ -443,7 +443,7 @@ def test_logical_expr_3d_3():
 
     dim    = 3
     domain = Domain('Omega', dim=dim)
-    M      = Mapping('M', dim=dim)
+    M      = BaseMapping('M', dim=dim)
 
     mapped_domain = M(domain)
 
@@ -464,7 +464,7 @@ def test_logical_expr_3d_4():
 
     dim    = 3
     domain = Domain('Omega', dim=dim)
-    M      = Mapping('M', dim=dim)
+    M      = BaseMapping('M', dim=dim)
 
     mapped_domain = M(domain)
 
@@ -485,7 +485,7 @@ def test_logical_expr_3d_5():
 
     dim    = 3
     domain = Domain('Omega', dim=dim)
-    M      = Mapping('M', dim=dim)
+    M      = BaseMapping('M', dim=dim)
 
     mapped_domain = M(domain)
 
@@ -509,7 +509,7 @@ def test_logical_expr_3d_5():
 #==============================================================================
 def test_symbolic_expr_3d_1():
     dim    = 3
-    M      = Mapping('M', dim=dim)
+    M      = BaseMapping('M', dim=dim)
     domain = M(Domain('Omega', dim=dim))
 
     V = ScalarFunctionSpace('V', domain, kind='h1')

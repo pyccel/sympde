@@ -3,7 +3,7 @@ import numpy as np
 
 from sympy import Matrix, symbols, Array
 from sympy import S
-from sympde.utilities.utils import lambdify_sympde
+from sympde.topology.base_analytic_mapping import lambdify_sympde
 
 
 
