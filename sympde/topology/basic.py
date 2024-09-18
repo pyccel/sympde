@@ -8,8 +8,6 @@ from sympy.core import Basic, Symbol, Expr
 from sympy.core.containers import Tuple
 from sympy.tensor import IndexedBase
 
-from sympde.topology.base_mapping import BaseMapping
-
 #==============================================================================
 class BasicDomain(Basic):
     _dim         = None
