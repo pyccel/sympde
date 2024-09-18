@@ -167,11 +167,11 @@ class BaseAnalyticMapping(BaseMapping):
             raise TypeError("not a callable object")
         else :
             assert len(Xs)==self.ldim
-            Xshape = np.shape(Xs[0]) 
+            Xshape = np.shape(Xs[0])
             for X in Xs:
                 assert np.shape(X) == Xshape
             return  self._metric_eval(*Xs)
-        
+
     def _metric_det_evaluate( self, *Xs ):
         if self._metric_det_eval is None:
             raise TypeError("not a callable object")
@@ -181,7 +181,7 @@ class BaseAnalyticMapping(BaseMapping):
             for X in Xs:
                 assert np.shape(X) == Xshape
             return self._metric_det_eval(*Xs)
-    
+
     def __call__( self, *args ):
         if len(args) == 1 and isinstance(args[0], BasicDomain):
             return self._evaluate_domain(args[0])
