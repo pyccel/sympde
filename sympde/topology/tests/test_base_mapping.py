@@ -159,7 +159,7 @@ def teardown_module():
 def teardown_function():
     from sympy.core import cache
     cache.clear_cache()
-    
+
 if __name__ == '__main__' :
     test_mapping_1d()
     test_mapping_2d()

@@ -128,20 +128,20 @@ class BaseAnalyticMapping(BaseMapping):
     def _evaluate_domain( self, domain ):
         assert(isinstance(domain, BasicDomain))
         return MappedDomain(self, domain)
-    
+
     def _evaluate( self, *Xs ):
         #int, float or numpy arrays
         if self._func_eval is None :
             raise TypeError("not a callable object")
         else :
             assert len(Xs)==self.ldim
-            Xshape = np.shape(Xs[0]) 
+            Xshape = np.shape(Xs[0])
             for X in Xs:
                 assert np.shape(X) == Xshape
             return tuple( f( *Xs ) for f in self._func_eval)
 
     def _jacobian_evaluate( self, *Xs ):
-        #int, float or numpy arrays 
+        #int, float or numpy arrays
         if self._jac_eval is None:
             raise TypeError("not a callable object")
         else :
@@ -149,7 +149,7 @@ class BaseAnalyticMapping(BaseMapping):
             Xshape = np.shape(Xs[0]) 
             for X in Xs:
                 assert np.shape(X) == Xshape
-            return self._jac_eval(*Xs) 
+            return self._jac_eval(*Xs)
    
     def _jacobian_inv_evaluate( self, *Xs ):
         #int, float or numpy arrays 
@@ -160,7 +160,7 @@ class BaseAnalyticMapping(BaseMapping):
             Xshape = np.shape(Xs[0]) 
             for X in Xs:
                 assert np.shape(X) == Xshape
-            return  self._inv_jac_eval(*Xs) 
+            return  self._inv_jac_eval(*Xs)
         
     def _metric_evaluate( self, *Xs ):
         if self._metric_eval is None:
@@ -170,7 +170,7 @@ class BaseAnalyticMapping(BaseMapping):
             Xshape = np.shape(Xs[0]) 
             for X in Xs:
                 assert np.shape(X) == Xshape
-            return  self._metric_eval(*Xs) 
+            return  self._metric_eval(*Xs)
         
     def _metric_det_evaluate( self, *Xs ):
         if self._metric_det_eval is None:
@@ -180,7 +180,7 @@ class BaseAnalyticMapping(BaseMapping):
             Xshape = np.shape(Xs[0]) 
             for X in Xs:
                 assert np.shape(X) == Xshape
-            return self._metric_det_eval(*Xs) 
+            return self._metric_det_eval(*Xs)
     
     def __call__( self, *args ):
         if len(args) == 1 and isinstance(args[0], BasicDomain):
@@ -194,13 +194,13 @@ class BaseAnalyticMapping(BaseMapping):
         if all(isinstance(arg, (int, float, Symbol, np.ndarray)) for arg in args):
             return self._jacobian_evaluate(*args)
         else:
-            raise TypeError("Invalid arguments for jacobian_eval")            
+            raise TypeError("Invalid arguments for jacobian_eval")         
 
     def jacobian_inv_eval( self, *args ):
         if all(isinstance(arg, (int, float, Symbol, np.ndarray)) for arg in args):
             return self._jacobian_inv_evaluate(*args)
         else:
-            raise TypeError("Invalid arguments for jacobian_inv_eval") 
+            raise TypeError("Invalid arguments for jacobian_inv_eval")
 
     def metric_eval( self, *args ):
         if all(isinstance(arg, (int, float, Symbol, np.ndarray)) for arg in args):
