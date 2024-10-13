@@ -839,7 +839,8 @@ class NCube(Domain):
             raise ValueError("Min coordinates must be smaller than max")
 
         coord_names = 'x1:{}'.format(dim + 1)
-        coordinates = symbols(coord_names)  # [MCP 24.07.2024] we should be able to pass real=True but requires additional testing as it breaks some calls to TerminalExpr
+
+        coordinates = symbols(coord_names, real=True)
 
         # Choose which type to use:
         #   a) if dim <= 3, use Line, Square or Cube;
