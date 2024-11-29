@@ -626,7 +626,7 @@ def test_identity_mapping_2d_2():
 def test_polar_mapping_2d_1():
     dim = 2
 
-    x1, x2 = symbols('x1, x2')
+    x1, x2 = symbols('x1, x2', real=True)
 
     constants = ['c1', 'c2', 'rmax', 'rmin']
     c1, c2, rmax, rmin = [Constant(i) for i in constants]
@@ -656,7 +656,7 @@ def test_polar_mapping_2d_1():
 def test_target_mapping_2d_1():
     dim = 2
 
-    x1, x2 = symbols('x1, x2')
+    x1, x2 = symbols('x1, x2', real=True)
 
     constants = ['c1', 'c2', 'D', 'k']
     c1, c2, D, k = [Constant(i) for i in constants]
@@ -688,7 +688,7 @@ def test_target_mapping_2d_1():
 def test_czarny_mapping_2d_1():
     dim = 2
 
-    x1, x2 = symbols('x1, x2')
+    x1, x2 = symbols('x1, x2', real=True)
 
     constants = ['c2', 'eps', 'b']
     c2, eps, b = [Constant(i) for i in constants]
@@ -725,7 +725,7 @@ def test_czarny_mapping_2d_1():
 def test_collela_mapping_2d_1():
     dim = 2
 
-    x1, x2 = symbols('x1, x2')
+    x1, x2 = symbols('x1, x2', real=True)
 
     constants = ['eps', 'k1', 'k2']
     eps, k1, k2 = [Constant(i) for i in constants]
@@ -763,7 +763,7 @@ def test_collela_mapping_2d_1():
 def test_torus_mapping_3d_1():
     dim = 3
 
-    x1, x2, x3 = symbols('x1, x2, x3')
+    x1, x2, x3 = symbols('x1, x2, x3', real=True)
     R0 = Constant('R0')
 
     M = TorusMapping('M', dim=dim)
@@ -812,7 +812,7 @@ def test_torus_mapping_3d_1():
 def test_twisted_target_mapping_3d_1():
     dim = 3
 
-    x1, x2, x3 = symbols('x1, x2, x3')
+    x1, x2, x3 = symbols('x1, x2, x3', real=True)
 
     constants = ['c1', 'c2', 'c3', 'D', 'k']
     c1, c2, c3, D, k = [Constant(i) for i in constants]
