@@ -204,8 +204,14 @@ class Mapping(BasicMapping):
         obj._is_plus             = None
 
         lcoords = ['x1', 'x2', 'x3'][:ldim]
-        lcoords = [Symbol(i, real=True) for i in lcoords]
-        obj._logical_coordinates = Tuple(*lcoords)
+        lcoords_real = [Symbol(i, real=True) for i in lcoords]
+        lcoords_symbols = {i: si for i,si in zip(lcoords, lcoords_real)}
+
+        obj._logical_coordinates = Tuple(*lcoords_real)       
+
+        lcoords = [Symbol(i) for i in lcoords]
+        
+
         # ...
         if not( obj._expressions is None ):
             coords = ['x', 'y', 'z'][:pdim]
@@ -214,8 +220,7 @@ class Mapping(BasicMapping):
             args = []
             for i in coords:
                 x = obj._expressions[i]
-                from sympy import parse_expr
-                x = sympify(parse_expr(x, {x: Symbol(x, real=True)}))
+                x = sympify(x)
                 args.append(x)
 
             args = Tuple(*args)
@@ -233,6 +238,7 @@ class Mapping(BasicMapping):
             constants_values.update( kwargs )
             d = {a:numpy_to_native_python(constants_values[a.name]) for a in constants}
             args = args.subs(d)
+            args = args.subs(lcoords_symbols)
 
             obj._expressions = args
             obj._constants   = tuple(a for a in constants if isinstance(constants_values[a.name], Symbol))

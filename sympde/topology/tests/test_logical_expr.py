@@ -585,7 +585,7 @@ def test_symbolic_expr_3d_1():
 def test_identity_mapping_2d_1():
     dim = 2
 
-    x1, x2 = symbols('x1, x2')
+    x1, x2 = symbols('x1, x2', real=True)
 
     M = IdentityMapping('M', dim=dim)
 
