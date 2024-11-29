@@ -204,7 +204,7 @@ class Mapping(BasicMapping):
         obj._is_plus             = None
 
         lcoords = ['x1', 'x2', 'x3'][:ldim]
-        lcoords = [Symbol(i) for i in lcoords]
+        lcoords = [Symbol(i, real=True) for i in lcoords]
         obj._logical_coordinates = Tuple(*lcoords)
         # ...
         if not( obj._expressions is None ):
@@ -214,7 +214,8 @@ class Mapping(BasicMapping):
             args = []
             for i in coords:
                 x = obj._expressions[i]
-                x = sympify(x)
+                from sympy import parse_expr
+                x = sympify(parse_expr(x, {x: Symbol(x, real=True)}))
                 args.append(x)
 
             args = Tuple(*args)
