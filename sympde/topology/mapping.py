@@ -919,7 +919,7 @@ class LogicalExpr(CalculusFunction):
             if has(expr, DiffOperator):
                 return cls( expr, domain, evaluate=False)
             else:
-                syms = symbols(ph_coords[:dim])
+                syms = symbols(ph_coords[:dim], real=True)
                 if isinstance(mapping, InterfaceMapping):
                     mapping = mapping.minus
                     # here we assume that the two mapped domains
