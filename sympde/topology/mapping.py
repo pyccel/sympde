@@ -184,7 +184,7 @@ class Mapping(BasicMapping):
             return obj
 
         if coordinates is None:
-            _coordinates = [Symbol(name) for name in ['x', 'y', 'z'][:pdim]]
+            _coordinates = [Symbol(name, real=True) for name in ['x', 'y', 'z'][:pdim]]
         else:
             if not isinstance(coordinates, (list, tuple, Tuple)):
                 raise TypeError('> Expecting list, tuple, Tuple')
@@ -193,7 +193,7 @@ class Mapping(BasicMapping):
                 if not isinstance(a, (str, Symbol)):
                     raise TypeError('> Expecting str or Symbol')
 
-            _coordinates = [Symbol(u) for u in coordinates]
+            _coordinates = [Symbol(u, real=True) for u in coordinates]
 
         obj._name                = name
         obj._ldim                = ldim
@@ -204,8 +204,14 @@ class Mapping(BasicMapping):
         obj._is_plus             = None
 
         lcoords = ['x1', 'x2', 'x3'][:ldim]
+        lcoords_real = [Symbol(i, real=True) for i in lcoords]
+        lcoords_symbols = {i: si for i,si in zip(lcoords, lcoords_real)}
+
+        obj._logical_coordinates = Tuple(*lcoords_real)       
+
         lcoords = [Symbol(i) for i in lcoords]
-        obj._logical_coordinates = Tuple(*lcoords)
+        
+
         # ...
         if not( obj._expressions is None ):
             coords = ['x', 'y', 'z'][:pdim]
@@ -232,6 +238,7 @@ class Mapping(BasicMapping):
             constants_values.update( kwargs )
             d = {a:numpy_to_native_python(constants_values[a.name]) for a in constants}
             args = args.subs(d)
+            args = args.subs(lcoords_symbols)
 
             obj._expressions = args
             obj._constants   = tuple(a for a in constants if isinstance(constants_values[a.name], Symbol))
@@ -919,7 +926,7 @@ class LogicalExpr(CalculusFunction):
             if has(expr, DiffOperator):
                 return cls( expr, domain, evaluate=False)
             else:
-                syms = symbols(ph_coords[:dim])
+                syms = symbols(ph_coords[:dim], real=True)
                 if isinstance(mapping, InterfaceMapping):
                     mapping = mapping.minus
                     # here we assume that the two mapped domains

@@ -17,7 +17,7 @@ from sympde.exterior import DifferentialForm
 #==============================================================================
 def test_exterior_1():
 
-    x, y, z = symbols('x y z')
+    x, y, z = symbols('x y z', real=True)
     a = Constant('a')
     n = Symbol('n')
 
