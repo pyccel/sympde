@@ -184,7 +184,7 @@ class Mapping(BasicMapping):
             return obj
 
         if coordinates is None:
-            _coordinates = [Symbol(name) for name in ['x', 'y', 'z'][:pdim]]
+            _coordinates = [Symbol(name, real=True) for name in ['x', 'y', 'z'][:pdim]]
         else:
             if not isinstance(coordinates, (list, tuple, Tuple)):
                 raise TypeError('> Expecting list, tuple, Tuple')
@@ -193,7 +193,7 @@ class Mapping(BasicMapping):
                 if not isinstance(a, (str, Symbol)):
                     raise TypeError('> Expecting str or Symbol')
 
-            _coordinates = [Symbol(u) for u in coordinates]
+            _coordinates = [Symbol(u, real=True) for u in coordinates]
 
         obj._name                = name
         obj._ldim                = ldim
