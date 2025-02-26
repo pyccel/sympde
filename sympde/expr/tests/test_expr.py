@@ -1963,4 +1963,5 @@ def teardown_function():
     from sympy.core import cache
     cache.clear_cache()
 
-test_terminal_expressions_for_navier_stokes()
+if __name__ == '__main__':
+    test_terminal_expressions_for_navier_stokes()
