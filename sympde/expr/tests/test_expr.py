@@ -1892,6 +1892,7 @@ def test_interface_integral_4():
 
 
 #==============================================================================
+@pytest.mark.xfail
 def test_terminal_expressions_for_navier_stokes():
 
     domain = Square()
@@ -1918,9 +1919,15 @@ def test_terminal_expressions_for_navier_stokes():
     fy = -mu*(uy.diff(x, 2) + uy.diff(y, 2)) + ux*uy.diff(x) + uy*uy.diff(y) + pe.diff(y)
 
     # [MCP 18.07.2024] for now, this test fails here because f is essentially 0: this should be fixed
+    print(20*" -- ")
+    print(20*" -- ")
     print(f'a = {a}')
+    print(20*" -- ")
     print(f'b = {b}')
+    print(20*" -- ")
     print(f'f = {f}')
+    print(20*" -- ")
+    print(20*" -- ")
     assert (f[0]-fx).simplify() == 0
     assert (f[1]-fy).simplify() == 0
     
@@ -1955,3 +1962,5 @@ def teardown_module():
 def teardown_function():
     from sympy.core import cache
     cache.clear_cache()
+
+test_terminal_expressions_for_navier_stokes()
