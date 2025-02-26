@@ -1912,6 +1912,7 @@ def test_terminal_expressions_for_navier_stokes():
     # Verify that div(u) = 0
     assert (ux.diff(x) + uy.diff(y)).simplify() == 0
 
+    # again, with div operator
     d = TerminalExpr(div(ue), domain)
     assert d.simplify() == 0
 
@@ -1935,17 +1936,25 @@ def test_terminal_expressions_with_div_free_fields():
 
     ux =  sin(pi * x) * cos(pi * y)
     uy = -cos(pi * x) * sin(pi * y)
+    u = Matrix([[ux], [uy]])
 
     # Verify that div(u) = 0
     assert (ux.diff(x) + uy.diff(y)).simplify() == 0
 
+    # again, with div operator
+    du = TerminalExpr(div(u), domain)
+    assert du.simplify() == 0
+
     vx = x**2*(-x + 1)**2*(4*y**3 - 6*y**2 + 2*y)
     vy =-y**2*(-y + 1)**2*(4*x**3 - 6*x**2 + 2*x)
+    v = Matrix([[vx], [vy]])
 
     # Verify that div(v) = 0
-    AA = (vx.diff(x) + vy.diff(y)).simplify()
     assert (vx.diff(x) + vy.diff(y)).simplify() == 0
-    print(f'test = {AA}')
+
+    # again, with div operator
+    dv = TerminalExpr(div(v), domain)
+    assert dv.simplify() == 0
 
     # ...
 #==============================================================================
