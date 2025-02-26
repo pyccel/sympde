@@ -1904,14 +1904,17 @@ def test_terminal_expressions_for_navier_stokes():
     pe = sin(pi*y)
     # ...
 
-    # Verify that div(u) = 0
-    assert (ux.diff(x) + uy.diff(y)).simplify() == 0
-
     # ... Compute right-hand side
     a = TerminalExpr(-mu*laplace(ue), domain)
     b = TerminalExpr(    grad(ue), domain)
     c = TerminalExpr(    grad(pe), domain)
-    
+
+    # Verify that div(u) = 0
+    assert (ux.diff(x) + uy.diff(y)).simplify() == 0
+
+    d = TerminalExpr(div(ue), domain)
+    assert d.simplify() == 0
+
     f = (a + b.T*ue + c).simplify()
 
     fx = -mu*(ux.diff(x, 2) + ux.diff(y, 2)) + ux*ux.diff(x) + uy*ux.diff(y) + pe.diff(x)
