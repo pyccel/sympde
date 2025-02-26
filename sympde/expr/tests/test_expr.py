@@ -1892,7 +1892,6 @@ def test_interface_integral_4():
 
 
 #==============================================================================
-@pytest.mark.xfail
 def test_terminal_expressions_for_navier_stokes():
 
     domain = Square()
@@ -1919,15 +1918,9 @@ def test_terminal_expressions_for_navier_stokes():
     fy = -mu*(uy.diff(x, 2) + uy.diff(y, 2)) + ux*uy.diff(x) + uy*uy.diff(y) + pe.diff(y)
 
     # [MCP 18.07.2024] for now, this test fails here because f is essentially 0: this should be fixed
-    print(20*" -- ")
-    print(20*" -- ")
     print(f'a = {a}')
-    print(20*" -- ")
     print(f'b = {b}')
-    print(20*" -- ")
     print(f'f = {f}')
-    print(20*" -- ")
-    print(20*" -- ")
     assert (f[0]-fx).simplify() == 0
     assert (f[1]-fy).simplify() == 0
     
@@ -1947,8 +1940,9 @@ def test_terminal_expressions_with_div_free_fields():
     vy =-y**2*(-y + 1)**2*(4*x**3 - 6*x**2 + 2*x)
 
     # Verify that div(v) = 0
+    AA = (vx.diff(x) + vy.diff(y)).simplify()
     assert (vx.diff(x) + vy.diff(y)).simplify() == 0
-
+    print(f'test = {AA}')
 
     # ...
 #==============================================================================
@@ -1964,4 +1958,5 @@ def teardown_function():
     cache.clear_cache()
 
 if __name__ == '__main__':
+    # test_terminal_expressions_with_div_free_fields()
     test_terminal_expressions_for_navier_stokes()
