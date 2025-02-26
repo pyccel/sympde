@@ -2,36 +2,36 @@
 
 # TODO: - add assert to every test
 
-import pytest
+# import pytest
 
-from sympy.core.containers import Tuple
-from sympy import Function
+# from sympy.core.containers import Tuple
+# from sympy import Function
 from sympy import pi, cos, sin, exp
 from sympy import ImmutableDenseMatrix as Matrix
 
-from sympde.core     import Constant
+# from sympde.core     import Constant
 from sympde.calculus import grad, dot, inner, rot, div
 from sympde.calculus import laplace, bracket, convect
-from sympde.calculus import jump, avg, Dn, minus, plus
+# from sympde.calculus import jump, avg, Dn, minus, plus
 
-from sympde.topology import dx1, dx2, dx3
-from sympde.topology import dx, dy, dz
-from sympde.topology import Mapping
-from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
-from sympde.topology import element_of, elements_of
-from sympde.topology import InteriorDomain, Union
-from sympde.topology import Boundary, NormalVector
-from sympde.topology import Domain
-#from sympde.topology import trace_1  # TODO [YG, 27.01.2021]: fix trace
+# from sympde.topology import dx1, dx2, dx3
+# from sympde.topology import dx, dy, dz
+# from sympde.topology import Mapping
+# from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
+# from sympde.topology import element_of, elements_of
+# from sympde.topology import InteriorDomain, Union
+# from sympde.topology import Boundary, NormalVector
+# from sympde.topology import Domain
+# #from sympde.topology import trace_1  # TODO [YG, 27.01.2021]: fix trace
 from sympde.topology import Square
-from sympde.topology import ElementDomain
-from sympde.topology import Area
+# from sympde.topology import ElementDomain
+# from sympde.topology import Area
 
-from sympde.expr.expr import LinearExpr
-from sympde.expr.expr import LinearForm, BilinearForm
-from sympde.expr.expr import integral
-from sympde.expr.expr import Functional, Norm
-from sympde.expr.expr import linearize
+# from sympde.expr.expr import LinearExpr
+# from sympde.expr.expr import LinearForm, BilinearForm
+# from sympde.expr.expr import integral
+# from sympde.expr.expr import Functional, Norm
+# from sympde.expr.expr import linearize
 from sympde.expr.evaluation import TerminalExpr
 
 def try_terminal_expressions_for_navier_stokes():
