@@ -12,32 +12,53 @@ An example of use can be found in psydac_ or gelato_.
 .. _gelato: https://github.com/pyccel/gelato
 .. _fenics: https://fenicsproject.org/
 
-Install
+Installation
 *******
 
-From PyPi
+Set up a virtual environment
 ^^^^^^^^^
 
-Simply run, for a local installation::
+We always recommend working in a Python virtual environment.
+To create a new one we recommend the venv_ package::
 
-  pip3 install --user sympde 
+  python3 -m venv <ENV-PATH>
 
-or::
+.. _venv: https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/#creating-a-virtual-environment
+
+where `<ENV-PATH>` is the location to create the virtual environment.
+(A new directory will be created at the required location.)
+
+In order to activate the environment from a new terminal session just run the command ::
+
+  source <ENV-PATH>/bin/activate
+
+Option 1: Install from PyPI
+^^^^^^^^^
+
+Make sure that your virtual environment is activated. Then simply run ::
 
   pip3 install sympde 
 
-for a global installation.
+to download the correct version of SymPDE from PyPI_ and install it in your virtual environment.
 
-From sources
+.. _PyPI: https://pypi.org/project/sympde/
+
+Option 2: Install from sources
 ^^^^^^^^^^^^
 
-* **Standard mode**::
+First, clone the repository with Git to download the source files.
+
+* **Standard mode**
+
+  After checking out your preferred branch/tag/commit::
 
     python3 -m pip install .
 
-* **Development mode**::
+* **Developer mode**
 
-    python3 -m pip install --user -e .
+  If you want to make changes to the library, and see these changes when you import the package from your virtual environment, you should install SymPDE in editable mode::
+
+    python3 -m pip install --editable .
 
 
 For developers
