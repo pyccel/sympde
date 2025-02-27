@@ -1951,8 +1951,8 @@ def test_terminal_expressions_with_div_free_fields():
     # and again with div operator
     dv = TerminalExpr(div(v), domain)
     assert dv.simplify() == 0
+    assert False
 
-    # ...
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
@@ -1965,6 +1965,24 @@ def teardown_function():
     from sympy.core import cache
     cache.clear_cache()
 
-# for running some tests with a direct call to file
+#==============================================================================
+# DIRECT CALL TO FILE (allows to run some tests directly)
+#==============================================================================
+
 if __name__ == '__main__':
-    test_terminal_expressions_for_navier_stokes()
+
+    # Tests that should be run (with no arguments)
+    tests = (
+        test_terminal_expressions_for_navier_stokes,
+        test_terminal_expressions_with_div_free_fields
+    )
+
+    for test in tests:
+        try:
+            print(f"Running: {test.__name__}... ", end='')
+            test()
+        except:
+            print("FAIL")
+            raise
+        else:
+            print("PASS")
