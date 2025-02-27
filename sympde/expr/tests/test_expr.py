@@ -1890,7 +1890,68 @@ def test_interface_integral_4():
     assert expr[0].expr[0,0]   == u2[0]*v2[0]
     assert expr[0].expr[1,1]   == u2[1]*v2[1]
 
+
+#==============================================================================
+def test_terminal_expressions_for_navier_stokes():
+
+    domain = Square()
+    x, y   = domain.coordinates
+
+    mu = 1
+    ux = cos(y*pi)
+    uy = x*(x-1)
+    ue = Matrix([[ux], [uy]])
+    pe = sin(pi*y)
     # ...
+
+    # ... Compute right-hand side
+    a = TerminalExpr(-mu*laplace(ue), domain)
+    b = TerminalExpr(    grad(ue), domain)
+    c = TerminalExpr(    grad(pe), domain)
+
+    # Verify that div(u) = 0
+    assert (ux.diff(x) + uy.diff(y)).simplify() == 0
+
+    # and again with div operator
+    d = TerminalExpr(div(ue), domain)
+    assert d.simplify() == 0
+
+    f = (a + b.T*ue + c).simplify()
+
+    fx = -mu*(ux.diff(x, 2) + ux.diff(y, 2)) + ux*ux.diff(x) + uy*ux.diff(y) + pe.diff(x)
+    fy = -mu*(uy.diff(x, 2) + uy.diff(y, 2)) + ux*uy.diff(x) + uy*uy.diff(y) + pe.diff(y)
+
+    assert (f[0]-fx).simplify() == 0
+    assert (f[1]-fy).simplify() == 0
+    
+
+def test_terminal_expressions_with_div_free_fields():
+
+    domain = Square()
+    x, y   = domain.coordinates
+
+    ux =  sin(pi * x) * cos(pi * y)
+    uy = -cos(pi * x) * sin(pi * y)
+    u = Matrix([[ux], [uy]])
+
+    # Verify that div(u) = 0
+    assert (ux.diff(x) + uy.diff(y)).simplify() == 0
+
+    # and again with div operator
+    du = TerminalExpr(div(u), domain)
+    assert du.simplify() == 0
+
+    vx = x**2*(-x + 1)**2*(4*y**3 - 6*y**2 + 2*y)
+    vy =-y**2*(-y + 1)**2*(4*x**3 - 6*x**2 + 2*x)
+    v = Matrix([[vx], [vy]])
+
+    # Verify that div(v) = 0
+    assert (vx.diff(x) + vy.diff(y)).simplify() == 0
+
+    # and again with div operator
+    dv = TerminalExpr(div(v), domain)
+    assert dv.simplify() == 0
+
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
@@ -1902,3 +1963,25 @@ def teardown_module():
 def teardown_function():
     from sympy.core import cache
     cache.clear_cache()
+
+#==============================================================================
+# DIRECT CALL TO FILE (allows to run some tests directly)
+#==============================================================================
+
+if __name__ == '__main__':
+
+    # Tests that should be run (with no arguments)
+    tests = (
+        test_terminal_expressions_for_navier_stokes,
+        test_terminal_expressions_with_div_free_fields
+    )
+
+    for test in tests:
+        try:
+            print(f"Running: {test.__name__}... ", end='')
+            test()
+        except:
+            print("FAIL")
+            raise
+        else:
+            print("PASS")
