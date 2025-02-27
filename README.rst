@@ -60,7 +60,7 @@ To check out a specific branch/tag/commit named ``<TAG>``, just use ``git checko
 
     python3 -m pip install .
 
-  Further changes to the cloned directory are not reflected in the installed package. This is why we call this a **static** installation.
+  Further changes to the cloned directory are not reflected in the installed package. This is why we call it a **static** installation.
 
 * **Editable mode**
 
