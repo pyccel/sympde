@@ -1951,7 +1951,6 @@ def test_terminal_expressions_with_div_free_fields():
     # and again with div operator
     dv = TerminalExpr(div(v), domain)
     assert dv.simplify() == 0
-    assert False
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
