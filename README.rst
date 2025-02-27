@@ -12,6 +12,7 @@ An example of use can be found in psydac_ or gelato_.
 .. _gelato: https://github.com/pyccel/gelato
 .. _fenics: https://fenicsproject.org/
 
+
 Installation
 *******
 
@@ -25,7 +26,7 @@ To create a new one we recommend the venv_ package::
 
 .. _venv: https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/#creating-a-virtual-environment
 
-where `<ENV-PATH>` is the location to create the virtual environment.
+where ``<ENV-PATH>`` is the location to create the virtual environment.
 (A new directory will be created at the required location.)
 
 In order to activate the environment from a new terminal session just run the command ::
@@ -35,28 +36,35 @@ In order to activate the environment from a new terminal session just run the co
 Option 1: Install from PyPI
 ^^^^^^^^^
 
-Make sure that your virtual environment is activated. Then simply run ::
+Make sure that the preferred virtual environment is activated. Then simply run ::
 
-  pip3 install sympde 
+  pip3 install sympde
 
-to download the correct version of SymPDE from PyPI_ and install it in your virtual environment.
+This will download the correct version of SymPDE from PyPI_ and install it in the virtual environment.
 
 .. _PyPI: https://pypi.org/project/sympde/
 
 Option 2: Install from sources
 ^^^^^^^^^^^^
 
-First, clone the repository with Git to download the source files.
+First, clone the repository with Git to download the source files, and change the current directory::
 
-* **Standard mode**
+  git clone https://github.com/pyccel/sympde.git
+  cd sympde
 
-  After checking out your preferred branch/tag/commit::
+To check out a specific branch/tag/commit named ``<TAG>``, just use ``git checkout <TAG>``.
+
+* **Static mode**
+
+  To install the source files in the virtual environment just run::
 
     python3 -m pip install .
 
-* **Developer mode**
+  Further changes to the cloned directory are not reflected in the installed package. This is why we call this a **static** installation.
 
-  If you want to make changes to the library, and see these changes when you import the package from your virtual environment, you should install SymPDE in editable mode::
+* **Editable mode**
+
+  In order to make changes to the library, and see these changes when the package is imported, SymPDE should be installed in **editable** mode::
 
     python3 -m pip install --editable .
 
