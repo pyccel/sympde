@@ -12,32 +12,61 @@ An example of use can be found in psydac_ or gelato_.
 .. _gelato: https://github.com/pyccel/gelato
 .. _fenics: https://fenicsproject.org/
 
-Install
+
+Installation
 *******
 
-From PyPi
+Set up a virtual environment
 ^^^^^^^^^
 
-Simply run, for a local installation::
+We always recommend working in a Python virtual environment.
+To create a new one we recommend the venv_ package::
 
-  pip3 install --user sympde 
+  python3 -m venv <ENV-PATH>
 
-or::
+.. _venv: https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/#creating-a-virtual-environment
 
-  pip3 install sympde 
+where ``<ENV-PATH>`` is the location to create the virtual environment.
+(A new directory will be created at the required location.)
 
-for a global installation.
+In order to activate the environment from a new terminal session just run the command ::
 
-From sources
+  source <ENV-PATH>/bin/activate
+
+Option 1: Install from PyPI
+^^^^^^^^^
+
+Make sure that the preferred virtual environment is activated. Then simply run ::
+
+  pip3 install sympde
+
+This will download the correct version of SymPDE from PyPI_ and install it in the virtual environment.
+
+.. _PyPI: https://pypi.org/project/sympde/
+
+Option 2: Install from sources
 ^^^^^^^^^^^^
 
-* **Standard mode**::
+First, clone the repository with Git to download the source files, and change the current directory::
+
+  git clone https://github.com/pyccel/sympde.git
+  cd sympde
+
+To check out a specific branch/tag/commit named ``<TAG>``, just use ``git checkout <TAG>``.
+
+* **Static mode**
+
+  To install the source files in the virtual environment just run::
 
     python3 -m pip install .
 
-* **Development mode**::
+  Further changes to the cloned directory are not reflected in the installed package. This is why we call it a **static** installation.
 
-    python3 -m pip install --user -e .
+* **Editable mode**
+
+  In order to make changes to the library, and see these changes when the package is imported, SymPDE should be installed in **editable** mode::
+
+    python3 -m pip install --editable .
 
 
 For developers
