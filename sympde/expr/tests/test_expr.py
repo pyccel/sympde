@@ -1912,7 +1912,7 @@ def test_terminal_expressions_for_navier_stokes():
     # Verify that div(u) = 0
     assert (ux.diff(x) + uy.diff(y)).simplify() == 0
 
-    # again, with div operator
+    # and again with div operator
     d = TerminalExpr(div(ue), domain)
     assert d.simplify() == 0
 
@@ -1921,10 +1921,6 @@ def test_terminal_expressions_for_navier_stokes():
     fx = -mu*(ux.diff(x, 2) + ux.diff(y, 2)) + ux*ux.diff(x) + uy*ux.diff(y) + pe.diff(x)
     fy = -mu*(uy.diff(x, 2) + uy.diff(y, 2)) + ux*uy.diff(x) + uy*uy.diff(y) + pe.diff(y)
 
-    # [MCP 18.07.2024] for now, this test fails here because f is essentially 0: this should be fixed
-    print(f'a = {a}')
-    print(f'b = {b}')
-    print(f'f = {f}')
     assert (f[0]-fx).simplify() == 0
     assert (f[1]-fy).simplify() == 0
     
@@ -1941,7 +1937,7 @@ def test_terminal_expressions_with_div_free_fields():
     # Verify that div(u) = 0
     assert (ux.diff(x) + uy.diff(y)).simplify() == 0
 
-    # again, with div operator
+    # and again with div operator
     du = TerminalExpr(div(u), domain)
     assert du.simplify() == 0
 
@@ -1952,7 +1948,7 @@ def test_terminal_expressions_with_div_free_fields():
     # Verify that div(v) = 0
     assert (vx.diff(x) + vy.diff(y)).simplify() == 0
 
-    # again, with div operator
+    # and again with div operator
     dv = TerminalExpr(div(v), domain)
     assert dv.simplify() == 0
 
@@ -1969,6 +1965,6 @@ def teardown_function():
     from sympy.core import cache
     cache.clear_cache()
 
+# for running some tests with a direct call to file
 if __name__ == '__main__':
-    # test_terminal_expressions_with_div_free_fields()
     test_terminal_expressions_for_navier_stokes()
