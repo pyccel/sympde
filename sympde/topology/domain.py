@@ -183,7 +183,7 @@ class Domain(BasicDomain):
     @property
     def subdomains(self) -> tuple:
         """returns subdomains as tuple of Domains"""
-        if isinstance( self.interior, iterable_types):    
+        if isinstance( self.interior, iterable_types):
             subs = self.interior
         else:
             subs = [self.interior]
