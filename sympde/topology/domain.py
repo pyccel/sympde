@@ -193,12 +193,6 @@ class Domain(BasicDomain):
     def mappings(self) -> OrderedDict:
         return OrderedDict([(P.logical_domain, P.mapping)
                            for P in self.subdomains])
-        # if isinstance( self.interior, iterable_types):    
-        #     subdomains = self.interior
-        # else:
-        #     subdomains = [self.interior]
-        # return OrderedDict([(P.logical_domain, P.mapping)
-        #                    for P in subdomains])
 
     @property
     def logical_domain(self) -> Domain:
