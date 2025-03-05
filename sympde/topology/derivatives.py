@@ -104,7 +104,7 @@ class DifferentialOperator(LinearOperator):
                 return S.Zero
 
             elif isinstance(expr, Expr):
-                x = Symbol(cls.coordinate)
+                x = Symbol(cls.coordinate, real=True)
                 if cls.logical:
                     M = expr.atoms(Mapping)
                     if len(M)>0:

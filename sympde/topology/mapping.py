@@ -184,7 +184,7 @@ class Mapping(BasicMapping):
             return obj
 
         if coordinates is None:
-            _coordinates = [Symbol(name) for name in ['x', 'y', 'z'][:pdim]]
+            _coordinates = [Symbol(name, real=True) for name in ['x', 'y', 'z'][:pdim]]
         else:
             if not isinstance(coordinates, (list, tuple, Tuple)):
                 raise TypeError('> Expecting list, tuple, Tuple')
@@ -193,7 +193,7 @@ class Mapping(BasicMapping):
                 if not isinstance(a, (str, Symbol)):
                     raise TypeError('> Expecting str or Symbol')
 
-            _coordinates = [Symbol(u) for u in coordinates]
+            _coordinates = [Symbol(u, real=True) for u in coordinates]
 
         obj._name                = name
         obj._ldim                = ldim
@@ -203,16 +203,19 @@ class Mapping(BasicMapping):
         obj._is_minus            = None
         obj._is_plus             = None
 
-        lcoords = ['x1', 'x2', 'x3'][:ldim]
-        lcoords = [Symbol(i) for i in lcoords]
-        obj._logical_coordinates = Tuple(*lcoords)
+        lcoords_names = ['x1', 'x2', 'x3'][:ldim]
+        lcoords_symbols_real = [Symbol(i, real=True) for i in lcoords_names]
+        lcoords_symbols_real_dict = {key: symbol for key,symbol in zip(lcoords_names, lcoords_symbols_real)}
+        obj._logical_coordinates = Tuple(*lcoords_symbols_real) # coordinates must be symbols with real=True      
+        lcoords_general_symbols = [Symbol(i) for i in lcoords_names] #list of symbols without real=True       
+
         # ...
         if not( obj._expressions is None ):
-            coords = ['x', 'y', 'z'][:pdim]
+            coords_names = ['x', 'y', 'z'][:pdim]
 
             # ...
             args = []
-            for i in coords:
+            for i in coords_names:
                 x = obj._expressions[i]
                 x = sympify(x)
                 args.append(x)
@@ -225,13 +228,15 @@ class Mapping(BasicMapping):
                 x = sympify(i)
                 args = args.subs(x,0)
             # ...
-
-            constants        = list(set(args.free_symbols) - set(lcoords))
+            # get constants by subtracting coordinates from list of free symbols
+            constants        = list(set(args.free_symbols) - set(lcoords_general_symbols))
             constants_values = {a.name:Constant(a.name) for a in constants}
             # subs constants as Constant objects instead of Symbol
             constants_values.update( kwargs )
             d = {a:numpy_to_native_python(constants_values[a.name]) for a in constants}
             args = args.subs(d)
+            # subs coordinate symbols without real=True to symbols with real=True
+            args = args.subs(lcoords_symbols_real_dict)
 
             obj._expressions = args
             obj._constants   = tuple(a for a in constants if isinstance(constants_values[a.name], Symbol))
@@ -919,7 +924,7 @@ class LogicalExpr(CalculusFunction):
             if has(expr, DiffOperator):
                 return cls( expr, domain, evaluate=False)
             else:
-                syms = symbols(ph_coords[:dim])
+                syms = symbols(ph_coords[:dim], real=True)
                 if isinstance(mapping, InterfaceMapping):
                     mapping = mapping.minus
                     # here we assume that the two mapped domains
