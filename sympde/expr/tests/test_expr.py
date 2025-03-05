@@ -902,25 +902,25 @@ def test_terminal_expr_bilinear_3d_1():
 def test_terminal_expr_1d_1():
     domain = Domain('Omega', dim=1)
     x = domain.coordinates
-    assert(TerminalExpr(grad(x), domain) == 1)
-    assert(TerminalExpr(grad(exp(1j*x) - x + 7), domain) == 1j*exp(1j*x) - 1)
+    assert TerminalExpr(grad(x), domain) == 1
+    assert TerminalExpr(grad(exp(1j*x) - x + 7), domain) == 1j*exp(1j*x) - 1
 
 #==============================================================================
 def test_terminal_expr_2d_1():
     domain = Domain('Omega', dim=2)
     x, y = domain.coordinates
-    assert(TerminalExpr(grad(x), domain) == Matrix([[1], [0]]))
-    assert(TerminalExpr(grad(y), domain) == Matrix([[0], [1]]))
-    assert(TerminalExpr(grad(exp(1j*x)*sin(2*y)), domain) == Matrix([[1j*exp(1j*x)*sin(2*y)], [2*exp(1j*x)*cos(2*y)]]))
+    assert TerminalExpr(grad(x), domain) == Matrix([[1], [0]])
+    assert TerminalExpr(grad(y), domain) == Matrix([[0], [1]])
+    assert TerminalExpr(grad(exp(1j*x)*sin(2*y)), domain) == Matrix([[1j*exp(1j*x)*sin(2*y)], [2*exp(1j*x)*cos(2*y)]])
 
 #==============================================================================
 def test_terminal_expr_3d_1():
     domain = Domain('Omega', dim=3)
     x, y, z = domain.coordinates
-    assert(TerminalExpr(grad(x), domain) == Matrix([[1], [0], [0]]))
-    assert(TerminalExpr(grad(y), domain) == Matrix([[0], [1], [0]]))
-    assert(TerminalExpr(grad(z), domain) == Matrix([[0], [0], [1]]))
-    assert(TerminalExpr(grad(exp(1j*x)*sin(2*y)*z), domain) == Matrix([[1j*exp(1j*x)*sin(2*y)*z], [2*exp(1j*x)*cos(2*y)*z], [exp(1j*x)*sin(2*y)]]))
+    assert TerminalExpr(grad(x), domain) == Matrix([[1], [0], [0]])
+    assert TerminalExpr(grad(y), domain) == Matrix([[0], [1], [0]])
+    assert TerminalExpr(grad(z), domain) == Matrix([[0], [0], [1]])
+    assert TerminalExpr(grad(exp(1j*x)*sin(2*y)*z), domain) == Matrix([[1j*exp(1j*x)*sin(2*y)*z], [2*exp(1j*x)*cos(2*y)*z], [exp(1j*x)*sin(2*y)]])
 
 #==============================================================================
 @pytest.mark.skip(reason="New linearize() function does not accept 'LinearExpr' objects")
