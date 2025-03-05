@@ -6,7 +6,7 @@ import h5py
 import yaml
 import os
 
-from collections import abc
+from collections import abc, OrderedDict
 from typing import Union as TypeUnion, Optional, List, Dict, Iterable, TYPE_CHECKING
 # Union clashes with core.basic.Union
 
@@ -179,6 +179,20 @@ class Domain(BasicDomain):
     def mapping(self) -> Optional[Mapping]:
         """The mapping that maps the logical domain to the physical domain"""
         return self.args[3]
+
+    @property
+    def subdomains(self) -> tuple:
+        """returns subdomains as tuple of Domains"""
+        if isinstance( self.interior, iterable_types):
+            subs = self.interior
+        else:
+            subs = [self.interior]
+        return tuple(subs)
+
+    @property
+    def mappings(self) -> OrderedDict:
+        return OrderedDict([(P.logical_domain, P.mapping)
+                           for P in self.subdomains])
 
     @property
     def logical_domain(self) -> Domain:
@@ -480,6 +494,11 @@ class Domain(BasicDomain):
         assert isinstance(patches, (tuple, list))
         assert isinstance(connectivity, (tuple, list))
         assert isinstance(name, str)
+
+        if len(patches) == 1:
+            # single patch domain: return the patch
+            assert len(connectivity) == 0
+            return patches[0]
 
         assert all(p.dim==patches[0].dim for p in patches)
         dim = int(patches[0].dim)
