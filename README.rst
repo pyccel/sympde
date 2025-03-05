@@ -14,10 +14,10 @@ An example of use can be found in psydac_ or gelato_.
 
 
 Installation
-*******
+************
 
 Set up a virtual environment
-^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 We always recommend working in a Python virtual environment.
 To create a new one we recommend the venv_ package::
@@ -34,7 +34,7 @@ In order to activate the environment from a new terminal session just run the co
   source <ENV-PATH>/bin/activate
 
 Option 1: Install from PyPI
-^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Make sure that the preferred virtual environment is activated. Then simply run ::
 
@@ -45,7 +45,7 @@ This will download the correct version of SymPDE from PyPI_ and install it in th
 .. _PyPI: https://pypi.org/project/sympde/
 
 Option 2: Install from sources
-^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 First, clone the repository with Git to download the source files, and change the current directory::
 
