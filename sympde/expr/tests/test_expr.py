@@ -35,6 +35,7 @@ from sympde.expr.expr import linearize
 from sympde.expr.evaluation import TerminalExpr
 
 #==============================================================================
+
 def test_linear_expr_2d_1():
 
     domain = Domain('Omega', dim=2)
@@ -898,6 +899,30 @@ def test_terminal_expr_bilinear_3d_1():
     assert e3[0].expr.factor() == (dx1(u)*dx1(v) + dx2(u)*dx2(v) + dx3(u)*dx3(v))*det
 
 #==============================================================================
+def test_terminal_expr_1d_1():
+    domain = Domain('Omega', dim=1)
+    x = domain.coordinates
+    assert TerminalExpr(grad(x), domain) == 1
+    assert TerminalExpr(grad(exp(1j*x) - x + 7), domain) == 1j*exp(1j*x) - 1
+
+#==============================================================================
+def test_terminal_expr_2d_1():
+    domain = Domain('Omega', dim=2)
+    x, y = domain.coordinates
+    assert TerminalExpr(grad(x), domain) == Matrix([[1], [0]])
+    assert TerminalExpr(grad(y), domain) == Matrix([[0], [1]])
+    assert TerminalExpr(grad(exp(1j*x)*sin(2*y)), domain) == Matrix([[1j*exp(1j*x)*sin(2*y)], [2*exp(1j*x)*cos(2*y)]])
+
+#==============================================================================
+def test_terminal_expr_3d_1():
+    domain = Domain('Omega', dim=3)
+    x, y, z = domain.coordinates
+    assert TerminalExpr(grad(x), domain) == Matrix([[1], [0], [0]])
+    assert TerminalExpr(grad(y), domain) == Matrix([[0], [1], [0]])
+    assert TerminalExpr(grad(z), domain) == Matrix([[0], [0], [1]])
+    assert TerminalExpr(grad(exp(1j*x)*sin(2*y)*z), domain) == Matrix([[1j*exp(1j*x)*sin(2*y)*z], [2*exp(1j*x)*cos(2*y)*z], [exp(1j*x)*sin(2*y)]])
+
+#==============================================================================
 @pytest.mark.skip(reason="New linearize() function does not accept 'LinearExpr' objects")
 def test_linearize_expr_2d_1():
     domain = Domain('Omega', dim=2)
@@ -1155,7 +1180,7 @@ def test_area_2d_1():
 
     mu    = Constant('mu'   , is_real=True)
 
-    e = ElementDomain(domain)
+    e = ElementDomain()
     area = Area(e)
 
     V = ScalarFunctionSpace('V', domain)
@@ -1688,9 +1713,9 @@ def test_interface_integral_1():
     A = Square('A')
     B = Square('B')
 
-    domain = A.join(B, name = 'domain',
-                bnd_minus = A.get_boundary(axis=0, ext=1),
-                bnd_plus  = B.get_boundary(axis=0, ext=-1))
+    domains = [A, B]
+    connectivity = [((0, 0, 1),(1, 0, -1))]
+    domain = Domain.join(domains, connectivity, 'domain')
     # ...
 
     x,y = domain.coordinates
@@ -1752,9 +1777,10 @@ def test_interface_integral_2():
     A = Square('A')
     B = Square('B')
 
-    domain = A.join(B, name = 'domain',
-                bnd_minus = A.get_boundary(axis=0, ext=1),
-                bnd_plus  = B.get_boundary(axis=0, ext=-1))
+
+    domains = [A, B]
+    connectivity = [((0, 0, 1),(1, 0, -1))]
+    domain = Domain.join(domains, connectivity, 'domain')
     # ...
 
     x,y = domain.coordinates
@@ -1794,14 +1820,10 @@ def test_interface_integral_3():
     B = Square('B')
     C = Square('C')
 
-    AB = A.join(B, name = 'AB',
-               bnd_minus = A.get_boundary(axis=0, ext=1),
-               bnd_plus  = B.get_boundary(axis=0, ext=-1))
 
-    domain = AB.join(C, name = 'domain',
-               bnd_minus = B.get_boundary(axis=0, ext=1),
-               bnd_plus  = C.get_boundary(axis=0, ext=-1))
-    # ...
+    domains = [A, B, C]
+    connectivity = [((0, 0, 1),(1, 0, -1)),((1,0,1),(2,0,-1))]
+    domain = Domain.join(domains, connectivity, 'domain')
 
     x,y = domain.coordinates
 
@@ -1841,9 +1863,9 @@ def test_interface_integral_4():
     A = Square('A')
     B = Square('B')
 
-    domain = A.join(B, name = 'AB',
-               bnd_minus = A.get_boundary(axis=0, ext=1),
-               bnd_plus  = B.get_boundary(axis=0, ext=-1))
+    domains = [A, B]
+    connectivity = [((0, 0, 1),(1, 0, -1))]
+    domain = Domain.join(domains, connectivity, 'AB')
 
     x,y = domain.coordinates
     assert all([x.name == 'x1', y.name == 'x2'])
@@ -1893,15 +1915,98 @@ def test_interface_integral_4():
     assert expr[0].expr[0,0]   == u2[0]*v2[0]
     assert expr[0].expr[1,1]   == u2[1]*v2[1]
 
+
+#==============================================================================
+def test_terminal_expressions_for_navier_stokes():
+
+    domain = Square()
+    x, y   = domain.coordinates
+
+    mu = 1
+    ux = cos(y*pi)
+    uy = x*(x-1)
+    ue = Matrix([[ux], [uy]])
+    pe = sin(pi*y)
     # ...
+
+    # ... Compute right-hand side
+    a = TerminalExpr(-mu*laplace(ue), domain)
+    b = TerminalExpr(    grad(ue), domain)
+    c = TerminalExpr(    grad(pe), domain)
+
+    # Verify that div(u) = 0
+    assert (ux.diff(x) + uy.diff(y)).simplify() == 0
+
+    # and again with div operator
+    d = TerminalExpr(div(ue), domain)
+    assert d.simplify() == 0
+
+    f = (a + b.T*ue + c).simplify()
+
+    fx = -mu*(ux.diff(x, 2) + ux.diff(y, 2)) + ux*ux.diff(x) + uy*ux.diff(y) + pe.diff(x)
+    fy = -mu*(uy.diff(x, 2) + uy.diff(y, 2)) + ux*uy.diff(x) + uy*uy.diff(y) + pe.diff(y)
+
+    assert (f[0]-fx).simplify() == 0
+    assert (f[1]-fy).simplify() == 0
+    
+
+def test_terminal_expressions_with_div_free_fields():
+
+    domain = Square()
+    x, y   = domain.coordinates
+
+    ux =  sin(pi * x) * cos(pi * y)
+    uy = -cos(pi * x) * sin(pi * y)
+    u = Matrix([[ux], [uy]])
+
+    # Verify that div(u) = 0
+    assert (ux.diff(x) + uy.diff(y)).simplify() == 0
+
+    # and again with div operator
+    du = TerminalExpr(div(u), domain)
+    assert du.simplify() == 0
+
+    vx = x**2*(-x + 1)**2*(4*y**3 - 6*y**2 + 2*y)
+    vy =-y**2*(-y + 1)**2*(4*x**3 - 6*x**2 + 2*x)
+    v = Matrix([[vx], [vy]])
+
+    # Verify that div(v) = 0
+    assert (vx.diff(x) + vy.diff(y)).simplify() == 0
+
+    # and again with div operator
+    dv = TerminalExpr(div(v), domain)
+    assert dv.simplify() == 0
+
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
 
 def teardown_module():
-    from sympy import cache
+    from sympy.core import cache
     cache.clear_cache()
 
 def teardown_function():
-    from sympy import cache
+    from sympy.core import cache
     cache.clear_cache()
+
+#==============================================================================
+# DIRECT CALL TO FILE (allows to run some tests directly)
+#==============================================================================
+
+if __name__ == '__main__':
+
+    # Tests that should be run (with no arguments)
+    tests = (
+        test_terminal_expressions_for_navier_stokes,
+        test_terminal_expressions_with_div_free_fields
+    )
+
+    for test in tests:
+        try:
+            print(f"Running: {test.__name__}... ", end='')
+            test()
+        except:
+            print("FAIL")
+            raise
+        else:
+            print("PASS")

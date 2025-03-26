@@ -71,8 +71,6 @@ class CollelaMapping2D(Mapping):
     """
     Represents a Collela 2D Mapping object.
 
-    Examples
-
     """
     _expressions = {'x': '2.*(x1 + eps*sin(2.*pi*k1*x1)*sin(2.*pi*k2*x2)) - 1.',
                     'y': '2.*(x2 + eps*sin(2.*pi*k1*x1)*sin(2.*pi*k2*x2)) - 1.'}
@@ -83,32 +81,65 @@ class CollelaMapping2D(Mapping):
 #==============================================================================
 class TorusMapping(Mapping):
     """
-    Represents a Torus 3D Mapping object.
+    Parametrization of a torus (or a portion of it) of major radius R0, using
+    toroidal coordinates (x1, x2, x3) = (r, theta, phi), where:
 
-    Examples
+      - minor radius    0 <= r < R0
+      - poloidal angle  0 <= theta < 2 pi
+      - toroidal angle  0 <= phi < 2 pi
 
     """
-    _expressions = {'x': '(R0+x1*cos(x2))*cos(x3)',
-                    'y': '(R0+x1*cos(x2))*sin(x3)',
-                    'z': 'x1*sin(x2)'}
+    _expressions = {'x': '(R0 + x1 * cos(x2)) * cos(x3)',
+                    'y': '(R0 + x1 * cos(x2)) * sin(x3)',
+                    'z':       'x1 * sin(x2)'}
+
+    _ldim        = 3
+    _pdim        = 3
+
+#==============================================================================
+# TODO [YG, 07.10.2022]: add test in sympde/topology/tests/test_logical_expr.py
+class TorusSurfaceMapping(Mapping):
+    """
+    3D surface obtained by "slicing" the torus above at r = a.
+    The parametrization uses the coordinates (x1, x2) = (theta, phi), where:
+
+      - poloidal angle  0 <= theta < 2 pi
+      - toroidal angle  0 <= phi < 2 pi
+
+    """
+    _expressions = {'x': '(R0 + a * cos(x1)) * cos(x2)',
+                    'y': '(R0 + a * cos(x1)) * sin(x2)',
+                    'z':       'a * sin(x1)'}
 
     _ldim        = 2
-    _pdim        = 2
+    _pdim        = 3
+
+#==============================================================================
+# TODO [YG, 07.10.2022]: add test in sympde/topology/tests/test_logical_expr.py
+class TwistedTargetSurfaceMapping(Mapping):
+    """
+    3D surface obtained by "twisting" the TargetMapping out of the (x, y) plane
+
+    """
+    _expressions = {'x': 'c1 + (1-k) * x1 * cos(x2) - D *x1**2',
+                    'y': 'c2 + (1+k) * x1 * sin(x2)',
+                    'z': 'c3 + x1**2 * sin(2*x2)'}
+
+    _ldim        = 2
+    _pdim        = 3
 
 #==============================================================================
 class TwistedTargetMapping(Mapping):
     """
-    Represents a Twisted Target 3D Mapping object.
-
-    Examples
+    3D volume obtained by "extruding" the TwistedTargetSurfaceMapping along z.
 
     """
-    _expressions = {'x': 'c1 + (1-k)*x1*cos(x2) - D*x1**2',
-                    'y': 'c2 + (1+k)*x1*sin(x2)',
-                    'z': 'c3 + x3*x1**2*sin(2*x2)'}
+    _expressions = {'x': 'c1 + (1-k) * x1 * cos(x2) - D * x1**2',
+                    'y': 'c2 + (1+k) * x1 * sin(x2)',
+                    'z': 'c3 + x3 * x1**2 * sin(2*x2)'}
 
-    _ldim        = 2
-    _pdim        = 2
+    _ldim        = 3
+    _pdim        = 3
 
 #==============================================================================
 class SphericalMapping(Mapping):

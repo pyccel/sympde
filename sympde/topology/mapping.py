@@ -1,7 +1,5 @@
 # coding: utf-8
-
-
-
+from abc import ABC, abstractmethod
 from sympy                 import Indexed, IndexedBase, Idx
 from sympy                 import Matrix, ImmutableDenseMatrix
 from sympy                 import Function, Expr
@@ -10,7 +8,6 @@ from sympy                 import cacheit
 from sympy.core            import Basic
 from sympy.core            import Symbol,Integer
 from sympy.core            import Add, Mul, Pow
-
 from sympy.core.numbers    import ImaginaryUnit
 from sympy.core.containers import Tuple
 from sympy                 import S
@@ -26,7 +23,6 @@ from sympde.calculus.core     import PlusInterfaceOperator, MinusInterfaceOperat
 from sympde.calculus.core     import grad, div, curl, laplace #, hessian
 from sympde.calculus.core     import dot, inner, outer, _diff_ops
 from sympde.calculus.core     import has, DiffOperator
-
 from sympde.calculus.matrices import MatrixSymbolicExpr, MatrixElement, SymbolicTrace, Inverse
 from sympde.calculus.matrices import SymbolicDeterminant, Transpose
 
@@ -48,6 +44,7 @@ from .derivatives import LogicalGrad_1d, LogicalGrad_2d, LogicalGrad_3d
 # TODO fix circular dependency between sympde.expr.evaluation and sympde.topology.mapping
 
 __all__ = (
+    'BasicCallableMapping',
     'Contravariant',
     'Covariant',
     'InterfaceMapping',
@@ -86,6 +83,59 @@ def get_logical_test_function(u):
     l_space         = type(space)(space.name, logical_domain, kind=kind)
     el              = l_space.element(u.name)
     return el
+
+import numpy as np
+
+def numpy_to_native_python(a):
+    if isinstance(a, np.generic):
+        return a.item()
+    return a
+
+#==============================================================================
+class BasicCallableMapping(ABC):
+    """
+    Transformation of coordinates, which can be evaluated.
+
+    F: R^l -> R^p
+    F(eta) = x
+
+    with l <= p
+    """
+    @abstractmethod
+    def __call__(self, *eta):
+        """ Evaluate mapping at location eta. """
+
+    @abstractmethod
+    def jacobian(self, *eta):
+        """ Compute Jacobian matrix at location eta. """
+
+    @abstractmethod
+    def jacobian_inv(self, *eta):
+        """ Compute inverse Jacobian matrix at location eta.
+            An exception should be raised if the matrix is singular.
+        """
+
+    @abstractmethod
+    def metric(self, *eta):
+        """ Compute components of metric tensor at location eta. """
+
+    @abstractmethod
+    def metric_det(self, *eta):
+        """ Compute determinant of metric tensor at location eta. """
+
+    @property
+    @abstractmethod
+    def ldim(self):
+        """ Number of logical/parametric dimensions in mapping
+            (= number of eta components).
+        """
+
+    @property
+    @abstractmethod
+    def pdim(self):
+        """ Number of physical dimensions in mapping
+            (= number of x components).
+        """
 
 #==============================================================================
 class Mapping(BasicMapping):
@@ -134,7 +184,7 @@ class Mapping(BasicMapping):
             return obj
 
         if coordinates is None:
-            _coordinates = [Symbol(name) for name in ['x', 'y', 'z'][:pdim]]
+            _coordinates = [Symbol(name, real=True) for name in ['x', 'y', 'z'][:pdim]]
         else:
             if not isinstance(coordinates, (list, tuple, Tuple)):
                 raise TypeError('> Expecting list, tuple, Tuple')
@@ -143,7 +193,7 @@ class Mapping(BasicMapping):
                 if not isinstance(a, (str, Symbol)):
                     raise TypeError('> Expecting str or Symbol')
 
-            _coordinates = [Symbol(u) for u in coordinates]
+            _coordinates = [Symbol(u, real=True) for u in coordinates]
 
         obj._name                = name
         obj._ldim                = ldim
@@ -153,16 +203,19 @@ class Mapping(BasicMapping):
         obj._is_minus            = None
         obj._is_plus             = None
 
-        lcoords = ['x1', 'x2', 'x3'][:ldim]
-        lcoords = [Symbol(i) for i in lcoords]
-        obj._logical_coordinates = Tuple(*lcoords)
+        lcoords_names = ['x1', 'x2', 'x3'][:ldim]
+        lcoords_symbols_real = [Symbol(i, real=True) for i in lcoords_names]
+        lcoords_symbols_real_dict = {key: symbol for key,symbol in zip(lcoords_names, lcoords_symbols_real)}
+        obj._logical_coordinates = Tuple(*lcoords_symbols_real) # coordinates must be symbols with real=True      
+        lcoords_general_symbols = [Symbol(i) for i in lcoords_names] #list of symbols without real=True       
+
         # ...
         if not( obj._expressions is None ):
-            coords = ['x', 'y', 'z'][:pdim]
+            coords_names = ['x', 'y', 'z'][:pdim]
 
             # ...
             args = []
-            for i in coords:
+            for i in coords_names:
                 x = obj._expressions[i]
                 x = sympify(x)
                 args.append(x)
@@ -175,13 +228,15 @@ class Mapping(BasicMapping):
                 x = sympify(i)
                 args = args.subs(x,0)
             # ...
-
-            constants        = list(set(args.free_symbols) - set(lcoords))
+            # get constants by subtracting coordinates from list of free symbols
+            constants        = list(set(args.free_symbols) - set(lcoords_general_symbols))
             constants_values = {a.name:Constant(a.name) for a in constants}
             # subs constants as Constant objects instead of Symbol
             constants_values.update( kwargs )
-            d = {a:constants_values[a.name] for a in constants}
+            d = {a:numpy_to_native_python(constants_values[a.name]) for a in constants}
             args = args.subs(d)
+            # subs coordinate symbols without real=True to symbols with real=True
+            args = args.subs(lcoords_symbols_real_dict)
 
             obj._expressions = args
             obj._constants   = tuple(a for a in constants if isinstance(constants_values[a.name], Symbol))
@@ -192,10 +247,10 @@ class Mapping(BasicMapping):
 
             if obj._jac is None and obj._inv_jac is None:
                 obj._jac     = Jacobian(obj).subs(list(zip(args, exprs)))
-                obj._inv_jac = obj._jac.inv()
+                obj._inv_jac = obj._jac.inv() if pdim == ldim else None
             elif obj._inv_jac is None:
                 obj._jac     = ImmutableDenseMatrix(sympify(obj._jac)).subs(subs)
-                obj._inv_jac = obj._jac.inv()
+                obj._inv_jac = obj._jac.inv() if pdim == ldim else None
 
             elif obj._jac is None:
                 obj._inv_jac = ImmutableDenseMatrix(sympify(obj._inv_jac)).subs(subs)
@@ -212,6 +267,31 @@ class Mapping(BasicMapping):
 
         return obj
 
+    #--------------------------------------------------------------------------
+    # Callable mapping
+    #--------------------------------------------------------------------------
+    def get_callable_mapping(self):
+        if self._callable_map is None:
+            if self._expressions is None:
+                msg = 'Cannot generate callable mapping without analytical expressions. '\
+                      'A user-defined callable mapping of type `BasicCallableMapping` '\
+                      'can be provided using the method `set_callable_mapping`.'
+                raise ValueError(msg)
+
+            from sympde.topology.callable_mapping import CallableMapping
+            self._callable_map = CallableMapping(self)
+
+        return self._callable_map
+
+    def set_callable_mapping(self, F):
+
+        if not isinstance(F, BasicCallableMapping):
+            raise TypeError(
+                f'F must be a BasicCallableMapping, got {type(F)} instead')
+
+        self._callable_map = F
+
+    #--------------------------------------------------------------------------
     @property
     def name( self ):
         return self._name
@@ -323,13 +403,6 @@ class Mapping(BasicMapping):
         args = (self.name, self.ldim, self.pdim, self._coordinates, self._logical_coordinates,
                 self._expressions, self._constants, self._is_plus, self._is_minus)
         return tuple([a for a in args if a is not None])
-
-    def get_callable_mapping( self ):
-
-        if self._callable_map is None:
-            import sympde.topology.callable_mapping as cm
-            self._callable_map = cm.CallableMapping( self )
-        return self._callable_map
 
     def _eval_subs(self, old, new):
         return self
@@ -851,7 +924,7 @@ class LogicalExpr(CalculusFunction):
             if has(expr, DiffOperator):
                 return cls( expr, domain, evaluate=False)
             else:
-                syms = symbols(ph_coords[:dim])
+                syms = symbols(ph_coords[:dim], real=True)
                 if isinstance(mapping, InterfaceMapping):
                     mapping = mapping.minus
                     # here we assume that the two mapped domains
@@ -1366,4 +1439,3 @@ class SymbolicExpr(CalculusFunction):
         # TODO: check if we should use 'sympy.sympify(expr)' instead
         else:
             raise NotImplementedError('Cannot translate to Sympy: {}'.format(expr))
-

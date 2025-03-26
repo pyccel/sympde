@@ -13,7 +13,7 @@ from sympy.core import Symbol
 from sympy.core import Expr
 from sympy.core.containers import Tuple
 from sympy.core.singleton import Singleton
-from sympy.core.compatibility import with_metaclass
+from sympde.old_sympy_utilities import with_metaclass
 
 #==============================================================================
 class SpaceType(with_metaclass(Singleton, Basic)):

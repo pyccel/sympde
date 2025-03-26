@@ -102,8 +102,8 @@ from sympy.core               import Add, Mul, Pow
 from sympy.core.containers    import Tuple
 from sympy.core.singleton     import S
 from sympy.core.decorators    import call_highest_priority
-from sympy.core.compatibility import is_sequence
 
+from sympde.old_sympy_utilities import is_sequence
 from sympde.core.basic        import CalculusFunction
 from sympde.core.basic        import _coeffs_registery
 from sympde.topology.space    import ScalarFunction, VectorFunction
