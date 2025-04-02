@@ -32,7 +32,7 @@ class BasicDomain(Basic):
             else:
                 xyz = ['x', 'y', 'z'][:dim]
 
-            xyz = [Symbol(i) for i in xyz]
+            xyz = [Symbol(i, real=True) for i in xyz]
             self._coordinates = xyz
 
         if dim == 1:

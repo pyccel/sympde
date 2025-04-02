@@ -37,6 +37,7 @@ __all__ = (
     'Integral',
     'LinearExpr',
     'LinearForm',
+    'SemiNorm',
     'Norm',
 #
     '_get_domain',
@@ -337,7 +338,7 @@ class LinearForm(BasicForm):
     is_linear = True
     is_sesquilinear   = False
 
-    def __new__(cls, arguments, expr, **options):
+    def __new__(cls, arguments, expr, check_linearity=True, ignore_linearity_errors=False, **options):
 
         # Trivial case: null expression
         if expr == 0:
@@ -350,17 +351,26 @@ class LinearForm(BasicForm):
         # TODO: why do we 'sanitize' here?
         args = _sanitize_arguments(arguments, is_linear=True)
 
-        # Check linearity with respect to the given arguments
+        # Check (anti)linearity with respect to the given arguments
         if args[0].is_complex:
-            if not is_antilinear_expression(expr, args):
-                msg = 'Complex case : Expression is not antilinear w.r.t [{}]'.format(args)
-                raise UnconsistentLinearExpressionError(msg)
+            field = 'Complex'
+            prefix = 'anti'
+            check_function = is_antilinear_expression
         else:
-            if not is_linear_expression(expr, args):
-                msg = 'Real case :Expression is not linear w.r.t [{}]'.format(args)
+            field ='Real'
+            prefix = ''
+            check_function = is_linear_expression 
+        
+        if check_linearity and not check_function(expr, args):
+            print(expr)
+            print(args)
+            msg = f'{field} case: Expression is not {prefix}linear w.r.t [{args}]'
+            if ignore_linearity_errors:
+                print(msg)
+            else:
                 raise UnconsistentLinearExpressionError(msg)
 
-            # Create new object of type LinearForm
+        # Create new object of type LinearForm
         obj = Basic.__new__(cls, args, expr)
 
         # Compute 'domain' property (scalar or tuple)
@@ -423,7 +433,7 @@ class BilinearForm(BasicForm):
     is_sesquilinear   = False
     _is_symmetric = None
 
-    def __new__(cls, arguments, expr, **options):
+    def __new__(cls, arguments, expr, check_linearity=True, ignore_linearity_errors=False, **options):
 
         # Trivial case: null expression
         if expr == 0:
@@ -447,16 +457,21 @@ class BilinearForm(BasicForm):
 
 
         # Check linearity with respect to trial functions
-        if not is_linear_expression(expr, trial_functions):
-            msg = ' Expression is not linear w.r.t trial functions {}'\
-                    .format(trial_functions)
-            raise UnconsistentLinearExpressionError(msg)
+        if check_linearity and not is_linear_expression(expr, trial_functions):
+            msg = f'Expression is not linear w.r.t. trial functions [{trial_functions}]'
+            if ignore_linearity_errors:
+                print(msg)
+            else:
+                raise UnconsistentLinearExpressionError(msg)
+
 
         # Check linearity with respect to test functions
-        if not is_linear_expression(expr, test_functions):
-            msg = ' Expression is not linear w.r.t test functions {}'\
-                    .format(test_functions)
-            raise UnconsistentLinearExpressionError(msg)
+        if check_linearity and not is_linear_expression(expr, test_functions):
+            msg = f'Expression is not linear w.r.t. test functions [{test_functions}]'
+            if ignore_linearity_errors:
+                print(msg)
+            else:
+                raise UnconsistentLinearExpressionError(msg)
 
         # Create new object of type BilinearForm
         obj = Basic.__new__(cls, args, expr)
@@ -557,7 +572,6 @@ class SesquilinearForm(BasicForm):
         if not trial_functions[0].space.codomain_complex:
             raise TypeError('Trial space and Test space should be complex. In the real case, a BilinearForm should be called ')
 
-
         # Check linearity with respect to trial functions
         if not is_linear_expression(expr, trial_functions):
             msg = ' Real Case : Expression is not linear w.r.t trial functions {}'\
@@ -644,25 +658,14 @@ class SesquilinearForm(BasicForm):
         return expr
 
 #==============================================================================
-class Norm(Functional):
+class SemiNorm(Functional):
     is_norm = True
-    is_sesquilinear   = False
+    is_sesquilinear = False
 
     def __new__(cls, expr, domain, kind='l2', evaluate=True, **options):
-#        # ...
-#        tests = expr.atoms((ScalarFunction, VectorFunction))
-#        if tests:
-#            msg = '> Expecting an Expression without test functions'
-#            raise UnconsistentArgumentsError(msg)
-#
-#        if not isinstance(expr, (Expr, Matrix, ImmutableDenseMatrix)):
-#            msg = '> Expecting Expr, Matrix, ImmutableDenseMatrix'
-#            raise UnconsistentArgumentsError(msg)
-#        # ...
 
-        # ...
         kind = kind.lower()
-        if not(kind in ['l2', 'h1', 'h2']):
+        if kind not in ['l2', 'h1', 'h2']:
             raise ValueError('> Only L2, H1, H2 norms are available')
         # ...
 
@@ -681,14 +684,16 @@ class Norm(Functional):
                 expr = expr * conjugate(expr)
 
             else:
-                if not( expr.shape[1] == 1 ):
+                if expr.shape[1] != 1:
                     raise ValueError('Wrong expression for Matrix. must be a row')
 
                 args = expr[:, 0]
-                args_conj=[conjugate(i) for i in args]
+                args_conj = [conjugate(i) for i in args]
                 v = Tuple(*args)
                 v_conj = Tuple(*args_conj)
                 expr = Dot(v, v_conj)
+                v = Tuple(*expr[:, 0])
+                expr = Dot(v, v)
 
         elif kind == 'h1'and evaluate :
             exponent = 2
@@ -698,10 +703,11 @@ class Norm(Functional):
                 expr = Dot(a, conjugate(a))
 
             else:
-                if not( expr.shape[1] == 1 ):
+                if expr.shape[1] != 1:
                     raise ValueError('Wrong expression for Matrix. must be a row')
+
                 args = expr[:, 0]
-                args_conj=[conjugate(i) for i in args]
+                args_conj = [conjugate(i) for i in args]
                 v = Tuple(*args)
                 v_conj = Tuple(*args_conj)
                 expr = Dot(Grad(v), Grad(v_conj))
@@ -712,6 +718,85 @@ class Norm(Functional):
             if not is_vector:
                 a    = Hessian(expr)
                 expr = Dot(a, conjugate(a))
+
+            else:
+                raise NotImplementedError('TODO')
+        # ...
+
+        obj = Functional.__new__(cls, expr, domain, evaluate=evaluate)
+        obj._exponent = exponent
+        obj._kind     = kind
+
+        return obj
+
+    @property
+    def exponent(self):
+        return self._exponent
+
+    @property
+    def kind(self):
+        return self._kind
+
+#==============================================================================
+class Norm(Functional):
+    is_norm = True
+    is_sesquilinear = False
+
+    # [YG, 02.03.2025]
+    # This "new Norm" class was introduced after merging with the master
+    # branch (where the former Norm was renamed as SemiNorm). Hence I do not
+    # expect it to give a correct expression when used with complex fields.
+
+    def __new__(cls, expr, domain, kind='l2', evaluate=True, **options):
+
+        kind = kind.lower()
+        if kind not in ['l2', 'h1', 'h2']:
+            raise ValueError('> Only L2, H1, H2 norms are available')
+        # ...
+
+        # ...
+        is_vector = isinstance(expr, (Matrix, ImmutableDenseMatrix, Tuple, list, tuple))
+        if is_vector:
+            expr = ImmutableDenseMatrix(expr)
+        # ...
+
+        # ...
+        exponent = None
+        if kind == 'l2' and evaluate:
+            exponent = 2
+
+            if not is_vector:
+                expr = expr*expr
+
+            else:
+                if expr.shape[1] != 1:
+                    raise ValueError('Wrong expression for Matrix. must be a row')
+
+                v = Tuple(*expr[:,0])
+                expr = Dot(v, v)
+
+        elif kind == 'h1' and evaluate :
+            exponent = 2
+
+            if not is_vector:
+                a    = Grad(expr)
+                expr = Dot(a, a) + expr * expr
+
+            else:
+                if expr.shape[1] != 1:
+                    raise ValueError('Wrong expression for Matrix. must be a row')
+
+                v = Tuple(*expr[:, 0])
+                a = Grad(v)
+                expr = Inner(a, a) + Dot(v, v)
+
+        elif kind == 'h2' and evaluate :
+            exponent = 2
+
+            if not is_vector:
+                a    = Hessian(expr)
+                b    = Grad(expr)
+                expr = Dot(a, a) + Dot(b, b) + expr * expr
 
             else:
                 raise NotImplementedError('TODO')
@@ -964,4 +1049,3 @@ Basic._constructor_postprocessor_mapping[Integral] = {
 Basic._constructor_postprocessor_mapping[IntAdd] = {
     "Mul": [mul_add],
 }
-

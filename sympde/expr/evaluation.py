@@ -567,7 +567,7 @@ class TerminalExpr(CalculusFunction):
                     if isinstance(domain, (NCube, NCubeInterior)):
                         bounds      = domain.min_coords if ext == -1 else domain.max_coords
                         J           = J.subs(coordinates[axis], bounds[axis])
-                    newcoords = [Symbol(c.name+"_plus") for c in coordinates]
+                    newcoords = [Symbol(c.name+"_plus", real=True) for c in coordinates]
                     subs      = list(zip(coordinates, newcoords))
                     J = J.subs(subs)
 
