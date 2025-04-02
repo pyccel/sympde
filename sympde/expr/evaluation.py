@@ -6,7 +6,7 @@ from itertools import product
 import numpy as np
 
 from sympy import Abs, S, cacheit
-from sympy import Indexed, Matrix, ImmutableDenseMatrix
+from sympy import Indexed, Matrix, ImmutableDenseMatrix, conjugate
 from sympy import expand
 from sympy.core import Basic, Symbol
 from sympy.core import Add, Mul, Pow
@@ -139,7 +139,7 @@ def _get_trials_tests(expr, *, flatten=False):
     if not isinstance(expr, (BasicForm, BasicExpr)):
         raise TypeError("Expression must be of type BasicForm or BasicExpr, got '{}' instead".format(type(expr)))
 
-    if expr.is_bilinear:
+    if expr.is_bilinear or expr.is_sesquilinear:
         trials = _unpack_functions(expr.variables[0]) if flatten else expr.variables[0]
         tests  = _unpack_functions(expr.variables[1]) if flatten else expr.variables[1]
 
@@ -827,6 +827,10 @@ class TerminalExpr(CalculusFunction):
             domain    = expr.domain
             expr      = cls(expr.expr, domain=domain)
             return LogicalExpr(expr, domain=domain)
+
+        elif isinstance(expr, conjugate):
+            expr      = cls(expr.args[0], domain=domain)
+            return conjugate(expr)
 
         return expr
 

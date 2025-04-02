@@ -62,14 +62,16 @@ class BasicExpr(Expr):
     is_Function   = True
     is_linear     = False
     is_bilinear   = False
+    # TODO put is_sesquilinear=False here but it don't work
+    #is_sesquilinear   = False
     is_functional = False
 
     @property
     def fields(self):
         atoms  = self.expr.atoms(ScalarFunction, VectorFunction)
-        if self.is_bilinear or self.is_linear:
+        if self.is_bilinear or self.is_sesquilinear or self.is_linear:
             args = self.variables
-            if self.is_bilinear:
+            if self.is_bilinear or self.is_sesquilinear :
                 args = args[0]+args[1]
             fields = tuple(atoms.difference(args))
         else:
