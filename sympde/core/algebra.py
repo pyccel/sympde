@@ -292,6 +292,9 @@ class InnerBasic(CalculusFunction):
         M = u.transpose() * v
         return M.trace()
 
+# ...
+class Inner_1d(InnerBasic):
+    pass
 
 # ...
 class Inner_2d(InnerBasic):

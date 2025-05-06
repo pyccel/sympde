@@ -16,7 +16,7 @@ from sympy.simplify.simplify import simplify
 
 from sympde.core.basic import _coeffs_registery
 from sympde.core.basic import CalculusFunction
-from sympde.core.algebra import (Dot_1d,
+from sympde.core.algebra import (Dot_1d, Inner_1d,
                                  Dot_2d, Inner_2d, Cross_2d,
                                  Dot_3d, Inner_3d, Cross_3d)
 from sympde.core.utils import random_string
