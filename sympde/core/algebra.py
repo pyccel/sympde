@@ -274,48 +274,29 @@ class InnerBasic(CalculusFunction):
         else:
             return r
 
-class Inner_2d(InnerBasic):
-
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
 
-        if not( len(_args) == 2):
+        if len(_args) != 2:
             raise ValueError('Expecting two arguments')
 
-        u = _args[0]
-        v = _args[1]
+        u, v = _args
 
         u = Matrix(u)
         v = Matrix(v)
 
         # TODO add conjugate
-        M = u.transpose()*v
+        M = u.transpose() * v
         return M.trace()
 
 
-class Inner_3d(InnerBasic):
-
-    @classmethod
-    def eval(cls, *_args):
-        """."""
-
-        if not _args:
-            return
-
-        if not( len(_args) == 2):
-            raise ValueError('Expecting two arguments')
-
-        u = _args[0]
-        v = _args[1]
-
-        u = Matrix(u)
-        v = Matrix(v)
-
-        # TODO add conjugate
-        M = u.transpose()*v
-        return M.trace()
 # ...
+class Inner_2d(InnerBasic):
+    pass
+
+# ...
+class Inner_3d(InnerBasic):
+    pass
