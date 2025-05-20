@@ -32,7 +32,7 @@ from sympde.expr.expr import LinearForm, BilinearForm
 from sympde.expr.expr import integral
 from sympde.expr.expr import Functional, Norm
 from sympde.expr.expr import linearize
-from sympde.expr.evaluation import TerminalExpr
+from sympde.expr.evaluation import TerminalExpr, DomainExpression, BoundaryExpression
 
 #==============================================================================
 
@@ -369,7 +369,8 @@ def test_terminal_expr_linear_2d_1():
     domain = Domain('Omega', dim=2)
     B1 = Boundary(r'\Gamma_1', domain)
 
-    x,y = domain.coordinates
+    # Domain has no mapping, so physical coordinates are the same as logical
+    x, y = x1, x2 = domain.coordinates
 
     kappa = Constant('kappa', is_real=True)
     mu    = Constant('mu'   , is_real=True)
@@ -380,69 +381,98 @@ def test_terminal_expr_linear_2d_1():
     u,u1,u2 = [element_of(V, name=i) for i in ['u', 'u1', 'u2']]
     v,v1,v2 = [element_of(V, name=i) for i in ['v', 'v1', 'v2']]
 
-    # ...
     int_0 = lambda expr: integral(domain , expr)
     int_1 = lambda expr: integral(B1, expr)
 
-    l = LinearForm(v, int_0(x*y*v))
+    # ...
+    expr = x * y * v
+    l = LinearForm(v, int_0(expr))
+    l_term = TerminalExpr(l, domain)
 
-    print(TerminalExpr(l, domain))
-    print('')
+    l_term_expected = (DomainExpression(domain.interior, expr),)
+    assert l_term == l_term_expected
     # ...
 
     # ...
-    l = LinearForm(v, int_0(x*y*v + v))
-    print(TerminalExpr(l, domain))
-    print('')
+    expr = x * y * v + v
+    l = LinearForm(v, int_0(expr))
+    l_term = TerminalExpr(l, domain)
+
+    l_term_expected = (DomainExpression(domain.interior, expr),)
+    assert l_term == l_term_expected
     # ...
 
     # ...
     g = Matrix((x**2, y**2))
-    l = LinearForm(v, int_1(v*dot(g, nn)))
-    print(TerminalExpr(l, domain))
-    print('')
+    expr = v * dot(g, nn)
+    l = LinearForm(v, int_1(expr))
+    l_term = TerminalExpr(l, domain)
+
+    expr_2 = v * (g[0] * nn[0] + g[1] * nn[1])
+    l_term_expected = (BoundaryExpression(B1, expr_2),)
+    assert l_term == l_term_expected
     # ...
 
     # ...
     g = Matrix((x**2, y**2))
-    l = LinearForm(v, int_1(v*dot(g, nn)) + int_0(x*y*v))
-    print(TerminalExpr(l, domain))
-    print('')
+    expr_0 = x * y * v
+    expr_1 = v * dot(g, nn)
+    l = LinearForm(v, int_1(expr_1) + int_0(expr_0))
+    l_term = TerminalExpr(l, domain)
+
+    expr_2 = v * (g[0] * nn[0] + g[1] * nn[1])
+    l_term_expected = (DomainExpression(domain.interior, expr_0),
+                       BoundaryExpression(B1, expr_2))
+    assert l_term == l_term_expected
     # ...
 
     # ...
-    l1 = LinearForm(v1, int_0(x*y*v1))
+    l1 = LinearForm(v1, int_0(x * y * v1))
     l = LinearForm(v, l1(v))
-    print(TerminalExpr(l, domain))
-    print('')
+    l_term = TerminalExpr(l, domain)
+
+    l_term_expected = (DomainExpression(domain.interior, x * y * v),)
+    assert l_term == l_term_expected
     # ...
 
     # ...
-    g = Matrix((x,y))
-    l1 = LinearForm(v1, int_0(x*y*v1))
+    g = Matrix((x, y))
+    l1 = LinearForm(v1, int_0(x * y * v1))
     l2 = LinearForm(v2, int_0(dot(grad(v2), g)))
+    l  = LinearForm(v, l1(v) + l2(v))
+    l_term = TerminalExpr(l, domain)
 
-    l = LinearForm(v, l1(v) + l2(v))
-    print(TerminalExpr(l, domain))
-    print('')
+    expr_2 = v * x * y + x * dx1(v) + y * dx2(v)
+    l_term_expected = (DomainExpression(domain.interior, expr_2),)
+    assert l_term == l_term_expected
     # ...
 
+
     # ...
-    l1 = LinearForm(v1, int_0(x*y*v1))
+    l1 = LinearForm(v1, int_0(x * y * v1))
     l2 = LinearForm(v1, int_0(v1))
-    l = LinearForm(v, l1(v) + kappa*l2(v))
-    print(TerminalExpr(l, domain))
-    print('')
+    l  = LinearForm(v, l1(v) + kappa * l2(v))
+
+    l_term = TerminalExpr(l, domain)
+
+    expr_2 = kappa * v + v * x * y
+    l_term_expected = (DomainExpression(domain.interior, expr_2),)
+    assert l_term == l_term_expected
     # ...
 
     # ...
     g = Matrix((x**2, y**2))
-    l1 = LinearForm(v1, int_0(x*y*v1))
+    l1 = LinearForm(v1, int_0(x * y * v1))
     l2 = LinearForm(v1, int_0(v1))
-    l3 = LinearForm(v, int_1(v*dot(g, nn)))
-    l = LinearForm(v, l1(v) + kappa*l2(v) + mu*l3(v))
-    print(TerminalExpr(l, domain))
-    print('')
+    l3 = LinearForm(v, int_1(v * dot(g, nn)))
+    l  = LinearForm(v, l1(v) + kappa * l2(v) + mu * l3(v))
+    l_term = TerminalExpr(l, domain)
+
+    expr_2 = kappa * v + v * x * y
+    expr_3 = mu * v * (g[0] * nn[0] + g[1] * nn[1])
+    l_term_expected = (DomainExpression(domain.interior, expr_2),
+                       BoundaryExpression(B1, expr_3))
+    assert l_term == l_term_expected
     # ...
 
 #==============================================================================
