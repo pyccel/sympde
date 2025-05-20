@@ -500,25 +500,27 @@ class Inner(BasicOperator):
         else:
             b = [arg2]
 
-        args_1 = [i for i in a if not i.is_commutative]
+        args_1 = [i for i in a if not i.is_commutative or has(i, types)]
         c1     = [i for i in a if not i in args_1]
-        args_2 = [i for i in b if not i.is_commutative]
+        args_2 = [i for i in b if not i.is_commutative or has(i, types)]
         c2     = [i for i in b if not i in args_2]
 
         a = reduce(mul, args_1)
         b = reduce(mul, args_2)
-        c = Mul(*c1)*Mul(*c2)
+        c = Mul(*c1) * Mul(*c2)
 
+        # TODO [YG 20.05.2025] : apply conjugate if arguments are flipped
         if str(a) > str(b):
-            a,b = b,a
+            a, b = b, a
 
         obj = Basic.__new__(cls, a, b)
 
+        # This is a norm when a == b
         if a == b:
             obj.is_real     = True
             obj.is_positive = True
 
-        return c*obj
+        return c * obj
 
 #==============================================================================
 class Outer(BasicOperator):
