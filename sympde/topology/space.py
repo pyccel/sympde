@@ -431,7 +431,7 @@ class ScalarFunction(Symbol):
     >>> V = SplineFemSpace('V')
     >>> phi = ScalarFunction(V, 'phi')
     """
-    is_commutative = True
+    is_commutative = False
     _space         = None
     _projection_of = None
 
