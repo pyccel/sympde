@@ -285,6 +285,11 @@ class InnerBasic(CalculusFunction):
 
         u, v = _args
 
+        # Matrix constructor requires a sequence
+        if not is_sequence(u): u = [u]
+        if not is_sequence(v): v = [v]
+
+        # Convert arguments to Matrix (nothing happens if already Matrix)
         u = Matrix(u)
         v = Matrix(v)
 
