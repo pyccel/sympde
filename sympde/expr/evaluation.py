@@ -1,13 +1,7 @@
 # coding: utf-8
 
-from itertools import product
-
-
-import numpy as np
-
 from sympy import Abs, S, cacheit
 from sympy import Indexed, Matrix, ImmutableDenseMatrix
-from sympy import expand
 from sympy.core import Basic, Symbol
 from sympy.core import Add, Mul, Pow
 from sympy.core.expr import AtomicExpr
@@ -19,19 +13,17 @@ from sympde.core.basic import CalculusFunction
 from sympde.core.algebra import (Dot_1d, Inner_1d,
                                  Dot_2d, Inner_2d, Cross_2d,
                                  Dot_3d, Inner_3d, Cross_3d)
-from sympde.core.utils import random_string
 
-from sympde.calculus import jump, avg, minus, plus
+from sympde.calculus import jump, minus, plus
 from sympde.calculus import Jump, is_zero
-from sympde.calculus.core import _generic_ops, _diff_ops
 from sympde.calculus.matrices import SymbolicDeterminant, Inverse, Transpose
-from sympde.calculus.matrices import MatSymbolicPow, MatrixElement, SymbolicTrace
+from sympde.calculus.matrices import MatrixElement, SymbolicTrace
 
 from sympde.topology.basic   import BasicDomain, Union, Interval
 from sympde.topology.basic   import Boundary, Interface
 from sympde.topology.basic   import InteriorDomain
 from sympde.topology.domain  import NormalVector, TangentVector, NCube, NCubeInterior
-from sympde.topology.mapping import JacobianSymbol, InterfaceMapping, MultiPatchMapping, JacobianInverseSymbol
+from sympde.topology.mapping import JacobianSymbol, InterfaceMapping, JacobianInverseSymbol
 from sympde.topology.mapping import LogicalExpr, PullBack
 
 # TODO fix circular dependency between sympde.expr.evaluation and sympde.topology.mapping
@@ -40,7 +32,6 @@ from sympde.topology.space import ScalarFunction
 from sympde.topology.space import VectorFunction
 from sympde.topology.space import IndexedVectorFunction
 from sympde.topology.space import Trace
-from sympde.topology.space import element_of
 from sympde.topology.space import ScalarFunctionSpace
 
 from sympde.topology.derivatives import _partial_derivatives
