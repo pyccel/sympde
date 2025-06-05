@@ -51,21 +51,21 @@ def test_equation_2d_1():
     
     # ... bilinear/linear forms
     expr = inner(grad(v), grad(u))
-    a1 = BilinearForm((v,u), int_0(expr))
+    a1 = BilinearForm((u, v), int_0(expr))
 
-    expr = v*u
-    a2 = BilinearForm((v,u),int_0(expr))
+    expr = inner(u, v)
+    a2 = BilinearForm((u, v),int_0(expr))
 
-    expr = v*u
-    a_B1 = BilinearForm((v, u), int_1(expr))
+    expr = inner(u, v)
+    a_B1 = BilinearForm((u, v), int_1(expr))
 
-    expr = x*y*v
+    expr = inner(x * y, v)
     l1 = LinearForm(v, int_0(expr))
 
-    expr = cos(x+y)*v
+    expr = inner(cos(x + y), v)
     l2 = LinearForm(v, int_0(expr))
 
-    expr = x*y*v
+    expr = inner(x * y, v)
     l_B2 = LinearForm(v, int_2(expr))
     # ...
 
@@ -96,23 +96,23 @@ def test_equation_2d_1():
     # ...
 
     # ...
-    a = BilinearForm((v,u), a1(v,u) + alpha*a2(v,u))
+    a = BilinearForm((u, v), a1(u, v) + alpha*a2(u, v))
     equation = Equation(a, l1, tests=v, trials=u)
     # ...
 
     # ...
-    a = BilinearForm((v,u), a1(v,u) + a_B1(v,u))
+    a = BilinearForm((u, v), a1(u, v) + a_B1(u, v))
     equation = Equation(a, l1, tests=v, trials=u)
     # ...
 
     # ...
-    a = BilinearForm((v,u), a1(v,u) + a_B1(v,u))
+    a = BilinearForm((u, v), a1(u, v) + a_B1(u, v))
     l = LinearForm(v, l1(v) + l2(v))
     equation = Equation(a, l, tests=v, trials=u)
     # ...
 
     # ...
-    a = BilinearForm((v,u), a1(v,u) + a_B1(v,u))
+    a = BilinearForm((u, v), a1(u, v) + a_B1(u, v))
     l = LinearForm(v, l1(v) + alpha*l_B2(v))
     equation = Equation(a, l, tests=v, trials=u)
     # ...
@@ -125,12 +125,12 @@ def test_equation_2d_1():
     g    = cos(pi*x) * cos(pi*y)
     a0   = BilinearForm((u, v), int_0(inner(grad(u), grad(v))))
     a_B1 = BilinearForm((u, v), - int_1(kappa * u * dot(grad(v), nn)
-                               - v * dot(grad(u), nn)
-                               + u * v/eps))
+                               - inner(dot(grad(u), nn), v)
+                               + inner(u, v)/eps))
 
 
-    a = BilinearForm((u,v), a0(u,v) + a_B1(u,v))
-    l = LinearForm(v, int_0(g*v/eps) - int_1(kappa*v*g))
+    a = BilinearForm((u, v), a0(u, v) + a_B1(u, v))
+    l = LinearForm(v, int_0(inner(g, v)) / eps - kappa * int_1(inner(g, v)))
     equation = Equation(a, l, tests=v, trials=u)
     # ...
 
