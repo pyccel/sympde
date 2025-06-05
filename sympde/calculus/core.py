@@ -505,8 +505,8 @@ class Inner(BasicOperator):
         args_2 = [i for i in b if not i.is_commutative or has(i, types)]
         c2     = [i for i in b if not i in args_2]
 
-        a = reduce(mul, args_1)
-        b = reduce(mul, args_2)
+        a = reduce(mul, args_1, S.One)
+        b = reduce(mul, args_2, S.One)
         c = Mul(*c1) * Mul(*c2)
 
         # TODO [YG 20.05.2025] : apply conjugate if arguments are flipped
