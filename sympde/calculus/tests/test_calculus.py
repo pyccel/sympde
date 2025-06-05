@@ -76,11 +76,14 @@ def test_Cross(dim):
     # TODO: check exceptions
 
 #==============================================================================
+@pytest.mark.parametrize('vector', [True, False])
 @pytest.mark.parametrize('dim', [1, 2, 3])
-def test_Inner(dim):
+def test_Inner(dim, vector):
+
+    FunctionSpace = VectorFunctionSpace if vector else ScalarFunctionSpace
 
     domain  = Domain('Omega', dim=dim)
-    W       = VectorFunctionSpace('W', domain)
+    W       = FunctionSpace('W', domain)
     a, b, c = elements_of(W, names='a, b, c')
     r       = Constant('r')
 
