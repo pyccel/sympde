@@ -136,11 +136,11 @@ class Union(BasicDomain):
         # remove duplicates and sort domains by their string representation
         args = sorted(set(args), key=str)
 
-        # a. If the required Union contains no domains, return an empty list;
+        # a. If the required Union contains no domains, return an empty tuple;
         # b. If it contains a single domain, return the domain itself;
         # c. If it contains multiple domains, create a Union object.
         if not args:
-            obj = []
+            obj = ()
         elif len(args) == 1:
             obj = args[0]
         else:
