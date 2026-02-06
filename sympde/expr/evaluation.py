@@ -1,13 +1,5 @@
-# coding: utf-8
-
-from itertools import product
-
-
-import numpy as np
-
-from sympy import Abs, S, cacheit
+from sympy import Abs, S, cacheit, Expr
 from sympy import Indexed, Matrix, ImmutableDenseMatrix
-from sympy import expand
 from sympy.core import Basic, Symbol
 from sympy.core import Add, Mul, Pow
 from sympy.core.expr import AtomicExpr
@@ -19,19 +11,20 @@ from sympde.core.basic import CalculusFunction
 from sympde.core.algebra import (Dot_1d,
                                  Dot_2d, Inner_2d, Cross_2d,
                                  Dot_3d, Inner_3d, Cross_3d)
-from sympde.core.utils import random_string
+#from sympde.core.utils import random_string
 
 from sympde.calculus import jump, avg, minus, plus
 from sympde.calculus import Jump, is_zero
 from sympde.calculus.core import _generic_ops, _diff_ops
+from sympde.calculus.core import MinusInterfaceOperator, PlusInterfaceOperator
 from sympde.calculus.matrices import SymbolicDeterminant, Inverse, Transpose
-from sympde.calculus.matrices import MatSymbolicPow, MatrixElement, SymbolicTrace
+from sympde.calculus.matrices import MatrixElement, SymbolicTrace
 
 from sympde.topology.basic   import BasicDomain, Union, Interval
 from sympde.topology.basic   import Boundary, Interface
 from sympde.topology.basic   import InteriorDomain
 from sympde.topology.domain  import NormalVector, TangentVector, NCube, NCubeInterior
-from sympde.topology.mapping import JacobianSymbol, InterfaceMapping, MultiPatchMapping, JacobianInverseSymbol
+from sympde.topology.mapping import JacobianSymbol, InterfaceMapping, JacobianInverseSymbol
 from sympde.topology.mapping import LogicalExpr, PullBack
 
 # TODO fix circular dependency between sympde.expr.evaluation and sympde.topology.mapping
@@ -40,7 +33,6 @@ from sympde.topology.space import ScalarFunction
 from sympde.topology.space import VectorFunction
 from sympde.topology.space import IndexedVectorFunction
 from sympde.topology.space import Trace
-from sympde.topology.space import element_of
 from sympde.topology.space import ScalarFunctionSpace
 
 from sympde.topology.derivatives import _partial_derivatives
@@ -132,10 +124,7 @@ def _get_trials_tests(expr, *, flatten=False):
     tests : tuple
         All scalar test functions in the given expression, with vector
         functions decomposed into their scalar components.
-
-
     """
-
     if not isinstance(expr, (BasicForm, BasicExpr)):
         raise TypeError("Expression must be of type BasicForm or BasicExpr, got '{}' instead".format(type(expr)))
 
@@ -187,7 +176,7 @@ def _to_matrix_form(expr, *, trials=None, tests=None, domain=None):
     tests : iterable
         List of all scalar test functions (after unpacking vector functions).
 
-    domain : Domain
+    domain : BasicDomain
         domain of expr
 
     Returns
@@ -434,10 +423,29 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
 
 #==============================================================================
 class KernelExpression(Basic):
+    """
+    A generic SymPDE expression `expr` defined over the `target` domain. This
+    is a lightweight object which stores just the input values. In addition, if
+    the expression is a 1x1 matrix, the content of its only entry is taken.
+
+    Parameters
+    ----------
+    target : BasicDomain (from sympde.topology.basic)
+        The domain in which the expression is defined. This may be a Domain, a
+        Boundary, an Interface, or an object of any subclasses.
+
+    expr : Expr (from sympy)
+        The mathematical expression.
+    """
     def __new__(cls, target, expr):
+
+        assert isinstance(target, BasicDomain)
+        assert isinstance(expr, Expr)
+
         if isinstance(expr, (Matrix, ImmutableDenseMatrix)):
-            n,m = expr.shape
-            if n*m == 1: expr = expr[0,0]
+            n, m = expr.shape
+            if n * m == 1:
+                expr = expr[0,0]
 
         return Basic.__new__(cls, target, expr)
 
@@ -451,18 +459,31 @@ class KernelExpression(Basic):
 
 #==============================================================================
 class DomainExpression(KernelExpression):
-    pass
+    def __new__(cls, target, expr):
+        assert isinstance(target, InteriorDomain)
+        return KernelExpression.__new__(cls, target, expr)
 
 #==============================================================================
 class BoundaryExpression(KernelExpression):
-    pass
+    def __new__(cls, target, expr):
+        assert isinstance(target, Boundary)
+        return KernelExpression.__new__(cls, target, expr)
 
 #==============================================================================
+function_types = (ScalarFunction, VectorFunction, MinusInterfaceOperator, PlusInterfaceOperator)
+
 class InterfaceExpression(KernelExpression):
+
     def __new__(cls, target, u, v, expr):
+
+        assert isinstance(target, Interface)
+        assert isinstance(u, function_types)
+        assert isinstance(v, function_types)
+
         obj = KernelExpression.__new__(cls, target, expr)
         obj._trial = u
         obj._test  = v
+
         return obj
 
     @property
@@ -476,33 +497,45 @@ class InterfaceExpression(KernelExpression):
 #==============================================================================
 class TerminalExpr(CalculusFunction):
     """
-     This class takes a SymPDE expression and transforms its vector operators into atomic ones
-     for a specified domain.
+    This class takes a SymPDE expression and transforms its vector operators
+    into atomic ones for a specified domain.
 
-     Parameters
-     ----------
-     expr: sympy.Expr
-      The mathematical expression.
+    Parameters
+    ----------
+    expr : Expr | Matrix | ImmutableDenseMatrix (from sympy)
+                | LogicalExpr (from sympde.topology.mapping)
+        The mathematical expression.
 
-     domain: Domain
-      The domain in which the expression is defined.
+    domain : BasicDomain (from sympde.topology.basic)
+        The domain in which the expression is defined. This may be a Domain, a
+        Boundary, an Interface, or an object of any subclasses.
 
-     Returns
-     -------
-      r: sympy.Expr or tuple of sympy.Expr
-       The atomized expression.
+    evaluate : bool, optional
+        Whether the input expression should be evaluated (default = True).
+
+    Returns
+    -------
+    Expr | tuple[Expr] | TerminalExpr
+        The atomized expression. A tuple of expressions is returned in the case
+        of `expr` being a BasicForm (i.e. a BilinearForm, LinearForm, or
+        Functional), as the domain could contain multiple patches. An
+        unevaluated `TerminalExpr` object (which only stores its arguments) is
+        returned if `evaluate is False`.
     """
-    def __new__(cls, expr, domain, **options):
+    def __new__(cls, expr: Expr, domain: BasicDomain, *, evaluate: bool=True):
 
-        if options.pop('evaluate', True):
-            r = cls.eval(expr, domain)
-        else:
-            r = None
+        expr_types = (Expr, Matrix, ImmutableDenseMatrix, LogicalExpr)
 
-        if r is None:
-            return Basic.__new__(cls, expr, domain)
+        assert isinstance(expr, expr_types)
+        assert isinstance(domain, BasicDomain)
+        assert isinstance(evaluate, bool)
+
+        if evaluate:
+            obj = cls.eval(expr, domain)
         else:
-            return r
+            obj = Basic.__new__(cls, expr, domain)
+
+        return obj
 
     def __getitem__(self, indices, **kw_args):
         if is_sequence(indices):
@@ -522,9 +555,33 @@ class TerminalExpr(CalculusFunction):
     @classmethod
     @cacheit
     def eval(cls, expr, domain):
-        """."""
+        """
+        Process the whole AST of `expr` to generate a new expression where the
+        vector operators have been replaced by atomic operators. The input
+        `domain` is used to determine essential information like the number
+        of dimensions, the coordinate variables, the boundary orientation, etc.
+
+        Parameters
+        ----------
+        expr : Expr (from sympy)
+            The mathematical expression.
+
+        domain : BasicDomain (from sympde.topology.basic)
+            The domain in which the expression is defined. This may be a Domain, a
+            Boundary, an Interface, or an object of any subclasses.
+
+        Returns
+        -------
+        Expr | tuple[Expr] | TerminalExpr
+            The atomized expression. A tuple of expressions is returned in the case
+            of `expr` being a BasicForm (i.e. a BilinearForm, LinearForm, or
+            Functional), as the domain could contain multiple patches. An
+            unevaluated `TerminalExpr` object (which only stores its arguments) is
+            returned if `evaluate is False`.
+        """
 
         dim = domain.dim
+
         if isinstance(expr, Add):
             args = [cls.eval(a, domain=domain) for a in expr.args]
             o = args[0]
@@ -734,8 +791,8 @@ class TerminalExpr(CalculusFunction):
 
             ls = []
             for key in d_int:
-                domain, u,v = key
-                expr    = d_int[domain, u, v]
+                domain, u, v = key
+                expr = d_int[domain, u, v]
 
                 newexpr = cls.eval(expr, domain=domain)
                 if newexpr != 0:
@@ -787,7 +844,7 @@ class TerminalExpr(CalculusFunction):
             return new(*args)
 
         elif isinstance(expr, Trace):
-            # TODO treate different spaces
+            # TODO treat different spaces
             if expr.order == 0:
                 return cls.eval(expr.expr, domain=domain)
 
@@ -824,8 +881,8 @@ class TerminalExpr(CalculusFunction):
             return ImmutableDenseMatrix(lines)
 
         elif isinstance(expr, LogicalExpr):
-            domain    = expr.domain
-            expr      = cls(expr.expr, domain=domain)
+            domain = expr.domain
+            expr   = cls(expr.expr, domain=domain)
             return LogicalExpr(expr, domain=domain)
 
         return expr
