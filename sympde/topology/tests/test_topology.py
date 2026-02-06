@@ -1,21 +1,15 @@
-# coding: utf-8
-
-from sympy.tensor import Indexed
+import os
 
 from sympde.topology import InteriorDomain, Union
-from sympde.topology import Boundary, NormalVector, TangentVector
-from sympde.topology import Connectivity, Edge
+from sympde.topology import Boundary
 from sympde.topology import Domain, ElementDomain
 from sympde.topology import Area, Mapping
 from sympde.topology import Interface
 from sympde.topology import Line, Square, Cube
 from sympde.topology import IdentityMapping
 
-import os
-
 base_dir = os.path.dirname(os.path.realpath(__file__))
 topo_dir = os.path.join(base_dir, 'data')
-
 
 #==============================================================================
 def test_interior_domain():
@@ -33,7 +27,6 @@ def test_interior_domain():
     assert(len(D) == 2)
     assert( D.todict() == [{'name': 'D1', 'mapping':'None'},
                            {'name': 'D2', 'mapping':'None'}] )
-
 
 #==============================================================================
 def test_topology_1():
