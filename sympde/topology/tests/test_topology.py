@@ -16,17 +16,17 @@ def test_interior_domain():
     D1 = InteriorDomain('D1', dim=2)
     D2 = InteriorDomain('D2', dim=2)
 
-    assert( D1.todict() == {'name': 'D1', 'mapping':'None'} )
-    assert( D2.todict() == {'name': 'D2', 'mapping':'None'} )
+    assert D1.todict() == {'name': 'D1', 'mapping':'None'}
+    assert D2.todict() == {'name': 'D2', 'mapping':'None'}
 
-    assert( Union(D2, D1) == Union(D1, D2) )
+    assert Union(D2, D1) == Union(D1, D2)
 
     D = Union(D1, D2)
 
-    assert(D.dim == 2)
-    assert(len(D) == 2)
-    assert( D.todict() == [{'name': 'D1', 'mapping':'None'},
-                           {'name': 'D2', 'mapping':'None'}] )
+    assert D.dim == 2
+    assert len(D) == 2
+    assert D.todict() == [{'name': 'D1', 'mapping':'None'},
+                          {'name': 'D2', 'mapping':'None'}]
 
 #==============================================================================
 def test_topology_1():
@@ -42,12 +42,12 @@ def test_topology_1():
     D1 = M1(A)
     D2 = M2(B)
 
-    domains = [D1, D2]
-    connectivity = [((0, 0, 1), (1, 0, -1))]
-    Omega = Domain.join(domains, connectivity, 'domain')
+    patches = [D1, D2]
+    connectivity = [((0, 0, 1), (1, 0, -1), 1)]
+    Omega = Domain.join(patches, connectivity, 'domain')
 
     interfaces = Omega.interfaces
-    assert(isinstance(interfaces, Interface))
+    assert isinstance(interfaces, Interface)
 
     # export
     Omega.export('omega.h5')
@@ -71,9 +71,9 @@ def test_domain_1():
                    interiors=[Omega_1, Omega_2],
                    boundaries=[Gamma_1, Gamma_2, Gamma_3])
 
-    assert( Omega.dim == 2 )
-    assert( len(Omega.interior) == 2 )
-    assert( len(Omega.boundary) == 3 )
+    assert Omega.dim == 2
+    assert len(Omega.interior) == 2
+    assert len(Omega.boundary) == 3
 
 #==============================================================================
 def test_boundary_1():
@@ -86,9 +86,9 @@ def test_boundary_1():
                    interiors=[Omega_1],
                    boundaries=[Gamma_1, Gamma_2])
 
-    assert(Omega.boundary == Union(Gamma_1, Gamma_2))
-    assert(Omega.boundary.complement(Gamma_1) == Gamma_2)
-    assert(Omega.boundary - Gamma_1 == Gamma_2)
+    assert Omega.boundary == Union(Gamma_1, Gamma_2)
+    assert Omega.boundary.complement(Gamma_1) == Gamma_2
+    assert Omega.boundary - Gamma_1 == Gamma_2
 
 #==============================================================================
 def test_boundary_2():
@@ -102,23 +102,23 @@ def test_boundary_2():
                    interiors=[Omega_1],
                    boundaries=[Gamma_1, Gamma_2, Gamma_3])
 
-    assert(Omega.boundary == Union(Gamma_1, Gamma_2, Gamma_3))
-    assert(Omega.boundary.complement(Gamma_1) == Union(Gamma_2, Gamma_3))
-    assert(Omega.boundary - Gamma_1 == Union(Gamma_2, Gamma_3))
+    assert Omega.boundary == Union(Gamma_1, Gamma_2, Gamma_3)
+    assert Omega.boundary.complement(Gamma_1) == Union(Gamma_2, Gamma_3)
+    assert Omega.boundary - Gamma_1 == Union(Gamma_2, Gamma_3)
 
 #==============================================================================
 def test_boundary_3():
     Omega_1 = InteriorDomain('Omega_1', dim=2)
 
     Gamma_1 = Boundary(r'\Gamma_1', Omega_1, axis=0, ext=-1)
-    Gamma_4 = Boundary(r'\Gamma_4', Omega_1, axis=1, ext=1)
+    Gamma_4 = Boundary(r'\Gamma_4', Omega_1, axis=1, ext= 1)
 
     Omega = Domain('Omega',
                    interiors=[Omega_1],
                    boundaries=[Gamma_1, Gamma_4])
 
-    assert(Omega.get_boundary(axis=0, ext=-1) == Gamma_1)
-    assert(Omega.get_boundary(axis=1, ext=1) == Gamma_4)
+    assert Omega.get_boundary(axis=0, ext=-1) == Gamma_1
+    assert Omega.get_boundary(axis=1, ext= 1) == Gamma_4
 
 #==============================================================================
 def test_element():
@@ -135,7 +135,7 @@ def test_element():
     a = Area(D1)
     print(a)
 
-    assert(Area(D) ==  Area(D1) + Area(D2))
+    assert Area(D) ==  Area(D1) + Area(D2)
 
 #==============================================================================
 def test_domain_join_line():
@@ -171,7 +171,8 @@ def test_domain_join_line():
     ABC = Domain.join(domains, connectivity, 'ABC')
 
     assert ABC.interior == Union(A.interior, B.interior, C.interior)
-    assert ABC.interfaces == Union(Interface('A|B', AB_bnd_minus, AB_bnd_plus),Interface('B|C', BC_bnd_minus, BC_bnd_plus))
+    assert ABC.interfaces == Union(Interface('A|B', AB_bnd_minus, AB_bnd_plus),
+                                   Interface('B|C', BC_bnd_minus, BC_bnd_plus))
     print(list(ABC.connectivity.items()))
     print('')
     # ...
@@ -186,14 +187,14 @@ def test_domain_join_square():
     # ...
 
 
-    domains = [A, B]
-    connectivity = [((0, 0, 1), (1, 0, -1))]
-    AB = Domain.join(domains, connectivity, 'AB')
+    patches = [A, B]
+    connectivity = [((0, 0, 1), (1, 0, -1), 1)]
+    AB = Domain.join(patches, connectivity, 'AB')
 
-    AB_bnd_minus = A.get_boundary(axis=0, ext=1)
+    AB_bnd_minus = A.get_boundary(axis=0, ext= 1)
     AB_bnd_plus  = B.get_boundary(axis=0, ext=-1)
 
-    BC_bnd_minus = B.get_boundary(axis=0, ext=1)
+    BC_bnd_minus = B.get_boundary(axis=0, ext= 1)
     BC_bnd_plus  = C.get_boundary(axis=0, ext=-1)
 
     print(AB)
@@ -202,9 +203,10 @@ def test_domain_join_square():
     print(AB.connectivity)
     # ...
 
-    domains = [A, B, C]
-    connectivity = [((0, 0, 1),(1, 0, -1)), ((1, 0, 1), (2, 0, -1))]
-    ABC = Domain.join(domains, connectivity, 'ABC')
+    patches = [A, B, C]
+    connectivity = [((0, 0, 1), (1, 0, -1), 1),
+                    ((1, 0, 1), (2, 0, -1), 1)]
+    ABC = Domain.join(patches, connectivity, 'ABC')
 
 
     print(ABC)
@@ -222,15 +224,15 @@ def test_get_subdomain():
     C = Square('C')
     # ...
 
-    domains = [A, B]
-    connectivity = [((0, 0, 1), (1, 0, -1))]
-    AB = Domain.join(domains, connectivity, 'AB')
+    patches = [A, B]
+    connectivity = [((0, 0, 1), (1, 0, -1), 1)]
+    AB = Domain.join(patches, connectivity, 'AB')
 
     # ...
 
-    domains = [A, B, C]
-    connectivity = [((0, 0, 1), (1, 0, -1)), ((1, 0, 1), (2, 0, -1))]
-    ABC = Domain.join(domains, connectivity, 'ABC')
+    patches = [A, B, C]
+    connectivity = [((0, 0, 1), (1, 0, -1), 1), ((1, 0, 1), (2, 0, -1), 1)]
+    ABC = Domain.join(patches, connectivity, 'ABC')
 
     A_1 = AB.get_subdomain('A')
     A_2 = ABC.get_subdomain('A')
@@ -266,17 +268,16 @@ def test_2d_domain_without_bnd():
     mapping_4 = IdentityMapping('M4', 2)
     domain_4  = mapping_4(OmegaLog4)
 
-    domains=[domain_1, domain_2, domain_3, domain_4]
-
-    connectivity = [((0, 0, 1), (2, 0,-1)),
-                    ((1, 0, 1), (3, 0,-1)),
-                    ((2, 0, 1), (0, 0,-1)),
-                    ((3, 0, 1), (1, 0,-1)),
-                    ((0, 1, 1), (1, 1,-1)),
-                    ((2, 1, 1), (3, 1,-1)),
-                    ((1, 1, 1), (0, 1,-1)),
-                    ((3, 1, 1), (2, 1,-1))]
-    domain = Domain.join(domains, connectivity, 'domain')
+    patches =  [domain_1, domain_2, domain_3, domain_4]
+    connectivity = [((0, 0, 1), (2, 0,-1), 1),
+                    ((1, 0, 1), (3, 0,-1), 1),
+                    ((2, 0, 1), (0, 0,-1), 1),
+                    ((3, 0, 1), (1, 0,-1), 1),
+                    ((0, 1, 1), (1, 1,-1), 1),
+                    ((2, 1, 1), (3, 1,-1), 1),
+                    ((1, 1, 1), (0, 1,-1), 1),
+                    ((3, 1, 1), (2, 1,-1), 1)]
+    domain = Domain.join(patches, connectivity, 'domain')
 
     assert len(domain.interior) == 4
     assert len(domain.interfaces) == 8
@@ -297,8 +298,7 @@ def test_3d_domain_without_bnd():
     mapping_4 = IdentityMapping('M4', 3)
     domain_4  = mapping_4(OmegaLog4)
 
-    domains = [domain_1, domain_2, domain_3, domain_4]
-
+    patches = [domain_1, domain_2, domain_3, domain_4]
     connectivity = [((0, 0, 1), (2, 0,-1), (1, 1, 1)),
                     ((1, 0, 1), (3, 0,-1), (1, 1, 1)),
                     ((2, 0, 1), (0, 0,-1), (1, 1, 1)),
@@ -307,7 +307,7 @@ def test_3d_domain_without_bnd():
                     ((2, 1, 1), (3, 1,-1), (1, 1, 1)),
                     ((1, 1, 1), (0, 1,-1), (1, 1, 1)),
                     ((3, 1, 1), (2, 1,-1), (1, 1, 1))]
-    domain = Domain.join(domains, connectivity, 'domain')
+    domain = Domain.join(patches, connectivity, 'domain')
 
     assert len(domain.interior) == 4
     assert len(domain.interfaces) == 8
