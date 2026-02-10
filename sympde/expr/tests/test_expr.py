@@ -1408,7 +1408,7 @@ def test_interface_2d_1():
         bnd_B_3 = Boundary(r'\Gamma_3', B, axis=1, ext=-1)
         bnd_B_4 = Boundary(r'\Gamma_4', B, axis=1, ext=1)
 
-        connectivity['I'] = Interface('I', bnd_A_2, bnd_B_1)
+        connectivity['I'] = Interface('I', bnd_A_2, bnd_B_1, ornt=1)
 
         Omega = Domain('Omega',
                        interiors=[A, B],

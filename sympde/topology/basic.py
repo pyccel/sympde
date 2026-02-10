@@ -439,26 +439,85 @@ class Interface(BasicDomain):
     """
     Represents an interface between two subdomains through two boundaries.
 
-    Examples
+    Parameters
+    ----------
+    name : str
+        Name of the interface.
 
+    bnd_minus : Boundary
+        Boundary on the "minus" side of the interface.
+
+    bnd_plus : Boundary
+        Boundary on the "plus" side of the interface.
+
+    mapping : Mapping, optional
+        Mapping from the logical domain to the physical domain, if available.
+
+    logical_domain : BasicDomain, optional
+        Logical domain associated with the interface, if available. It should
+        be consistent with the mapping if provided.
+
+    ornt : int | Iterable[int], optional
+        Orientation of the interface. For 1D interfaces, this is not needed and
+        should be set to None. For 2D interfaces, this should be either -1 or 1.
+        For 3D interfaces, this should be a tuple of three integers, each being
+        either -1 or 1.
+
+    Notes
+    -----
+    The orientations are specified in the same manner as in GeoPDES, see e.g.
+    <https://github.com/rafavzqz/geopdes/blob/master/geopdes/doc/geo_specs_mp_v21.txt#L193-L237>
+    and
+    T. Dokken, E. Quak, V. Skytt. Requirements from Isogeometric Analysis for changes in product design ontologies, 2010.
     """
-    def __new__(cls, name, bnd_minus, bnd_plus, mapping=None, logical_domain=None, ornt=None):
+    def __new__(cls, name, bnd_minus, bnd_plus, *, mapping=None, logical_domain=None, ornt=None):
 
-        if not isinstance(name     , str    ): raise TypeError(name)
+        if not isinstance(name     , str     ): raise TypeError(name)
         if not isinstance(bnd_minus, Boundary): raise TypeError(bnd_minus)
         if not isinstance(bnd_plus , Boundary): raise TypeError(bnd_plus)
 
+        # Check that the dimensions of the two boundaries are the same
         if bnd_minus.dim != bnd_plus.dim:
-            raise TypeError('Dimension mismatch: {} != {}'.format(
-                bnd_minus.dim, bnd_plus.dim))
+            raise ValueError(f'Dimension mismatch between boundaries: {bnd_minus.dim} != {bnd_plus.dim}')
+        else:
+            # Number of logical dimensions of the interface
+            ldim = bnd_minus.dim
 
+        # Mapping and logical domain must be provided together or not at all
         assert mapping is None and logical_domain is None or\
                mapping is not None and logical_domain is not None
 
-        if bnd_minus.dim == 3:
-            ornt = tuple(ornt)
+        # If provided, check that mapping is consistent with the boundaries
+        if mapping is not None:
+            from sympde.topology.mapping import Mapping
+            if not isinstance(mapping, Mapping):
+                raise TypeError(f'mapping must be of type Mapping, got {type(mapping)} instead')
+            if mapping.ldim != ldim:
+                raise ValueError(f'mapping should have logical dimension = {ldim}, got {mapping.ldim} instead')
 
+        # If provided, check that logical domain is consistent with the boundaries
+        if logical_domain is not None:
+            if not isinstance(logical_domain, BasicDomain):
+                raise TypeError(f'logical_domain must be of type BasicDomain, got {type(logical_domain)} instead')
+            if logical_domain.dim != ldim:
+                raise ValueError(f'Logical domain should have dimension = {ldim}, got {logical_domain.dim} instead')
+
+        # Check that orientation is provided in the correct format depending on the dimension
+        if ldim == 1:
+            assert ornt is None, 'ornt is not needed for 1D interfaces'
+        elif ldim == 2:
+            assert ornt in (-1, 1), 'ornt must be either -1 or 1 for 2D interfaces'
+        elif ldim == 3:
+            ornt = tuple(ornt)
+            assert len(ornt) == 3, 'ornt must be a tuple of length 3 for 3D interfaces'
+            assert all(o in (-1, 1) for o in ornt), 'each element of ornt must be either -1 or 1 for 3D interfaces'
+        else:
+            raise ValueError(f'Unsupported dimension: {ldim}')
+
+        # Strong requirement: the two boundaries must be defined over the same axis
+        # TODO [YG 10.02.2026]: relax this requirement ASAP
         assert bnd_minus.axis == bnd_plus.axis
+
         obj = Basic.__new__(cls, name, bnd_minus, bnd_plus, ornt)
         obj._mapping        = mapping
         obj._logical_domain = logical_domain
