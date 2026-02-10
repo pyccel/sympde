@@ -56,7 +56,7 @@ def test_topology_1():
     # read it again and check that it has the same description as Omega
     D = Domain.from_file('omega.h5')
 
-    assert( D.todict() == Omega.todict() )
+    assert D.todict() == Omega.todict()
 
 #==============================================================================
 def test_domain_1():

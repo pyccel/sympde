@@ -579,10 +579,10 @@ class Connectivity(abc.Mapping):
         if data is None:
             data = {}
         else:
-            assert isinstance( data, dict )
-            for k,v in data.items():
-                assert( isinstance( k, str ) )
-                assert( isinstance(v, Interface) )
+            assert isinstance(data, dict)
+            for k, v in data.items():
+                assert isinstance(k, str)
+                assert isinstance(v, Interface)
         self._data = data
 
     @property
@@ -602,7 +602,7 @@ class Connectivity(abc.Mapping):
         connectivity = {}
         data = dict(sorted(self._data.items()))
         for name, v in data.items():
-            connectivity[name] = [v.minus.todict(), v.plus.todict()]
+            connectivity[name] = [v.minus.todict(), v.plus.todict(), v.ornt]
         connectivity = dict(sorted(connectivity.items()))
         # ...
 

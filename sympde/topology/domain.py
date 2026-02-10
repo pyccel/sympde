@@ -351,7 +351,7 @@ class Domain(BasicDomain):
         if not(ext == '.h5'):
             raise ValueError('> Only h5 files are supported')
         # ...
-        from sympde.topology.mapping import Mapping, MultiPatchMapping
+        from sympde.topology.mapping import Mapping
 
         h5  = h5py.File( filename, mode='r' )
         yml = yaml.load( h5['topology.yml'][()], Loader=yaml.SafeLoader )
@@ -387,7 +387,7 @@ class Domain(BasicDomain):
             boundaries.append(bd)
 
         connectivity = []
-        for _,(minus, plus) in d_connectivity.items():
+        for _,(minus, plus, ornt) in d_connectivity.items():
             minus_name = minus['patch']
             minus_axis = int(minus['axis'])
             minus_ext  = int(minus['ext'])
@@ -397,7 +397,8 @@ class Domain(BasicDomain):
             plus_axis = int(plus['axis'])
             plus_ext  = int(plus['ext'])
             plus_patch_i = patch_index[plus_name]
-            interface = ((minus_patch_i, minus_axis, minus_ext),(plus_patch_i, plus_axis, plus_ext))
+            interface = ((minus_patch_i, minus_axis, minus_ext),
+                         ( plus_patch_i,  plus_axis,  plus_ext), ornt)
 
             connectivity.append(interface)
 
