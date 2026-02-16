@@ -1,13 +1,14 @@
-# coding: utf-8
+import pytest
 
 from sympy.abc import x,y,z
 from sympy import Tuple
 from sympy import symbols
 
-x1, x2, x3 = symbols('x1, x2, x3', real=True)
-
 from sympde.topology import Interval, ProductDomain, InteriorDomain, Domain
 from sympde.topology import Line, Square, Cube, NCubeInterior
+
+
+x1, x2, x3 = symbols('x1, x2, x3', real=True)
 
 #==============================================================================
 def test_interval():
@@ -22,6 +23,7 @@ def test_interval():
     assert(D_xy.dim == 2)
 
 #==============================================================================
+@pytest.mark.xdist_group('h5py')
 def test_unit_line():
 
     # Create 1D domain (Line) from interval [0, 1]
@@ -53,6 +55,7 @@ def test_unit_line():
     assert D == domain
 
 #==============================================================================
+@pytest.mark.xdist_group('h5py')
 def test_generic_line():
 
     # Create 1D domain (Line) from interval [-3, 4]
@@ -84,6 +87,7 @@ def test_generic_line():
     assert D == domain
 
 #==============================================================================
+@pytest.mark.xdist_group('h5py')
 def test_unit_square():
 
     # Create 2D square domain [0, 1]^2
@@ -118,6 +122,7 @@ def test_unit_square():
     assert D == domain
 
 #==============================================================================
+@pytest.mark.xdist_group('h5py')
 def test_rectangle():
 
     # Create 2D rectangular domain [1, 5] X [3, 7]
@@ -151,6 +156,7 @@ def test_rectangle():
     assert D == domain
 
 #==============================================================================
+@pytest.mark.xdist_group('h5py')
 def test_unit_cube():
 
     # Create 3D cube domain [0, 1]^3
@@ -186,6 +192,7 @@ def test_unit_cube():
     assert D == domain
 
 #==============================================================================
+@pytest.mark.xdist_group('h5py')
 def test_orthogonal_hexahedron():
 
     # Create 3D orthogonal hexahedron [-1, 1] X [0, 10] X [0, 2]

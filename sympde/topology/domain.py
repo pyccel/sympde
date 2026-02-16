@@ -351,7 +351,7 @@ class Domain(BasicDomain):
         if not(ext == '.h5'):
             raise ValueError('> Only h5 files are supported')
         # ...
-        from sympde.topology.mapping import Mapping, MultiPatchMapping
+        from sympde.topology.mapping import Mapping
 
         h5  = h5py.File( filename, mode='r' )
         yml = yaml.load( h5['topology.yml'][()], Loader=yaml.SafeLoader )
@@ -387,7 +387,7 @@ class Domain(BasicDomain):
             boundaries.append(bd)
 
         connectivity = []
-        for _,(minus, plus) in d_connectivity.items():
+        for _,(minus, plus, ornt) in d_connectivity.items():
             minus_name = minus['patch']
             minus_axis = int(minus['axis'])
             minus_ext  = int(minus['ext'])
@@ -397,7 +397,8 @@ class Domain(BasicDomain):
             plus_axis = int(plus['axis'])
             plus_ext  = int(plus['ext'])
             plus_patch_i = patch_index[plus_name]
-            interface = ((minus_patch_i, minus_axis, minus_ext),(plus_patch_i, plus_axis, plus_ext))
+            interface = ((minus_patch_i, minus_axis, minus_ext),
+                         ( plus_patch_i,  plus_axis,  plus_ext), ornt)
 
             connectivity.append(interface)
 
@@ -488,9 +489,7 @@ class Domain(BasicDomain):
 
         # the multi-patch domain
         Omega = Domain.join(patches=patches, connectivity=connectivity, name='Omega')
-        
         """
-
         assert isinstance(patches, (tuple, list))
         assert isinstance(connectivity, (tuple, list))
         assert isinstance(name, str)
@@ -501,7 +500,7 @@ class Domain(BasicDomain):
             return patches[0]
 
         assert all(p.dim==patches[0].dim for p in patches)
-        dim = int(patches[0].dim)
+        ldim = int(patches[0].dim)
 
         patch_given_by_indices = (len(connectivity) > 0 and isinstance(connectivity[0][0][0], int))
 
@@ -518,14 +517,21 @@ class Domain(BasicDomain):
                 patch_plus  = cn[1][0]
             bnd_minus = patch_minus.get_boundary(axis=cn[0][1], ext=cn[0][2])
             bnd_plus  =  patch_plus.get_boundary(axis=cn[1][1], ext=cn[1][2])
-            if   dim == 1: ornt = None
-            elif dim == 2: ornt = 1 if len(cn) == 2 else cn[2]
-            elif dim == 3:
-                flag = 1 if len(cn) == 2 else cn[2][0]
-                ornt1 = 1 if len(cn) == 2 else cn[2][1]
-                ornt2 = 1 if len(cn) == 2 else cn[2][2]
-                ornt = (flag, ornt1, ornt2)
 
+            # Check that orientation is provided in the correct format depending on the dimension
+            ornt = cn[2] if len(cn) == 3 else None
+            if ldim == 1:
+                assert ornt is None, 'ornt is not needed for 1D interfaces'
+            elif ldim == 2:
+                assert ornt in (-1, 1), 'ornt must be either -1 or 1 for 2D interfaces'
+            elif ldim == 3:
+                ornt = tuple(ornt)
+                assert len(ornt) == 3, 'ornt must be a tuple of length 3 for 3D interfaces'
+                assert all(o in (-1, 1) for o in ornt), 'each element of ornt must be either -1 or 1 for 3D interfaces'
+            else:
+                raise ValueError(f'Unsupported dimension: {ldim}')
+
+            # Create a new Interface object using the join method of the Boundary objects
             interface = bnd_minus.join(bnd_plus, ornt=ornt)
             if interface.name in interfaces:
                 interface = bnd_plus.join(bnd_minus, ornt=ornt)
