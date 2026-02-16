@@ -282,8 +282,10 @@ def test_2d_domain_without_bnd():
     assert len(domain.interior) == 4
     assert len(domain.interfaces) == 8
 
+    assert domain.boundary is None
+
 #==============================================================================
-def test_3d_domain_without_bnd():
+def test_3d_domain_with_doubly_connected_patches():
 
     OmegaLog1 = Cube('OmegaLog1', bounds1 = (0,.5), bounds2 = (0,.5), bounds3 = (0,1))
     mapping_1 = IdentityMapping('M1', 3)
@@ -311,6 +313,10 @@ def test_3d_domain_without_bnd():
 
     assert len(domain.interior) == 4
     assert len(domain.interfaces) == 8
+
+    assert isinstance(domain.boundary, Union)
+    assert all(isinstance(b, Boundary) for b in domain.boundary)
+    assert len(domain.boundary) == 8
 
 #==============================================================================
 def test_hash():
