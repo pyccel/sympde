@@ -560,6 +560,9 @@ class Interface(BasicDomain):
         return '{}'.format(sstr(self.name))
 
 #==============================================================================
+# TODO [MCP 16.02.2026]: remove this class as it is not used anywhere, neither
+# in SymPDE nor in PSYDAC. It appears to have been replaced by Boundary, which
+# is more general as it can represent geometrical objects in any dimension.
 class Edge(object):
     def __init__(self, name):
         self._name = name
