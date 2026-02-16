@@ -194,37 +194,44 @@ def test_bilinear_form_2d_1():
     int_0 = lambda expr: integral(domain , expr)
     int_1 = lambda expr: integral(B1, expr)
 
-    a = BilinearForm((u,v), int_0(u*v))
+    a = BilinearForm((u, v), int_0(u * v))
     assert a.domain == domain.interior
-    assert a(u1,v1) == int_0(u1*v1)
+    assert a.variables == ((u,), (v,))
+    assert a.expr == int_0(u * v)
+    assert a(u1, v1) == a.expr.subs([(u, u1), (v, v1)])
 
-    a = BilinearForm((u,v), int_0(u*v + dot(grad(u), grad(v))))
+    a = BilinearForm((u, v), int_0(u * v + dot(grad(u), grad(v))))
     assert a.domain == domain.interior
-    assert a(u1,v1) == int_0(u1*v1) + int_0(dot(grad(u1), grad(v1)))
+    assert a.variables == ((u,), (v,))
+    assert a.expr == int_0(u * v + dot(grad(u), grad(v)))
+    assert a(u1, v1) == a.expr.subs([(u, u1), (v, v1)])
 
-    a = BilinearForm((u,v), int_1(v*dot(grad(u), nn)))
+    a = BilinearForm((u, v), int_1(u * dot(grad(v), nn)))
     assert a.domain == B1
-#    assert a(u1,v1) == int_1(v1*trace_1(grad(u1), B1)) # TODO [YG, 27.01.2021]: fix trace
-    assert a(u1,v1) == int_1(v1*dot(grad(u1), nn))
+    assert a.variables == ((u,), (v,))
+    assert a.expr == int_1(u * dot(grad(v), nn))
+    assert a(u1, v1) == a.expr.subs([(u, u1), (v, v1)])
 
-    a = BilinearForm((u,v), int_0(u*v) + int_1(v*dot(grad(u), nn)))
-    # TODO a.domain are not ordered
-    assert len(a.domain.args) == 2
-    for i in a.domain.args:
-        assert i in [domain.interior, B1]
-#    assert a(u1,v1) == int_0(u1*v1) + int_1(v1*trace_1(grad(u1), B1)) # TODO [YG, 27.01.2021]: fix trace
-    assert a(u1,v1) == int_0(u1*v1) + int_1(v1*dot(grad(u1), nn))
+    a = BilinearForm((u, v), int_0(u * v) + int_1(u * dot(grad(v), nn)))
+    assert a.domain == Union(domain.interior, B1)
+    assert a.variables == ((u,), (v,))
+    assert a.expr == int_0(u * v) + int_1(u * dot(grad(v), nn))
+    assert a(u1, v1) == a.expr.subs([(u, u1), (v, v1)])
 
-    a1 = BilinearForm((u1,v1), int_0(u1*v1))
-    a = BilinearForm((u,v), a1(u,v))
-    assert(a.domain == domain.interior)
-    assert(a(u2,v2) == int_0(u2*v2))
+    a1 = BilinearForm((u1, v1), int_0(u1 * v1))
+    a = BilinearForm((u, v), a1(u, v))
+    assert a.domain == domain.interior
+    assert a.variables == ((u,), (v,))
+    assert a.expr == int_0(u * v)
+    assert a(u1, v1) == a.expr.subs([(u, u1), (v, v1)])
 
-    a1 = BilinearForm((u1,v1), int_0(u1*v1))
-    a2 = BilinearForm((u2,v2), int_0(dot(grad(u2), grad(v2))))
-    a = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v))
-    assert(a.domain == domain.interior)
-    assert(a(u,v) == int_0(u*v) + int_0(kappa*dot(grad(u), grad(v))))
+    a1 = BilinearForm((u1, v1), int_0(u1 * v1))
+    a2 = BilinearForm((u2, v2), int_0(dot(grad(u2), grad(v2))))
+    a = BilinearForm((u, v), a1(u, v) + kappa * a2(u, v))
+    assert a.domain == domain.interior
+    assert a.variables == ((u,), (v,))
+    assert a.expr == int_0(u * v) + kappa * int_0(dot(grad(u), grad(v)))
+    assert a(u1, v1) == a.expr.subs([(u, u1), (v, v1)])
 
 #==============================================================================
 def test_bilinear_form_2d_2():
@@ -237,25 +244,32 @@ def test_bilinear_form_2d_2():
 
     int_0 = lambda expr: integral(domain , expr)
 
-    a = BilinearForm((u,v), int_0(dot(u,v)))
+    a = BilinearForm((u, v), int_0(dot(u, v)))
     assert a.domain == domain.interior
-    assert a(u1,v1) == int_0(dot(u1,v1))
+    assert a.variables == ((u,), (v,))
+    assert a.expr == int_0(dot(u, v))
+    assert a(u1, v1) == a.expr.subs([(u, u1), (v, v1)])
 
-    a = BilinearForm((u,v), int_0(dot(u,v) + inner(grad(u), grad(v))))
+    a = BilinearForm((u, v), int_0(dot(u, v) + inner(grad(u), grad(v))))
     assert a.domain == domain.interior
-    assert a(u1,v1) == int_0(dot(u1,v1)) + int_0(inner(grad(u1), grad(v1)))
+    assert a.variables == ((u,), (v,))
+    assert a.expr == int_0(dot(u, v) + inner(grad(u), grad(v)))
+    assert a(u1, v1) == a.expr.subs([(u, u1), (v, v1)])
 
-    a1 = BilinearForm((u1,v1), int_0(dot(u1,v1)))
-    a = BilinearForm((u,v), a1(u,v))
+    a1 = BilinearForm((u1, v1), int_0(dot(u1, v1)))
+    a = BilinearForm((u, v), a1(u, v))
     assert a.domain == domain.interior
-    assert a(u2,v2) == int_0(dot(u2,v2))
+    assert a.variables == ((u,), (v,))
+    assert a.expr == int_0(dot(u, v))
+    assert a(u1, v1) == a.expr.subs([(u, u1), (v, v1)])
 
-    a1 = BilinearForm((u1,v1), int_0(dot(u1,v1)))
-    a2 = BilinearForm((u2,v2), int_0(inner(grad(u2), grad(v2))))
-    a = BilinearForm((u,v), a1(u,v) + kappa*a2(u,v))
-
+    a1 = BilinearForm((u1, v1), int_0(dot(u1, v1)))
+    a2 = BilinearForm((u2, v2), int_0(inner(grad(u2), grad(v2))))
+    a = BilinearForm((u, v), a1(u, v) + kappa * a2(u, v))
     assert a.domain == domain.interior
-    assert a(u,v) == int_0(dot(u,v)) + int_0(kappa*inner(grad(u), grad(v)))
+    assert a.variables == ((u,), (v,))
+    assert a.expr == int_0(dot(u, v)) + kappa * int_0(inner(grad(u), grad(v)))
+    assert a(u1, v1) == a.expr.subs([(u, u1), (v, v1)])
 
 #==============================================================================
 def test_terminal_expr_linear_2d_1():
