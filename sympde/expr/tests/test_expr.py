@@ -41,21 +41,17 @@ def test_linear_expr_2d_1():
     u, u1, u2 = elements_of(V, names='u, u1, u2')
     v, v1, v2 = elements_of(V, names='v, v1, v2')
 
-    l = LinearExpr(v, x*y*v)
-    print(l)
-    print(l.expr)
-    print(l(v1))
-    # TODO
-#    print(l(v1+v2))
-    print('')
+    l = LinearExpr(v, x * y * v)
+    assert l.variables == (v,)
+    assert l.expr == x * y * v
+    assert l(u) == l.expr.subs(v, u)
+    # TODO [YG, 16.02.2026]: add test for l(v1+v2)
 
-    l = LinearExpr((v1,v2), x*v1 + y*v2)
-    print(l)
-    print(l.expr)
-    print(l(u1, u2))
-    # TODO
-#    print(l(u1+v1, u2+v2))
-    print('')
+    l = LinearExpr((v1, v2), x * v1 + y * v2)
+    assert l.variables == (v1, v2)
+    assert l.expr == x * v1 + y *v2
+    assert l(u1, u2) == l.expr.subs([(v1, u1), (v2, u2)])
+    # TODO [YG, 16.02.2026]: add test for l((v1 + u1, v2 + u2))
 
 #==============================================================================
 def test_linear_expr_2d_2():
@@ -66,24 +62,20 @@ def test_linear_expr_2d_2():
     u, u1, u2 = elements_of(V, names='u, u1, u2')
     v, v1, v2 = elements_of(V, names='v, v1, v2')
 
-    g = Tuple(x,y)
+    g = Tuple(x, y)
     l = LinearExpr(v, dot(g, v))
-    print(l)
-    print(l.expr)
-    print(l(v1))
-    # TODO
-#    print(l(v1+v2))
-    print('')
+    assert l.variables == (v,)
+    assert l.expr == dot(g, v)
+    assert l(u) == l.expr.subs(v, u)
+    # TODO [YG, 16.02.2026]: add test for l(v1+v2)
 
-    g1 = Tuple(x,0)
-    g2 = Tuple(0,y)
-    l = LinearExpr((v1,v2), dot(g1, v1) + dot(g2, v2))
-    print(l)
-    print(l.expr)
-    print(l(u1, u2))
-    # TODO
-#    print(l(u1+v1, u2+v2))
-    print('')
+    g1 = Tuple(x, 0)
+    g2 = Tuple(0, y)
+    l = LinearExpr((v1, v2), dot(g1, v1) + dot(g2, v2))
+    assert l.variables == (v1, v2)
+    assert l.expr == dot(g1, v1) + dot(g2, v2)
+    assert l(u1, u2) == l.expr.subs([(v1, u1), (v2, u2)])
+    # TODO [YG, 16.02.2026]: add test for l((v1 + u1, v2 + u2))
 
 #==============================================================================
 def test_linear_form_2d_1():
@@ -101,36 +93,41 @@ def test_linear_form_2d_1():
     int_0 = lambda expr: integral(domain , expr)
     int_1 = lambda expr: integral(B1, expr)
 
-    l = LinearForm(v, int_0(x*y*v))
+    l = LinearForm(v, int_0(x * y * v))
     assert l.domain == domain.interior
-    assert l(v1) == int_0(x*y*v1)
+    assert l.variables == (v,)
+    assert l.expr == int_0(x * y * v)
+    assert l(u) == l.expr.subs(v, u)
 
     g = Tuple(x**2, y**2)
-    l = LinearForm(v, int_1(v*dot(g, nn)))
-    print(l)
+    l = LinearForm(v, int_1(v * dot(g, nn)))
     assert l.domain == B1
-#    assert l(v1) == int_1(v1*trace_1(g, B1)) # TODO [YG, 27.01.2021]: fix trace
-    assert l(v1) == int_1(v1*dot(g, nn))
+    assert l.variables == (v,)
+    assert l.expr == int_1(v * dot(g, nn))
+    assert l(u) == l.expr.subs(v, u)
 
     g = Tuple(x**2, y**2)
-    l = LinearForm(v, int_1(v*dot(g, nn)) + int_0(x*y*v))
-    assert len(l.domain.args) == 2
-    for i in l.domain.args:
-        assert i in [domain.interior, B1]
-#    assert l(v1) == int_1(v1*trace_1(g, B1)) + int_0(x*y*v1) # TODO [YG, 27.01.2021]: fix trace
-    assert l(v1) == int_1(v1*dot(g, nn)) + int_0(x*y*v1)
+    l = LinearForm(v, int_1(v * dot(g, nn)) + int_0(x * y * v))
+    assert l.domain == Union(domain.interior, B1)
+    assert l.variables == (v,)
+    assert l.expr == int_1(v * dot(g, nn)) + int_0(x * y * v)
+    assert l(u) == l.expr.subs(v, u)
 
     l1 = LinearForm(v1, int_0(x*y*v1))
     l  = LinearForm(v, l1(v))
     assert l.domain == domain.interior
-    assert l(u1) == int_0(x*y*u1)
+    assert l.variables == (v,)
+    assert l.expr == int_0(x * y * v)
+    assert l(u) == l.expr.subs(v, u)
 
     g = Tuple(x,y)
-    l1 = LinearForm(u1, int_0(x*y*u1))
+    l1 = LinearForm(u1, int_0(x * y * u1))
     l2 = LinearForm(u2, int_0(dot(grad(u2), g)))
     l  = LinearForm(v, l1(v) + l2(v))
     assert l.domain == domain.interior
-    assert l(v1) == int_0(x*y*v1) + int_0(dot(grad(v1), g))
+    assert l.variables == (v,)
+    assert l.expr == int_0(x * y * v) + int_0(dot(grad(v), g))
+    assert l(u) == l.expr.subs(v, u)
 
     pn, wn, tau, sigma = elements_of(V, names='pn, wn, tau, sigma')
     Re = Constant('Re', real=True)
@@ -138,7 +135,10 @@ def test_linear_form_2d_1():
     l1 = LinearForm(tau, int_0(bracket(pn, wn)*tau - 1./Re * dot(grad(tau), grad(wn))))
     l  = LinearForm((tau, sigma), dt*l1(tau))
     assert l.domain == domain.interior
-    assert l(u1,u2).expand() == int_0(-1.0*dt*dot(grad(u1), grad(wn))/Re) + \
+    assert l.variables == (tau, sigma)
+    assert l.expr == dt * l1.expr
+    assert l(u1, u2) == l.expr.subs([(tau, u1), (sigma, u2)])
+    assert l(u1, u2).expand() == int_0(-1.0*dt*dot(grad(u1), grad(wn))/Re) + \
                        int_0(dt*u1*bracket(pn, wn))
 
 #==============================================================================
@@ -156,13 +156,17 @@ def test_linear_form_2d_2():
     g = Matrix((x, y))
     l = LinearForm(v, int_0(dot(g, v)))
     assert l.domain == domain.interior
-    assert l(v1) == int_0(dot(g, v1))
+    assert l.variables == (v,)
+    assert l.expr == int_0(dot(g, v))
+    assert l(u) == l.expr.subs(v, u)
 
     g = Matrix((x, y))
     l1 = LinearForm(v1, int_0(dot(g, v1)))
     l = LinearForm(v, l1(v))
     assert l.domain == domain.interior
-    assert l(u1) == int_0(dot(g, u1))
+    assert l.variables == (v,)
+    assert l.expr == int_0(dot(g, v))
+    assert l(u) == l.expr.subs(v, u)
 
     g1 = Matrix((x, 0))
     g2 = Matrix((0, y))
@@ -170,7 +174,9 @@ def test_linear_form_2d_2():
     l2 = LinearForm(v2, int_0(dot(v2, g2)))
     l  = LinearForm(v, l1(v) + l2(v))
     assert l.domain == domain.interior
-    assert l(u) == int_0(dot(u, g1)) + int_0(dot(u, g2))
+    assert l.variables == (v,)
+    assert l.expr == int_0(dot(v, g1)) + int_0(dot(v, g2))
+    assert l(u) == l.expr.subs(v, u)
 
 #==============================================================================
 def test_bilinear_form_2d_1():
