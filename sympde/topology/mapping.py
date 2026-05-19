@@ -44,9 +44,11 @@ from .derivatives import LogicalGrad_1d, LogicalGrad_2d, LogicalGrad_3d
 # TODO fix circular dependency between sympde.expr.evaluation and sympde.topology.mapping
 
 __all__ = (
+    'AnalyticMapping',
     'BasicCallableMapping',
     'Contravariant',
     'Covariant',
+    'DefinedMapping',
     'InterfaceMapping',
     'InverseMapping',
     'Jacobian',
@@ -58,8 +60,10 @@ __all__ = (
     'MappingApplication',
     'MultiPatchMapping',
     'PullBack',
+    'StructuralMapping',
     'SymbolicExpr',
     'SymbolicWeightedVolume',
+    'UndefinedMapping',
     'get_logical_test_function',
 )
 
@@ -398,7 +402,7 @@ class Mapping(BasicMapping):
         obj._inv_jac             = self._inv_jac
         obj._metric              = self._metric
         obj._metric_det          = self._metric_det
-        obj.__callable_map       = self._callable_map
+        obj._callable_map        = self._callable_map
         obj._is_plus             = self._is_plus
         obj._is_minus            = self._is_minus
         return obj
@@ -415,8 +419,77 @@ class Mapping(BasicMapping):
         sstr = printer.doprint
         return sstr(self.name)
 
+
+# Backward-compatible alias used while migrating from Mapping to UndefinedMapping.
+UndefinedMapping = Mapping
+
+
 #==============================================================================
-class InverseMapping(Mapping):
+class DefinedMapping(Mapping):
+    """Mapping class for point-evaluable mappings.
+
+    In addition to symbolic mapped-domain construction, these mappings can be
+    evaluated at logical points (single points or arrays of points).
+    """
+
+    def __call__(self, *args):
+        if len(args) == 1 and isinstance(args[0], BasicDomain):
+            return Mapping.__call__(self, args[0])
+
+        return self.get_callable_mapping()(*args)
+
+    def get_callable_mapping(self):
+        return Mapping.get_callable_mapping(self)
+
+    def set_callable_mapping(self, F):
+        Mapping.set_callable_mapping(self, F)
+
+    def jacobian_eval(self, *eta):
+        return self.get_callable_mapping().jacobian(*eta)
+
+    def jacobian_inv_eval(self, *eta):
+        return self.get_callable_mapping().jacobian_inv(*eta)
+
+    def metric_eval(self, *eta):
+        return self.get_callable_mapping().metric(*eta)
+
+    def metric_det_eval(self, *eta):
+        return self.get_callable_mapping().metric_det(*eta)
+
+
+#==============================================================================
+class StructuralMapping(Mapping):
+    """Mapping class for symbolic/non-point-evaluable mapping structures."""
+
+    def get_callable_mapping(self):
+        raise TypeError(
+            'StructuralMapping objects are not point-evaluable and do not '
+            'expose callable mappings.'
+        )
+
+    def set_callable_mapping(self, F):
+        raise TypeError(
+            'Cannot attach a callable mapping to StructuralMapping. '
+            'Use a DefinedMapping subclass instead.'
+        )
+
+    def __call__(self, *args):
+        if len(args) == 1 and isinstance(args[0], BasicDomain):
+            return Mapping.__call__(self, args[0])
+
+        raise TypeError(
+            'StructuralMapping objects are not point-evaluable. '
+            'Only DefinedMapping subclasses can be evaluated on logical points.'
+        )
+
+
+#==============================================================================
+class AnalyticMapping(DefinedMapping):
+    """Base class for mappings defined by analytical expressions."""
+    pass
+
+#==============================================================================
+class InverseMapping(StructuralMapping):
     def __new__(cls, mapping):
         assert isinstance(mapping, Mapping)
         name     = mapping.name
@@ -509,7 +582,7 @@ class JacobianInverseSymbol(MatrixSymbolicExpr):
             return 'Jacobian({})**(-1)'.format(sstr(self.mapping.name))
 
 #==============================================================================
-class InterfaceMapping(Mapping):
+class InterfaceMapping(StructuralMapping):
     """
     InterfaceMapping is used to represent a mapping in the interface.
 
@@ -557,7 +630,7 @@ class InterfaceMapping(Mapping):
         return self
 
 #==============================================================================
-class MultiPatchMapping(Mapping):
+class MultiPatchMapping(StructuralMapping):
 
     def __new__(cls, dic):
         assert isinstance( dic, dict)

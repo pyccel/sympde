@@ -1,8 +1,10 @@
 import numpy as np
+import pytest
 
-from sympde.topology.mapping            import Mapping, BasicCallableMapping
+from sympde.topology.mapping            import Mapping, DefinedMapping, BasicCallableMapping
 from sympde.topology.analytical_mapping import IdentityMapping, AffineMapping
 from sympde.topology.analytical_mapping import PolarMapping
+from sympde.topology.callable_mapping   import CallableMapping
 
 # Tolerance for testing float equality
 RTOL = 1e-15
@@ -229,6 +231,14 @@ def test_polar_mapping():
 
 #------------------------------------------------------------------------------
 # TODO [YG 23.02.2022]: add unit tests for other mappings
+
+def test_callable_mapping_requires_defined_mapping():
+
+    F = Mapping('F', dim=2)
+
+    with pytest.raises(TypeError, match='DefinedMapping'):
+        CallableMapping(F)
+
 
 def test_identity_mapping_array_1d():
 
@@ -506,7 +516,7 @@ def test_user_defined_callable_mapping():
         def pdim(self):
             return self._ndim
 
-    F = Mapping('F', ldim = 3, pdim = 3) # Declare undefined symbolic mapping
+    F = DefinedMapping('F', ldim = 3, pdim = 3) # Declare point-evaluable symbolic mapping
     f = UserIdentity(3)        # Create user-defined callable mapping
     F.set_callable_mapping(f)  # Attach callable mapping to symbolic mapping
 

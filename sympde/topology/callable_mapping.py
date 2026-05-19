@@ -1,7 +1,7 @@
 from sympy import Symbol
 
 from sympde.utilities.utils import lambdify_sympde
-from .mapping import Mapping, BasicCallableMapping
+from .mapping import DefinedMapping, BasicCallableMapping
 
 __all__ = ('CallableMapping',)
 
@@ -11,7 +11,9 @@ class CallableMapping(BasicCallableMapping):
     def __init__( self, mapping, **kwargs ):
 
         # Extract information from class
-        assert isinstance(mapping, Mapping)
+        if not isinstance(mapping, DefinedMapping):
+            raise TypeError(
+                f'mapping must be a DefinedMapping, got {type(mapping)} instead')
 
         variables   = mapping.logical_coordinates
         expressions = mapping.expressions
