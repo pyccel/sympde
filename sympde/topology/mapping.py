@@ -1,5 +1,4 @@
 # coding: utf-8
-from abc import ABC, abstractmethod
 import warnings
 from sympy                 import Indexed, IndexedBase, Idx
 from sympy                 import Matrix, ImmutableDenseMatrix
@@ -111,7 +110,7 @@ def numpy_to_native_python(a):
     return a
 
 #==============================================================================
-class BasicCallableMapping(ABC):
+class BasicCallableMapping:
     """
     Transformation of coordinates, which can be evaluated.
 
@@ -120,41 +119,41 @@ class BasicCallableMapping(ABC):
 
     with l <= p
     """
-    @abstractmethod
     def __call__(self, *eta):
         """ Evaluate mapping at location eta. """
+        raise NotImplementedError()
 
-    @abstractmethod
     def jacobian(self, *eta):
         """ Compute Jacobian matrix at location eta. """
+        raise NotImplementedError()
 
-    @abstractmethod
     def jacobian_inv(self, *eta):
         """ Compute inverse Jacobian matrix at location eta.
             An exception should be raised if the matrix is singular.
         """
+        raise NotImplementedError()
 
-    @abstractmethod
     def metric(self, *eta):
         """ Compute components of metric tensor at location eta. """
+        raise NotImplementedError()
 
-    @abstractmethod
     def metric_det(self, *eta):
         """ Compute determinant of metric tensor at location eta. """
+        raise NotImplementedError()
 
     @property
-    @abstractmethod
     def ldim(self):
         """ Number of logical/parametric dimensions in mapping
             (= number of eta components).
         """
+        raise NotImplementedError()
 
     @property
-    @abstractmethod
     def pdim(self):
         """ Number of physical dimensions in mapping
             (= number of x components).
         """
+        raise NotImplementedError()
 
 #==============================================================================
 class Mapping(BasicMapping):
@@ -464,7 +463,7 @@ class UndefinedMapping(Mapping):
 
 
 #==============================================================================
-class DefinedMapping(Mapping):
+class DefinedMapping(Mapping, BasicCallableMapping):
     """Mapping class for point-evaluable mappings.
 
     In addition to symbolic mapped-domain construction, these mappings can be
