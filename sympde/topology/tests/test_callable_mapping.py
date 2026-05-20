@@ -240,6 +240,48 @@ def test_callable_mapping_requires_defined_mapping():
         CallableMapping(F)
 
 
+def test_defined_mapping_is_abstract():
+
+    with pytest.raises(TypeError, match='abstract'):
+        DefinedMapping('F', dim=2)
+
+
+def test_mapping_callable_behavior_is_deprecated():
+
+    class UserIdentity(BasicCallableMapping):
+
+        def __init__(self, ndim):
+            self._ndim = ndim
+
+        def __call__(self, *eta):
+            return eta
+
+        def jacobian(self, *eta):
+            return np.eye(self._ndim)
+
+        def jacobian_inv(self, *eta):
+            return np.eye(self._ndim)
+
+        def metric(self, *eta):
+            return np.eye(self._ndim)
+
+        def metric_det(self, *eta):
+            return 1.0
+
+        @property
+        def ldim(self):
+            return self._ndim
+
+        @property
+        def pdim(self):
+            return self._ndim
+
+    F = Mapping('F_depr', dim=2)
+
+    with pytest.warns(DeprecationWarning, match='Callable behavior on generic Mapping/UndefinedMapping'):
+        F.set_callable_mapping(UserIdentity(2))
+
+
 def test_identity_mapping_array_1d():
 
     F = IdentityMapping('F', dim=1)
@@ -516,7 +558,10 @@ def test_user_defined_callable_mapping():
         def pdim(self):
             return self._ndim
 
-    F = DefinedMapping('F', ldim = 3, pdim = 3) # Declare point-evaluable symbolic mapping
+    class UserDefinedSymbolicMapping(DefinedMapping):
+        pass
+
+    F = UserDefinedSymbolicMapping('F', ldim = 3, pdim = 3)
     f = UserIdentity(3)        # Create user-defined callable mapping
     F.set_callable_mapping(f)  # Attach callable mapping to symbolic mapping
 

@@ -1,5 +1,6 @@
 # coding: utf-8
 from abc import ABC, abstractmethod
+import warnings
 from sympy                 import Indexed, IndexedBase, Idx
 from sympy                 import Matrix, ImmutableDenseMatrix
 from sympy                 import Function, Expr
@@ -66,6 +67,19 @@ __all__ = (
     'UndefinedMapping',
     'get_logical_test_function',
 )
+
+_MAPPING_DEPRECATION_MSG = (
+    'Mapping is deprecated and will be removed in a future release. '
+    'Use UndefinedMapping instead.'
+)
+_MAPPING_DEPRECATION_EMITTED = False
+_MAPPING_CALLABLE_DEPRECATION_MSG = (
+    'Callable behavior on generic Mapping/UndefinedMapping objects is '
+    'deprecated. Use a concrete DefinedMapping subclass for point-evaluable '
+    'mappings.'
+)
+_MAPPING_GET_CALLABLE_DEPRECATION_EMITTED = False
+_MAPPING_SET_CALLABLE_DEPRECATION_EMITTED = False
 
 #==============================================================================
 @cacheit
@@ -159,6 +173,14 @@ class Mapping(BasicMapping):
     _pdim         = None
 
     def __new__(cls, name, dim=None, **kwargs):
+
+        global _MAPPING_DEPRECATION_EMITTED
+        if cls is Mapping:
+            if not _MAPPING_DEPRECATION_EMITTED:
+                warnings.warn(_MAPPING_DEPRECATION_MSG,
+                              DeprecationWarning,
+                              stacklevel=2)
+                _MAPPING_DEPRECATION_EMITTED = True
 
         ldim        = kwargs.pop('ldim', cls._ldim)
         pdim        = kwargs.pop('pdim', cls._pdim)
@@ -276,6 +298,14 @@ class Mapping(BasicMapping):
     # Callable mapping
     #--------------------------------------------------------------------------
     def get_callable_mapping(self):
+        global _MAPPING_GET_CALLABLE_DEPRECATION_EMITTED
+        if not isinstance(self, DefinedMapping):
+            if not _MAPPING_GET_CALLABLE_DEPRECATION_EMITTED:
+                warnings.warn(_MAPPING_CALLABLE_DEPRECATION_MSG,
+                              DeprecationWarning,
+                              stacklevel=2)
+                _MAPPING_GET_CALLABLE_DEPRECATION_EMITTED = True
+
         if self._callable_map is None:
             if self._expressions is None:
                 msg = 'Cannot generate callable mapping without analytical expressions. '\
@@ -289,6 +319,13 @@ class Mapping(BasicMapping):
         return self._callable_map
 
     def set_callable_mapping(self, F):
+        global _MAPPING_SET_CALLABLE_DEPRECATION_EMITTED
+        if not isinstance(self, DefinedMapping):
+            if not _MAPPING_SET_CALLABLE_DEPRECATION_EMITTED:
+                warnings.warn(_MAPPING_CALLABLE_DEPRECATION_MSG,
+                              DeprecationWarning,
+                              stacklevel=2)
+                _MAPPING_SET_CALLABLE_DEPRECATION_EMITTED = True
 
         if not isinstance(F, BasicCallableMapping):
             raise TypeError(
@@ -420,8 +457,10 @@ class Mapping(BasicMapping):
         return sstr(self.name)
 
 
-# Backward-compatible alias used while migrating from Mapping to UndefinedMapping.
-UndefinedMapping = Mapping
+#==============================================================================
+class UndefinedMapping(Mapping):
+    """Explicit class name for undefined symbolic mappings."""
+    pass
 
 
 #==============================================================================
@@ -431,6 +470,14 @@ class DefinedMapping(Mapping):
     In addition to symbolic mapped-domain construction, these mappings can be
     evaluated at logical points (single points or arrays of points).
     """
+
+    def __new__(cls, *args, **kwargs):
+        if cls is DefinedMapping:
+            raise TypeError(
+                'DefinedMapping is abstract and cannot be instantiated '
+                'directly. Use a concrete subclass instead.'
+            )
+        return Mapping.__new__(cls, *args, **kwargs)
 
     def __call__(self, *args):
         if len(args) == 1 and isinstance(args[0], BasicDomain):
