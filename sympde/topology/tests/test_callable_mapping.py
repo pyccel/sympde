@@ -9,6 +9,40 @@ from sympde.topology.analytical_mapping import PolarMapping
 RTOL = 1e-15
 ATOL = 1e-15
 
+
+class _UserIdentityCallableMap:
+
+    def __init__(self, ndim):
+        self._ndim = ndim
+
+    def __call__(self, *eta):
+        assert len(eta) == self._ndim
+        return eta
+
+    def jacobian(self, *eta):
+        assert len(eta) == self._ndim
+        return np.eye(self._ndim)
+
+    def jacobian_inv(self, *eta):
+        assert len(eta) == self._ndim
+        return np.eye(self._ndim)
+
+    def metric(self, *eta):
+        assert len(eta) == self._ndim
+        return np.eye(self._ndim)
+
+    def metric_det(self, *eta):
+        assert len(eta) == self._ndim
+        return 1.0
+
+    @property
+    def ldim(self):
+        return self._ndim
+
+    @property
+    def pdim(self):
+        return self._ndim
+
 #==============================================================================
 def test_identity_mapping_1d():
 
@@ -281,38 +315,10 @@ def test_defined_mapping_is_abstract():
 
 def test_mapping_callable_behavior_requires_defined_mapping():
 
-    class UserIdentity:
-
-        def __init__(self, ndim):
-            self._ndim = ndim
-
-        def __call__(self, *eta):
-            return eta
-
-        def jacobian(self, *eta):
-            return np.eye(self._ndim)
-
-        def jacobian_inv(self, *eta):
-            return np.eye(self._ndim)
-
-        def metric(self, *eta):
-            return np.eye(self._ndim)
-
-        def metric_det(self, *eta):
-            return 1.0
-
-        @property
-        def ldim(self):
-            return self._ndim
-
-        @property
-        def pdim(self):
-            return self._ndim
-
     F = UndefinedMapping('F_depr', dim=2)
 
     with pytest.raises(TypeError, match='DefinedMapping'):
-        F.set_callable_mapping(UserIdentity(2))
+        F.set_callable_mapping(_UserIdentityCallableMap(2))
 
 
 def test_identity_mapping_array_1d():
@@ -555,47 +561,11 @@ def test_polar_mapping_array():
 
 #==============================================================================
 def test_user_defined_callable_mapping():
-
-    class UserIdentity:
-        """ Identity in N dimensions.
-        """
-
-        def __init__(self, ndim):
-            self._ndim = ndim
-
-        def __call__(self, *eta):
-            assert len(eta) == self._ndim
-            return eta
-
-        def jacobian(self, *eta):
-            assert len(eta) == self._ndim
-            return np.eye(self._ndim)
-
-        def jacobian_inv(self, *eta):
-            assert len(eta) == self._ndim
-            return np.eye(self._ndim)
-
-        def metric(self, *eta):
-            assert len(eta) == self._ndim
-            return np.eye(self._ndim)
-
-        def metric_det(self, *eta):
-            assert len(eta) == self._ndim
-            return 1.0
-
-        @property
-        def ldim(self):
-            return self._ndim
-
-        @property
-        def pdim(self):
-            return self._ndim
-
     class UserDefinedSymbolicMapping(DefinedMapping):
         pass
 
     F = UserDefinedSymbolicMapping('F', ldim = 3, pdim = 3)
-    f = UserIdentity(3)        # Create user-defined callable mapping
+    f = _UserIdentityCallableMap(3)  # Create user-defined callable mapping
     F.set_callable_mapping(f)  # Attach callable mapping to symbolic mapping
 
     assert F.get_callable_mapping() is f
