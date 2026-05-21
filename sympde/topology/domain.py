@@ -343,7 +343,7 @@ class Domain(BasicDomain):
         h5.close()
 
     @classmethod
-    def from_file( cls, filename ):
+    def from_file( cls, filename, *, point_evaluable_mappings=None ):
 
         # ... check extension of the file
         _, ext = os.path.splitext(filename)
@@ -351,9 +351,19 @@ class Domain(BasicDomain):
         if not(ext == '.h5'):
             raise ValueError('> Only h5 files are supported')
         # ...
-        from sympde.topology.mapping import UndefinedMapping
-
         h5  = h5py.File( filename, mode='r' )
+
+        if point_evaluable_mappings is None:
+            # Geometry files include both topology.yml and geometry.yml datasets.
+            # In this case we need point-evaluable symbolic placeholders to allow
+            # attaching discrete callable mappings during geometry reconstruction.
+            point_evaluable_mappings = 'geometry.yml' in h5
+
+        if point_evaluable_mappings:
+            from sympde.topology.mapping import AttachedDefinedMapping as LoadedMapping
+        else:
+            from sympde.topology.mapping import UndefinedMapping as LoadedMapping
+
         yml = yaml.load( h5['topology.yml'][()], Loader=yaml.SafeLoader )
 
         domain_name    = yml['name']
@@ -373,7 +383,7 @@ class Domain(BasicDomain):
 
         constructors = [globals()[dt['type']] for dt in dtype]
         interiors    = [cs(i['name'], **dt['parameters']) for cs,i,dt in zip(constructors, d_interior, dtype)]
-        mappings     = [UndefinedMapping(I['mapping'], dim=dim) if I.get('mapping', "None") != "None" else None for I in d_interior]
+        mappings     = [LoadedMapping(I['mapping'], dim=dim) if I.get('mapping', "None") != "None" else None for I in d_interior]
         domains      = [mapping(i) if mapping else i for i,mapping in zip(interiors, mappings)]
         patch_index  = {I.name:ind for ind,I in enumerate(interiors)}
 
