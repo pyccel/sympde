@@ -246,7 +246,7 @@ def test_defined_mapping_is_abstract():
         DefinedMapping('F', dim=2)
 
 
-def test_mapping_callable_behavior_is_deprecated():
+def test_mapping_callable_behavior_requires_defined_mapping():
 
     class UserIdentity(BasicCallableMapping):
 
@@ -278,7 +278,7 @@ def test_mapping_callable_behavior_is_deprecated():
 
     F = UndefinedMapping('F_depr', dim=2)
 
-    with pytest.warns(DeprecationWarning, match='Callable behavior on generic Mapping/UndefinedMapping'):
+    with pytest.raises(TypeError, match='DefinedMapping'):
         F.set_callable_mapping(UserIdentity(2))
 
 

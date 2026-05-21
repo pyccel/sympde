@@ -45,6 +45,7 @@ from .derivatives import LogicalGrad_1d, LogicalGrad_2d, LogicalGrad_3d
 
 __all__ = (
     'AnalyticMapping',
+    'AttachedDefinedMapping',
     'BasicCallableMapping',
     'Contravariant',
     'Covariant',
@@ -72,13 +73,6 @@ _MAPPING_DEPRECATION_MSG = (
     'Use UndefinedMapping instead.'
 )
 _MAPPING_DEPRECATION_EMITTED = False
-_MAPPING_CALLABLE_DEPRECATION_MSG = (
-    'Callable behavior on generic Mapping/UndefinedMapping objects is '
-    'deprecated. Use a concrete DefinedMapping subclass for point-evaluable '
-    'mappings.'
-)
-_MAPPING_GET_CALLABLE_DEPRECATION_EMITTED = False
-_MAPPING_SET_CALLABLE_DEPRECATION_EMITTED = False
 
 #==============================================================================
 @cacheit
@@ -296,19 +290,16 @@ class Mapping(BasicMapping):
     # Callable mapping
     #--------------------------------------------------------------------------
     def get_callable_mapping(self):
-        global _MAPPING_GET_CALLABLE_DEPRECATION_EMITTED
         if not isinstance(self, DefinedMapping):
-            if not _MAPPING_GET_CALLABLE_DEPRECATION_EMITTED:
-                warnings.warn(_MAPPING_CALLABLE_DEPRECATION_MSG,
-                              DeprecationWarning,
-                              stacklevel=2)
-                _MAPPING_GET_CALLABLE_DEPRECATION_EMITTED = True
+            raise TypeError(
+                'Only DefinedMapping subclasses can expose callable mappings.'
+            )
 
         if self._callable_map is None:
             if self._expressions is None:
                 msg = 'Cannot generate callable mapping without analytical expressions. '\
-                      'A user-defined callable mapping of type `BasicCallableMapping` '\
-                      'can be provided using the method `set_callable_mapping`.'
+                      'Attach a user-defined callable mapping to a DefinedMapping '\
+                      'subclass using `set_callable_mapping`.'
                 raise ValueError(msg)
 
             from sympde.topology.callable_mapping import CallableMapping
@@ -317,13 +308,11 @@ class Mapping(BasicMapping):
         return self._callable_map
 
     def set_callable_mapping(self, F):
-        global _MAPPING_SET_CALLABLE_DEPRECATION_EMITTED
         if not isinstance(self, DefinedMapping):
-            if not _MAPPING_SET_CALLABLE_DEPRECATION_EMITTED:
-                warnings.warn(_MAPPING_CALLABLE_DEPRECATION_MSG,
-                              DeprecationWarning,
-                              stacklevel=2)
-                _MAPPING_SET_CALLABLE_DEPRECATION_EMITTED = True
+            raise TypeError(
+                'Cannot attach callable mappings to Mapping/UndefinedMapping. '
+                'Use a concrete DefinedMapping subclass instead.'
+            )
 
         if not isinstance(F, BasicCallableMapping):
             raise TypeError(
@@ -500,6 +489,12 @@ class DefinedMapping(Mapping, BasicCallableMapping):
 
     def metric_det_eval(self, *eta):
         return self.get_callable_mapping().metric_det(*eta)
+
+
+#==============================================================================
+class AttachedDefinedMapping(DefinedMapping):
+    """Concrete DefinedMapping for callable maps attached at runtime."""
+    pass
 
 
 #==============================================================================
