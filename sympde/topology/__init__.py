@@ -6,4 +6,3 @@ from .mapping            import *
 from .measure            import *
 from .space              import *
 from .analytical_mapping import *
-from .callable_mapping   import *

@@ -1,5 +1,6 @@
 # coding: utf-8
 import warnings
+from typing                import Protocol, runtime_checkable
 from sympy                 import Indexed, IndexedBase, Idx
 from sympy                 import Matrix, ImmutableDenseMatrix
 from sympy                 import Function, Expr
@@ -25,6 +26,7 @@ from sympde.calculus.core     import dot, inner, outer, _diff_ops
 from sympde.calculus.core     import has, DiffOperator
 from sympde.calculus.matrices import MatrixSymbolicExpr, MatrixElement, SymbolicTrace, Inverse
 from sympde.calculus.matrices import SymbolicDeterminant, Transpose
+from sympde.old_sympy_utilities import is_sequence
 
 from .basic       import BasicDomain, Union, InteriorDomain
 from .basic       import Boundary, Connectivity, Interface
@@ -46,7 +48,6 @@ from .derivatives import LogicalGrad_1d, LogicalGrad_2d, LogicalGrad_3d
 __all__ = (
     'AnalyticMapping',
     'AttachedDefinedMapping',
-    'BasicCallableMapping',
     'Contravariant',
     'Covariant',
     'DefinedMapping',
@@ -61,11 +62,13 @@ __all__ = (
     'MappingApplication',
     'MultiPatchMapping',
     'PullBack',
+    'PointEvaluableMapping',
     'StructuralMapping',
     'SymbolicExpr',
     'SymbolicWeightedVolume',
     'UndefinedMapping',
     'get_logical_test_function',
+    'is_point_evaluable_mapping',
 )
 
 _MAPPING_DEPRECATION_MSG = (
@@ -73,6 +76,11 @@ _MAPPING_DEPRECATION_MSG = (
     'Use UndefinedMapping instead.'
 )
 _MAPPING_DEPRECATION_EMITTED = False
+
+_POINT_EVALUABLE_MAPPING_MSG = (
+    'point-evaluable mapping object implementing '
+    '(__call__, jacobian, jacobian_inv, metric, metric_det, ldim, pdim)'
+)
 
 #==============================================================================
 @cacheit
@@ -103,51 +111,46 @@ def numpy_to_native_python(a):
         return a.item()
     return a
 
-#==============================================================================
-class BasicCallableMapping:
-    """
-    Transformation of coordinates, which can be evaluated.
 
-    F: R^l -> R^p
-    F(eta) = x
-
-    with l <= p
-    """
-    def __call__(self, *eta):
-        """ Evaluate mapping at location eta. """
-        raise NotImplementedError()
-
-    def jacobian(self, *eta):
-        """ Compute Jacobian matrix at location eta. """
-        raise NotImplementedError()
-
-    def jacobian_inv(self, *eta):
-        """ Compute inverse Jacobian matrix at location eta.
-            An exception should be raised if the matrix is singular.
-        """
-        raise NotImplementedError()
-
-    def metric(self, *eta):
-        """ Compute components of metric tensor at location eta. """
-        raise NotImplementedError()
-
-    def metric_det(self, *eta):
-        """ Compute determinant of metric tensor at location eta. """
-        raise NotImplementedError()
+@runtime_checkable
+class PointEvaluableMapping(Protocol):
+    """Structural protocol for objects that support point evaluation."""
 
     @property
     def ldim(self):
-        """ Number of logical/parametric dimensions in mapping
-            (= number of eta components).
-        """
-        raise NotImplementedError()
+        ...
 
     @property
     def pdim(self):
-        """ Number of physical dimensions in mapping
-            (= number of x components).
-        """
-        raise NotImplementedError()
+        ...
+
+    def __call__(self, *eta):
+        ...
+
+    def jacobian(self, *eta):
+        ...
+
+    def jacobian_inv(self, *eta):
+        ...
+
+    def metric(self, *eta):
+        ...
+
+    def metric_det(self, *eta):
+        ...
+
+
+def is_point_evaluable_mapping(mapping_obj):
+    """Return True when an object satisfies the point-evaluable mapping API."""
+    required_methods = ('__call__', 'jacobian', 'jacobian_inv', 'metric', 'metric_det')
+
+    if not callable(mapping_obj):
+        return False
+
+    if not all(callable(getattr(mapping_obj, name, None)) for name in required_methods):
+        return False
+
+    return all(hasattr(mapping_obj, name) for name in ('ldim', 'pdim'))
 
 #==============================================================================
 class Mapping(BasicMapping):
@@ -302,8 +305,7 @@ class Mapping(BasicMapping):
                       'subclass using `set_callable_mapping`.'
                 raise ValueError(msg)
 
-            from sympde.topology.callable_mapping import CallableMapping
-            self._callable_map = CallableMapping(self)
+            self._callable_map = _DefinedMappingEvaluator(self)
 
         return self._callable_map
 
@@ -314,9 +316,16 @@ class Mapping(BasicMapping):
                 'Use a concrete DefinedMapping subclass instead.'
             )
 
-        if not isinstance(F, BasicCallableMapping):
+        if not is_point_evaluable_mapping(F):
             raise TypeError(
-                f'F must be a BasicCallableMapping, got {type(F)} instead')
+                f'F must be a {_POINT_EVALUABLE_MAPPING_MSG}; got {type(F)} instead'
+            )
+
+        if F.ldim != self.ldim or F.pdim != self.pdim:
+            raise ValueError(
+                f'Callable mapping dimensions mismatch: expected (ldim={self.ldim}, pdim={self.pdim}), '
+                f'got (ldim={F.ldim}, pdim={F.pdim})'
+            )
 
         self._callable_map = F
 
@@ -451,7 +460,7 @@ class UndefinedMapping(Mapping):
 
 
 #==============================================================================
-class DefinedMapping(Mapping, BasicCallableMapping):
+class DefinedMapping(Mapping):
     """Mapping class for point-evaluable mappings.
 
     In addition to symbolic mapped-domain construction, these mappings can be
@@ -495,6 +504,80 @@ class DefinedMapping(Mapping, BasicCallableMapping):
 class AttachedDefinedMapping(DefinedMapping):
     """Concrete DefinedMapping for callable maps attached at runtime."""
     pass
+
+
+#==============================================================================
+class _DefinedMappingEvaluator:
+    """Internal callable evaluator for analytical DefinedMapping instances."""
+
+    def __init__(self, mapping, **kwargs):
+
+        if not isinstance(mapping, DefinedMapping):
+            raise TypeError(
+                f'mapping must be a DefinedMapping, got {type(mapping)} instead'
+            )
+
+        from sympde.utilities.utils import lambdify_sympde
+
+        variables   = mapping.logical_coordinates
+        expressions = mapping.expressions
+        jac         = mapping.jacobian_expr
+        inv_jac     = mapping.jacobian_inv_expr
+        metric      = mapping.metric_expr
+        metric_det  = mapping.metric_det_expr
+
+        constants = mapping.constants
+        params    = {a.name: a for a in constants}
+        params.update(kwargs)
+        for p in params.values():
+            assert not isinstance(p, Symbol)
+
+        if params:
+            subs = {a: params[a.name] for a in constants}
+            expressions = expressions.subs(subs)
+            jac         = jac.subs(subs)
+            inv_jac     = inv_jac.subs(subs)
+            metric      = metric.subs(subs)
+            metric_det  = metric_det.subs(subs)
+
+        self._func_eval      = tuple(lambdify_sympde(variables, expr) for expr in expressions)
+        self._jacobian       = lambdify_sympde(variables, jac)
+        self._jacobian_inv   = lambdify_sympde(variables, inv_jac)
+        self._metric         = lambdify_sympde(variables, metric)
+        self._metric_det     = lambdify_sympde(variables, metric_det)
+        self._params         = params
+        self._symbolic_map   = mapping
+
+    def __call__(self, *eta):
+        return tuple(f(*eta) for f in self._func_eval)
+
+    def jacobian(self, *eta):
+        return self._jacobian(*eta)
+
+    def jacobian_inv(self, *eta):
+        return self._jacobian_inv(*eta)
+
+    def metric(self, *eta):
+        return self._metric(*eta)
+
+    def metric_det(self, *eta):
+        return self._metric_det(*eta)
+
+    @property
+    def ldim(self):
+        return self._symbolic_map.ldim
+
+    @property
+    def pdim(self):
+        return self._symbolic_map.pdim
+
+    @property
+    def params(self):
+        return self._params
+
+    @property
+    def symbolic_mapping(self):
+        return self._symbolic_map
 
 
 #==============================================================================

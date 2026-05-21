@@ -1,10 +1,9 @@
 import numpy as np
 import pytest
 
-from sympde.topology.mapping            import UndefinedMapping, DefinedMapping, BasicCallableMapping
+from sympde.topology.mapping            import UndefinedMapping, DefinedMapping
 from sympde.topology.analytical_mapping import IdentityMapping, AffineMapping
 from sympde.topology.analytical_mapping import PolarMapping
-from sympde.topology.callable_mapping   import CallableMapping
 
 # Tolerance for testing float equality
 RTOL = 1e-15
@@ -237,7 +236,7 @@ def test_callable_mapping_requires_defined_mapping():
     F = UndefinedMapping('F', dim=2)
 
     with pytest.raises(TypeError, match='DefinedMapping'):
-        CallableMapping(F)
+        F.get_callable_mapping()
 
 
 def test_defined_mapping_is_abstract():
@@ -248,7 +247,7 @@ def test_defined_mapping_is_abstract():
 
 def test_mapping_callable_behavior_requires_defined_mapping():
 
-    class UserIdentity(BasicCallableMapping):
+    class UserIdentity:
 
         def __init__(self, ndim):
             self._ndim = ndim
@@ -523,7 +522,7 @@ def test_polar_mapping_array():
 #==============================================================================
 def test_user_defined_callable_mapping():
 
-    class UserIdentity(BasicCallableMapping):
+    class UserIdentity:
         """ Identity in N dimensions.
         """
 
