@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from sympde.topology.mapping            import UndefinedMapping, DefinedMapping
+from sympde.topology.mapping            import UndefinedMapping, DefinedMapping, BasicCallableMapping
 from sympde.topology.analytical_mapping import IdentityMapping, AffineMapping
 from sympde.topology.analytical_mapping import PolarMapping
 
@@ -237,6 +237,40 @@ def test_callable_mapping_requires_defined_mapping():
 
     with pytest.raises(TypeError, match='DefinedMapping'):
         F.get_callable_mapping()
+
+
+def test_basic_callable_mapping_compat_alias():
+
+    F = IdentityMapping('F', dim=2)
+
+    assert isinstance(F.get_callable_mapping(), BasicCallableMapping)
+
+
+def test_callable_mapping_shim_module_path():
+
+    from sympde.topology.callable_mapping import CallableMapping
+
+    F = IdentityMapping('F', dim=2)
+
+    with pytest.deprecated_call(match='deprecated'):
+        f = CallableMapping(F)
+
+    assert f(0.25, -1.0) == (0.25, -1.0)
+
+
+def test_callable_mapping_shim_topology_path():
+
+    import sympde.topology as topology
+
+    with pytest.deprecated_call(match='deprecated'):
+        CallableMapping = topology.CallableMapping
+
+    F = IdentityMapping('F', dim=1)
+
+    with pytest.deprecated_call(match='deprecated'):
+        f = CallableMapping(F)
+
+    assert f(0.5) == (0.5,)
 
 
 def test_defined_mapping_is_abstract():

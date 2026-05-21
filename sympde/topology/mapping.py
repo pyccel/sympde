@@ -48,6 +48,7 @@ from .derivatives import LogicalGrad_1d, LogicalGrad_2d, LogicalGrad_3d
 __all__ = (
     'AnalyticMapping',
     'AttachedDefinedMapping',
+    'BasicCallableMapping',
     'Contravariant',
     'Covariant',
     'DefinedMapping',
@@ -138,6 +139,12 @@ class PointEvaluableMapping(Protocol):
 
     def metric_det(self, *eta):
         ...
+
+
+@runtime_checkable
+class BasicCallableMapping(PointEvaluableMapping, Protocol):
+    """Deprecated compatibility alias for point-evaluable mappings."""
+    pass
 
 
 def is_point_evaluable_mapping(mapping_obj):
