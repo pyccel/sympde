@@ -2,7 +2,7 @@ from .mapping import AnalyticMapping
 
 class IdentityMapping(AnalyticMapping):
     """
-    Represents an identity 1D/2D/3D Mapping object.
+    Represents an identity 1D/2D/3D mapping object.
 
     Examples
 
@@ -14,7 +14,7 @@ class IdentityMapping(AnalyticMapping):
 #==============================================================================
 class AffineMapping(AnalyticMapping):
     """
-    Represents a 1D/2D/3D Affine Mapping object.
+    Represents a 1D/2D/3D Affine mapping object.
 
     Examples
 
@@ -26,7 +26,7 @@ class AffineMapping(AnalyticMapping):
 #==============================================================================
 class PolarMapping(AnalyticMapping):
     """
-    Represents a Polar 2D Mapping object (Annulus).
+    Represents a Polar 2D mapping object (Annulus).
 
     Examples
 
@@ -40,7 +40,7 @@ class PolarMapping(AnalyticMapping):
 #==============================================================================
 class TargetMapping(AnalyticMapping):
     """
-    Represents a Target 2D Mapping object.
+    Represents a Target 2D mapping object.
 
     Examples
 
@@ -54,7 +54,7 @@ class TargetMapping(AnalyticMapping):
 #==============================================================================
 class CzarnyMapping(AnalyticMapping):
     """
-    Represents a Czarny 2D Mapping object.
+    Represents a Czarny 2D mapping object.
 
     Examples
 
@@ -69,7 +69,7 @@ class CzarnyMapping(AnalyticMapping):
 #==============================================================================
 class CollelaMapping2D(AnalyticMapping):
     """
-    Represents a Collela 2D Mapping object.
+    Represents a Collela 2D mapping object.
 
     """
     _expressions = {'x': '2.*(x1 + eps*sin(2.*pi*k1*x1)*sin(2.*pi*k2*x2)) - 1.',

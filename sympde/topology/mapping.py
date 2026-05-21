@@ -158,10 +158,9 @@ class BasicCallableMapping:
 #==============================================================================
 class Mapping(BasicMapping):
     """
-    Represents a Mapping object.
-
-    Examples
-
+    Represents a Mapping object, either defined by analytical expressions or left undefined. 
+    
+    Deprecated: it should be replaced by UndefinedMapping or concrete DefinedMapping subclasses when possible.
     """
     _expressions  = None # used for analytical mapping
     _jac          = None

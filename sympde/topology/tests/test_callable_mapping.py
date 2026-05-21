@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from sympde.topology.mapping            import Mapping, DefinedMapping, BasicCallableMapping
+from sympde.topology.mapping            import UndefinedMapping, DefinedMapping, BasicCallableMapping
 from sympde.topology.analytical_mapping import IdentityMapping, AffineMapping
 from sympde.topology.analytical_mapping import PolarMapping
 from sympde.topology.callable_mapping   import CallableMapping
@@ -234,7 +234,7 @@ def test_polar_mapping():
 
 def test_callable_mapping_requires_defined_mapping():
 
-    F = Mapping('F', dim=2)
+    F = UndefinedMapping('F', dim=2)
 
     with pytest.raises(TypeError, match='DefinedMapping'):
         CallableMapping(F)
@@ -276,7 +276,7 @@ def test_mapping_callable_behavior_is_deprecated():
         def pdim(self):
             return self._ndim
 
-    F = Mapping('F_depr', dim=2)
+    F = UndefinedMapping('F_depr', dim=2)
 
     with pytest.warns(DeprecationWarning, match='Callable behavior on generic Mapping/UndefinedMapping'):
         F.set_callable_mapping(UserIdentity(2))

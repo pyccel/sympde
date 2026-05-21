@@ -7,7 +7,7 @@ from sympy import Matrix
 from sympy.tensor import IndexedBase
 from sympy import symbols, simplify
 
-from sympde.topology import Mapping, MappedDomain, AffineMapping
+from sympde.topology import UndefinedMapping, MappedDomain, AffineMapping
 from sympde.topology import dx, dy, dz
 from sympde.topology import dx1, dx2, dx3
 from sympde.topology import Domain
@@ -19,7 +19,7 @@ def test_mapping_1d():
 
     dim = 1
 
-    F = Mapping('F', dim=dim)
+    F = UndefinedMapping('F', dim=dim)
 
     assert(F.name == 'F')
 
@@ -40,7 +40,7 @@ def test_mapping_2d():
 
     dim = 2
 
-    F = Mapping('F', dim=dim)
+    F = UndefinedMapping('F', dim=dim)
 
     a,b = symbols('a b')
     ab = Tuple(a, b)
@@ -80,7 +80,7 @@ def test_mapping_3d():
 
     dim = 3
 
-    F = Mapping('F', dim=dim)
+    F = UndefinedMapping('F', dim=dim)
 
     a,b,c = symbols('a b c')
     abc = Tuple(a, b, c)
@@ -125,7 +125,7 @@ def test_mapping_2d_2():
     print('============ test_mapping_2d_2 ==============')
 
     dim   = 2
-    F      = Mapping('F', dim=dim)
+    F      = UndefinedMapping('F', dim=dim)
     domain = Domain('Omega', dim=dim)
     D      = F(domain)
 

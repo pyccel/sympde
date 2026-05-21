@@ -28,7 +28,6 @@ from sympde.topology import InteriorDomain, Union
 from sympde.topology import Boundary, NormalVector, TangentVector
 from sympde.topology import Domain
 from sympde.topology import Trace, trace_0, trace_1
-from sympde.topology import Mapping
 from sympde.topology import Square
 
 from sympde.expr import BilinearForm, LinearForm, Integral

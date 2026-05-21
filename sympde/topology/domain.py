@@ -26,7 +26,7 @@ from .basic            import ProductDomain
 
 # TODO fix circular dependency between domain and mapping
 if TYPE_CHECKING:
-    from sympde.topology.mapping import Mapping
+    from sympde.topology.mapping import UndefinedMapping
 # TODO add pdim
 
 iterable_types = (tuple, list, Tuple, Union)
@@ -46,7 +46,7 @@ class Domain(BasicDomain):
             boundaries : TypeUnion[Iterable[Boundary], Boundary, None] = None,
             dim : Optional[int] = None,
             connectivity : Optional[Connectivity] = None,
-            mapping : Optional[Mapping] = None,
+            mapping : Optional[UndefinedMapping] = None,
             logical_domain : Optional[Domain] = None):
         """
         Interiors or connectivity must be given. When the mapping is given 
@@ -64,7 +64,7 @@ class Domain(BasicDomain):
             Dimension of the space of the domain
         connectivity : Connectivity or None, optional
             Connectivity object with the interfaces of the domain
-        mapping : Mapping or None, optional
+        mapping : UndefinedMapping or None, optional
             Maps the logical domain to the physical domain
         logical_domain : Domain or None, optional
             Logical domain that is mapped to the physical domain
@@ -176,7 +176,7 @@ class Domain(BasicDomain):
         return self.args[2]
 
     @property
-    def mapping(self) -> Optional[Mapping]:
+    def mapping(self) -> Optional[UndefinedMapping]:
         """The mapping that maps the logical domain to the physical domain"""
         return self.args[3]
 
