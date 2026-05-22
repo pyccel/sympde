@@ -160,12 +160,8 @@ def is_point_evaluable_mapping(mapping_obj):
     return all(hasattr(mapping_obj, name) for name in ('ldim', 'pdim'))
 
 #==============================================================================
-class Mapping(BasicMapping):
-    """
-    Represents a Mapping object, either defined by analytical expressions or left undefined. 
-    
-    Deprecated: it should be replaced by UndefinedMapping or concrete DefinedMapping subclasses when possible.
-    """
+class UndefinedMapping(BasicMapping):
+    """Represents a symbolic mapping, either analytical or undefined."""
     _expressions  = None # used for analytical mapping
     _jac          = None
     _inv_jac      = None
@@ -175,14 +171,6 @@ class Mapping(BasicMapping):
     _pdim         = None
 
     def __new__(cls, name, dim=None, **kwargs):
-
-        global _MAPPING_DEPRECATION_EMITTED
-        if cls is Mapping:
-            if not _MAPPING_DEPRECATION_EMITTED:
-                warnings.warn(_MAPPING_DEPRECATION_MSG,
-                              DeprecationWarning,
-                              stacklevel=2)
-                _MAPPING_DEPRECATION_EMITTED = True
 
         ldim        = kwargs.pop('ldim', cls._ldim)
         pdim        = kwargs.pop('pdim', cls._pdim)
@@ -463,9 +451,31 @@ class Mapping(BasicMapping):
 
 
 #==============================================================================
-class UndefinedMapping(Mapping):
-    """Explicit class name for undefined symbolic mappings."""
-    pass
+class _MappingCompatMeta(type(BasicMapping)):
+    """Compatibility metaclass so old Mapping checks still accept UndefinedMapping."""
+
+    def __instancecheck__(cls, instance):
+        return isinstance(instance, UndefinedMapping) or super().__instancecheck__(instance)
+
+    def __subclasscheck__(cls, subclass):
+        return issubclass(subclass, UndefinedMapping) or super().__subclasscheck__(subclass)
+
+
+#==============================================================================
+class Mapping(UndefinedMapping, metaclass=_MappingCompatMeta):
+    """Deprecated compatibility facade for UndefinedMapping."""
+
+    def __new__(cls, name, dim=None, **kwargs):
+
+        global _MAPPING_DEPRECATION_EMITTED
+        if cls is Mapping:
+            if not _MAPPING_DEPRECATION_EMITTED:
+                warnings.warn(_MAPPING_DEPRECATION_MSG,
+                              DeprecationWarning,
+                              stacklevel=2)
+                _MAPPING_DEPRECATION_EMITTED = True
+
+        return super().__new__(cls, name, dim=dim, **kwargs)
 
 
 #==============================================================================
