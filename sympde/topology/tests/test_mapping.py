@@ -7,13 +7,20 @@ from sympy import Matrix
 from sympy.tensor import IndexedBase
 from sympy import symbols, simplify
 
-from sympde.topology import UndefinedMapping, MappedDomain, AffineMapping
+from sympde.topology import MappedDomain, AffineMapping
 from sympde.topology import dx, dy, dz
 from sympde.topology import dx1, dx2, dx3
 from sympde.topology import Domain
 
+from sympde.topology.mapping import Mapping, UndefinedMapping, DefinedMapping, StructuralMapping
 from sympde.topology.mapping import Jacobian, Covariant, Contravariant
 # ...
+def test_mapping_hierarchy_shape():
+    assert issubclass(UndefinedMapping, Mapping)
+    assert issubclass(DefinedMapping, UndefinedMapping)
+    assert issubclass(StructuralMapping, UndefinedMapping)
+
+
 def test_mapping_1d():
     print('============ test_mapping_1d ==============')
 

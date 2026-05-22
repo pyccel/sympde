@@ -425,10 +425,12 @@ class Mapping(BasicMapping):
         self._is_minus = minus
 
     def copy(self):
-        obj = Mapping(self.name,
-                     ldim=self.ldim,
-                     pdim=self.pdim,
-                     evaluate=False)
+        obj = UndefinedMapping(
+            self.name,
+            ldim=self.ldim,
+            pdim=self.pdim,
+            evaluate=False,
+        )
 
         obj._name                = self.name
         obj._ldim                = self.ldim
@@ -467,7 +469,7 @@ class UndefinedMapping(Mapping):
 
 
 #==============================================================================
-class DefinedMapping(Mapping):
+class DefinedMapping(UndefinedMapping):
     """Mapping class for point-evaluable mappings.
 
     In addition to symbolic mapped-domain construction, these mappings can be
@@ -480,19 +482,19 @@ class DefinedMapping(Mapping):
                 'DefinedMapping is abstract and cannot be instantiated '
                 'directly. Use a concrete subclass instead.'
             )
-        return Mapping.__new__(cls, *args, **kwargs)
+        return super().__new__(cls, *args, **kwargs)
 
     def __call__(self, *args):
         if len(args) == 1 and isinstance(args[0], BasicDomain):
-            return Mapping.__call__(self, args[0])
+            return super().__call__(args[0])
 
         return self.get_callable_mapping()(*args)
 
     def get_callable_mapping(self):
-        return Mapping.get_callable_mapping(self)
+        return super().get_callable_mapping()
 
     def set_callable_mapping(self, F):
-        Mapping.set_callable_mapping(self, F)
+        super().set_callable_mapping(F)
 
     def jacobian_eval(self, *eta):
         return self.get_callable_mapping().jacobian(*eta)
@@ -588,7 +590,7 @@ class _DefinedMappingEvaluator:
 
 
 #==============================================================================
-class StructuralMapping(Mapping):
+class StructuralMapping(UndefinedMapping):
     """Mapping class for symbolic/non-point-evaluable mapping structures."""
 
     def get_callable_mapping(self):
@@ -605,7 +607,7 @@ class StructuralMapping(Mapping):
 
     def __call__(self, *args):
         if len(args) == 1 and isinstance(args[0], BasicDomain):
-            return Mapping.__call__(self, args[0])
+            return super().__call__(args[0])
 
         raise TypeError(
             'StructuralMapping objects are not point-evaluable. '
@@ -627,7 +629,7 @@ class InverseMapping(StructuralMapping):
         pdim     = mapping.pdim
         coords   = mapping.logical_coordinates
         jacobian = mapping.jacobian.inv()
-        return Mapping.__new__(cls, name, ldim=ldim, pdim=pdim, coordinates=coords, jacobian=jacobian)
+        return UndefinedMapping.__new__(cls, name, ldim=ldim, pdim=pdim, coordinates=coords, jacobian=jacobian)
 
 #==============================================================================
 class JacobianSymbol(MatrixSymbolicExpr):
