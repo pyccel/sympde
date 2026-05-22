@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from sympde.topology.mapping            import UndefinedMapping, DefinedMapping, BasicCallableMapping
+from sympde.topology.mapping            import SymbolicMapping, DefinedMapping, BasicCallableMapping
 from sympde.topology.analytical_mapping import IdentityMapping, AffineMapping
 from sympde.topology.analytical_mapping import PolarMapping
 
@@ -267,7 +267,7 @@ def test_polar_mapping():
 
 def test_callable_mapping_requires_defined_mapping():
 
-    F = UndefinedMapping('F', dim=2)
+    F = SymbolicMapping('F', dim=2)
 
     with pytest.raises(TypeError, match='DefinedMapping'):
         F.get_callable_mapping()
@@ -315,7 +315,7 @@ def test_defined_mapping_is_abstract():
 
 def test_mapping_callable_behavior_requires_defined_mapping():
 
-    F = UndefinedMapping('F_depr', dim=2)
+    F = SymbolicMapping('F_depr', dim=2)
 
     with pytest.raises(TypeError, match='DefinedMapping'):
         F.set_callable_mapping(_UserIdentityCallableMap(2))

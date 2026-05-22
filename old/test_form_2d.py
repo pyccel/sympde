@@ -30,7 +30,7 @@ from sympde.topology import InteriorDomain, Union
 from sympde.topology import Boundary, NormalVector, TangentVector
 from sympde.topology import Domain
 from sympde.topology import Trace, trace_0, trace_1
-from sympde.topology import UndefinedMapping
+from sympde.topology import SymbolicMapping
 from sympde.topology import Square
 from sympde.topology import ElementDomain
 from sympde.topology import Area
@@ -613,7 +613,7 @@ def test_vector_2d_1():
 #==============================================================================
 def test_expr_mapping_2d():
 
-    F = UndefinedMapping('F', DIM)
+    F = SymbolicMapping('F', DIM)
     patch = Domain('Omega', dim=DIM)
     domain = F(patch)
 

@@ -26,7 +26,7 @@ from .basic            import ProductDomain
 
 # TODO fix circular dependency between domain and mapping
 if TYPE_CHECKING:
-    from sympde.topology.mapping import UndefinedMapping
+    from sympde.topology.mapping import SymbolicMapping
 # TODO add pdim
 
 iterable_types = (tuple, list, Tuple, Union)
@@ -46,7 +46,7 @@ class Domain(BasicDomain):
             boundaries : TypeUnion[Iterable[Boundary], Boundary, None] = None,
             dim : Optional[int] = None,
             connectivity : Optional[Connectivity] = None,
-            mapping : Optional[UndefinedMapping] = None,
+            mapping : Optional[SymbolicMapping] = None,
             logical_domain : Optional[Domain] = None):
         """
         Interiors or connectivity must be given. When the mapping is given 
@@ -64,7 +64,7 @@ class Domain(BasicDomain):
             Dimension of the space of the domain
         connectivity : Connectivity or None, optional
             Connectivity object with the interfaces of the domain
-        mapping : UndefinedMapping or None, optional
+        mapping : SymbolicMapping or None, optional
             Maps the logical domain to the physical domain
         logical_domain : Domain or None, optional
             Logical domain that is mapped to the physical domain
@@ -176,7 +176,7 @@ class Domain(BasicDomain):
         return self.args[2]
 
     @property
-    def mapping(self) -> Optional[UndefinedMapping]:
+    def mapping(self) -> Optional[SymbolicMapping]:
         """The mapping that maps the logical domain to the physical domain"""
         return self.args[3]
 
@@ -362,7 +362,7 @@ class Domain(BasicDomain):
         if point_evaluable_mappings:
             from sympde.topology.mapping import AttachedDefinedMapping as LoadedMapping
         else:
-            from sympde.topology.mapping import UndefinedMapping as LoadedMapping
+            from sympde.topology.mapping import SymbolicMapping as LoadedMapping
 
         yml = yaml.load( h5['topology.yml'][()], Loader=yaml.SafeLoader )
 

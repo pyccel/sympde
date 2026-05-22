@@ -450,7 +450,7 @@ class Interface(BasicDomain):
     bnd_plus : Boundary
         Boundary on the "plus" side of the interface.
 
-    mapping : UndefinedMapping | InterfaceMapping, optional
+    mapping : SymbolicMapping | InterfaceMapping, optional
         Mapping from the logical domain to the physical domain, if available.
 
     logical_domain : BasicDomain, optional
@@ -489,10 +489,10 @@ class Interface(BasicDomain):
 
         # If provided, check that mapping is consistent with the boundaries
         if mapping is not None:
-            from sympde.topology.mapping import InterfaceMapping, UndefinedMapping
-            if not isinstance(mapping, (UndefinedMapping, InterfaceMapping)):
+            from sympde.topology.mapping import InterfaceMapping, SymbolicMapping
+            if not isinstance(mapping, (SymbolicMapping, InterfaceMapping)):
                 raise TypeError(
-                    f'mapping must be of type UndefinedMapping or InterfaceMapping, got {type(mapping)} instead'
+                    f'mapping must be of type SymbolicMapping or InterfaceMapping, got {type(mapping)} instead'
                 )
             if mapping.ldim != ldim:
                 raise ValueError(f'mapping should have logical dimension = {ldim}, got {mapping.ldim} instead')

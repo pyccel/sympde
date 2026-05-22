@@ -12,13 +12,13 @@ from sympde.topology import dx, dy, dz
 from sympde.topology import dx1, dx2, dx3
 from sympde.topology import Domain
 
-from sympde.topology.mapping import Mapping, UndefinedMapping, DefinedMapping, StructuralMapping
+from sympde.topology.mapping import Mapping, SymbolicMapping, DefinedMapping, StructuralMapping
 from sympde.topology.mapping import Jacobian, Covariant, Contravariant
 # ...
 def test_mapping_hierarchy_shape():
-    assert issubclass(UndefinedMapping, Mapping)
-    assert issubclass(DefinedMapping, UndefinedMapping)
-    assert issubclass(StructuralMapping, UndefinedMapping)
+    assert issubclass(SymbolicMapping, Mapping)
+    assert issubclass(DefinedMapping, SymbolicMapping)
+    assert issubclass(StructuralMapping, SymbolicMapping)
 
 
 def test_mapping_1d():
@@ -26,7 +26,7 @@ def test_mapping_1d():
 
     dim = 1
 
-    F = UndefinedMapping('F', dim=dim)
+    F = SymbolicMapping('F', dim=dim)
 
     assert(F.name == 'F')
 
@@ -47,7 +47,7 @@ def test_mapping_2d():
 
     dim = 2
 
-    F = UndefinedMapping('F', dim=dim)
+    F = SymbolicMapping('F', dim=dim)
 
     a,b = symbols('a b')
     ab = Tuple(a, b)
@@ -87,7 +87,7 @@ def test_mapping_3d():
 
     dim = 3
 
-    F = UndefinedMapping('F', dim=dim)
+    F = SymbolicMapping('F', dim=dim)
 
     a,b,c = symbols('a b c')
     abc = Tuple(a, b, c)
@@ -132,7 +132,7 @@ def test_mapping_2d_2():
     print('============ test_mapping_2d_2 ==============')
 
     dim   = 2
-    F      = UndefinedMapping('F', dim=dim)
+    F      = SymbolicMapping('F', dim=dim)
     domain = Domain('Omega', dim=dim)
     D      = F(domain)
 

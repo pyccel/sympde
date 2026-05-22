@@ -67,14 +67,14 @@ __all__ = (
     'StructuralMapping',
     'SymbolicExpr',
     'SymbolicWeightedVolume',
-    'UndefinedMapping',
+    'SymbolicMapping',
     'get_logical_test_function',
     'is_point_evaluable_mapping',
 )
 
 _MAPPING_DEPRECATION_MSG = (
     'Mapping is deprecated and will be removed in a future release. '
-    'Use UndefinedMapping instead.'
+    'Use SymbolicMapping instead.'
 )
 _MAPPING_DEPRECATION_EMITTED = False
 
@@ -160,7 +160,7 @@ def is_point_evaluable_mapping(mapping_obj):
     return all(hasattr(mapping_obj, name) for name in ('ldim', 'pdim'))
 
 #==============================================================================
-class UndefinedMapping(BasicMapping):
+class SymbolicMapping(BasicMapping):
     """Represents a symbolic mapping, either analytical or undefined."""
     _expressions  = None # used for analytical mapping
     _jac          = None
@@ -307,7 +307,7 @@ class UndefinedMapping(BasicMapping):
     def set_callable_mapping(self, F):
         if not isinstance(self, DefinedMapping):
             raise TypeError(
-                'Cannot attach callable mappings to Mapping/UndefinedMapping. '
+                'Cannot attach callable mappings to Mapping/SymbolicMapping. '
                 'Use a concrete DefinedMapping subclass instead.'
             )
 
@@ -413,7 +413,7 @@ class UndefinedMapping(BasicMapping):
         self._is_minus = minus
 
     def copy(self):
-        obj = UndefinedMapping(
+        obj = SymbolicMapping(
             self.name,
             ldim=self.ldim,
             pdim=self.pdim,
@@ -452,18 +452,18 @@ class UndefinedMapping(BasicMapping):
 
 #==============================================================================
 class _MappingCompatMeta(type(BasicMapping)):
-    """Compatibility metaclass so old Mapping checks still accept UndefinedMapping."""
+    """Compatibility metaclass so old Mapping checks still accept SymbolicMapping."""
 
     def __instancecheck__(cls, instance):
-        return isinstance(instance, UndefinedMapping) or super().__instancecheck__(instance)
+        return isinstance(instance, SymbolicMapping) or super().__instancecheck__(instance)
 
     def __subclasscheck__(cls, subclass):
-        return issubclass(subclass, UndefinedMapping) or super().__subclasscheck__(subclass)
+        return issubclass(subclass, SymbolicMapping) or super().__subclasscheck__(subclass)
 
 
 #==============================================================================
-class Mapping(UndefinedMapping, metaclass=_MappingCompatMeta):
-    """Deprecated compatibility facade for UndefinedMapping."""
+class Mapping(SymbolicMapping, metaclass=_MappingCompatMeta):
+    """Deprecated compatibility facade for SymbolicMapping."""
 
     def __new__(cls, name, dim=None, **kwargs):
 
@@ -479,7 +479,7 @@ class Mapping(UndefinedMapping, metaclass=_MappingCompatMeta):
 
 
 #==============================================================================
-class DefinedMapping(UndefinedMapping):
+class DefinedMapping(SymbolicMapping):
     """Mapping class for point-evaluable mappings.
 
     In addition to symbolic mapped-domain construction, these mappings can be
@@ -600,7 +600,7 @@ class _DefinedMappingEvaluator:
 
 
 #==============================================================================
-class StructuralMapping(UndefinedMapping):
+class StructuralMapping(SymbolicMapping):
     """Mapping class for symbolic/non-point-evaluable mapping structures."""
 
     def get_callable_mapping(self):
@@ -639,7 +639,7 @@ class InverseMapping(StructuralMapping):
         pdim     = mapping.pdim
         coords   = mapping.logical_coordinates
         jacobian = mapping.jacobian.inv()
-        return UndefinedMapping.__new__(cls, name, ldim=ldim, pdim=pdim, coordinates=coords, jacobian=jacobian)
+        return SymbolicMapping.__new__(cls, name, ldim=ldim, pdim=pdim, coordinates=coords, jacobian=jacobian)
 
 #==============================================================================
 class JacobianSymbol(MatrixSymbolicExpr):
@@ -746,7 +746,7 @@ class InterfaceMapping(StructuralMapping):
         plus.set_plus_minus(plus=True)
 
         name = '{}|{}'.format(str(minus.name), str(plus.name))
-        obj  = Mapping.__new__(cls, name, ldim=minus.ldim, pdim=minus.pdim)
+        obj  = SymbolicMapping.__new__(cls, name, ldim=minus.ldim, pdim=minus.pdim)
         obj._minus = minus
         obj._plus  = plus
         return obj
