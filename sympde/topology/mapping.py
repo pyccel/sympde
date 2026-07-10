@@ -1,5 +1,4 @@
 # coding: utf-8
-import warnings
 from typing                import Protocol, runtime_checkable
 from sympy                 import Indexed, IndexedBase, Idx
 from sympy                 import Matrix, ImmutableDenseMatrix
@@ -59,7 +58,6 @@ __all__ = (
     'JacobianSymbol',
     'LogicalExpr',
     'MappedDomain',
-    'Mapping',
     'MappingApplication',
     'MultiPatchMapping',
     'PullBack',
@@ -71,12 +69,6 @@ __all__ = (
     'get_logical_test_function',
     'is_point_evaluable_mapping',
 )
-
-_MAPPING_DEPRECATION_MSG = (
-    'Mapping is deprecated and will be removed in a future release. '
-    'Use SymbolicMapping instead.'
-)
-_MAPPING_DEPRECATION_EMITTED = False
 
 _POINT_EVALUABLE_MAPPING_MSG = (
     'point-evaluable mapping object implementing '
@@ -307,7 +299,7 @@ class SymbolicMapping(BasicMapping):
     def set_callable_mapping(self, F):
         if not isinstance(self, DefinedMapping):
             raise TypeError(
-                'Cannot attach callable mappings to Mapping/SymbolicMapping. '
+                'Cannot attach callable mappings to SymbolicMapping. '
                 'Use a concrete DefinedMapping subclass instead.'
             )
 
@@ -450,35 +442,6 @@ class SymbolicMapping(BasicMapping):
         return sstr(self.name)
 
 
-#==============================================================================
-class _MappingCompatMeta(type(BasicMapping)):
-    """Compatibility metaclass so old Mapping checks still accept SymbolicMapping."""
-
-    def __instancecheck__(cls, instance):
-        return isinstance(instance, SymbolicMapping) or super().__instancecheck__(instance)
-
-    def __subclasscheck__(cls, subclass):
-        return issubclass(subclass, SymbolicMapping) or super().__subclasscheck__(subclass)
-
-
-#==============================================================================
-class Mapping(SymbolicMapping, metaclass=_MappingCompatMeta):
-    """Deprecated compatibility facade for SymbolicMapping."""
-
-    def __new__(cls, name, dim=None, **kwargs):
-
-        global _MAPPING_DEPRECATION_EMITTED
-        if cls is Mapping:
-            if not _MAPPING_DEPRECATION_EMITTED:
-                warnings.warn(_MAPPING_DEPRECATION_MSG,
-                              DeprecationWarning,
-                              stacklevel=2)
-                _MAPPING_DEPRECATION_EMITTED = True
-
-        return super().__new__(cls, name, dim=dim, **kwargs)
-
-
-#==============================================================================
 class DefinedMapping(SymbolicMapping):
     """Mapping class for point-evaluable mappings.
 
@@ -633,7 +596,7 @@ class AnalyticMapping(DefinedMapping):
 #==============================================================================
 class InverseMapping(StructuralMapping):
     def __new__(cls, mapping):
-        assert isinstance(mapping, Mapping)
+        assert isinstance(mapping, SymbolicMapping)
         name     = mapping.name
         ldim     = mapping.ldim
         pdim     = mapping.pdim
@@ -645,7 +608,7 @@ class InverseMapping(StructuralMapping):
 class JacobianSymbol(MatrixSymbolicExpr):
     _axis = None
     def __new__(cls, mapping, axis=None):
-        assert isinstance(mapping, Mapping)
+        assert isinstance(mapping, SymbolicMapping)
         if axis is not None:
             assert isinstance(axis, (int, Integer))
         obj = MatrixSymbolicExpr.__new__(cls, mapping)
@@ -673,7 +636,7 @@ class JacobianSymbol(MatrixSymbolicExpr):
         return hash(self._hashable_content())
 
     def _eval_subs(self, old, new):
-        if isinstance(new, Mapping):
+        if isinstance(new, SymbolicMapping):
             if self.axis is not None:
                 obj = JacobianSymbol(new, self.axis)
             else:
@@ -692,7 +655,7 @@ class JacobianInverseSymbol(MatrixSymbolicExpr):
     _axis = None
     is_Matrix     = False
     def __new__(cls, mapping, axis=None):
-        assert isinstance(mapping, Mapping)
+        assert isinstance(mapping, SymbolicMapping)
         if axis is not None:
             assert isinstance(axis, int)
         obj = MatrixSymbolicExpr.__new__(cls, mapping)
@@ -730,15 +693,15 @@ class InterfaceMapping(StructuralMapping):
 
     Attributes
     ----------
-    minus : Mapping
+    minus : SymbolicMapping
         the mapping on the negative direction of the interface
-    plus  : Mapping
+    plus  : SymbolicMapping
         the mapping on the positive direction of the interface
     """
 
     def __new__(cls, minus, plus):
-        assert isinstance(minus, Mapping)
-        assert isinstance(plus,  Mapping)
+        assert isinstance(minus, SymbolicMapping)
+        assert isinstance(plus,  SymbolicMapping)
         minus = minus.copy()
         plus  = plus.copy()
 
@@ -818,7 +781,7 @@ class MappedDomain(BasicDomain):
 
     @cacheit
     def __new__(cls, mapping, logical_domain):
-        assert(isinstance(mapping, Mapping))
+        assert(isinstance(mapping, SymbolicMapping))
         assert(isinstance(logical_domain, BasicDomain))
         if isinstance(logical_domain, Domain):
             kwargs = dict(
@@ -968,7 +931,7 @@ class Jacobian(MappingApplication):
 
         Parameters:
         ----------
-         F: Mapping
+            F: SymbolicMapping
             mapping object
 
         Returns:
@@ -977,8 +940,8 @@ class Jacobian(MappingApplication):
             the jacobian matrix
         """
 
-        if not isinstance(F, Mapping):
-            raise TypeError('> Expecting a Mapping object')
+        if not isinstance(F, SymbolicMapping):
+            raise TypeError('> Expecting a SymbolicMapping object')
 
         if F.jacobian_expr is not None:
             return F.jacobian_expr
@@ -1016,7 +979,7 @@ class Covariant(MappingApplication):
 
         Parameters:
         ----------
-         F: Mapping
+            F: SymbolicMapping
             mapping object
 
          v: <tuple|list|Tuple|ImmutableDenseMatrix|Matrix>
@@ -1065,7 +1028,7 @@ class Contravariant(MappingApplication):
 
         Parameters:
         ----------
-         F: Mapping
+            F: SymbolicMapping
             mapping object
 
          v: <tuple|list|Tuple|ImmutableDenseMatrix|Matrix>
@@ -1077,8 +1040,8 @@ class Contravariant(MappingApplication):
             the contravariant transformation
         """
 
-        if not isinstance(F, Mapping):
-            raise TypeError('> Expecting a Mapping')
+        if not isinstance(F, SymbolicMapping):
+            raise TypeError('> Expecting a SymbolicMapping')
 
         if not isinstance(v, (tuple, list, Tuple, ImmutableDenseMatrix, Matrix)):
             raise TypeError('> Expecting a tuple, list, Tuple, Matrix')
@@ -1570,7 +1533,7 @@ class SymbolicExpr(CalculusFunction):
 
         elif isinstance(expr, Indexed):
             base = expr.base
-            if isinstance(base, Mapping):
+            if isinstance(base, SymbolicMapping):
                 if expr.indices[0] == 0:
                     name = 'x'
                 elif expr.indices[0] == 1:
@@ -1615,7 +1578,7 @@ class SymbolicExpr(CalculusFunction):
                     code += k*n
             return cls.eval(atom, code=code)
 
-        elif isinstance(expr, Mapping):
+        elif isinstance(expr, SymbolicMapping):
             return Symbol(expr.name)
 
         # ... this must be done here, otherwise codegen for FEM will not work

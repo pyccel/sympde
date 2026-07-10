@@ -1,3 +1,4 @@
+import importlib
 import numpy as np
 import pytest
 
@@ -280,31 +281,18 @@ def test_basic_callable_mapping_compat_alias():
     assert isinstance(F.get_callable_mapping(), BasicCallableMapping)
 
 
-def test_callable_mapping_shim_module_path():
+def test_callable_mapping_shim_module_removed():
 
-    from sympde.topology.callable_mapping import CallableMapping
-
-    F = IdentityMapping('F', dim=2)
-
-    with pytest.deprecated_call(match='deprecated'):
-        f = CallableMapping(F)
-
-    assert f(0.25, -1.0) == (0.25, -1.0)
+    with pytest.raises(ModuleNotFoundError):
+        importlib.import_module('sympde.topology.callable_mapping')
 
 
-def test_callable_mapping_shim_topology_path():
+def test_callable_mapping_shim_topology_attr_removed():
 
     import sympde.topology as topology
 
-    with pytest.deprecated_call(match='deprecated'):
-        CallableMapping = topology.CallableMapping
-
-    F = IdentityMapping('F', dim=1)
-
-    with pytest.deprecated_call(match='deprecated'):
-        f = CallableMapping(F)
-
-    assert f(0.5) == (0.5,)
+    with pytest.raises(AttributeError):
+        _ = topology.CallableMapping
 
 
 def test_defined_mapping_is_abstract():

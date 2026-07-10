@@ -12,11 +12,10 @@ from sympde.topology import dx, dy, dz
 from sympde.topology import dx1, dx2, dx3
 from sympde.topology import Domain
 
-from sympde.topology.mapping import Mapping, SymbolicMapping, DefinedMapping, StructuralMapping
+from sympde.topology.mapping import SymbolicMapping, DefinedMapping, StructuralMapping
 from sympde.topology.mapping import Jacobian, Covariant, Contravariant
 # ...
 def test_mapping_hierarchy_shape():
-    assert issubclass(SymbolicMapping, Mapping)
     assert issubclass(DefinedMapping, SymbolicMapping)
     assert issubclass(StructuralMapping, SymbolicMapping)
 
