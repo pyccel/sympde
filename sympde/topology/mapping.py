@@ -1,4 +1,5 @@
 # coding: utf-8
+from abc                   import ABCMeta, abstractmethod
 from typing                import Protocol, runtime_checkable
 from sympy                 import Indexed, IndexedBase, Idx
 from sympy                 import Matrix, ImmutableDenseMatrix
@@ -442,7 +443,12 @@ class SymbolicMapping(BasicMapping):
         return sstr(self.name)
 
 
-class DefinedMapping(SymbolicMapping):
+class _DefinedMappingMeta(type(BasicMapping), ABCMeta):
+    """Metaclass combining SymPy mapping metaclass behavior with ABC support."""
+    pass
+
+
+class DefinedMapping(SymbolicMapping, metaclass=_DefinedMappingMeta):
     """Mapping class for point-evaluable mappings.
 
     In addition to symbolic mapped-domain construction, these mappings can be
@@ -450,18 +456,13 @@ class DefinedMapping(SymbolicMapping):
     """
 
     def __new__(cls, *args, **kwargs):
-        if cls is DefinedMapping:
-            raise TypeError(
-                'DefinedMapping is abstract and cannot be instantiated '
-                'directly. Use a concrete subclass instead.'
-            )
         return super().__new__(cls, *args, **kwargs)
 
     def __call__(self, *args):
         if len(args) == 1 and isinstance(args[0], BasicDomain):
             return super().__call__(args[0])
 
-        return self.get_callable_mapping()(*args)
+        return self._evaluate_points(*args)
 
     def get_callable_mapping(self):
         return super().get_callable_mapping()
@@ -470,22 +471,61 @@ class DefinedMapping(SymbolicMapping):
         super().set_callable_mapping(F)
 
     def jacobian_eval(self, *eta):
-        return self.get_callable_mapping().jacobian(*eta)
+        return self._jacobian_eval_impl(*eta)
 
     def jacobian_inv_eval(self, *eta):
-        return self.get_callable_mapping().jacobian_inv(*eta)
+        return self._jacobian_inv_eval_impl(*eta)
 
     def metric_eval(self, *eta):
-        return self.get_callable_mapping().metric(*eta)
+        return self._metric_eval_impl(*eta)
 
     def metric_det_eval(self, *eta):
-        return self.get_callable_mapping().metric_det(*eta)
+        return self._metric_det_eval_impl(*eta)
+
+    @abstractmethod
+    def _evaluate_points(self, *eta):
+        """Evaluate the mapping at logical points."""
+        raise NotImplementedError()
+
+    @abstractmethod
+    def _jacobian_eval_impl(self, *eta):
+        """Evaluate Jacobian matrix at logical points."""
+        raise NotImplementedError()
+
+    @abstractmethod
+    def _jacobian_inv_eval_impl(self, *eta):
+        """Evaluate inverse Jacobian at logical points."""
+        raise NotImplementedError()
+
+    @abstractmethod
+    def _metric_eval_impl(self, *eta):
+        """Evaluate metric tensor at logical points."""
+        raise NotImplementedError()
+
+    @abstractmethod
+    def _metric_det_eval_impl(self, *eta):
+        """Evaluate metric determinant at logical points."""
+        raise NotImplementedError()
 
 
 #==============================================================================
 class AttachedDefinedMapping(DefinedMapping):
     """Concrete DefinedMapping for callable maps attached at runtime."""
-    pass
+
+    def _evaluate_points(self, *eta):
+        return self.get_callable_mapping()(*eta)
+
+    def _jacobian_eval_impl(self, *eta):
+        return self.get_callable_mapping().jacobian(*eta)
+
+    def _jacobian_inv_eval_impl(self, *eta):
+        return self.get_callable_mapping().jacobian_inv(*eta)
+
+    def _metric_eval_impl(self, *eta):
+        return self.get_callable_mapping().metric(*eta)
+
+    def _metric_det_eval_impl(self, *eta):
+        return self.get_callable_mapping().metric_det(*eta)
 
 
 #==============================================================================
@@ -591,7 +631,21 @@ class StructuralMapping(SymbolicMapping):
 #==============================================================================
 class AnalyticMapping(DefinedMapping):
     """Base class for mappings defined by analytical expressions."""
-    pass
+
+    def _evaluate_points(self, *eta):
+        return self.get_callable_mapping()(*eta)
+
+    def _jacobian_eval_impl(self, *eta):
+        return self.get_callable_mapping().jacobian(*eta)
+
+    def _jacobian_inv_eval_impl(self, *eta):
+        return self.get_callable_mapping().jacobian_inv(*eta)
+
+    def _metric_eval_impl(self, *eta):
+        return self.get_callable_mapping().metric(*eta)
+
+    def _metric_det_eval_impl(self, *eta):
+        return self.get_callable_mapping().metric_det(*eta)
 
 #==============================================================================
 class InverseMapping(StructuralMapping):

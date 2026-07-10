@@ -550,7 +550,20 @@ def test_polar_mapping_array():
 #==============================================================================
 def test_user_defined_callable_mapping():
     class UserDefinedSymbolicMapping(DefinedMapping):
-        pass
+        def _evaluate_points(self, *eta):
+            return self.get_callable_mapping()(*eta)
+
+        def _jacobian_eval_impl(self, *eta):
+            return self.get_callable_mapping().jacobian(*eta)
+
+        def _jacobian_inv_eval_impl(self, *eta):
+            return self.get_callable_mapping().jacobian_inv(*eta)
+
+        def _metric_eval_impl(self, *eta):
+            return self.get_callable_mapping().metric(*eta)
+
+        def _metric_det_eval_impl(self, *eta):
+            return self.get_callable_mapping().metric_det(*eta)
 
     F = UserDefinedSymbolicMapping('F', ldim = 3, pdim = 3)
     f = _UserIdentityCallableMap(3)  # Create user-defined callable mapping
