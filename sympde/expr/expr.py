@@ -748,7 +748,7 @@ def is_linear_expression(expr, args, debug=True):
 
     Parameters
     ----------
-    expr
+    expr : Expr
         Symbolic expression to test.
     args : iterable
         Each argument must be ScalarFunction or VectorFunction.
@@ -760,6 +760,7 @@ def is_linear_expression(expr, args, debug=True):
     bool
         True if the expression is linear with respect to all given arguments, False otherwise.
     """
+    assert isinstance(expr, Expr)
 
     x_args = []
     y_args = []
