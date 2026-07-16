@@ -741,16 +741,22 @@ def linearize(form, fields, trials=None):
 #==============================================================================
 def is_linear_expression(expr, args, debug=True):
     """
-    Checks if expression is linear with respect to ``args``:
+    Checks if expression is linear with respect to each argument in``args``:
 
         1. Additivity:   f(x + y) = f(x) + f(y)
         2. Homogeneity:  f(alpha * x) = alpha * f(x)
+
+    In this notation, x and y represent independent copies of the same argument. In general, f may have an
+    arbitrary number of arguments.
 
     Parameters
     ----------
     expr : Expr
         Symbolic expression to test.
     args : iterable
+        Arguments with respect to which expr is tested for linearity.
+        Only one instance of each argument needs to be provided; the function internally creates
+        the independent copies required for the additivity and homogeneity checks.
         Each argument must be ScalarFunction or VectorFunction.
     debug : bool, optional
         Print diagnostic info if a check fails.
