@@ -793,8 +793,8 @@ def is_linear_expression(expr, args, debug=True):
     summed_args = [x + y for x, y in zip(x_args, y_args)]
     expr_at_x  = expr.subs(zip(args, x_args)) # f(x)
     expr_at_y = expr.subs(zip(args, y_args)) # f(y)
-    expr_at_sum    = expr.subs(zip(args, summed_args)) # f(x + y)
-    expected_sum = expr_at_x + expr_at_y # = f(x) + f (y)
+    expr_at_sum = expr.subs(zip(args, summed_args)) # f(x + y)
+    expected_sum = expr_at_x + expr_at_y # f(x) + f(y)
 
     if (expr_at_sum - expected_sum).expand() != 0:
         expr1 = expr_at_sum.expand()
