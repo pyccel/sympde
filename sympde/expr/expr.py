@@ -804,7 +804,8 @@ def is_linear_expression(expr, args, debug=True):
         expr2 = expected_sum.expand()
         if expr1 != expr2:
             if debug:
-                print(r"Failed to assert addition property `f(x + y) = f(x) + f(y)`, where:")
+                print(r"Failed to assert addition property "
+                    r"`f(x + y) = f(x) + f(y)`, where:")
                 print()
                 print('f(x + y) =')
                 print(expr1)
@@ -831,7 +832,8 @@ def is_linear_expression(expr, args, debug=True):
         expr2 = scaled_expr.expand()
         if expr1 != expr2:
             if debug:
-                print(r"Failed to assert multiplication property `f(alpha * x) = alpha * f(x)`, where:")
+                print(r"Failed to assert multiplication property "
+                      r"`f(alpha * x) = alpha * f(x)`, where:")
                 print()
                 print('f(alpha * x) =')
                 print(expr1)
