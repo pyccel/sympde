@@ -741,13 +741,14 @@ def linearize(form, fields, trials=None):
 #==============================================================================
 def is_linear_expression(expr, args, debug=True):
     """
-    Checks if expression is linear with respect to each argument in``args``:
+    Checks if expression is linear with respect to each argument in ``args``:
 
         1. Additivity:   f(x + y) = f(x) + f(y)
         2. Homogeneity:  f(alpha * x) = alpha * f(x)
 
-    In this notation, x and y represent independent copies of the same argument. In general, f may have an
-    arbitrary number of arguments.
+    In general, `f` may have an arbitrary number of arguments: `x` and `y`
+    represent independent copies of the same list of arguments.
+    
 
     Parameters
     ----------
