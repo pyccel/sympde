@@ -755,8 +755,9 @@ def is_linear_expression(expr, args, debug=True):
         Symbolic expression to test.
     args : iterable
         Arguments with respect to which expr is tested for linearity.
-        Only one instance of each argument needs to be provided; the function internally creates
-        the independent copies required for the additivity and homogeneity checks.
+        Only one instance of each argument needs to be provided; the function
+        internally creates the independent copies required for the additivity
+        and homogeneity checks.
         Each argument must be ScalarFunction or VectorFunction.
     debug : bool, optional
         Print diagnostic info if a check fails.
@@ -764,7 +765,8 @@ def is_linear_expression(expr, args, debug=True):
     Returns
     -------
     bool
-        True if the expression is linear with respect to all given arguments, False otherwise.
+        True if the expression is linear with respect to all given arguments,
+        False otherwise.
     """
     assert isinstance(expr, Expr)
 
@@ -788,7 +790,7 @@ def is_linear_expression(expr, args, debug=True):
         x_args.append(x)
         y_args.append(y)
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
     # check addition property: f(x + y) = f(x) + f(y)
     summed_args = [x + y for x, y in zip(x_args, y_args)]
     expr_at_x  = expr.subs(zip(args, x_args)) # f(x)
@@ -810,7 +812,7 @@ def is_linear_expression(expr, args, debug=True):
                 print(expr2)
             return False
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
     # check multiplication property: f(alpha * x) = alpha * f(x)
     alpha = Constant(f"alpha_{random_string(4)}")
 
