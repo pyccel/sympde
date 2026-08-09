@@ -1,13 +1,7 @@
 # coding: utf-8
 
-from itertools import product
-
-
-import numpy as np
-
 from sympy import Abs, S, cacheit
 from sympy import Indexed, Matrix, ImmutableDenseMatrix
-from sympy import expand
 from sympy.core import Basic, Symbol
 from sympy.core import Add, Mul, Pow
 from sympy.core.expr import AtomicExpr
@@ -16,22 +10,20 @@ from sympy.simplify.simplify import simplify
 
 from sympde.core.basic import _coeffs_registery
 from sympde.core.basic import CalculusFunction
-from sympde.core.algebra import (Dot_1d,
+from sympde.core.algebra import (Dot_1d, Inner_1d,
                                  Dot_2d, Inner_2d, Cross_2d,
                                  Dot_3d, Inner_3d, Cross_3d)
-from sympde.core.utils import random_string
 
-from sympde.calculus import jump, avg, minus, plus
+from sympde.calculus import jump, minus, plus
 from sympde.calculus import Jump, is_zero
-from sympde.calculus.core import _generic_ops, _diff_ops
 from sympde.calculus.matrices import SymbolicDeterminant, Inverse, Transpose
-from sympde.calculus.matrices import MatSymbolicPow, MatrixElement, SymbolicTrace
+from sympde.calculus.matrices import MatrixElement, SymbolicTrace
 
 from sympde.topology.basic   import BasicDomain, Union, Interval
 from sympde.topology.basic   import Boundary, Interface
 from sympde.topology.basic   import InteriorDomain
 from sympde.topology.domain  import NormalVector, TangentVector, NCube, NCubeInterior
-from sympde.topology.mapping import JacobianSymbol, InterfaceMapping, MultiPatchMapping, JacobianInverseSymbol
+from sympde.topology.mapping import JacobianSymbol, InterfaceMapping, JacobianInverseSymbol
 from sympde.topology.mapping import LogicalExpr, PullBack
 
 # TODO fix circular dependency between sympde.expr.evaluation and sympde.topology.mapping
@@ -40,7 +32,6 @@ from sympde.topology.space import ScalarFunction
 from sympde.topology.space import VectorFunction
 from sympde.topology.space import IndexedVectorFunction
 from sympde.topology.space import Trace
-from sympde.topology.space import element_of
 from sympde.topology.space import ScalarFunctionSpace
 
 from sympde.topology.derivatives import _partial_derivatives
@@ -49,15 +40,22 @@ from sympde.topology.derivatives import get_atom_derivatives
 from sympde.topology.derivatives import get_atom_logical_derivatives
 from sympde.topology.derivatives import dx, dy, dz
 from sympde.topology.derivatives import dx1, dx2, dx3
-from sympde.topology.derivatives import (Grad_1d, Div_1d,
-                                         Grad_2d, Curl_2d, Rot_2d, Div_2d,
-                                         Grad_3d, Curl_3d, Div_3d)
+
+from sympde.calculus.core import Grad, Div, Curl, Rot, Bracket, Laplace, Hessian
+from sympde.calculus.core import Dot, Inner, Cross
+
+from sympde.topology.derivatives import Grad_1d, Grad_2d, Grad_3d
+from sympde.topology.derivatives import Div_1d, Div_2d, Div_3d
+from sympde.topology.derivatives import Curl_2d, Curl_3d
+from sympde.topology.derivatives import Rot_2d
 from sympde.topology.derivatives import Bracket_2d
 from sympde.topology.derivatives import Laplace_1d, Laplace_2d, Laplace_3d
 from sympde.topology.derivatives import Hessian_1d, Hessian_2d, Hessian_3d
-from sympde.topology.derivatives import (LogicalGrad_1d, LogicalDiv_1d,
-                                         LogicalGrad_2d, LogicalCurl_2d, LogicalRot_2d, LogicalDiv_2d,
-                                         LogicalGrad_3d, LogicalCurl_3d, LogicalDiv_3d)
+
+from sympde.topology.derivatives import LogicalGrad_1d, LogicalGrad_2d, LogicalGrad_3d
+from sympde.topology.derivatives import LogicalDiv_1d, LogicalDiv_2d, LogicalDiv_3d
+from sympde.topology.derivatives import LogicalCurl_2d, LogicalCurl_3d
+from sympde.topology.derivatives import LogicalRot_2d
 from sympde.topology.derivatives import LogicalBracket_2d
 from sympde.topology.derivatives import LogicalLaplace_1d, LogicalLaplace_2d, LogicalLaplace_3d
 from sympde.topology.derivatives import LogicalHessian_1d, LogicalHessian_2d, LogicalHessian_3d
@@ -90,6 +88,33 @@ __all__ = (
     '_unpack_functions',
     'is_sequence',
 )
+
+#==============================================================================
+differential_operators = {
+    Grad   : (None,    Grad_1d,    Grad_2d,    Grad_3d),
+    Div    : (None,     Div_1d,     Div_2d,     Div_3d),
+    Curl   : (None,       None,    Curl_2d,    Curl_3d),
+    Rot    : (None,       None,     Rot_2d,       None),
+    Bracket: (None,       None, Bracket_2d,       None),
+    Laplace: (None, Laplace_1d, Laplace_2d, Laplace_3d),
+    Hessian: (None, Hessian_1d, Hessian_2d, Hessian_3d),
+}
+
+logical_differential_operators = {
+    Grad   : (None,    LogicalGrad_1d,    LogicalGrad_2d,    LogicalGrad_3d),
+    Div    : (None,     LogicalDiv_1d,     LogicalDiv_2d,     LogicalDiv_3d),
+    Curl   : (None,              None,    LogicalCurl_2d,    LogicalCurl_3d),
+    Rot    : (None,              None,     LogicalRot_2d,              None),
+    Bracket: (None,              None, LogicalBracket_2d,              None),
+    Laplace: (None, LogicalLaplace_1d, LogicalLaplace_2d, LogicalLaplace_3d),
+    Hessian: (None, LogicalHessian_1d, LogicalHessian_2d, LogicalHessian_3d),
+}
+
+generic_operators = {
+    Dot  : (None,   Dot_1d,   Dot_2d,   Dot_3d),
+    Inner: (None, Inner_1d, Inner_2d, Inner_3d),
+    Cross: (None,     None, Cross_2d, Cross_3d),
+}
 
 #==============================================================================
 def is_sequence(a):
@@ -769,22 +794,34 @@ class TerminalExpr(CalculusFunction):
         elif isinstance(expr, BasicExpr):
             return cls.eval(expr.expr, domain=domain)
 
-        elif isinstance(expr, _diff_ops):
-            op   = type(expr)
+        elif isinstance(expr, (*differential_operators,)):
             if domain.mapping is None:
-                new  = eval('Logical{0}_{1}d'.format(op, dim))
+                new = logical_differential_operators[type(expr)][dim]
             else:
-                new  = eval('{0}_{1}d'.format(op, dim))
-
+                new = differential_operators[type(expr)][dim]
             args = [cls.eval(i, domain=domain) for i in expr.args]
             return new(*args)
 
-        elif isinstance(expr, _generic_ops):
-            # if i = Dot(...) then type(i) is Grad
-            op = type(expr)
-            new  = eval('{0}_{1}d'.format(op, dim))
+        elif isinstance(expr, (*generic_operators,)):
+            new = generic_operators[type(expr)][dim]
             args = [cls.eval(i, domain=domain) for i in expr.args]
             return new(*args)
+
+#        elif isinstance(expr, _diff_ops):
+#            op   = type(expr)
+#            if domain.mapping is None:
+#                new  = eval('Logical{0}_{1}d'.format(op, dim))
+#            else:
+#                new  = eval('{0}_{1}d'.format(op, dim))
+#            args = [cls.eval(i, domain=domain) for i in expr.args]
+#            return new(*args)
+#
+#        elif isinstance(expr, _generic_ops):
+#            # if i = Dot(...) then type(i) is Grad
+#            op = type(expr)
+#            new  = eval('{0}_{1}d'.format(op, dim))
+#            args = [cls.eval(i, domain=domain) for i in expr.args]
+#            return new(*args)
 
         elif isinstance(expr, Trace):
             # TODO treate different spaces

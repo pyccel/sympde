@@ -1,38 +1,17 @@
 # coding: utf-8
 
-import numpy as np
-from itertools import groupby
-
 #from sympy.core.sympify import sympify
 from sympy.simplify.simplify import simplify
-from sympy import Symbol
-from sympy import Lambda
-from sympy import Function
-from sympy import bspline_basis
-from sympy import lambdify
-from sympy import cos
-from sympy import sin
-from sympy import Rational
-from sympy import diff
 from sympy import Matrix, ImmutableDenseMatrix
-from sympy import latex
-from sympy import I as sympy_I
 from sympy.core import Basic
 from sympy.core.singleton import S
-from sympy.simplify.simplify import nsimplify
-from sympy.utilities.lambdify import implemented_function
-from sympy.matrices.dense import MutableDenseMatrix
 from sympy import Mul, Add
-from sympy import postorder_traversal
-from sympy import preorder_traversal
-from sympy.core.expr import Expr
 from sympy.core.containers import Tuple
-from sympy import Integer, Float
 from sympy import Add, Mul
 from sympy import simplify
 from sympy import S
 from sympy import Basic
-from sympy import Indexed, IndexedBase
+from sympy import Indexed
 
 from sympde.old_sympy_utilities import is_sequence
 from .basic import CalculusFunction
@@ -274,48 +253,37 @@ class InnerBasic(CalculusFunction):
         else:
             return r
 
-class Inner_2d(InnerBasic):
-
     @classmethod
     def eval(cls, *_args):
-        """."""
 
         if not _args:
             return
 
-        if not( len(_args) == 2):
+        if len(_args) != 2:
             raise ValueError('Expecting two arguments')
 
-        u = _args[0]
-        v = _args[1]
+        u, v = _args
 
+        # Matrix constructor requires a sequence
+        if not is_sequence(u): u = [u]
+        if not is_sequence(v): v = [v]
+
+        # Convert arguments to Matrix (nothing happens if already Matrix)
         u = Matrix(u)
         v = Matrix(v)
 
         # TODO add conjugate
-        M = u.transpose()*v
+        M = u.transpose() * v
         return M.trace()
 
-
-class Inner_3d(InnerBasic):
-
-    @classmethod
-    def eval(cls, *_args):
-        """."""
-
-        if not _args:
-            return
-
-        if not( len(_args) == 2):
-            raise ValueError('Expecting two arguments')
-
-        u = _args[0]
-        v = _args[1]
-
-        u = Matrix(u)
-        v = Matrix(v)
-
-        # TODO add conjugate
-        M = u.transpose()*v
-        return M.trace()
 # ...
+class Inner_1d(InnerBasic):
+    pass
+
+# ...
+class Inner_2d(InnerBasic):
+    pass
+
+# ...
+class Inner_3d(InnerBasic):
+    pass
