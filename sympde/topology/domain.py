@@ -75,12 +75,12 @@ class Domain(BasicDomain):
         # ...
 
         # ...
-        if ( ( interiors is None ) and ( connectivity is None ) and ( dim is None) ):
+        if ( ( interiors in [None, ()] ) and ( connectivity in [None, ()] ) and ( dim is None) ):
             raise ValueError('> either interiors or connectivity must be given')
         # ...
 
         # ...
-        if not( interiors is None ):
+        if not( interiors in [None, ()] ):
             if not isinstance( interiors, (*iterable_types, InteriorDomain)):
                 raise TypeError('> Expecting an iterable or a InteriorDomain')
 
@@ -103,7 +103,7 @@ class Domain(BasicDomain):
             interiors = Tuple(*interiors)
         # ...
 
-        if not( boundaries is None ):
+        if not( boundaries in [None, ()] ):
             if not isinstance( boundaries, (*iterable_types, Boundary)):
                 raise TypeError('> Expecting an iterable or a Boundary')
 
@@ -119,7 +119,7 @@ class Domain(BasicDomain):
 
         boundaries = Tuple(*boundaries)
 
-        if not( connectivity is None ):
+        if not( connectivity in [None, ()] ):
             if not isinstance( connectivity, Connectivity ):
                 raise TypeError('> Expecting a Connectivity')
 
@@ -128,7 +128,7 @@ class Domain(BasicDomain):
             connectivity = Connectivity()
 
         # ...
-        if interiors is None and dim:
+        if interiors in [None, ()] and dim:
             interiors = [InteriorDomain(name, dim=dim)]
 
         if len(interiors) == 0 and dim is None:
@@ -228,7 +228,7 @@ class Domain(BasicDomain):
     @property
     def corners(self):
         corners = getattr(self,'_corners', None)
-        if corners is None:
+        if corners in [None, ()]:
             corners = self.get_shared_corners()
         self._corners = corners
         return corners
@@ -540,7 +540,7 @@ class Domain(BasicDomain):
 
         # ... boundary
         boundaries = Union(*[b for p in patches for b in p.boundary]).complement(Union(*boundaries))
-        if boundaries is None:
+        if boundaries in [None, ()]:
             boundaries = ()
         else :
             boundaries = boundaries.as_tuple()
