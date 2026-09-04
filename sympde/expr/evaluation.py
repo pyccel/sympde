@@ -518,9 +518,10 @@ class TerminalExpr(CalculusFunction):
     Expr | tuple[Expr] | TerminalExpr
         The atomized expression. A tuple of expressions is returned in the case
         of `expr` being a BasicForm (i.e. a BilinearForm, LinearForm, or
-        Functional), as the domain could contain multiple patches. An
-        unevaluated `TerminalExpr` object (which only stores its arguments) is
-        returned if `evaluate is False`.
+        Functional), as the domain could contain multiple patches. The
+        transformation applied to the input argument `expr` depends on its exact
+        type. If `expr` does not match any of the specific `isinstance` checks,
+        the input object is returned unchanged.
     """
     def __new__(cls, expr: Expr, domain: BasicDomain, *, evaluate: bool=True):
 
