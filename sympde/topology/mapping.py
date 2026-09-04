@@ -1,4 +1,5 @@
 # coding: utf-8
+import warnings
 from abc import ABC, ABCMeta, abstractmethod
 from sympy                 import Indexed, IndexedBase, Idx
 from sympy                 import Matrix, ImmutableDenseMatrix
@@ -435,12 +436,24 @@ class Mapping(BasicMapping):
         return MappedDomain(self, domain)
 
     @property
-    def jacobian( self ):
+    def jacobian_symbol( self ):
+        """Symbolic JacobianSymbol of this mapping."""
         return self._jacobian
 
     @property
+    def jacobian( self ):
+        # WP 02a: the name `jacobian` is being freed so that in 02b it can become
+        # the numeric point-evaluation method of DefinedMapping. The symbolic
+        # JacobianSymbol now lives on `jacobian_symbol`.
+        warnings.warn(
+            "Mapping.jacobian (symbolic) is deprecated; use "
+            "Mapping.jacobian_symbol.",
+            DeprecationWarning, stacklevel=2)
+        return self.jacobian_symbol
+
+    @property
     def det_jacobian( self ):
-        return self.jacobian.det()
+        return self.jacobian_symbol.det()
 
     @property
     def is_analytical( self ):
@@ -531,7 +544,7 @@ class InverseMapping(Mapping):
         ldim     = mapping.ldim
         pdim     = mapping.pdim
         coords   = mapping.logical_coordinates
-        jacobian = mapping.jacobian.inv()
+        jacobian = mapping.jacobian_symbol.inv()
         return Mapping.__new__(cls, name, ldim=ldim, pdim=pdim, coordinates=coords, jacobian=jacobian)
 
 #==============================================================================
@@ -809,7 +822,7 @@ class PullBack(Expr):
         else:
             mapping = space.domain.mapping
 
-        J = mapping.jacobian
+        J = mapping.jacobian_symbol
         if isinstance(kind, (UndefinedSpaceType, H1SpaceType)):
             expr = el
 
@@ -1117,7 +1130,7 @@ class LogicalExpr(CalculusFunction):
             else:
                 arg = cls.eval(arg, domain)
 
-            return mapping.jacobian.inv().T*grad(arg)
+            return mapping.jacobian_symbol.inv().T*grad(arg)
 
         elif isinstance(expr, curl):
             arg = expr.args[0]
@@ -1137,7 +1150,7 @@ class LogicalExpr(CalculusFunction):
                 arg = cls.eval(arg, domain)
 
             if isinstance(arg, PullBack) and isinstance(arg.kind, HcurlSpaceType):
-                J   = mapping.jacobian
+                J   = mapping.jacobian_symbol
                 arg = arg.test
                 if isinstance(expr.args[0], (MinusInterfaceOperator, PlusInterfaceOperator)):
                     arg = type(expr.args[0])(arg)
@@ -1167,20 +1180,20 @@ class LogicalExpr(CalculusFunction):
                 arg = cls.eval(arg, domain)
 
             if isinstance(arg, PullBack) and isinstance(arg.kind, HdivSpaceType):
-                J   = mapping.jacobian
+                J   = mapping.jacobian_symbol
                 arg = arg.test
                 if isinstance(expr.args[0], (MinusInterfaceOperator, PlusInterfaceOperator)):
                     arg = type(expr.args[0])(arg)
                 return (1/J.det())*div(arg)
             elif isinstance(arg, PullBack):
-                return SymbolicTrace(mapping.jacobian.inv().T*grad(arg.test))
+                return SymbolicTrace(mapping.jacobian_symbol.inv().T*grad(arg.test))
             else:
                 raise NotImplementedError('TODO')
 
         elif isinstance(expr, laplace):
             arg = expr.args[0]
             v   = cls.eval(grad(arg), domain)
-            v   = mapping.jacobian.inv().T*grad(v)
+            v   = mapping.jacobian_symbol.inv().T*grad(v)
             return SymbolicTrace(v)
 
 #        elif isinstance(expr, hessian):
@@ -1328,7 +1341,7 @@ class LogicalExpr(CalculusFunction):
             assert domain is not None
 
             if expr.is_domain_integral:
-                J   = mapping.jacobian
+                J   = mapping.jacobian_symbol
                 det = sqrt((J.T*J).det())
             else:
                 axis = domain.axis
@@ -1361,7 +1374,7 @@ class LogicalExpr(CalculusFunction):
 
         elif isinstance(expr, DomainExpression):
             domain  = expr.target
-            J       = domain.mapping.jacobian
+            J       = domain.mapping.jacobian_symbol
             newexpr = cls.eval(expr.expr, domain)
             newexpr = TerminalExpr(newexpr, domain=domain)
             domain  = domain.logical_domain

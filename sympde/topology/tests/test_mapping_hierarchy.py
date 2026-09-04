@@ -67,3 +67,20 @@ def test_concrete_subclasses_lose_abstractness_without_instantiation():
     assert not inspect.isabstract(ConcreteStructural)
     assert ConcreteDefined.__abstractmethods__    == frozenset()
     assert ConcreteStructural.__abstractmethods__ == frozenset()
+
+
+# -- work-package 02a: the symbolic `jacobian` property moved to `jacobian_symbol`
+
+def test_jacobian_symbol_holds_the_symbolic_jacobian():
+    from sympde.topology import IdentityMapping
+    F = IdentityMapping('F', dim=2)
+    assert F.jacobian_symbol is F._jacobian
+    assert type(F.jacobian_symbol).__name__ == 'JacobianSymbol'
+
+
+def test_legacy_jacobian_property_is_a_deprecated_alias():
+    from sympde.topology import IdentityMapping
+    F = IdentityMapping('F', dim=2)
+    with pytest.warns(DeprecationWarning, match='jacobian_symbol'):
+        legacy = F.jacobian
+    assert legacy is F.jacobian_symbol
