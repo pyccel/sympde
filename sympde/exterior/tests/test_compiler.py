@@ -287,11 +287,11 @@ def test_compiler_3d_stokes():
 #==============================================================================
 
 def teardown_module():
-    from sympy import cache
+    from sympy.core import cache
     cache.clear_cache()
 
 def teardown_function():
-    from sympy import cache
+    from sympy.core import cache
     cache.clear_cache()
 
 #test_compiler_3d_1()

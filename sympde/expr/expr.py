@@ -9,8 +9,8 @@ from sympy.core import Basic, S
 from sympy.core import Expr, Add, Mul
 from sympy.core.numbers import Zero as sy_Zero
 from sympy.core.containers import Tuple
-from sympy.core.compatibility import is_sequence
 
+from sympde.old_sympy_utilities import is_sequence
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import Constant
 from sympde.core.utils import random_string
@@ -35,6 +35,7 @@ __all__ = (
     'Integral',
     'LinearExpr',
     'LinearForm',
+    'SemiNorm',
     'Norm',
 #
     '_get_domain',
@@ -126,7 +127,7 @@ class LinearExpr(BasicExpr):
 
         args = _sanitize_arguments(arguments, is_linear=True)
 
-        if not is_linear_expression(expr, args, integral=False):
+        if not is_linear_expression(expr, args):
             msg = '> Expression is not linear'
             raise UnconsistentLinearExpressionError(msg)
 
@@ -333,7 +334,7 @@ class Functional(BasicForm):
 class LinearForm(BasicForm):
     is_linear = True
 
-    def __new__(cls, arguments, expr, **options):
+    def __new__(cls, arguments, expr, check_linearity=True, ignore_linearity_errors=False, **options):
 
         # Trivial case: null expression
         if expr == 0:
@@ -347,9 +348,14 @@ class LinearForm(BasicForm):
         args = _sanitize_arguments(arguments, is_linear=True)
 
         # Check linearity with respect to the given arguments
-        if not is_linear_expression(expr, args):
-            msg = 'Expression is not linear w.r.t [{}]'.format(args)
-            raise UnconsistentLinearExpressionError(msg)
+        if check_linearity and not is_linear_expression(expr, args):
+            print(expr)
+            print(args)
+            msg = f'Expression is not linear w.r.t. [{args}]'
+            if ignore_linearity_errors:
+                print(msg)
+            else:
+                raise UnconsistentLinearExpressionError(msg)
 
         # Create new object of type LinearForm
         obj = Basic.__new__(cls, args, expr)
@@ -396,7 +402,7 @@ class LinearForm(BasicForm):
         # Make sure that 'values' is always a list
         if len(tests) == 1:
             values = tests[0]
-            if not is_sequence(values):
+            if not is_sequence(values, vector=isinstance(values, VectorFunction)):
                 values = [values]
         else:
             values = tests
@@ -413,7 +419,7 @@ class BilinearForm(BasicForm):
     is_bilinear = True
     _is_symmetric = None
 
-    def __new__(cls, arguments, expr, **options):
+    def __new__(cls, arguments, expr, check_linearity=True, ignore_linearity_errors=False, **options):
 
         # Trivial case: null expression
         if expr == 0:
@@ -431,16 +437,21 @@ class BilinearForm(BasicForm):
         trial_functions, test_functions = args
 
         # Check linearity with respect to trial functions
-        if not is_linear_expression(expr, trial_functions):
-            msg = ' Expression is not linear w.r.t trial functions {}'\
-                    .format(trial_functions)
-            raise UnconsistentLinearExpressionError(msg)
+        if check_linearity and not is_linear_expression(expr, trial_functions):
+            msg = f'Expression is not linear w.r.t. trial functions [{trial_functions}]'
+            if ignore_linearity_errors:
+                print(msg)
+            else:
+                raise UnconsistentLinearExpressionError(msg)
+
 
         # Check linearity with respect to test functions
-        if not is_linear_expression(expr, test_functions):
-            msg = ' Expression is not linear w.r.t test functions {}'\
-                    .format(test_functions)
-            raise UnconsistentLinearExpressionError(msg)
+        if check_linearity and not is_linear_expression(expr, test_functions):
+            msg = f'Expression is not linear w.r.t. test functions [{test_functions}]'
+            if ignore_linearity_errors:
+                print(msg)
+            else:
+                raise UnconsistentLinearExpressionError(msg)
 
         # Create new object of type BilinearForm
         obj = Basic.__new__(cls, args, expr)
@@ -502,8 +513,8 @@ class BilinearForm(BasicForm):
         expr = self._update_free_variables(**kwargs)
 
         # If needed, convert positional arguments to lists
-        if not is_sequence(trials): trials = [trials]
-        if not is_sequence(tests ): tests  = [tests ]
+        if not is_sequence(trials, vector=isinstance(trials, VectorFunction)): trials = [trials]
+        if not is_sequence(tests, vector=isinstance(tests, VectorFunction)): tests  = [tests ]
 
         # Concatenate input values into single list
         values = [*trials, *tests]
@@ -516,24 +527,85 @@ class BilinearForm(BasicForm):
         return expr
 
 #==============================================================================
+class SemiNorm(Functional):
+    is_norm = True
+
+    def __new__(cls, expr, domain, kind='l2', evaluate=True, **options):
+
+        kind = kind.lower()
+        if kind not in ['l2', 'h1', 'h2']:
+            raise ValueError('> Only L2, H1, H2 norms are available')
+        # ...
+
+        # ...
+        is_vector = isinstance(expr, (Matrix, ImmutableDenseMatrix, Tuple, list, tuple))
+        if is_vector:
+            expr = ImmutableDenseMatrix(expr)
+        # ...
+
+        # ...
+        exponent = None
+        if kind == 'l2' and evaluate:
+            exponent = 2
+
+            if not is_vector:
+                expr = expr * expr
+
+            else:
+                if expr.shape[1] != 1:
+                    raise ValueError('Wrong expression for Matrix. must be a row')
+
+                v = Tuple(*expr[:, 0])
+                expr = Dot(v, v)
+
+        elif kind == 'h1'and evaluate :
+            exponent = 2
+
+            if not is_vector:
+                a    = Grad(expr)
+                expr = Dot(a, a)
+
+            else:
+                if expr.shape[1] != 1:
+                    raise ValueError('Wrong expression for Matrix. must be a row')
+
+                v = Tuple(*expr[:, 0])
+                a = Grad(v)
+                expr = Inner(a, a)
+
+        elif kind == 'h2'and evaluate :
+            exponent = 2
+
+            if not is_vector:
+                a    = Hessian(expr)
+                expr = Dot(a, a)
+
+            else:
+                raise NotImplementedError('TODO')
+        # ...
+
+        obj = Functional.__new__(cls, expr, domain, evaluate=evaluate)
+        obj._exponent = exponent
+        obj._kind     = kind
+
+        return obj
+
+    @property
+    def exponent(self):
+        return self._exponent
+
+    @property
+    def kind(self):
+        return self._kind
+
+#==============================================================================
 class Norm(Functional):
     is_norm = True
 
     def __new__(cls, expr, domain, kind='l2', evaluate=True, **options):
-#        # ...
-#        tests = expr.atoms((ScalarFunction, VectorFunction))
-#        if tests:
-#            msg = '> Expecting an Expression without test functions'
-#            raise UnconsistentArgumentsError(msg)
-#
-#        if not isinstance(expr, (Expr, Matrix, ImmutableDenseMatrix)):
-#            msg = '> Expecting Expr, Matrix, ImmutableDenseMatrix'
-#            raise UnconsistentArgumentsError(msg)
-#        # ...
 
-        # ...
         kind = kind.lower()
-        if not(kind in ['l2', 'h1', 'h2']):
+        if kind not in ['l2', 'h1', 'h2']:
             raise ValueError('> Only L2, H1, H2 norms are available')
         # ...
 
@@ -552,33 +624,34 @@ class Norm(Functional):
                 expr = expr*expr
 
             else:
-                if not( expr.shape[1] == 1 ):
+                if expr.shape[1] != 1:
                     raise ValueError('Wrong expression for Matrix. must be a row')
 
                 v = Tuple(*expr[:,0])
                 expr = Dot(v, v)
 
-        elif kind == 'h1'and evaluate :
+        elif kind == 'h1' and evaluate :
             exponent = 2
 
             if not is_vector:
                 a    = Grad(expr)
-                expr = Dot(a, a)
+                expr = Dot(a, a) + expr * expr
 
             else:
-                if not( expr.shape[1] == 1 ):
+                if expr.shape[1] != 1:
                     raise ValueError('Wrong expression for Matrix. must be a row')
 
-                v = Tuple(*expr[:,0])
+                v = Tuple(*expr[:, 0])
                 a = Grad(v)
-                expr = Inner(a, a)
+                expr = Inner(a, a) + Dot(v, v)
 
-        elif kind == 'h2'and evaluate :
+        elif kind == 'h2' and evaluate :
             exponent = 2
 
             if not is_vector:
                 a    = Hessian(expr)
-                expr = Dot(a, a)
+                b    = Grad(expr)
+                expr = Dot(a, a) + Dot(b, b) + expr * expr
 
             else:
                 raise NotImplementedError('TODO')
@@ -652,8 +725,9 @@ def linearize(form, fields, trials=None):
     for I in integrals:
 
         g0 = I.expr
-        g1 = I.expr.subs(zip(fields, new_fields)).expand()
-        dg_du = ((g1-g0)/eps).series(eps, 0, 2).subs(eps, 0)
+        g1 = I.expr.subs(zip(fields, new_fields))
+        temp=((g1-g0)/eps).expand()
+        dg_du = (temp).series(eps, 0, 2).subs(eps, 0)
 
         if dg_du:
             new_I = integral(I.domain, dg_du)
@@ -665,71 +739,108 @@ def linearize(form, fields, trials=None):
     return BilinearForm((trials, tests), bilinear_expr)
 
 #==============================================================================
-def is_linear_expression(expr, args, integral=True, debug=True):
-    """checks if an expression is linear with respect to the given arguments."""
-    # ...
-    left_args  = []
-    right_args = []
+def is_linear_expression(expr, args, debug=True):
+    """
+    Checks if expression is linear with respect to each argument in ``args``:
 
+        1. Additivity:   f(x + y) = f(x) + f(y)
+        2. Homogeneity:  f(alpha * x) = alpha * f(x)
+
+    In general, `f` may have an arbitrary number of arguments: `x` and `y`
+    represent independent copies of the same list of arguments.
+    
+
+    Parameters
+    ----------
+    expr : Expr
+        Symbolic expression to test.
+    args : iterable
+        Arguments with respect to which expr is tested for linearity.
+        Only one instance of each argument needs to be provided; the function
+        internally creates the independent copies required for the additivity
+        and homogeneity checks.
+        Each argument must be ScalarFunction or VectorFunction.
+    debug : bool, optional
+        Print diagnostic info if a check fails.
+
+    Returns
+    -------
+    bool
+        True if the expression is linear with respect to all given arguments,
+        False otherwise.
+    """
+    assert isinstance(expr, Expr)
+
+    x_args = []
+    y_args = []
+
+    # create 2 independent copies (x and y) of every original argument
     for arg in args:
-        tag    = random_string( 4 )
+        tag = random_string(4)
 
         if isinstance(arg, ScalarFunction):
-            left  = ScalarFunction(arg.space, name='l_' + tag)
-            right = ScalarFunction(arg.space, name='r_' + tag)
+            x  = ScalarFunction(arg.space, name='x_' + tag)
+            y = ScalarFunction(arg.space, name='y_' + tag)
 
         elif isinstance(arg, VectorFunction):
-            left  = VectorFunction(arg.space, name='l_' + tag)
-            right = VectorFunction(arg.space, name='r_' + tag)
+            x  = VectorFunction(arg.space, name='x_' + tag)
+            y = VectorFunction(arg.space, name='y_' + tag)
         else:
             raise TypeError('argument must be a {Scalar|Vector}Function')
 
-        left_args  += [left]
-        right_args += [right]
-    # ...
+        x_args.append(x)
+        y_args.append(y)
 
-    # ... check addition
-    newargs = [left + right for left, right in zip(left_args, right_args)]
+    # ------------------------------------------------------------------------
+    # check addition property: f(x + y) = f(x) + f(y)
+    summed_args = [x + y for x, y in zip(x_args, y_args)]
+    expr_at_x  = expr.subs(zip(args, x_args)) # f(x)
+    expr_at_y = expr.subs(zip(args, y_args)) # f(y)
+    expr_at_sum = expr.subs(zip(args, summed_args)) # f(x + y)
+    expected_sum = expr_at_x + expr_at_y # f(x) + f(y)
 
-    newexpr    = expr.subs(zip(args, newargs))
-    left_expr  = expr.subs(zip(args, left_args))
-    right_expr = expr.subs(zip(args, right_args))
+    if (expr_at_sum - expected_sum).expand() != 0:
+        expr1 = expr_at_sum.expand()
+        expr2 = expected_sum.expand()
+        if expr1 != expr2:
+            if debug:
+                print(r"Failed to assert addition property "
+                    r"`f(x + y) = f(x) + f(y)`, where:")
+                print()
+                print('f(x + y) =')
+                print(expr1)
+                print()
+                print('f(x) + f(y) =')
+                print(expr2)
+            return False
 
-    a = newexpr
-    b = left_expr + right_expr
+    # ------------------------------------------------------------------------
+    # check multiplication property: f(alpha * x) = alpha * f(x)
+    alpha = Constant(f"alpha_{random_string(4)}")
 
-    if not( (a-b).expand() == 0 or a.expand() == b.expand()):
-        # TODO use a warning or exception?
-        if debug:
-            print('Failed to assert addition property')
-            print('{} != {}'.format(a.expand(), b.expand()))
-        return False
+    scaled_x_args = [alpha * x for x in x_args]
+    expr_at_scaled_x = expr.subs(zip(args, scaled_x_args))
 
-    # ...
-
-    # ... check multiplication
-    tag   = random_string( 4 )
-    coeff = Constant('alpha_' + tag)
-
-    newexpr = expr
-    for arg, left in zip(args, left_args):
-        newarg  = coeff * left
-        newexpr = newexpr.subs(arg, newarg)
-
-    atoms     = list(newexpr.atoms(BasicOperator))
+    atoms     = list(expr_at_scaled_x.atoms(BasicOperator))
     subs      = [e.func(*e.args, evaluate=True) for e in atoms]
-    newexpr   = newexpr.subs(zip(atoms, subs))
+    expr_at_scaled_x   = expr_at_scaled_x.subs(zip(atoms, subs))
 
+    scaled_expr = alpha * expr_at_x
 
-    left_expr = expr.subs(list(zip(args, left_args)))
-    left_expr = coeff * left_expr
-    if not( (newexpr-left_expr).expand() == 0 or newexpr.expand()==left_expr.expand()):
-        # TODO use a warning or exception?
-        if debug:
-            print('Failed to assert multiplication property')
-            print('{} != {}'.format(newexpr, left_expr))
-        return False
-    # ...
+    if (expr_at_scaled_x - scaled_expr).expand() != 0:
+        expr1 = expr_at_scaled_x.expand()
+        expr2 = scaled_expr.expand()
+        if expr1 != expr2:
+            if debug:
+                print(r"Failed to assert multiplication property "
+                      r"`f(alpha * x) = alpha * f(x)`, where:")
+                print()
+                print('f(alpha * x) =')
+                print(expr1)
+                print()
+                print('alpha * f(x) =')
+                print(expr2)
+            return False
 
     return True
 

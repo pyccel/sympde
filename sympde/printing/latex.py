@@ -116,7 +116,7 @@ class LatexPrinter(LatexPrinterSympy):
 
     # ...
     def _print_VectorFunction(self, expr):
-        return r'\mathbf{' + self._print(expr.name) + '}'
+        return r'\mathbf{' + expr.name + '}'
     # ...
 
     # ... algebraic operators
