@@ -45,6 +45,7 @@ from .derivatives import LogicalGrad_1d, LogicalGrad_2d, LogicalGrad_3d
 # TODO fix circular dependency between sympde.expr.evaluation and sympde.topology.mapping
 
 __all__ = (
+    'AnalyticMapping',
     'BasicCallableMapping',
     'Contravariant',
     'Covariant',
@@ -152,9 +153,9 @@ class _MappingABCMeta(ABCMeta, type(BasicMapping)):
     carries sympy's metaclass; declaring ``@abstractmethod`` members on it
     additionally requires ``ABCMeta``. Python rejects a class whose metaclass is
     not a subclass of every base's metaclass, so the two are merged here once
-    and reused by ``DefinedMapping`` and ``StructuralMapping``. ``type(...)`` is
-    used instead of importing the name so this keeps working if a future sympy
-    renames its metaclass.
+    and reused by ``DefinedMapping``, ``StructuralMapping``, and
+    ``AnalyticMapping``. ``type(...)`` is used instead of importing the name so
+    this keeps working if a future sympy renames its metaclass.
     """
 
 #==============================================================================
@@ -174,7 +175,7 @@ class SymbolicMapping(BasicMapping):
     """
 
 #==============================================================================
-class DefinedMapping(SymbolicMapping, metaclass=_MappingABCMeta):
+class DefinedMapping(SymbolicMapping, BasicCallableMapping, metaclass=_MappingABCMeta):
     """
     Abstract base class for *point-evaluable* mappings.
 
@@ -182,48 +183,13 @@ class DefinedMapping(SymbolicMapping, metaclass=_MappingABCMeta):
 
     A concrete subclass (``AnalyticMapping`` in sympde, ``SplineMapping`` in
     psydac) can be evaluated on logical coordinates -- single points or arrays
-    of points -- and returns physical coordinates. Every method below must be
-    implemented for a subclass to be instantiable; this is what guarantees that
-    the sympde and psydac concrete mappings are interchangeable.
-
-    The interface mirrors (and is meant to supersede) ``BasicCallableMapping``.
+    of points -- and returns physical coordinates. The point-evaluation
+    interface (``__call__``, ``jacobian``, ``jacobian_inv``, ``metric``,
+    ``metric_det``, ``ldim``, ``pdim``) is inherited verbatim from
+    ``BasicCallableMapping``; every one must be implemented for a subclass to be
+    instantiable, which is what guarantees the sympde and psydac concrete
+    mappings are interchangeable.
     """
-
-    @abstractmethod
-    def __call__(self, *eta):
-        """ Evaluate mapping at location eta. """
-
-    @abstractmethod
-    def jacobian(self, *eta):
-        """ Compute Jacobian matrix at location eta. """
-
-    @abstractmethod
-    def jacobian_inv(self, *eta):
-        """ Compute inverse Jacobian matrix at location eta.
-            An exception should be raised if the matrix is singular.
-        """
-
-    @abstractmethod
-    def metric(self, *eta):
-        """ Compute components of metric tensor at location eta. """
-
-    @abstractmethod
-    def metric_det(self, *eta):
-        """ Compute determinant of metric tensor at location eta. """
-
-    @property
-    @abstractmethod
-    def ldim(self):
-        """ Number of logical/parametric dimensions in mapping
-            (= number of eta components).
-        """
-
-    @property
-    @abstractmethod
-    def pdim(self):
-        """ Number of physical dimensions in mapping
-            (= number of x components).
-        """
 
 #==============================================================================
 class StructuralMapping(SymbolicMapping, metaclass=_MappingABCMeta):
@@ -502,7 +468,13 @@ class Mapping(BasicMapping):
         self._is_minus = minus
 
     def copy(self):
-        obj = Mapping(self.name,
+        # Use type(self), not Mapping, so a copy of an AnalyticMapping (or any
+        # other Mapping subclass) keeps its concrete class -- and hence its
+        # point-evaluation capability -- rather than being downgraded to a
+        # plain, non-point-evaluable Mapping. Safe because evaluate=False
+        # short-circuits Mapping.__new__ right after IndexedBase.__new__,
+        # before any subclass-specific (_expressions) branching runs.
+        obj = type(self)(self.name,
                      ldim=self.ldim,
                      pdim=self.pdim,
                      evaluate=False)
@@ -535,6 +507,57 @@ class Mapping(BasicMapping):
     def _sympystr(self, printer):
         sstr = printer.doprint
         return sstr(self.name)
+
+#==============================================================================
+class AnalyticMapping(Mapping, DefinedMapping, metaclass=_MappingABCMeta):
+    """
+    Analytic mapping: symbolic like ``Mapping`` (it carries ``_expressions``),
+    and *directly point-evaluable* through the ``DefinedMapping`` interface.
+
+    Point evaluation is delegated to the mapping's own callable mapping (built
+    lazily by :meth:`Mapping.get_callable_mapping` from the analytic
+    expressions), so an ``AnalyticMapping`` and a psydac ``SplineMapping`` are
+    interchangeable wherever a point-evaluable mapping is expected.
+
+    Examples
+    --------
+    >>> from sympde.topology import IdentityMapping
+    >>> F = IdentityMapping('F', dim=2)
+    >>> F(0.3, 0.4)                       # point evaluation -> physical coords
+    (0.3, 0.4)
+    >>> F.jacobian_symbol                 # symbolic JacobianSymbol (unchanged)
+    Jacobian(F)
+    """
+
+    def __call__(self, *args):
+        # Domain call -> symbolic MappedDomain (unchanged Mapping behaviour);
+        # anything else -> point evaluation on logical coordinates.
+        if len(args) == 1 and isinstance(args[0], BasicDomain):
+            return super().__call__(args[0])
+        return self.get_callable_mapping()(*args)
+
+    def _delegate_point_eval(self, name, *eta):
+        """ Delegate a point-evaluation call to this mapping's callable mapping. """
+        return getattr(self.get_callable_mapping(), name)(*eta)
+
+    def jacobian(self, *eta):
+        """ Jacobian matrix evaluated at the logical point(s) ``eta``. """
+        return self._delegate_point_eval('jacobian', *eta)
+
+    def jacobian_inv(self, *eta):
+        """ Inverse Jacobian matrix evaluated at the logical point(s) ``eta``. """
+        return self._delegate_point_eval('jacobian_inv', *eta)
+
+    def metric(self, *eta):
+        """ Metric tensor evaluated at the logical point(s) ``eta``. """
+        return self._delegate_point_eval('metric', *eta)
+
+    def metric_det(self, *eta):
+        """ Determinant of the metric tensor at the logical point(s) ``eta``. """
+        return self._delegate_point_eval('metric_det', *eta)
+
+    # ldim / pdim: the concrete properties inherited from Mapping satisfy the
+    # DefinedMapping / BasicCallableMapping abstract members.
 
 #==============================================================================
 class InverseMapping(Mapping):
