@@ -8,11 +8,14 @@ import numpy as np
 from sympy import Abs, S, cacheit
 from sympy import Indexed, Matrix, ImmutableDenseMatrix
 from sympy import expand
+from sympy import exp, sin, cos
 from sympy.core import Basic, Symbol
 from sympy.core import Add, Mul, Pow
 from sympy.core.expr import AtomicExpr
 from sympy.core.containers import Tuple
 from sympy.simplify.simplify import simplify
+from sympy.functions.elementary.trigonometric import TrigonometricFunction
+from sympy.functions.elementary.hyperbolic import HyperbolicFunction
 
 from sympde.core.basic import _coeffs_registery
 from sympde.core.basic import CalculusFunction
@@ -543,9 +546,14 @@ class TerminalExpr(CalculusFunction):
             return Abs(cls.eval(expr.args[0], domain=domain))
 
         elif isinstance(expr, Pow):
-            base = cls.eval(expr.base, domain=domain)
-            exp  = cls.eval(expr.exp, domain=domain)
-            return base**exp
+            b = cls.eval(expr.base, domain=domain)
+            e = cls.eval(expr.exp , domain=domain)
+            return b ** e
+
+        elif isinstance(expr, (TrigonometricFunction,HyperbolicFunction)): # TODO [YG 12.06.2023]: use generic SymPy type
+
+            args = [cls.eval(a, domain=domain) for a in expr.args]
+            return type(expr)(*args)
 
         elif isinstance(expr, JacobianSymbol):
             axis = expr.axis
