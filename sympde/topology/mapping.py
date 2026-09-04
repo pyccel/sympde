@@ -1,5 +1,5 @@
 # coding: utf-8
-from abc import ABC, abstractmethod
+from abc import ABC, ABCMeta, abstractmethod
 from sympy                 import Indexed, IndexedBase, Idx
 from sympy                 import Matrix, ImmutableDenseMatrix
 from sympy                 import Function, Expr
@@ -47,6 +47,7 @@ __all__ = (
     'BasicCallableMapping',
     'Contravariant',
     'Covariant',
+    'DefinedMapping',
     'InterfaceMapping',
     'InverseMapping',
     'Jacobian',
@@ -58,7 +59,9 @@ __all__ = (
     'MappingApplication',
     'MultiPatchMapping',
     'PullBack',
+    'StructuralMapping',
     'SymbolicExpr',
+    'SymbolicMapping',
     'SymbolicWeightedVolume',
     'get_logical_test_function',
 )
@@ -137,6 +140,111 @@ class BasicCallableMapping(ABC):
         """ Number of physical dimensions in mapping
             (= number of x components).
         """
+
+#==============================================================================
+class _MappingABCMeta(ABCMeta, type(BasicMapping)):
+    """
+    Metaclass merging ``abc.ABCMeta`` with sympy's metaclass
+    (``ManagedProperties`` in sympy 1.9).
+
+    A mapping class derived from ``IndexedBase`` (via ``BasicMapping``) already
+    carries sympy's metaclass; declaring ``@abstractmethod`` members on it
+    additionally requires ``ABCMeta``. Python rejects a class whose metaclass is
+    not a subclass of every base's metaclass, so the two are merged here once
+    and reused by ``DefinedMapping`` and ``StructuralMapping``. ``type(...)`` is
+    used instead of importing the name so this keeps working if a future sympy
+    renames its metaclass.
+    """
+
+#==============================================================================
+class SymbolicMapping(BasicMapping):
+    """
+    Common root of the unified mapping hierarchy: a symbolic transformation of
+    coordinates identified by a name and a pair of dimensions (logical ``ldim``
+    to physical ``pdim``).
+
+    A ``SymbolicMapping`` may be undefined (name and dimensions only) or carry
+    more structure in a subclass. It stays callable on a *domain*, returning a
+    symbolic mapped domain; point evaluation is the responsibility of
+    ``DefinedMapping``.
+
+    This class is deliberately thin for now: the existing concrete mappings are
+    moved underneath it in later work-packages.
+    """
+
+#==============================================================================
+class DefinedMapping(SymbolicMapping, metaclass=_MappingABCMeta):
+    """
+    Abstract base class for *point-evaluable* mappings.
+
+    F: R^l -> R^p ,  F(eta) = x ,  with l <= p
+
+    A concrete subclass (``AnalyticMapping`` in sympde, ``SplineMapping`` in
+    psydac) can be evaluated on logical coordinates -- single points or arrays
+    of points -- and returns physical coordinates. Every method below must be
+    implemented for a subclass to be instantiable; this is what guarantees that
+    the sympde and psydac concrete mappings are interchangeable.
+
+    The interface mirrors (and is meant to supersede) ``BasicCallableMapping``.
+    """
+
+    @abstractmethod
+    def __call__(self, *eta):
+        """ Evaluate mapping at location eta. """
+
+    @abstractmethod
+    def jacobian(self, *eta):
+        """ Compute Jacobian matrix at location eta. """
+
+    @abstractmethod
+    def jacobian_inv(self, *eta):
+        """ Compute inverse Jacobian matrix at location eta.
+            An exception should be raised if the matrix is singular.
+        """
+
+    @abstractmethod
+    def metric(self, *eta):
+        """ Compute components of metric tensor at location eta. """
+
+    @abstractmethod
+    def metric_det(self, *eta):
+        """ Compute determinant of metric tensor at location eta. """
+
+    @property
+    @abstractmethod
+    def ldim(self):
+        """ Number of logical/parametric dimensions in mapping
+            (= number of eta components).
+        """
+
+    @property
+    @abstractmethod
+    def pdim(self):
+        """ Number of physical dimensions in mapping
+            (= number of x components).
+        """
+
+#==============================================================================
+class StructuralMapping(SymbolicMapping, metaclass=_MappingABCMeta):
+    """
+    Abstract base class for *symbolic, non-point-evaluable* mappings.
+
+    These objects (``InverseMapping``, ``InterfaceMapping``,
+    ``MultiPatchMapping``) describe how patches are related or assembled and
+    only make sense symbolically: they must reject point evaluation. That
+    rejection is wired up in a later work-package; here the class only needs to
+    exist and be abstract.
+    """
+
+    @property
+    @abstractmethod
+    def ldim(self):
+        """ Number of logical/parametric dimensions. """
+
+    @property
+    @abstractmethod
+    def pdim(self):
+        """ Number of physical dimensions. """
 
 #==============================================================================
 class Mapping(BasicMapping):
