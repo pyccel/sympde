@@ -491,7 +491,7 @@ class Mapping(BasicMapping):
         obj._inv_jac             = self._inv_jac
         obj._metric              = self._metric
         obj._metric_det          = self._metric_det
-        obj.__callable_map       = self._callable_map
+        obj._callable_map        = self._callable_map
         obj._is_plus             = self._is_plus
         obj._is_minus            = self._is_minus
         return obj

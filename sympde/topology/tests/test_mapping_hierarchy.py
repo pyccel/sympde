@@ -175,3 +175,26 @@ def test_interface_mapping_copy_preserves_analytic_mapping_type():
     expected = itf.minus.get_callable_mapping().jacobian(0.3, 0.4)
     assert np.array_equal(itf.minus.jacobian(0.3, 0.4), expected)
     assert itf.minus(0.3, 0.4) == (0.3, 0.4)
+
+
+def test_copy_preserves_user_set_callable_mapping():
+    # post-commit finding A: copy() used to write the name-mangled
+    # `__callable_map` instead of `_callable_map`, silently dropping a
+    # user-supplied callable mapping (set via set_callable_mapping) on copy --
+    # observable e.g. through InterfaceMapping, which always copies its legs.
+    from sympde.topology import AnalyticMapping
+    from sympde.topology.mapping import BasicCallableMapping
+
+    class Custom(BasicCallableMapping):
+        def __call__(self, *eta):     return eta
+        def jacobian(self, *eta):     return None
+        def jacobian_inv(self, *eta): return None
+        def metric(self, *eta):       return None
+        def metric_det(self, *eta):   return None
+        ldim = 2
+        pdim = 2
+
+    F  = AnalyticMapping('F', dim=2)   # no _expressions
+    cm = Custom()
+    F.set_callable_mapping(cm)
+    assert F.copy()._callable_map is cm
