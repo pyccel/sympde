@@ -313,3 +313,18 @@ def test_mapped_multipatch_domain_with_interface_is_broken_pre_existing():
     F = IdentityMapping('F', dim=2)
     with pytest.raises(AssertionError, match='ornt'):
         F(domain)
+
+
+# -- work-package 06a: Mapping re-parented onto SymbolicMapping
+
+def test_mapping_is_a_symbolic_mapping():
+    from sympde.topology import (Mapping, SymbolicMapping, IdentityMapping,
+                                 InterfaceMapping)
+    assert issubclass(Mapping, SymbolicMapping)
+    # every branch of the hierarchy is now isinstance(_, SymbolicMapping):
+    assert isinstance(Mapping('F', dim=2), SymbolicMapping)               # undefined
+    assert isinstance(IdentityMapping('G', dim=2), SymbolicMapping)       # analytic
+    itf = InterfaceMapping(IdentityMapping('A', dim=2), IdentityMapping('B', dim=2))
+    assert isinstance(itf, SymbolicMapping)                               # structural
+    # SymbolicMapping appears exactly once in the MRO (no C3 duplication)
+    assert [c.__name__ for c in Mapping.__mro__].count('SymbolicMapping') == 1

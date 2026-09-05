@@ -247,9 +247,13 @@ class StructuralMapping(SymbolicMapping, metaclass=_MappingABCMeta):
         """ Number of physical dimensions. """
 
 #==============================================================================
-class Mapping(BasicMapping):
+class Mapping(SymbolicMapping):
     """
     Represents a Mapping object.
+
+    Now sits under ``SymbolicMapping`` (WP 06a) so that
+    ``isinstance(_, SymbolicMapping)`` holds for every mapping in the hierarchy;
+    ``SymbolicMapping`` is still a thin pass-through, so behaviour is unchanged.
 
     Examples
 
