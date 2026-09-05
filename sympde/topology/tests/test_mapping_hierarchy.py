@@ -198,3 +198,118 @@ def test_copy_preserves_user_set_callable_mapping():
     cm = Custom()
     F.set_callable_mapping(cm)
     assert F.copy()._callable_map is cm
+
+
+# -- work-package 03: InverseMapping / InterfaceMapping / MultiPatchMapping
+# are now also StructuralMapping subclasses (additive: they keep Mapping too)
+
+def test_structural_subclasses_hierarchy():
+    from sympde.topology import (StructuralMapping, InverseMapping,
+                                 InterfaceMapping, MultiPatchMapping, Mapping)
+    for cls in (InverseMapping, InterfaceMapping, MultiPatchMapping):
+        assert issubclass(cls, StructuralMapping)
+        assert issubclass(cls, Mapping)              # no regression
+        assert not inspect.isabstract(cls)
+        # own ldim/pdim must win over StructuralMapping's abstract ones
+        assert cls.ldim is not StructuralMapping.ldim
+        assert cls.pdim is not StructuralMapping.pdim
+
+
+def test_interface_mapping_rejects_point_call_but_stays_domain_callable():
+    from sympde.topology import IdentityMapping, InterfaceMapping, Square
+    itf = InterfaceMapping(IdentityMapping('F1', dim=2), IdentityMapping('F2', dim=2))
+    assert itf.ldim == 2
+    with pytest.raises(TypeError, match='StructuralMapping'):
+        itf(0.3, 0.4)
+    mapped = itf(Square('D'))
+    assert type(mapped).__name__ in ('Domain', 'MappedDomain')
+
+
+def test_multi_patch_mapping_rejects_point_call():
+    from sympde.topology import MultiPatchMapping, IdentityMapping
+    mp = MultiPatchMapping({'p1': IdentityMapping('F1', dim=2),
+                            'p2': IdentityMapping('F2', dim=2)})
+    assert mp.ldim == 2
+    with pytest.raises(TypeError, match='StructuralMapping'):
+        mp(0.3, 0.4)
+    # NOTE: mp(some_domain) (the domain-call path) is not exercised here: it
+    # hits a pre-existing bug independent of WP03 -- MultiPatchMapping.__new__
+    # uses Basic.__new__(cls, dic) and never sets self._name, so any domain
+    # call that reaches Mapping.name raises AttributeError. Reproduced on the
+    # pre-WP03 baseline too (git stash), so it is not a regression from this
+    # slice. Flagged for a future fix; out of scope here.
+
+
+def test_structural_mapping_still_abstract():
+    # WP01 invariant must not regress
+    from sympde.topology import StructuralMapping
+    assert inspect.isabstract(StructuralMapping)
+    with pytest.raises(TypeError, match='abstract'):
+        StructuralMapping('F')
+
+
+# -- post-review fixes (found by /code-review on the WP03 diff)
+
+def test_structural_mapping_call_accepts_domain_keyword():
+    # StructuralMapping.__call__(self, *args) initially dropped the `domain`
+    # keyword that Mapping.__call__(self, domain) supported -- restored via
+    # explicit positional/keyword normalization before delegating.
+    from sympde.topology import IdentityMapping, InterfaceMapping, Square
+    itf = InterfaceMapping(IdentityMapping('F1', dim=2), IdentityMapping('F2', dim=2))
+    positional = itf(Square('D'))
+    keyword    = itf(domain=Square('D'))
+    assert type(positional) is type(keyword)
+
+
+def test_structural_mapping_call_delegates_via_super():
+    # DRY fix: the domain-call branch now delegates to Mapping.__call__ (via
+    # super()) instead of duplicating its body.
+    from sympde.topology import StructuralMapping, Mapping
+    import inspect as _inspect
+    src = _inspect.getsource(StructuralMapping.__call__)
+    assert 'super().__call__' in src
+
+
+def test_ldim_pdim_alias_mapping_descriptor():
+    # DRY fix: InverseMapping/InterfaceMapping alias Mapping's ldim/pdim
+    # property objects rather than re-typing their bodies.
+    from sympde.topology import InverseMapping, InterfaceMapping, Mapping
+    assert InverseMapping.ldim   is Mapping.ldim
+    assert InverseMapping.pdim   is Mapping.pdim
+    assert InterfaceMapping.ldim is Mapping.ldim
+    assert InterfaceMapping.pdim is Mapping.pdim
+
+
+def test_interface_mapping_copy_is_broken_pre_existing():
+    # post-review finding: InterfaceMapping inherits Mapping.copy(), which
+    # calls type(self)(self.name, ldim=..., pdim=..., evaluate=False) -- but
+    # InterfaceMapping.__new__(cls, minus, plus) doesn't accept those kwargs.
+    # Confirmed pre-existing (reproduces on the pre-WP03 baseline too, and
+    # traces back to the WP02b post-review copy() fix that generalized
+    # Mapping(...) to type(self)(...)); documenting the current behaviour
+    # rather than silently fixing it -- .copy() is never called on an
+    # InterfaceMapping instance itself anywhere in sympde or psydac today.
+    from sympde.topology import IdentityMapping, InterfaceMapping
+    itf = InterfaceMapping(IdentityMapping('F1', dim=2), IdentityMapping('F2', dim=2))
+    with pytest.raises(TypeError, match='ldim'):
+        itf.copy()
+
+
+def test_mapped_multipatch_domain_with_interface_is_broken_pre_existing():
+    # post-review finding: MappedDomain.__new__ rebuilds each patch Interface
+    # as Interface(e.name, mapping(e.minus), mapping(e.plus)) without
+    # forwarding e.ornt (or mapping/logical_domain). Since commit 9783335
+    # ("Rigorously check arguments of Interface constructor") made
+    # Interface.__new__ validate ornt strictly, this now raises instead of
+    # silently building an under-specified Interface. Confirmed pre-existing
+    # (reproduces identically on the pre-WP03 baseline via git stash) --
+    # unrelated to StructuralMapping/Mapping base-list changes, but it lives
+    # in mapping.py's MappedDomain.__new__, a function this file's tests
+    # exercise elsewhere. Documenting rather than fixing: the fix belongs to
+    # whoever owns the Interface/ornt validation, not this work-package.
+    from sympde.topology import Domain, Square, IdentityMapping
+    patches = [Square('D1'), Square('D2')]
+    domain  = Domain.join(patches, [((0, 0, 1), (1, 0, -1), 1)], 'domain')
+    F = IdentityMapping('F', dim=2)
+    with pytest.raises(AssertionError, match='ornt'):
+        F(domain)

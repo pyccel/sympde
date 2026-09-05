@@ -198,10 +198,43 @@ class StructuralMapping(SymbolicMapping, metaclass=_MappingABCMeta):
 
     These objects (``InverseMapping``, ``InterfaceMapping``,
     ``MultiPatchMapping``) describe how patches are related or assembled and
-    only make sense symbolically: they must reject point evaluation. That
-    rejection is wired up in a later work-package; here the class only needs to
-    exist and be abstract.
+    only make sense symbolically: they stay callable on a domain (returning a
+    symbolic mapped domain, like any ``SymbolicMapping``) but reject point
+    evaluation.
     """
+
+    def __call__(self, *args, **kwargs):
+        """
+        Call this structural mapping on a domain (positional or as the
+        ``domain`` keyword, matching ``Mapping.__call__``'s signature) to get
+        a symbolic mapped domain.
+
+        Parameters
+        ----------
+        domain : BasicDomain
+            The logical domain to map.
+
+        Returns
+        -------
+        MappedDomain
+
+        Raises
+        ------
+        TypeError
+            If called with anything other than exactly one ``BasicDomain``
+            argument -- a ``StructuralMapping`` is symbolic and not
+            point-evaluable.
+        """
+        # Normalize the single accepted argument, whether given positionally
+        # or as `domain=...`, then delegate to Mapping.__call__ (found via
+        # MRO) so the domain-call logic is defined in exactly one place.
+        if len(args) + len(kwargs) == 1:
+            domain = args[0] if args else kwargs.get('domain')
+            if isinstance(domain, BasicDomain):
+                return super().__call__(domain)
+        raise TypeError(
+            f"{type(self).__name__} is a StructuralMapping: it is symbolic "
+            "and not point-evaluable.")
 
     @property
     @abstractmethod
@@ -560,7 +593,7 @@ class AnalyticMapping(Mapping, DefinedMapping, metaclass=_MappingABCMeta):
     # DefinedMapping / BasicCallableMapping abstract members.
 
 #==============================================================================
-class InverseMapping(Mapping):
+class InverseMapping(StructuralMapping, Mapping, metaclass=_MappingABCMeta):
     def __new__(cls, mapping):
         assert isinstance(mapping, Mapping)
         name     = mapping.name
@@ -569,6 +602,14 @@ class InverseMapping(Mapping):
         coords   = mapping.logical_coordinates
         jacobian = mapping.jacobian_symbol.inv()
         return Mapping.__new__(cls, name, ldim=ldim, pdim=pdim, coordinates=coords, jacobian=jacobian)
+
+    # StructuralMapping.ldim/pdim are abstract and would otherwise shadow
+    # Mapping's concrete ones (StructuralMapping is listed first, for
+    # __call__'s point-rejection to win); alias the existing descriptor
+    # instead of re-typing its body, so a future change to Mapping.ldim/pdim
+    # applies here automatically.
+    ldim = Mapping.ldim
+    pdim = Mapping.pdim
 
 #==============================================================================
 class JacobianSymbol(MatrixSymbolicExpr):
@@ -653,7 +694,7 @@ class JacobianInverseSymbol(MatrixSymbolicExpr):
             return 'Jacobian({})**(-1)'.format(sstr(self.mapping.name))
 
 #==============================================================================
-class InterfaceMapping(Mapping):
+class InterfaceMapping(StructuralMapping, Mapping, metaclass=_MappingABCMeta):
     """
     InterfaceMapping is used to represent a mapping in the interface.
 
@@ -688,6 +729,14 @@ class InterfaceMapping(Mapping):
     def plus(self):
         return self._plus
 
+    # StructuralMapping.ldim/pdim are abstract and would otherwise shadow
+    # Mapping's concrete ones (StructuralMapping is listed first, for
+    # __call__'s point-rejection to win); alias the existing descriptor
+    # instead of re-typing its body, so a future change to Mapping.ldim/pdim
+    # applies here automatically.
+    ldim = Mapping.ldim
+    pdim = Mapping.pdim
+
     @property
     def is_analytical(self):
         return self.minus.is_analytical and self.plus.is_analytical
@@ -701,7 +750,7 @@ class InterfaceMapping(Mapping):
         return self
 
 #==============================================================================
-class MultiPatchMapping(Mapping):
+class MultiPatchMapping(StructuralMapping, Mapping, metaclass=_MappingABCMeta):
 
     def __new__(cls, dic):
         assert isinstance( dic, dict)
