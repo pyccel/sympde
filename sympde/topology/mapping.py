@@ -54,6 +54,7 @@ __all__ = (
     'JacobianSymbol',
     'LogicalExpr',
     'MappedDomain',
+    'Mapping',
     'MappingApplication',
     'MultiPatchMapping',
     'PullBack',
@@ -318,8 +319,11 @@ class Mapping(BasicMapping):
         else:
             return self._logical_coordinates
 
+    # Applying the mapping to a logical domain returns a mapped domain
     def __call__(self, domain):
-        assert(isinstance(domain, BasicDomain))
+        assert isinstance(domain, BasicDomain)
+        assert domain.logical_domain is None
+        assert domain.dim == self.ldim
         return MappedDomain(self, domain)
 
     @property

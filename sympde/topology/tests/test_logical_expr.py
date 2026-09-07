@@ -221,9 +221,9 @@ def test_logical_expr_2d_2():
     D1 = M1(A)
     D2 = M2(B)
 
-    domains = [D1, D2]
-    connectivity = [((0, 0, 1),(1, 0, -1))]
-    domain = Domain.join(domains, connectivity, 'domain')
+    patches = [D1, D2]
+    connectivity = [((0, 0, 1), (1, 0, -1), 1)]
+    domain = Domain.join(patches, connectivity, 'domain')
 
 
     V1 = ScalarFunctionSpace('V1', domain, kind='h1')
@@ -275,11 +275,12 @@ def test_logical_expr_2d_3():
     D2 = M2(B)
 
 
-    domains = [D1, D2]
-    connectivity = [((0, 0, 1),(1, 0, -1))]
-    domain = Domain.join(domains, connectivity, 'domain')
+    patches = [D1, D2]
+    connectivity = [((0, 0, 1), (1, 0, -1), 1)]
+    domain = Domain.join(patches, connectivity, 'domain')
 
     V = VectorFunctionSpace('V', domain, kind='hcurl')
+    assert V.is_broken
 
     u,v = [element_of(V, name=i) for i in ['u', 'v']]
 

@@ -143,8 +143,6 @@ class Domain(BasicDomain):
             interiors = Union(*interiors)
             dtype = [i.dtype for i in interiors]
 
-
-
         assert mapping is None and logical_domain is None or \
         mapping is not None and logical_domain  is not None
 
@@ -248,7 +246,6 @@ class Domain(BasicDomain):
         elif isinstance(self.interior, Union):
             return [i.name for i in self.interior.args]
 
-
     def set_interfaces(self, *interfaces):
         for i in interfaces:
             self.connectivity[i.name] = i
@@ -258,25 +255,39 @@ class Domain(BasicDomain):
         return '{}'.format(sstr(self.name))
 
     def get_boundary(self, axis, ext):
-        """return boundary by name or (axis, ext)."""
-        # ...
+        """
+        Return the domain boundary at the given extremity of the required axis.
+
+        Parameters
+        ----------
+        axis : int | None
+            Index of the coordinate (0 <= axis < ndim) which has constant value at the boundary.
+            In 1D passing `axis=None` is accepted, in which case it is interpreted as 0.
+        ext : {-1, +1}
+            Extremity identifier:
+              * If -1, the boundary is at the minimum value of $x_{axis}$
+              * If +1, the boundary is at the maximum value of $x_{axis}$
+        
+        Returns
+        -------
+        Boundary (from sympde.topology.basic)
+            The domain boundary of interest.
+        """
         if axis is None:
             assert(self.interior.dim == 1)
             axis = 0
-        # ...
 
         if isinstance(self.boundary, Union):
             x = [i for i in self.boundary.args if i.ext == ext and i.axis == axis]
             if len(x) == 0:
-                raise ValueError('> could not find boundary with axis {} and ext {}'.format(axis, ext))
-
+                raise ValueError(f'> could not find boundary with axis {axis} and ext {ext}')
             return x[0]
 
         elif isinstance(self.boundary, Boundary):
             if self.boundary.axis == axis and self.boundary.ext == ext:
                 return self.boundary
 
-        raise ValueError('> could not find boundary with axis {} and ext {}'.format(axis, ext))
+        raise ValueError(f'> could not find boundary with axis {axis} and ext {ext}')
 
     def get_interface(self, domain1, domain2):
         interfaces = []
@@ -343,15 +354,28 @@ class Domain(BasicDomain):
         h5.close()
 
     @classmethod
-    def from_file( cls, filename ):
+    def from_file(cls, filename):
+        """
+        Read the "topology.yml" portion of an HDF5 geometry file and create a (mapped)
+        multipatch domain using the information therein.
 
+        Parameters
+        ----------
+        filename : str
+            Name of the HDF5 geometry file to be read.
+
+        Returns
+        -------
+        Domain
+            Multipatch domain.
+        """
         # ... check extension of the file
         _, ext = os.path.splitext(filename)
 
-        if not(ext == '.h5'):
+        if ext != '.h5':
             raise ValueError('> Only h5 files are supported')
         # ...
-        from sympde.topology.mapping import Mapping, MultiPatchMapping
+        from sympde.topology.mapping import Mapping
 
         h5  = h5py.File( filename, mode='r' )
         yml = yaml.load( h5['topology.yml'][()], Loader=yaml.SafeLoader )
@@ -363,7 +387,8 @@ class Domain(BasicDomain):
         d_boundary     = yml['boundary']
         d_connectivity = yml['connectivity']
 
-        if dtype == 'None': dtype = None
+        if dtype == 'None':
+            dtype = None
 
         assert dtype is not None
         assert all(dtype)
@@ -387,7 +412,7 @@ class Domain(BasicDomain):
             boundaries.append(bd)
 
         connectivity = []
-        for _,(minus, plus) in d_connectivity.items():
+        for _,(minus, plus, ornt) in d_connectivity.items():
             minus_name = minus['patch']
             minus_axis = int(minus['axis'])
             minus_ext  = int(minus['ext'])
@@ -397,44 +422,43 @@ class Domain(BasicDomain):
             plus_axis = int(plus['axis'])
             plus_ext  = int(plus['ext'])
             plus_patch_i = patch_index[plus_name]
-            interface = ((minus_patch_i, minus_axis, minus_ext),(plus_patch_i, plus_axis, plus_ext))
+            interface = ((minus_patch_i, minus_axis, minus_ext),
+                         ( plus_patch_i,  plus_axis,  plus_ext), ornt)
 
             connectivity.append(interface)
 
-        if len(domains)==1:
+        if len(domains) == 1:
             return domains[0]
 
         return Domain.join(domains, connectivity, domain_name)
 
-
     @classmethod
     def join(cls, patches, connectivity, name):
         """
-        creates a multipatch domain by joining two or more patches in 2D or 3D
+        Create a multipatch domain by joining two or more patches in 2D or 3D.
 
         Parameters
         ----------
-        patches : list
-            list of patches
+        patches : list[Domain]
+            List of patches.
 
         connectivity : list
-            list of interfaces, identified by a tuple of 2 boundaries and an orientation: (bound_minus, bound_plus, ornt)
-            where 
-            - each boundary is identified by a tuple of 3 integers: (patch, axis, ext)
+            List of interfaces, identified by a tuple of 2 boundaries and an orientation
+            (bound_minus, bound_plus, ornt) where
+            - Each boundary is identified by a tuple of 3 integers: (patch, axis, ext)
               with patches given as objects (or by their indices in the patches list)
             and 
             - In 2D, ornt is an integer that can take the value of 1 or -1
             - In 3D, ornt is a tuple of 3 integers that can take the value of 1 or -1
             (see below for more details)
-            
-        
+
         name : str
-            name of the domain
+            Name of the domain.
 
         Returns
         -------
-        domain : Domain
-            multipatch domain
+        Domain
+            Multipatch domain.
 
         Notes
         -----
@@ -488,9 +512,7 @@ class Domain(BasicDomain):
 
         # the multi-patch domain
         Omega = Domain.join(patches=patches, connectivity=connectivity, name='Omega')
-        
         """
-
         assert isinstance(patches, (tuple, list))
         assert isinstance(connectivity, (tuple, list))
         assert isinstance(name, str)
@@ -501,7 +523,7 @@ class Domain(BasicDomain):
             return patches[0]
 
         assert all(p.dim==patches[0].dim for p in patches)
-        dim = int(patches[0].dim)
+        ldim = int(patches[0].dim)
 
         patch_given_by_indices = (len(connectivity) > 0 and isinstance(connectivity[0][0][0], int))
 
@@ -518,14 +540,21 @@ class Domain(BasicDomain):
                 patch_plus  = cn[1][0]
             bnd_minus = patch_minus.get_boundary(axis=cn[0][1], ext=cn[0][2])
             bnd_plus  =  patch_plus.get_boundary(axis=cn[1][1], ext=cn[1][2])
-            if   dim == 1: ornt = None
-            elif dim == 2: ornt = 1 if len(cn) == 2 else cn[2]
-            elif dim == 3:
-                flag = 1 if len(cn) == 2 else cn[2][0]
-                ornt1 = 1 if len(cn) == 2 else cn[2][1]
-                ornt2 = 1 if len(cn) == 2 else cn[2][2]
-                ornt = (flag, ornt1, ornt2)
 
+            # Check that orientation is provided in the correct format depending on the dimension
+            ornt = cn[2] if len(cn) == 3 else None
+            if ldim == 1:
+                assert ornt is None, 'ornt is not needed for 1D interfaces'
+            elif ldim == 2:
+                assert ornt in (-1, 1), 'ornt must be either -1 or 1 for 2D interfaces'
+            elif ldim == 3:
+                ornt = tuple(ornt)
+                assert len(ornt) == 3, 'ornt must be a tuple of length 3 for 3D interfaces'
+                assert all(o in (-1, 1) for o in ornt), 'each element of ornt must be either -1 or 1 for 3D interfaces'
+            else:
+                raise ValueError(f'Unsupported dimension: {ldim}')
+
+            # Create a new Interface object using the join method of the Boundary objects
             interface = bnd_minus.join(bnd_plus, ornt=ornt)
             if interface.name in interfaces:
                 interface = bnd_plus.join(bnd_minus, ornt=ornt)
@@ -561,8 +590,8 @@ class Domain(BasicDomain):
                             boundaries=logical_boundaries,
                             connectivity=logical_connectivity)
         else:
-            mapping              = None
-            logical_domain       = None
+            mapping        = None
+            logical_domain = None
 
         # ...
         return Domain(name,
