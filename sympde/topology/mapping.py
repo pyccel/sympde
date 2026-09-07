@@ -17,7 +17,7 @@ from sympy.core.exprtools  import factor_terms
 from sympy.polys.polytools import parallel_poly_from_expr
 
 from sympde.core              import Constant
-from sympde.core.basic        import BasicMapping
+from sympde.core.basic        import SymbolicMapping
 from sympde.core.basic        import CalculusFunction
 from sympde.core.basic        import _coeffs_registery
 from sympde.calculus.core     import PlusInterfaceOperator, MinusInterfaceOperator
@@ -144,35 +144,23 @@ class BasicCallableMapping(ABC):
         """
 
 #==============================================================================
-class _MappingABCMeta(ABCMeta, type(BasicMapping)):
+class _MappingABCMeta(ABCMeta, type(SymbolicMapping)):
     """
     Metaclass merging ``abc.ABCMeta`` with sympy's metaclass
     (``ManagedProperties`` in sympy 1.9).
 
-    A mapping class derived from ``IndexedBase`` (via ``BasicMapping``) already
-    carries sympy's metaclass; declaring ``@abstractmethod`` members on it
-    additionally requires ``ABCMeta``. Python rejects a class whose metaclass is
-    not a subclass of every base's metaclass, so the two are merged here once
+    A mapping class derived from ``IndexedBase`` (via ``SymbolicMapping``)
+    already carries sympy's metaclass; declaring ``@abstractmethod`` members on
+    it additionally requires ``ABCMeta``. Python rejects a class whose metaclass
+    is not a subclass of every base's metaclass, so the two are merged here once
     and reused by ``DefinedMapping``, ``StructuralMapping``, and
     ``AnalyticMapping``. ``type(...)`` is used instead of importing the name so
     this keeps working if a future sympy renames its metaclass.
     """
 
 #==============================================================================
-class SymbolicMapping(BasicMapping):
-    """
-    Common root of the unified mapping hierarchy: a symbolic transformation of
-    coordinates identified by a name and a pair of dimensions (logical ``ldim``
-    to physical ``pdim``).
-
-    A ``SymbolicMapping`` may be undefined (name and dimensions only) or carry
-    more structure in a subclass. It stays callable on a *domain*, returning a
-    symbolic mapped domain; point evaluation is the responsibility of
-    ``DefinedMapping``.
-
-    This class is deliberately thin for now: the existing concrete mappings are
-    moved underneath it in later work-packages.
-    """
+# ``SymbolicMapping`` is defined in ``sympde.core.basic`` (imported above) so
+# that leaf modules can type-check against it without importing this one.
 
 #==============================================================================
 class DefinedMapping(SymbolicMapping, BasicCallableMapping, metaclass=_MappingABCMeta):
@@ -385,17 +373,25 @@ class Mapping(SymbolicMapping):
     # Callable mapping
     #--------------------------------------------------------------------------
     def get_callable_mapping(self):
-        if self._callable_map is None:
-            if self._expressions is None:
-                msg = 'Cannot generate callable mapping without analytical expressions. '\
-                      'A user-defined callable mapping of type `BasicCallableMapping` '\
-                      'can be provided using the method `set_callable_mapping`.'
-                raise ValueError(msg)
+        # An explicitly attached callable (set_callable_mapping) always wins.
+        if self._callable_map is not None:
+            return self._callable_map
 
-            from sympde.topology.callable_mapping import CallableMapping
-            self._callable_map = CallableMapping(self)
+        if self._expressions is None:
+            raise ValueError(
+                'Cannot generate a callable mapping without analytical '
+                'expressions. Attach a user-defined callable of type '
+                '`BasicCallableMapping` with the method `set_callable_mapping`.')
 
-        return self._callable_map
+        # Reachable only for a bare `Mapping` subclass that carries
+        # `_expressions` but is not an `AnalyticMapping` (whose override returns
+        # `self`). Since WP06c such a class is a mistake -- there is no longer a
+        # `CallableMapping` wrapper to build.
+        raise TypeError(
+            f'{type(self).__name__} carries analytical expressions but is not '
+            'an AnalyticMapping. Subclass AnalyticMapping (not Mapping) for a '
+            'point-evaluable analytic mapping; an AnalyticMapping instance is '
+            'its own callable mapping.')
 
     def set_callable_mapping(self, F):
 
@@ -620,8 +616,8 @@ class AnalyticMapping(Mapping, DefinedMapping, metaclass=_MappingABCMeta):
         ``get_callable_mapping()``. """
         cm = self.get_callable_mapping()
         if cm is not self:
-            # cm is a SplineMapping / CallableMapping / user object -- its own
-            # methods, no recursion. It has no `.call`, so 'call' -> cm(*eta).
+            # cm is a SplineMapping or user-supplied BasicCallableMapping -- its
+            # own methods, no recursion. It has no `.call`, so 'call' -> cm(*eta).
             return cm(*eta) if name == 'call' else getattr(cm, name)(*eta)
         if name == 'call':
             return tuple(f(*eta) for f in self._lambdify('call'))

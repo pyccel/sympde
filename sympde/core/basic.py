@@ -35,11 +35,24 @@ class CalculusFunction(Function):
     pass
 
 #==============================================================================
-class BasicMapping(IndexedBase):
+class SymbolicMapping(IndexedBase):
     """
-    Represents a basic class for mapping.
+    Common root of the unified mapping hierarchy: a symbolic transformation of
+    coordinates identified by a name and a pair of dimensions (logical ``ldim``
+    to physical ``pdim``).
+
+    A ``SymbolicMapping`` may be undefined (name and dimensions only) or carry
+    more structure in a subclass. It stays callable on a *domain*, returning a
+    symbolic mapped domain; point evaluation is the responsibility of
+    ``DefinedMapping``.
+
+    Lives here (rather than in ``sympde.topology.mapping``) so that leaf modules
+    such as ``sympde.topology.derivatives`` can type-check against it without a
+    circular import.
     """
-    pass
+
+# Deprecated alias for the pre-WP06 name; removed in WP06d-4.
+BasicMapping = SymbolicMapping
 
 #==============================================================================
 class BasicDerivable(Basic):

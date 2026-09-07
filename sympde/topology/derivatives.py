@@ -22,7 +22,7 @@ from sympde.old_sympy_utilities import is_sequence
 
 from sympde.core.basic    import CalculusFunction
 from sympde.core.basic    import _coeffs_registery
-from sympde.core.basic    import BasicMapping
+from sympde.core.basic    import SymbolicMapping
 from sympde.core.algebra  import LinearOperator
 from sympde.calculus.core import minus, plus
 from sympde.calculus.core import has
@@ -97,7 +97,7 @@ class DifferentialOperator(LinearOperator):
         elif isinstance(expr, (minus, plus)):
             return cls(expr, evaluate=False)
 
-        elif isinstance(expr, Indexed) and isinstance(expr.base, BasicMapping):
+        elif isinstance(expr, Indexed) and isinstance(expr.base, SymbolicMapping):
             return cls(expr, evaluate=False)
         elif not has(expr, types):
             if expr.is_number:

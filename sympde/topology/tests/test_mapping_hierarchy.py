@@ -370,3 +370,42 @@ def test_analytic_mapping_honours_explicitly_attached_callable():
     assert F(0.5, 0.5) == (7.0, 8.0)            # not the analytic value
     assert F.jacobian(0.5, 0.5) == [[1.0, 0.0], [0.0, 1.0]]
     assert F.metric_det(0.5, 0.5) == 1.0
+
+
+# -- work-package 06d-2: CallableMapping deleted, BasicMapping folded away
+
+def test_callable_mapping_is_removed():
+    import sympde.topology.callable_mapping as cm
+    with pytest.raises(AttributeError, match='removed'):
+        cm.CallableMapping
+
+
+def test_bare_mapping_with_expressions_rejects_get_callable_mapping():
+    # a Mapping subclass carrying _expressions but not parented under
+    # AnalyticMapping is now a mistake -- there is no CallableMapping to build.
+    from sympde.topology import Mapping
+
+    class M(Mapping):
+        _expressions = {'x': '2*x1', 'y': '3*x2'}
+        _ldim = 2
+        _pdim = 2
+
+    with pytest.raises(TypeError, match='AnalyticMapping'):
+        M('m').get_callable_mapping()
+
+
+def test_undefined_mapping_still_valueerrors_on_get_callable_mapping():
+    from sympde.topology import Mapping
+    with pytest.raises(ValueError):
+        Mapping('F', dim=2).get_callable_mapping()
+
+
+def test_basicmapping_folded_into_symbolicmapping():
+    from sympde.core.basic import BasicMapping, SymbolicMapping
+    assert BasicMapping is SymbolicMapping
+
+    from sympde.topology import Mapping, IdentityMapping
+    assert issubclass(Mapping, SymbolicMapping)
+    assert isinstance(IdentityMapping('G', dim=2), SymbolicMapping)
+    # SymbolicMapping appears exactly once in the MRO (BasicMapping is gone)
+    assert [c.__name__ for c in Mapping.__mro__].count('SymbolicMapping') == 1
