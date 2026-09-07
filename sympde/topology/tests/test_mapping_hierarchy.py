@@ -328,3 +328,45 @@ def test_mapping_is_a_symbolic_mapping():
     assert isinstance(itf, SymbolicMapping)                               # structural
     # SymbolicMapping appears exactly once in the MRO (no C3 duplication)
     assert [c.__name__ for c in Mapping.__mro__].count('SymbolicMapping') == 1
+
+
+# -- work-package 06c: AnalyticMapping is its own callable mapping
+
+def test_analytic_mapping_is_its_own_callable_mapping():
+    from sympde.topology import IdentityMapping, Square
+    F = IdentityMapping('F', dim=2)
+    assert F.get_callable_mapping() is F
+    # point evaluation (positional) and domain call (positional or `domain=`)
+    assert F(0.3, 0.4) == (0.3, 0.4)
+    assert type(F(Square('D'))).__name__ in ('Domain', 'MappedDomain')
+    assert type(F(domain=Square('D'))).__name__ in ('Domain', 'MappedDomain')
+
+
+def test_analytic_mapping_with_symbolic_constants_rejects_point_call():
+    from sympde.topology import PolarMapping
+    P = PolarMapping('P', dim=2)          # rmin/rmax/c1/c2 left symbolic
+    with pytest.raises(ValueError, match='symbolic constants'):
+        P(0.5, 0.5)
+
+
+def test_analytic_mapping_honours_explicitly_attached_callable():
+    # 06c amendment 2: an AnalyticMapping's point-eval methods must agree with
+    # get_callable_mapping() -- a callable attached via set_callable_mapping()
+    # wins over the mapping's own lambdified expressions.
+    from sympde.topology import PolarMapping
+    from sympde.topology.mapping import BasicCallableMapping
+
+    class Const(BasicCallableMapping):          # deliberately "wrong" values,
+        ldim = pdim = 2                         # so analytic vs attached differ
+        def __call__(self, *eta):      return (7.0, 8.0)
+        def jacobian(self, *eta):      return [[1.0, 0.0], [0.0, 1.0]]
+        def jacobian_inv(self, *eta):  return [[1.0, 0.0], [0.0, 1.0]]
+        def metric(self, *eta):        return [[1.0, 0.0], [0.0, 1.0]]
+        def metric_det(self, *eta):    return 1.0
+
+    F = PolarMapping('F', dim=2, rmin=0.0, rmax=1.0, c1=0.0, c2=0.0)
+    F.set_callable_mapping(Const())
+    assert isinstance(F.get_callable_mapping(), Const)
+    assert F(0.5, 0.5) == (7.0, 8.0)            # not the analytic value
+    assert F.jacobian(0.5, 0.5) == [[1.0, 0.0], [0.0, 1.0]]
+    assert F.metric_det(0.5, 0.5) == 1.0

@@ -203,7 +203,7 @@ class StructuralMapping(SymbolicMapping, metaclass=_MappingABCMeta):
     evaluation.
     """
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args, domain=None):
         """
         Call this structural mapping on a domain (positional or as the
         ``domain`` keyword, matching ``Mapping.__call__``'s signature) to get
@@ -225,13 +225,14 @@ class StructuralMapping(SymbolicMapping, metaclass=_MappingABCMeta):
             argument -- a ``StructuralMapping`` is symbolic and not
             point-evaluable.
         """
-        # Normalize the single accepted argument, whether given positionally
-        # or as `domain=...`, then delegate to Mapping.__call__ (found via
-        # MRO) so the domain-call logic is defined in exactly one place.
-        if len(args) + len(kwargs) == 1:
-            domain = args[0] if args else kwargs.get('domain')
-            if isinstance(domain, BasicDomain):
-                return super().__call__(domain)
+        # Accept the one domain argument positionally or as `domain=...`, then
+        # delegate to Mapping.__call__ (found via MRO) so the domain-call logic
+        # lives in exactly one place. An unexpected keyword raises a natural
+        # TypeError before we get here.
+        if domain is None and len(args) == 1 and isinstance(args[0], BasicDomain):
+            domain = args[0]
+        if domain is not None:
+            return super().__call__(domain)
         raise TypeError(
             f"{type(self).__name__} is a StructuralMapping: it is symbolic "
             "and not point-evaluable.")
@@ -551,10 +552,14 @@ class AnalyticMapping(Mapping, DefinedMapping, metaclass=_MappingABCMeta):
     Analytic mapping: symbolic like ``Mapping`` (it carries ``_expressions``),
     and *directly point-evaluable* through the ``DefinedMapping`` interface.
 
-    Point evaluation is delegated to the mapping's own callable mapping (built
-    lazily by :meth:`Mapping.get_callable_mapping` from the analytic
-    expressions), so an ``AnalyticMapping`` and a psydac ``SplineMapping`` are
-    interchangeable wherever a point-evaluable mapping is expected.
+    Point evaluation is done by the mapping itself: on first use it lambdifies
+    its own analytic expressions into numpy callables (cached, one quantity at a
+    time), so an ``AnalyticMapping`` and a psydac ``SplineMapping`` are
+    interchangeable wherever the point-evaluation interface is expected, and
+    ``get_callable_mapping()`` returns ``self``. A callable mapping attached
+    explicitly with ``set_callable_mapping`` (e.g. a spline approximation) still
+    wins: it is then used both by ``get_callable_mapping()`` and by every point
+    call (``F(eta)``, ``F.jacobian(eta)``, ...).
 
     Examples
     --------
@@ -566,16 +571,72 @@ class AnalyticMapping(Mapping, DefinedMapping, metaclass=_MappingABCMeta):
     Jacobian(F)
     """
 
-    def __call__(self, *args):
-        # Domain call -> symbolic MappedDomain (unchanged Mapping behaviour);
-        # anything else -> point evaluation on logical coordinates.
-        if len(args) == 1 and isinstance(args[0], BasicDomain):
-            return super().__call__(args[0])
-        return self.get_callable_mapping()(*args)
+    def _ensure_lambdified(self):
+        """ Check this mapping can be point-evaluated and return the per-quantity
+        lambdified-callable cache (created empty on first call; entries are
+        filled in on demand by ``_lambdify``). """
+        cache = getattr(self, '_lambdified', None)
+        if cache is None:
+            if self._expressions is None:
+                raise ValueError('Cannot point-evaluate a mapping without '
+                                 'analytical expressions.')
+            if self._constants:
+                raise ValueError(
+                    f'{self.name} has unresolved symbolic constants '
+                    f'{self._constants}; give them numeric values at '
+                    'construction to point-evaluate it.')
+            self._lambdified = cache = {}
+        return cache
+
+    def _lambdify(self, key):
+        """ Lambdify one quantity -- ``'call'``, ``'jacobian'``,
+        ``'jacobian_inv'``, ``'metric'`` or ``'metric_det'`` -- into a numpy
+        callable, caching it on the instance. Done one quantity at a time so
+        that e.g. ``F(eta)`` never builds ``jacobian_inv`` (which needs a
+        square Jacobian -- surface mappings have ``ldim != pdim``). """
+        cache = self._ensure_lambdified()
+        if key not in cache:
+            # Lazy import: sympde.utilities.utils imports sympde.topology,
+            # so a module-level import here would be circular.
+            from sympde.utilities.utils import lambdify_sympde
+            v = self.logical_coordinates
+            if key == 'call':
+                cache[key] = tuple(lambdify_sympde(v, e) for e in self.expressions)
+            else:
+                expr = {'jacobian':     self.jacobian_expr,
+                        'jacobian_inv': self.jacobian_inv_expr,
+                        'metric':       self.metric_expr,
+                        'metric_det':   self.metric_det_expr}[key]
+                cache[key] = lambdify_sympde(v, expr)
+        return cache[key]
 
     def _delegate_point_eval(self, name, *eta):
-        """ Delegate a point-evaluation call to this mapping's callable mapping. """
-        return getattr(self.get_callable_mapping(), name)(*eta)
+        """ Point-evaluate quantity ``name`` (``'call'`` | ``'jacobian'`` |
+        ``'jacobian_inv'`` | ``'metric'`` | ``'metric_det'``) at ``eta``.
+
+        A callable mapping attached with ``set_callable_mapping`` wins; otherwise
+        this mapping's own lambdified analytic expressions are used. Keeps
+        ``F(eta)`` / ``F.jacobian(eta)`` / ... consistent with
+        ``get_callable_mapping()``. """
+        cm = self.get_callable_mapping()
+        if cm is not self:
+            # cm is a SplineMapping / CallableMapping / user object -- its own
+            # methods, no recursion. It has no `.call`, so 'call' -> cm(*eta).
+            return cm(*eta) if name == 'call' else getattr(cm, name)(*eta)
+        if name == 'call':
+            return tuple(f(*eta) for f in self._lambdify('call'))
+        return self._lambdify(name)(*eta)
+
+    def __call__(self, *args, domain=None):
+        # A single BasicDomain (positional or `domain=`) -> symbolic
+        # MappedDomain (unchanged Mapping behaviour). Anything else -> point
+        # evaluation on logical coordinates. An unexpected keyword raises a
+        # natural TypeError. Same dispatch shape as StructuralMapping.__call__.
+        if domain is None and len(args) == 1 and isinstance(args[0], BasicDomain):
+            domain, args = args[0], ()
+        if domain is not None:
+            return super().__call__(domain)
+        return self._delegate_point_eval('call', *args)
 
     def jacobian(self, *eta):
         """ Jacobian matrix evaluated at the logical point(s) ``eta``. """
@@ -592,6 +653,11 @@ class AnalyticMapping(Mapping, DefinedMapping, metaclass=_MappingABCMeta):
     def metric_det(self, *eta):
         """ Determinant of the metric tensor at the logical point(s) ``eta``. """
         return self._delegate_point_eval('metric_det', *eta)
+
+    def get_callable_mapping(self):
+        # An AnalyticMapping *is* its own callable mapping. An explicitly
+        # attached callable (set_callable_mapping) still wins.
+        return self._callable_map if self._callable_map is not None else self
 
     # ldim / pdim: the concrete properties inherited from Mapping satisfy the
     # DefinedMapping / BasicCallableMapping abstract members.

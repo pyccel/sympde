@@ -1,3 +1,5 @@
+import warnings
+
 from sympy import Symbol
 
 from sympde.utilities.utils import lambdify_sympde
@@ -7,8 +9,21 @@ __all__ = ('CallableMapping',)
 
 #==============================================================================
 class CallableMapping(BasicCallableMapping):
+    """
+    Deprecated. Analytic mappings are now directly point-evaluable
+    (:class:`AnalyticMapping`), so ``mapping.get_callable_mapping()`` returns
+    the mapping itself. This wrapper class is scheduled for removal in
+    work-package 06d.
+    """
 
     def __init__( self, mapping, **kwargs ):
+
+        warnings.warn(
+            'CallableMapping is deprecated and will be removed (WP 06d). '
+            'Subclass AnalyticMapping (not Mapping) for a point-evaluable '
+            'analytic mapping; AnalyticMapping instances are their own '
+            'callable mapping.',
+            DeprecationWarning, stacklevel=2)
 
         # Extract information from class
         assert isinstance(mapping, Mapping)
