@@ -143,8 +143,6 @@ class Domain(BasicDomain):
             interiors = Union(*interiors)
             dtype = [i.dtype for i in interiors]
 
-
-
         assert mapping is None and logical_domain is None or \
         mapping is not None and logical_domain  is not None
 
@@ -248,7 +246,6 @@ class Domain(BasicDomain):
         elif isinstance(self.interior, Union):
             return [i.name for i in self.interior.args]
 
-
     def set_interfaces(self, *interfaces):
         for i in interfaces:
             self.connectivity[i.name] = i
@@ -258,25 +255,39 @@ class Domain(BasicDomain):
         return '{}'.format(sstr(self.name))
 
     def get_boundary(self, axis, ext):
-        """return boundary by name or (axis, ext)."""
-        # ...
+        """
+        Return the domain boundary at the given extremity of the required axis.
+
+        Parameters
+        ----------
+        axis : int | None
+            Index of the coordinate (0 <= axis < ndim) which has constant value at the boundary.
+            In 1D passing `axis=None` is accepted, in which case it is interpreted as 0.
+        ext : {-1, +1}
+            Extremity identifier:
+              * If -1, the boundary is at the minimum value of $x_{axis}$
+              * If +1, the boundary is at the maximum value of $x_{axis}$
+        
+        Returns
+        -------
+        Boundary (from sympde.topology.basic)
+            The domain boundary of interest.
+        """
         if axis is None:
             assert(self.interior.dim == 1)
             axis = 0
-        # ...
 
         if isinstance(self.boundary, Union):
             x = [i for i in self.boundary.args if i.ext == ext and i.axis == axis]
             if len(x) == 0:
-                raise ValueError('> could not find boundary with axis {} and ext {}'.format(axis, ext))
-
+                raise ValueError(f'> could not find boundary with axis {axis} and ext {ext}')
             return x[0]
 
         elif isinstance(self.boundary, Boundary):
             if self.boundary.axis == axis and self.boundary.ext == ext:
                 return self.boundary
 
-        raise ValueError('> could not find boundary with axis {} and ext {}'.format(axis, ext))
+        raise ValueError(f'> could not find boundary with axis {axis} and ext {ext}')
 
     def get_interface(self, domain1, domain2):
         interfaces = []
@@ -343,12 +354,25 @@ class Domain(BasicDomain):
         h5.close()
 
     @classmethod
-    def from_file( cls, filename ):
+    def from_file(cls, filename):
+        """
+        Read the "topology.yml" portion of an HDF5 geometry file and create a (mapped)
+        multipatch domain using the information therein.
 
+        Parameters
+        ----------
+        filename : str
+            Name of the HDF5 geometry file to be read.
+
+        Returns
+        -------
+        Domain
+            Multipatch domain.
+        """
         # ... check extension of the file
         _, ext = os.path.splitext(filename)
 
-        if not(ext == '.h5'):
+        if ext != '.h5':
             raise ValueError('> Only h5 files are supported')
         # ...
         from sympde.topology.mapping import Mapping
@@ -363,7 +387,8 @@ class Domain(BasicDomain):
         d_boundary     = yml['boundary']
         d_connectivity = yml['connectivity']
 
-        if dtype == 'None': dtype = None
+        if dtype == 'None':
+            dtype = None
 
         assert dtype is not None
         assert all(dtype)
@@ -402,40 +427,38 @@ class Domain(BasicDomain):
 
             connectivity.append(interface)
 
-        if len(domains)==1:
+        if len(domains) == 1:
             return domains[0]
 
         return Domain.join(domains, connectivity, domain_name)
 
-
     @classmethod
     def join(cls, patches, connectivity, name):
         """
-        creates a multipatch domain by joining two or more patches in 2D or 3D
+        Create a multipatch domain by joining two or more patches in 2D or 3D.
 
         Parameters
         ----------
-        patches : list
-            list of patches
+        patches : list[Domain]
+            List of patches.
 
         connectivity : list
-            list of interfaces, identified by a tuple of 2 boundaries and an orientation: (bound_minus, bound_plus, ornt)
-            where 
-            - each boundary is identified by a tuple of 3 integers: (patch, axis, ext)
+            List of interfaces, identified by a tuple of 2 boundaries and an orientation
+            (bound_minus, bound_plus, ornt) where
+            - Each boundary is identified by a tuple of 3 integers: (patch, axis, ext)
               with patches given as objects (or by their indices in the patches list)
             and 
             - In 2D, ornt is an integer that can take the value of 1 or -1
             - In 3D, ornt is a tuple of 3 integers that can take the value of 1 or -1
             (see below for more details)
-            
-        
+
         name : str
-            name of the domain
+            Name of the domain.
 
         Returns
         -------
-        domain : Domain
-            multipatch domain
+        Domain
+            Multipatch domain.
 
         Notes
         -----
@@ -567,8 +590,8 @@ class Domain(BasicDomain):
                             boundaries=logical_boundaries,
                             connectivity=logical_connectivity)
         else:
-            mapping              = None
-            logical_domain       = None
+            mapping        = None
+            logical_domain = None
 
         # ...
         return Domain(name,
