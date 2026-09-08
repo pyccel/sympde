@@ -524,3 +524,25 @@ def test_symbolicmapping_honours_injected_jacobian():
     # forwarded through the shell to SymbolicMapping.__new__ (not swallowed by
     # `**kwargs` and replaced by the default JacobianSymbol).
     assert G.jacobian_symbol is J
+
+
+def test_interface_mapping_from_bare_mapping_legs_is_warning_free_on_copy():
+    # /code-review finding 2 (06d-4c-1b): SymbolicMapping.copy() re-invokes the
+    # constructor; for a bare Mapping leg that re-tripped the 06d-4c-1a
+    # `isinstance(name, str)` warning gate. InterfaceMapping.__new__ copies both
+    # legs, so building one from bare-Mapping legs must not warn -- while an
+    # explicit Mapping(...) call still does.
+    import warnings
+    from sympde.topology import Mapping, InterfaceMapping
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', DeprecationWarning)
+        a = Mapping('a_bare', dim=2)
+        b = Mapping('b_bare', dim=2)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', DeprecationWarning)
+        InterfaceMapping(a, b)                  # copies a, b internally -- silent
+
+    with pytest.warns(DeprecationWarning):      # explicit construction still warns
+        Mapping('c_bare', dim=2)

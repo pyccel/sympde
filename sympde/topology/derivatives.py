@@ -105,9 +105,14 @@ class DifferentialOperator(LinearOperator):
             elif isinstance(expr, Expr):
                 x = Symbol(cls.coordinate, real=True)
                 if cls.logical:
-                    M = expr.atoms(SymbolicMapping)
-                    if len(M)>0:
-                        M = list(M)[0]
+                    # Chain rule here indexes the mapping (`M[i]`), so only an
+                    # indexable point mapping qualifies. A MultiPatchMapping
+                    # (Basic.__new__, no `_shape`) is not indexable and is
+                    # lowered elsewhere.
+                    M = [m for m in expr.atoms(SymbolicMapping)
+                         if getattr(m, '_shape', None) is not None]
+                    if M:
+                        M = M[0]
                         expr_primes = [diff(expr, M[i]) for i in range(M.pdim)]
                         Jj = Jacobian(M)[:,cls.grad_index]
                         expr_prime = sum([ei*Jji for ei,Jji in zip(expr_primes, Jj)])

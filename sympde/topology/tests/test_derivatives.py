@@ -149,6 +149,36 @@ def test_logical_derivative_through_symbolic_mapping_index():
 # ...
 
 
+# ...
+def test_logical_derivative_through_interface_mapping_component():
+    # /code-review finding 1 (WP06d-4c-1b): the 06d-4c-1a widening to
+    # `expr.atoms(SymbolicMapping)` now also selects structural mappings. The
+    # indexable ones (InterfaceMapping, InverseMapping) must still be
+    # chain-ruled through -- the `_shape` filter added in 4c-1b keeps them.
+    from sympde.topology import dx1, InterfaceMapping, IdentityMapping
+
+    itf = InterfaceMapping(IdentityMapping('A', dim=2), IdentityMapping('B', dim=2))
+    assert dx1(itf[0]**2) == 2 * itf[0] * dx1(itf[0])
+
+
+def test_multipatch_mapping_is_excluded_from_the_chain_rule_branch():
+    # WP06d-4c-1b: the chain-rule branch indexes the mapping (`M[i]`), so it
+    # filters `expr.atoms(SymbolicMapping)` to indexable mappings via
+    # `getattr(m, '_shape', None) is not None`. MultiPatchMapping is built via
+    # Basic.__new__ and has no `_shape`; without the filter `M[i]` raised
+    # AttributeError. (It cannot actually be built into a scalar Expr reaching
+    # that branch -- its `.args` is a raw dict, which breaks Expr.is_number
+    # first -- so the filter is a defensive guard; lock the discriminator here.)
+    from sympde.topology import (MultiPatchMapping, InterfaceMapping,
+                                 IdentityMapping)
+
+    mp  = MultiPatchMapping({'p': IdentityMapping('F', dim=2)})
+    itf = InterfaceMapping(IdentityMapping('A', dim=2), IdentityMapping('B', dim=2))
+    assert getattr(mp,  '_shape', None) is None
+    assert getattr(itf, '_shape', None) is not None
+# ...
+
+
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================

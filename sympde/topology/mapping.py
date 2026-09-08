@@ -358,7 +358,14 @@ class SymbolicMapping(IndexedBase):
         # (and its point-evaluation capability, for AnalyticMapping). Safe
         # because evaluate=False short-circuits __new__ right after
         # IndexedBase.__new__, before the `_expressions` branch.
-        obj = type(self)(self.name, ldim=self.ldim, pdim=self.pdim, evaluate=False)
+        #
+        # Suppress the bare-`Mapping` deprecation warning: this is an internal
+        # reconstruction, not a new user construction (InterfaceMapping.__new__
+        # copies its legs).
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', DeprecationWarning)
+            obj = type(self)(self.name, ldim=self.ldim, pdim=self.pdim,
+                             evaluate=False)
         obj._name                = self.name
         obj._ldim                = self.ldim
         obj._pdim                = self.pdim
