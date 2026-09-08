@@ -489,9 +489,12 @@ class Interface(BasicDomain):
 
         # If provided, check that mapping is consistent with the boundaries
         if mapping is not None:
-            from sympde.topology.mapping import Mapping
-            if not isinstance(mapping, Mapping):
-                raise TypeError(f'mapping must be of type Mapping, got {type(mapping)} instead')
+            # SymbolicMapping, not Mapping: an interface can carry an
+            # InterfaceMapping (a StructuralMapping) here, which since WP06d-4a
+            # no longer subclasses Mapping.
+            from sympde.topology.mapping import SymbolicMapping
+            if not isinstance(mapping, SymbolicMapping):
+                raise TypeError(f'mapping must be a SymbolicMapping, got {type(mapping)} instead')
             if mapping.ldim != ldim:
                 raise ValueError(f'mapping should have logical dimension = {ldim}, got {mapping.ldim} instead')
 

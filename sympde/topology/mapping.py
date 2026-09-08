@@ -189,13 +189,23 @@ class StructuralMapping(SymbolicMapping, metaclass=_MappingABCMeta):
     only make sense symbolically: they stay callable on a domain (returning a
     symbolic mapped domain, like any ``SymbolicMapping``) but reject point
     evaluation.
+
+    Since WP06d-4a a ``StructuralMapping`` no longer inherits ``Mapping`` -- it
+    owns the small symbolic surface it needs (``name``, ``is_plus``/``is_minus``,
+    coordinates, ``__call__``, hashing) directly here. Each concrete subclass
+    sets ``_name`` / ``_ldim`` / ``_pdim`` (and ``_coordinates`` /
+    ``_logical_coordinates`` where meaningful) in its own ``__new__`` and
+    implements ``ldim`` / ``pdim``.
     """
+
+    _is_minus = None
+    _is_plus  = None
 
     def __call__(self, *args, domain=None):
         """
         Call this structural mapping on a domain (positional or as the
-        ``domain`` keyword, matching ``Mapping.__call__``'s signature) to get
-        a symbolic mapped domain.
+        ``domain`` keyword, matching ``SymbolicMapping``'s signature) to get a
+        symbolic mapped domain.
 
         Parameters
         ----------
@@ -213,17 +223,87 @@ class StructuralMapping(SymbolicMapping, metaclass=_MappingABCMeta):
             argument -- a ``StructuralMapping`` is symbolic and not
             point-evaluable.
         """
-        # Accept the one domain argument positionally or as `domain=...`, then
-        # delegate to Mapping.__call__ (found via MRO) so the domain-call logic
-        # lives in exactly one place. An unexpected keyword raises a natural
-        # TypeError before we get here.
+        # Same domain-vs-point dispatch as AnalyticMapping.__call__; the
+        # terminal action here is the domain call (Mapping.__call__'s body,
+        # reproduced -- Mapping is no longer in the MRO to super() into).
         if domain is None and len(args) == 1 and isinstance(args[0], BasicDomain):
             domain = args[0]
         if domain is not None:
-            return super().__call__(domain)
+            assert domain.logical_domain is None
+            assert domain.dim == self.ldim
+            return MappedDomain(self, domain)
         raise TypeError(
             f"{type(self).__name__} is a StructuralMapping: it is symbolic "
             "and not point-evaluable.")
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def is_minus(self):
+        return self._is_minus
+
+    @property
+    def is_plus(self):
+        return self._is_plus
+
+    @property
+    def coordinates(self):
+        c = self._coordinates
+        return c[0] if self.pdim == 1 else c
+
+    @property
+    def logical_coordinates(self):
+        c = self._logical_coordinates
+        return c[0] if self.ldim == 1 else c
+
+    @property
+    def jacobian_symbol(self):
+        # lazy: multipatch pull-back (PullBack.__new__) asks for this on an
+        # InterfaceMapping. InverseMapping overrides with a pre-inverted one.
+        j = getattr(self, '_jacobian', None)
+        if j is None:
+            j = self._jacobian = JacobianSymbol(self)
+        return j
+
+    # A structural mapping carries no analytic `_expressions`; its symbolic
+    # jacobian / metric are the same `Jacobian(self)` forms that Mapping.__new__
+    # produced for it before WP06d-4a severed the base. Each concrete __new__
+    # calls _init_symbolic_jacobian(obj) once (straight-line, like the old
+    # Mapping.__new__ `else` branch -- a lazy property would recurse through
+    # Jacobian.eval). psydac codegen (api/ast/fem.py) reads `jacobian_expr` on
+    # multipatch mappings.
+    _jac        = None
+    _inv_jac    = None
+    _metric     = None
+    _metric_det = None
+
+    @staticmethod
+    def _init_symbolic_jacobian(obj):
+        obj._jac        = Jacobian(obj)
+        obj._metric     = obj._jac.T * obj._jac
+        obj._metric_det = obj._metric.det()
+
+    @property
+    def jacobian_expr(self):
+        return self._jac
+
+    @property
+    def jacobian_inv_expr(self):
+        return self._inv_jac
+
+    @property
+    def metric_expr(self):
+        return self._metric
+
+    @property
+    def metric_det_expr(self):
+        return self._metric_det
+
+    def _hashable_content(self):
+        return (type(self).__name__, self._name, self.ldim, self.pdim,
+                self._coordinates, self._logical_coordinates)
 
     @property
     @abstractmethod
@@ -659,29 +739,52 @@ class AnalyticMapping(Mapping, DefinedMapping, metaclass=_MappingABCMeta):
     # DefinedMapping / BasicCallableMapping abstract members.
 
 #==============================================================================
-class InverseMapping(StructuralMapping, Mapping, metaclass=_MappingABCMeta):
-    def __new__(cls, mapping):
-        assert isinstance(mapping, Mapping)
-        name     = mapping.name
-        ldim     = mapping.ldim
-        pdim     = mapping.pdim
-        coords   = mapping.logical_coordinates
-        jacobian = mapping.jacobian_symbol.inv()
-        return Mapping.__new__(cls, name, ldim=ldim, pdim=pdim, coordinates=coords, jacobian=jacobian)
+class InverseMapping(StructuralMapping, metaclass=_MappingABCMeta):
+    """ Symbolic inverse of a mapping: F^{-1}. Not point-evaluable. """
 
-    # StructuralMapping.ldim/pdim are abstract and would otherwise shadow
-    # Mapping's concrete ones (StructuralMapping is listed first, for
-    # __call__'s point-rejection to win); alias the existing descriptor
-    # instead of re-typing its body, so a future change to Mapping.ldim/pdim
-    # applies here automatically.
-    ldim = Mapping.ldim
-    pdim = Mapping.pdim
+    def __new__(cls, mapping):
+        assert isinstance(mapping, SymbolicMapping)
+        # Build the IndexedBase directly (WP06d-4a: no longer routing through
+        # Mapping.__new__, which wrapped `coordinates` Symbols in Symbol(...)
+        # again -- the pre-existing `Symbol(Symbol(...))` TypeError).
+        obj = IndexedBase.__new__(cls, mapping.name, shape=mapping.pdim)
+        lcoords                  = mapping._logical_coordinates  # raw Tuple
+        obj._name                = mapping.name
+        obj._ldim                = mapping.ldim
+        obj._pdim                = mapping.pdim
+        obj._coordinates         = lcoords
+        obj._logical_coordinates = lcoords
+        obj._jacobian            = mapping.jacobian_symbol.inv()
+        obj._is_minus            = None
+        obj._is_plus             = None
+        obj._base_mapping        = mapping
+        cls._init_symbolic_jacobian(obj)
+        return obj
+
+    @property
+    def ldim(self):
+        return self._ldim
+
+    @property
+    def pdim(self):
+        return self._pdim
+
+    @property
+    def jacobian_symbol(self):
+        return self._jacobian
+
+    @property
+    def is_analytical(self):
+        return self._base_mapping.is_analytical
+
+    def copy(self):
+        return InverseMapping(self._base_mapping)
 
 #==============================================================================
 class JacobianSymbol(MatrixSymbolicExpr):
     _axis = None
     def __new__(cls, mapping, axis=None):
-        assert isinstance(mapping, Mapping)
+        assert isinstance(mapping, SymbolicMapping)   # incl. structural mappings (WP06d-4a)
         if axis is not None:
             assert isinstance(axis, (int, Integer))
         obj = MatrixSymbolicExpr.__new__(cls, mapping)
@@ -709,7 +812,7 @@ class JacobianSymbol(MatrixSymbolicExpr):
         return hash(self._hashable_content())
 
     def _eval_subs(self, old, new):
-        if isinstance(new, Mapping):
+        if isinstance(new, SymbolicMapping):
             if self.axis is not None:
                 obj = JacobianSymbol(new, self.axis)
             else:
@@ -728,7 +831,7 @@ class JacobianInverseSymbol(MatrixSymbolicExpr):
     _axis = None
     is_Matrix     = False
     def __new__(cls, mapping, axis=None):
-        assert isinstance(mapping, Mapping)
+        assert isinstance(mapping, SymbolicMapping)   # incl. structural mappings (WP06d-4a)
         if axis is not None:
             assert isinstance(axis, int)
         obj = MatrixSymbolicExpr.__new__(cls, mapping)
@@ -760,7 +863,7 @@ class JacobianInverseSymbol(MatrixSymbolicExpr):
             return 'Jacobian({})**(-1)'.format(sstr(self.mapping.name))
 
 #==============================================================================
-class InterfaceMapping(StructuralMapping, Mapping, metaclass=_MappingABCMeta):
+class InterfaceMapping(StructuralMapping, metaclass=_MappingABCMeta):
     """
     InterfaceMapping is used to represent a mapping in the interface.
 
@@ -773,18 +876,29 @@ class InterfaceMapping(StructuralMapping, Mapping, metaclass=_MappingABCMeta):
     """
 
     def __new__(cls, minus, plus):
-        assert isinstance(minus, Mapping)
-        assert isinstance(plus,  Mapping)
+        assert isinstance(minus, SymbolicMapping)
+        assert isinstance(plus,  SymbolicMapping)
         minus = minus.copy()
         plus  = plus.copy()
 
         minus.set_plus_minus(minus=True)
         plus.set_plus_minus(plus=True)
 
-        name = '{}|{}'.format(str(minus.name), str(plus.name))
-        obj  = Mapping.__new__(cls, name, ldim=minus.ldim, pdim=minus.pdim)
-        obj._minus = minus
-        obj._plus  = plus
+        name       = '{}|{}'.format(str(minus.name), str(plus.name))
+        ldim, pdim = minus.ldim, minus.pdim
+
+        # WP06d-4a: build the IndexedBase directly instead of via Mapping.__new__.
+        obj = IndexedBase.__new__(cls, name, shape=pdim)
+        obj._name                = name
+        obj._ldim                = ldim
+        obj._pdim                = pdim
+        obj._coordinates         = tuple(Symbol(u, real=True) for u in ['x', 'y', 'z'][:pdim])
+        obj._logical_coordinates = Tuple(*(Symbol(u, real=True) for u in ['x1', 'x2', 'x3'][:ldim]))
+        obj._is_minus            = None
+        obj._is_plus             = None
+        obj._minus               = minus
+        obj._plus                = plus
+        cls._init_symbolic_jacobian(obj)
         return obj
 
     @property
@@ -795,17 +909,20 @@ class InterfaceMapping(StructuralMapping, Mapping, metaclass=_MappingABCMeta):
     def plus(self):
         return self._plus
 
-    # StructuralMapping.ldim/pdim are abstract and would otherwise shadow
-    # Mapping's concrete ones (StructuralMapping is listed first, for
-    # __call__'s point-rejection to win); alias the existing descriptor
-    # instead of re-typing its body, so a future change to Mapping.ldim/pdim
-    # applies here automatically.
-    ldim = Mapping.ldim
-    pdim = Mapping.pdim
+    @property
+    def ldim(self):
+        return self._ldim
+
+    @property
+    def pdim(self):
+        return self._pdim
 
     @property
     def is_analytical(self):
         return self.minus.is_analytical and self.plus.is_analytical
+
+    def copy(self):
+        return InterfaceMapping(self._minus, self._plus)
 
     def _eval_subs(self, old, new):
         minus = self.minus.subs(old, new)
@@ -816,19 +933,27 @@ class InterfaceMapping(StructuralMapping, Mapping, metaclass=_MappingABCMeta):
         return self
 
 #==============================================================================
-class MultiPatchMapping(StructuralMapping, Mapping, metaclass=_MappingABCMeta):
+class MultiPatchMapping(StructuralMapping, metaclass=_MappingABCMeta):
 
     def __new__(cls, dic):
         assert isinstance( dic, dict)
-        return Basic.__new__(cls, dic)
+        obj = Basic.__new__(cls, dic)
+        # WP06d-4a bug fix: MultiPatchMapping.__new__ never set _name, so any
+        # domain call or `==` that reached `name` raised AttributeError.
+        first = next(iter(dic.values()))
+        obj._name                = '|'.join(str(m.name) for m in dic.values())
+        obj._coordinates         = first._coordinates
+        obj._logical_coordinates = first._logical_coordinates
+        obj._is_minus            = None
+        obj._is_plus             = None
+        # NB: no _init_symbolic_jacobian -- MultiPatchMapping uses Basic.__new__
+        # (not IndexedBase), so it can't be indexed; pre-WP06d-4a it never went
+        # through Mapping.__new__ either, so jacobian_expr stays None.
+        return obj
 
     @property
     def mappings(self):
         return self.args[0]
-
-    @property
-    def is_analytical(self):
-        return all(a.is_analytical for a in self.mappings.values())
 
     @property
     def ldim(self):
@@ -842,11 +967,17 @@ class MultiPatchMapping(StructuralMapping, Mapping, metaclass=_MappingABCMeta):
     def is_analytical(self):
         return all(e.is_analytical for e in self.mappings.values())
 
+    def copy(self):
+        return MultiPatchMapping(dict(self.mappings))
+
     def _eval_subs(self, old, new):
         return self
 
     def _eval_simplify(self, **kwargs):
         return self
+
+    def _hashable_content(self):
+        return (type(self).__name__, *self.mappings.keys(), *self.mappings.values())
 
     def __hash__(self):
         return hash((*self.mappings.values(), *self.mappings.keys()))
@@ -862,7 +993,10 @@ class MappedDomain(BasicDomain):
 
     @cacheit
     def __new__(cls, mapping, logical_domain):
-        assert(isinstance(mapping, Mapping))
+        # SymbolicMapping, not Mapping: since WP06d-4a the structural mappings
+        # (InterfaceMapping / MultiPatchMapping / InverseMapping) are callable
+        # on a domain but no longer subclass Mapping.
+        assert(isinstance(mapping, SymbolicMapping))
         assert(isinstance(logical_domain, BasicDomain))
         if isinstance(logical_domain, Domain):
             kwargs = dict(
@@ -1021,8 +1155,12 @@ class Jacobian(MappingApplication):
             the jacobian matrix
         """
 
-        if not isinstance(F, Mapping):
-            raise TypeError('> Expecting a Mapping object')
+        # SymbolicMapping, not Mapping: WP06d-4a's structural mappings ask for
+        # their own Jacobian(self) at construction (via
+        # StructuralMapping._init_symbolic_jacobian), and they are no longer
+        # Mapping subclasses.
+        if not isinstance(F, SymbolicMapping):
+            raise TypeError('> Expecting a SymbolicMapping object')
 
         if F.jacobian_expr is not None:
             return F.jacobian_expr
@@ -1659,7 +1797,7 @@ class SymbolicExpr(CalculusFunction):
                     code += k*n
             return cls.eval(atom, code=code)
 
-        elif isinstance(expr, Mapping):
+        elif isinstance(expr, SymbolicMapping):
             return Symbol(expr.name)
 
         # ... this must be done here, otherwise codegen for FEM will not work
