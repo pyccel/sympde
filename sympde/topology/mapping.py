@@ -876,8 +876,10 @@ class InterfaceMapping(StructuralMapping, metaclass=_MappingABCMeta):
     """
 
     def __new__(cls, minus, plus):
-        assert isinstance(minus, SymbolicMapping)
-        assert isinstance(plus,  SymbolicMapping)
+        # Mapping, not SymbolicMapping: interface legs are always concrete patch
+        # mappings -- the body below needs Mapping's set_plus_minus() / copy().
+        assert isinstance(minus, Mapping)
+        assert isinstance(plus,  Mapping)
         minus = minus.copy()
         plus  = plus.copy()
 
@@ -940,10 +942,11 @@ class MultiPatchMapping(StructuralMapping, metaclass=_MappingABCMeta):
         obj = Basic.__new__(cls, dic)
         # WP06d-4a bug fix: MultiPatchMapping.__new__ never set _name, so any
         # domain call or `==` that reached `name` raised AttributeError.
-        first = next(iter(dic.values()))
+        # An empty dict is degenerate but constructed fine pre-WP06d-4a.
+        first = next(iter(dic.values()), None)
         obj._name                = '|'.join(str(m.name) for m in dic.values())
-        obj._coordinates         = first._coordinates
-        obj._logical_coordinates = first._logical_coordinates
+        obj._coordinates         = first._coordinates         if first is not None else None
+        obj._logical_coordinates = first._logical_coordinates if first is not None else None
         obj._is_minus            = None
         obj._is_plus             = None
         # NB: no _init_symbolic_jacobian -- MultiPatchMapping uses Basic.__new__
@@ -1259,8 +1262,11 @@ class Contravariant(MappingApplication):
             the contravariant transformation
         """
 
-        if not isinstance(F, Mapping):
-            raise TypeError('> Expecting a Mapping')
+        # SymbolicMapping, not Mapping: consistent with Covariant.eval (no
+        # guard) and Jacobian.eval -- WP06d-4a's structural mappings are valid
+        # here (Hdiv push-forward over a multipatch/broken domain).
+        if not isinstance(F, SymbolicMapping):
+            raise TypeError('> Expecting a SymbolicMapping')
 
         if not isinstance(v, (tuple, list, Tuple, ImmutableDenseMatrix, Matrix)):
             raise TypeError('> Expecting a tuple, list, Tuple, Matrix')
@@ -1752,7 +1758,9 @@ class SymbolicExpr(CalculusFunction):
 
         elif isinstance(expr, Indexed):
             base = expr.base
-            if isinstance(base, Mapping):
+            # SymbolicMapping, not Mapping: WP06d-4a's structural mappings are
+            # IndexedBase-backed but no longer Mapping (mirrors the L1800 check).
+            if isinstance(base, SymbolicMapping):
                 if expr.indices[0] == 0:
                     name = 'x'
                 elif expr.indices[0] == 1:

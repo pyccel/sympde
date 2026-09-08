@@ -308,6 +308,27 @@ def test_structural_mappings_are_not_analytic():
         assert not hasattr(m, '_expressions')
 
 
+def test_symbolicexpr_lowers_indexed_structural_mapping_to_coordinate():
+    # 06d-4a-1: SymbolicExpr.eval's Indexed branch must recognise a severed
+    # structural mapping (SymbolicMapping, not Mapping) so `itf[i]` lowers to a
+    # coordinate symbol, not the `{base.name}_{i}` fallback (an invalid
+    # 'F1|F2_0').
+    from sympde.topology import IdentityMapping, InterfaceMapping
+    from sympde.topology.mapping import SymbolicExpr
+    from sympy import Symbol
+    itf = InterfaceMapping(IdentityMapping('F1', dim=2), IdentityMapping('F2', dim=2))
+    assert SymbolicExpr(itf[0]) == Symbol('x')
+    assert SymbolicExpr(itf[1]) == Symbol('y')
+
+
+def test_empty_multipatch_mapping_still_constructs():
+    # 06d-4a-1: MultiPatchMapping({}) constructed pre-WP06d-4a via Basic.__new__;
+    # the _name/_coordinates derivation must not StopIteration on an empty dict.
+    from sympde.topology import MultiPatchMapping
+    mp = MultiPatchMapping({})
+    assert mp.name == ''
+
+
 def test_mapped_multipatch_domain_with_interface_is_broken_pre_existing():
     # post-review finding: MappedDomain.__new__ rebuilds each patch Interface
     # as Interface(e.name, mapping(e.minus), mapping(e.plus)) without
