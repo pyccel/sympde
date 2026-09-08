@@ -1,6 +1,6 @@
 import numpy as np
 
-from sympde.topology.mapping            import Mapping, BasicCallableMapping
+from sympde.topology.mapping            import SymbolicMapping, BasicCallableMapping
 from sympde.topology.analytical_mapping import IdentityMapping, AffineMapping
 from sympde.topology.analytical_mapping import PolarMapping
 
@@ -506,7 +506,7 @@ def test_user_defined_callable_mapping():
         def pdim(self):
             return self._ndim
 
-    F = Mapping('F', ldim = 3, pdim = 3) # Declare undefined symbolic mapping
+    F = SymbolicMapping('F', ldim = 3, pdim = 3) # Declare undefined symbolic mapping
     f = UserIdentity(3)        # Create user-defined callable mapping
     F.set_callable_mapping(f)  # Attach callable mapping to symbolic mapping
 

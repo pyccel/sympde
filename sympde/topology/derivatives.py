@@ -22,7 +22,6 @@ from sympde.old_sympy_utilities import is_sequence
 
 from sympde.core.basic    import CalculusFunction
 from sympde.core.basic    import _coeffs_registery
-from sympde.core.basic    import SymbolicMapping
 from sympde.core.algebra  import LinearOperator
 from sympde.calculus.core import minus, plus
 from sympde.calculus.core import has
@@ -106,7 +105,7 @@ class DifferentialOperator(LinearOperator):
             elif isinstance(expr, Expr):
                 x = Symbol(cls.coordinate, real=True)
                 if cls.logical:
-                    M = expr.atoms(Mapping)
+                    M = expr.atoms(SymbolicMapping)
                     if len(M)>0:
                         M = list(M)[0]
                         expr_primes = [diff(expr, M[i]) for i in range(M.pdim)]
@@ -1288,5 +1287,5 @@ def get_max_logical_partial_derivatives(expr, F=None):
             if v > d[k]: d[k] = v
     return d
 
-from .mapping import Mapping, Jacobian
+from .mapping import Jacobian, SymbolicMapping
 

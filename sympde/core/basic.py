@@ -5,7 +5,6 @@ from sympy        import Number
 from sympy        import NumberSymbol
 from sympy.core   import Basic
 from sympy.core   import Symbol
-from sympy.tensor import IndexedBase
 
 #==============================================================================
 class Constant(Symbol):
@@ -33,23 +32,6 @@ class CalculusFunction(Function):
     """this class is needed to distinguish between functions and calculus
     functions when manipulating our expressions"""
     pass
-
-#==============================================================================
-class SymbolicMapping(IndexedBase):
-    """
-    Common root of the unified mapping hierarchy: a symbolic transformation of
-    coordinates identified by a name and a pair of dimensions (logical ``ldim``
-    to physical ``pdim``).
-
-    A ``SymbolicMapping`` may be undefined (name and dimensions only) or carry
-    more structure in a subclass. It stays callable on a *domain*, returning a
-    symbolic mapped domain; point evaluation is the responsibility of
-    ``DefinedMapping``.
-
-    Lives here (rather than in ``sympde.topology.mapping``) so that leaf modules
-    such as ``sympde.topology.derivatives`` can type-check against it without a
-    circular import.
-    """
 
 #==============================================================================
 class BasicDerivable(Basic):

@@ -32,9 +32,13 @@ def test_hierarchy_links():
 
 
 def test_defined_mapping_interface_covers_basic_callable_mapping():
-    # DefinedMapping is meant to supersede BasicCallableMapping: every method of
-    # the old interface must still be required by the new one
-    assert set(BasicCallableMapping.__abstractmethods__).issubset(
+    # DefinedMapping supersedes BasicCallableMapping: every name of the old
+    # interface is still exposed. 06d-4c: ldim / pdim / __call__ are now
+    # provided concretely by SymbolicMapping, so only the numeric point-eval
+    # methods stay abstract until a concrete subclass implements them.
+    for name in BasicCallableMapping.__abstractmethods__:
+        assert hasattr(DefinedMapping, name)
+    assert {'jacobian', 'jacobian_inv', 'metric', 'metric_det'}.issubset(
         DefinedMapping.__abstractmethods__)
 
 
@@ -80,10 +84,12 @@ def test_jacobian_symbol_holds_the_symbolic_jacobian():
 
 def test_legacy_jacobian_property_is_a_deprecated_alias():
     from sympde.topology import Mapping
-    # On a bare (undefined) Mapping, `.jacobian` is still the deprecated
-    # symbolic property. On an AnalyticMapping it is shadowed by the numeric
-    # point-evaluation method (see test_analytic_mapping_is_directly_point_evaluable).
-    F = Mapping('F', dim=2)
+    # `.jacobian` (the deprecated symbolic property) lives on `Mapping` only --
+    # `SymbolicMapping` deliberately does not carry it. On an AnalyticMapping it
+    # is shadowed by the numeric point-evaluation method
+    # (see test_analytic_mapping_is_directly_point_evaluable).
+    with pytest.warns(DeprecationWarning, match='SymbolicMapping'):   # 06d-4c: ctor
+        F = Mapping('F', dim=2)
     with pytest.warns(DeprecationWarning, match='jacobian_symbol'):
         legacy = F.jacobian
     assert legacy is F.jacobian_symbol
@@ -92,9 +98,12 @@ def test_legacy_jacobian_property_is_a_deprecated_alias():
 # -- work-package 02b: AnalyticMapping is a concrete, point-evaluable DefinedMapping
 
 def test_defined_mapping_inherits_basic_callable_mapping():
-    # D5: the point-eval interface is now stated once, on BasicCallableMapping
+    # D5: the point-eval interface is now stated once, on BasicCallableMapping.
+    # 06d-4c: SymbolicMapping provides ldim / pdim / __call__ concretely, so
+    # DefinedMapping only still-abstracts the numeric point-eval methods.
     assert issubclass(DefinedMapping, BasicCallableMapping)
-    assert DefinedMapping.__abstractmethods__ == BasicCallableMapping.__abstractmethods__
+    assert DefinedMapping.__abstractmethods__ == frozenset(
+        {'jacobian', 'jacobian_inv', 'metric', 'metric_det'})
 
 
 def test_analytic_mapping_hierarchy():
@@ -299,13 +308,17 @@ def test_interface_mapping_copy_reconstructs():
 
 
 def test_structural_mappings_are_not_analytic():
-    # 06d-4a: no longer carrying Mapping's point-eval / deprecated surface.
+    # 06d-4a: the structural object itself carries no analytic `_expressions`.
+    # 06d-4c: the callable-mapping API lives on SymbolicMapping now (psydac
+    # attaches spline callables to undefined mappings), so a structural mapping
+    # inherits get_callable_mapping -- but it has nothing to build / return.
     from sympde.topology import IdentityMapping, InterfaceMapping, MultiPatchMapping
     itf = InterfaceMapping(IdentityMapping('F1', dim=2), IdentityMapping('F2', dim=2))
     mp  = MultiPatchMapping({'p': IdentityMapping('F', dim=2)})
     for m in (itf, mp):
-        assert not hasattr(m, 'get_callable_mapping')
-        assert not hasattr(m, '_expressions')
+        assert getattr(m, '_expressions', None) is None
+        with pytest.raises((ValueError, TypeError, AttributeError)):
+            m.get_callable_mapping()
 
 
 def test_symbolicexpr_lowers_indexed_structural_mapping_to_coordinate():
@@ -356,7 +369,9 @@ def test_mapping_is_a_symbolic_mapping():
                                  InterfaceMapping)
     assert issubclass(Mapping, SymbolicMapping)
     # every branch of the hierarchy is now isinstance(_, SymbolicMapping):
-    assert isinstance(Mapping('F', dim=2), SymbolicMapping)               # undefined
+    with pytest.warns(DeprecationWarning):                                # 06d-4c
+        bare = Mapping('F', dim=2)
+    assert isinstance(bare, SymbolicMapping)                              # undefined
     assert isinstance(IdentityMapping('G', dim=2), SymbolicMapping)       # analytic
     itf = InterfaceMapping(IdentityMapping('A', dim=2), IdentityMapping('B', dim=2))
     assert isinstance(itf, SymbolicMapping)                               # structural
@@ -429,20 +444,83 @@ def test_bare_mapping_with_expressions_rejects_get_callable_mapping():
 
 
 def test_undefined_mapping_still_valueerrors_on_get_callable_mapping():
-    from sympde.topology import Mapping
+    # 06d-4c: get_callable_mapping() moved onto SymbolicMapping (an undefined
+    # mapping with no _expressions and no attached callable still ValueErrors).
+    from sympde.topology import SymbolicMapping
     with pytest.raises(ValueError):
-        Mapping('F', dim=2).get_callable_mapping()
+        SymbolicMapping('F', dim=2).get_callable_mapping()
 
 
 def test_basicmapping_alias_removed():
     # 06d-2 folded BasicMapping into SymbolicMapping (keeping a deprecated
-    # alias); 06d-4b drops the alias.
+    # alias); 06d-4b drops the alias; 06d-4c relocates SymbolicMapping out of
+    # sympde.core.basic into sympde.topology.mapping.
     with pytest.raises(ImportError):
         from sympde.core.basic import BasicMapping  # noqa: F401
+    with pytest.raises(ImportError):
+        from sympde.core.basic import SymbolicMapping  # noqa: F401
 
-    from sympde.core.basic import SymbolicMapping
-    from sympde.topology import Mapping, IdentityMapping
+    from sympde.topology import Mapping, SymbolicMapping, IdentityMapping
     assert issubclass(Mapping, SymbolicMapping)
     assert isinstance(IdentityMapping('G', dim=2), SymbolicMapping)
     # SymbolicMapping appears exactly once in the MRO (BasicMapping is gone)
     assert [c.__name__ for c in Mapping.__mro__].count('SymbolicMapping') == 1
+
+
+# -- work-package 06d-4c: SymbolicMapping is the undefined-mapping constructor,
+# `Mapping` is a DeprecationWarning shell over it
+
+def test_symbolicmapping_is_the_undefined_mapping_constructor():
+    from sympde.topology import SymbolicMapping, Square
+    F = SymbolicMapping('F', dim=2)
+    assert F.name == 'F' and F.ldim == 2 and F.pdim == 2
+    assert F.is_analytical is False
+    assert type(F(Square('D'))).__name__ in ('Domain', 'MappedDomain')
+
+
+def test_bare_mapping_construction_is_deprecated():
+    import warnings
+    from sympde.topology import Mapping, IdentityMapping
+    with pytest.warns(DeprecationWarning, match='SymbolicMapping'):
+        Mapping('M', dim=2)
+    with warnings.catch_warnings():          # analytic subclasses do NOT warn
+        warnings.simplefilter('error', DeprecationWarning)
+        IdentityMapping('G', dim=2)
+
+
+def test_bare_mapping_rebuild_does_not_warn():
+    # /code-review finding 3 (06d-4c-1a): sympy's internal `func(*args)` rebuild
+    # (Basic.rebuild, cse, pickling, deepcopy) re-enters Mapping.__new__ with
+    # `name` already a Symbol -- it must stay quiet, or a downstream running
+    # `filterwarnings=error` breaks on expressions it merely stored / copied.
+    import warnings, pickle, copy
+    from sympde.topology import Mapping
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', DeprecationWarning)
+        M = Mapping('F_rebuild', dim=2)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', DeprecationWarning)
+        M.func(*M.args)                       # the exact rebuild path
+        copy.deepcopy(M)
+        pickle.loads(pickle.dumps(M))
+
+
+def test_symbolicmapping_honours_injected_jacobian():
+    # /code-review finding 2 (06d-4c-1a): the `jacobian=` constructor hook that
+    # Mapping.__new__ honoured must survive the move into SymbolicMapping.__new__,
+    # and must not leak into the analytic-constants dict of the Mapping shell.
+    from sympy import ImmutableDenseMatrix, eye
+    from sympde.topology import SymbolicMapping, Mapping
+
+    J = ImmutableDenseMatrix(eye(2))
+
+    F = SymbolicMapping('F_injjac', dim=2, jacobian=J)
+    assert F.jacobian_symbol is J
+
+    with pytest.warns(DeprecationWarning):          # bare Mapping still deprecated
+        G = Mapping('G_injjac', dim=2, jacobian=J)
+    # forwarded through the shell to SymbolicMapping.__new__ (not swallowed by
+    # `**kwargs` and replaced by the default JacobianSymbol).
+    assert G.jacobian_symbol is J

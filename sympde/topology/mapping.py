@@ -17,7 +17,6 @@ from sympy.core.exprtools  import factor_terms
 from sympy.polys.polytools import parallel_poly_from_expr
 
 from sympde.core              import Constant
-from sympde.core.basic        import SymbolicMapping
 from sympde.core.basic        import CalculusFunction
 from sympde.core.basic        import _coeffs_registery
 from sympde.calculus.core     import PlusInterfaceOperator, MinusInterfaceOperator
@@ -144,6 +143,251 @@ class BasicCallableMapping(ABC):
         """
 
 #==============================================================================
+class SymbolicMapping(IndexedBase):
+    """
+    Common root of the unified mapping hierarchy: an undefined symbolic
+    transformation of coordinates, identified by a name and a pair of
+    dimensions (logical ``ldim`` to physical ``pdim``). Callable on a *domain*
+    (-> a symbolic ``MappedDomain``) but not point-evaluable -- that is
+    ``DefinedMapping``'s job.
+
+    Construct one directly for a mapping you only need symbolically:
+    ``SymbolicMapping('F', dim=2)``. Analytic mappings (carrying ``_expressions``)
+    are ``AnalyticMapping`` subclasses; the ``Mapping`` name (WP06d-4c) is a
+    deprecated shell over this class.
+    """
+
+    _expressions  = None
+    _jac          = None
+    _inv_jac      = None
+    _constants    = None
+    _metric       = None
+    _metric_det   = None
+    _callable_map = None
+    _ldim         = None
+    _pdim         = None
+    _is_minus     = None
+    _is_plus      = None
+
+    def __new__(cls, name, dim=None, **kwargs):
+
+        # `SymbolicMapping.__new__` runs before `object.__new__`'s abstract-class
+        # guard would fire, so replicate it here: `DefinedMapping('F')` /
+        # `StructuralMapping('F')` must still raise `TypeError` mentioning the
+        # unimplemented abstract methods, not trip an assertion below.
+        if getattr(cls, '__abstractmethods__', frozenset()):
+            raise TypeError(
+                "Can't instantiate abstract class {} with abstract methods {}"
+                .format(cls.__name__, ', '.join(sorted(cls.__abstractmethods__))))
+
+        ldim        = kwargs.pop('ldim', cls._ldim)
+        pdim        = kwargs.pop('pdim', cls._pdim)
+        coordinates = kwargs.pop('coordinates', None)
+        evaluate    = kwargs.pop('evaluate', True)
+
+        dims = [dim, ldim, pdim]
+        for i, d in enumerate(dims):
+            if isinstance(d, (tuple, list, Tuple, Matrix, ImmutableDenseMatrix)):
+                if not len(d) == 1:
+                    raise ValueError('> Expecting a tuple, list, Tuple of length 1')
+                dims[i] = d[0]
+
+        dim, ldim, pdim = dims
+
+        if dim is None:
+            assert ldim is not None
+            assert pdim is not None
+            assert pdim >= ldim
+        else:
+            ldim = dim
+            pdim = dim
+
+        obj = IndexedBase.__new__(cls, name, shape=pdim)
+
+        if not evaluate:
+            return obj
+
+        if coordinates is None:
+            _coordinates = [Symbol(c, real=True) for c in ['x', 'y', 'z'][:pdim]]
+        else:
+            if not isinstance(coordinates, (list, tuple, Tuple)):
+                raise TypeError('> Expecting list, tuple, Tuple')
+            for a in coordinates:
+                if not isinstance(a, (str, Symbol)):
+                    raise TypeError('> Expecting str or Symbol')
+            _coordinates = [Symbol(u, real=True) for u in coordinates]
+
+        obj._name                = name
+        obj._ldim                = ldim
+        obj._pdim                = pdim
+        obj._coordinates         = tuple(_coordinates)
+        # `jacobian=` lets a caller inject a pre-built symbolic Jacobian
+        # instead of the default JacobianSymbol(obj); preserved from the old
+        # Mapping.__new__ constructor contract.
+        obj._jacobian            = kwargs.pop('jacobian', JacobianSymbol(obj))
+        obj._is_minus            = None
+        obj._is_plus             = None
+
+        lcoords_names        = ['x1', 'x2', 'x3'][:ldim]
+        lcoords_symbols_real = [Symbol(i, real=True) for i in lcoords_names]
+        obj._logical_coordinates = Tuple(*lcoords_symbols_real)
+
+        # Undefined mapping: symbolic Jacobian / metric straight from
+        # Jacobian(obj). Mapping.__new__ overrides this for the subclasses that
+        # carry `_expressions`.
+        if cls._expressions is None:
+            obj._jac        = Jacobian(obj)
+            obj._metric     = obj._jac.T * obj._jac
+            obj._metric_det = obj._metric.det()
+
+        return obj
+
+    # Applying the mapping to a logical domain returns a mapped domain.
+    def __call__(self, domain):
+        assert isinstance(domain, BasicDomain)
+        assert domain.logical_domain is None
+        assert domain.dim == self.ldim
+        return MappedDomain(self, domain)
+
+    #--------------------------------------------------------------------------
+    # Callable mapping (a discrete point-evaluable mapping attached explicitly)
+    #--------------------------------------------------------------------------
+    def get_callable_mapping(self):
+        # An explicitly attached callable (set_callable_mapping) always wins.
+        if self._callable_map is not None:
+            return self._callable_map
+
+        if self._expressions is None:
+            raise ValueError(
+                'Cannot generate a callable mapping without analytical '
+                'expressions. Attach a user-defined callable of type '
+                '`BasicCallableMapping` with the method `set_callable_mapping`.')
+
+        # Reachable only for a bare subclass that carries `_expressions` but is
+        # not an `AnalyticMapping` (whose override returns `self`). Since WP06c
+        # such a class is a mistake -- there is no `CallableMapping` to build.
+        raise TypeError(
+            f'{type(self).__name__} carries analytical expressions but is not '
+            'an AnalyticMapping. Subclass AnalyticMapping for a point-evaluable '
+            'analytic mapping; an AnalyticMapping instance is its own callable '
+            'mapping.')
+
+    def set_callable_mapping(self, F):
+        if not isinstance(F, BasicCallableMapping):
+            raise TypeError(
+                f'F must be a BasicCallableMapping, got {type(F)} instead')
+        self._callable_map = F
+
+    #--------------------------------------------------------------------------
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def ldim(self):
+        return self._ldim
+
+    @property
+    def pdim(self):
+        return self._pdim
+
+    @property
+    def coordinates(self):
+        return self._coordinates[0] if self.pdim == 1 else self._coordinates
+
+    @property
+    def logical_coordinates(self):
+        return self._logical_coordinates[0] if self.ldim == 1 else self._logical_coordinates
+
+    @property
+    def jacobian_symbol(self):
+        """ Symbolic JacobianSymbol of this mapping. """
+        return self._jacobian
+
+    @property
+    def det_jacobian(self):
+        return self.jacobian_symbol.det()
+
+    @property
+    def is_analytical(self):
+        return self._expressions is not None
+
+    @property
+    def expressions(self):
+        return self._expressions
+
+    @property
+    def constants(self):
+        return self._constants
+
+    @property
+    def jacobian_expr(self):
+        return self._jac
+
+    @property
+    def jacobian_inv_expr(self):
+        if not self.is_analytical and self._inv_jac is None:
+            self._inv_jac = self.jacobian_expr.inv()
+        return self._inv_jac
+
+    @property
+    def metric_expr(self):
+        return self._metric
+
+    @property
+    def metric_det_expr(self):
+        return self._metric_det
+
+    @property
+    def is_minus(self):
+        return self._is_minus
+
+    @property
+    def is_plus(self):
+        return self._is_plus
+
+    def set_plus_minus(self, **kwargs):
+        minus = kwargs.pop('minus', False)
+        plus  = kwargs.pop('plus', False)
+        assert plus is not minus
+        self._is_plus  = plus
+        self._is_minus = minus
+
+    def copy(self):
+        # type(self), not SymbolicMapping, so a copy keeps its concrete class
+        # (and its point-evaluation capability, for AnalyticMapping). Safe
+        # because evaluate=False short-circuits __new__ right after
+        # IndexedBase.__new__, before the `_expressions` branch.
+        obj = type(self)(self.name, ldim=self.ldim, pdim=self.pdim, evaluate=False)
+        obj._name                = self.name
+        obj._ldim                = self.ldim
+        obj._pdim                = self.pdim
+        obj._coordinates         = self._coordinates
+        obj._jacobian            = JacobianSymbol(obj)
+        obj._logical_coordinates = self._logical_coordinates
+        obj._expressions         = self._expressions
+        obj._constants           = self._constants
+        obj._jac                 = self._jac
+        obj._inv_jac             = self._inv_jac
+        obj._metric              = self._metric
+        obj._metric_det          = self._metric_det
+        obj._callable_map        = self._callable_map
+        obj._is_plus             = self._is_plus
+        obj._is_minus            = self._is_minus
+        return obj
+
+    def _hashable_content(self):
+        args = (self.name, self.ldim, self.pdim, self._coordinates, self._logical_coordinates,
+                self._expressions, self._constants, self._is_plus, self._is_minus)
+        return tuple([a for a in args if a is not None])
+
+    def _eval_subs(self, old, new):
+        return self
+
+    def _sympystr(self, printer):
+        return printer.doprint(self.name)
+
+#==============================================================================
 class _MappingABCMeta(ABCMeta, type(SymbolicMapping)):
     """
     Metaclass merging ``abc.ABCMeta`` with sympy's metaclass
@@ -157,10 +401,6 @@ class _MappingABCMeta(ABCMeta, type(SymbolicMapping)):
     ``AnalyticMapping``. ``type(...)`` is used instead of importing the name so
     this keeps working if a future sympy renames its metaclass.
     """
-
-#==============================================================================
-# ``SymbolicMapping`` is defined in ``sympde.core.basic`` (imported above) so
-# that leaf modules can type-check against it without importing this one.
 
 #==============================================================================
 class DefinedMapping(SymbolicMapping, BasicCallableMapping, metaclass=_MappingABCMeta):
@@ -318,309 +558,93 @@ class StructuralMapping(SymbolicMapping, metaclass=_MappingABCMeta):
 #==============================================================================
 class Mapping(SymbolicMapping):
     """
-    Represents a Mapping object.
-
-    Now sits under ``SymbolicMapping`` (WP 06a) so that
-    ``isinstance(_, SymbolicMapping)`` holds for every mapping in the hierarchy;
-    ``SymbolicMapping`` is still a thin pass-through, so behaviour is unchanged.
-
-    Examples
-
+    Deprecated shell over :class:`SymbolicMapping` (WP06d-4c): constructing a
+    bare ``Mapping`` emits a ``DeprecationWarning`` -- use ``SymbolicMapping``
+    for an undefined mapping, or an ``AnalyticMapping`` subclass for an analytic
+    one. It survives only to host the ``_expressions`` -> symbolic
+    Jacobian / metric machinery that its analytic subclasses inherit through
+    ``__new__``, and the deprecated symbolic ``jacobian`` property.
     """
-    _expressions  = None # used for analytical mapping
-    _jac          = None
-    _inv_jac      = None
-    _constants    = None
-    _callable_map = None
-    _ldim         = None
-    _pdim         = None
 
     def __new__(cls, name, dim=None, **kwargs):
+        # Warn only on explicit user construction (`name` is a plain ``str``).
+        # sympy's internal ``func(*args)`` rebuild -- pickling, ``Basic.rebuild``,
+        # cse/canonicalisation -- re-invokes ``__new__`` with ``name`` already a
+        # ``Symbol``; that path must stay quiet so a downstream running
+        # ``filterwarnings=error`` is not tripped by warning spam it did not
+        # cause.
+        if cls is Mapping and isinstance(name, str):
+            warnings.warn(
+                'sympde.topology.Mapping is deprecated; use SymbolicMapping '
+                '(or an AnalyticMapping subclass for an analytic mapping).',
+                DeprecationWarning, stacklevel=2)
 
-        ldim        = kwargs.pop('ldim', cls._ldim)
-        pdim        = kwargs.pop('pdim', cls._pdim)
-        coordinates = kwargs.pop('coordinates', None)
-        evaluate    = kwargs.pop('evaluate', True)
+        evaluate  = kwargs.get('evaluate', True)
+        # `jacobian` goes to SymbolicMapping.__new__ too -- forwarding it here
+        # both honours it and keeps it out of the `_expressions` constants dict.
+        prefix_kw = {k: kwargs.pop(k)
+                     for k in ('ldim', 'pdim', 'coordinates', 'evaluate', 'jacobian')
+                     if k in kwargs}
+        obj = super().__new__(cls, name, dim, **prefix_kw)
 
-        dims = [dim, ldim, pdim]
-        for i,d in enumerate(dims):
-            if isinstance(d, (tuple, list, Tuple, Matrix, ImmutableDenseMatrix)):
-                if not len(d) == 1:
-                    raise ValueError('> Expecting a tuple, list, Tuple of length 1')
-                dims[i] = d[0]
-
-        dim, ldim, pdim = dims
-
-        if dim is None:
-            assert ldim is not None
-            assert pdim is not None
-            assert pdim >= ldim
-        else:
-            ldim = dim
-            pdim = dim
-
-
-        obj = IndexedBase.__new__(cls, name, shape=pdim)
-
-        if not evaluate:
+        if not evaluate or cls._expressions is None:
             return obj
 
-        if coordinates is None:
-            _coordinates = [Symbol(name, real=True) for name in ['x', 'y', 'z'][:pdim]]
+        # -- analytic subclass: expand `_expressions` into _jac / _inv_jac /
+        #    _metric (SymbolicMapping.__new__ left these to us). --
+        ldim, pdim   = obj._ldim, obj._pdim
+        _coordinates = list(obj._coordinates)
+        lcoords_names             = ['x1', 'x2', 'x3'][:ldim]
+        lcoords_symbols_real      = list(obj._logical_coordinates)
+        lcoords_symbols_real_dict = {n: s for n, s in zip(lcoords_names, lcoords_symbols_real)}
+        lcoords_general_symbols   = [Symbol(i) for i in lcoords_names]
+
+        coords_names = ['x', 'y', 'z'][:pdim]
+        args = Tuple(*(sympify(obj._expressions[i]) for i in coords_names))
+        for i in ['x1', 'x2', 'x3'][ldim:]:
+            args = args.subs(sympify(i), 0)
+
+        constants        = list(set(args.free_symbols) - set(lcoords_general_symbols))
+        constants_values = {a.name: Constant(a.name) for a in constants}
+        constants_values.update(kwargs)
+        d = {a: numpy_to_native_python(constants_values[a.name]) for a in constants}
+        args = args.subs(d)
+        args = args.subs(lcoords_symbols_real_dict)
+
+        obj._expressions = args
+        obj._constants   = tuple(a for a in constants if isinstance(constants_values[a.name], Symbol))
+
+        idx   = [obj[i] for i in range(pdim)]
+        exprs = obj._expressions
+        subs  = list(zip(_coordinates, exprs))
+
+        if obj._jac is None and obj._inv_jac is None:
+            obj._jac     = Jacobian(obj).subs(list(zip(idx, exprs)))
+            obj._inv_jac = obj._jac.inv() if pdim == ldim else None
+        elif obj._inv_jac is None:
+            obj._jac     = ImmutableDenseMatrix(sympify(obj._jac)).subs(subs)
+            obj._inv_jac = obj._jac.inv() if pdim == ldim else None
+        elif obj._jac is None:
+            obj._inv_jac = ImmutableDenseMatrix(sympify(obj._inv_jac)).subs(subs)
+            obj._jac     = obj._inv_jac.inv()
         else:
-            if not isinstance(coordinates, (list, tuple, Tuple)):
-                raise TypeError('> Expecting list, tuple, Tuple')
+            obj._jac     = ImmutableDenseMatrix(sympify(obj._jac)).subs(subs)
+            obj._inv_jac = ImmutableDenseMatrix(sympify(obj._inv_jac)).subs(subs)
 
-            for a in coordinates:
-                if not isinstance(a, (str, Symbol)):
-                    raise TypeError('> Expecting str or Symbol')
-
-            _coordinates = [Symbol(u, real=True) for u in coordinates]
-
-        obj._name                = name
-        obj._ldim                = ldim
-        obj._pdim                = pdim
-        obj._coordinates         = tuple(_coordinates)
-        obj._jacobian            = kwargs.pop('jacobian', JacobianSymbol(obj))
-        obj._is_minus            = None
-        obj._is_plus             = None
-
-        lcoords_names = ['x1', 'x2', 'x3'][:ldim]
-        lcoords_symbols_real = [Symbol(i, real=True) for i in lcoords_names]
-        lcoords_symbols_real_dict = {key: symbol for key,symbol in zip(lcoords_names, lcoords_symbols_real)}
-        obj._logical_coordinates = Tuple(*lcoords_symbols_real) # coordinates must be symbols with real=True      
-        lcoords_general_symbols = [Symbol(i) for i in lcoords_names] #list of symbols without real=True       
-
-        # ...
-        if not( obj._expressions is None ):
-            coords_names = ['x', 'y', 'z'][:pdim]
-
-            # ...
-            args = []
-            for i in coords_names:
-                x = obj._expressions[i]
-                x = sympify(x)
-                args.append(x)
-
-            args = Tuple(*args)
-            # ...
-            zero_coords = ['x1', 'x2', 'x3'][ldim:]
-
-            for i in zero_coords:
-                x = sympify(i)
-                args = args.subs(x,0)
-            # ...
-            # get constants by subtracting coordinates from list of free symbols
-            constants        = list(set(args.free_symbols) - set(lcoords_general_symbols))
-            constants_values = {a.name:Constant(a.name) for a in constants}
-            # subs constants as Constant objects instead of Symbol
-            constants_values.update( kwargs )
-            d = {a:numpy_to_native_python(constants_values[a.name]) for a in constants}
-            args = args.subs(d)
-            # subs coordinate symbols without real=True to symbols with real=True
-            args = args.subs(lcoords_symbols_real_dict)
-
-            obj._expressions = args
-            obj._constants   = tuple(a for a in constants if isinstance(constants_values[a.name], Symbol))
-
-            args  = [obj[i] for i in range(pdim)]
-            exprs = obj._expressions
-            subs  = list(zip(_coordinates, exprs))
-
-            if obj._jac is None and obj._inv_jac is None:
-                obj._jac     = Jacobian(obj).subs(list(zip(args, exprs)))
-                obj._inv_jac = obj._jac.inv() if pdim == ldim else None
-            elif obj._inv_jac is None:
-                obj._jac     = ImmutableDenseMatrix(sympify(obj._jac)).subs(subs)
-                obj._inv_jac = obj._jac.inv() if pdim == ldim else None
-
-            elif obj._jac is None:
-                obj._inv_jac = ImmutableDenseMatrix(sympify(obj._inv_jac)).subs(subs)
-                obj._jac     = obj._inv_jac.inv()
-            else:
-                obj._jac     = ImmutableDenseMatrix(sympify(obj._jac)).subs(subs)
-                obj._inv_jac = ImmutableDenseMatrix(sympify(obj._inv_jac)).subs(subs)
-
-        else:
-            obj._jac     = Jacobian(obj)
-
-        obj._metric     = obj._jac.T*obj._jac
+        obj._metric     = obj._jac.T * obj._jac
         obj._metric_det = obj._metric.det()
-
         return obj
 
-    #--------------------------------------------------------------------------
-    # Callable mapping
-    #--------------------------------------------------------------------------
-    def get_callable_mapping(self):
-        # An explicitly attached callable (set_callable_mapping) always wins.
-        if self._callable_map is not None:
-            return self._callable_map
-
-        if self._expressions is None:
-            raise ValueError(
-                'Cannot generate a callable mapping without analytical '
-                'expressions. Attach a user-defined callable of type '
-                '`BasicCallableMapping` with the method `set_callable_mapping`.')
-
-        # Reachable only for a bare `Mapping` subclass that carries
-        # `_expressions` but is not an `AnalyticMapping` (whose override returns
-        # `self`). Since WP06c such a class is a mistake -- there is no longer a
-        # `CallableMapping` wrapper to build.
-        raise TypeError(
-            f'{type(self).__name__} carries analytical expressions but is not '
-            'an AnalyticMapping. Subclass AnalyticMapping (not Mapping) for a '
-            'point-evaluable analytic mapping; an AnalyticMapping instance is '
-            'its own callable mapping.')
-
-    def set_callable_mapping(self, F):
-
-        if not isinstance(F, BasicCallableMapping):
-            raise TypeError(
-                f'F must be a BasicCallableMapping, got {type(F)} instead')
-
-        self._callable_map = F
-
-    #--------------------------------------------------------------------------
     @property
-    def name( self ):
-        return self._name
-
-    @property
-    def ldim( self ):
-        return self._ldim
-
-    @property
-    def pdim( self ):
-        return self._pdim
-
-    @property
-    def coordinates( self ):
-        if self.pdim == 1:
-            return self._coordinates[0]
-        else:
-            return self._coordinates
-
-    @property
-    def logical_coordinates( self ):
-        if self.ldim == 1:
-            return self._logical_coordinates[0]
-        else:
-            return self._logical_coordinates
-
-    # Applying the mapping to a logical domain returns a mapped domain
-    def __call__(self, domain):
-        assert isinstance(domain, BasicDomain)
-        assert domain.logical_domain is None
-        assert domain.dim == self.ldim
-        return MappedDomain(self, domain)
-
-    @property
-    def jacobian_symbol( self ):
-        """Symbolic JacobianSymbol of this mapping."""
-        return self._jacobian
-
-    @property
-    def jacobian( self ):
-        # WP 02a: the name `jacobian` is being freed so that in 02b it can become
-        # the numeric point-evaluation method of DefinedMapping. The symbolic
-        # JacobianSymbol now lives on `jacobian_symbol`.
+    def jacobian(self):
+        # WP02a froze this name so WP02b/06c could make it the *numeric*
+        # point-evaluation method on DefinedMapping. The symbolic JacobianSymbol
+        # lives on `jacobian_symbol`.
         warnings.warn(
             "Mapping.jacobian (symbolic) is deprecated; use "
             "Mapping.jacobian_symbol.",
             DeprecationWarning, stacklevel=2)
         return self.jacobian_symbol
-
-    @property
-    def det_jacobian( self ):
-        return self.jacobian_symbol.det()
-
-    @property
-    def is_analytical( self ):
-        return not( self._expressions is None )
-
-    @property
-    def expressions( self ):
-        return self._expressions
-
-    @property
-    def jacobian_expr( self ):
-        return self._jac
-
-    @property
-    def jacobian_inv_expr( self ):
-        if not self.is_analytical and self._inv_jac is None:
-            self._inv_jac = self.jacobian_expr.inv()
-        return self._inv_jac
-
-    @property
-    def metric_expr( self ):
-        return self._metric
-
-    @property
-    def metric_det_expr( self ):
-        return self._metric_det
-
-    @property
-    def constants( self ):
-        return self._constants
-
-    @property
-    def is_minus( self ):
-        return self._is_minus
-
-    @property
-    def is_plus( self ):
-        return self._is_plus
-
-    def set_plus_minus( self, **kwargs):
-        minus = kwargs.pop('minus', False)
-        plus  = kwargs.pop('plus', False)
-        assert plus is not minus
-
-        self._is_plus  = plus
-        self._is_minus = minus
-
-    def copy(self):
-        # Use type(self), not Mapping, so a copy of an AnalyticMapping (or any
-        # other Mapping subclass) keeps its concrete class -- and hence its
-        # point-evaluation capability -- rather than being downgraded to a
-        # plain, non-point-evaluable Mapping. Safe because evaluate=False
-        # short-circuits Mapping.__new__ right after IndexedBase.__new__,
-        # before any subclass-specific (_expressions) branching runs.
-        obj = type(self)(self.name,
-                     ldim=self.ldim,
-                     pdim=self.pdim,
-                     evaluate=False)
-
-        obj._name                = self.name
-        obj._ldim                = self.ldim
-        obj._pdim                = self.pdim
-        obj._coordinates         = self.coordinates
-        obj._jacobian            = JacobianSymbol(obj)
-        obj._logical_coordinates = self.logical_coordinates
-        obj._expressions         = self._expressions
-        obj._constants           = self._constants
-        obj._jac                 = self._jac
-        obj._inv_jac             = self._inv_jac
-        obj._metric              = self._metric
-        obj._metric_det          = self._metric_det
-        obj._callable_map        = self._callable_map
-        obj._is_plus             = self._is_plus
-        obj._is_minus            = self._is_minus
-        return obj
-
-    def _hashable_content(self):
-        args = (self.name, self.ldim, self.pdim, self._coordinates, self._logical_coordinates,
-                self._expressions, self._constants, self._is_plus, self._is_minus)
-        return tuple([a for a in args if a is not None])
-
-    def _eval_subs(self, old, new):
-        return self
-
-    def _sympystr(self, printer):
-        sstr = printer.doprint
-        return sstr(self.name)
 
 #==============================================================================
 class AnalyticMapping(Mapping, DefinedMapping, metaclass=_MappingABCMeta):
@@ -876,10 +900,11 @@ class InterfaceMapping(StructuralMapping, metaclass=_MappingABCMeta):
     """
 
     def __new__(cls, minus, plus):
-        # Mapping, not SymbolicMapping: interface legs are always concrete patch
-        # mappings -- the body below needs Mapping's set_plus_minus() / copy().
-        assert isinstance(minus, Mapping)
-        assert isinstance(plus,  Mapping)
+        # Interface legs are patch mappings: an AnalyticMapping subclass, or a
+        # plain SymbolicMapping (e.g. built by Domain.from_file). The body needs
+        # copy() / set_plus_minus(), both on SymbolicMapping since WP06d-4c.
+        assert isinstance(minus, SymbolicMapping)
+        assert isinstance(plus,  SymbolicMapping)
         minus = minus.copy()
         plus  = plus.copy()
 

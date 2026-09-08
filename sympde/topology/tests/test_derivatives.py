@@ -12,7 +12,7 @@ from sympde.topology import get_index_derivatives_atom
 from sympde.topology import get_max_partial_derivatives
 from sympde.topology import ScalarFunctionSpace
 from sympde.topology import (dx, dy, dz)
-from sympde.topology import Mapping
+from sympde.topology import SymbolicMapping
 
 
 def indices_as_str(a):
@@ -30,7 +30,7 @@ def test_partial_derivatives_1():
 
     # ...
     domain = Domain('Omega', dim=2)
-    M      = Mapping('M', dim=2)
+    M      = SymbolicMapping('M', dim=2)
 
     mapped_domain = M(domain)
 
@@ -78,7 +78,7 @@ def test_partial_derivatives_2():
 
     # ...
     domain = Domain('Omega', dim=2)
-    M      = Mapping('M', dim=2)
+    M      = SymbolicMapping('M', dim=2)
 
     mapped_domain = M(domain)
 
@@ -127,6 +127,25 @@ def test_partial_derivatives_2():
     d = get_max_partial_derivatives(expr)
     assert(indices_as_str(d) == 'xxy')
     # ...
+# ...
+
+
+# ...
+def test_logical_derivative_through_symbolic_mapping_index():
+    # /code-review finding 1 (WP06d-4c-1a): `_DifferentialOperator.eval`'s
+    # logical chain-rule branch matched `expr.atoms(Mapping)`, which no longer
+    # catches a bare `SymbolicMapping` (the constructor WP06d-4c recommends and
+    # migrated every test to). The chain-rule term through the mapping component
+    # `M[i]` was then silently dropped and `dx1(M[0]**2)` collapsed to 0.
+    from sympde.topology import dx1, dx2
+
+    M = SymbolicMapping('M', dim=2)
+
+    assert dx1(M[0]**2) == 2 * M[0] * dx1(M[0])
+    assert dx2(M[1]**2) == 2 * M[1] * dx2(M[1])
+
+    N = SymbolicMapping('N', dim=3)
+    assert dx1(N[2]**3) == 3 * N[2]**2 * dx1(N[2])
 # ...
 
 
