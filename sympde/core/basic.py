@@ -51,9 +51,6 @@ class SymbolicMapping(IndexedBase):
     circular import.
     """
 
-# Deprecated alias for the pre-WP06 name; removed in WP06d-4.
-BasicMapping = SymbolicMapping
-
 #==============================================================================
 class BasicDerivable(Basic):
     pass

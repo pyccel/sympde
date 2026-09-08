@@ -432,7 +432,7 @@ def test_logical_expr_3d_2():
     u,v   = elements_of(V, names='u,v')
     um,vm = elements_of(VM, names='u,v')
 
-    J   = M.jacobian
+    J   = M.jacobian_symbol
 
     a = dot(grad(um),grad(vm))
     e = LogicalExpr(a, mapped_domain)
@@ -454,7 +454,7 @@ def test_logical_expr_3d_3():
     u,v   = elements_of(V, names='u,v')
     um,vm = elements_of(VM, names='u,v')
 
-    J   = M.jacobian
+    J   = M.jacobian_symbol
 
     a = dot(curl(um), curl(vm))
     e = LogicalExpr(a, mapped_domain)
@@ -475,7 +475,7 @@ def test_logical_expr_3d_4():
     u,v   = elements_of(V, names='u,v')
     um,vm = elements_of(VM, names='u,v')
 
-    J   = M.jacobian
+    J   = M.jacobian_symbol
 
     a = div(um)*div(vm)
     e = LogicalExpr(a, mapped_domain)
@@ -493,7 +493,7 @@ def test_logical_expr_3d_5():
     V  = VectorFunctionSpace('V' , domain, kind='hcurl')
     VM = VectorFunctionSpace('VM', mapped_domain, kind='hcurl')
 
-    J   = M.jacobian
+    J   = M.jacobian_symbol
     u,v   = elements_of(V,  names='u,v')
     um,vm = elements_of(VM, names='u,v')
 

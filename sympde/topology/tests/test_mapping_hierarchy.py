@@ -434,10 +434,13 @@ def test_undefined_mapping_still_valueerrors_on_get_callable_mapping():
         Mapping('F', dim=2).get_callable_mapping()
 
 
-def test_basicmapping_folded_into_symbolicmapping():
-    from sympde.core.basic import BasicMapping, SymbolicMapping
-    assert BasicMapping is SymbolicMapping
+def test_basicmapping_alias_removed():
+    # 06d-2 folded BasicMapping into SymbolicMapping (keeping a deprecated
+    # alias); 06d-4b drops the alias.
+    with pytest.raises(ImportError):
+        from sympde.core.basic import BasicMapping  # noqa: F401
 
+    from sympde.core.basic import SymbolicMapping
     from sympde.topology import Mapping, IdentityMapping
     assert issubclass(Mapping, SymbolicMapping)
     assert isinstance(IdentityMapping('G', dim=2), SymbolicMapping)
