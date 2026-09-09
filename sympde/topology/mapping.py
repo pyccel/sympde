@@ -49,6 +49,7 @@ __all__ = (
     'Contravariant',
     'Covariant',
     'DefinedMapping',
+    'DiscreteMapping',
     'InterfaceMapping',
     'InverseMapping',
     'Jacobian',
@@ -424,7 +425,18 @@ class DefinedMapping(SymbolicMapping, BasicCallableMapping, metaclass=_MappingAB
     ``BasicCallableMapping``; every one must be implemented for a subclass to be
     instantiable, which is what guarantees the sympde and psydac concrete
     mappings are interchangeable.
+
+    ``DefinedMapping`` itself is abstract, but as a convenience
+    ``DefinedMapping(callable_mapping, name, dim=...)`` -- a first positional
+    :class:`BasicCallableMapping` -- builds a :class:`DiscreteMapping` wrapping
+    that callable.
     """
+
+    def __new__(cls, *args, **kwargs):
+        if (cls is DefinedMapping and args
+                and isinstance(args[0], BasicCallableMapping)):
+            return DiscreteMapping(*args, **kwargs)
+        return super().__new__(cls, *args, **kwargs)
 
 #==============================================================================
 class StructuralMapping(SymbolicMapping, metaclass=_MappingABCMeta):
@@ -768,6 +780,183 @@ class AnalyticMapping(Mapping, DefinedMapping, metaclass=_MappingABCMeta):
 
     # ldim / pdim: the concrete properties inherited from Mapping satisfy the
     # DefinedMapping / BasicCallableMapping abstract members.
+
+#==============================================================================
+class DiscreteMapping(DefinedMapping, metaclass=_MappingABCMeta):
+    """
+    A concrete :class:`DefinedMapping` whose geometry is supplied by an
+    *external* point-evaluable mapping (a psydac ``SplineMapping`` /
+    ``NurbsMapping``, or any :class:`BasicCallableMapping`).
+
+    It plays the same role as :class:`AnalyticMapping` -- a symbolic mapping
+    that is also point-evaluable -- but where ``AnalyticMapping`` lambdifies its
+    own ``_expressions``, ``DiscreteMapping`` *delegates* every point call to
+    the wrapped callable. Use it to give a discrete geometry (e.g. a spline
+    approximation) a first-class symbolic identity without mutating some other
+    mapping via ``set_callable_mapping``::
+
+        >>> from psydac.mapping.discrete import SplineMapping
+        >>> F_h = SplineMapping.from_mapping(V, F)          # a BasicCallableMapping
+        >>> G   = DiscreteMapping(F_h, name='G', dim=2)     # a fresh DefinedMapping
+        >>> G.get_callable_mapping() is F_h
+        True
+        >>> G(domain_log)                    # callable on a domain -> MappedDomain
+        >>> G.jacobian(0.3, 0.4)             # point call -> delegated to F_h
+
+    ``is_analytical`` is ``False`` (there are no closed-form ``_expressions``),
+    so psydac's assembly AST takes its grid-evaluation branch for a
+    ``DiscreteMapping``-carried domain (as it does for a bare
+    :class:`SymbolicMapping` from ``Domain.from_file``), evaluating the wrapped
+    callable on the quadrature grid rather than an analytic Jacobian. That
+    callable must be a ``SplineMapping`` / ``NurbsMapping`` for assembly today;
+    an end-to-end spline-mapped solve through ``DiscreteMapping`` is verified in
+    WP07b. Point evaluation, plotting and symbolic use work with any
+    ``BasicCallableMapping``.
+
+    Two same-named ``DiscreteMapping``s wrapping *different* callables are
+    distinct (equality / hashing include the wrapped callable), so a per-patch
+    spline geometry is never silently conflated with another. Still, give each
+    discrete geometry a distinct ``name`` -- the name is its symbolic identity.
+
+    ``subs`` / ``xreplace`` on a ``DiscreteMapping`` are safe (they leave it
+    unchanged), but it cannot be reconstructed by sympy from its symbolic args
+    alone -- ``func(*args)`` / ``pickle`` / ``copy.deepcopy`` raise, because the
+    runtime callable is not part of ``args``. (``InverseMapping`` /
+    ``InterfaceMapping`` / ``MultiPatchMapping`` share this limitation.)
+
+    Parameters
+    ----------
+    callable_mapping : BasicCallableMapping
+        The point-evaluable mapping providing the geometry. It is authoritative
+        for ``ldim`` / ``pdim``.
+    name : str, optional
+        Symbolic name. Falls back to ``callable_mapping.name`` when not given; a
+        ``ValueError`` is raised if neither yields a non-empty name.
+    ldim, pdim, dim : int, optional
+        May only *confirm* ``callable_mapping.ldim`` / ``.pdim`` -- a mismatch
+        raises ``ValueError``. ``dim`` sets both. No other keyword is accepted.
+
+    Raises
+    ------
+    TypeError
+        If ``callable_mapping`` is not a :class:`BasicCallableMapping`, or an
+        unexpected keyword is passed.
+    ValueError
+        If no non-empty name can be determined, or a supplied ``dim`` / ``ldim``
+        / ``pdim`` contradicts the wrapped callable.
+    """
+
+    def __new__(cls, callable_mapping, name=None, **kwargs):
+        if not isinstance(callable_mapping, BasicCallableMapping):
+            raise TypeError(
+                'DiscreteMapping wraps a runtime BasicCallableMapping and '
+                'cannot be reconstructed from symbolic args alone (got '
+                f'{type(callable_mapping).__name__}). This happens if sympy '
+                'rebuilds it via func(*args) / pickle / deepcopy; rebuild it '
+                'from the original callable instead. (InverseMapping / '
+                'InterfaceMapping / MultiPatchMapping share this limitation.)')
+
+        if name is None:
+            name = getattr(callable_mapping, 'name', None)
+        if not name:
+            raise ValueError('DiscreteMapping needs a non-empty name (pass '
+                             'name=..., or wrap a callable that has a .name)')
+
+        # The wrapped callable is authoritative for the dimensions; a `dim` /
+        # `ldim` / `pdim` argument may only confirm them, never override.
+        dim  = kwargs.pop('dim',  None)
+        ldim = kwargs.pop('ldim', dim)
+        pdim = kwargs.pop('pdim', dim)
+        c_ldim, c_pdim = callable_mapping.ldim, callable_mapping.pdim
+        if ldim is not None and ldim != c_ldim:
+            raise ValueError(f'ldim={ldim} conflicts with '
+                             f'callable_mapping.ldim={c_ldim}')
+        if pdim is not None and pdim != c_pdim:
+            raise ValueError(f'pdim={pdim} conflicts with '
+                             f'callable_mapping.pdim={c_pdim}')
+        if kwargs:
+            raise TypeError(f'DiscreteMapping got unexpected keyword(s) '
+                            f'{list(kwargs)}')
+
+        # Build the IndexedBase directly and attach `_callable_map` BEFORE the
+        # symbolic Jacobian / metric machinery, so every Indexed(obj, i) it
+        # bakes in carries `obj`'s final identity -- which includes the callable
+        # (see `_hashable_content`). Same construction shape as InverseMapping /
+        # InterfaceMapping; the Jacobian tail matches
+        # StructuralMapping._init_symbolic_jacobian (inlined -- a DefinedMapping
+        # calling a StructuralMapping staticmethod would be odd).
+        obj = IndexedBase.__new__(cls, name, shape=c_pdim)
+        obj._name                = name
+        obj._ldim                = c_ldim
+        obj._pdim                = c_pdim
+        obj._coordinates         = tuple(Symbol(u, real=True)
+                                         for u in ['x', 'y', 'z'][:c_pdim])
+        obj._logical_coordinates = Tuple(*(Symbol(u, real=True)
+                                           for u in ['x1', 'x2', 'x3'][:c_ldim]))
+        obj._is_minus            = None
+        obj._is_plus             = None
+        obj._callable_map        = callable_mapping
+        obj._jacobian            = JacobianSymbol(obj)
+        obj._jac                 = Jacobian(obj)
+        obj._metric              = obj._jac.T * obj._jac
+        obj._metric_det          = obj._metric.det()
+        return obj
+
+    #--------------------------------------------------------------------------
+    def __call__(self, *args, domain=None):
+        # A single BasicDomain (positional or `domain=`) -> symbolic
+        # MappedDomain; anything else -> point evaluation, delegated to the
+        # wrapped callable. Same dispatch shape as AnalyticMapping.__call__.
+        if domain is None and len(args) == 1 and isinstance(args[0], BasicDomain):
+            domain, args = args[0], ()
+        if domain is not None:
+            return super().__call__(domain)
+        return self.get_callable_mapping()(*args)
+
+    def jacobian(self, *eta):
+        """ Jacobian matrix at the logical point(s) ``eta`` (delegated). """
+        return self.get_callable_mapping().jacobian(*eta)
+
+    def jacobian_inv(self, *eta):
+        """ Inverse Jacobian matrix at the logical point(s) ``eta`` (delegated). """
+        return self.get_callable_mapping().jacobian_inv(*eta)
+
+    def metric(self, *eta):
+        """ Metric tensor at the logical point(s) ``eta`` (delegated). """
+        return self.get_callable_mapping().metric(*eta)
+
+    def metric_det(self, *eta):
+        """ Determinant of the metric tensor at ``eta`` (delegated). """
+        return self.get_callable_mapping().metric_det(*eta)
+
+    def get_callable_mapping(self):
+        # Unlike AnalyticMapping, a DiscreteMapping is never its own callable.
+        if self._callable_map is None:
+            raise ValueError('DiscreteMapping has no attached callable')
+        return self._callable_map
+
+    def copy(self):
+        # type(self)(name, ldim=...) -- SymbolicMapping.copy()'s call -- does not
+        # match DiscreteMapping.__new__, so rebuild explicitly (as
+        # InterfaceMapping / InverseMapping do), then carry the attributes
+        # SymbolicMapping.copy() preserves.
+        obj = DiscreteMapping(self._callable_map, self.name,
+                              ldim=self.ldim, pdim=self.pdim)
+        obj._coordinates         = self._coordinates
+        obj._logical_coordinates = self._logical_coordinates
+        obj._is_plus             = self._is_plus
+        obj._is_minus            = self._is_minus
+        return obj
+
+    def _hashable_content(self):
+        # The wrapped callable is part of the identity: two same-named
+        # DiscreteMappings over different geometries must not compare equal
+        # (else MappedDomain's @cacheit conflates them). __new__ attaches
+        # `_callable_map` before any Indexed(self, i) / Jacobian(self) is built,
+        # so this is well-defined from the first hash.
+        cm  = self._callable_map
+        key = cm if getattr(type(cm), '__hash__', None) else id(cm)
+        return super()._hashable_content() + (key,)
 
 #==============================================================================
 class InverseMapping(StructuralMapping, metaclass=_MappingABCMeta):

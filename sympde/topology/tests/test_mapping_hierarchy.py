@@ -546,3 +546,225 @@ def test_interface_mapping_from_bare_mapping_legs_is_warning_free_on_copy():
 
     with pytest.warns(DeprecationWarning):      # explicit construction still warns
         Mapping('c_bare', dim=2)
+
+
+# -- WP07: DiscreteMapping -- a DefinedMapping backed by an external callable
+
+class _FakeCallable(BasicCallableMapping):
+    """ Minimal BasicCallableMapping for the DiscreteMapping tests. """
+    def __init__(self, ldim=2, pdim=2, name=None):
+        self._l, self._p, self._n = ldim, pdim, name
+    def __call__(self, *e):      return tuple(e)
+    def jacobian(self, *e):      return [[1, 0], [0, 1]]
+    def jacobian_inv(self, *e):  return [[1, 0], [0, 1]]
+    def metric(self, *e):        return [[1, 0], [0, 1]]
+    def metric_det(self, *e):    return 1.0
+    @property
+    def ldim(self): return self._l
+    @property
+    def pdim(self): return self._p
+    @property
+    def name(self): return self._n
+
+
+def test_discrete_mapping_is_a_concrete_defined_mapping():
+    from sympde.topology import DiscreteMapping, DefinedMapping
+
+    G = DiscreteMapping(_FakeCallable(), name='D', dim=2)
+    assert isinstance(G, DefinedMapping)
+    assert isinstance(G, SymbolicMapping)
+    assert not inspect.isabstract(DiscreteMapping)
+    assert G.name == 'D' and G.ldim == 2 and G.pdim == 2
+    assert G.is_analytical is False
+
+
+def test_discrete_mapping_delegates_point_evaluation():
+    from sympde.topology import DiscreteMapping
+
+    f = _FakeCallable()
+    G = DiscreteMapping(f, name='D', dim=2)
+    assert G.get_callable_mapping() is f
+    assert G.jacobian(0.1, 0.2) == [[1, 0], [0, 1]]
+    assert G(0.3, 0.4) == (0.3, 0.4)          # point call, delegated
+
+
+def test_discrete_mapping_is_callable_on_a_domain():
+    from sympde.topology import DiscreteMapping, Square
+
+    G  = DiscreteMapping(_FakeCallable(), name='D', dim=2)
+    Om = G(Square('S'))
+    assert type(Om).__name__ in ('Domain', 'MappedDomain')
+    assert Om.mapping is G
+    assert Om.logical_domain == Square('S')
+
+
+def test_discrete_mapping_copy_round_trips():
+    from sympde.topology import DiscreteMapping
+
+    f = _FakeCallable()
+    G = DiscreteMapping(f, name='D', dim=2)
+    c = G.copy()
+    assert type(c) is DiscreteMapping
+    assert c == G
+    assert c.get_callable_mapping() is f
+
+
+def test_discrete_mapping_name_inference_and_error():
+    from sympde.topology import DiscreteMapping
+
+    assert DiscreteMapping(_FakeCallable(name='H')).name == 'H'   # inferred
+    with pytest.raises(ValueError):
+        DiscreteMapping(_FakeCallable())                          # no name anywhere
+
+
+def test_discrete_mapping_rejects_non_callable():
+    from sympde.topology import DiscreteMapping
+    with pytest.raises(TypeError):
+        DiscreteMapping(object(), name='D', dim=2)
+
+
+def test_defined_mapping_factory_sugar():
+    from sympde.topology import DefinedMapping, DiscreteMapping
+
+    G = DefinedMapping(_FakeCallable(), name='D', dim=2)
+    assert type(G) is DiscreteMapping
+    # a plain abstract call still fails
+    with pytest.raises(TypeError, match='abstract'):
+        DefinedMapping('F')
+
+
+def test_discrete_mapping_usable_as_interface_leg():
+    from sympde.topology import DiscreteMapping, InterfaceMapping
+
+    a = DiscreteMapping(_FakeCallable(), name='a', dim=2)
+    b = DiscreteMapping(_FakeCallable(), name='b', dim=2)
+    itf = InterfaceMapping(a, b)
+    assert itf.is_analytical is False
+
+
+# -- WP07-1: post-/code-review fixes for DiscreteMapping
+
+def test_discrete_mapping_identity_includes_the_wrapped_callable():
+    # F1: two same-named DiscreteMappings over different geometries must be
+    # distinct, else MappedDomain's @cacheit conflates them.
+    from sympde.topology import DiscreteMapping, Square
+
+    fa, fb = _FakeCallable(), _FakeCallable()
+    Ga = DiscreteMapping(fa, name='G', dim=2)
+    Gb = DiscreteMapping(fb, name='G', dim=2)
+    assert Ga != Gb
+    assert hash(Ga) != hash(Gb)
+    assert len({Ga, Gb}) == 2
+
+    Da, Db = Ga(Square('S1')), Gb(Square('S1'))
+    assert Da is not Db
+    assert Da.mapping.get_callable_mapping() is fa
+    assert Db.mapping.get_callable_mapping() is fb
+
+    # same callable + name + dims -> still equal
+    assert DiscreteMapping(fa, name='G', dim=2) == Ga
+
+
+def test_discrete_mapping_dims_come_from_the_callable():
+    # F4: a dim= / ldim= / pdim= argument may only confirm the callable's dims.
+    from sympde.topology import DiscreteMapping
+
+    surf = _FakeCallable(ldim=2, pdim=3)
+    G = DiscreteMapping(surf, name='S', ldim=2, pdim=3)
+    assert G.ldim == 2 and G.pdim == 3
+
+    with pytest.raises(ValueError):
+        DiscreteMapping(surf, name='S2', dim=2)          # 2 != pdim 3
+    with pytest.raises(ValueError):
+        DiscreteMapping(_FakeCallable(), name='S3', pdim=5)
+
+    assert DiscreteMapping(_FakeCallable(), name='D', dim=2).pdim == 2   # consistent, ok
+
+
+def test_discrete_mapping_copy_preserves_interface_tags():
+    # F2: copy() must carry _is_plus / _is_minus (and coordinates), not just
+    # (callable, name, ldim, pdim).
+    from sympde.topology import DiscreteMapping, InterfaceMapping
+
+    itf = InterfaceMapping(DiscreteMapping(_FakeCallable(), 'a', dim=2),
+                           DiscreteMapping(_FakeCallable(), 'b', dim=2))
+    assert itf.minus.is_minus is True
+    assert itf.minus.copy().is_minus is True
+    assert itf.plus.copy().is_plus is True
+
+
+def test_discrete_mapping_reconstruction_fails_clearly():
+    # F3: sympy's func(*args) / pickle / deepcopy shape must raise an actionable
+    # error, not a confusing "got Symbol".
+    from sympy import Symbol, Tuple
+    from sympde.topology import DiscreteMapping
+
+    with pytest.raises(TypeError, match='reconstructed'):
+        DiscreteMapping(Symbol('D'), Tuple(2))
+
+
+def test_discrete_mapping_get_callable_guards_none():
+    # F3: defensive -- a callable-less DiscreteMapping raises, not AttributeError.
+    from sympde.topology import DiscreteMapping
+
+    G = DiscreteMapping(_FakeCallable(), name='D', dim=2)
+    G._callable_map = None
+    with pytest.raises(ValueError):
+        G.get_callable_mapping()
+
+
+# -- WP07-2: second /code-review round for DiscreteMapping
+
+def test_discrete_mapping_jacobian_expr_uses_the_final_identity():
+    # G1: __new__ must attach _callable_map before building _jac / _metric, so
+    # `G[i]` and the Indexed(G, i) baked into jacobian_expr hash identically.
+    from sympy import Symbol
+    from sympde.topology import DiscreteMapping
+
+    G = DiscreteMapping(_FakeCallable(), name='D', dim=2)
+    assert G[0] in G.jacobian_expr.free_symbols
+    assert G[1] in G.metric_expr.free_symbols
+    assert G.jacobian_expr.subs(G[0], Symbol('v')) != G.jacobian_expr
+
+    Ga = DiscreteMapping(_FakeCallable(), name='S', dim=2)
+    Gb = DiscreteMapping(_FakeCallable(), name='S', dim=2)
+    assert all(s.base is Ga for s in Ga.jacobian_expr.free_symbols
+               if hasattr(s, 'base'))
+    assert all(s.base is Gb for s in Gb.jacobian_expr.free_symbols
+               if hasattr(s, 'base'))
+
+
+def test_discrete_mapping_delegators_guard_none_callable():
+    # G2: every delegating point-eval method routes through
+    # get_callable_mapping(), so a None _callable_map gives a ValueError, not
+    # AttributeError / TypeError.
+    from sympde.topology import DiscreteMapping
+
+    G = DiscreteMapping(_FakeCallable(), name='D', dim=2)
+    G._callable_map = None
+    for call in (lambda: G.jacobian(0., 0.),
+                 lambda: G.jacobian_inv(0., 0.),
+                 lambda: G.metric(0., 0.),
+                 lambda: G.metric_det(0., 0.),
+                 lambda: G(0.1, 0.2)):
+        with pytest.raises(ValueError):
+            call()
+
+
+def test_discrete_mapping_name_rules():
+    # G3: an explicit name wins and must be non-empty; a falsy name is not
+    # silently replaced by the callable's.
+    from sympde.topology import DiscreteMapping
+
+    with pytest.raises(ValueError):
+        DiscreteMapping(_FakeCallable(name='H'), name='')
+    with pytest.raises(ValueError):
+        DiscreteMapping(_FakeCallable(name=None))
+    assert DiscreteMapping(_FakeCallable(name='H')).name == 'H'
+    assert DiscreteMapping(_FakeCallable(name='H'), name='K').name == 'K'
+
+
+def test_discrete_mapping_rejects_unexpected_kwargs():
+    from sympde.topology import DiscreteMapping
+    with pytest.raises(TypeError):
+        DiscreteMapping(_FakeCallable(), name='D', dim=2, bogus=1)
