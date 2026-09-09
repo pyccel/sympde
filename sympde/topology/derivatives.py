@@ -112,11 +112,16 @@ class DifferentialOperator(LinearOperator):
                     M = [m for m in expr.atoms(SymbolicMapping)
                          if getattr(m, '_shape', None) is not None]
                     if M:
-                        M = M[0]
-                        expr_primes = [diff(expr, M[i]) for i in range(M.pdim)]
-                        Jj = Jacobian(M)[:,cls.grad_index]
-                        expr_prime = sum([ei*Jji for ei,Jji in zip(expr_primes, Jj)])
-                        return expr_prime + diff(expr, x)
+                        # Chain rule through *every* mapping whose components
+                        # appear in `expr` (D-1). Each contributes
+                        # Sum_i (d expr / d m[i]) * Jacobian(m)[i, k],
+                        # k = cls.grad_index; summation order is irrelevant.
+                        total = diff(expr, x)
+                        for m in M:
+                            Jj = Jacobian(m)[:, cls.grad_index]
+                            total += sum(diff(expr, m[i]) * Jj[i]
+                                         for i in range(m.pdim))
+                        return total
                 return diff(expr, x)
 
 

@@ -179,6 +179,50 @@ def test_multipatch_mapping_is_excluded_from_the_chain_rule_branch():
 # ...
 
 
+# ...
+def test_logical_derivative_sums_over_all_mappings():
+    # D-1: `_DifferentialOperator.eval`'s logical chain-rule branch used to pick
+    # ONE mapping out of `expr.atoms(SymbolicMapping)` and treat the rest as
+    # constants -- a silently wrong derivative when two or more mappings' indexed
+    # components appear in the same expression.
+    from sympy import sqrt, simplify
+    from sympde.topology import dx1
+
+    F = SymbolicMapping('F', dim=2)
+    G = SymbolicMapping('G', dim=2)
+
+    r = dx1(sqrt(F[0]**2 + G[0]**2))
+    expected = (F[0]*dx1(F[0]) + G[0]*dx1(G[0])) / sqrt(F[0]**2 + G[0]**2)
+    assert simplify(r - expected) == 0
+    assert dx1(F[0]) in r.atoms(type(dx1(F[0])))
+    assert dx1(G[0]) in r.atoms(type(dx1(G[0])))
+
+
+def test_logical_derivative_single_mapping_is_unchanged():
+    # D-1 generalisation must not perturb the common one-mapping path.
+    from sympy import sqrt, simplify
+    from sympde.topology import dx1, dx2
+
+    F = SymbolicMapping('F', dim=2)
+
+    r = dx1(sqrt(F[0]**2 + F[1]**2))
+    assert simplify(r - (F[0]*dx1(F[0]) + F[1]*dx1(F[1])) / sqrt(F[0]**2 + F[1]**2)) == 0
+    assert dx2(F[0]**3) == 3 * F[0]**2 * dx2(F[0])
+
+
+def test_logical_derivative_through_patch_map_and_interface_mapping():
+    # D-1: a patch SymbolicMapping and an InterfaceMapping routinely co-occur;
+    # both must contribute a chain-rule term.
+    from sympde.topology import dx1, InterfaceMapping, IdentityMapping
+
+    F   = SymbolicMapping('F', dim=2)
+    itf = InterfaceMapping(IdentityMapping('A', dim=2), IdentityMapping('B', dim=2))
+
+    r = dx1(F[0]*itf[0])
+    assert r == F[0]*dx1(itf[0]) + itf[0]*dx1(F[0])
+# ...
+
+
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
