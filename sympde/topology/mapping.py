@@ -818,11 +818,15 @@ class DiscreteMapping(DefinedMapping, metaclass=_MappingABCMeta):
     spline geometry is never silently conflated with another. Still, give each
     discrete geometry a distinct ``name`` -- the name is its symbolic identity.
 
-    ``subs`` / ``xreplace`` on a ``DiscreteMapping`` are safe (they leave it
-    unchanged), but it cannot be reconstructed by sympy from its symbolic args
-    alone -- ``func(*args)`` / ``pickle`` / ``copy.deepcopy`` raise, because the
-    runtime callable is not part of ``args``. (``InverseMapping`` /
-    ``InterfaceMapping`` / ``MultiPatchMapping`` share this limitation.)
+    A ``DiscreteMapping`` has no symbolic sub-structure -- the wrapped callable
+    is not in ``.args`` and the name / dims do not simplify -- so ``subs`` /
+    ``xreplace`` and any in-process ``func(*args)`` rebuild (``sympy.simplify``,
+    ``Basic.rebuild``, cse walking an expression that contains ``self[i]``) are
+    the identity (see :meth:`func`). ``pickle`` / ``copy.deepcopy`` still cannot
+    round-trip it -- they reconstruct through ``__new__`` with the symbolic args
+    only, and the runtime callable is gone; use :meth:`copy` or rebuild from the
+    original callable. (``InverseMapping`` / ``InterfaceMapping`` /
+    ``MultiPatchMapping`` share the pickle limitation.)
 
     Parameters
     ----------
@@ -957,6 +961,17 @@ class DiscreteMapping(DefinedMapping, metaclass=_MappingABCMeta):
         cm  = self._callable_map
         key = cm if getattr(type(cm), '__hash__', None) else id(cm)
         return super()._hashable_content() + (key,)
+
+    @property
+    def func(self):
+        # Base `Basic.func` is `type(self)`, so `expr.func(*expr.args)` would be
+        # `DiscreteMapping(Symbol(name), Tuple(pdim))` -> TypeError. A
+        # DiscreteMapping has no symbolic sub-structure (the callable is not in
+        # `.args`), so the faithful rebuild IS the identity. sympy does this
+        # `func(*args)` rebuild while walking an expression that contains
+        # `self[i]` (e.g. `sympy.simplify` inside `Jacobian(M).inv()` when a
+        # bilinear form is lowered on a DiscreteMapping-carried domain).
+        return lambda *args, **kwargs: self
 
 #==============================================================================
 class InverseMapping(StructuralMapping, metaclass=_MappingABCMeta):

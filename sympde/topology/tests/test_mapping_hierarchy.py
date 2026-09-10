@@ -768,3 +768,25 @@ def test_discrete_mapping_rejects_unexpected_kwargs():
     from sympde.topology import DiscreteMapping
     with pytest.raises(TypeError):
         DiscreteMapping(_FakeCallable(), name='D', dim=2, bogus=1)
+
+
+# -- WP07b-1: DiscreteMapping survives sympy's func(*args) rebuild
+
+def test_discrete_mapping_func_is_the_identity_rebuild():
+    # sympy walks an expression tree calling `node.func(*node.args)`
+    # (Basic.rebuild, cse, and sympy.simplify's replace-reducer). The base
+    # `Basic.func` is `type(self)`, so it would call
+    # `DiscreteMapping(Symbol(name), Tuple(pdim))` -> TypeError. A DiscreteMapping
+    # is a symbolic leaf (the callable is not in `.args`), so `func(*args)` must
+    # be the identity -- this is what lets a bilinear form be discretised on a
+    # DiscreteMapping-carried domain (Jacobian(M).inv() -> simplify -> func).
+    import sympy
+    from sympde.topology import DiscreteMapping
+    from sympde.topology.mapping import Jacobian
+
+    G = DiscreteMapping(_FakeCallable(), name='D', dim=2)
+
+    assert G.func(*G.args) is G
+    assert G.func(sympy.Symbol('x'), (99,), foo='bar') is G
+    assert sympy.simplify(G[0]**2 / G[1]) == G[0]**2 / G[1]     # no crash
+    Jacobian(G).inv()                                            # the assembly path; no crash
