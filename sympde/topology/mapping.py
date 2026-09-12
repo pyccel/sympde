@@ -793,7 +793,9 @@ class DiscreteMapping(DefinedMapping, metaclass=_MappingABCMeta):
     own ``_expressions``, ``DiscreteMapping`` *delegates* every point call to
     the wrapped callable. Use it to give a discrete geometry (e.g. a spline
     approximation) a first-class symbolic identity without mutating some other
-    mapping via ``set_callable_mapping``::
+    mapping via ``set_callable_mapping`` -- and unlike that pattern, the wrapped
+    callable here cannot itself be reattached after construction (:meth:`set_callable_mapping`
+    raises ``TypeError``; it is part of :meth:`_hashable_content`)::
 
         >>> from psydac.mapping.discrete import SplineMapping
         >>> F_h = SplineMapping.from_mapping(V, F)          # a BasicCallableMapping
@@ -938,6 +940,18 @@ class DiscreteMapping(DefinedMapping, metaclass=_MappingABCMeta):
         if self._callable_map is None:
             raise ValueError('DiscreteMapping has no attached callable')
         return self._callable_map
+
+    def set_callable_mapping(self, F):
+        # WP07d: unlike SymbolicMapping.set_callable_mapping (which this would
+        # otherwise inherit unguarded), a DiscreteMapping's callable is fixed at
+        # construction -- it is part of `_hashable_content`, so silently
+        # reattaching it would let `geo.mappings[name]` (read by assembly) and
+        # `self.get_callable_mapping()` (read by point-evaluation consumers)
+        # diverge without the object's identity (hash/equality) ever changing.
+        raise TypeError(
+            "DiscreteMapping's callable is fixed at construction (it is part "
+            "of its identity -- see _hashable_content) and cannot be "
+            "reattached; build a new DiscreteMapping(F, name=...) instead.")
 
     def copy(self):
         # type(self)(name, ldim=...) -- SymbolicMapping.copy()'s call -- does not

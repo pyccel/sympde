@@ -713,6 +713,18 @@ def test_discrete_mapping_get_callable_guards_none():
         G.get_callable_mapping()
 
 
+def test_discrete_mapping_set_callable_mapping_raises():
+    # WP07d: the wrapped callable is fixed at construction (part of identity,
+    # see _hashable_content) -- set_callable_mapping must not be able to swap
+    # it, unlike the base SymbolicMapping.set_callable_mapping it would
+    # otherwise inherit unguarded.
+    from sympde.topology import DiscreteMapping
+
+    G = DiscreteMapping(_FakeCallable(), name='D', dim=2)
+    with pytest.raises(TypeError):
+        G.set_callable_mapping(_FakeCallable())
+
+
 # -- WP07-2: second /code-review round for DiscreteMapping
 
 def test_discrete_mapping_jacobian_expr_uses_the_final_identity():
