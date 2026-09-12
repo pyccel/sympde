@@ -941,6 +941,13 @@ class DiscreteMapping(DefinedMapping, metaclass=_MappingABCMeta):
             raise ValueError('DiscreteMapping has no attached callable')
         return self._callable_map
 
+    def has_callable_mapping(self):
+        # WP07e: always True for any DiscreteMapping built through the public
+        # API (__new__ requires a callable, set_callable_mapping cannot detach
+        # it) -- exists so callers can ask without relying on
+        # get_callable_mapping()'s ValueError as control flow.
+        return self._callable_map is not None
+
     def set_callable_mapping(self, F):
         # WP07d: unlike SymbolicMapping.set_callable_mapping (which this would
         # otherwise inherit unguarded), a DiscreteMapping's callable is fixed at

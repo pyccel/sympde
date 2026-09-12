@@ -713,6 +713,18 @@ def test_discrete_mapping_get_callable_guards_none():
         G.get_callable_mapping()
 
 
+def test_discrete_mapping_has_callable_mapping():
+    # WP07e: a non-raising predicate for get_callable_mapping()'s guard, so
+    # callers don't need to catch ValueError as control flow.
+    from sympde.topology import DiscreteMapping
+
+    G = DiscreteMapping(_FakeCallable(), name='D', dim=2)
+    assert G.has_callable_mapping() is True
+
+    G._callable_map = None
+    assert G.has_callable_mapping() is False
+
+
 def test_discrete_mapping_set_callable_mapping_raises():
     # WP07d: the wrapped callable is fixed at construction (part of identity,
     # see _hashable_content) -- set_callable_mapping must not be able to swap
