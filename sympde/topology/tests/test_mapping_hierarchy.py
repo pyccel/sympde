@@ -321,6 +321,20 @@ def test_structural_mappings_are_not_analytic():
             m.get_callable_mapping()
 
 
+def test_structural_mappings_reject_set_callable_mapping():
+    # WP09: a StructuralMapping is symbolic and not point-evaluable (__call__
+    # already rejects point calls) -- set_callable_mapping (inherited
+    # unguarded from SymbolicMapping otherwise) must not be able to silently
+    # make get_callable_mapping() start returning something. Mirrors
+    # DiscreteMapping.set_callable_mapping's guard (WP07d).
+    from sympde.topology import IdentityMapping, InterfaceMapping, MultiPatchMapping
+    itf = InterfaceMapping(IdentityMapping('F1', dim=2), IdentityMapping('F2', dim=2))
+    mp  = MultiPatchMapping({'p': IdentityMapping('F', dim=2)})
+    for m in (itf, mp):
+        with pytest.raises(TypeError):
+            m.set_callable_mapping(object())
+
+
 def test_symbolicexpr_lowers_indexed_structural_mapping_to_coordinate():
     # 06d-4a-1: SymbolicExpr.eval's Indexed branch must recognise a severed
     # structural mapping (SymbolicMapping, not Mapping) so `itf[i]` lowers to a

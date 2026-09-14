@@ -495,6 +495,16 @@ class StructuralMapping(SymbolicMapping, metaclass=_MappingABCMeta):
             f"{type(self).__name__} is a StructuralMapping: it is symbolic "
             "and not point-evaluable.")
 
+    def set_callable_mapping(self, F):
+        # WP09: a StructuralMapping is symbolic and not point-evaluable (see
+        # __call__) -- attaching a callable would silently make
+        # get_callable_mapping() return one, contradicting that. Mirrors
+        # DiscreteMapping's guard (WP07d).
+        raise TypeError(
+            f"{type(self).__name__} is a StructuralMapping: it is symbolic "
+            "and not point-evaluable, and cannot be given an attached "
+            "callable.")
+
     @property
     def name(self):
         return self._name
