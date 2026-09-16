@@ -100,12 +100,19 @@ def numpy_to_native_python(a):
 #==============================================================================
 class BasicCallableMapping(ABC):
     """
-    Transformation of coordinates, which can be evaluated.
+    Interface for evaluating a coordinate transformation at a point.
 
     F: R^l -> R^p
     F(eta) = x
 
     with l <= p
+
+    This has no symbolic identity of its own (no name, not usable in a domain
+    or form) -- it is the pure evaluation contract that a numeric backend like
+    psydac's ``SplineCallableMapping`` implements directly. Contrast with
+    ``SymbolicMapping.__call__``, which maps a *domain* to build a symbolic
+    ``MappedDomain`` rather than evaluating a point; ``DefinedMapping``
+    combines both.
     """
     @abstractmethod
     def __call__(self, *eta):
@@ -417,7 +424,7 @@ class DefinedMapping(SymbolicMapping, BasicCallableMapping, metaclass=_MappingAB
 
     F: R^l -> R^p ,  F(eta) = x ,  with l <= p
 
-    A concrete subclass (``AnalyticMapping`` in sympde, ``SplineMapping`` in
+    A concrete subclass (``AnalyticMapping`` in sympde, ``SplineCallableMapping`` in
     psydac) can be evaluated on logical coordinates -- single points or arrays
     of points -- and returns physical coordinates. The point-evaluation
     interface (``__call__``, ``jacobian``, ``jacobian_inv``, ``metric``,
@@ -683,7 +690,7 @@ class AnalyticMapping(Mapping, DefinedMapping, metaclass=_MappingABCMeta):
 
     Point evaluation is done by the mapping itself: on first use it lambdifies
     its own analytic expressions into numpy callables (cached, one quantity at a
-    time), so an ``AnalyticMapping`` and a psydac ``SplineMapping`` are
+    time), so an ``AnalyticMapping`` and a psydac ``SplineCallableMapping`` are
     interchangeable wherever the point-evaluation interface is expected, and
     ``get_callable_mapping()`` returns ``self``. A callable mapping attached
     explicitly with ``set_callable_mapping`` (e.g. a spline approximation) still
@@ -749,7 +756,7 @@ class AnalyticMapping(Mapping, DefinedMapping, metaclass=_MappingABCMeta):
         ``get_callable_mapping()``. """
         cm = self.get_callable_mapping()
         if cm is not self:
-            # cm is a SplineMapping or user-supplied BasicCallableMapping -- its
+            # cm is a SplineCallableMapping or user-supplied BasicCallableMapping -- its
             # own methods, no recursion. It has no `.call`, so 'call' -> cm(*eta).
             return cm(*eta) if name == 'call' else getattr(cm, name)(*eta)
         if name == 'call':
@@ -795,8 +802,8 @@ class AnalyticMapping(Mapping, DefinedMapping, metaclass=_MappingABCMeta):
 class DiscreteMapping(DefinedMapping, metaclass=_MappingABCMeta):
     """
     A concrete :class:`DefinedMapping` whose geometry is supplied by an
-    *external* point-evaluable mapping (a psydac ``SplineMapping`` /
-    ``NurbsMapping``, or any :class:`BasicCallableMapping`).
+    *external* point-evaluable mapping (a psydac ``SplineCallableMapping`` /
+    ``NurbsCallableMapping``, or any :class:`BasicCallableMapping`).
 
     It plays the same role as :class:`AnalyticMapping` -- a symbolic mapping
     that is also point-evaluable -- but where ``AnalyticMapping`` lambdifies its
@@ -807,8 +814,8 @@ class DiscreteMapping(DefinedMapping, metaclass=_MappingABCMeta):
     callable here cannot itself be reattached after construction (:meth:`set_callable_mapping`
     raises ``TypeError``; it is part of :meth:`_hashable_content`)::
 
-        >>> from psydac.mapping.discrete import SplineMapping
-        >>> F_h = SplineMapping.from_mapping(V, F)          # a BasicCallableMapping
+        >>> from psydac.mapping.discrete import SplineCallableMapping
+        >>> F_h = SplineCallableMapping.from_mapping(V, F)  # a BasicCallableMapping
         >>> G   = DiscreteMapping(F_h, name='G', dim=2)     # a fresh DefinedMapping
         >>> G.get_callable_mapping() is F_h
         True
@@ -820,10 +827,10 @@ class DiscreteMapping(DefinedMapping, metaclass=_MappingABCMeta):
     ``DiscreteMapping``-carried domain (as it does for a bare
     :class:`SymbolicMapping` from ``Domain.from_file``), evaluating the wrapped
     callable on the quadrature grid rather than an analytic Jacobian. That
-    callable must be a ``SplineMapping`` / ``NurbsMapping`` for assembly today;
-    an end-to-end spline-mapped solve through ``DiscreteMapping`` is verified in
-    WP07b. Point evaluation, plotting and symbolic use work with any
-    ``BasicCallableMapping``.
+    callable must be a ``SplineCallableMapping`` / ``NurbsCallableMapping`` 
+    for assembly today; an end-to-end spline-mapped solve through 
+    ``DiscreteMapping`` is verified in WP07b. Point evaluation, plotting and 
+    symbolic use work with any ``BasicCallableMapping``.
 
     Two same-named ``DiscreteMapping``s wrapping *different* callables are
     distinct (equality / hashing include the wrapped callable), so a per-patch
