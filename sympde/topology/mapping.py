@@ -424,14 +424,18 @@ class DefinedMapping(SymbolicMapping, BasicCallableMapping, metaclass=_MappingAB
 
     F: R^l -> R^p ,  F(eta) = x ,  with l <= p
 
-    A concrete subclass (``AnalyticMapping`` in sympde, ``SplineCallableMapping`` in
-    psydac) can be evaluated on logical coordinates -- single points or arrays
-    of points -- and returns physical coordinates. The point-evaluation
-    interface (``__call__``, ``jacobian``, ``jacobian_inv``, ``metric``,
-    ``metric_det``, ``ldim``, ``pdim``) is inherited verbatim from
-    ``BasicCallableMapping``; every one must be implemented for a subclass to be
-    instantiable, which is what guarantees the sympde and psydac concrete
-    mappings are interchangeable.
+    The two concrete subclasses are ``AnalyticMapping`` (lambdifies its own
+    ``_expressions``) and ``DiscreteMapping`` (delegates to a wrapped external
+    :class:`BasicCallableMapping`, e.g. psydac's ``SplineCallableMapping``). A
+    bare :class:`BasicCallableMapping` has no symbolic identity of its own --
+    it must be wrapped (``DiscreteMapping(F, name)`` /
+    ``F.to_defined_mapping(name)``) to act as a ``DefinedMapping``. The
+    point-evaluation interface (``__call__``, ``jacobian``, ``jacobian_inv``,
+    ``metric``, ``metric_det``, ``ldim``, ``pdim``) is inherited verbatim from
+    ``BasicCallableMapping``;
+    every one must be implemented for a subclass to be instantiable, which is
+    what makes the two subclasses interchangeable wherever a
+    :class:`BasicCallableMapping` is expected.
 
     ``DefinedMapping`` itself is abstract, but as a convenience
     ``DefinedMapping(callable_mapping, name, dim=...)`` -- a first positional
