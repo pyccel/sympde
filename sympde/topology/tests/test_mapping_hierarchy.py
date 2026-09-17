@@ -191,7 +191,9 @@ def test_copy_preserves_user_set_callable_mapping():
     # `__callable_map` instead of `_callable_map`, silently dropping a
     # user-supplied callable mapping (set via set_callable_mapping) on copy --
     # observable e.g. through InterfaceMapping, which always copies its legs.
-    from sympde.topology import AnalyticMapping
+    # WP13/D2: AnalyticMapping.set_callable_mapping now raises (it is always
+    # its own callable), so this is retargeted to a plain SymbolicMapping.
+    from sympde.topology import SymbolicMapping
     from sympde.topology.mapping import BasicCallableMapping
 
     class Custom(BasicCallableMapping):
@@ -203,7 +205,7 @@ def test_copy_preserves_user_set_callable_mapping():
         ldim = 2
         pdim = 2
 
-    F  = AnalyticMapping('F', dim=2)   # no _expressions
+    F  = SymbolicMapping('F', dim=2)
     cm = Custom()
     F.set_callable_mapping(cm)
     assert F.copy()._callable_map is cm
@@ -335,6 +337,44 @@ def test_structural_mappings_reject_set_callable_mapping():
             m.set_callable_mapping(object())
 
 
+def test_analytic_mapping_set_callable_mapping_raises():
+    # WP13/D2: mirrors DiscreteMapping (WP07d) / StructuralMapping (WP09) --
+    # an AnalyticMapping is already its own callable mapping.
+    from sympde.topology import IdentityMapping, PolarMapping
+    for F in (IdentityMapping('F', dim=2),
+              PolarMapping('F', dim=2, rmin=0., rmax=1., c1=0., c2=0.)):
+        with pytest.raises(TypeError, match='to_defined_mapping'):
+            F.set_callable_mapping(object())
+
+
+def test_analytic_mapping_get_callable_mapping_is_always_self():
+    from sympde.topology import IdentityMapping, PolarMapping
+    for F in (IdentityMapping('F', dim=2),
+              PolarMapping('F', dim=2, rmin=0., rmax=1., c1=0., c2=0.)):
+        assert F.get_callable_mapping() is F
+
+
+def test_symbolic_mapping_set_callable_mapping_still_works():
+    # Protects the WP10 Geometry.read() shim: plain SymbolicMapping.
+    # set_callable_mapping/get_callable_mapping stays unguarded.
+    from sympde.topology import SymbolicMapping
+    from sympde.topology.mapping import BasicCallableMapping
+
+    class Custom(BasicCallableMapping):
+        def __call__(self, *eta):     return eta
+        def jacobian(self, *eta):     return None
+        def jacobian_inv(self, *eta): return None
+        def metric(self, *eta):       return None
+        def metric_det(self, *eta):   return None
+        ldim = 2
+        pdim = 2
+
+    F  = SymbolicMapping('F', dim=2)
+    cm = Custom()
+    F.set_callable_mapping(cm)
+    assert F.get_callable_mapping() is cm
+
+
 def test_symbolicexpr_lowers_indexed_structural_mapping_to_coordinate():
     # 06d-4a-1: SymbolicExpr.eval's Indexed branch must recognise a severed
     # structural mapping (SymbolicMapping, not Mapping) so `itf[i]` lowers to a
@@ -412,15 +452,20 @@ def test_analytic_mapping_with_symbolic_constants_rejects_point_call():
         P(0.5, 0.5)
 
 
-def test_analytic_mapping_honours_explicitly_attached_callable():
-    # 06c amendment 2: an AnalyticMapping's point-eval methods must agree with
-    # get_callable_mapping() -- a callable attached via set_callable_mapping()
-    # wins over the mapping's own lambdified expressions.
+def test_analytic_mapping_rejects_attached_callable():
+    # WP13/D2: an AnalyticMapping is already its own callable mapping, so
+    # attaching a different one (which used to silently "win" for point
+    # evaluation while is_analytical stayed True for assembly) now raises.
+    # (Historically -- pre-WP13 -- this test asserted the opposite: that the
+    # attached callable "won". Kept as its own regression test, alongside the
+    # more general test_analytic_mapping_set_callable_mapping_raises above,
+    # because it exercises a real BasicCallableMapping implementation rather
+    # than a bare object().)
     from sympde.topology import PolarMapping
     from sympde.topology.mapping import BasicCallableMapping
 
-    class Const(BasicCallableMapping):          # deliberately "wrong" values,
-        ldim = pdim = 2                         # so analytic vs attached differ
+    class Const(BasicCallableMapping):
+        ldim = pdim = 2
         def __call__(self, *eta):      return (7.0, 8.0)
         def jacobian(self, *eta):      return [[1.0, 0.0], [0.0, 1.0]]
         def jacobian_inv(self, *eta):  return [[1.0, 0.0], [0.0, 1.0]]
@@ -428,11 +473,8 @@ def test_analytic_mapping_honours_explicitly_attached_callable():
         def metric_det(self, *eta):    return 1.0
 
     F = PolarMapping('F', dim=2, rmin=0.0, rmax=1.0, c1=0.0, c2=0.0)
-    F.set_callable_mapping(Const())
-    assert isinstance(F.get_callable_mapping(), Const)
-    assert F(0.5, 0.5) == (7.0, 8.0)            # not the analytic value
-    assert F.jacobian(0.5, 0.5) == [[1.0, 0.0], [0.0, 1.0]]
-    assert F.metric_det(0.5, 0.5) == 1.0
+    with pytest.raises(TypeError, match='to_defined_mapping'):
+        F.set_callable_mapping(Const())
 
 
 # -- work-package 06d-2: CallableMapping deleted, BasicMapping folded away

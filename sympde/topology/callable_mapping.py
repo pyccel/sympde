@@ -15,6 +15,6 @@ def __getattr__(name):
         raise AttributeError(
             "CallableMapping was removed in sympde WP06d-2. Analytic mappings "
             "are point-evaluable directly: subclass AnalyticMapping (an "
-            "AnalyticMapping instance is its own callable mapping), or attach a "
-            "callable with Mapping.set_callable_mapping().")
+            "AnalyticMapping instance is its own callable mapping), or wrap a "
+            "callable with DiscreteMapping(F, name).")
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

@@ -696,10 +696,7 @@ class AnalyticMapping(Mapping, DefinedMapping, metaclass=_MappingABCMeta):
     its own analytic expressions into numpy callables (cached, one quantity at a
     time), so an ``AnalyticMapping`` and a psydac ``SplineCallableMapping`` are
     interchangeable wherever the point-evaluation interface is expected, and
-    ``get_callable_mapping()`` returns ``self``. A callable mapping attached
-    explicitly with ``set_callable_mapping`` (e.g. a spline approximation) still
-    wins: it is then used both by ``get_callable_mapping()`` and by every point
-    call (``F(eta)``, ``F.jacobian(eta)``, ...).
+    ``get_callable_mapping()`` returns ``self``.
 
     Examples
     --------
@@ -752,17 +749,8 @@ class AnalyticMapping(Mapping, DefinedMapping, metaclass=_MappingABCMeta):
 
     def _delegate_point_eval(self, name, *eta):
         """ Point-evaluate quantity ``name`` (``'call'`` | ``'jacobian'`` |
-        ``'jacobian_inv'`` | ``'metric'`` | ``'metric_det'``) at ``eta``.
-
-        A callable mapping attached with ``set_callable_mapping`` wins; otherwise
-        this mapping's own lambdified analytic expressions are used. Keeps
-        ``F(eta)`` / ``F.jacobian(eta)`` / ... consistent with
-        ``get_callable_mapping()``. """
-        cm = self.get_callable_mapping()
-        if cm is not self:
-            # cm is a SplineCallableMapping or user-supplied BasicCallableMapping -- its
-            # own methods, no recursion. It has no `.call`, so 'call' -> cm(*eta).
-            return cm(*eta) if name == 'call' else getattr(cm, name)(*eta)
+        ``'jacobian_inv'`` | ``'metric'`` | ``'metric_det'``) at ``eta``, using
+        this mapping's own lambdified analytic expressions. """
         if name == 'call':
             return tuple(f(*eta) for f in self._lambdify('call'))
         return self._lambdify(name)(*eta)
@@ -795,9 +783,21 @@ class AnalyticMapping(Mapping, DefinedMapping, metaclass=_MappingABCMeta):
         return self._delegate_point_eval('metric_det', *eta)
 
     def get_callable_mapping(self):
-        # An AnalyticMapping *is* its own callable mapping. An explicitly
-        # attached callable (set_callable_mapping) still wins.
-        return self._callable_map if self._callable_map is not None else self
+        # An AnalyticMapping *is* its own callable mapping.
+        return self
+
+    def set_callable_mapping(self, F):
+        # D2/WP13: an AnalyticMapping is its own callable mapping (self is
+        # always point-evaluable); attaching an external one would leave
+        # is_analytical == True while assembly silently kept using the
+        # analytic formulas instead of the attached callable. Mirrors
+        # DiscreteMapping's guard (WP07d) and StructuralMapping's (WP09).
+        # Use F.to_defined_mapping(name) / DiscreteMapping(F, name) instead.
+        raise TypeError(
+            f"{type(self).__name__} is an AnalyticMapping: it is already its "
+            "own callable mapping, and cannot be given a different attached "
+            "callable. Wrap the callable instead: "
+            "F.to_defined_mapping(name) / DiscreteMapping(F, name).")
 
     # ldim / pdim: the concrete properties inherited from Mapping satisfy the
     # DefinedMapping / BasicCallableMapping abstract members.
