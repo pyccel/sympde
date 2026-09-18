@@ -792,12 +792,16 @@ class AnalyticMapping(Mapping, DefinedMapping, metaclass=_MappingABCMeta):
         # is_analytical == True while assembly silently kept using the
         # analytic formulas instead of the attached callable. Mirrors
         # DiscreteMapping's guard (WP07d) and StructuralMapping's (WP09).
-        # Use F.to_defined_mapping(name) / DiscreteMapping(F, name) instead.
+        # Use DiscreteMapping(F, name) instead (or, if F is a psydac
+        # SplineCallableMapping specifically, its convenience shorthand
+        # F.to_defined_mapping(name) -- not available on a generic
+        # BasicCallableMapping).
         raise TypeError(
             f"{type(self).__name__} is an AnalyticMapping: it is already its "
             "own callable mapping, and cannot be given a different attached "
-            "callable. Wrap the callable instead: "
-            "F.to_defined_mapping(name) / DiscreteMapping(F, name).")
+            "callable. Wrap the callable instead: DiscreteMapping(F, name) "
+            "(or F.to_defined_mapping(name) if F is a psydac "
+            "SplineCallableMapping).")
 
     # ldim / pdim: the concrete properties inherited from Mapping satisfy the
     # DefinedMapping / BasicCallableMapping abstract members.
