@@ -268,8 +268,10 @@ class SymbolicMapping(IndexedBase):
         if self._expressions is None:
             raise ValueError(
                 'Cannot generate a callable mapping without analytical '
-                'expressions. Attach a user-defined callable of type '
-                '`BasicCallableMapping` with the method `set_callable_mapping`.')
+                'expressions. Give this mapping a point-evaluable identity '
+                'up front instead, e.g. `DiscreteMapping(F, name)` (or '
+                '`F.to_defined_mapping(name)` if `F` is a psydac '
+                '`SplineCallableMapping`).')
 
         # Reachable only for a bare subclass that carries `_expressions` but is
         # not an `AnalyticMapping` (whose override returns `self`). Since WP06c
@@ -281,6 +283,56 @@ class SymbolicMapping(IndexedBase):
             'mapping.')
 
     def set_callable_mapping(self, F):
+        """
+        Attach a point-evaluable callable to this undefined symbolic mapping.
+
+        .. deprecated:: 0.18
+            Mutating an already-constructed symbolic mapping is unsafe:
+            sympy interns ``SymbolicMapping`` instances, so every other holder
+            of a mapping with the same name and dimensions observes the
+            change. Build the identity up front instead --
+            ``DiscreteMapping(F, name)`` -- and map the logical domain with
+            that. The method still works and will be removed in a later step.
+
+        Parameters
+        ----------
+        F : BasicCallableMapping
+            The callable to attach.
+
+        Raises
+        ------
+        TypeError
+            If `F` is not a `BasicCallableMapping`. (Also raised
+            unconditionally by `AnalyticMapping`, `DiscreteMapping` and
+            `StructuralMapping`, which override this method.)
+
+            Note the deprecation warning above is emitted *before* this
+            check, deliberately, so that a caller on the deprecated path
+            learns it is deprecated even when their argument is also wrong.
+            Under warnings-as-errors (``-W error::DeprecationWarning``) that
+            means a bad `F` surfaces as the `DeprecationWarning`, not as this
+            `TypeError`.
+
+        Examples
+        --------
+        >>> F = SymbolicMapping('F', dim=2)
+        >>> F.set_callable_mapping(F_h)        # deprecated
+        >>> F.get_callable_mapping() is F_h
+        True
+
+        The replacement, which builds the identity up front:
+
+        >>> G = DiscreteMapping(F_h, 'G')
+        >>> G.get_callable_mapping() is F_h
+        True
+        """
+        warnings.warn(
+            'SymbolicMapping.set_callable_mapping is deprecated: it mutates a '
+            'sympy-interned object, so other holders of the same symbolic '
+            'mapping silently become point-evaluable too. Use '
+            'DiscreteMapping(F, name) instead (or F.to_defined_mapping(name) '
+            'if F is a psydac SplineCallableMapping).',
+            DeprecationWarning, stacklevel=2)
         if not isinstance(F, BasicCallableMapping):
             raise TypeError(
                 f'F must be a BasicCallableMapping, got {type(F)} instead')
@@ -818,9 +870,10 @@ class DiscreteMapping(DefinedMapping, metaclass=_MappingABCMeta):
     own ``_expressions``, ``DiscreteMapping`` *delegates* every point call to
     the wrapped callable. Use it to give a discrete geometry (e.g. a spline
     approximation) a first-class symbolic identity without mutating some other
-    mapping via ``set_callable_mapping`` -- and unlike that pattern, the wrapped
-    callable here cannot itself be reattached after construction (:meth:`set_callable_mapping`
-    raises ``TypeError``; it is part of :meth:`_hashable_content`)::
+    mapping via ``set_callable_mapping`` (deprecated) -- and unlike that
+    pattern, the wrapped callable here cannot itself be reattached after
+    construction (:meth:`set_callable_mapping` raises ``TypeError``; it is
+    part of :meth:`_hashable_content`)::
 
         >>> from psydac.mapping.discrete import SplineCallableMapping
         >>> F_h = SplineCallableMapping.from_mapping(V, F)  # a BasicCallableMapping

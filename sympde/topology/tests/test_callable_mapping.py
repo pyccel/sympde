@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from sympde.topology.mapping            import SymbolicMapping, BasicCallableMapping
 from sympde.topology.analytical_mapping import IdentityMapping, AffineMapping
@@ -508,7 +509,10 @@ def test_user_defined_callable_mapping():
 
     F = SymbolicMapping('F', ldim = 3, pdim = 3) # Declare undefined symbolic mapping
     f = UserIdentity(3)        # Create user-defined callable mapping
-    F.set_callable_mapping(f)  # Attach callable mapping to symbolic mapping
+    # set_callable_mapping is deprecated; DiscreteMapping(f, 'F') is the
+    # current route to a point-evaluable symbolic identity.
+    with pytest.warns(DeprecationWarning):
+        F.set_callable_mapping(f)  # Attach callable mapping to symbolic mapping
 
     assert F.get_callable_mapping() is f
     assert f(4, 5, 6) == (4, 5, 6)

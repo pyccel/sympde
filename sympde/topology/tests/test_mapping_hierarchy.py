@@ -8,6 +8,7 @@ DefinedMapping / StructuralMapping without exercising sympy object construction
 (that is covered by later work-packages).
 """
 import inspect
+import warnings
 
 import pytest
 
@@ -207,8 +208,16 @@ def test_copy_preserves_user_set_callable_mapping():
 
     F  = SymbolicMapping('F', dim=2)
     cm = Custom()
-    F.set_callable_mapping(cm)
-    assert F.copy()._callable_map is cm
+    with pytest.warns(DeprecationWarning):
+        F.set_callable_mapping(cm)
+    # copy() assigns `_callable_map` directly, not through the deprecated
+    # setter, so it must not warn. Sitting outside the `pytest.warns` block
+    # above does NOT assert that -- pytest.warns says nothing about warnings
+    # raised elsewhere -- so pin it explicitly, as the guards' test does.
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
+        G = F.copy()
+    assert G._callable_map is cm
 
 
 # -- work-package 03 / 06d-4a: InverseMapping / InterfaceMapping /
@@ -354,9 +363,11 @@ def test_analytic_mapping_get_callable_mapping_is_always_self():
         assert F.get_callable_mapping() is F
 
 
-def test_symbolic_mapping_set_callable_mapping_still_works():
-    # Protects the WP10 Geometry.read() shim: plain SymbolicMapping.
-    # set_callable_mapping/get_callable_mapping stays unguarded.
+def test_symbolic_mapping_set_callable_mapping_is_deprecated_but_works():
+    # D3-b: SymbolicMapping.set_callable_mapping is deprecated (conventions:
+    # deprecated symbols keep working until the explicit remove-aliases
+    # work-package) -- plain SymbolicMapping.set_callable_mapping/
+    # get_callable_mapping stays unguarded, but now warns.
     from sympde.topology import SymbolicMapping
     from sympde.topology.mapping import BasicCallableMapping
 
@@ -371,8 +382,58 @@ def test_symbolic_mapping_set_callable_mapping_still_works():
 
     F  = SymbolicMapping('F', dim=2)
     cm = Custom()
-    F.set_callable_mapping(cm)
+    with pytest.warns(DeprecationWarning):
+        F.set_callable_mapping(cm)
     assert F.get_callable_mapping() is cm
+
+
+def test_set_callable_mapping_warning_names_discrete_mapping():
+    # D3-b: the deprecation warning must point callers at the replacement.
+    from sympde.topology import SymbolicMapping
+    from sympde.topology.mapping import BasicCallableMapping
+
+    class Custom(BasicCallableMapping):
+        def __call__(self, *eta):     return eta
+        def jacobian(self, *eta):     return None
+        def jacobian_inv(self, *eta): return None
+        def metric(self, *eta):       return None
+        def metric_det(self, *eta):   return None
+        ldim = 2
+        pdim = 2
+
+    F = SymbolicMapping('F', dim=2)
+    with pytest.warns(DeprecationWarning, match='DiscreteMapping'):
+        F.set_callable_mapping(Custom())
+
+
+def test_set_callable_mapping_guards_do_not_warn():
+    # D3-b: the three overriding guards (AnalyticMapping, DiscreteMapping,
+    # StructuralMapping subclasses) raise TypeError without calling super(),
+    # so they must not start emitting the new DeprecationWarning.
+    from sympde.topology import (IdentityMapping, InterfaceMapping,
+                                 MultiPatchMapping)
+    from sympde.topology.mapping import DiscreteMapping, BasicCallableMapping
+
+    class Custom(BasicCallableMapping):
+        def __call__(self, *eta):     return eta
+        def jacobian(self, *eta):     return None
+        def jacobian_inv(self, *eta): return None
+        def metric(self, *eta):       return None
+        def metric_det(self, *eta):   return None
+        ldim = 2
+        pdim = 2
+
+    F1  = IdentityMapping('F1', dim=2)
+    F2  = IdentityMapping('F2', dim=2)
+    G   = DiscreteMapping(Custom(), 'G')
+    itf = InterfaceMapping(F1, F2)
+    mp  = MultiPatchMapping({'p1': F1, 'p2': F2})
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
+        for mapping in (F1, G, itf, mp):
+            with pytest.raises(TypeError):
+                mapping.set_callable_mapping(Custom())
 
 
 def test_symbolicexpr_lowers_indexed_structural_mapping_to_coordinate():
