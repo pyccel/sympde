@@ -42,10 +42,50 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.todo',
-    'sphinx.ext.imgmath',
+    'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinxcontrib.bibtex',
 ]
+
+# Keep the custom commands used by ``math/feec.rst`` available in HTML
+# output.  The corresponding LaTeX definitions live in ``latex_macros.sty``
+# and are loaded separately for PDF builds below.
+mathjax4_config = {
+    'tex': {
+        'macros': {
+            'Alt': r'\mathrm{Alt}\,',
+            'Curl': r'\nabla \times',
+            'Div': r'\nabla \cdot',
+            'Grad': r'\boldsymbol{\nabla}',
+            'Hcurl': r'{H}(\mbox{curl}, \Omega)',
+            'HcurlLogical': r'{H}(\mbox{curl}, \hat{\Omega})',
+            'Hdiv': r'{H}(\mbox{div}, \Omega)',
+            'HdivLogical': r'{H}(\mbox{div}, \hat{\Omega})',
+            'Hgrad': r'H^1(\Omega)',
+            'HgradLogical': r'H^1(\hat{\Omega})',
+            'Ltwo': r'L^2(\Omega)',
+            'LtwoLogical': r'L^2(\hat{\Omega})',
+            'Vcurl': r'V_h(\mbox{curl}, \Omega)',
+            'Vdiv': r'V_h(\mbox{div}, \Omega)',
+            'Vgrad': r'V_h(\mbox{grad}, \Omega)',
+            'Vltwo': r'V_h(L^2, \Omega)',
+            'diff': r'\mathrm{d}\,',
+            'divs': r'\mathrm{div}\,',
+            'icurl': r'\imath^{1}',
+            'id': r'\mathrm{id}\,',
+            'idiv': r'\imath^{2}',
+            'igrad': r'\imath^{0}',
+            'iltwo': r'\imath^{3}',
+            'nn': r'\mathbf{n}',
+            'rots': r'\mathrm{rot}\,',
+            'tr': r'\operatorname{tr}',
+            'trace': r'\mathrm{Tr}\,',
+            'uu': r'\mathbf{u}',
+            'volume': r'\mathrm{vol}\,',
+            'xx': r'\mathbf{x}',
+        },
+    },
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -64,7 +104,7 @@ master_doc = 'index'
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -143,25 +183,9 @@ latex_engine='pdflatex'
 
 latex_additional_files = ['latex_macros.sty']
 latex_elements = {
-    'printmodindex': '',
     'printindex': '',
     'preamble' : r'\usepackage{amsmath} \usepackage{amssymb} \usepackage{latex_macros}',
-    'docclass':'report',
     }
-
-#####################################################
-# add LaTeX macros
-
-f = open('latex_macros.sty', 'r')
-
-try:
-    imgmath_latex_preamble  # check whether this is already defined
-except NameError:
-    imgmath_latex_preamble = ""
-
-for macro in f:
-    # used when building html version
-    imgmath_latex_preamble += macro + '\n'
 
 # -- Options for manual page output ------------------------------------------
 
@@ -191,6 +215,9 @@ texinfo_documents = [
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
+
+# Bibliography used by ``math/feec.rst``.
+bibtex_bibfiles = ['math/refs_feec.bib']
 
 
 # -- APIDOC ----------------------------------------------
