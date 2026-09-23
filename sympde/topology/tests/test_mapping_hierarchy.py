@@ -86,9 +86,11 @@ def test_jacobian_symbol_holds_the_symbolic_jacobian():
 def test_legacy_jacobian_property_is_a_deprecated_alias():
     from sympde.topology import Mapping
     # `.jacobian` (the deprecated symbolic property) lives on `Mapping` only --
-    # `SymbolicMapping` deliberately does not carry it. On an AnalyticMapping it
-    # is shadowed by the numeric point-evaluation method
-    # (see test_analytic_mapping_is_directly_point_evaluable).
+    # `SymbolicMapping` deliberately does not carry it. Since WP D8,
+    # `AnalyticMapping` no longer inherits `Mapping`, so nothing is "shadowed"
+    # any more: `.jacobian` is simply confined to `Mapping` and its legacy
+    # subclasses, while `AnalyticMapping.jacobian` is a distinct, unrelated
+    # numeric method (see test_analytic_mapping_is_directly_point_evaluable).
     with pytest.warns(DeprecationWarning, match='SymbolicMapping'):   # 06d-4c: ctor
         F = Mapping('F', dim=2)
     with pytest.warns(DeprecationWarning, match='jacobian_symbol'):
@@ -109,21 +111,101 @@ def test_defined_mapping_inherits_basic_callable_mapping():
 
 def test_analytic_mapping_hierarchy():
     from sympde.topology import AnalyticMapping, Mapping
-    assert issubclass(AnalyticMapping, Mapping)
+    # WP D8: AnalyticMapping no longer inherits the deprecated Mapping.
+    assert not issubclass(AnalyticMapping, Mapping)
     assert issubclass(AnalyticMapping, DefinedMapping)
     assert issubclass(AnalyticMapping, BasicCallableMapping)
     assert not inspect.isabstract(AnalyticMapping)
 
 
 def test_analytical_gallery_reparented_onto_analytic_mapping():
-    from sympde.topology import AnalyticMapping, Mapping
+    from sympde.topology import AnalyticMapping, Mapping, SymbolicMapping
     from sympde.topology import (IdentityMapping, AffineMapping, PolarMapping,
                                  TargetMapping, CzarnyMapping, CollelaMapping2D,
                                  TorusMapping)
     for cls in (IdentityMapping, AffineMapping, PolarMapping, TargetMapping,
                 CzarnyMapping, CollelaMapping2D, TorusMapping):
         assert issubclass(cls, AnalyticMapping)
-        assert issubclass(cls, Mapping)          # isinstance(_, Mapping) still holds
+        # WP D8: no longer under the deprecated Mapping; use SymbolicMapping
+        # as the "any symbolic mapping" check (same as 06d-4a for structural).
+        assert not issubclass(cls, Mapping)
+        assert issubclass(cls, SymbolicMapping)
+
+
+# -- D8: AnalyticMapping no longer inherits the deprecated Mapping
+
+def test_analytic_mapping_no_longer_inherits_deprecated_mapping():
+    from sympde.topology import AnalyticMapping, Mapping, DefinedMapping, SymbolicMapping
+    from sympde.topology import PolarMapping
+    assert not issubclass(AnalyticMapping, Mapping)
+    assert Mapping not in PolarMapping.__mro__
+    assert issubclass(AnalyticMapping, DefinedMapping)
+    assert issubclass(AnalyticMapping, SymbolicMapping)
+    assert not inspect.isabstract(AnalyticMapping)
+    # no C3 duplication of SymbolicMapping in the MRO
+    assert [c.__name__ for c in AnalyticMapping.__mro__].count('SymbolicMapping') == 1
+    assert issubclass(Mapping, SymbolicMapping)
+
+
+def test_analytic_expression_machinery_survives_the_move():
+    from sympy import ImmutableDenseMatrix, eye
+    from sympde.topology import IdentityMapping, PolarMapping, TorusSurfaceMapping, AnalyticMapping
+
+    F = IdentityMapping('F', dim=2)
+    assert F.jacobian_expr == ImmutableDenseMatrix(eye(2))
+    assert F.jacobian_inv_expr == ImmutableDenseMatrix(eye(2))
+    assert F.metric_det_expr == 1
+
+    # no numeric constants given: all four stay symbolic Constants
+    from sympy import Symbol, cos, sin
+    from sympde.core.basic import Constant
+    P0 = PolarMapping('P0', dim=2)
+    assert set(a.name for a in P0.constants) == {'c1', 'c2', 'rmin', 'rmax'}
+    c1, c2, rmin, rmax = (Constant(n) for n in ('c1', 'c2', 'rmin', 'rmax'))
+    # the logical coordinates on the mapping are real-valued Symbols
+    x1, x2 = (Symbol(n, real=True) for n in ('x1', 'x2'))
+    expected = (c1 + (rmin*(1 - x1) + rmax*x1)*cos(x2),
+                c2 + (rmin*(1 - x1) + rmax*x1)*sin(x2))
+    assert P0.expressions == expected
+
+    # pdim != ldim: the _inv_jac branch is None
+    T = TorusSurfaceMapping('T', ldim=2, pdim=3, R0=1., a=0.3)
+    assert T.jacobian_expr.shape == (3, 2)
+    assert T.jacobian_inv_expr is None
+    assert T.metric_expr.shape == (2, 2)
+
+    # early-return branch of the new __new__: no _expressions on the class
+    bare = AnalyticMapping('bare', dim=2)
+    assert bare.is_analytical is False
+
+
+def test_legacy_mapping_subclass_still_expands_expressions():
+    from sympy import ImmutableDenseMatrix
+    from sympde.topology import Mapping, AnalyticMapping
+
+    class M(Mapping):
+        _expressions = {'x': '2*x1', 'y': '3*x2'}
+        _ldim = 2
+        _pdim = 2
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', DeprecationWarning)
+        m = M('m')          # `cls is Mapping` gate: subclass construction is quiet
+
+    assert m.jacobian_expr == ImmutableDenseMatrix([[2, 0], [0, 3]])
+    assert m.metric_det_expr == 36
+    assert not isinstance(m, AnalyticMapping)
+
+
+def test_analytic_mapping_construction_is_warning_free():
+    from sympde.topology import IdentityMapping, PolarMapping, TorusSurfaceMapping
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', DeprecationWarning)
+        F = IdentityMapping('F', dim=2)
+        P = PolarMapping('P', dim=2, c1=0., c2=0., rmin=.3, rmax=1.)
+        T = TorusSurfaceMapping('T', ldim=2, pdim=3, R0=1., a=0.3)
+        F.copy()
+        F.func(*F.args)
 
 
 def test_analytic_mapping_is_directly_point_evaluable():

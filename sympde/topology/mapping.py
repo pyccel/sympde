@@ -648,14 +648,84 @@ class StructuralMapping(SymbolicMapping, metaclass=_MappingABCMeta):
         """ Number of physical dimensions. """
 
 #==============================================================================
+def _init_analytic_expressions(obj, **kwargs):
+    """
+    Expand ``obj._expressions`` (set by the class body of an analytic
+    mapping subclass) into ``_jac`` / ``_inv_jac`` / ``_metric`` /
+    ``_metric_det`` / ``_constants``, and return ``obj``. ``kwargs`` are the
+    caller's numeric values for the symbolic constants found in
+    ``_expressions`` (anything not given numerically becomes a
+    :class:`~sympde.core.basic.Constant`).
+
+    Free-standing (not a method) because it is shared by two callers:
+    ``AnalyticMapping.__new__`` (the supported path) and the deprecated
+    ``Mapping.__new__`` (kept working for legacy subclasses such as
+    ``class SquareTorus(Mapping)`` in downstream code). Keeping it
+    free-standing also means ``Mapping`` can be deleted later, by the
+    remove-aliases work-package, without moving this code again.
+    """
+    # -- analytic subclass: expand `_expressions` into _jac / _inv_jac /
+    #    _metric (SymbolicMapping.__new__ left these to us). --
+    ldim, pdim   = obj._ldim, obj._pdim
+    _coordinates = list(obj._coordinates)
+    lcoords_names             = ['x1', 'x2', 'x3'][:ldim]
+    lcoords_symbols_real      = list(obj._logical_coordinates)
+    lcoords_symbols_real_dict = {n: s for n, s in zip(lcoords_names, lcoords_symbols_real)}
+    lcoords_general_symbols   = [Symbol(i) for i in lcoords_names]
+
+    coords_names = ['x', 'y', 'z'][:pdim]
+    args = Tuple(*(sympify(obj._expressions[i]) for i in coords_names))
+    for i in ['x1', 'x2', 'x3'][ldim:]:
+        args = args.subs(sympify(i), 0)
+
+    constants        = list(set(args.free_symbols) - set(lcoords_general_symbols))
+    constants_values = {a.name: Constant(a.name) for a in constants}
+    constants_values.update(kwargs)
+    d = {a: numpy_to_native_python(constants_values[a.name]) for a in constants}
+    args = args.subs(d)
+    args = args.subs(lcoords_symbols_real_dict)
+
+    obj._expressions = args
+    obj._constants   = tuple(a for a in constants if isinstance(constants_values[a.name], Symbol))
+
+    idx   = [obj[i] for i in range(pdim)]
+    exprs = obj._expressions
+    subs  = list(zip(_coordinates, exprs))
+
+    if obj._jac is None and obj._inv_jac is None:
+        obj._jac     = Jacobian(obj).subs(list(zip(idx, exprs)))
+        obj._inv_jac = obj._jac.inv() if pdim == ldim else None
+    elif obj._inv_jac is None:
+        obj._jac     = ImmutableDenseMatrix(sympify(obj._jac)).subs(subs)
+        obj._inv_jac = obj._jac.inv() if pdim == ldim else None
+    elif obj._jac is None:
+        obj._inv_jac = ImmutableDenseMatrix(sympify(obj._inv_jac)).subs(subs)
+        obj._jac     = obj._inv_jac.inv()
+    else:
+        obj._jac     = ImmutableDenseMatrix(sympify(obj._jac)).subs(subs)
+        obj._inv_jac = ImmutableDenseMatrix(sympify(obj._inv_jac)).subs(subs)
+
+    obj._metric     = obj._jac.T * obj._jac
+    obj._metric_det = obj._metric.det()
+    return obj
+
+#==============================================================================
 class Mapping(SymbolicMapping):
     """
     Deprecated shell over :class:`SymbolicMapping` (WP06d-4c): constructing a
     bare ``Mapping`` emits a ``DeprecationWarning`` -- use ``SymbolicMapping``
     for an undefined mapping, or an ``AnalyticMapping`` subclass for an analytic
-    one. It survives only to host the ``_expressions`` -> symbolic
-    Jacobian / metric machinery that its analytic subclasses inherit through
-    ``__new__``, and the deprecated symbolic ``jacobian`` property.
+    one. It is no longer in ``AnalyticMapping``'s MRO (WP D8): the
+    ``_expressions`` -> symbolic Jacobian / metric machinery now lives in the
+    free-standing :func:`_init_analytic_expressions`, which ``Mapping.__new__``
+    still calls so that legacy subclasses (``class X(Mapping)`` with
+    ``_expressions``) keep working. ``Mapping`` survives only as a deprecated
+    name and as that legacy analytic base, until the remove-aliases
+    work-package deletes it.
+
+    .. deprecated:: WP D8
+        Use :class:`SymbolicMapping` (undefined mapping) or
+        :class:`AnalyticMapping` (analytic mapping) instead.
     """
 
     def __new__(cls, name, dim=None, **kwargs):
@@ -682,50 +752,7 @@ class Mapping(SymbolicMapping):
         if not evaluate or cls._expressions is None:
             return obj
 
-        # -- analytic subclass: expand `_expressions` into _jac / _inv_jac /
-        #    _metric (SymbolicMapping.__new__ left these to us). --
-        ldim, pdim   = obj._ldim, obj._pdim
-        _coordinates = list(obj._coordinates)
-        lcoords_names             = ['x1', 'x2', 'x3'][:ldim]
-        lcoords_symbols_real      = list(obj._logical_coordinates)
-        lcoords_symbols_real_dict = {n: s for n, s in zip(lcoords_names, lcoords_symbols_real)}
-        lcoords_general_symbols   = [Symbol(i) for i in lcoords_names]
-
-        coords_names = ['x', 'y', 'z'][:pdim]
-        args = Tuple(*(sympify(obj._expressions[i]) for i in coords_names))
-        for i in ['x1', 'x2', 'x3'][ldim:]:
-            args = args.subs(sympify(i), 0)
-
-        constants        = list(set(args.free_symbols) - set(lcoords_general_symbols))
-        constants_values = {a.name: Constant(a.name) for a in constants}
-        constants_values.update(kwargs)
-        d = {a: numpy_to_native_python(constants_values[a.name]) for a in constants}
-        args = args.subs(d)
-        args = args.subs(lcoords_symbols_real_dict)
-
-        obj._expressions = args
-        obj._constants   = tuple(a for a in constants if isinstance(constants_values[a.name], Symbol))
-
-        idx   = [obj[i] for i in range(pdim)]
-        exprs = obj._expressions
-        subs  = list(zip(_coordinates, exprs))
-
-        if obj._jac is None and obj._inv_jac is None:
-            obj._jac     = Jacobian(obj).subs(list(zip(idx, exprs)))
-            obj._inv_jac = obj._jac.inv() if pdim == ldim else None
-        elif obj._inv_jac is None:
-            obj._jac     = ImmutableDenseMatrix(sympify(obj._jac)).subs(subs)
-            obj._inv_jac = obj._jac.inv() if pdim == ldim else None
-        elif obj._jac is None:
-            obj._inv_jac = ImmutableDenseMatrix(sympify(obj._inv_jac)).subs(subs)
-            obj._jac     = obj._inv_jac.inv()
-        else:
-            obj._jac     = ImmutableDenseMatrix(sympify(obj._jac)).subs(subs)
-            obj._inv_jac = ImmutableDenseMatrix(sympify(obj._inv_jac)).subs(subs)
-
-        obj._metric     = obj._jac.T * obj._jac
-        obj._metric_det = obj._metric.det()
-        return obj
+        return _init_analytic_expressions(obj, **kwargs)
 
     @property
     def jacobian(self):
@@ -739,10 +766,12 @@ class Mapping(SymbolicMapping):
         return self.jacobian_symbol
 
 #==============================================================================
-class AnalyticMapping(Mapping, DefinedMapping, metaclass=_MappingABCMeta):
+class AnalyticMapping(DefinedMapping, metaclass=_MappingABCMeta):
     """
-    Analytic mapping: symbolic like ``Mapping`` (it carries ``_expressions``),
-    and *directly point-evaluable* through the ``DefinedMapping`` interface.
+    Analytic mapping: a concrete :class:`DefinedMapping` whose ``_expressions``
+    (set by the subclass body) are expanded into symbolic Jacobian / metric on
+    construction, and *directly point-evaluable* through the
+    ``DefinedMapping`` interface.
 
     Point evaluation is done by the mapping itself: on first use it lambdifies
     its own analytic expressions into numpy callables (cached, one quantity at a
@@ -759,6 +788,20 @@ class AnalyticMapping(Mapping, DefinedMapping, metaclass=_MappingABCMeta):
     >>> F.jacobian_symbol                 # symbolic JacobianSymbol (unchanged)
     Jacobian(F)
     """
+
+    def __new__(cls, name, dim=None, **kwargs):
+        evaluate  = kwargs.get('evaluate', True)
+        # `jacobian` goes to SymbolicMapping.__new__ too -- forwarding it here
+        # both honours it and keeps it out of the `_expressions` constants dict.
+        prefix_kw = {k: kwargs.pop(k)
+                     for k in ('ldim', 'pdim', 'coordinates', 'evaluate', 'jacobian')
+                     if k in kwargs}
+        obj = super().__new__(cls, name, dim, **prefix_kw)
+
+        if not evaluate or cls._expressions is None:
+            return obj
+
+        return _init_analytic_expressions(obj, **kwargs)
 
     def _ensure_lambdified(self):
         """ Check this mapping can be point-evaluated and return the per-quantity
@@ -855,8 +898,8 @@ class AnalyticMapping(Mapping, DefinedMapping, metaclass=_MappingABCMeta):
             "(or F.to_defined_mapping(name) if F is a psydac "
             "SplineCallableMapping).")
 
-    # ldim / pdim: the concrete properties inherited from Mapping satisfy the
-    # DefinedMapping / BasicCallableMapping abstract members.
+    # ldim / pdim: the concrete properties inherited from SymbolicMapping
+    # satisfy the DefinedMapping / BasicCallableMapping abstract members.
 
 #==============================================================================
 class DiscreteMapping(DefinedMapping, metaclass=_MappingABCMeta):
