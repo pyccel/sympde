@@ -6,7 +6,8 @@ import h5py
 import yaml
 import os
 
-from collections import abc, OrderedDict
+from collections import OrderedDict
+from itertools import product
 from typing import Union as TypeUnion, Optional, List, Dict, Iterable, TYPE_CHECKING
 # Union clashes with core.basic.Union
 
@@ -21,8 +22,10 @@ from sympy.core.expr import AtomicExpr
 from sympde.old_sympy_utilities import is_sequence, with_metaclass
 from sympde.core.basic import CalculusFunction
 from .basic            import BasicDomain, InteriorDomain, Boundary, Union, Connectivity
-from .basic            import Interval, Interface, CornerBoundary, CornerInterface
+from .basic            import Interval, Interface
+from .basic            import CornerBoundary, CornerInterface
 from .basic            import ProductDomain
+from .basic            import _as_integer
 
 # TODO fix circular dependency between domain and mapping
 if TYPE_CHECKING:
@@ -180,12 +183,24 @@ class Domain(BasicDomain):
 
     @property
     def subdomains(self) -> tuple:
-        """returns subdomains as tuple of Domains"""
+        """Return top-dimensional interior regions as a tuple."""
         if isinstance( self.interior, iterable_types):
             subs = self.interior
         else:
             subs = [self.interior]
         return tuple(subs)
+
+    @property
+    def patches(self) -> tuple:
+        """Top-dimensional patch regions as a stable tuple.
+
+        This additive multipatch view leaves the symbolic ``interior`` and
+        ``subdomains`` APIs unchanged.  For a single-patch domain it contains
+        exactly that domain's interior.
+        """
+        if isinstance(self.interior, InteriorDomain):
+            return (self.interior,)
+        return self.interior.as_tuple()
 
     @property
     def mappings(self) -> OrderedDict:
@@ -201,6 +216,25 @@ class Domain(BasicDomain):
     def connectivity(self) -> Connectivity:
         """Contains information about the interfaces"""
         return self._connectivity
+
+    @property
+    def interface_map(self) -> Connectivity:
+        """Interfaces keyed by their unique names.
+
+        Unlike the symbolic :attr:`interfaces` property, this view always has
+        mapping semantics, including when the domain has zero or one interface.
+        """
+        return self.connectivity
+
+    @property
+    def exterior_sides(self) -> tuple:
+        """Exterior boundary sides as a stable tuple."""
+        boundary = self.boundary
+        if boundary is None:
+            return ()
+        if isinstance(boundary, Boundary):
+            return (boundary,)
+        return boundary.as_tuple()
 
     @property
     def dim(self) -> int:
@@ -230,6 +264,16 @@ class Domain(BasicDomain):
             corners = self.get_shared_corners()
         self._corners = corners
         return corners
+
+    @property
+    def shared_vertices(self) -> tuple:
+        """Shared patch-vertex equivalence classes as a stable tuple."""
+        corners = self.corners
+        if corners is None:
+            return ()
+        if isinstance(corners, CornerInterface):
+            return (corners,)
+        return corners.as_tuple()
 
     def __len__(self):
         if isinstance(self.interior, InteriorDomain):
@@ -274,8 +318,18 @@ class Domain(BasicDomain):
             The domain boundary of interest.
         """
         if axis is None:
-            assert(self.interior.dim == 1)
+            if self.interior.dim != 1:
+                raise ValueError('axis may be None only for a 1D domain')
             axis = 0
+        else:
+            axis = _as_integer(axis, 'boundary axis')
+        ext = _as_integer(ext, 'boundary extremity')
+
+        if not 0 <= axis < self.dim:
+            raise ValueError(
+                f'boundary axis must be between 0 and {self.dim - 1}')
+        if ext not in (-1, 1):
+            raise ValueError('boundary extremity must be either -1 or 1')
 
         if isinstance(self.boundary, Union):
             x = [i for i in self.boundary.args if i.ext == ext and i.axis == axis]
@@ -320,7 +374,7 @@ class Domain(BasicDomain):
         name         = str(self.name)
         dim          = str(self.dim)
         interior     = self.interior.todict()
-        boundary     = self.boundary.todict()
+        boundary     = [side.todict() for side in self.exterior_sides]
         connectivity = self.connectivity.todict()
 
         dtype = self.dtype
@@ -336,22 +390,17 @@ class Domain(BasicDomain):
 
         return dict(sorted(d.items()))
 
-    def export( self, filename ):
+    def export(self, filename):
 
         yml = self.todict()
 
         # Dump metadata to string in YAML file format
-        geo = yaml.dump( data   = yml,
-                         sort_keys = None)
+        geo = yaml.safe_dump(data=yml, sort_keys=None)
 
         # Create HDF5 file (in parallel mode if MPI communicator size > 1)
-        h5 = h5py.File( filename, mode='w' )
-
-        # Write geometry metadata as fixed-length array of ASCII characters
-        h5['topology.yml'] = np.array( geo, dtype='S' )
-
-        # Close HDF5 file
-        h5.close()
+        with h5py.File(filename, mode='w') as h5:
+            # Write geometry metadata as fixed-length array of ASCII characters
+            h5['topology.yml'] = np.array(geo, dtype='S')
 
     @classmethod
     def from_file(cls, filename):
@@ -377,15 +426,32 @@ class Domain(BasicDomain):
         # ...
         from sympde.topology.mapping import Mapping
 
-        h5  = h5py.File( filename, mode='r' )
-        yml = yaml.load( h5['topology.yml'][()], Loader=yaml.SafeLoader )
+        with h5py.File(filename, mode='r') as h5:
+            yml = yaml.safe_load(h5['topology.yml'][()])
 
         domain_name    = yml['name']
         dim            = int(yml['dim'])
         dtype          = yml['dtype']
         d_interior     = yml['interior']
-        d_boundary     = yml['boundary']
-        d_connectivity = yml['connectivity']
+        has_boundary_metadata = (
+            'boundary' in yml and yml['boundary'] is not None)
+        d_boundary     = yml.get('boundary', [])
+        d_connectivity = yml.get('connectivity', {})
+
+        # Boundary metadata was historically cardinality-dependent: a single
+        # side was stored as a dictionary and several sides as a list. Accept
+        # that representation while making the canonical format always a list.
+        if d_boundary is None:
+            d_boundary = []
+        elif isinstance(d_boundary, dict):
+            d_boundary = [d_boundary]
+        elif not isinstance(d_boundary, list):
+            raise TypeError('boundary topology must be a list or a dictionary')
+
+        if d_connectivity is None:
+            d_connectivity = {}
+        elif not isinstance(d_connectivity, dict):
+            raise TypeError('connectivity topology must be a dictionary')
 
         if dtype == 'None':
             dtype = None
@@ -402,55 +468,124 @@ class Domain(BasicDomain):
         domains      = [mapping(i) if mapping else i for i,mapping in zip(interiors, mappings)]
         patch_index  = {I.name:ind for ind,I in enumerate(interiors)}
 
-        boundaries   = []
-        for bd in d_boundary:
-            name = bd['patch']
-            axis = bd['axis']
-            ext  = bd['ext']
-            i    = patch_index[name]
-            bd   = domains[i].get_boundary(axis=int(axis), ext=int(ext))
-            boundaries.append(bd)
+        def serialized_integer(value, name):
+            """Read legacy decimal strings without accepting numeric floats."""
+            if isinstance(value, str):
+                try:
+                    return int(value)
+                except ValueError as error:
+                    raise TypeError(f'{name} must be an integer') from error
+            return _as_integer(value, name)
+
+        stored_boundary_sides = []
+        for boundary_data in d_boundary:
+            if not isinstance(boundary_data, dict):
+                raise TypeError('each serialized boundary must be a dictionary')
+            name = boundary_data['patch']
+            axis = serialized_integer(
+                boundary_data['axis'], 'serialized boundary axis')
+            ext  = serialized_integer(
+                boundary_data['ext'], 'serialized boundary extremity')
+            if name not in patch_index:
+                raise ValueError(
+                    f'serialized boundary references unknown patch: {name}')
+            domains[patch_index[name]].get_boundary(axis=axis, ext=ext)
+            stored_boundary_sides.append((str(name), axis, ext))
+
+        if len(stored_boundary_sides) != len(set(stored_boundary_sides)):
+            raise ValueError('serialized boundary contains duplicate sides')
 
         connectivity = []
-        for _,(minus, plus, ornt) in d_connectivity.items():
+        for interface_name, interface_data in d_connectivity.items():
+            if not isinstance(interface_name, str):
+                raise TypeError('serialized interface names must be strings')
+            if len(interface_data) != 3:
+                raise ValueError(
+                    'multipatch topology files must store two interface sides '
+                    'and an explicit orientation; regenerate legacy files '
+                    'that contain only two interface sides')
+            minus, plus, orientation = interface_data
+
             minus_name = minus['patch']
-            minus_axis = int(minus['axis'])
-            minus_ext  = int(minus['ext'])
+            minus_axis = serialized_integer(
+                minus['axis'], 'serialized interface axis')
+            minus_ext  = serialized_integer(
+                minus['ext'], 'serialized interface extremity')
             minus_patch_i = patch_index[minus_name]
 
             plus_name = plus['patch']
-            plus_axis = int(plus['axis'])
-            plus_ext  = int(plus['ext'])
+            plus_axis = serialized_integer(
+                plus['axis'], 'serialized interface axis')
+            plus_ext  = serialized_integer(
+                plus['ext'], 'serialized interface extremity')
             plus_patch_i = patch_index[plus_name]
             interface = ((minus_patch_i, minus_axis, minus_ext),
-                         ( plus_patch_i,  plus_axis,  plus_ext), ornt)
+                         (plus_patch_i, plus_axis, plus_ext), orientation,
+                         interface_name)
 
             connectivity.append(interface)
 
-        if len(domains) == 1:
-            return domains[0]
+        if len(domains) == 1 and not connectivity:
+            domain = domains[0]
+        else:
+            domain = Domain.join(domains, connectivity, domain_name)
 
-        return Domain.join(domains, connectivity, domain_name)
+        derived_boundary_sides = []
+        for boundary in domain.exterior_sides:
+            boundary_data = boundary.todict()
+            derived_boundary_sides.append((
+                str(boundary_data['patch']),
+                int(boundary_data['axis']),
+                int(boundary_data['ext'])))
+
+        if has_boundary_metadata and \
+           set(stored_boundary_sides) != set(derived_boundary_sides):
+            raise ValueError(
+                'serialized boundary does not match the exterior boundary '
+                'derived from connectivity')
+
+        return domain
 
     @classmethod
-    def join(cls, patches, connectivity, name):
+    def join(cls, patches, connectivity=None, name=None, *, interfaces=None):
         """
-        Create a multipatch domain by joining two or more patches in 2D or 3D.
+        Create a domain by joining one or more patches in 1D, 2D, or 3D.
+
+        A single patch is returned unchanged when ``connectivity`` is empty.
+        With non-empty connectivity, its distinct boundaries may be joined to
+        create self-interfaces such as periodic identifications.
 
         Parameters
         ----------
-        patches : list[Domain]
-            List of patches.
+        patches : sequence of Domain
+            Ordered non-empty collection of atomic, unconnected patches. All
+            patches must have the same logical dimension. Their positions
+            define the integer patch indices accepted by an interface side.
+            Patch objects, interior names, and serialized logical names must be
+            unique. Joined multipatch domains must be flattened before being
+            passed to this method.
 
-        connectivity : list
-            List of interfaces, identified by a tuple of 2 boundaries and an orientation
-            (bound_minus, bound_plus, ornt) where
-            - Each boundary is identified by a tuple of 3 integers: (patch, axis, ext)
-              with patches given as objects (or by their indices in the patches list)
-            and 
-            - In 2D, ornt is an integer that can take the value of 1 or -1
-            - In 3D, ornt is a tuple of 3 integers that can take the value of 1 or -1
-            (see below for more details)
+        connectivity : sequence, optional
+            Interface descriptions. Each description is the tuple
+            ``(minus, plus, orientation)`` or
+            ``(minus, plus, orientation, name)``. The optional name is
+            preserved exactly and must be unique among all interfaces.
+            If both this argument and ``interfaces`` are omitted, the
+            connectivity is empty.
+
+            Each side is ``(patch, axis, ext)``. ``patch`` is either a patch
+            object or its integer position in ``patches``. ``axis`` is the
+            zero-based logical axis normal to the face. ``ext=-1`` selects the
+            lower-coordinate face and ``ext=+1`` the upper-coordinate face.
+
+            ``minus`` and ``plus`` define the direction in which orientation
+            is read. In 1D, orientation is ``None``. In 2D, it is ``+1`` or
+            ``-1``. In 3D, it is ``(flag, sign1, sign2)`` as documented by
+            :class:`Interface`.
+
+        interfaces : sequence, optional
+            Keyword alias for ``connectivity``.  Provide exactly one of
+            ``connectivity`` and ``interfaces``.
 
         name : str
             Name of the domain.
@@ -462,104 +597,215 @@ class Domain(BasicDomain):
 
         Notes
         -----
-        The orientations are specified in the same manner as in GeoPDES, see e.g.
-        <https://github.com/rafavzqz/geopdes/blob/master/geopdes/doc/geo_specs_mp_v21.txt#L193-L237>
-        and 
-        T. Dokken, E. Quak, V. Skytt. Requirements from Isogeometric Analysis for changes in product design ontologies, 2010.
+        The compact orientation convention follows the convention used by
+        GeoPDEs; see its `multipatch geometry specification
+        <https://github.com/rafavzqz/geopdes/blob/master/geopdes/doc/geo_specs_mp_v21.txt#L193-L237>`_
+        and T. Dokken, E. Quak, V. Skytt, *Requirements from Isogeometric
+        Analysis for Changes in Product Design Ontologies* (2010).
 
-        Example
-        -------
-        # list of patches (mapped domains)
-        Omega_0 = F0(A)
-        Omega_1 = F1(A)
-        Omega_2 = F2(A)
-        Omega_3 = F3(A)
+        Connectivity is symbolic. This method does not infer interfaces from
+        physical coordinates or verify that mapped faces coincide. It also
+        does not impose a mesh, spline space, or trace-coupling policy.
 
-        patches = [Omega_0, Omega_1, Omega_2, Omega_3]
-        
-        # integers representing the axes 
-        axis_0 = 0
-        axis_1 = 1
-        axis_2 = 2
+        Examples
+        --------
+        A four-patch 2D connectivity may reference patch objects directly:
 
-        # integers representing the extremities: left (-1) or right (+1)
-        ext_0 = -1
-        ext_1 = +1
-    
-        # A connectivity list in 2D
-        connectivity = [((Omega_0, axis_0, ext_0), (Omega_1, axis_0, ext_1),  1),
-                        ((Omega_1, axis_1, ext_0), (Omega_3, axis_1, ext_1), -1),
-                        ((Omega_0, axis_1, ext_0), (Omega_2, axis_1, ext_1),  1),
-                        ((Omega_2, axis_0, ext_0), (Omega_3, axis_0, ext_1), -1)]
+        >>> from sympde.topology import Cube, Domain, Square
+        >>> patches = [Square(f'P{i}') for i in range(4)]
+        >>> connectivity = [
+        ...     ((patches[0], 0, -1), (patches[1], 0, +1), +1),
+        ...     ((patches[1], 1, -1), (patches[3], 1, +1), -1),
+        ...     ((patches[0], 1, -1), (patches[2], 1, +1), +1),
+        ...     ((patches[2], 0, -1), (patches[3], 0, +1), -1),
+        ... ]
+        >>> omega = Domain.join(patches, connectivity, name='Omega')
 
-        # alternative option (passing interface patches by their indices in the patches list):
-        connectivity = [((0, axis_0, ext_0), (1, axis_0, ext_1),  1),
-                        ((1, axis_1, ext_0), (3, axis_1, ext_1), -1),
-                        ((0, axis_1, ext_0), (2, axis_1, ext_1),  1),
-                        ((2, axis_0, ext_0), (3, axis_0, ext_1), -1)]
+        The equivalent connectivity may use positions in ``patches``:
 
-        # A connectivity list in 3D
-        connectivity = [((Omega_0, axis_0, ext_1), (Omega_1, axis_0, ext_0), ( 1,  1,  1)),
-                        ((Omega_0, axis_1, ext_1), (Omega_2, axis_1, ext_0), ( 1, -1,  1)),
-                        ((Omega_1, axis_1, ext_1), (Omega_3, axis_1, ext_0), (-1,  1, -1)),
-                        ((Omega_2, axis_0, ext_1), (Omega_3, axis_0, ext_0), (-1,  1,  1))]
+        >>> connectivity = [
+        ...     ((0, 0, -1), (1, 0, +1), +1),
+        ...     ((1, 1, -1), (3, 1, +1), -1),
+        ...     ((0, 1, -1), (2, 1, +1), +1),
+        ...     ((2, 0, -1), (3, 0, +1), -1),
+        ... ]
+        >>> omega = Domain.join(patches, connectivity, name='Omega')
 
-        # alternative option (passing interface patches by their indices in the patches list):
-        connectivity = [((0, axis_0, ext_1), (1, axis_0, ext_0), ( 1,  1,  1)),
-                        ((0, axis_1, ext_1), (2, axis_1, ext_0), ( 1, -1,  1)),
-                        ((1, axis_1, ext_1), (3, axis_1, ext_0), (-1,  1, -1)),
-                        ((2, axis_0, ext_1), (3, axis_0, ext_0), (-1,  1,  1))]
+        A tuple also describes a cross-axis 3D interface:
 
-        # the multi-patch domain
-        Omega = Domain.join(patches=patches, connectivity=connectivity, name='Omega')
+        >>> A = Cube('A')
+        >>> B = Cube('B')
+        >>> omega = Domain.join(
+        ...     patches=[A, B],
+        ...     interfaces=[(
+        ...         (A, 0, +1),
+        ...         (B, 1, -1),
+        ...         (-1, +1, -1),
+        ...     )],
+        ...     name='Omega3D',
+        ... )
+        >>> interface, = omega.interface_map.values()
+        >>> interface.axis_map
+        ((1, 2, 1), (2, 0, -1))
         """
-        assert isinstance(patches, (tuple, list))
-        assert isinstance(connectivity, (tuple, list))
-        assert isinstance(name, str)
+        if not isinstance(patches, (tuple, list)):
+            raise TypeError('patches must be a list or tuple')
+        if not patches or not all(isinstance(patch, Domain) for patch in patches):
+            raise TypeError('patches must contain Domain objects')
 
-        if len(patches) == 1:
-            # single patch domain: return the patch
-            assert len(connectivity) == 0
+        if len({id(patch) for patch in patches}) != len(patches):
+            raise ValueError('patches must not contain the same object twice')
+
+        if any(not isinstance(patch.interior, InteriorDomain) or
+               patch.connectivity for patch in patches):
+            raise ValueError(
+                'Domain.join expects atomic patch domains without existing '
+                'connectivity; flatten joined domains before joining them')
+
+        patch_names = [str(patch.interior.name) for patch in patches]
+        if len(set(patch_names)) != len(patch_names):
+            raise ValueError('patch interior names must be unique')
+
+        serialized_patch_names = [
+            str(patch.interior.logical_domain.name)
+            if patch.interior.logical_domain is not None
+            else str(patch.interior.name)
+            for patch in patches
+        ]
+        if len(set(serialized_patch_names)) != len(serialized_patch_names):
+            raise ValueError(
+                'logical patch names used for serialization must be unique')
+
+        if interfaces is not None:
+            if connectivity is not None:
+                raise TypeError(
+                    'provide either connectivity or interfaces, not both')
+            connectivity = interfaces
+        elif connectivity is None:
+            connectivity = ()
+        if not isinstance(connectivity, (tuple, list)):
+            raise TypeError('connectivity/interfaces must be a list or tuple')
+        if not isinstance(name, str):
+            raise TypeError('name must be a string')
+
+        if len(patches) == 1 and not connectivity:
+            # Preserve the original single-patch domain when there is no
+            # topology to add. A non-empty connectivity may contain a
+            # self-interface and must follow the normal joining path.
             return patches[0]
 
-        assert all(p.dim==patches[0].dim for p in patches)
+        if not all(p.dim == patches[0].dim for p in patches):
+            raise ValueError('all patches must have the same logical dimension')
         ldim = int(patches[0].dim)
 
-        patch_given_by_indices = (len(connectivity) > 0 and isinstance(connectivity[0][0][0], int))
+        normalized_connectivity = []
+        explicit_interface_names = set()
+        for interface_data in connectivity:
+            if not isinstance(interface_data, tuple) or \
+               len(interface_data) not in (3, 4):
+                raise TypeError(
+                    'an interface must be the tuple '
+                    '(minus, plus, orientation) or '
+                    '(minus, plus, orientation, name)')
+
+            minus_spec, plus_spec, orientation = interface_data[:3]
+            interface_name = (
+                interface_data[3] if len(interface_data) == 4 else None)
+            if interface_name is not None:
+                if not isinstance(interface_name, str):
+                    raise TypeError('an explicit interface name must be a string')
+                if not interface_name:
+                    raise ValueError('an explicit interface name cannot be empty')
+                if interface_name in explicit_interface_names:
+                    raise ValueError(
+                        f'duplicate explicit interface name: {interface_name}')
+                explicit_interface_names.add(interface_name)
+
+            normalized_connectivity.append(
+                (minus_spec, plus_spec, orientation, interface_name))
 
         from sympde.topology.mapping import MultiPatchMapping
         # ... connectivity
         interfaces = {}
         boundaries = []
-        for cn in connectivity:
-            if patch_given_by_indices:
-                patch_minus = patches[cn[0][0]]
-                patch_plus  = patches[cn[1][0]]
+        # Reserve every explicit name before allocating generated ones. This
+        # makes explicit identity independent of the interface input order.
+        physical_interface_names = set(explicit_interface_names)
+        logical_interface_names = set()
+
+        def get_unique_interface_name(base, used_names):
+            """Return an unused name while preserving the historical pattern."""
+            if base not in used_names:
+                used_names.add(base)
+                return base
+
+            occurrence = 2
+            while f'{base}#{occurrence}' in used_names:
+                occurrence += 1
+            name = f'{base}#{occurrence}'
+            used_names.add(name)
+            return name
+
+        def get_boundary(boundary_spec):
+            if not isinstance(boundary_spec, tuple) or len(boundary_spec) != 3:
+                raise TypeError(
+                    'an interface side must be the tuple '
+                    '(patch, axis, extremity)')
+            patch_ref, axis, ext = boundary_spec
+            if isinstance(patch_ref, bool):
+                raise TypeError(
+                    'a patch reference must be a patch or integer index')
+            if isinstance(patch_ref, Domain):
+                matching_patches = [
+                    patch for patch in patches if patch_ref is patch]
+                if not matching_patches:
+                    raise ValueError(
+                        'an interface references a patch not present in patches')
+                patch = matching_patches[0]
             else:
-                patch_minus = cn[0][0]
-                patch_plus  = cn[1][0]
-            bnd_minus = patch_minus.get_boundary(axis=cn[0][1], ext=cn[0][2])
-            bnd_plus  =  patch_plus.get_boundary(axis=cn[1][1], ext=cn[1][2])
+                try:
+                    patch_index = _as_integer(patch_ref, 'patch index')
+                except TypeError as error:
+                    raise TypeError(
+                        'a patch reference must be a patch or integer index') \
+                        from error
+                if not 0 <= patch_index < len(patches):
+                    raise IndexError(f'patch index {patch_index} is out of range')
+                patch = patches[patch_index]
+            axis = _as_integer(axis, 'interface side axis')
+            ext = _as_integer(ext, 'interface side extremity')
+            if not 0 <= axis < ldim:
+                raise ValueError(f'axis must be between 0 and {ldim - 1}')
+            if ext not in (-1, 1):
+                raise ValueError('boundary extremity must be either -1 or 1')
+            return patch.get_boundary(axis=axis, ext=ext)
 
-            # Check that orientation is provided in the correct format depending on the dimension
-            ornt = cn[2] if len(cn) == 3 else None
-            if ldim == 1:
-                assert ornt is None, 'ornt is not needed for 1D interfaces'
-            elif ldim == 2:
-                assert ornt in (-1, 1), 'ornt must be either -1 or 1 for 2D interfaces'
-            elif ldim == 3:
-                ornt = tuple(ornt)
-                assert len(ornt) == 3, 'ornt must be a tuple of length 3 for 3D interfaces'
-                assert all(o in (-1, 1) for o in ornt), 'each element of ornt must be either -1 or 1 for 3D interfaces'
+        for minus_spec, plus_spec, orientation, explicit_name \
+                in normalized_connectivity:
+
+            bnd_minus = get_boundary(minus_spec)
+            bnd_plus  = get_boundary(plus_spec)
+            if explicit_name is None:
+                physical_base = (
+                    f'{bnd_minus.domain.name}|{bnd_plus.domain.name}')
+                interface_name = get_unique_interface_name(
+                    physical_base, physical_interface_names)
             else:
-                raise ValueError(f'Unsupported dimension: {ldim}')
+                interface_name = explicit_name
 
-            # Create a new Interface object using the join method of the Boundary objects
-            interface = bnd_minus.join(bnd_plus, ornt=ornt)
-            if interface.name in interfaces:
-                interface = bnd_plus.join(bnd_minus, ornt=ornt)
+            logical_name = None
+            if bnd_minus.logical_domain and bnd_plus.logical_domain:
+                logical_base = (
+                    f'{bnd_minus.logical_domain.domain.name}|'
+                    f'{bnd_plus.logical_domain.domain.name}')
+                logical_name = get_unique_interface_name(
+                    logical_base, logical_interface_names)
 
-            interfaces[interface.name] = interface
+            interface = bnd_minus.join(
+                bnd_plus, orientation, name=interface_name,
+                logical_name=logical_name)
+
+            interfaces[str(interface.name)] = interface
             boundaries.append(bnd_minus)
             boundaries.append(bnd_plus)
 
@@ -571,20 +817,27 @@ class Domain(BasicDomain):
         boundaries = Union(*[b for p in patches for b in p.boundary]).complement(Union(*boundaries))
         if boundaries is None:
             boundaries = ()
-        else :
+        elif isinstance(boundaries, Boundary):
+            boundaries = (boundaries,)
+        else:
             boundaries = boundaries.as_tuple()
 
         # ... interiors
-        interiors       = Union(*[p.interior for p in patches])
+        interior_patches = [p.interior for p in patches]
+        interiors       = Union(*interior_patches)
 
-        if all(e.mapping for e in interiors):
-            logical_interiors    = Union(*[e.logical_domain for e in interiors])
+        if all(e.mapping for e in interior_patches):
+            logical_interiors    = Union(*[e.logical_domain for e in interior_patches])
             logical_boundaries   = [e.logical_domain for e in boundaries]
             logical_connectivity = Connectivity()
             for k,v in connectivity.items():
                 logical_connectivity[v.logical_domain.name] = v.logical_domain
 
-            mapping        = MultiPatchMapping({e.logical_domain: e.mapping for e in interiors})
+            patch_mappings = {
+                e.logical_domain: e.mapping for e in interior_patches}
+            mapping = (
+                interior_patches[0].mapping if len(interior_patches) == 1
+                else MultiPatchMapping(patch_mappings))
             logical_domain = Domain(name,
                             interiors=logical_interiors,
                             boundaries=logical_boundaries,
@@ -602,162 +855,187 @@ class Domain(BasicDomain):
                       logical_domain=logical_domain)
 
     def get_shared_corners(self):
-        """ Compute the corners shared by multiple patches in 2D """
+        """Return equivalence classes of patch vertices joined by interfaces.
 
-        interfaces   = self.interfaces
-        interfaces = (interfaces,) if isinstance(interfaces, Interface) else interfaces
+        Face vertices are related using each interface's signed tangential-axis
+        permutation.  Connected components then handle any patch incidence in
+        both 2D and 3D, without walking around interfaces in a prescribed order.
+        """
+        interfaces = self.interfaces
+        if interfaces is None:
+            return None
+        interfaces = (interfaces,) if isinstance(interfaces, Interface) else tuple(interfaces)
 
-        directions   = {i.plus:i.ornt for i in interfaces}
-        directions.update({i.minus:i.ornt for i in interfaces})
+        parent = {}
 
-        boundaries    = {i.minus:i.plus for i in interfaces}
-        boundaries.update({value:key for key, value in boundaries.items()})
+        def find(vertex):
+            parent.setdefault(vertex, vertex)
+            while parent[vertex] != vertex:
+                parent[vertex] = parent[parent[vertex]]
+                vertex = parent[vertex]
+            return vertex
 
-        not_treated_corners = set([tuple(set((b, n))) for b in boundaries for n in b.adjacent_boundaries])
-        grouped_corners     = []
+        def union(vertex_1, vertex_2):
+            root_1 = find(vertex_1)
+            root_2 = find(vertex_2)
+            if root_1 != root_2:
+                if root_2.sort_key() < root_1.sort_key():
+                    root_1, root_2 = root_2, root_1
+                parent[root_2] = root_1
 
-        while not_treated_corners:
-            corner = not_treated_corners.pop()
-            grouped_corners.append([corner])
-            if not ( corner[0] in boundaries and corner[1] in boundaries):
-                while corner[1] in boundaries:
-                    bd1     = boundaries[corner[1]]
-                    bd2     = bd1.domain.get_boundary(axis=corner[0].axis, ext=corner[0].ext)
-                    corner = (bd1, bd2.rotate(directions[bd1]))
-                    grouped_corners[-1].append(corner)
+        def make_vertex(face, extents):
+            boundaries = [
+                face.domain.get_boundary(axis=axis, ext=ext)
+                for axis, ext in enumerate(extents)
+            ]
+            return CornerBoundary(*boundaries)
 
-                corner = grouped_corners[-1][0]
-                while corner[0] in boundaries:
-                    bd2     = boundaries[corner[0]]
-                    bd1     = bd2.domain.get_boundary(axis=corner[1].axis, ext=corner[1].ext)
-                    corner = (bd1.rotate(directions[bd2]), bd2)
-                    grouped_corners[-1].insert(0, corner)
+        for interface in interfaces:
+            minus_axis = interface.minus.axis
+            plus_axis  = interface.plus.axis
 
-            else:
-                while corner[1] in boundaries:
-                    bd1     = boundaries[corner[1]]
-                    bd2     = bd1.domain.get_boundary(axis=corner[0].axis, ext=corner[0].ext)
-                    corner = (bd1, bd2.rotate(directions[bd1]))
-                    if corner == grouped_corners[-1][0]:
-                        break
-                    grouped_corners[-1].append(corner)
-                else:
-                    corner = grouped_corners[-1][0]
-                    while corner[0] in boundaries:
-                        bd2     = boundaries[corner[0]]
-                        bd1     = bd2.domain.get_boundary(axis=corner[1].axis, ext=corner[1].ext)
-                        corner = (bd1.rotate(directions[bd2]), bd2)
-                        grouped_corners[-1].insert(0, corner)
+            for tangent_extents in product((-1, 1), repeat=self.dim - 1):
+                minus_extents = [None] * self.dim
+                plus_extents  = [None] * self.dim
+                minus_extents[minus_axis] = interface.minus.ext
+                plus_extents[plus_axis]   = interface.plus.ext
+                for source_position, (source_axis, target_axis, direction) \
+                        in enumerate(interface.axis_map):
+                    source_ext = tangent_extents[source_position]
+                    minus_extents[source_axis] = source_ext
+                    plus_extents[target_axis]  = direction * source_ext
 
-            grouped_corners[-1] = tuple(tuple(set(c)) for c in grouped_corners[-1])
-            not_treated_corners = not_treated_corners.difference(grouped_corners[-1])
+                union(
+                    make_vertex(interface.minus, minus_extents),
+                    make_vertex(interface.plus, plus_extents))
 
-        grouped_corners = set(tuple(grouped_corners))
-        grouped_corners = Union(*[CornerInterface(*[CornerBoundary(*e) for e in cs]) for cs in grouped_corners])
-        return grouped_corners
+        groups = {}
+        for vertex in parent:
+            groups.setdefault(find(vertex), []).append(vertex)
+
+        shared_corners = [
+            CornerInterface(*vertices)
+            for _, vertices in sorted(groups.items(), key=lambda item: item[0].sort_key())
+            if len(vertices) > 1
+        ]
+        return Union(*shared_corners)
 
     def get_subdomain(self, names):
         """
-        Returns an individual patch or a Union of patches of a multipatch domain.
+        Return the subdomain induced by a selection of patch names.
 
         Parameters
         ----------
         names : tuple of str or str
-            Names of the patches to join.
-            If a string is given, the corresponding patch will be returned.
-            If a tuple of strings is given, the Union of the corresponding subdomains will be returned.
+            Names of the patches to retain. If a string is given, a one-patch
+            subdomain is returned. If a tuple is given, its order determines
+            the generated subdomain name.
 
         Notes
         -----
-        The subdomain is returned as it was before being joined, which means that its boundary includes the
-        boundaries that are part of an interface in the multipatch domain.
+        Interfaces whose two sides belong to selected patches are retained,
+        including repeated and self-interfaces. If exactly one side is
+        selected, that side becomes part of the subdomain's exterior boundary.
         """
         if names == ():
             return None
 
         if isinstance(names, str):
             names = (names,)
-            assert names[0] in self.interior_names
+        elif not isinstance(names, tuple):
+            raise TypeError('names must be a string or a tuple of strings')
 
-        elif isinstance(names, tuple):
-            assert all(isinstance(name, str) for name in names)
-            assert len(set(names)) == len(names)
-            assert all(name in self.interior_names or name == self.name for name in names)
+        if not all(isinstance(name, str) for name in names):
+            raise TypeError('every subdomain name must be a string')
+        if len(set(names)) != len(names):
+            raise ValueError('subdomain names must be unique')
 
-        # Check trivial case of single patch domain
-        if isinstance(self.interior, InteriorDomain):
-            assert names[0] == self.interior.name
+        interior_names = tuple(self.interior_names)
+        unknown_names = [
+            name for name in names
+            if name not in interior_names and name != self.name
+        ]
+        if unknown_names:
+            unknown = ', '.join(unknown_names)
+            raise ValueError(f'unknown subdomain name(s): {unknown}')
+
+        # Selecting the containing domain or every patch is an identity
+        # operation, preserving its name and object identity.
+        if self.name in names or set(names) == set(interior_names):
             return self
 
-        # If all patches are joined we get the full domain
-        # Same if the full domain is part of the union
-        if len(names) == len(self.interior_names) or self.name in names:
-            return self
+        selected_names = set(names)
+        interior_dict = {interior.name: interior for interior in self.patches}
+        interiors = [interior_dict[name] for name in names]
 
-        # Build dictionary of interiors accessed by names
-        interior_dict = {i.name: i for i in self.interior.as_tuple()}
+        # Existing exterior sides remain exterior when their patch is selected.
+        boundaries = [
+            boundary for boundary in self.exterior_sides
+            if boundary.domain.name in selected_names
+        ]
+        interfaces = OrderedDict()
 
-        # Build dictionary of boundaries
-        if self.boundary is not None:
-            if isinstance(self.boundary, Union):
-                boundary_dict = {(b.domain.name, b.axis, b.ext): b for b in self.boundary.as_tuple()}
+        # Connectivity induces both the retained interfaces and the new cut
+        # boundary. Iterating the original mapping preserves interface keys and
+        # distinguishes repeated interfaces between the same patch pair.
+        for key, interface in self.connectivity.items():
+            minus_selected = interface.minus.domain.name in selected_names
+            plus_selected = interface.plus.domain.name in selected_names
+
+            if minus_selected and plus_selected:
+                interfaces[key] = interface
+            elif minus_selected:
+                boundaries.append(interface.minus)
+            elif plus_selected:
+                boundaries.append(interface.plus)
+
+        connectivity = Connectivity(interfaces)
+        name = '|'.join(names)
+        mapping = None
+        logical_domain = None
+
+        if all(interior.mapping is not None for interior in interiors):
+            logical_interiors = [
+                interior.logical_domain for interior in interiors]
+            logical_boundaries = [
+                boundary.logical_domain for boundary in boundaries]
+            logical_interfaces = OrderedDict()
+
+            if any(interior is None for interior in logical_interiors) or \
+               any(boundary is None for boundary in logical_boundaries):
+                raise ValueError(
+                    'mapped patch topology is missing logical-domain metadata')
+
+            for interface in interfaces.values():
+                logical_interface = interface.logical_domain
+                if logical_interface is None:
+                    raise ValueError(
+                        'mapped interface is missing logical-domain metadata')
+                logical_interfaces[str(logical_interface.name)] = \
+                    logical_interface
+
+            logical_domain = Domain(
+                name,
+                interiors=logical_interiors,
+                boundaries=logical_boundaries,
+                connectivity=Connectivity(logical_interfaces))
+
+            if len(interiors) == 1:
+                mapping = interiors[0].mapping
             else:
-                b = self.boundary
-                boundary_dict = {(b.domain.name, b.axis, b.ext): b}
-        else:
-            boundary_dict = {}
+                from sympde.topology.mapping import MultiPatchMapping
+                mapping = MultiPatchMapping({
+                    interior.logical_domain: interior.mapping
+                    for interior in interiors
+                })
 
-        # Build dictionary of interfaces
-        if self.interfaces is not None:
-            if isinstance(self.interfaces, Union):
-                interfaces_dict = {(i.minus.domain.name, i.plus.domain.name): i for i in self.interfaces.as_tuple()}
-            elif isinstance(self.interfaces, Interface):
-                i = self.interfaces
-                interfaces_dict = {(i.minus.domain.name, i.plus.domain.name): i}
-        else:
-            interfaces_dict = {}
-
-        interfaces = []
-
-        for name in names:
-            if name == self.name:
-                return self
-            interior = interior_dict[name]
-            boundaries = [boundary_dict.get((name, axis, ext)) for axis in range(self.dim) for ext in [-1, 1]]
-
-            boundaries = [b for b in boundaries if b is not None]
-
-            # Extract boundaries and interfaces from interfaces_dict
-            for other_name in self.interior_names:
-                if other_name != name:
-                    i_minus = interfaces_dict.pop((name, other_name), None)
-                    i_plus = interfaces_dict.pop((other_name, name), None)
-
-                    if other_name not in names:
-                        if i_minus is not None:
-                            boundaries.append(i_minus.minus)
-                        if i_plus is not None:
-                            boundaries.append(i_plus.plus)
-                    else:
-                        if i_plus is not None:
-                            interfaces.append((i_plus.name, i_plus))
-                        if i_minus is not None:
-                            interfaces.append((i_minus.name, i_minus))
-
-            # Create domain with name, interior and boundaries
-            new_domain = Domain(name=name, interiors=interior, boundaries=boundaries,
-                                mapping=interior.mapping, logical_domain=interior.logical_domain)
-            try:
-                previous_domain = Domain.join([previous_domain,new_domain], [], name=f"{previous_domain.name}|{new_domain.name}")
-            except NameError:
-                previous_domain = new_domain
-
-        # Add interfaces
-        joined_domain = previous_domain
-        for k,v in interfaces:
-            joined_domain.connectivity[k] = v
-
-        return joined_domain
+        return Domain(
+            name,
+            interiors=interiors,
+            boundaries=boundaries,
+            connectivity=connectivity,
+            mapping=mapping,
+            logical_domain=logical_domain)
 
 
 #==============================================================================
@@ -850,11 +1128,22 @@ class NCubeInterior(InteriorDomain):
     def get_boundary(self, axis=None, ext=None):
         """return boundary by (axis, ext)."""
         # ...
-        assert(not( ext  is None ))
+        if ext is None:
+            raise ValueError('boundary extremity must be provided')
 
         if axis is None:
-            assert(self.dim == 1)
+            if self.dim != 1:
+                raise ValueError('axis may be None only for a 1D domain')
             axis = 0
+        else:
+            axis = _as_integer(axis, 'boundary axis')
+        ext = _as_integer(ext, 'boundary extremity')
+
+        if not 0 <= axis < self.dim:
+            raise ValueError(
+                f'boundary axis must be between 0 and {self.dim - 1}')
+        if ext not in (-1, 1):
+            raise ValueError('boundary extremity must be either -1 or 1')
 
         if isinstance(self.boundary, Union):
             x = [i for i in self.boundary.args if i.ext == ext and i.axis==axis]
@@ -1141,5 +1430,3 @@ def split(domain, value):
 
     else:
         raise NotImplementedError('TODO')
-
-

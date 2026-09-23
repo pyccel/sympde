@@ -222,7 +222,7 @@ def test_logical_expr_2d_2():
     D2 = M2(B)
 
     patches = [D1, D2]
-    connectivity = [((0, 0, 1), (1, 0, -1), 1)]
+    connectivity = [((0, 0, 1), (1, 0, -1), +1)]
     domain = Domain.join(patches, connectivity, 'domain')
 
 
@@ -262,6 +262,24 @@ def test_logical_expr_2d_2():
     assert str(expr) == 'Integral(A|B, Dot((Jacobian(M2)**(-1)).T * Grad(PlusInterfaceOperator(u2)), (Jacobian(M2)**(-1)).T * Grad(PlusInterfaceOperator(v2)))*sqrt(det(Jacobian(M1|M2).T * Jacobian(M1|M2))))'
 
 
+#==============================================================================
+def test_logical_expr_on_mapped_multipatch_interface():
+    logical_domain = Domain.join(
+        [Square('A'), Square('B')],
+        [((0, 0, +1), (1, 1, -1), -1)],
+        'AB')
+    mapped_domain = Mapping('M', dim=2)(logical_domain)
+    V = ScalarFunctionSpace('V', mapped_domain, kind='h1')
+    u = element_of(V, name='u')
+
+    expr = LogicalExpr(integral(mapped_domain.interfaces, u**2), mapped_domain)
+
+    assert expr.domain is logical_domain.interfaces
+    assert str(expr) == (
+        'Integral(A|B, u**2*sqrt(det('
+        'Jacobian(M|M).T * Jacobian(M|M))))')
+
+
 def test_logical_expr_2d_3():
     dim = 2
 
@@ -276,7 +294,7 @@ def test_logical_expr_2d_3():
 
 
     patches = [D1, D2]
-    connectivity = [((0, 0, 1), (1, 0, -1), 1)]
+    connectivity = [((0, 0, 1), (1, 0, -1), +1)]
     domain = Domain.join(patches, connectivity, 'domain')
 
     V = VectorFunctionSpace('V', domain, kind='hcurl')

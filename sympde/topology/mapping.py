@@ -623,20 +623,26 @@ class MappedDomain(BasicDomain):
             elif boundaries:
                 kwargs['boundaries'] = mapping(boundaries)
 
-            interfaces =  logical_domain.connectivity.interfaces
-            if interfaces:
-                if isinstance(interfaces, Union):
-                    interfaces = interfaces.args
-                else:
-                    interfaces = [interfaces]
-                connectivity = {}
-                for e in interfaces:
-                    connectivity[e.name] = Interface(e.name, mapping(e.minus), mapping(e.plus))
+            if logical_domain.connectivity:
+                connectivity = {
+                    name: mapping(interface)
+                    for name, interface in logical_domain.connectivity.items()
+                }
                 kwargs['connectivity'] = Connectivity(connectivity)
 
             name = '{}({})'.format(str(mapping.name), str(logical_domain.name))
             return Domain(name, **kwargs)
 
+        elif isinstance(logical_domain, Interface):
+            minus = mapping(logical_domain.minus)
+            plus  = mapping(logical_domain.plus)
+            interface_mapping = InterfaceMapping(
+                minus.mapping, plus.mapping)
+            return Interface(
+                str(logical_domain.name), minus, plus,
+                logical_domain.orientation,
+                mapping=interface_mapping,
+                logical_domain=logical_domain)
         elif isinstance(logical_domain, NCubeInterior):
             name  = logical_domain.name
             dim   = logical_domain.dim
@@ -751,14 +757,14 @@ class Jacobian(MappingApplication):
         """
         this class methods computes the jacobian of a mapping
 
-        Parameters:
+        Parameters
         ----------
-         F: Mapping
+        F : Mapping
             mapping object
 
-        Returns:
-        ----------
-         expr : ImmutableDenseMatrix
+        Returns
+        -------
+        expr : ImmutableDenseMatrix
             the jacobian matrix
         """
 
@@ -799,17 +805,17 @@ class Covariant(MappingApplication):
         """
         This class methods computes the covariant transformation
 
-        Parameters:
+        Parameters
         ----------
-         F: Mapping
+        F : Mapping
             mapping object
 
-         v: <tuple|list|Tuple|ImmutableDenseMatrix|Matrix>
+        v : tuple | list | Tuple | ImmutableDenseMatrix | Matrix
             the basis function
 
-        Returns:
-        ----------
-         expr : Tuple
+        Returns
+        -------
+        expr : Tuple
             the covariant transformation
         """
 
@@ -848,17 +854,17 @@ class Contravariant(MappingApplication):
         """
         This class methods computes the contravariant transformation
 
-        Parameters:
+        Parameters
         ----------
-         F: Mapping
+        F : Mapping
             mapping object
 
-         v: <tuple|list|Tuple|ImmutableDenseMatrix|Matrix>
+        v : tuple | list | Tuple | ImmutableDenseMatrix | Matrix
             the basis function
 
-        Returns:
-        ----------
-         expr : Tuple
+        Returns
+        -------
+        expr : Tuple
             the contravariant transformation
         """
 
@@ -1223,7 +1229,11 @@ class LogicalExpr(CalculusFunction):
                 J   = mapping.jacobian
                 det = sqrt((J.T*J).det())
             else:
-                axis = domain.axis
+                # Interface integration uses the minus side as its canonical
+                # parametrization.  The plus face may have a different normal
+                # axis, so an Interface has deliberately no single ``axis``.
+                axis = (domain.minus.axis
+                        if isinstance(domain, Interface) else domain.axis)
                 J    = JacobianSymbol(mapping, axis=axis)
                 det  = sqrt((J.T*J).det())
 

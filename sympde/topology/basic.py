@@ -3,10 +3,18 @@
 
 
 from collections import abc
+from numbers import Integral
 
-from sympy.core import Basic, Symbol, Expr
+from sympy.core import Basic, Symbol, Expr, Integer
 from sympy.core.containers import Tuple
 from sympy.tensor import IndexedBase
+
+
+def _as_integer(value, name):
+    """Return an integer input without silently truncating other scalars."""
+    if isinstance(value, bool) or not isinstance(value, (Integral, Integer)):
+        raise TypeError(f'{name} must be an integer')
+    return int(value)
 
 #==============================================================================
 class BasicDomain(Basic):
@@ -43,6 +51,7 @@ class BasicDomain(Basic):
     def _sympystr(self, printer):
         sstr = printer.doprint
         return '{}'.format(sstr(self.name))
+
 
 #==============================================================================
 class InteriorDomain(BasicDomain):
@@ -265,10 +274,15 @@ class Boundary(BasicDomain):
     def __new__(cls, name, domain, axis=None, ext=None, mapping=None, logical_domain=None):
 
         if axis is not None:
-            assert isinstance(axis, int)
+            axis = _as_integer(axis, 'boundary axis')
+            if not 0 <= axis < domain.dim:
+                raise ValueError(
+                    f'boundary axis must be between 0 and {domain.dim - 1}')
 
         if ext is not None:
-            assert isinstance(ext, int)
+            ext = _as_integer(ext, 'boundary extremity')
+            if ext not in (-1, 1):
+                raise ValueError('boundary extremity must be either -1 or 1')
 
         obj                 = Basic.__new__(cls, name, domain, axis, ext)
         obj._mapping        = mapping
@@ -289,8 +303,31 @@ class Boundary(BasicDomain):
         return self.args[2]
 
     @property
+    def normal_axis(self):
+        """Logical axis normal to this patch side.
+
+        This is the descriptive multipatch alias of :attr:`axis`.
+        """
+        return self.axis
+
+    @property
     def ext(self):
         return self.args[3]
+
+    @property
+    def patch(self):
+        """Patch interior owning this side; an alias of :attr:`domain`."""
+        return self.domain
+
+    @property
+    def patch_dim(self):
+        """Logical dimension of the patch owning this side."""
+        return self.dim
+
+    @property
+    def intrinsic_dim(self):
+        """Intrinsic dimension of this codimension-one side."""
+        return self.dim - 1
 
     @property
     def mapping(self):
@@ -323,22 +360,27 @@ class Boundary(BasicDomain):
 
         raise NotImplementedError('only 2d case is available')
 
-    def join(self, boundary, ornt=None):
-        from sympde.topology.mapping import InterfaceMapping
-        # TODO be careful with '|' in psydac
+    def join(self, boundary, orientation, *, name=None, logical_name=None):
+        if not isinstance(boundary, Boundary):
+            raise TypeError('boundary must be a Boundary')
+
         if self.mapping and boundary.mapping:
+            # Imported lazily to keep the basic topology layer independent of
+            # the mapping/domain import cycle.
+            from sympde.topology.mapping import InterfaceMapping
             int_map            = InterfaceMapping(self.mapping , boundary.mapping)
             a,b                = self.logical_domain, boundary.logical_domain
-            l_name             = '{l}|{r}'.format(l=a.domain.name, r=b.domain.name)
-            int_logical_domain = Interface(l_name, a,b, ornt=ornt)
+            l_name             = logical_name or '{l}|{r}'.format(l=a.domain.name, r=b.domain.name)
+            int_logical_domain = Interface(l_name, a, b, orientation=orientation)
         else:
             int_map            = None
             int_logical_domain = None
 
-        name               = '{l}|{r}'.format(l=self.domain.name, r=boundary.domain.name)
+        name = name or '{l}|{r}'.format(l=self.domain.name, r=boundary.domain.name)
         interface = Interface(name, self, boundary,
                               mapping=int_map,
-                              logical_domain=int_logical_domain, ornt=ornt)
+                              logical_domain=int_logical_domain,
+                              orientation=orientation)
         return interface
 
     def _sympystr(self, printer):
@@ -363,7 +405,7 @@ class Boundary(BasicDomain):
 #==============================================================================
 class CornerBoundary(BasicDomain):
     """
-    Represents an undefined corner over a domain in 2D.
+    Represents a vertex as the intersection of a patch's boundary faces.
 
     """
     def __new__(cls, *boundaries):
@@ -406,7 +448,7 @@ class CornerBoundary(BasicDomain):
 #==============================================================================
 class CornerInterface(BasicDomain):
     """
-    Represents a shared corner over multiple patches in 2D.
+    Represents a vertex shared by multiple patches.
 
     """
     def __new__(cls, *corners):
@@ -434,6 +476,34 @@ class CornerInterface(BasicDomain):
         corners = ', '.join(sstr(b) for b in self.corners)
         return 'CornerInterface({})'.format(corners)
 
+
+# Descriptive multipatch aliases.  The original class names remain canonical
+# SymPy and serialization names for backwards compatibility.
+PatchVertex = CornerBoundary
+SharedVertex = CornerInterface
+
+
+#==============================================================================
+def _interface_axis_map(dim, minus_axis, plus_axis, orientation):
+    """Decode a validated compact orientation into a signed axis map."""
+    dim = int(dim)
+    minus_tangents = tuple(axis for axis in range(dim) if axis != minus_axis)
+    plus_tangents = tuple(axis for axis in range(dim) if axis != plus_axis)
+
+    if dim == 1:
+        return ()
+    if dim == 2:
+        return ((minus_tangents[0], plus_tangents[0], orientation),)
+
+    flag, sign1, sign2 = orientation
+    plus_positions = (0, 1) if flag == 1 else (1, 0)
+    return tuple(
+        (minus_axis, plus_tangents[plus_position], direction)
+        for minus_axis, plus_position, direction
+        in zip(minus_tangents, plus_positions, (sign1, sign2))
+    )
+
+
 #==============================================================================
 class Interface(BasicDomain):
     """
@@ -450,6 +520,19 @@ class Interface(BasicDomain):
     bnd_plus : Boundary
         Boundary on the "plus" side of the interface.
 
+    orientation : None, int, or tuple[int, int, int]
+        Compact orientation from the minus face to the plus face. Let ``M``
+        and ``P`` be the ordered tangential axes obtained by removing the
+        normal axis of the minus and plus face, respectively, from
+        ``range(dim)``.
+
+        In 1D the orientation is ``None``. In 2D it is one sign, and maps
+        ``M[0]`` to ``P[0]`` with that direction. In 3D it is
+        ``(flag, sign1, sign2)``. If ``flag`` is ``+1``, ``M[0]`` and ``M[1]``
+        map to ``P[0]`` and ``P[1]``. If ``flag`` is ``-1``, they map to
+        ``P[1]`` and ``P[0]``. ``sign1`` and ``sign2`` give the respective
+        directions. Every flag and sign is either ``-1`` or ``+1``.
+
     mapping : Mapping, optional
         Mapping from the logical domain to the physical domain, if available.
 
@@ -457,20 +540,45 @@ class Interface(BasicDomain):
         Logical domain associated with the interface, if available. It should
         be consistent with the mapping if provided.
 
-    ornt : int | Iterable[int], optional
-        Orientation of the interface. For 1D interfaces, this is not needed and
-        should be set to None. For 2D interfaces, this should be either -1 or 1.
-        For 3D interfaces, this should be a tuple of three integers, each being
-        either -1 or 1.
-
     Notes
     -----
-    The orientations are specified in the same manner as in GeoPDES, see e.g.
-    <https://github.com/rafavzqz/geopdes/blob/master/geopdes/doc/geo_specs_mp_v21.txt#L193-L237>
-    and
-    T. Dokken, E. Quak, V. Skytt. Requirements from Isogeometric Analysis for changes in product design ontologies, 2010.
+    ``minus`` and ``plus`` are ordered labels: they define the direction in
+    which ``orientation`` is read. They do not describe geometric position or
+    mesh size. The two faces may have different normal axes; those axes are
+    part of ``bnd_minus`` and ``bnd_plus`` and are deliberately not repeated
+    in the orientation.
+
+    This compact orientation convention follows the multipatch convention
+    used by GeoPDEs; see its `multipatch geometry specification
+    <https://github.com/rafavzqz/geopdes/blob/master/geopdes/doc/geo_specs_mp_v21.txt#L193-L237>`_
+    and T. Dokken, E. Quak, V. Skytt, *Requirements from Isogeometric
+    Analysis for Changes in Product Design Ontologies* (2010).
+
+    :attr:`axis_map` exposes the decoded convention as
+    ``(minus_axis, plus_axis, direction)`` triples.
+
+    Examples
+    --------
+    A cube interface may exchange its two tangential axes and reverse one of
+    them, even when the faces have different normal axes:
+
+    >>> from sympde.topology import Cube, Interface
+    >>> A = Cube('A')
+    >>> B = Cube('B')
+    >>> interface = Interface(
+    ...     'A|B',
+    ...     A.get_boundary(axis=0, ext=+1),
+    ...     B.get_boundary(axis=1, ext=-1),
+    ...     orientation=(-1, +1, -1),
+    ... )
+    >>> interface.orientation
+    (-1, 1, -1)
+    >>> interface.axis_map
+    ((1, 2, 1), (2, 0, -1))
+
     """
-    def __new__(cls, name, bnd_minus, bnd_plus, *, mapping=None, logical_domain=None, ornt=None):
+    def __new__(cls, name, bnd_minus, bnd_plus, orientation, *, mapping=None,
+                logical_domain=None):
 
         if not isinstance(name     , str     ): raise TypeError(name)
         if not isinstance(bnd_minus, Boundary): raise TypeError(bnd_minus)
@@ -502,23 +610,45 @@ class Interface(BasicDomain):
             if logical_domain.dim != ldim:
                 raise ValueError(f'Logical domain should have dimension = {ldim}, got {logical_domain.dim} instead')
 
-        # Check that orientation is provided in the correct format depending on the dimension
+        # Validate the public input and convert it to the canonical SymPy
+        # representation stored in ``args``.  ``axis_map`` can consequently
+        # decode ``self.orientation`` without validating it a second time.
         if ldim == 1:
-            assert ornt is None, 'ornt is not needed for 1D interfaces'
+            if orientation is not None:
+                raise ValueError('a 1D interface orientation must be None')
+            orientation_arg = None
         elif ldim == 2:
-            assert ornt in (-1, 1), 'ornt must be either -1 or 1 for 2D interfaces'
+            try:
+                orientation = _as_integer(
+                    orientation, 'a 2D interface orientation')
+            except TypeError as error:
+                raise TypeError(
+                    'a 2D interface orientation must be an integer') \
+                    from error
+            if orientation not in (-1, 1):
+                raise ValueError('a 2D interface orientation must be +1 or -1')
+            orientation_arg = Integer(orientation)
         elif ldim == 3:
-            ornt = tuple(ornt)
-            assert len(ornt) == 3, 'ornt must be a tuple of length 3 for 3D interfaces'
-            assert all(o in (-1, 1) for o in ornt), 'each element of ornt must be either -1 or 1 for 3D interfaces'
+            if (not isinstance(orientation, (tuple, list, Tuple)) or
+                    len(orientation) != 3):
+                raise TypeError(
+                    'a 3D interface orientation must be '
+                    '(flag, sign1, sign2)')
+            try:
+                orientation = tuple(
+                    _as_integer(value, 'a 3D interface orientation value')
+                    for value in orientation)
+            except TypeError as error:
+                message = 'a 3D interface orientation must contain integers'
+                raise TypeError(message) from error
+            if any(value not in (-1, 1) for value in orientation):
+                raise ValueError(
+                    'each 3D interface orientation value must be +1 or -1')
+            orientation_arg = Tuple(*orientation)
         else:
-            raise ValueError(f'Unsupported dimension: {ldim}')
+            raise ValueError(f'unsupported interface dimension: {ldim}')
 
-        # Strong requirement: the two boundaries must be defined over the same axis
-        # TODO [YG 10.02.2026]: relax this requirement ASAP
-        assert bnd_minus.axis == bnd_plus.axis
-
-        obj = Basic.__new__(cls, name, bnd_minus, bnd_plus, ornt)
+        obj = Basic.__new__(cls, name, bnd_minus, bnd_plus, orientation_arg)
         obj._mapping        = mapping
         obj._logical_domain = logical_domain
         return obj
@@ -536,16 +666,43 @@ class Interface(BasicDomain):
         return self.args[1]
 
     @property
+    def minus_side(self):
+        """Descriptive alias of :attr:`minus`."""
+        return self.minus
+
+    @property
     def plus(self):
         return self.args[2]
 
     @property
-    def ornt(self):
-        return self.args[3]
+    def plus_side(self):
+        """Descriptive alias of :attr:`plus`."""
+        return self.plus
 
     @property
-    def axis(self):
-        return self.plus.axis
+    def orientation(self):
+        """Compact dimension-specific orientation of this interface."""
+        if self.dim == 1:
+            return None
+        if self.dim == 2:
+            return int(self.args[3])
+        return tuple(int(value) for value in self.args[3])
+
+    @property
+    def axis_map(self):
+        """Tangential-axis correspondence from the minus to the plus side."""
+        return _interface_axis_map(
+            self.dim, self.minus.axis, self.plus.axis, self.orientation)
+
+    @property
+    def patch_dim(self):
+        """Logical dimension of each adjacent patch."""
+        return self.dim
+
+    @property
+    def intrinsic_dim(self):
+        """Intrinsic dimension of the interface."""
+        return self.dim - 1
 
     @property
     def mapping(self):
@@ -559,20 +716,6 @@ class Interface(BasicDomain):
         sstr = printer.doprint
         return '{}'.format(sstr(self.name))
 
-#==============================================================================
-# TODO [MCP 16.02.2026]: remove this class as it is not used anywhere, neither
-# in SymPDE nor in PSYDAC. It appears to have been replaced by Boundary, which
-# is more general as it can represent geometrical objects in any dimension.
-class Edge(object):
-    def __init__(self, name):
-        self._name = name
-
-    @property
-    def name(self):
-        return self._name
-
-    def __lt__(self, other):
-        return self.name.__lt__(other.name)
 
 #==============================================================================
 class Connectivity(abc.Mapping):
@@ -605,7 +748,11 @@ class Connectivity(abc.Mapping):
         connectivity = {}
         data = dict(sorted(self._data.items()))
         for name, v in data.items():
-            connectivity[name] = [v.minus.todict(), v.plus.todict(), v.ornt]
+            orientation = v.orientation
+            if isinstance(orientation, tuple):
+                orientation = list(orientation)
+            connectivity[name] = [
+                v.minus.todict(), v.plus.todict(), orientation]
         connectivity = dict(sorted(connectivity.items()))
         # ...
 
@@ -639,5 +786,3 @@ class Connectivity(abc.Mapping):
         return 0
 
     # ==========================================
-
-
