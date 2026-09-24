@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # --------------------------------------------------------------------------- #
 # This file is part of SymPDE.                                              #
 # --------------------------------------------------------------------------- #
@@ -6,29 +5,17 @@
 
 from argparse import ArgumentParser
 from pathlib import Path
-import sys
 
 import numpy as np
 
-if __package__:
-    from .analytical_mapping import (
-        AffineMapping,
-        IdentityMapping,
-        PolarMapping,
-        TorusMapping,
-        TransposedPolarMapping,
-    )
-    from .domain import Cube, Domain, Square
-else:
-    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-    from sympde.topology.analytical_mapping import (
-        AffineMapping,
-        IdentityMapping,
-        PolarMapping,
-        TorusMapping,
-        TransposedPolarMapping,
-    )
-    from sympde.topology.domain import Cube, Domain, Square
+from .analytical_mapping import (
+    AffineMapping,
+    IdentityMapping,
+    PolarMapping,
+    TorusMapping,
+    TransposedPolarMapping,
+)
+from .domain import Cube, Domain, Square
 
 __all__ = (
     'build_annulus_3',
@@ -37,17 +24,22 @@ __all__ = (
     'build_curved_l_shape',
     'build_multipatch_domain_2d',
     'build_multipatch_domain_3d',
+    'build_oriented_two_cube',
     'build_pretzel',
     'build_pretzel_annulus',
     'build_pretzel_debug',
     'build_pretzel_f',
+    'build_self_connected_patch',
     'build_square_2',
     'build_square_4',
     'build_square_6',
     'build_square_8',
     'build_square_9',
-    'build_torus_2x2_3d',
-    'build_two_patch_3d',
+    'build_three_patch_shared_edge',
+    'build_three_patch_shared_vertex',
+    'build_torus_3d',
+    'build_two_cube_3d',
+    'build_two_patch_twisted_strip',
     'plot_multipatch_domain',
 )
 
@@ -58,18 +50,18 @@ __all__ = (
 
 def build_square_2():
     """Build a square decomposed into two horizontal patches."""
-    logical_1 = Square(
-        'OmegaLog1',
+    logical_patch_1 = Square(
+        'P1',
         bounds1=(0., np.pi),
         bounds2=(0., np.pi / 2),
     )
-    logical_2 = Square(
-        'OmegaLog2',
+    logical_patch_2 = Square(
+        'P2',
         bounds1=(0., np.pi),
         bounds2=(np.pi / 2, np.pi),
     )
-    patch_1 = IdentityMapping('M1', dim=2)(logical_1)
-    patch_2 = IdentityMapping('M2', dim=2)(logical_2)
+    patch_1 = IdentityMapping('M1', dim=2)(logical_patch_1)
+    patch_2 = IdentityMapping('M2', dim=2)(logical_patch_2)
 
     patches = (patch_1, patch_2)
     connectivity = (
@@ -80,30 +72,30 @@ def build_square_2():
 
 def build_square_4():
     """Build a square decomposed into a two-by-two patch grid."""
-    logical_a = Square(
+    logical_patch_a = Square(
         'A',
         bounds1=(0., np.pi / 2),
         bounds2=(0., np.pi / 2),
     )
-    logical_b = Square(
+    logical_patch_b = Square(
         'B',
         bounds1=(np.pi / 2, np.pi),
         bounds2=(0., np.pi / 2),
     )
-    logical_c = Square(
+    logical_patch_c = Square(
         'C',
         bounds1=(0., np.pi / 2),
         bounds2=(np.pi / 2, np.pi),
     )
-    logical_d = Square(
+    logical_patch_d = Square(
         'D',
         bounds1=(np.pi / 2, np.pi),
         bounds2=(np.pi / 2, np.pi),
     )
-    patch_a = IdentityMapping('M1', dim=2)(logical_a)
-    patch_b = IdentityMapping('M2', dim=2)(logical_b)
-    patch_c = IdentityMapping('M3', dim=2)(logical_c)
-    patch_d = IdentityMapping('M4', dim=2)(logical_d)
+    patch_a = IdentityMapping('M1', dim=2)(logical_patch_a)
+    patch_b = IdentityMapping('M2', dim=2)(logical_patch_b)
+    patch_c = IdentityMapping('M3', dim=2)(logical_patch_c)
+    patch_d = IdentityMapping('M4', dim=2)(logical_patch_d)
 
     patches = (patch_a, patch_b, patch_c, patch_d)
     connectivity = (
@@ -117,42 +109,42 @@ def build_square_4():
 
 def build_square_6():
     """Build a square decomposed into a two-by-three patch grid."""
-    logical_1 = Square(
-        'OmegaLog1',
+    logical_patch_1 = Square(
+        'P1',
         bounds1=(0., np.pi / 2),
         bounds2=(0., np.pi / 3),
     )
-    logical_2 = Square(
-        'OmegaLog2',
+    logical_patch_2 = Square(
+        'P2',
         bounds1=(np.pi / 2, np.pi),
         bounds2=(0., np.pi / 3),
     )
-    logical_3 = Square(
-        'OmegaLog3',
+    logical_patch_3 = Square(
+        'P3',
         bounds1=(0., np.pi / 2),
         bounds2=(np.pi / 3, 2 * np.pi / 3),
     )
-    logical_4 = Square(
-        'OmegaLog4',
+    logical_patch_4 = Square(
+        'P4',
         bounds1=(np.pi / 2, np.pi),
         bounds2=(np.pi / 3, 2 * np.pi / 3),
     )
-    logical_5 = Square(
-        'OmegaLog5',
+    logical_patch_5 = Square(
+        'P5',
         bounds1=(0., np.pi / 2),
         bounds2=(2 * np.pi / 3, np.pi),
     )
-    logical_6 = Square(
-        'OmegaLog6',
+    logical_patch_6 = Square(
+        'P6',
         bounds1=(np.pi / 2, np.pi),
         bounds2=(2 * np.pi / 3, np.pi),
     )
-    patch_1 = IdentityMapping('M1', dim=2)(logical_1)
-    patch_2 = IdentityMapping('M2', dim=2)(logical_2)
-    patch_3 = IdentityMapping('M3', dim=2)(logical_3)
-    patch_4 = IdentityMapping('M4', dim=2)(logical_4)
-    patch_5 = IdentityMapping('M5', dim=2)(logical_5)
-    patch_6 = IdentityMapping('M6', dim=2)(logical_6)
+    patch_1 = IdentityMapping('M1', dim=2)(logical_patch_1)
+    patch_2 = IdentityMapping('M2', dim=2)(logical_patch_2)
+    patch_3 = IdentityMapping('M3', dim=2)(logical_patch_3)
+    patch_4 = IdentityMapping('M4', dim=2)(logical_patch_4)
+    patch_5 = IdentityMapping('M5', dim=2)(logical_patch_5)
+    patch_6 = IdentityMapping('M6', dim=2)(logical_patch_6)
 
     patches = (patch_1, patch_2, patch_3, patch_4, patch_5, patch_6)
     connectivity = (
@@ -169,54 +161,54 @@ def build_square_6():
 
 def build_square_8():
     """Build a three-by-three square grid without its center patch."""
-    logical_1 = Square(
-        'OmegaLog1',
+    logical_patch_1 = Square(
+        'P1',
         bounds1=(0., np.pi / 3),
         bounds2=(0., np.pi / 3),
     )
-    logical_2 = Square(
-        'OmegaLog2',
+    logical_patch_2 = Square(
+        'P2',
         bounds1=(np.pi / 3, 2 * np.pi / 3),
         bounds2=(0., np.pi / 3),
     )
-    logical_3 = Square(
-        'OmegaLog3',
+    logical_patch_3 = Square(
+        'P3',
         bounds1=(2 * np.pi / 3, np.pi),
         bounds2=(0., np.pi / 3),
     )
-    logical_4 = Square(
-        'OmegaLog4',
+    logical_patch_4 = Square(
+        'P4',
         bounds1=(0., np.pi / 3),
         bounds2=(np.pi / 3, 2 * np.pi / 3),
     )
-    logical_5 = Square(
-        'OmegaLog5',
+    logical_patch_5 = Square(
+        'P5',
         bounds1=(2 * np.pi / 3, np.pi),
         bounds2=(np.pi / 3, 2 * np.pi / 3),
     )
-    logical_6 = Square(
-        'OmegaLog6',
+    logical_patch_6 = Square(
+        'P6',
         bounds1=(0., np.pi / 3),
         bounds2=(2 * np.pi / 3, np.pi),
     )
-    logical_7 = Square(
-        'OmegaLog7',
+    logical_patch_7 = Square(
+        'P7',
         bounds1=(np.pi / 3, 2 * np.pi / 3),
         bounds2=(2 * np.pi / 3, np.pi),
     )
-    logical_8 = Square(
-        'OmegaLog8',
+    logical_patch_8 = Square(
+        'P8',
         bounds1=(2 * np.pi / 3, np.pi),
         bounds2=(2 * np.pi / 3, np.pi),
     )
-    patch_1 = IdentityMapping('M1', dim=2)(logical_1)
-    patch_2 = IdentityMapping('M2', dim=2)(logical_2)
-    patch_3 = IdentityMapping('M3', dim=2)(logical_3)
-    patch_4 = IdentityMapping('M4', dim=2)(logical_4)
-    patch_5 = IdentityMapping('M5', dim=2)(logical_5)
-    patch_6 = IdentityMapping('M6', dim=2)(logical_6)
-    patch_7 = IdentityMapping('M7', dim=2)(logical_7)
-    patch_8 = IdentityMapping('M8', dim=2)(logical_8)
+    patch_1 = IdentityMapping('M1', dim=2)(logical_patch_1)
+    patch_2 = IdentityMapping('M2', dim=2)(logical_patch_2)
+    patch_3 = IdentityMapping('M3', dim=2)(logical_patch_3)
+    patch_4 = IdentityMapping('M4', dim=2)(logical_patch_4)
+    patch_5 = IdentityMapping('M5', dim=2)(logical_patch_5)
+    patch_6 = IdentityMapping('M6', dim=2)(logical_patch_6)
+    patch_7 = IdentityMapping('M7', dim=2)(logical_patch_7)
+    patch_8 = IdentityMapping('M8', dim=2)(logical_patch_8)
 
     patches = (
         patch_1, patch_2, patch_3, patch_4,
@@ -237,60 +229,60 @@ def build_square_8():
 
 def build_square_9():
     """Build a square decomposed into a three-by-three patch grid."""
-    logical_1 = Square(
-        'OmegaLog1',
+    logical_patch_1 = Square(
+        'P1',
         bounds1=(0., np.pi / 3),
         bounds2=(0., np.pi / 3),
     )
-    logical_2 = Square(
-        'OmegaLog2',
+    logical_patch_2 = Square(
+        'P2',
         bounds1=(np.pi / 3, 2 * np.pi / 3),
         bounds2=(0., np.pi / 3),
     )
-    logical_3 = Square(
-        'OmegaLog3',
+    logical_patch_3 = Square(
+        'P3',
         bounds1=(2 * np.pi / 3, np.pi),
         bounds2=(0., np.pi / 3),
     )
-    logical_4 = Square(
-        'OmegaLog4',
+    logical_patch_4 = Square(
+        'P4',
         bounds1=(0., np.pi / 3),
         bounds2=(np.pi / 3, 2 * np.pi / 3),
     )
-    logical_5 = Square(
-        'OmegaLog5',
+    logical_patch_5 = Square(
+        'P5',
         bounds1=(2 * np.pi / 3, np.pi),
         bounds2=(np.pi / 3, 2 * np.pi / 3),
     )
-    logical_6 = Square(
-        'OmegaLog6',
+    logical_patch_6 = Square(
+        'P6',
         bounds1=(0., np.pi / 3),
         bounds2=(2 * np.pi / 3, np.pi),
     )
-    logical_7 = Square(
-        'OmegaLog7',
+    logical_patch_7 = Square(
+        'P7',
         bounds1=(np.pi / 3, 2 * np.pi / 3),
         bounds2=(2 * np.pi / 3, np.pi),
     )
-    logical_8 = Square(
-        'OmegaLog8',
+    logical_patch_8 = Square(
+        'P8',
         bounds1=(2 * np.pi / 3, np.pi),
         bounds2=(2 * np.pi / 3, np.pi),
     )
-    logical_9 = Square(
-        'OmegaLog9',
+    logical_patch_9 = Square(
+        'P9',
         bounds1=(np.pi / 3, 2 * np.pi / 3),
         bounds2=(np.pi / 3, 2 * np.pi / 3),
     )
-    patch_1 = IdentityMapping('M1', dim=2)(logical_1)
-    patch_2 = IdentityMapping('M2', dim=2)(logical_2)
-    patch_3 = IdentityMapping('M3', dim=2)(logical_3)
-    patch_4 = IdentityMapping('M4', dim=2)(logical_4)
-    patch_5 = IdentityMapping('M5', dim=2)(logical_5)
-    patch_6 = IdentityMapping('M6', dim=2)(logical_6)
-    patch_7 = IdentityMapping('M7', dim=2)(logical_7)
-    patch_8 = IdentityMapping('M8', dim=2)(logical_8)
-    patch_9 = IdentityMapping('M9', dim=2)(logical_9)
+    patch_1 = IdentityMapping('M1', dim=2)(logical_patch_1)
+    patch_2 = IdentityMapping('M2', dim=2)(logical_patch_2)
+    patch_3 = IdentityMapping('M3', dim=2)(logical_patch_3)
+    patch_4 = IdentityMapping('M4', dim=2)(logical_patch_4)
+    patch_5 = IdentityMapping('M5', dim=2)(logical_patch_5)
+    patch_6 = IdentityMapping('M6', dim=2)(logical_patch_6)
+    patch_7 = IdentityMapping('M7', dim=2)(logical_patch_7)
+    patch_8 = IdentityMapping('M8', dim=2)(logical_patch_8)
+    patch_9 = IdentityMapping('M9', dim=2)(logical_patch_9)
 
     patches = (
         patch_1, patch_2, patch_3, patch_4, patch_5,
@@ -320,18 +312,18 @@ def build_annulus_3(r_min=None, r_max=None):
     if not 0 < r_min < r_max:
         raise ValueError('annulus radii must satisfy 0 < r_min < r_max')
 
-    logical_1 = Square(
-        'OmegaLog1',
+    logical_patch_1 = Square(
+        'P1',
         bounds1=(r_min, r_max),
         bounds2=(0., np.pi / 2),
     )
-    logical_2 = Square(
-        'OmegaLog2',
+    logical_patch_2 = Square(
+        'P2',
         bounds1=(r_min, r_max),
         bounds2=(np.pi / 2, np.pi),
     )
-    logical_3 = Square(
-        'OmegaLog3',
+    logical_patch_3 = Square(
+        'P3',
         bounds1=(r_min, r_max),
         bounds2=(np.pi, 2 * np.pi),
     )
@@ -341,9 +333,9 @@ def build_annulus_3(r_min=None, r_max=None):
         'M2', dim=2, c1=0., c2=0., rmin=0., rmax=1.)
     mapping_3 = PolarMapping(
         'M3', dim=2, c1=0., c2=0., rmin=0., rmax=1.)
-    patch_1 = mapping_1(logical_1)
-    patch_2 = mapping_2(logical_2)
-    patch_3 = mapping_3(logical_3)
+    patch_1 = mapping_1(logical_patch_1)
+    patch_2 = mapping_2(logical_patch_2)
+    patch_3 = mapping_3(logical_patch_3)
 
     patches = (patch_1, patch_2, patch_3)
     connectivity = (
@@ -361,23 +353,23 @@ def build_annulus_4(r_min=None, r_max=None):
     if not 0 < r_min < r_max:
         raise ValueError('annulus radii must satisfy 0 < r_min < r_max')
 
-    logical_1 = Square(
-        'OmegaLog1',
+    logical_patch_1 = Square(
+        'P1',
         bounds1=(r_min, r_max),
         bounds2=(0., np.pi / 2),
     )
-    logical_2 = Square(
-        'OmegaLog2',
+    logical_patch_2 = Square(
+        'P2',
         bounds1=(r_min, r_max),
         bounds2=(np.pi / 2, np.pi),
     )
-    logical_3 = Square(
-        'OmegaLog3',
+    logical_patch_3 = Square(
+        'P3',
         bounds1=(r_min, r_max),
         bounds2=(np.pi, 3 * np.pi / 2),
     )
-    logical_4 = Square(
-        'OmegaLog4',
+    logical_patch_4 = Square(
+        'P4',
         bounds1=(r_min, r_max),
         bounds2=(3 * np.pi / 2, 2 * np.pi),
     )
@@ -389,10 +381,10 @@ def build_annulus_4(r_min=None, r_max=None):
         'M3', dim=2, c1=0., c2=0., rmin=0., rmax=1.)
     mapping_4 = PolarMapping(
         'M4', dim=2, c1=0., c2=0., rmin=0., rmax=1.)
-    patch_1 = mapping_1(logical_1)
-    patch_2 = mapping_2(logical_2)
-    patch_3 = mapping_3(logical_3)
-    patch_4 = mapping_4(logical_4)
+    patch_1 = mapping_1(logical_patch_1)
+    patch_2 = mapping_2(logical_patch_2)
+    patch_3 = mapping_3(logical_patch_3)
+    patch_4 = mapping_4(logical_patch_4)
 
     patches = (patch_1, patch_2, patch_3, patch_4)
     connectivity = (
@@ -406,18 +398,18 @@ def build_annulus_4(r_min=None, r_max=None):
 
 def build_curved_l_shape():
     """Build the three-patch curved L-shaped benchmark domain."""
-    logical_1 = Square(
-        'dom1',
+    logical_patch_1 = Square(
+        'P1',
         bounds1=(2, 3),
         bounds2=(0., np.pi / 8),
     )
-    logical_2 = Square(
-        'dom2',
+    logical_patch_2 = Square(
+        'P2',
         bounds1=(2, 3),
         bounds2=(np.pi / 8, np.pi / 4),
     )
-    logical_3 = Square(
-        'dom3',
+    logical_patch_3 = Square(
+        'P3',
         bounds1=(1, 2),
         bounds2=(np.pi / 8, np.pi / 4),
     )
@@ -427,9 +419,9 @@ def build_curved_l_shape():
         'M2', dim=2, c1=0., c2=0., rmin=0., rmax=1.)
     mapping_3 = PolarMapping(
         'M3', dim=2, c1=0., c2=0., rmin=0., rmax=1.)
-    patch_1 = mapping_1(logical_1)
-    patch_2 = mapping_2(logical_2)
-    patch_3 = mapping_3(logical_3)
+    patch_1 = mapping_1(logical_patch_1)
+    patch_2 = mapping_2(logical_patch_2)
+    patch_3 = mapping_3(logical_patch_3)
 
     patches = (patch_1, patch_2, patch_3)
     connectivity = (
@@ -450,23 +442,23 @@ def build_pretzel(r_min=None, r_max=None):
     half_h = h / 2
     center_radius = h + (r_max + r_min) / 2
 
-    logical_1 = Square(
-        'dom1',
+    logical_patch_1 = Square(
+        'P1',
         bounds1=(r_min, r_max),
         bounds2=(0., np.pi / 2),
     )
-    logical_2 = Square(
-        'dom2',
+    logical_patch_2 = Square(
+        'P2',
         bounds1=(r_min, r_max),
         bounds2=(np.pi / 2, np.pi),
     )
-    logical_3 = Square(
-        'dom3',
+    logical_patch_3 = Square(
+        'P3',
         bounds1=(r_min, r_max),
         bounds2=(np.pi, 3 * np.pi / 2),
     )
-    logical_4 = Square(
-        'dom4',
+    logical_patch_4 = Square(
+        'P4',
         bounds1=(r_min, r_max),
         bounds2=(3 * np.pi / 2, 2 * np.pi),
     )
@@ -478,33 +470,33 @@ def build_pretzel(r_min=None, r_max=None):
         'M3', dim=2, c1=-h, c2=0, rmin=0., rmax=1.)
     mapping_4 = PolarMapping(
         'M4', dim=2, c1=h, c2=0, rmin=0., rmax=1.)
-    patch_1 = mapping_1(logical_1)
-    patch_2 = mapping_2(logical_2)
-    patch_3 = mapping_3(logical_3)
-    patch_4 = mapping_4(logical_4)
+    patch_1 = mapping_1(logical_patch_1)
+    patch_2 = mapping_2(logical_patch_2)
+    patch_3 = mapping_3(logical_patch_3)
+    patch_4 = mapping_4(logical_patch_4)
 
-    logical_5 = Square(
-        'dom5',
+    logical_patch_5 = Square(
+        'P5',
         bounds1=(-half_h, half_h),
         bounds2=(-h / 2, h / 2),
     )
-    logical_6 = Square(
-        'dom6',
+    logical_patch_6 = Square(
+        'P6',
         bounds1=(-half_h, half_h),
         bounds2=(-h / 2, h / 2),
     )
-    logical_7 = Square(
-        'dom7',
+    logical_patch_7 = Square(
+        'P7',
         bounds1=(-half_h, half_h),
         bounds2=(-h / 2, h / 2),
     )
-    logical_9 = Square(
-        'dom9',
+    logical_patch_9 = Square(
+        'P9',
         bounds1=(-half_h, half_h),
         bounds2=(-h, h),
     )
-    logical_12 = Square(
-        'dom12',
+    logical_patch_12 = Square(
+        'P12',
         bounds1=(-half_h, half_h),
         bounds2=(-h / 2, h / 2),
     )
@@ -536,19 +528,19 @@ def build_pretzel(r_min=None, r_max=None):
         c1=center_radius, c2=h / 2,
         a11=1, a12=0, a21=0, a22=-1,
     )
-    patch_5 = mapping_5(logical_5)
-    patch_6 = mapping_6(logical_6)
-    patch_7 = mapping_7(logical_7)
-    patch_9 = mapping_9(logical_9)
-    patch_12 = mapping_12(logical_12)
+    patch_5 = mapping_5(logical_patch_5)
+    patch_6 = mapping_6(logical_patch_6)
+    patch_7 = mapping_7(logical_patch_7)
+    patch_9 = mapping_9(logical_patch_9)
+    patch_12 = mapping_12(logical_patch_12)
 
-    logical_13 = Square(
-        'dom13',
+    logical_patch_13 = Square(
+        'P13',
         bounds1=(3 * np.pi / 2, 2 * np.pi),
         bounds2=(r_min, r_max),
     )
-    logical_14 = Square(
-        'dom14',
+    logical_patch_14 = Square(
+        'P14',
         bounds1=(np.pi, 3 * np.pi / 2),
         bounds2=(r_min, r_max),
     )
@@ -560,8 +552,8 @@ def build_pretzel(r_min=None, r_max=None):
         'M14', dim=2,
         c1=r_min + h, c2=r_min + h, rmin=0., rmax=1.,
     )
-    patch_13 = mapping_13(logical_13)
-    patch_14 = mapping_14(logical_14)
+    patch_13 = mapping_13(logical_patch_13)
+    patch_14 = mapping_14(logical_patch_14)
 
     patches = (
         patch_1, patch_2, patch_3, patch_4, patch_5, patch_6,
@@ -596,15 +588,15 @@ def build_pretzel_annulus(r_min=None, r_max=None):
     half_h = h / 2
     center_radius = h + (r_max + r_min) / 2
 
-    logical_1 = Square(
-        'dom1', bounds1=(r_min, r_max), bounds2=(0., np.pi / 2))
-    logical_2 = Square(
-        'dom2', bounds1=(r_min, r_max), bounds2=(np.pi / 2, np.pi))
-    logical_3 = Square(
-        'dom3', bounds1=(r_min, r_max),
+    logical_patch_1 = Square(
+        'P1', bounds1=(r_min, r_max), bounds2=(0., np.pi / 2))
+    logical_patch_2 = Square(
+        'P2', bounds1=(r_min, r_max), bounds2=(np.pi / 2, np.pi))
+    logical_patch_3 = Square(
+        'P3', bounds1=(r_min, r_max),
         bounds2=(np.pi, 3 * np.pi / 2))
-    logical_4 = Square(
-        'dom4', bounds1=(r_min, r_max),
+    logical_patch_4 = Square(
+        'P4', bounds1=(r_min, r_max),
         bounds2=(3 * np.pi / 2, 2 * np.pi))
     mapping_1 = PolarMapping(
         'M1', dim=2, c1=h, c2=h, rmin=0., rmax=1.)
@@ -614,21 +606,21 @@ def build_pretzel_annulus(r_min=None, r_max=None):
         'M3', dim=2, c1=-h, c2=0, rmin=0., rmax=1.)
     mapping_4 = PolarMapping(
         'M4', dim=2, c1=h, c2=0, rmin=0., rmax=1.)
-    patch_1 = mapping_1(logical_1)
-    patch_2 = mapping_2(logical_2)
-    patch_3 = mapping_3(logical_3)
-    patch_4 = mapping_4(logical_4)
+    patch_1 = mapping_1(logical_patch_1)
+    patch_2 = mapping_2(logical_patch_2)
+    patch_3 = mapping_3(logical_patch_3)
+    patch_4 = mapping_4(logical_patch_4)
 
-    logical_5 = Square(
-        'dom5', bounds1=(-half_h, half_h), bounds2=(-h / 2, h / 2))
-    logical_6 = Square(
-        'dom6', bounds1=(-half_h, half_h), bounds2=(-h / 2, h / 2))
-    logical_7 = Square(
-        'dom7', bounds1=(-half_h, half_h), bounds2=(-h / 2, h / 2))
-    logical_9 = Square(
-        'dom9', bounds1=(-half_h, half_h), bounds2=(-h, h))
-    logical_12 = Square(
-        'dom12', bounds1=(-half_h, half_h), bounds2=(-h / 2, h / 2))
+    logical_patch_5 = Square(
+        'P5', bounds1=(-half_h, half_h), bounds2=(-h / 2, h / 2))
+    logical_patch_6 = Square(
+        'P6', bounds1=(-half_h, half_h), bounds2=(-h / 2, h / 2))
+    logical_patch_7 = Square(
+        'P7', bounds1=(-half_h, half_h), bounds2=(-h / 2, h / 2))
+    logical_patch_9 = Square(
+        'P9', bounds1=(-half_h, half_h), bounds2=(-h, h))
+    logical_patch_12 = Square(
+        'P12', bounds1=(-half_h, half_h), bounds2=(-h / 2, h / 2))
     mapping_5 = AffineMapping(
         'M5', dim=2,
         c1=h / 2, c2=center_radius,
@@ -657,11 +649,11 @@ def build_pretzel_annulus(r_min=None, r_max=None):
         c1=center_radius, c2=h / 2,
         a11=1, a12=0, a21=0, a22=-1,
     )
-    patch_5 = mapping_5(logical_5)
-    patch_6 = mapping_6(logical_6)
-    patch_7 = mapping_7(logical_7)
-    patch_9 = mapping_9(logical_9)
-    patch_12 = mapping_12(logical_12)
+    patch_5 = mapping_5(logical_patch_5)
+    patch_6 = mapping_6(logical_patch_6)
+    patch_7 = mapping_7(logical_patch_7)
+    patch_9 = mapping_9(logical_patch_9)
+    patch_12 = mapping_12(logical_patch_12)
 
     patches = (
         patch_1, patch_5, patch_6, patch_2, patch_7,
@@ -689,13 +681,13 @@ def build_pretzel_debug(r_min=None, r_max=None):
         raise ValueError('pretzel radii must satisfy 0 < r_min < r_max')
 
     h = r_max - r_min
-    logical_1 = Square(
-        'dom1',
+    logical_patch_1 = Square(
+        'P1',
         bounds1=(r_min, r_max),
         bounds2=(0., np.pi / 2),
     )
-    logical_10 = Square(
-        'dom10',
+    logical_patch_10 = Square(
+        'P10',
         bounds1=(r_min, r_max),
         bounds2=(np.pi / 2, np.pi),
     )
@@ -703,8 +695,8 @@ def build_pretzel_debug(r_min=None, r_max=None):
         'M1', dim=2, c1=h, c2=h, rmin=0., rmax=1.)
     mapping_10 = PolarMapping(
         'M10', dim=2, c1=h, c2=h, rmin=0., rmax=1.)
-    patch_1 = mapping_1(logical_1)
-    patch_10 = mapping_10(logical_10)
+    patch_1 = mapping_1(logical_patch_1)
+    patch_10 = mapping_10(logical_patch_10)
 
     patches = (patch_1, patch_10)
     connectivity = (
@@ -724,43 +716,43 @@ def build_pretzel_f(r_min=None, r_max=None):
     half_h = h / 2
     center_radius = h + (r_max + r_min) / 2
 
-    logical_1_1 = Square(
-        'dom1_1',
+    logical_patch_1_1 = Square(
+        'P1_1',
         bounds1=(r_min, r_max),
         bounds2=(0., np.pi / 4),
     )
-    logical_1_2 = Square(
-        'dom1_2',
+    logical_patch_1_2 = Square(
+        'P1_2',
         bounds1=(r_min, r_max),
         bounds2=(np.pi / 4, np.pi / 2),
     )
-    logical_2_1 = Square(
-        'dom2_1',
+    logical_patch_2_1 = Square(
+        'P2_1',
         bounds1=(r_min, r_max),
         bounds2=(np.pi / 2, 3 * np.pi / 4),
     )
-    logical_2_2 = Square(
-        'dom2_2',
+    logical_patch_2_2 = Square(
+        'P2_2',
         bounds1=(r_min, r_max),
         bounds2=(3 * np.pi / 4, np.pi),
     )
-    logical_3_1 = Square(
-        'dom3_1',
+    logical_patch_3_1 = Square(
+        'P3_1',
         bounds1=(r_min, r_max),
         bounds2=(np.pi, 5 * np.pi / 4),
     )
-    logical_3_2 = Square(
-        'dom3_2',
+    logical_patch_3_2 = Square(
+        'P3_2',
         bounds1=(r_min, r_max),
         bounds2=(5 * np.pi / 4, 3 * np.pi / 2),
     )
-    logical_4_1 = Square(
-        'dom4_1',
+    logical_patch_4_1 = Square(
+        'P4_1',
         bounds1=(r_min, r_max),
         bounds2=(3 * np.pi / 2, 7 * np.pi / 4),
     )
-    logical_4_2 = Square(
-        'dom4_2',
+    logical_patch_4_2 = Square(
+        'P4_2',
         bounds1=(r_min, r_max),
         bounds2=(7 * np.pi / 4, 2 * np.pi),
     )
@@ -780,42 +772,42 @@ def build_pretzel_f(r_min=None, r_max=None):
         'M4_1', dim=2, c1=h, c2=0, rmin=0., rmax=1.)
     mapping_4_2 = PolarMapping(
         'M4_2', dim=2, c1=h, c2=0, rmin=0., rmax=1.)
-    patch_1_1 = mapping_1_1(logical_1_1)
-    patch_1_2 = mapping_1_2(logical_1_2)
-    patch_2_1 = mapping_2_1(logical_2_1)
-    patch_2_2 = mapping_2_2(logical_2_2)
-    patch_3_1 = mapping_3_1(logical_3_1)
-    patch_3_2 = mapping_3_2(logical_3_2)
-    patch_4_1 = mapping_4_1(logical_4_1)
-    patch_4_2 = mapping_4_2(logical_4_2)
+    patch_1_1 = mapping_1_1(logical_patch_1_1)
+    patch_1_2 = mapping_1_2(logical_patch_1_2)
+    patch_2_1 = mapping_2_1(logical_patch_2_1)
+    patch_2_2 = mapping_2_2(logical_patch_2_2)
+    patch_3_1 = mapping_3_1(logical_patch_3_1)
+    patch_3_2 = mapping_3_2(logical_patch_3_2)
+    patch_4_1 = mapping_4_1(logical_patch_4_1)
+    patch_4_2 = mapping_4_2(logical_patch_4_2)
 
-    logical_5 = Square(
-        'dom5',
+    logical_patch_5 = Square(
+        'P5',
         bounds1=(-half_h, half_h),
         bounds2=(-h / 2, h / 2),
     )
-    logical_6 = Square(
-        'dom6',
+    logical_patch_6 = Square(
+        'P6',
         bounds1=(-half_h, half_h),
         bounds2=(-h / 2, h / 2),
     )
-    logical_7 = Square(
-        'dom7',
+    logical_patch_7 = Square(
+        'P7',
         bounds1=(-half_h, half_h),
         bounds2=(-h / 2, h / 2),
     )
-    logical_9_1 = Square(
-        'dom9_1',
+    logical_patch_9_1 = Square(
+        'P9_1',
         bounds1=(-half_h, half_h),
         bounds2=(-h, 0),
     )
-    logical_9_2 = Square(
-        'dom9_2',
+    logical_patch_9_2 = Square(
+        'P9_2',
         bounds1=(-half_h, half_h),
         bounds2=(0, h),
     )
-    logical_12 = Square(
-        'dom12',
+    logical_patch_12 = Square(
+        'P12',
         bounds1=(-half_h, half_h),
         bounds2=(-h / 2, h / 2),
     )
@@ -853,30 +845,30 @@ def build_pretzel_f(r_min=None, r_max=None):
         c1=center_radius, c2=h / 2,
         a11=1, a12=0, a21=0, a22=-1,
     )
-    patch_5 = mapping_5(logical_5)
-    patch_6 = mapping_6(logical_6)
-    patch_7 = mapping_7(logical_7)
-    patch_9_1 = mapping_9_1(logical_9_1)
-    patch_9_2 = mapping_9_2(logical_9_2)
-    patch_12 = mapping_12(logical_12)
+    patch_5 = mapping_5(logical_patch_5)
+    patch_6 = mapping_6(logical_patch_6)
+    patch_7 = mapping_7(logical_patch_7)
+    patch_9_1 = mapping_9_1(logical_patch_9_1)
+    patch_9_2 = mapping_9_2(logical_patch_9_2)
+    patch_12 = mapping_12(logical_patch_12)
 
-    logical_13_1 = Square(
-        'dom13_1',
+    logical_patch_13_1 = Square(
+        'P13_1',
         bounds1=(3 * np.pi / 2, 7 * np.pi / 4),
         bounds2=(r_min, r_max),
     )
-    logical_13_2 = Square(
-        'dom13_2',
+    logical_patch_13_2 = Square(
+        'P13_2',
         bounds1=(7 * np.pi / 4, 2 * np.pi),
         bounds2=(r_min, r_max),
     )
-    logical_14_1 = Square(
-        'dom14_1',
+    logical_patch_14_1 = Square(
+        'P14_1',
         bounds1=(np.pi, 5 * np.pi / 4),
         bounds2=(r_min, r_max),
     )
-    logical_14_2 = Square(
-        'dom14_2',
+    logical_patch_14_2 = Square(
+        'P14_2',
         bounds1=(5 * np.pi / 4, 3 * np.pi / 2),
         bounds2=(r_min, r_max),
     )
@@ -896,10 +888,10 @@ def build_pretzel_f(r_min=None, r_max=None):
         'M14_2', dim=2,
         c1=r_min + h, c2=r_min + h, rmin=0., rmax=1.,
     )
-    patch_13_1 = mapping_13_1(logical_13_1)
-    patch_13_2 = mapping_13_2(logical_13_2)
-    patch_14_1 = mapping_14_1(logical_14_1)
-    patch_14_2 = mapping_14_2(logical_14_2)
+    patch_13_1 = mapping_13_1(logical_patch_13_1)
+    patch_13_2 = mapping_13_2(logical_patch_13_2)
+    patch_14_1 = mapping_14_1(logical_patch_14_1)
+    patch_14_2 = mapping_14_2(logical_patch_14_2)
 
     patches = (
         patch_1_1, patch_1_2, patch_2_1, patch_2_2,
@@ -932,6 +924,79 @@ def build_pretzel_f(r_min=None, r_max=None):
     return Domain.join(patches, connectivity, name='pretzel_f')
 
 
+def build_two_patch_twisted_strip():
+    """Return two patches connected by interfaces of both 2D orientations."""
+    logical_patch_a = Square('A', bounds1=(0, 1), bounds2=(0, 1))
+    logical_patch_b = Square('B', bounds1=(0, 1), bounds2=(0, 1))
+
+    patch_a = IdentityMapping('F_A', dim=2)(logical_patch_a)
+    patch_b = AffineMapping(
+        'F_B', dim=2,
+        c1=1, c2=0,
+        a11=1, a12=0,
+        a21=0, a22=1,
+    )(logical_patch_b)
+
+    return Domain.join(
+        patches=[patch_a, patch_b],
+        interfaces=[
+            # Touching sides preserve their tangential coordinates.
+            ((patch_a, 0, +1), (patch_b, 0, -1), +1),
+            # Outer sides are identified with reversed coordinates.
+            ((patch_a, 0, -1), (patch_b, 0, +1), -1),
+        ],
+        name='two_patch_twisted_strip',
+    )
+
+
+def build_self_connected_patch():
+    """Return a single square with a left-to-right self-interface."""
+    logical_patch = Square('P', bounds1=(0, 1), bounds2=(0, 1))
+    patch = IdentityMapping('F_P', dim=2)(logical_patch)
+
+    return Domain.join(
+        patches=[patch],
+        interfaces=[((patch, 0, -1), (patch, 0, +1), +1)],
+        name='self_connected_patch',
+    )
+
+
+def build_three_patch_shared_vertex():
+    """Return three affine patches meeting at one interior vertex."""
+    root_three_over_two = np.sqrt(3.0) / 2.0
+    directions = (
+        np.array((1.0, 0.0)),
+        np.array((-0.5, root_three_over_two)),
+        np.array((-0.5, -root_three_over_two)),
+    )
+    patches = []
+    for patch_name, first, second in (
+        ('A', directions[0], directions[1]),
+        ('B', directions[1], directions[2]),
+        ('C', directions[2], directions[0]),
+    ):
+        logical_patch = Square(
+            patch_name, bounds1=(0, 1), bounds2=(0, 1))
+        mapping = AffineMapping(
+            f'F_{patch_name}', dim=2,
+            c1=0, c2=0,
+            a11=first[0], a12=second[0],
+            a21=first[1], a22=second[1],
+        )
+        patches.append(mapping(logical_patch))
+
+    patch_a, patch_b, patch_c = patches
+    return Domain.join(
+        patches=patches,
+        interfaces=[
+            ((patch_a, 0, -1), (patch_b, 1, -1), +1),
+            ((patch_b, 0, -1), (patch_c, 1, -1), +1),
+            ((patch_c, 0, -1), (patch_a, 1, -1), +1),
+        ],
+        name='three_patch_shared_vertex',
+    )
+
+
 _DOMAIN_BUILDERS_2D = {
     'square_2': build_square_2,
     'square_4': build_square_4,
@@ -945,6 +1010,9 @@ _DOMAIN_BUILDERS_2D = {
     'pretzel_f': build_pretzel_f,
     'pretzel_annulus': build_pretzel_annulus,
     'pretzel_debug': build_pretzel_debug,
+    'two_patch_twisted_strip': build_two_patch_twisted_strip,
+    'self_connected_patch': build_self_connected_patch,
+    'three_patch_shared_vertex': build_three_patch_shared_vertex,
 }
 
 _RADIAL_DOMAINS_2D = {
@@ -1084,10 +1152,10 @@ def build_cartesian_multipatch_domain_2d(
 # 3D domains
 # =============================================================================
 
-def build_two_patch_3d():
+def build_two_cube_3d():
     """Build two mapped cubes joined across differently parameterized faces."""
-    logical_a = Cube('A')
-    logical_b = Cube('B')
+    logical_patch_a = Cube('A')
+    logical_patch_b = Cube('B')
 
     mapping_a = AffineMapping(
         'F_A', dim=3,
@@ -1103,8 +1171,8 @@ def build_two_patch_3d():
         a21=-0.15, a22=0.2, a23=1.00,
         a31=-1.00, a32=0.0, a33=0.10,
     )
-    patch_a = mapping_a(logical_a)
-    patch_b = mapping_b(logical_b)
+    patch_a = mapping_a(logical_patch_a)
+    patch_b = mapping_b(logical_patch_b)
 
     patches = (patch_a, patch_b)
     connectivity = (
@@ -1117,11 +1185,11 @@ def build_two_patch_3d():
     return Domain.join(
         patches,
         connectivity,
-        name='mapped_two_patch_3d',
+        name='mapped_two_cube_3d',
     )
 
 
-def build_torus_2x2_3d(
+def build_torus_3d(
         major_radius=2.0, minor_bounds=(0.35, 0.80), *, hollow=True,
         toroidal_angle=2.0 * np.pi, close_torus=None):
     """Build a four-patch torus with two angular cuts per direction.
@@ -1179,15 +1247,15 @@ def build_torus_2x2_3d(
 
     for theta_sector in range(2):
         for phi_sector in range(2):
-            name = f'P{theta_sector}{phi_sector}'
+            patch_name = f'P{theta_sector}{phi_sector}'
             logical_patch = Cube(
-                name,
+                patch_name,
                 bounds1=(inner_radius, outer_radius),
                 bounds2=theta_bounds[theta_sector:theta_sector + 2],
                 bounds3=phi_bounds[phi_sector:phi_sector + 2],
             )
             mapping = TorusMapping(
-                f'F_{name}', dim=3, R0=major_radius)
+                f'F_{patch_name}', dim=3, R0=major_radius)
             patch = mapping(logical_patch)
             patch_grid[theta_sector, phi_sector] = patch
             patches.append(patch)
@@ -1216,17 +1284,83 @@ def build_torus_2x2_3d(
     return Domain.join(
         patches,
         connectivity,
-        name=f'{closure}{shape}_torus_2x2_3d',
+        name=f'{closure}{shape}_torus_3d',
+    )
+
+
+def build_oriented_two_cube():
+    """Return two cubes with a swapped and reversed face parameterization."""
+    logical_patch_a = Cube('A')
+    logical_patch_b = Cube('B')
+
+    mapping_a = IdentityMapping('F_A', dim=3)
+    mapping_b = AffineMapping(
+        'F_B', dim=3,
+        c1=1, c2=0, c3=1,
+        a11=0, a12=1, a13=0,
+        a21=0, a22=0, a23=1,
+        a31=-1, a32=0, a33=0,
+    )
+    patch_a = mapping_a(logical_patch_a)
+    patch_b = mapping_b(logical_patch_b)
+
+    return Domain.join(
+        patches=[patch_a, patch_b],
+        interfaces=[(
+            (patch_a, 0, +1),
+            (patch_b, 1, -1),
+            (-1, +1, -1),
+        )],
+        name='oriented_two_cube',
+    )
+
+
+def build_three_patch_shared_edge():
+    """Return three affine hexahedra meeting at one interior edge."""
+    root_three_over_two = np.sqrt(3.0) / 2.0
+    directions = (
+        np.array((1.0, 0.0)),
+        np.array((-0.5, root_three_over_two)),
+        np.array((-0.5, -root_three_over_two)),
+    )
+
+    patches = []
+    for patch_name, first, second in (
+        ('H0', directions[0], directions[1]),
+        ('H1', directions[1], directions[2]),
+        ('H2', directions[2], directions[0]),
+    ):
+        logical_patch = Cube(patch_name)
+        mapping = AffineMapping(
+            f'G_{patch_name}', dim=3,
+            c1=0, c2=0, c3=0,
+            a11=first[0], a12=second[0], a13=0,
+            a21=first[1], a22=second[1], a23=0,
+            a31=0, a32=0, a33=1,
+        )
+        patches.append(mapping(logical_patch))
+
+    patch_0, patch_1, patch_2 = patches
+    return Domain.join(
+        patches=patches,
+        interfaces=[
+            ((patch_0, 0, -1), (patch_1, 1, -1), (+1, +1, +1)),
+            ((patch_1, 0, -1), (patch_2, 1, -1), (+1, +1, +1)),
+            ((patch_2, 0, -1), (patch_0, 1, -1), (+1, +1, +1)),
+        ],
+        name='three_patch_shared_edge',
     )
 
 
 _DOMAIN_BUILDERS_3D = {
-    'two_patch': build_two_patch_3d,
-    'torus_2x2': build_torus_2x2_3d,
+    'two_cube': build_two_cube_3d,
+    'torus': build_torus_3d,
+    'oriented_two_cube': build_oriented_two_cube,
+    'three_patch_shared_edge': build_three_patch_shared_edge,
 }
 
 
-def build_multipatch_domain_3d(domain_name='two_patch', **kwargs):
+def build_multipatch_domain_3d(domain_name='two_cube', **kwargs):
     """Build a named 3D multipatch domain from the gallery.
 
     Parameters
@@ -1252,7 +1386,7 @@ def build_multipatch_domain_3d(domain_name='two_patch', **kwargs):
 # =============================================================================
 
 def plot_multipatch_domain(
-        domain_name='square_2', *, output=None, show=True, topology=False,
+        domain_name='torus', *, output=None, show=True, topology=False,
         builder_options=None):
     """Build, print, and plot a named 2D or 3D gallery domain.
 
@@ -1321,8 +1455,8 @@ def main(argv=None):
     domain_names = (*_DOMAIN_BUILDERS_2D, *_DOMAIN_BUILDERS_3D)
     parser = ArgumentParser(description=__doc__)
     parser.add_argument(
-        'domain_name', nargs='?', default='square_2', choices=domain_names,
-        help='gallery domain to build and plot (default: square_2)')
+        'domain_name', nargs='?', default='torus', choices=domain_names,
+        help='gallery domain to build and plot (default: torus)')
     parser.add_argument(
         '--output', type=Path,
         help='optional path of the generated PNG or PDF figure')

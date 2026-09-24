@@ -15,17 +15,22 @@ from sympde.topology.multipatch_gallery import (
     build_curved_l_shape,
     build_multipatch_domain_2d,
     build_multipatch_domain_3d,
+    build_oriented_two_cube,
     build_pretzel,
     build_pretzel_annulus,
     build_pretzel_debug,
     build_pretzel_f,
+    build_self_connected_patch,
     build_square_2,
     build_square_4,
     build_square_6,
     build_square_8,
     build_square_9,
-    build_torus_2x2_3d,
-    build_two_patch_3d,
+    build_three_patch_shared_edge,
+    build_three_patch_shared_vertex,
+    build_torus_3d,
+    build_two_cube_3d,
+    build_two_patch_twisted_strip,
     plot_multipatch_domain,
 )
 
@@ -84,6 +89,26 @@ def test_multipatch_domain_builder(
                 _physical_point(interface.plus, parameter),
                 atol=1e-14,
             )
+
+
+@pytest.mark.parametrize('builder', [
+    build_square_2,
+    build_square_6,
+    build_square_8,
+    build_square_9,
+    build_annulus_3,
+    build_annulus_4,
+    build_curved_l_shape,
+    build_pretzel,
+    build_pretzel_f,
+    build_pretzel_annulus,
+    build_pretzel_debug,
+])
+def test_numbered_gallery_domains_use_patch_names(builder):
+    names = tuple(str(patch.logical_domain.name) for patch in builder().patches)
+
+    assert len(names) == len(set(names))
+    assert all(name.startswith('P') for name in names)
 
 
 @pytest.mark.parametrize('mapping', ['identity', 'polar'])
@@ -160,10 +185,10 @@ def test_build_multipatch_domain_2d_dispatches_names_and_radii():
     assert annulus.patches[0].logical_domain.max_coords[0] == 3
 
 
-def test_build_two_patch_3d():
-    domain = build_two_patch_3d()
+def test_build_two_cube_3d():
+    domain = build_two_cube_3d()
 
-    assert str(domain.name) == 'mapped_two_patch_3d'
+    assert str(domain.name) == 'mapped_two_cube_3d'
     assert len(domain.patches) == 2
     assert len(domain.interface_map) == 1
     assert len(domain.exterior_sides) == 10
@@ -176,20 +201,20 @@ def test_build_two_patch_3d():
 @pytest.mark.parametrize(
     'arguments, name, ninterfaces, nboundaries',
     [
-        ({}, 'hollow_torus_2x2_3d', 8, 8),
+        ({}, 'hollow_torus_3d', 8, 8),
         (
             {'toroidal_angle': 1.5 * np.pi},
-            'open_hollow_torus_2x2_3d', 6, 12,
+            'open_hollow_torus_3d', 6, 12,
         ),
         (
             {'hollow': False, 'close_torus': False},
-            'open_solid_torus_2x2_3d', 6, 12,
+            'open_solid_torus_3d', 6, 12,
         ),
     ],
 )
-def test_build_torus_2x2_3d(
+def test_build_torus_3d(
         arguments, name, ninterfaces, nboundaries):
-    domain = build_torus_2x2_3d(**arguments)
+    domain = build_torus_3d(**arguments)
 
     assert str(domain.name) == name
     assert len(domain.patches) == 4
@@ -209,10 +234,39 @@ def test_build_torus_2x2_3d(
         'only a full 2\\*pi sweep can be closed',
     ),
 ])
-def test_build_torus_2x2_3d_rejects_invalid_parameters(
+def test_build_torus_3d_rejects_invalid_parameters(
         arguments, error, message):
     with pytest.raises(error, match=message):
-        build_torus_2x2_3d(**arguments)
+        build_torus_3d(**arguments)
+
+
+@pytest.mark.parametrize(
+    'builder, name, npatches, ninterfaces, nboundaries',
+    [
+        (
+            build_two_patch_twisted_strip,
+            'two_patch_twisted_strip', 2, 2, 4,
+        ),
+        (build_self_connected_patch, 'self_connected_patch', 1, 1, 2),
+        (
+            build_three_patch_shared_vertex,
+            'three_patch_shared_vertex', 3, 3, 6,
+        ),
+        (build_oriented_two_cube, 'oriented_two_cube', 2, 1, 10),
+        (
+            build_three_patch_shared_edge,
+            'three_patch_shared_edge', 3, 3, 12,
+        ),
+    ],
+)
+def test_diagnostic_domain_builder(
+        builder, name, npatches, ninterfaces, nboundaries):
+    domain = builder()
+
+    assert str(domain.name) == name
+    assert len(domain.patches) == npatches
+    assert len(domain.interface_map) == ninterfaces
+    assert len(domain.exterior_sides) == nboundaries
 
 
 @pytest.mark.parametrize('name', ['unknown', None])
@@ -222,17 +276,17 @@ def test_build_multipatch_domain_3d_rejects_unknown_name(name):
 
 
 def test_build_multipatch_domain_3d_dispatches_names_and_arguments():
-    two_patch = build_multipatch_domain_3d('two_patch')
+    two_cube = build_multipatch_domain_3d('two_cube')
     torus = build_multipatch_domain_3d(
-        'torus_2x2', hollow=False, close_torus=False)
+        'torus', hollow=False, close_torus=False)
 
-    assert str(two_patch.name) == 'mapped_two_patch_3d'
-    assert str(torus.name) == 'open_solid_torus_2x2_3d'
+    assert str(two_cube.name) == 'mapped_two_cube_3d'
+    assert str(torus.name) == 'open_solid_torus_3d'
 
 
 @pytest.mark.parametrize('domain_name, dimension', [
     ('square_2', 2),
-    ('two_patch', 3),
+    ('two_cube', 3),
 ])
 def test_plot_multipatch_domain(domain_name, dimension, tmp_path):
     output = tmp_path / f'{domain_name}.png'
@@ -244,8 +298,8 @@ def test_plot_multipatch_domain(domain_name, dimension, tmp_path):
     assert output.is_file()
 
 
-def test_multipatch_gallery_runs_as_a_script(tmp_path):
-    script = Path(multipatch_gallery.__file__)
+def test_multipatch_gallery_runs_as_a_module(tmp_path):
+    repository_root = Path(multipatch_gallery.__file__).resolve().parents[2]
     output = tmp_path / 'square_2.png'
     environment = {
         **os.environ,
@@ -256,7 +310,8 @@ def test_multipatch_gallery_runs_as_a_script(tmp_path):
     result = subprocess.run(
         [
             sys.executable,
-            str(script),
+            '-m',
+            'sympde.topology.multipatch_gallery',
             'square_2',
             '--topology',
             '--no-show',
@@ -267,6 +322,7 @@ def test_multipatch_gallery_runs_as_a_script(tmp_path):
         capture_output=True,
         text=True,
         env=environment,
+        cwd=repository_root,
     )
 
     assert '=== square_2 ===' in result.stdout

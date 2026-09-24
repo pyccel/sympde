@@ -156,12 +156,13 @@ a hole. The values themselves are not interpreted by SymPDE, so the same array
 may later carry patch-specific cell counts for a discretizer. Both identity
 and polar patch mappings are available.
 
-The gallery also contains two 3D domains. ``build_two_patch_3d`` constructs
-two sheared cubes with a cross-axis interface, and ``build_torus_2x2_3d``
-constructs the four-patch hollow or solid toroidal volume.
-``build_multipatch_domain_3d`` selects these builders by the names
-``two_patch`` and ``torus_2x2`` and forwards optional arguments to the
-selected builder.
+The gallery also contains 3D domains. ``build_two_cube_3d`` constructs two
+sheared cubes with a cross-axis interface, and ``build_torus_3d`` constructs
+the four-patch hollow or solid toroidal volume. Additional diagnostic domains
+exercise oriented cube faces and three patches sharing an edge.
+``build_multipatch_domain_3d`` selects these builders by name, including
+``two_cube`` and ``torus``, and forwards optional arguments to the selected
+builder.
 
 The gallery module can also plot any registered 2D or 3D domain directly.
 For example, the following commands open an ordinary annulus plot and save an
@@ -170,8 +171,8 @@ annotated two-cube topology plot, respectively:
 .. code-block:: console
 
    python -m sympde.topology.multipatch_gallery annulus_4
-   python sympde/topology/multipatch_gallery.py two_patch \
-       --topology --no-show --output two_patch.png
+   python -m sympde.topology.multipatch_gallery two_cube \
+       --topology --no-show --output two_cube.png
 
 The corresponding Python entry point is ``plot_multipatch_domain``. Its
 ``builder_options`` argument forwards domain-specific parameters to the
