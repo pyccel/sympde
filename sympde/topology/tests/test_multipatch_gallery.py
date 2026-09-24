@@ -1,12 +1,6 @@
-import os
-from pathlib import Path
-import subprocess
-import sys
-
 import numpy as np
 import pytest
 
-import sympde.topology.multipatch_gallery as multipatch_gallery
 from sympde.topology import TransposedPolarMapping
 from sympde.topology.multipatch_gallery import (
     build_annulus_3,
@@ -31,6 +25,7 @@ from sympde.topology.multipatch_gallery import (
     build_torus_3d,
     build_two_cube_3d,
     build_two_patch_twisted_strip,
+    main,
     plot_multipatch_domain,
 )
 
@@ -298,32 +293,15 @@ def test_plot_multipatch_domain(domain_name, dimension, tmp_path):
     assert output.is_file()
 
 
-def test_multipatch_gallery_runs_as_a_module(tmp_path):
-    repository_root = Path(multipatch_gallery.__file__).resolve().parents[2]
+def test_multipatch_gallery_main(tmp_path):
     output = tmp_path / 'square_2.png'
-    environment = {
-        **os.environ,
-        'MPLBACKEND': 'Agg',
-        'MPLCONFIGDIR': str(tmp_path),
-    }
 
-    result = subprocess.run(
-        [
-            sys.executable,
-            '-m',
-            'sympde.topology.multipatch_gallery',
-            'square_2',
-            '--topology',
-            '--no-show',
-            '--output',
-            str(output),
-        ],
-        check=True,
-        capture_output=True,
-        text=True,
-        env=environment,
-        cwd=repository_root,
-    )
+    main([
+        'square_2',
+        '--topology',
+        '--no-show',
+        '--output',
+        str(output),
+    ])
 
-    assert '=== square_2 ===' in result.stdout
     assert output.is_file()

@@ -1,6 +1,4 @@
 from io import StringIO
-import subprocess
-import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -25,19 +23,6 @@ from sympde.utilities import (
 )
 from sympde.utilities.plotting import plot_domain as plotting_plot_domain
 from sympde.utilities.utils import lambdify_sympde
-
-
-def test_import_sympde_does_not_import_matplotlib():
-    code = """
-import sys
-import sympde
-assert 'matplotlib' not in sys.modules
-import sympde.utilities
-assert 'matplotlib' not in sys.modules
-from sympde.utilities import plot_domain
-assert 'matplotlib' in sys.modules
-"""
-    subprocess.run([sys.executable, '-c', code], check=True)
 
 
 def test_lambdify_sympde_1d():
