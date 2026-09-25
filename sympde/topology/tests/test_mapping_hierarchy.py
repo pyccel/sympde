@@ -149,7 +149,7 @@ def test_analytic_mapping_no_longer_inherits_deprecated_mapping():
 
 def test_analytic_expression_machinery_survives_the_move():
     from sympy import ImmutableDenseMatrix, eye
-    from sympde.topology import IdentityMapping, PolarMapping, TorusSurfaceMapping, AnalyticMapping
+    from sympde.topology import IdentityMapping, PolarMapping, TorusSurfaceMapping
 
     F = IdentityMapping('F', dim=2)
     assert F.jacobian_expr == ImmutableDenseMatrix(eye(2))
@@ -173,10 +173,6 @@ def test_analytic_expression_machinery_survives_the_move():
     assert T.jacobian_expr.shape == (3, 2)
     assert T.jacobian_inv_expr is None
     assert T.metric_expr.shape == (2, 2)
-
-    # early-return branch of the new __new__: no _expressions on the class
-    bare = AnalyticMapping('bare', dim=2)
-    assert bare.is_analytical is False
 
 
 def test_legacy_mapping_subclass_still_expands_expressions():
@@ -227,11 +223,79 @@ def test_analytic_mapping_still_callable_on_a_domain():
     assert type(mapped).__name__ in ('Domain', 'MappedDomain')
 
 
-def test_analytic_mapping_without_expressions_rejects_point_call():
+# -- D11: AnalyticMapping requires _expressions
+
+@pytest.mark.parametrize('kwargs', [
+    dict(dim=2),
+    dict(ldim=2, pdim=3),
+    dict(ldim=2, pdim=2, evaluate=False),
+])
+def test_bare_analytic_mapping_is_rejected_at_construction(kwargs):
+    # D11: a class with no `_expressions` cannot be point-evaluated, so
+    # constructing it is rejected outright, unconditionally on `evaluate`
+    # (the third case) -- the degenerate object must never come to exist.
     from sympde.topology import AnalyticMapping
-    F = AnalyticMapping('F', dim=2)          # no _expressions
-    with pytest.raises(ValueError, match='analytical expressions'):
-        F(0.1, 0.2)
+    with pytest.raises(TypeError, match='analytical expressions') as exc_info:
+        AnalyticMapping('F', **kwargs)
+    assert 'SymbolicMapping' in str(exc_info.value)
+
+
+def test_analytic_intermediate_base_without_expressions_is_definable_not_instantiable():
+    # The guard lives in __new__, not __init_subclass__: an intermediate base
+    # without `_expressions` stays a legal *definition*, only instantiating it
+    # raises.
+    from sympde.topology import AnalyticMapping
+
+    class Base(AnalyticMapping):
+        def helper(self):
+            return 'ok'
+
+    with pytest.raises(TypeError, match='analytical expressions'):
+        Base('b', dim=2)
+
+    class Leaf(Base):
+        _expressions = {'x': '2*x1', 'y': '3*x2'}
+        _ldim = 2
+        _pdim = 2
+
+    L = Leaf('l')
+    assert L(1.0, 1.0) == (2.0, 3.0)
+
+
+def test_construction_guard_spares_rebuilds_of_analytic_mappings():
+    # R4: rebuild paths only rebuild instances of classes that already passed
+    # the guard, so they must not raise. Rebuild EQUALITY is deliberately not
+    # asserted here: P.func(*P.args) == P and a pickle round trip == P are
+    # already False at baseline for gallery mappings (pre-existing, numeric
+    # constants come back symbolic) -- out of scope for D11.
+    import pickle
+    from sympde.topology import PolarMapping, InterfaceMapping, IdentityMapping
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', DeprecationWarning)
+        P = PolarMapping('P', dim=2, c1=0., c2=0., rmin=.3, rmax=1.)
+
+        for rebuilt in (P.copy(), P.func(*P.args), pickle.loads(pickle.dumps(P))):
+            assert type(rebuilt) is PolarMapping
+            assert rebuilt.is_analytical is True
+
+        itf = InterfaceMapping(IdentityMapping('A', dim=2), IdentityMapping('B', dim=2))
+    assert type(itf.minus) is IdentityMapping
+
+
+def test_gallery_analytic_mappings_all_carry_expressions():
+    # Filter by __module__, not AnalyticMapping.__subclasses__(): the latter
+    # would also pick up test-local subclasses (e.g. Base above), polluting
+    # the list depending on test order and xdist scheduling.
+    import sympde.topology.analytical_mapping as gallery
+    from sympde.topology import AnalyticMapping
+
+    classes = [c for c in vars(gallery).values()
+               if isinstance(c, type) and issubclass(c, AnalyticMapping)
+               and c.__module__ == 'sympde.topology.analytical_mapping']
+    assert len(classes) == 11
+    for c in classes:
+        assert c._expressions is not None
 
 
 # -- work-package 02b: post-review fixes

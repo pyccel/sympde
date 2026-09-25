@@ -779,6 +779,17 @@ class AnalyticMapping(DefinedMapping, metaclass=_MappingABCMeta):
     interchangeable wherever the point-evaluation interface is expected, and
     ``get_callable_mapping()`` returns ``self``.
 
+    A subclass **must** define a non-``None`` ``_expressions`` dict in its class
+    body (see the gallery in ``analytical_mapping.py``); it is what makes the
+    mapping point-evaluable. Instantiating a subclass that leaves
+    ``_expressions`` unset raises ``TypeError`` -- D11: without expressions
+    there is nothing to lambdify, so the alternative would be a
+    ``DefinedMapping`` in name only, silently unusable until some unrelated
+    call fails far from where it was built. Use ``SymbolicMapping(name,
+    dim=...)`` for an undefined symbolic mapping instead. Setting
+    ``cls._expressions`` before calling ``super().__new__`` (e.g. from a
+    factory) still works, since the guard reads ``cls._expressions``.
+
     Examples
     --------
     >>> from sympde.topology import IdentityMapping
@@ -787,9 +798,34 @@ class AnalyticMapping(DefinedMapping, metaclass=_MappingABCMeta):
     (0.3, 0.4)
     >>> F.jacobian_symbol                 # symbolic JacobianSymbol (unchanged)
     Jacobian(F)
+
+    Raises
+    ------
+    TypeError
+        If the class being instantiated -- ``AnalyticMapping`` itself or any
+        subclass -- has no ``_expressions``, either its own or inherited.
+        Only *instantiating* such a class raises; *defining* one (e.g. an
+        intermediate base) is still allowed.
     """
 
     def __new__(cls, name, dim=None, **kwargs):
+        # D11: without `_expressions` there is nothing to point-evaluate, so the
+        # result would be a DefinedMapping in name only (it used to construct and
+        # then fail far away -- e.g. discretize(Derham) succeeded, assembly died
+        # in generated code). Checked on `cls`, at instantiation (not in
+        # __init_subclass__), so an intermediate base without `_expressions` can
+        # still be *defined* and subclassed. Unconditional on `evaluate`: the only
+        # evaluate=False caller, SymbolicMapping.copy(), copies an existing
+        # instance, whose class already passed this check. Placed before
+        # `super().__new__` so no half-built instance is ever interned by sympy.
+        if cls._expressions is None:
+            raise TypeError(
+                f"{cls.__name__} has no analytical expressions (`_expressions` "
+                "is None), so it cannot be point-evaluated. Use "
+                "SymbolicMapping(name, dim=...) for an undefined symbolic "
+                "mapping, subclass AnalyticMapping with an `_expressions` dict "
+                "for an analytic one, or DiscreteMapping(F, name) to wrap an "
+                "external point-evaluable callable.")
         evaluate  = kwargs.get('evaluate', True)
         # `jacobian` goes to SymbolicMapping.__new__ too -- forwarding it here
         # both honours it and keeps it out of the `_expressions` constants dict.
@@ -798,7 +834,7 @@ class AnalyticMapping(DefinedMapping, metaclass=_MappingABCMeta):
                      if k in kwargs}
         obj = super().__new__(cls, name, dim, **prefix_kw)
 
-        if not evaluate or cls._expressions is None:
+        if not evaluate:
             return obj
 
         return _init_analytic_expressions(obj, **kwargs)
@@ -878,7 +914,8 @@ class AnalyticMapping(DefinedMapping, metaclass=_MappingABCMeta):
         return self._delegate_point_eval('metric_det', *eta)
 
     def get_callable_mapping(self):
-        # An AnalyticMapping *is* its own callable mapping.
+        # An AnalyticMapping *is* its own callable mapping -- guaranteed since
+        # D11: construction requires `_expressions`.
         return self
 
     def set_callable_mapping(self, F):
