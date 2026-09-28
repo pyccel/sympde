@@ -66,7 +66,20 @@ To check out a specific branch/tag/commit named ``<TAG>``, just use ``git checko
 
   In order to make changes to the library, and see these changes when the package is imported, SymPDE should be installed in **editable** mode::
 
-    python3 -m pip install --editable .
+    python3 -m pip install --editable ".[test]"
+
+Running the tests
+^^^^^^^^^^^^^^^^^
+
+The complete test suite can be run from any directory with::
+
+  python3 -m pytest -n auto --dist loadgroup --pyargs sympde -ra
+
+The documentation dependencies are installed separately and the HTML pages
+are built with warnings treated as errors::
+
+  python3 -m pip install --editable ".[docs]"
+  python3 -m sphinx -W --keep-going -b html doc doc/_build/html
 
 
 For developers
@@ -74,7 +87,7 @@ For developers
 
 Because many important features of SymPDE are only tested in Psydac, new PRs should also be tested against the test suite of Psydac.
 This can be done by opening a PR in Psydac, where the only change consists of installing the corresponding branch of SymPDE.
-To achieve this, one just needs to modify the line corresponding to ``sympde`` in the ``pyproject.yaml`` file.
+To achieve this, one just needs to modify the line corresponding to ``sympde`` in the ``pyproject.toml`` file.
 
 For instance, to test a new SymPDE branch called ``my_feature``, one should write
 
@@ -100,7 +113,7 @@ Also, pay attention to the words ``head`` and ``tags`` in the path: the former i
 
 .. |docs| image:: https://readthedocs.org/projects/sympde/badge/?version=latest
    :alt: Documentation Status
-   :target: http://sympde.readthedocs.io/en/latest/?badge=latest
+   :target: https://sympde.readthedocs.io/en/latest/?badge=latest
 
 .. |binder| image:: https://mybinder.org/badge_logo.svg
    :alt: Run notebooks in Binder
