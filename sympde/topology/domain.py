@@ -1,9 +1,6 @@
 # coding: utf-8
 from __future__ import annotations
 
-import numpy as np
-import h5py
-import yaml
 import os
 
 from collections import OrderedDict
@@ -337,6 +334,9 @@ class Domain(BasicDomain):
         return dict(sorted(d.items()))
 
     def export( self, filename ):
+        import h5py
+        import numpy as np
+        import yaml
 
         yml = self.todict()
 
@@ -369,6 +369,9 @@ class Domain(BasicDomain):
         Domain
             Multipatch domain.
         """
+        import h5py
+        import yaml
+
         # ... check extension of the file
         _, ext = os.path.splitext(filename)
 
