@@ -18,7 +18,7 @@ In **sympde**, you can declare :math:`u` using
 
 .. code-block:: python
 
-  from sympde import Unknown
+  from sympde.api import Unknown
 
   u = Unknown('u', ldim=2)
 
@@ -26,7 +26,7 @@ The expression associated to the operator :math:`\mathcal{L}` is then defined as
 
 .. code-block:: python
 
-  from sympde import grad, div
+  from sympde.api import grad, div
 
   expr = - div(grad(u)) + u
 
@@ -34,7 +34,7 @@ you can also use a *lambda expression*
 
 .. code-block:: python
 
-  from sympde import grad, div
+  from sympde.api import grad, div
 
   L = lambda u: - div(grad(u)) + u
 
@@ -63,8 +63,8 @@ The symbolic associated expression can be achieved using
 
 .. code-block:: python
 
-  from sympde import Unknown
-  from sympde import dx, dy
+  from sympde.api import Unknown
+  from sympde.api import dx, dy
 
   u = Unknown('u', ldim=2)
   v = Unknown('v', ldim=2)
@@ -89,8 +89,8 @@ When evaluated, **sympde** differential operators are linear operators. Which me
 
 .. code-block:: python
 
-  from sympde import Unknown
-  from sympde import dx, dy
+  from sympde.api import Unknown
+  from sympde.api import dx, dy
 
   u = Unknown('u', ldim=2)
   v = Unknown('v', ldim=2)
@@ -107,8 +107,8 @@ will return:
 
 .. code-block:: python
 
-  from sympde import Unknown, Constant
-  from sympde import dx
+  from sympde.api import Unknown, Constant
+  from sympde.api import dx
 
   u = Unknown('u', ldim=1)
   alpha = Constant('alpha')
@@ -125,8 +125,8 @@ You can also apply a differential operator on an analytical function, which is u
 
 .. code-block:: python
 
-  from sympde import Constant
-  from sympde import dx, dy
+  from sympde.api import Constant
+  from sympde.api import dx, dy
   from sympy.abc import x, y
   from sympy import cos, exp
 
@@ -146,8 +146,8 @@ sympy undefined can also be used:
 
 .. code-block:: python
 
-  from sympde import Constant
-  from sympde import dx, dy
+  from sympde.api import Constant
+  from sympde.api import dx, dy
   from sympy.abc import x, y
   from sympy import Function
 
@@ -190,10 +190,10 @@ The following example shows how to define the weak formulation of the Laplace op
 
 .. code-block:: python
 
-  from sympde import grad, dot
-  from sympde import FunctionSpace
-  from sympde import TestFunction
-  from sympde import BilinearForm
+  from sympde.api import grad, dot
+  from sympde.api import FunctionSpace
+  from sympde.api import TestFunction
+  from sympde.api import BilinearForm
 
   V = FunctionSpace('V', ldim=2)
   U = FunctionSpace('U', ldim=2)
@@ -229,10 +229,10 @@ The following example implements a 1D wave model:
 
 .. code-block:: python
 
-  from sympde import dx
-  from sympde import FunctionSpace
-  from sympde import TestFunction
-  from sympde import BilinearForm
+  from sympde.api import dx
+  from sympde.api import FunctionSpace
+  from sympde.api import TestFunction
+  from sympde.api import BilinearForm
 
   V = FunctionSpace('V', ldim=1)
   W = FunctionSpace('W', ldim=1)
@@ -266,9 +266,9 @@ Linear forms are more simple to create, but follow the same logic:
 
 .. code-block:: python
 
-  from sympde import FunctionSpace
-  from sympde import TestFunction
-  from sympde import LinearForm
+  from sympde.api import FunctionSpace
+  from sympde.api import TestFunction
+  from sympde.api import LinearForm
   from sympy import cos
 
   V = FunctionSpace('V', ldim=2)
@@ -288,10 +288,10 @@ A FunctionForm allows you to write expressions that can be integrated over the c
 
 .. code-block:: python
 
-  from sympde import grad, div
-  from sympde import FunctionSpace
-  from sympde import Field
-  from sympde import FunctionForm
+  from sympde.api import grad, div
+  from sympde.api import FunctionSpace
+  from sympde.api import Field
+  from sympde.api import FunctionForm
   from sympy import cos, pi
 
   V = FunctionSpace('V', ldim=1)
@@ -309,11 +309,11 @@ For example, when using *generic* operators such as **grad** or **div**, the exp
 
 .. code-block:: python
 
-  from sympde import grad, dot
-  from sympde import FunctionSpace
-  from sympde import TestFunction
-  from sympde import BilinearForm
-  from sympde import evaluate
+  from sympde.api import grad, dot
+  from sympde.api import FunctionSpace
+  from sympde.api import TestFunction
+  from sympde.api import BilinearForm
+  from sympde.api import evaluate
 
   V = FunctionSpace('V', ldim=2)
   U = FunctionSpace('U', ldim=2)
@@ -340,11 +340,11 @@ If you only want to convert the generic operators into atomic operators, then yo
 
 .. code-block:: python
 
-  from sympde import grad, dot
-  from sympde import FunctionSpace
-  from sympde import TestFunction
-  from sympde import BilinearForm
-  from sympde import atomize
+  from sympde.api import grad, dot
+  from sympde.api import FunctionSpace
+  from sympde.api import TestFunction
+  from sympde.api import BilinearForm
+  from sympde.api import atomize
 
   V = FunctionSpace('V', ldim=2)
   U = FunctionSpace('U', ldim=2)
@@ -373,8 +373,8 @@ A symbolic expression can be printed in latex. This is done by calling the funct
 
 .. code-block:: python
 
-  from sympde import grad, div
-  from sympde import Unknown
+  from sympde.api import grad, div
+  from sympde.api import Unknown
   from sympde.printing import latex
 
   u = Unknown('u', ldim=2)
@@ -395,11 +395,11 @@ A **BilinearForm** can also be printed:
 
 .. code-block:: python
 
-  from sympde import grad, dot
-  from sympde import FunctionSpace
-  from sympde import TestFunction
-  from sympde import BilinearForm
-  from sympde import atomize
+  from sympde.api import grad, dot
+  from sympde.api import FunctionSpace
+  from sympde.api import TestFunction
+  from sympde.api import BilinearForm
+  from sympde.api import atomize
   from sympde.printing import latex
 
   V = FunctionSpace('V', ldim=2)

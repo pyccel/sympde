@@ -14,11 +14,10 @@ from sympde.old_sympy_utilities import is_sequence
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import Constant
 from sympde.core.utils import random_string
-from sympde.calculus import Dot, Inner, BasicOperator
-from sympde.calculus import Grad, Hessian
-from sympde.topology import BasicDomain, Union
-from sympde.topology import NormalVector
-from sympde.topology import Boundary, Interface, Domain, InteriorDomain
+from sympde.calculus.core import BasicOperator, Dot, Grad, Hessian, Inner
+from sympde.topology.basic import BasicDomain, Boundary, Interface
+from sympde.topology.basic import InteriorDomain, Union
+from sympde.topology.domain import Domain, NormalVector
 from sympde.topology.space import ScalarFunction
 from sympde.topology.space import VectorFunction
 from sympde.topology.space import Trace, trace_0, trace_1
@@ -869,4 +868,3 @@ Basic._constructor_postprocessor_mapping[Integral] = {
 Basic._constructor_postprocessor_mapping[IntAdd] = {
     "Mul": [mul_add],
 }
-

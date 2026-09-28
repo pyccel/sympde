@@ -7,8 +7,8 @@ from sympy.printing.latex import LatexPrinter as LatexPrinterSympy
 from sympy.printing.latex import translate
 from sympy import Indexed, IndexedBase, Matrix, ImmutableDenseMatrix
 
-from sympde.topology import NormalVector, TangentVector
-from sympde.topology import Line, Square, Cube, Domain
+from sympde.topology.domain import Domain, Cube, Line, Square
+from sympde.topology.domain import NormalVector, TangentVector
 from sympde.topology.derivatives import sort_partial_derivatives
 from sympde.topology.derivatives import get_index_derivatives
 from sympde.topology.derivatives import get_atom_derivatives

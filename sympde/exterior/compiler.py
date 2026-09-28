@@ -10,11 +10,11 @@ from sympy import Tuple
 
 from sympde.core.basic import _coeffs_registery
 from sympde.core.basic import CalculusFunction
-from sympde.topology   import H1SpaceType, HcurlSpaceType, HdivSpaceType
-from sympde.topology   import L2SpaceType, UndefinedSpaceType
-from sympde.topology   import ScalarFunction, VectorFunction
-from sympde.calculus   import Grad, Curl, Div
-from sympde.calculus   import Dot, Inner, Cross
+from sympde.topology.datatype import H1SpaceType, HcurlSpaceType, HdivSpaceType
+from sympde.topology.datatype import L2SpaceType, UndefinedSpaceType
+from sympde.topology.space import ScalarFunction, VectorFunction
+from sympde.calculus.core import Curl, Div, Grad
+from sympde.calculus.core import Cross, Dot, Inner
 #from sympde.calculus import grad, dot, inner, cross, rot, curl, div
 
 from .form     import DifferentialForm

@@ -16,7 +16,7 @@ from sympy.core.singleton import S
 
 from sympde.old_sympy_utilities import with_metaclass
 from sympde.core.basic import _coeffs_registery
-from sympde.core import LinearOperator
+from sympde.core.algebra import LinearOperator
 
 #==============================================================================
 class FormType(with_metaclass(Singleton, Basic)):

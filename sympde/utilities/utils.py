@@ -2,7 +2,9 @@ import numpy as np
 import itertools as it
 from sympy import lambdify
 
-from sympde.topology import IdentityMapping, InteriorDomain, MultiPatchMapping
+from sympde.topology.analytical_mapping import IdentityMapping
+from sympde.topology.basic import InteriorDomain
+from sympde.topology.mapping import MultiPatchMapping
 from sympde.topology.analytical_mapping import TorusMapping
 
 def lambdify_sympde(variables, expr):
@@ -292,7 +294,8 @@ def plot_2d_single_patch(patch, mapping, ax, isolines=False, refinement=40):
     ax.plot(X_11, Y_11, 'k')
 
 if __name__ == '__main__':
-    from sympde.topology import Square, PolarMapping
+    from sympde.topology.analytical_mapping import PolarMapping
+    from sympde.topology.domain import Square
     A = Square('A', bounds1=(0, 1), bounds2=(0, np.pi/2))
     F = PolarMapping('F', c1=0, c2=0, rmin=0.5, rmax=1)
     Omega = F(A)

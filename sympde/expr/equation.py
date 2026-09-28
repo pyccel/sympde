@@ -6,12 +6,12 @@ from sympy.core import Expr
 from sympy.parsing.sympy_parser import parse_expr
 
 from sympde.topology.basic import Boundary, Union
-from sympde.topology.space  import VectorFunctionSpace, ScalarFunctionSpace
-from sympde.topology.space import ScalarFunction
-from sympde.topology.space import VectorFunction, IndexedVectorFunction
-from sympde.topology import Boundary, NormalVector, TangentVector
-from sympde.topology import Trace, trace_0, trace_1
-from sympde.calculus import grad, dot
+from sympde.topology.domain import NormalVector, TangentVector
+from sympde.topology.space import IndexedVectorFunction
+from sympde.topology.space import ScalarFunction, ScalarFunctionSpace
+from sympde.topology.space import Trace, trace_0, trace_1
+from sympde.topology.space import VectorFunction, VectorFunctionSpace
+from sympde.calculus.core import dot, grad
 from sympde.core.utils import random_string
 
 from .expr import BilinearForm, LinearForm

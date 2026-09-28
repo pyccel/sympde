@@ -1,11 +1,11 @@
 # coding: utf-8
 
-from sympde.core     import Constant
-from sympde.calculus import grad, dot
-from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
-from sympde.topology import element_of
-from sympde.topology import Domain, Boundary, NormalVector
-from sympde.expr     import EssentialBC
+from sympde.api import Constant
+from sympde.api import grad, dot
+from sympde.api import ScalarFunctionSpace, VectorFunctionSpace
+from sympde.api import element_of
+from sympde.api import Domain, Boundary, NormalVector
+from sympde.api import EssentialBC
 
 #==============================================================================
 def test_essential_bc_1():

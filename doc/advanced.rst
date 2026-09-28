@@ -10,10 +10,10 @@ Assume we have the following bilinear form for Laplace
 
 .. code-block:: python
 
-  from sympde import grad, dot
-  from sympde import FunctionSpace
-  from sympde import TestFunction
-  from sympde import BilinearForm
+  from sympde.api import grad, dot
+  from sympde.api import FunctionSpace
+  from sympde.api import TestFunction
+  from sympde.api import BilinearForm
   from sympde.core import tensorize
 
   V = FunctionSpace('V', ldim=2)

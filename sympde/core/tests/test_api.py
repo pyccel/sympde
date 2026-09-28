@@ -1,3 +1,15 @@
+from pathlib import Path
+
+
+def test_non_api_package_initializers_are_empty():
+    package_dir = Path(__file__).parents[2]
+    initializers = package_dir.rglob('__init__.py')
+
+    for initializer in initializers:
+        if initializer.parent != package_dir / 'api':
+            assert initializer.read_text() == ''
+
+
 def test_api_has_only_explicit_exports():
     import sympde.api as api
 

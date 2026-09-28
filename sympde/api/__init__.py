@@ -251,7 +251,7 @@ from sympde.exterior.calculus import (
     InteriorProduct,
     Ld,
     LieDerivative,
-    PullBack as ExteriorPullBack,
+    PullBack,
     d,
     delta,
     hodge,
@@ -284,6 +284,10 @@ from sympde.exterior.inference import infere_type
 from sympde.printing.latex import LatexPrinter, latex
 from sympde.utilities.utils import lambdify_sympde, plot_domain
 
+# ``PullBack`` historically referred to the exterior-calculus operator in the
+# root namespace.  Keep that spelling and provide explicit aliases for both
+# otherwise-colliding pull-back concepts.
+ExteriorPullBack = PullBack
 
 __all__ = (
     '__version__',
@@ -500,6 +504,7 @@ __all__ = (
     'InteriorProduct',
     'Ld',
     'LieDerivative',
+    'PullBack',
     'd',
     'delta',
     'hodge',

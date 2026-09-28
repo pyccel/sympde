@@ -16,7 +16,7 @@ from sympy.core import Add, Mul
 from sympy.core.singleton import S
 
 from sympde.core.basic import _coeffs_registery
-from sympde.core import LinearOperator
+from sympde.core.algebra import LinearOperator
 from sympde.core.basic import CalculusFunction
 
 from .form import DifferentialForm

@@ -7,10 +7,10 @@ from sympy import Matrix
 from sympy.tensor import IndexedBase
 from sympy import symbols, simplify
 
-from sympde.topology import Mapping, MappedDomain, AffineMapping
-from sympde.topology import dx, dy, dz
-from sympde.topology import dx1, dx2, dx3
-from sympde.topology import Domain
+from sympde.api import Mapping, MappedDomain, AffineMapping
+from sympde.api import dx, dy, dz
+from sympde.api import dx1, dx2, dx3
+from sympde.api import Domain
 
 from sympde.topology.mapping import Jacobian, Covariant, Contravariant
 # ...

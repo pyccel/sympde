@@ -1,13 +1,13 @@
 # coding: utf-8
 
-from sympde.calculus import grad, div
-from sympde.topology import Domain
-from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
+from sympde.api import grad, div
+from sympde.api import Domain
+from sympde.api import ScalarFunctionSpace, VectorFunctionSpace
 #from sympde.topology import ProductSpace
-from sympde.topology import element_of
-from sympde.topology import H1Space, HcurlSpace, HdivSpace, L2Space, UndefinedSpace
-from sympde.topology import ScalarFunction, VectorFunction
-from sympde.topology import Projector
+from sympde.api import element_of
+from sympde.api import H1Space, HcurlSpace, HdivSpace, L2Space, UndefinedSpace
+from sympde.api import ScalarFunction, VectorFunction
+from sympde.api import Projector
 
 #==============================================================================
 def test_space_1d_1():

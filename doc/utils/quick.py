@@ -16,8 +16,8 @@ def dotexport(expr, fname):
 
 
 # ...
-#from sympde import Unknown
-#from sympde import grad, div
+#from sympde.api import Unknown
+#from sympde.api import grad, div
 #
 #u = Unknown('u', ldim=2)
 #expr = - div(grad(u)) + u
@@ -25,8 +25,8 @@ def dotexport(expr, fname):
 # ...
 
 # ...
-#from sympde import Unknown
-#from sympde import dx, dy
+#from sympde.api import Unknown
+#from sympde.api import dx, dy
 #
 #u = Unknown('u', ldim=2)
 #v = Unknown('v', ldim=2)
@@ -36,8 +36,8 @@ def dotexport(expr, fname):
 # ...
 
 # ...
-#from sympde import Unknown
-#from sympde import dx, dy
+#from sympde.api import Unknown
+#from sympde.api import dx, dy
 #
 #u = Unknown('u', ldim=2)
 #v = Unknown('v', ldim=2)
@@ -47,8 +47,8 @@ def dotexport(expr, fname):
 # ...
 
 # ...
-#from sympde import Unknown, Constant
-#from sympde import dx
+#from sympde.api import Unknown, Constant
+#from sympde.api import dx
 #
 #u = Unknown('u', ldim=1)
 #alpha = Constant('alpha')
@@ -58,8 +58,8 @@ def dotexport(expr, fname):
 # ...
 
 # ...
-#from sympde import Constant
-#from sympde import dx, dy
+#from sympde.api import Constant
+#from sympde.api import dx, dy
 #from sympy.abc import x, y
 #from sympy import cos, exp
 #
@@ -72,8 +72,8 @@ def dotexport(expr, fname):
 # ...
 
 # ...
-#from sympde import Constant
-#from sympde import dx, dy
+#from sympde.api import Constant
+#from sympde.api import dx, dy
 #from sympy.abc import x, y
 #from sympy import Function
 #
@@ -87,10 +87,10 @@ def dotexport(expr, fname):
 # ...
 
 # ...
-#from sympde import grad, dot
-#from sympde import FunctionSpace
-#from sympde import TestFunction
-#from sympde import BilinearForm
+#from sympde.api import grad, dot
+#from sympde.api import FunctionSpace
+#from sympde.api import TestFunction
+#from sympde.api import BilinearForm
 #
 #V = FunctionSpace('V', ldim=2)
 #U = FunctionSpace('U', ldim=2)
@@ -104,11 +104,11 @@ def dotexport(expr, fname):
 # ...
 
 # ...
-#from sympde import dx
-#from sympde import FunctionSpace
-#from sympde import TestFunction
-#from sympde import BilinearForm
-#from sympde import Constant
+#from sympde.api import dx
+#from sympde.api import FunctionSpace
+#from sympde.api import TestFunction
+#from sympde.api import BilinearForm
+#from sympde.api import Constant
 #
 #V = FunctionSpace('V', ldim=1)
 #W = FunctionSpace('W', ldim=1)
@@ -136,9 +136,9 @@ def dotexport(expr, fname):
 # ...
 
 # ...
-#from sympde import FunctionSpace
-#from sympde import TestFunction
-#from sympde import LinearForm
+#from sympde.api import FunctionSpace
+#from sympde.api import TestFunction
+#from sympde.api import LinearForm
 #from sympy import cos
 #
 #V = FunctionSpace('V', ldim=2)
@@ -151,10 +151,10 @@ def dotexport(expr, fname):
 # ...
 
 # ...
-#from sympde import grad, div
-#from sympde import FunctionSpace
-#from sympde import Field
-#from sympde import FunctionForm
+#from sympde.api import grad, div
+#from sympde.api import FunctionSpace
+#from sympde.api import Field
+#from sympde.api import FunctionForm
 #from sympy import cos, pi
 #
 #V = FunctionSpace('V', ldim=1)
@@ -166,11 +166,11 @@ def dotexport(expr, fname):
 # ...
 
 # ...
-#from sympde import grad, dot
-#from sympde import FunctionSpace
-#from sympde import TestFunction
-#from sympde import BilinearForm
-#from sympde import evaluate
+#from sympde.api import grad, dot
+#from sympde.api import FunctionSpace
+#from sympde.api import TestFunction
+#from sympde.api import BilinearForm
+#from sympde.api import evaluate
 #
 #V = FunctionSpace('V', ldim=2)
 #U = FunctionSpace('U', ldim=2)
@@ -183,11 +183,11 @@ def dotexport(expr, fname):
 # ...
 
 # ...
-#from sympde import grad, dot
-#from sympde import FunctionSpace
-#from sympde import TestFunction
-#from sympde import BilinearForm
-#from sympde import atomize
+#from sympde.api import grad, dot
+#from sympde.api import FunctionSpace
+#from sympde.api import TestFunction
+#from sympde.api import BilinearForm
+#from sympde.api import atomize
 #
 #V = FunctionSpace('V', ldim=2)
 #U = FunctionSpace('U', ldim=2)
@@ -200,8 +200,8 @@ def dotexport(expr, fname):
 # ...
 
 # ...
-#from sympde import grad, div
-#from sympde import Unknown
+#from sympde.api import grad, div
+#from sympde.api import Unknown
 #from sympde.printing import latex
 #
 #u = Unknown('u', ldim=2)
@@ -210,11 +210,11 @@ def dotexport(expr, fname):
 # ...
 
 # ...
-from sympde import grad, dot
-from sympde import FunctionSpace
-from sympde import TestFunction
-from sympde import BilinearForm
-from sympde import atomize
+from sympde.api import grad, dot
+from sympde.api import FunctionSpace
+from sympde.api import TestFunction
+from sympde.api import BilinearForm
+from sympde.api import atomize
 from sympde.printing import latex
 
 V = FunctionSpace('V', ldim=2)

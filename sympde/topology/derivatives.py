@@ -106,6 +106,10 @@ class DifferentialOperator(LinearOperator):
             elif isinstance(expr, Expr):
                 x = Symbol(cls.coordinate, real=True)
                 if cls.logical:
+                    # Imported lazily to avoid a module cycle: mapping depends
+                    # on the differential-operator definitions in this module.
+                    from .mapping import Jacobian, Mapping
+
                     M = expr.atoms(Mapping)
                     if len(M)>0:
                         M = list(M)[0]
@@ -1287,6 +1291,3 @@ def get_max_logical_partial_derivatives(expr, F=None):
         for k,v in dd.items():
             if v > d[k]: d[k] = v
     return d
-
-from .mapping import Mapping, Jacobian
-

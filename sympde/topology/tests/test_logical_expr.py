@@ -5,27 +5,27 @@ from sympy import Matrix
 from sympy import expand
 from sympy import cos, sin, sqrt, pi
 
-from sympde.core     import Constant
-from sympde.calculus import grad, dot, inner, rot, div
-from sympde.calculus import laplace, bracket, convect
-from sympde.calculus import jump, avg, Dn, minus, plus
-from sympde.topology import Domain, Mapping, Square
-from sympde.topology import dx, dy
-from sympde.topology import dx1, dx2, dx3
-from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
-from sympde.topology import element_of, elements_of
-from sympde.topology import LogicalExpr
-from sympde.topology import SymbolicExpr
-from sympde.topology import IdentityMapping
-from sympde.topology import PolarMapping
-from sympde.topology import TargetMapping
-from sympde.topology import CzarnyMapping
-from sympde.topology import CollelaMapping2D
-from sympde.topology import TorusMapping
-from sympde.topology import TwistedTargetMapping
+from sympde.api import Constant
+from sympde.api import grad, dot, inner, rot, div
+from sympde.api import laplace, bracket, convect
+from sympde.api import jump, avg, Dn, minus, plus
+from sympde.api import Domain, Mapping, Square
+from sympde.api import dx, dy
+from sympde.api import dx1, dx2, dx3
+from sympde.api import ScalarFunctionSpace, VectorFunctionSpace
+from sympde.api import element_of, elements_of
+from sympde.api import LogicalExpr
+from sympde.api import SymbolicExpr
+from sympde.api import IdentityMapping
+from sympde.api import PolarMapping
+from sympde.api import TargetMapping
+from sympde.api import CzarnyMapping
+from sympde.api import CollelaMapping2D
+from sympde.api import TorusMapping
+from sympde.api import TwistedTargetMapping
 
-from sympde.expr     import BilinearForm, integral
-from sympde.calculus import grad, div, curl, dot
+from sympde.api import BilinearForm, integral
+from sympde.api import grad, div, curl, dot
 
 from sympde.topology.mapping import Jacobian
 
