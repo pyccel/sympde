@@ -4,6 +4,8 @@ import numpy as np
 from sympy import Matrix, symbols, Array
 from sympy import S
 from sympde.utilities.utils import lambdify_sympde
+from sympde.utilities.utils import plot_domain
+from sympde.topology import Square
 
 
 
@@ -51,6 +53,13 @@ def test_lambdify_sympde_1d():
     expected_a_da[0, 0, ...] = np.linspace(0, 1, 10)[None, None, Ellipsis]
     expected_a_da[1, ...] = np.linspace(0, 1, 10)[None, None, Ellipsis]
     assert np.array_equal(array_input_da, expected_a_da)
+
+
+def test_plot_unmapped_2d_domain(monkeypatch, tmp_path):
+    """Plotting an unmapped square must create a 2D identity mapping."""
+    monkeypatch.setenv('MPLBACKEND', 'Agg')
+    monkeypatch.setenv('MPLCONFIGDIR', str(tmp_path))
+    plot_domain(Square('Omega'), draw=False)
 
 
 def test_lambdify_sympde_2d():

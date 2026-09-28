@@ -2,9 +2,6 @@ import numpy as np
 import itertools as it
 from sympy import lambdify
 
-from mpl_toolkits.mplot3d import *
-import matplotlib.pyplot as plt
-
 from sympde.topology import IdentityMapping, InteriorDomain, MultiPatchMapping
 from sympde.topology.analytical_mapping import TorusMapping
 
@@ -134,6 +131,8 @@ def plot_2d(domain, draw=True, isolines=False, refinement=40):
     refinement : int
         Number of straight line segments used to approximate each boundary edge.
     """
+    import matplotlib.pyplot as plt
+
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
@@ -168,6 +167,8 @@ def plot_3d(domain, draw=True, refinement=15):
     refinement : int
         Number of straight line segments used to approximate each boundary edge.
     """
+    import matplotlib.pyplot as plt
+
     mapping = domain.mapping
 
     fig = plt.figure()
@@ -265,7 +266,7 @@ def plot_2d_single_patch(patch, mapping, ax, isolines=False, refinement=40):
         Number of straight line segments used to approximate each boundary edge.
     """
     if mapping is None:
-        mapping = IdentityMapping('Id', dim=3)
+        mapping = IdentityMapping('Id', dim=2)
 
     refinement+=1
     map_call = mapping.get_callable_mapping()
