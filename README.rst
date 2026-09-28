@@ -68,6 +68,16 @@ To check out a specific branch/tag/commit named ``<TAG>``, just use ``git checko
 
     python3 -m pip install --editable ".[test]"
 
+Public API
+^^^^^^^^^^
+
+User-facing objects can be imported from the flat, explicit API without
+knowing which internal module defines them::
+
+  from sympde.api import Cube, Mapping, Constant
+  from sympde.api import ScalarFunctionSpace, VectorFunctionSpace, elements_of
+  from sympde.api import BilinearForm, LinearForm, Norm
+
 Running the tests
 ^^^^^^^^^^^^^^^^^
 
