@@ -2,8 +2,6 @@
 
 # TODO add action of diff operators on sympy known functions
 
-from itertools   import groupby
-
 import numpy as np
 
 from sympy import Basic

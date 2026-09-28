@@ -1,20 +1,7 @@
 # coding: utf-8
 
-from numpy import unique
-
 from sympy.core import Basic
-from sympy.tensor import Indexed, IndexedBase
 from sympy.core import Symbol
-from sympy.core import Expr
-from sympy.core.containers import Tuple
-from sympy import Function
-from sympy import Integer, Float
-from sympy.core.singleton import Singleton
-from sympy.core import Add, Mul
-from sympy.core.singleton import S
-
-from sympde.core.basic import _coeffs_registery
-from sympde.core.algebra import LinearOperator
 
 from .datatype import get_index_form
 

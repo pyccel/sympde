@@ -4,9 +4,6 @@ we support. Also some functions that are needed SymPy-wide and are located
 here for easy import.
 """
 
-import operator
-from collections import defaultdict
-
 def with_metaclass(meta, *bases):
     """
     Create a base class with a metaclass.

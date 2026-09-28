@@ -14,7 +14,7 @@ from sympde.core.algebra import (Dot_1d,
 #from sympde.core.utils import random_string
 
 from sympde.calculus.core import Jump, is_zero
-from sympde.calculus.core import avg, jump, minus, plus
+from sympde.calculus.core import jump, minus, plus
 from sympde.calculus.core import _generic_ops, _diff_ops
 from sympde.calculus.core import MinusInterfaceOperator, PlusInterfaceOperator
 from sympde.calculus.matrices import SymbolicDeterminant, Inverse, Transpose

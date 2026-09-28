@@ -5,7 +5,6 @@ from sympy import lambdify
 from sympde.topology.analytical_mapping import IdentityMapping
 from sympde.topology.basic import InteriorDomain
 from sympde.topology.mapping import MultiPatchMapping
-from sympde.topology.analytical_mapping import TorusMapping
 
 def lambdify_sympde(variables, expr):
     """

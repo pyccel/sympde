@@ -5,13 +5,7 @@
 #        derivatives
 
 
-from numpy import unique
-
 from sympy.core import Basic
-from sympy.tensor import Indexed, IndexedBase
-from sympy.core import Symbol
-from sympy.core import Expr
-from sympy.core.containers import Tuple
 from sympy.core.singleton import Singleton
 from sympde.old_sympy_utilities import with_metaclass
 
@@ -108,4 +102,3 @@ dtype_regularity_registry = {'h1':    H1Regularity,
                              'hcurl': HcurlRegularity,
                              'hdiv':  HdivRegularity,
                              'l2':    L2Regularity}
-

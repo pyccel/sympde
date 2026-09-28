@@ -2,16 +2,12 @@
 #
 
 from sympy.core import Symbol
-from sympy import Mul, Tuple
+from sympy import Tuple
 from sympy.printing.latex import LatexPrinter as LatexPrinterSympy
 from sympy.printing.latex import translate
-from sympy import Indexed, IndexedBase, Matrix, ImmutableDenseMatrix
+from sympy import Indexed, IndexedBase
 
-from sympde.topology.domain import Domain, Cube, Line, Square
-from sympde.topology.domain import NormalVector, TangentVector
-from sympde.topology.derivatives import sort_partial_derivatives
-from sympde.topology.derivatives import get_index_derivatives
-from sympde.topology.derivatives import get_atom_derivatives
+from sympde.topology.domain import NormalVector
 from sympde.topology.space import ProductSpace
 from sympde.topology.space import ScalarFunction, VectorFunction
 

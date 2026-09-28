@@ -6,8 +6,8 @@ import h5py
 import yaml
 import os
 
-from collections import abc, OrderedDict
-from typing import Union as TypeUnion, Optional, List, Dict, Iterable, TYPE_CHECKING
+from collections import OrderedDict
+from typing import Union as TypeUnion, Optional, List, Iterable, TYPE_CHECKING
 # Union clashes with core.basic.Union
 
 from sympy import Integer
@@ -15,7 +15,7 @@ from sympy.core.singleton import Singleton
 from sympy.core import Basic, symbols
 from sympy.core.containers import Tuple
 from sympy.tensor import IndexedBase, Indexed
-from sympy.core import Add, Mul, Pow
+from sympy.core import Add
 from sympy.core.expr import AtomicExpr
 
 from sympde.old_sympy_utilities import is_sequence, with_metaclass
@@ -1100,4 +1100,3 @@ def split(domain, value):
 
     else:
         raise NotImplementedError('TODO')
-
