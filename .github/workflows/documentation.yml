@@ -4,11 +4,10 @@ on:
   push:
     branches: [ master ]
     paths:
-      - 'README.rst'
+      - 'README.md'
       - 'doc/**'
       - 'sympde/**.py'
       - 'pyproject.toml'
-      - '.readthedocs.yaml'
       - '.github/workflows/documentation.yml'
 
   pull_request:
@@ -20,6 +19,8 @@ on:
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
 
 jobs:
   build_docs:
@@ -50,8 +51,22 @@ jobs:
         python -m sphinx -W --keep-going
         -b html doc doc/_build/html
 
+    - name: Setup Pages
+      uses: actions/configure-pages@v5
+
     - name: Upload artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-pages-artifact@v3
       with:
-        name: sympde-documentation
         path: 'doc/_build/html'
+
+  deploy_docs:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: build_docs
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4

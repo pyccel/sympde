@@ -2,7 +2,7 @@
 
 [![CI status](https://github.com/pyccel/sympde/actions/workflows/testing.yml/badge.svg?branch=master&event=push)](https://github.com/pyccel/sympde/actions/workflows/testing.yml)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/pyccel/sympde/master)
-[![Documentation Status](https://readthedocs.org/projects/sympde/badge/?version=latest)](http://sympde.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://github.com/pyccel/sympde/actions/workflows/documentation.yml/badge.svg)](https://github.com/pyccel/sympde/actions/workflows/documentation.yml)
 
 **SymPDE** is a symbolic calculus library for partial differential equations and variational forms.
 It can be used to provide capabilities similar to the [FEniCS](https://fenicsproject.org/) project by extending and writing your own *printing* functions.
@@ -74,6 +74,14 @@ The complete test suite can be run from any directory with:
 
 ```bash
 pytest -n auto --dist loadgroup --pyargs sympde -ra
+```
+
+The documentation dependencies are installed separately, and the HTML pages
+are built with warnings treated as errors:
+
+```bash
+python3 -m pip install --editable ".[docs]"
+python3 -m sphinx -W --keep-going -b html doc doc/_build/html
 ```
 
 ## For developers
