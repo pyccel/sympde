@@ -12,6 +12,7 @@ Welcome to sympde's documentation!
 
    quick
    advanced
+   examples/index
 
 Mathematical background
 =======================
