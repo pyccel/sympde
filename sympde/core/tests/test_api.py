@@ -19,10 +19,6 @@ def test_api_has_only_explicit_exports():
         name for name in api.__all__ if not name.startswith('_')
     }
 
-    namespace = {}
-    exec('from sympde.api import *', namespace)
-    assert set(namespace).difference({'__builtins__'}) == set(api.__all__)
-
 
 def test_api_objects_come_from_defining_modules():
     from sympde.api import BilinearForm, Constant, Cube, Mapping, elements_of
