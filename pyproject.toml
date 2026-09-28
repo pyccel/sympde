@@ -43,7 +43,7 @@ docs = [
 ]
 
 [project.urls]
-Documentation = "https://sympde.readthedocs.io/"
+Documentation = "https://pyccel.github.io/sympde/"
 Issues = "https://github.com/pyccel/sympde/issues"
 Repository = "https://github.com/pyccel/sympde"
 
