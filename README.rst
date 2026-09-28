@@ -75,6 +75,13 @@ The complete test suite can be run from any directory with::
 
   pytest -n auto --dist loadgroup --pyargs sympde -ra
 
+The documentation dependencies are installed separately and the HTML pages
+are built with warnings treated as errors::
+
+  python3 -m pip install --editable ".[docs]"
+  python3 -m sphinx -W --keep-going -b html doc doc/_build/html
+
+
 For developers
 **************
 
@@ -104,9 +111,9 @@ Also, pay attention to the words ``head`` and ``tags`` in the path: the former i
    :alt: CI status
    :target: https://github.com/pyccel/sympde/actions/workflows/testing.yml
 
-.. |docs| image:: https://readthedocs.org/projects/sympde/badge/?version=latest
+.. |docs| image:: https://github.com/pyccel/sympde/actions/workflows/documentation.yml/badge.svg
    :alt: Documentation Status
-   :target: http://sympde.readthedocs.io/en/latest/?badge=latest
+   :target: https://github.com/pyccel/sympde/actions/workflows/documentation.yml
 
 .. |binder| image:: https://mybinder.org/badge_logo.svg
    :alt: Run notebooks in Binder
