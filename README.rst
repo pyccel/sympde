@@ -111,9 +111,9 @@ Also, pay attention to the words ``head`` and ``tags`` in the path: the former i
    :alt: CI status
    :target: https://github.com/pyccel/sympde/actions/workflows/testing.yml
 
-.. |docs| image:: https://readthedocs.org/projects/sympde/badge/?version=latest
+.. |docs| image:: https://github.com/pyccel/sympde/actions/workflows/documentation.yml/badge.svg
    :alt: Documentation Status
-   :target: https://sympde.readthedocs.io/en/latest/?badge=latest
+   :target: https://github.com/pyccel/sympde/actions/workflows/documentation.yml
 
 .. |binder| image:: https://mybinder.org/badge_logo.svg
    :alt: Run notebooks in Binder
