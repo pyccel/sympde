@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
-#
-# Configuration file for the Sphinx documentation builder.
-#
-# This file does only contain a selection of the most common options. For a
-# full list see the documentation:
-# http://www.sphinx-doc.org/en/master/config
+"""Sphinx configuration for the SymPDE documentation."""
+
+from pathlib import Path
+
+from sphinx.ext.apidoc import main as sphinx_apidoc
+
+from sympde import __version__
 
 # -- Path setup --------------------------------------------------------------
 
@@ -19,21 +19,21 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'sympde'
-copyright = '2018, A. Ratnani, S. Hadjout'
-author = 'A. Ratnani, S. Hadjout'
+project = 'SymPDE'
+copyright = '2018-2026, SymPDE developers'
+author = 'SymPDE developers'
 
 # The short X.Y version
-version = ''
+version = __version__.split('-dev', maxsplit=1)[0]
 # The full version, including alpha/beta/rc tags
-release = ''
+release = version
 
 
 # -- General configuration ---------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
 #
-# needs_sphinx = '1.0'
+needs_sphinx = '7.0'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -42,7 +42,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.todo',
-    'sphinx.ext.imgmath',
+    'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinxcontrib.bibtex',
 ]
@@ -54,7 +54,7 @@ templates_path = ['_templates']
 # You can specify multiple suffix as a list of string:
 #
 # source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+source_suffix = {'.rst': 'restructuredtext'}
 
 # The master toctree document.
 master_doc = 'index'
@@ -64,7 +64,7 @@ master_doc = 'index'
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -143,25 +143,12 @@ latex_engine='pdflatex'
 
 latex_additional_files = ['latex_macros.sty']
 latex_elements = {
-    'printmodindex': '',
     'printindex': '',
     'preamble' : r'\usepackage{amsmath} \usepackage{amssymb} \usepackage{latex_macros}',
-    'docclass':'report',
     }
 
 #####################################################
 # add LaTeX macros
-
-f = open('latex_macros.sty', 'r')
-
-try:
-    imgmath_latex_preamble  # check whether this is already defined
-except NameError:
-    imgmath_latex_preamble = ""
-
-for macro in f:
-    # used when building html version
-    imgmath_latex_preamble += macro + '\n'
 
 # -- Options for manual page output ------------------------------------------
 
@@ -192,11 +179,21 @@ texinfo_documents = [
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
 
+bibtex_bibfiles = ['math/refs_feec.bib']
+
 
 # -- APIDOC ----------------------------------------------
-import subprocess
-cmd = 'rm -rf source; sphinx-apidoc --force --maxdepth=3 -o source/ ../sympde'
-subprocess.call(cmd, shell=True)
-
-# create _static directory
-subprocess.call('mkdir -p _static', shell=True)
+doc_dir = Path(__file__).resolve().parent
+source_dir = doc_dir / 'source'
+static_dir = doc_dir / '_static'
+source_dir.mkdir(exist_ok=True)
+static_dir.mkdir(exist_ok=True)
+apidoc_args = [
+    '--force',
+    '--remove-old',
+    '--maxdepth', '3',
+    '--output-dir', str(source_dir),
+    str(doc_dir.parent / 'sympde'),
+]
+apidoc_args.extend(str(path) for path in (doc_dir.parent / 'sympde').glob('*/tests'))
+sphinx_apidoc(apidoc_args)

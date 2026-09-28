@@ -502,8 +502,7 @@ class TerminalExpr(CalculusFunction):
 
     Parameters
     ----------
-    expr : Expr | Matrix | ImmutableDenseMatrix (from sympy)
-                | LogicalExpr (from sympde.topology.mapping)
+    expr : Expr or Matrix or ImmutableDenseMatrix or LogicalExpr
         The mathematical expression.
 
     domain : BasicDomain (from sympde.topology.basic)
