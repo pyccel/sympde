@@ -107,9 +107,9 @@ Do not forget the comma at the end of the line, as this is an item in a list.
 Also, pay attention to the words ``head`` and ``tags`` in the path: the former is used for Git branches, the latter is used for Git tags (which may or may not correspond to GitHub releases).
 
 
-.. |CI status| image:: https://github.com/pyccel/sympde/actions/workflows/continuous-integration.yml/badge.svg?branch=master&event=push
+.. |CI status| image:: https://github.com/pyccel/sympde/actions/workflows/testing.yml/badge.svg?branch=master&event=push
    :alt: CI status
-   :target: https://github.com/pyccel/sympde/actions/workflows/continuous-integration.yml
+   :target: https://github.com/pyccel/sympde/actions/workflows/testing.yml
 
 .. |docs| image:: https://readthedocs.org/projects/sympde/badge/?version=latest
    :alt: Documentation Status
