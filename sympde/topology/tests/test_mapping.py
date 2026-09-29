@@ -7,12 +7,31 @@ from sympy import Matrix
 from sympy.tensor import IndexedBase
 from sympy import symbols, simplify
 
-from sympde.topology import Mapping, MappedDomain, AffineMapping
+from sympde.topology import IdentityMapping, Mapping, MappedDomain, AffineMapping
 from sympde.topology import dx, dy, dz
 from sympde.topology import dx1, dx2, dx3
-from sympde.topology import Domain
+from sympde.topology import Domain, Square
 
-from sympde.topology.mapping import Jacobian, Covariant, Contravariant
+from sympde.topology.mapping import (
+    Contravariant,
+    Covariant,
+    Jacobian,
+    MultiPatchMapping,
+)
+
+
+def test_multipatch_mapping_reconstruction():
+    patch = Square('A')
+    mapping = IdentityMapping('F', dim=2)
+    replacement = IdentityMapping('G', dim=2)
+    multipatch_mapping = MultiPatchMapping({patch: mapping})
+
+    rebuilt = multipatch_mapping.func(*multipatch_mapping.args)
+    replaced = multipatch_mapping.xreplace({mapping: replacement})
+
+    assert rebuilt == multipatch_mapping
+    assert rebuilt.mappings == multipatch_mapping.mappings
+    assert replaced.mappings == {patch: replacement}
 # ...
 def test_mapping_1d():
     print('============ test_mapping_1d ==============')
@@ -157,4 +176,3 @@ def teardown_module():
 def teardown_function():
     from sympy.core import cache
     cache.clear_cache()
-
