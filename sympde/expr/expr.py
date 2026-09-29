@@ -9,8 +9,8 @@ from sympy.core import Basic, S
 from sympy.core import Expr, Add, Mul
 from sympy.core.numbers import Zero as sy_Zero
 from sympy.core.containers import Tuple
+from sympy.utilities.iterables import is_sequence
 
-from sympde.old_sympy_utilities import is_sequence
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import Constant
 from sympde.core.utils import random_string
@@ -402,7 +402,7 @@ class LinearForm(BasicForm):
         # Make sure that 'values' is always a list
         if len(tests) == 1:
             values = tests[0]
-            if not is_sequence(values, vector=isinstance(values, VectorFunction)):
+            if isinstance(values, VectorFunction) or not is_sequence(values):
                 values = [values]
         else:
             values = tests
@@ -513,8 +513,8 @@ class BilinearForm(BasicForm):
         expr = self._update_free_variables(**kwargs)
 
         # If needed, convert positional arguments to lists
-        if not is_sequence(trials, vector=isinstance(trials, VectorFunction)): trials = [trials]
-        if not is_sequence(tests, vector=isinstance(tests, VectorFunction)): tests  = [tests ]
+        if isinstance(trials, VectorFunction) or not is_sequence(trials): trials = [trials]
+        if isinstance(tests, VectorFunction) or not is_sequence(tests): tests  = [tests ]
 
         # Concatenate input values into single list
         values = [*trials, *tests]
