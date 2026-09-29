@@ -458,19 +458,56 @@ class Domain(BasicDomain):
 
         Notes
         -----
-        The orientation convention follows the `GeoPDEs multipatch geometry
-        specification <https://github.com/rafavzqz/geopdes/blob/master/geopdes/doc/geo_specs_mp_v21.txt#L193-L237>`_.
+        The orientations are specified in the same manner as in GeoPDES, see e.g.
+        <https://github.com/rafavzqz/geopdes/blob/master/geopdes/doc/geo_specs_mp_v21.txt#L193-L237>
+        and
+        T. Dokken, E. Quak, V. Skytt. Requirements from Isogeometric Analysis for changes in product design ontologies, 2010.
 
-        Examples
-        --------
-        Join the right side of one square to the left side of another:
+        Example
+        -------
+        # list of patches (mapped domains)
+        Omega_0 = F0(A)
+        Omega_1 = F1(A)
+        Omega_2 = F2(A)
+        Omega_3 = F3(A)
 
-        >>> patch_a = Square('A')
-        >>> patch_b = Square('B')
-        >>> interfaces = [((0, 0, 1), (1, 0, -1), 1)]
-        >>> domain = Domain.join([patch_a, patch_b], interfaces, 'Omega')
-        >>> len(domain)
-        2
+        patches = [Omega_0, Omega_1, Omega_2, Omega_3]
+
+        # integers representing the axes
+        axis_0 = 0
+        axis_1 = 1
+        axis_2 = 2
+
+        # integers representing the extremities: left (-1) or right (+1)
+        ext_0 = -1
+        ext_1 = +1
+
+        # A connectivity list in 2D
+        connectivity = [((Omega_0, axis_0, ext_0), (Omega_1, axis_0, ext_1),  1),
+                        ((Omega_1, axis_1, ext_0), (Omega_3, axis_1, ext_1), -1),
+                        ((Omega_0, axis_1, ext_0), (Omega_2, axis_1, ext_1),  1),
+                        ((Omega_2, axis_0, ext_0), (Omega_3, axis_0, ext_1), -1)]
+
+        # alternative option (passing interface patches by their indices in the patches list):
+        connectivity = [((0, axis_0, ext_0), (1, axis_0, ext_1),  1),
+                        ((1, axis_1, ext_0), (3, axis_1, ext_1), -1),
+                        ((0, axis_1, ext_0), (2, axis_1, ext_1),  1),
+                        ((2, axis_0, ext_0), (3, axis_0, ext_1), -1)]
+
+        # A connectivity list in 3D
+        connectivity = [((Omega_0, axis_0, ext_1), (Omega_1, axis_0, ext_0), ( 1,  1,  1)),
+                        ((Omega_0, axis_1, ext_1), (Omega_2, axis_1, ext_0), ( 1, -1,  1)),
+                        ((Omega_1, axis_1, ext_1), (Omega_3, axis_1, ext_0), (-1,  1, -1)),
+                        ((Omega_2, axis_0, ext_1), (Omega_3, axis_0, ext_0), (-1,  1,  1))]
+
+        # alternative option (passing interface patches by their indices in the patches list):
+        connectivity = [((0, axis_0, ext_1), (1, axis_0, ext_0), ( 1,  1,  1)),
+                        ((0, axis_1, ext_1), (2, axis_1, ext_0), ( 1, -1,  1)),
+                        ((1, axis_1, ext_1), (3, axis_1, ext_0), (-1,  1, -1)),
+                        ((2, axis_0, ext_1), (3, axis_0, ext_0), (-1,  1,  1))]
+
+        # the multi-patch domain
+        Omega = Domain.join(patches=patches, connectivity=connectivity, name='Omega')
         """
         assert isinstance(patches, (tuple, list))
         assert isinstance(connectivity, (tuple, list))
@@ -1100,4 +1137,3 @@ def split(domain, value):
 
     else:
         raise NotImplementedError('TODO')
-
