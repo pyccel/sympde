@@ -28,7 +28,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-24.04, macos-14 ]
+        os: [ ubuntu-latest, macos-latest ]
         python-version: [ '3.9', '3.10', '3.11', '3.12', '3.13', '3.14' ]
 
     name: ${{ matrix.os }} / Python ${{ matrix.python-version }}
@@ -58,7 +58,7 @@ jobs:
         mkdir scratch
 
     - name: Run coverage tests on macOS
-      if: matrix.os == 'macos-14'
+      if: runner.os == 'macOS'
       working-directory: ./scratch
       run: >-
         pytest -n auto --dist loadgroup
@@ -66,21 +66,21 @@ jobs:
         --pyargs sympde -ra
 
     - name: Run tests on Ubuntu
-      if: matrix.os == 'ubuntu-24.04'
+      if: runner.os == 'Linux'
       working-directory: ./scratch
       run: >-
         pytest -n auto --dist loadgroup
         --pyargs sympde -ra
 
     - name: Upload coverage report
-      if: matrix.os == 'macos-14'
+      if: runner.os == 'macOS'
       uses: actions/upload-artifact@v4
       with:
-        name: coverage-report-python-${{ matrix.python-version }}
+        name: coverage-report-${{ matrix.os }}-python-${{ matrix.python-version }}
         path: scratch/coverage.xml
 
     - name: Print detailed coverage results on macOS
-      if: matrix.os == 'macos-14'
+      if: runner.os == 'macOS'
       working-directory: ./scratch
       run: |
         coverage report --ignore-errors --show-missing --sort=cover
