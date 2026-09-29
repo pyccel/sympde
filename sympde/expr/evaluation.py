@@ -1004,35 +1004,45 @@ class Basic1dForm(AtomicExpr):
 
 class Mass(Basic1dForm):
 
-    def __new__(cls, axis, weight=S.One):
+    def __new__(cls, axis, weight=S.One, *structural_args):
+        if structural_args:
+            return Basic1dForm.__new__(cls, axis, weight, *structural_args)
 #        name = 'Mass'
         name = 'M'
         return Basic1dForm.__new__(cls, name, axis, weight)
 
 class Stiffness(Basic1dForm):
 
-    def __new__(cls, axis, weight=S.One):
+    def __new__(cls, axis, weight=S.One, *structural_args):
+        if structural_args:
+            return Basic1dForm.__new__(cls, axis, weight, *structural_args)
 #        name = 'Stiffness'
         name = 'S'
         return Basic1dForm.__new__(cls, name, axis, weight)
 
 class Advection(Basic1dForm):
 
-    def __new__(cls, axis, weight=S.One):
+    def __new__(cls, axis, weight=S.One, *structural_args):
+        if structural_args:
+            return Basic1dForm.__new__(cls, axis, weight, *structural_args)
 #        name = 'Advection'
         name = 'A'
         return Basic1dForm.__new__(cls, name, axis, weight)
 
 class AdvectionT(Basic1dForm):
 
-    def __new__(cls, axis, weight=S.One):
+    def __new__(cls, axis, weight=S.One, *structural_args):
+        if structural_args:
+            return Basic1dForm.__new__(cls, axis, weight, *structural_args)
 #        name = 'AdvectionT'
         name = 'AT'
         return Basic1dForm.__new__(cls, name, axis, weight)
 
 class Bilaplacian(Basic1dForm):
 
-    def __new__(cls, axis, weight=S.One):
+    def __new__(cls, axis, weight=S.One, *structural_args):
+        if structural_args:
+            return Basic1dForm.__new__(cls, axis, weight, *structural_args)
 #        name = 'Bilaplacian'
         name = 'B'
         return Basic1dForm.__new__(cls, name, axis, weight)

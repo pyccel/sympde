@@ -12,7 +12,11 @@ from sympde.topology.space import ScalarFunction
 from sympde.topology.space import Trace
 from sympde.topology.space import VectorFunction, VectorFunctionSpace
 from sympde.calculus.core import dot, grad
-from sympde.core.basic import _is_none_argument, _new_basic
+from sympde.core.basic import (
+    _is_none_argument,
+    _new_basic,
+    _restore_optional_argument,
+)
 
 from .expr import BilinearForm, LinearForm
 from .expr import linearize
@@ -191,6 +195,8 @@ class Mean(BasicConstraint):
 class Equation(Basic):
 
     def __new__(cls, lhs, rhs, trials, tests, bc=None, constraint=None):
+        bc = _restore_optional_argument(bc)
+        constraint = _restore_optional_argument(constraint)
         # ...
         if not isinstance(lhs, BilinearForm):
             raise UnconsistentLhsError('> lhs must be a bilinear')
