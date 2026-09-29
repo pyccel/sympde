@@ -58,7 +58,7 @@ To check out a specific branch/tag/commit named ``<TAG>``, just use ``git checko
 
   To install the source files in the virtual environment just run::
 
-    python3 -m pip install .
+    pip install .
 
   Further changes to the cloned directory are not reflected in the installed package. This is why we call it a **static** installation.
 
