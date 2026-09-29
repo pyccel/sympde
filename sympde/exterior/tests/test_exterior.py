@@ -13,6 +13,17 @@ from sympde.api import d, wedge, ip, jp, delta, hodge
 from sympde.api import DifferentialForm
 
 
+def test_differential_form_symbol_identity():
+    u = DifferentialForm('u', index=1, dim=3)
+
+    assert u == DifferentialForm('u', index=1, dim=3)
+    assert hash(u) == hash(DifferentialForm('u', index=1, dim=3))
+    assert u != DifferentialForm('u', index=2, dim=3)
+    assert u != DifferentialForm('u', index=1, dim=2)
+    assert u.free_symbols == {u}
+    assert u.args == ()
+
+
 
 #==============================================================================
 def test_exterior_1():

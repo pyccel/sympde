@@ -9,6 +9,23 @@ from sympde.api import H1Space, HcurlSpace, HdivSpace, L2Space, UndefinedSpace
 from sympde.api import ScalarFunction, VectorFunction
 from sympde.api import Projector
 
+
+def test_function_symbol_identity():
+    domain = Domain('Omega', dim=2)
+    scalar_space = ScalarFunctionSpace('V', domain)
+    vector_space = VectorFunctionSpace('X', domain)
+
+    u = ScalarFunction(scalar_space, 'u')
+    same_u = ScalarFunction(scalar_space, 'u')
+    v = VectorFunction(vector_space, 'v')
+
+    assert u == same_u
+    assert hash(u) == hash(same_u)
+    assert u.is_commutative
+    assert not v.is_commutative
+    assert u.free_symbols == {u}
+    assert v.free_symbols == {v}
+
 #==============================================================================
 def test_space_1d_1():
 
