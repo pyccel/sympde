@@ -438,18 +438,13 @@ class ScalarFunction(Symbol):
     def __new__(cls, space, name):
         if not isinstance(space, ScalarFunctionSpace):
             raise ValueError('Expecting a ScalarFunctionSpace')
-        obj = Expr.__new__(cls)
+        obj = Symbol.__xnew__(cls, name, commutative=True)
         obj._space = space
-        obj._name  = name
         return obj
 
     @property
     def space(self):
         return self._space
-
-    @property
-    def name(self):
-        return self._name
 
     @property
     def ldim(self):
@@ -469,8 +464,8 @@ class ScalarFunction(Symbol):
         sstr = printer.doprint
         return sstr(self.name)
 
-    def __hash__(self):
-        return hash((self.name, self.space))
+    def _hashable_content(self):
+        return Symbol._hashable_content(self) + (self.space,)
 #==============================================================================
 # this class is needed, otherwise sympy will convert VectorFunction to
 # IndexedBase
@@ -547,18 +542,13 @@ class VectorFunction(Symbol, IndexedBase):
     def __new__(cls, space, name):
         if not isinstance(space, VectorFunctionSpace):
             raise ValueError('Expecting a VectorFunctionSpace')
-        obj        = Expr.__new__(cls)
+        obj        = Symbol.__xnew__(cls, name, commutative=False)
         obj._space = space
-        obj._name = name
         return obj
 
     @property
     def space(self):
         return self._space
-
-    @property
-    def name(self):
-        return self._name
 
     @property
     def shape(self):
@@ -595,8 +585,8 @@ class VectorFunction(Symbol, IndexedBase):
         sstr = printer.doprint
         return sstr(self.name)
 
-    def __hash__(self):
-        return hash((self.name, self.space))
+    def _hashable_content(self):
+        return Symbol._hashable_content(self) + (self.space,)
 
 #==============================================================================
 # this is implemented as a function, it would be better to have it as a class
