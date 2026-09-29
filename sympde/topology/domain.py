@@ -17,9 +17,17 @@ from sympy.core.containers import Tuple
 from sympy.tensor import IndexedBase, Indexed
 from sympy.core import Add, Mul, Pow
 from sympy.core.expr import AtomicExpr
+from sympy.utilities.iterables import is_sequence
 
-from sympde.old_sympy_utilities import is_sequence, with_metaclass
-from sympde.core.basic import CalculusFunction
+from sympde.core.basic import (
+    CalculusFunction,
+    _is_none_argument,
+    _new_basic,
+    _restore_container_argument,
+    _restore_int_argument,
+    _restore_optional_argument,
+    _restore_string_argument,
+)
 from .basic            import BasicDomain, InteriorDomain, Boundary, Union, Connectivity
 from .basic            import Interval, Interface, CornerBoundary, CornerInterface
 from .basic            import ProductDomain
@@ -41,7 +49,7 @@ class Domain(BasicDomain):
     name and connectivity need to be passed.
     """
 
-    def __new__(cls, name : str, *,
+    def __new__(cls, name : str, *structural_args,
             interiors : TypeUnion[Iterable[InteriorDomain], InteriorDomain, None] = None,
             boundaries : TypeUnion[Iterable[Boundary], Boundary, None] = None,
             dim : Optional[int] = None,
@@ -69,6 +77,27 @@ class Domain(BasicDomain):
         logical_domain : Domain or None, optional
             Logical domain that is mapped to the physical domain
         """
+        if structural_args:
+            if len(structural_args) != 5:
+                raise TypeError(
+                    'A reconstructed Domain expects five structural arguments'
+                )
+            if any(value is not None for value in (
+                    interiors, boundaries, dim, connectivity,
+                    mapping, logical_domain)):
+                raise TypeError(
+                    'Structural and keyword Domain arguments cannot be mixed'
+                )
+            interiors, boundaries, mapping, logical_domain, interfaces = structural_args
+            boundaries = _restore_optional_argument(boundaries)
+            mapping = _restore_optional_argument(mapping)
+            logical_domain = _restore_optional_argument(logical_domain)
+            interfaces = _restore_container_argument(interfaces)
+            connectivity = Connectivity({str(i.name): i for i in interfaces})
+
+        name = _restore_string_argument(name)
+        dim = _restore_int_argument(dim)
+
         # ...
         if not isinstance(name, str):
             raise TypeError('> name must be a string')
@@ -149,7 +178,8 @@ class Domain(BasicDomain):
         # ...
         boundaries = Union(*boundaries)
 
-        obj = Basic.__new__(cls, name, interiors, boundaries, mapping)
+        obj = _new_basic(cls, name, interiors, boundaries, mapping,
+                         logical_domain, tuple(connectivity.values()))
         obj._connectivity   = connectivity
         obj._corners        = None
         obj._dtype          = dtype
@@ -159,7 +189,7 @@ class Domain(BasicDomain):
 
     @property
     def name(self) -> str:
-        return self.args[0]
+        return self.args[0].name
 
     @property
     def interior(self) -> TypeUnion[Union, InteriorDomain]:
@@ -171,12 +201,14 @@ class Domain(BasicDomain):
     def boundary(self) -> TypeUnion[Union, Boundary]:
         """Either a Union object containing the boundaries or just a boundary 
         if there is only one"""
-        return self.args[2]
+        boundary = self.args[2]
+        return None if _is_none_argument(boundary) else boundary
 
     @property
     def mapping(self) -> Optional[Mapping]:
         """The mapping that maps the logical domain to the physical domain"""
-        return self.args[3]
+        mapping = self.args[3]
+        return None if _is_none_argument(mapping) else mapping
 
     @property
     def subdomains(self) -> tuple:
@@ -810,8 +842,21 @@ class NCubeInterior(InteriorDomain):
     def __new__(cls, name, dim=None, dtype=None, min_coords=None, max_coords=None,
                     mapping=None, logical_domain=None):
 
-        obj = InteriorDomain.__new__(cls, name, dim=dim, dtype=dtype,
-                    mapping=mapping, logical_domain=logical_domain)
+        name = _restore_string_argument(name)
+        dim = _restore_int_argument(dim)
+        dtype = _restore_container_argument(dtype)
+        min_coords = _restore_container_argument(min_coords)
+        max_coords = _restore_container_argument(max_coords)
+        mapping = _restore_optional_argument(mapping)
+        logical_domain = _restore_optional_argument(logical_domain)
+
+        obj = _new_basic(cls, name, dim, dtype, min_coords, max_coords,
+                         mapping, logical_domain)
+        obj._dim = dim
+        obj._target = None
+        obj._dtype = dtype
+        obj._mapping = mapping
+        obj._logical_domain = logical_domain
 
         obj._min_coords = min_coords
         obj._max_coords = max_coords
@@ -837,6 +882,14 @@ class NCubeInterior(InteriorDomain):
     @property
     def max_coords(self):
         return self._max_coords
+
+    @property
+    def mapping(self):
+        return self._mapping
+
+    @property
+    def logical_domain(self):
+        return self._logical_domain
 
     @property
     def boundary(self):
@@ -865,7 +918,17 @@ class NCubeInterior(InteriorDomain):
 #
 class NCube(Domain):
 
-    def __new__(cls, name, dim, min_coords, max_coords):
+    def __new__(cls, name, dim, min_coords, max_coords, *structural_args):
+
+        if structural_args:
+            return Domain.__new__(
+                cls, name, dim, min_coords, max_coords, *structural_args
+            )
+
+        name = _restore_string_argument(name)
+        dim = _restore_int_argument(dim)
+        min_coords = _restore_container_argument(min_coords)
+        max_coords = _restore_container_argument(max_coords)
 
         assert isinstance(name, str)
         assert isinstance(dim, (int, Integer))
@@ -950,7 +1013,9 @@ class NCube(Domain):
 #==============================================================================
 class Line(NCube):
 
-    def __new__(cls, name='Line', bounds=(0, 1)):
+    def __new__(cls, name='Line', bounds=(0, 1), *structural_args):
+        if structural_args:
+            return Domain.__new__(cls, name, bounds, *structural_args)
         dim = 1
         min_coords = (bounds[0],)
         max_coords = (bounds[1],)
@@ -963,7 +1028,12 @@ class Line(NCube):
 #==============================================================================
 class Square(NCube):
 
-    def __new__(cls, name='Square', bounds1=(0, 1), bounds2=(0, 1)):
+    def __new__(cls, name='Square', bounds1=(0, 1), bounds2=(0, 1),
+                *structural_args):
+        if structural_args:
+            return Domain.__new__(
+                cls, name, bounds1, bounds2, *structural_args
+            )
         dim = 2
         min_coords = (bounds1[0], bounds2[0])
         max_coords = (bounds1[1], bounds2[1])
@@ -980,7 +1050,12 @@ class Square(NCube):
 #==============================================================================
 class Cube(NCube):
 
-    def __new__(cls, name='Cube', bounds1=(0, 1), bounds2=(0, 1), bounds3=(0, 1)):
+    def __new__(cls, name='Cube', bounds1=(0, 1), bounds2=(0, 1),
+                bounds3=(0, 1), *structural_args):
+        if structural_args:
+            return Domain.__new__(
+                cls, name, bounds1, bounds2, bounds3, *structural_args
+            )
         dim = 3
         min_coords = (bounds1[0], bounds2[0], bounds3[0])
         max_coords = (bounds1[1], bounds2[1], bounds3[1])
@@ -1015,7 +1090,7 @@ class TangentVector(BoundaryVector):
     pass
 
 #==============================================================================
-class ElementDomain(with_metaclass(Singleton, Basic)):
+class ElementDomain(Basic, metaclass=Singleton):
     pass
 
 #==============================================================================

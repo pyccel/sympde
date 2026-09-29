@@ -8,6 +8,15 @@ from sympy.core import Basic, Symbol, Expr
 from sympy.core.containers import Tuple
 from sympy.tensor import IndexedBase
 
+from sympde.core.basic import (
+    _is_none_argument,
+    _new_basic,
+    _restore_container_argument,
+    _restore_int_argument,
+    _restore_optional_argument,
+    _restore_string_argument,
+)
+
 #==============================================================================
 class BasicDomain(Basic):
     _dim         = None
@@ -52,8 +61,15 @@ class InteriorDomain(BasicDomain):
     Examples
 
     """
-    def __new__(cls, name, dim=None, dtype=None, mapping=None, logical_domain=None):
-        target = None
+    def __new__(cls, name, dim=None, dtype=None, mapping=None,
+                logical_domain=None, target=None):
+        name = _restore_string_argument(name)
+        dim = _restore_int_argument(dim)
+        dtype = _restore_container_argument(dtype)
+        mapping = _restore_optional_argument(mapping)
+        logical_domain = _restore_optional_argument(logical_domain)
+        target = _restore_optional_argument(target)
+
         if not isinstance(name, str):
             target = name
             name   = name.name
@@ -64,7 +80,8 @@ class InteriorDomain(BasicDomain):
         assert mapping is None and logical_domain is None or \
         mapping is not None and logical_domain  is not None
 
-        obj = Basic.__new__(cls, name)
+        obj = _new_basic(cls, name, dim, dtype, mapping,
+                         logical_domain, target)
 
         obj._dim            = dim
         obj._target         = target
@@ -76,7 +93,7 @@ class InteriorDomain(BasicDomain):
 
     @property
     def name(self):
-        return self.args[0]
+        return self.args[0].name
 
     @property
     def target(self):
@@ -231,13 +248,17 @@ class Interval(InteriorDomain):
     _dim = 1
 
     def __new__(cls, name=None, coordinate=None, bounds=None):
+        name = _restore_string_argument(name)
+        coordinate = _restore_optional_argument(coordinate)
+        bounds = _restore_container_argument(bounds)
+
         if name is None:
             name = 'Interval'
 
         if bounds is None:
             bounds = (0, 1)
 
-        obj = Basic.__new__(cls, name)
+        obj = _new_basic(cls, name, coordinate, bounds)
         if coordinate:
             obj._coordinates = [coordinate]
 
@@ -247,7 +268,7 @@ class Interval(InteriorDomain):
 
     @property
     def name(self):
-        return self.args[0]
+        return self.args[0].name
 
     @property
     def bounds(self):
@@ -264,13 +285,20 @@ class Boundary(BasicDomain):
     """
     def __new__(cls, name, domain, axis=None, ext=None, mapping=None, logical_domain=None):
 
+        name = _restore_string_argument(name)
+        axis = _restore_int_argument(axis)
+        ext = _restore_int_argument(ext)
+        mapping = _restore_optional_argument(mapping)
+        logical_domain = _restore_optional_argument(logical_domain)
+
         if axis is not None:
             assert isinstance(axis, int)
 
         if ext is not None:
             assert isinstance(ext, int)
 
-        obj                 = Basic.__new__(cls, name, domain, axis, ext)
+        obj                 = _new_basic(cls, name, domain, axis, ext,
+                                         mapping, logical_domain)
         obj._mapping        = mapping
         obj._logical_domain = logical_domain
 
@@ -278,7 +306,7 @@ class Boundary(BasicDomain):
 
     @property
     def name(self):
-        return self.args[0]
+        return self.args[0].name
 
     @property
     def domain(self):
@@ -286,11 +314,13 @@ class Boundary(BasicDomain):
 
     @property
     def axis(self):
-        return self.args[2]
+        axis = self.args[2]
+        return None if _is_none_argument(axis) else int(axis)
 
     @property
     def ext(self):
-        return self.args[3]
+        ext = self.args[3]
+        return None if _is_none_argument(ext) else int(ext)
 
     @property
     def mapping(self):
@@ -470,7 +500,13 @@ class Interface(BasicDomain):
     and
     T. Dokken, E. Quak, V. Skytt. Requirements from Isogeometric Analysis for changes in product design ontologies, 2010.
     """
-    def __new__(cls, name, bnd_minus, bnd_plus, *, mapping=None, logical_domain=None, ornt=None):
+    def __new__(cls, name, bnd_minus, bnd_plus, ornt=None,
+                mapping=None, logical_domain=None):
+
+        name = _restore_string_argument(name)
+        ornt = _restore_container_argument(ornt)
+        mapping = _restore_optional_argument(mapping)
+        logical_domain = _restore_optional_argument(logical_domain)
 
         if not isinstance(name     , str     ): raise TypeError(name)
         if not isinstance(bnd_minus, Boundary): raise TypeError(bnd_minus)
@@ -518,7 +554,8 @@ class Interface(BasicDomain):
         # TODO [YG 10.02.2026]: relax this requirement ASAP
         assert bnd_minus.axis == bnd_plus.axis
 
-        obj = Basic.__new__(cls, name, bnd_minus, bnd_plus, ornt)
+        obj = _new_basic(cls, name, bnd_minus, bnd_plus, ornt,
+                         mapping, logical_domain)
         obj._mapping        = mapping
         obj._logical_domain = logical_domain
         return obj
@@ -529,7 +566,7 @@ class Interface(BasicDomain):
 
     @property
     def name(self):
-        return self.args[0]
+        return self.args[0].name
 
     @property
     def minus(self):
@@ -541,7 +578,12 @@ class Interface(BasicDomain):
 
     @property
     def ornt(self):
-        return self.args[3]
+        ornt = self.args[3]
+        if _is_none_argument(ornt):
+            return None
+        if isinstance(ornt, Tuple):
+            return tuple(int(o) for o in ornt)
+        return int(ornt)
 
     @property
     def axis(self):
@@ -620,6 +662,7 @@ class Connectivity(abc.Mapping):
         self._data[key] = value
 
     # ==========================================
+
     #  abstract methods
     # ==========================================
     def __getitem__(self, key):
@@ -639,5 +682,4 @@ class Connectivity(abc.Mapping):
         return 0
 
     # ==========================================
-
 
