@@ -58,7 +58,7 @@ To check out a specific branch/tag/commit named ``<TAG>``, just use ``git checko
 
   To install the source files in the virtual environment just run::
 
-    python3 -m pip install .
+    pip install .
 
   Further changes to the cloned directory are not reflected in the installed package. This is why we call it a **static** installation.
 
@@ -66,15 +66,21 @@ To check out a specific branch/tag/commit named ``<TAG>``, just use ``git checko
 
   In order to make changes to the library, and see these changes when the package is imported, SymPDE should be installed in **editable** mode::
 
-    python3 -m pip install --editable .
+    pip install --editable ".[test]"
 
+Running the tests
+^^^^^^^^^^^^^^^^^
+
+The complete test suite can be run from any directory with::
+
+  pytest -n auto --dist loadgroup --pyargs sympde -ra
 
 For developers
 **************
 
 Because many important features of SymPDE are only tested in Psydac, new PRs should also be tested against the test suite of Psydac.
 This can be done by opening a PR in Psydac, where the only change consists of installing the corresponding branch of SymPDE.
-To achieve this, one just needs to modify the line corresponding to ``sympde`` in the ``pyproject.yaml`` file.
+To achieve this, one just needs to modify the line corresponding to ``sympde`` in the ``pyproject.toml`` file.
 
 For instance, to test a new SymPDE branch called ``my_feature``, one should write
 
@@ -94,9 +100,9 @@ Do not forget the comma at the end of the line, as this is an item in a list.
 Also, pay attention to the words ``head`` and ``tags`` in the path: the former is used for Git branches, the latter is used for Git tags (which may or may not correspond to GitHub releases).
 
 
-.. |CI status| image:: https://github.com/pyccel/sympde/actions/workflows/continuous-integration.yml/badge.svg?branch=master&event=push
+.. |CI status| image:: https://github.com/pyccel/sympde/actions/workflows/testing.yml/badge.svg?branch=master&event=push
    :alt: CI status
-   :target: https://github.com/pyccel/sympde/actions/workflows/continuous-integration.yml
+   :target: https://github.com/pyccel/sympde/actions/workflows/testing.yml
 
 .. |docs| image:: https://readthedocs.org/projects/sympde/badge/?version=latest
    :alt: Documentation Status
