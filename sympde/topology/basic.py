@@ -7,6 +7,8 @@ from collections import abc
 from sympy.core import Basic, Symbol
 from sympy.core.containers import Tuple
 
+from sympde.core.basic import _is_none_argument, _new_basic
+
 #==============================================================================
 class BasicDomain(Basic):
     _dim         = None
@@ -63,7 +65,7 @@ class InteriorDomain(BasicDomain):
         assert mapping is None and logical_domain is None or \
         mapping is not None and logical_domain  is not None
 
-        obj = Basic.__new__(cls, name)
+        obj = _new_basic(cls, name)
 
         obj._dim            = dim
         obj._target         = target
@@ -75,7 +77,7 @@ class InteriorDomain(BasicDomain):
 
     @property
     def name(self):
-        return self.args[0]
+        return self.args[0].name
 
     @property
     def target(self):
@@ -236,7 +238,7 @@ class Interval(InteriorDomain):
         if bounds is None:
             bounds = (0, 1)
 
-        obj = Basic.__new__(cls, name)
+        obj = _new_basic(cls, name)
         if coordinate:
             obj._coordinates = [coordinate]
 
@@ -246,7 +248,7 @@ class Interval(InteriorDomain):
 
     @property
     def name(self):
-        return self.args[0]
+        return self.args[0].name
 
     @property
     def bounds(self):
@@ -269,7 +271,7 @@ class Boundary(BasicDomain):
         if ext is not None:
             assert isinstance(ext, int)
 
-        obj                 = Basic.__new__(cls, name, domain, axis, ext)
+        obj                 = _new_basic(cls, name, domain, axis, ext)
         obj._mapping        = mapping
         obj._logical_domain = logical_domain
 
@@ -277,7 +279,7 @@ class Boundary(BasicDomain):
 
     @property
     def name(self):
-        return self.args[0]
+        return self.args[0].name
 
     @property
     def domain(self):
@@ -285,11 +287,13 @@ class Boundary(BasicDomain):
 
     @property
     def axis(self):
-        return self.args[2]
+        axis = self.args[2]
+        return None if _is_none_argument(axis) else int(axis)
 
     @property
     def ext(self):
-        return self.args[3]
+        ext = self.args[3]
+        return None if _is_none_argument(ext) else int(ext)
 
     @property
     def mapping(self):
@@ -517,7 +521,7 @@ class Interface(BasicDomain):
         # TODO [YG 10.02.2026]: relax this requirement ASAP
         assert bnd_minus.axis == bnd_plus.axis
 
-        obj = Basic.__new__(cls, name, bnd_minus, bnd_plus, ornt)
+        obj = _new_basic(cls, name, bnd_minus, bnd_plus, ornt)
         obj._mapping        = mapping
         obj._logical_domain = logical_domain
         return obj
@@ -528,7 +532,7 @@ class Interface(BasicDomain):
 
     @property
     def name(self):
-        return self.args[0]
+        return self.args[0].name
 
     @property
     def minus(self):
@@ -540,7 +544,12 @@ class Interface(BasicDomain):
 
     @property
     def ornt(self):
-        return self.args[3]
+        ornt = self.args[3]
+        if _is_none_argument(ornt):
+            return None
+        if isinstance(ornt, Tuple):
+            return tuple(int(o) for o in ornt)
+        return int(ornt)
 
     @property
     def axis(self):
@@ -619,6 +628,7 @@ class Connectivity(abc.Mapping):
         self._data[key] = value
 
     # ==========================================
+
     #  abstract methods
     # ==========================================
     def __getitem__(self, key):
@@ -638,4 +648,3 @@ class Connectivity(abc.Mapping):
         return 0
 
     # ==========================================
-

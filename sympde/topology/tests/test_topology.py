@@ -1,5 +1,8 @@
 import os
 
+from sympy import preorder_traversal
+from sympy.core import Basic
+
 from sympde.api import InteriorDomain, Union
 from sympde.api import Boundary
 from sympde.api import Domain, ElementDomain
@@ -10,6 +13,21 @@ from sympde.api import IdentityMapping
 
 base_dir = os.path.dirname(os.path.realpath(__file__))
 topo_dir = os.path.join(base_dir, 'data')
+
+
+def test_structural_arguments_are_sympy_objects():
+    domain = Domain('Omega', dim=2)
+    boundary = Boundary(r'\Gamma_1', domain)
+    interface = Interface('I', boundary, boundary, ornt=1)
+
+    assert domain.name == 'Omega'
+    assert boundary.name == r'\Gamma_1'
+    assert boundary.axis is None
+    assert interface.ornt == 1
+
+    for expr in (domain, boundary, interface):
+        assert all(isinstance(arg, Basic) for arg in preorder_traversal(expr))
+
 
 #==============================================================================
 def test_interior_domain():
