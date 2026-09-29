@@ -9,7 +9,7 @@ from sympy.core            import Basic
 from sympy.core            import Symbol,Integer
 from sympy.core            import Add, Mul, Pow
 from sympy.core.numbers    import ImaginaryUnit
-from sympy.core.containers import Tuple
+from sympy.core.containers import Dict, Tuple
 from sympy                 import S
 from sympy                 import sqrt, symbols
 from sympy.core.exprtools  import factor_terms
@@ -562,9 +562,12 @@ class InterfaceMapping(Mapping):
 class MultiPatchMapping(Mapping):
 
     def __new__(cls, dic):
-        assert isinstance( dic, dict)
+        if isinstance(dic, Dict):
+            dic = dict(dic.items())
+        if not isinstance(dic, dict):
+            raise TypeError('Expecting a dictionary of patch mappings')
         obj = _new_basic(cls, dic)
-        obj._mappings = dic
+        obj._mappings = dict(dic)
         return obj
 
     @property
@@ -593,8 +596,8 @@ class MultiPatchMapping(Mapping):
     def _eval_simplify(self, **kwargs):
         return self
 
-    def __hash__(self):
-        return hash((*self.mappings.values(), *self.mappings.keys()))
+    def _hashable_content(self):
+        return self.args
 
     def _sympystr(self, printer):
         sstr = printer.doprint

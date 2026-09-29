@@ -19,14 +19,26 @@ def test_structural_arguments_are_sympy_objects():
     domain = Domain('Omega', dim=2)
     boundary = Boundary(r'\Gamma_1', domain)
     interface = Interface('I', boundary, boundary, ornt=1)
+    square = Square('S', bounds1=(-1, 2), bounds2=(3, 4))
 
     assert domain.name == 'Omega'
     assert boundary.name == r'\Gamma_1'
     assert boundary.axis is None
     assert interface.ornt == 1
 
-    for expr in (domain, boundary, interface):
+    for expr in (domain, domain.interior, boundary, interface, square,
+                 square.interior, square.boundary.args[0]):
         assert all(isinstance(arg, Basic) for arg in preorder_traversal(expr))
+        assert expr.func(*expr.args) == expr
+
+    replacement = Domain('Replacement', dim=2)
+    replaced_boundary = boundary.xreplace({domain: replacement})
+    assert replaced_boundary.domain == replacement
+
+    replacement_boundary = Boundary(r'\Gamma_2', domain)
+    replaced_interface = interface.xreplace({boundary: replacement_boundary})
+    assert replaced_interface.minus == replacement_boundary
+    assert replaced_interface.plus == replacement_boundary
 
 
 #==============================================================================
