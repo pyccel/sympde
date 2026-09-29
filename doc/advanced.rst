@@ -1,39 +1,34 @@
 Advanced expression manipulation
 ********************************
 
-In this section, we shall present different different features for manipulating expressions such us finding the Kronecker representation for bilinear forms.
+Tensor-product representation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Tensorization
-^^^^^^^^^^^^^
+``TensorExpr`` lowers an integrated form and expresses it through one-
+dimensional symbolic factors. This is useful to inspect the Kronecker
+structure consumed by tensor-product discretizations.
 
-Assume we have the following bilinear form for Laplace
+.. literalinclude:: examples/tensorization.py
+   :language: python
 
-.. code-block:: python
+The example is an executable documentation source and is run by the
+documentation workflow before Sphinx builds the page.
 
-  from sympde.api import grad, dot
-  from sympde.api import FunctionSpace
-  from sympde.api import TestFunction
-  from sympde.api import BilinearForm
-  from sympde.core import tensorize
+Logical expressions
+^^^^^^^^^^^^^^^^^^^
 
-  V = FunctionSpace('V', ldim=2)
-  U = FunctionSpace('U', ldim=2)
+``LogicalExpr`` pulls expressions on a mapped physical domain back to its
+logical domain. The analytical-mapping example demonstrates symbolic and
+numerical use of this transformation:
 
-  v = TestFunction(V, name='v')
-  u = TestFunction(U, name='u')
+.. literalinclude:: examples/analytical_mappings.py
+   :language: python
 
-  a = BilinearForm((v,u), dot(grad(v), grad(u)) + v*u)
-  print(tensorize(a))
+Nonlinear forms
+^^^^^^^^^^^^^^^
 
-the result is then
+``linearize`` differentiates a nonlinear residual with respect to a field and
+returns its symbolic Jacobian form:
 
-.. code-block:: python
-
-  >>> Mass(v1,u1)xMass(v0,u0) + Mass(v1,u1)xStiffness(v0,u0) + Stiffness(v1,u1)xMass(v0,u0) 
-
-which is what we expect, when splitting the integrals with respect to the two directions.
-Printing the corresponding latex code gives
-
-.. math::
-
-  {\int_{0}^{1}  u_{1} v_{1} dy}\otimes {\int_{0}^{1}  u_{0} v_{0} dx} + {\int_{0}^{1}  u_{1} v_{1} dy}\otimes {\int_{0}^{1}  u_{0}^\prime v_{0}^\prime dx} + {\int_{0}^{1}  u_{1}^\prime v_{1}^\prime dy}\otimes {\int_{0}^{1}  u_{0} v_{0} dx}
+.. literalinclude:: examples/nonlinear_poisson.py
+   :language: python
