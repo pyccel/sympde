@@ -855,7 +855,7 @@ def mul_integral(expr):
 def mul_add(expr):
     args_int = [a for a in expr.args if isinstance(a, IntAdd)]
     coeff    = Mul(*[a for a in expr.args if not a in args_int])
-    args_int[0] = [IntAdd(*[coeff*i for i in args_int[0].args])]
+    args_int[0] = IntAdd(*[coeff*i for i in args_int[0].args])
     return Mul(*args_int)
 
 def add_int(expr):
