@@ -45,7 +45,7 @@ class DifferentialForm(Symbol):
 
     @property
     def dim(self):
-        return self._dim
+        return int(self._dim) if self._dim.is_Integer else self._dim
 
     def _hashable_content(self):
-        return Symbol._hashable_content(self) + (self.index, self.dim)
+        return Symbol._hashable_content(self) + (self.index, self._dim)

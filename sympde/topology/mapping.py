@@ -19,6 +19,7 @@ from sympde.core              import Constant
 from sympde.core.basic        import BasicMapping
 from sympde.core.basic        import CalculusFunction
 from sympde.core.basic        import _coeffs_registery
+from sympde.core.basic        import _new_basic
 from sympde.calculus.core     import PlusInterfaceOperator, MinusInterfaceOperator
 from sympde.calculus.core     import grad, div, curl, laplace #, hessian
 from sympde.calculus.core     import dot, inner, outer, _diff_ops
@@ -561,11 +562,13 @@ class MultiPatchMapping(Mapping):
 
     def __new__(cls, dic):
         assert isinstance( dic, dict)
-        return Basic.__new__(cls, dic)
+        obj = _new_basic(cls, dic)
+        obj._mappings = dic
+        return obj
 
     @property
     def mappings(self):
-        return self.args[0]
+        return self._mappings
 
     @property
     def is_analytical(self):

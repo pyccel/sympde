@@ -13,6 +13,7 @@ from sympde.topology import Boundary, NormalVector, TangentVector
 from sympde.topology import Trace, trace_0, trace_1
 from sympde.calculus import grad, dot
 from sympde.core.utils import random_string
+from sympde.core.basic import _is_none_argument, _new_basic
 
 from .expr import BilinearForm, LinearForm
 from .expr import linearize
@@ -332,7 +333,7 @@ class Equation(Basic):
         tests  = Tuple(*tests)
         # ...
 
-        return Basic.__new__(cls, lhs, rhs, trials, tests, bc, constraint)
+        return _new_basic(cls, lhs, rhs, trials, tests, bc, constraint)
 
     @property
     def lhs(self):
@@ -352,11 +353,13 @@ class Equation(Basic):
 
     @property
     def bc(self):
-        return self._args[4]
+        bc = self._args[4]
+        return None if _is_none_argument(bc) else bc
 
     @property
     def constraint(self):
-        return self._args[5]
+        constraint = self._args[5]
+        return None if _is_none_argument(constraint) else constraint
 
 #==============================================================================
 # TODO must subtitute expr by given args => call then create BasicForm

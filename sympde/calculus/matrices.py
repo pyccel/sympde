@@ -2,7 +2,7 @@ from sympy                 import Expr, S
 from sympy                 import Add, Mul, Pow
 from sympy                 import sympify
 from sympy.core.decorators import call_highest_priority
-from sympde.core.basic     import _coeffs_registery, Basic
+from sympde.core.basic     import _coeffs_registery, _new_basic, Basic
 
 class MatrixSymbolicExpr(Expr):
     is_commutative = False
@@ -275,7 +275,7 @@ class SymbolicTrace(Expr):
 
 class MatrixElement(Expr):
     def __new__(cls, base, indices, **options):
-        return Expr.__new__(cls, base, indices)
+        return _new_basic(cls, base, indices)
 
     @property
     def base(self):
@@ -293,4 +293,3 @@ Basic._constructor_postprocessor_mapping[MatrixSymbolicExpr] = {
     "Mul": [lambda x: MatSymbolicMul(*x.args)],
     "Add": [lambda x: MatSymbolicAdd(*x.args)]
 }
-
