@@ -3,16 +3,16 @@
 from sympy import cos
 #from sympy import exp
 
-from sympde.core     import Constant
-from sympde.calculus import grad, dot
+from sympde.api import Constant
+from sympde.api import grad, dot
 #from sympde.topology import dx, dy
-from sympde.topology import ScalarFunctionSpace
-from sympde.topology import element_of
-from sympde.topology import Domain, Boundary
-from sympde.expr     import BilinearForm, LinearForm, integral
-from sympde.expr     import TerminalExpr
-from sympde.expr     import find
-from sympde.expr     import EssentialBC
+from sympde.api import ScalarFunctionSpace
+from sympde.api import element_of
+from sympde.api import Domain, Boundary
+from sympde.api import BilinearForm, LinearForm, integral
+from sympde.api import TerminalExpr
+from sympde.api import find
+from sympde.api import EssentialBC
 #from sympde.expr     import NewtonIteration
 
 DIM = 2

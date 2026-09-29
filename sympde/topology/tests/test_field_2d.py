@@ -2,11 +2,11 @@
 
 from sympy import Matrix
 
-from sympde.calculus import grad, inner
-from sympde.topology import Domain
-from sympde.topology import dx
-from sympde.topology import VectorFunctionSpace
-from sympde.topology import element_of
+from sympde.api import grad, inner
+from sympde.api import Domain
+from sympde.api import dx
+from sympde.api import VectorFunctionSpace
+from sympde.api import element_of
 
 #==============================================================================
 

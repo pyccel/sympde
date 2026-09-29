@@ -16,7 +16,7 @@ from sympy.core.exprtools  import factor_terms
 from sympy.polys.polytools import parallel_poly_from_expr
 from sympy.utilities.iterables import is_sequence
 
-from sympde.core              import Constant
+from sympde.core.basic        import Constant
 from sympde.core.basic        import BasicMapping
 from sympde.core.basic        import CalculusFunction
 from sympde.core.basic        import _coeffs_registery
@@ -25,7 +25,7 @@ from sympde.calculus.core     import PlusInterfaceOperator, MinusInterfaceOperat
 from sympde.calculus.core     import grad, div, curl, laplace #, hessian
 from sympde.calculus.core     import dot, inner, outer, _diff_ops
 from sympde.calculus.core     import has, DiffOperator
-from sympde.calculus.matrices import MatrixSymbolicExpr, MatrixElement, SymbolicTrace, Inverse
+from sympde.calculus.matrices import MatrixSymbolicExpr, MatrixElement, SymbolicTrace
 from sympde.calculus.matrices import SymbolicDeterminant, Transpose
 
 from .basic       import BasicDomain, Union, InteriorDomain
@@ -918,7 +918,7 @@ class LogicalExpr(CalculusFunction):
         """."""
 
         from sympde.expr.evaluation import TerminalExpr, DomainExpression
-        from sympde.expr.expr import BilinearForm, LinearForm, BasicForm, Norm
+        from sympde.expr.expr import BilinearForm, LinearForm, Norm
         from sympde.expr.expr import Integral
 
         types = (ScalarFunction, VectorFunction, DifferentialOperator, Trace, Integral)

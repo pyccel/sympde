@@ -49,6 +49,12 @@ jobs:
         pip install .[docs]
         pip freeze
 
+    - name: Run documentation examples
+      run: |
+        for example in doc/examples/*.py; do
+          python "$example"
+        done
+
     - name: Make the Sphinx documentation
       run: >-
         python -m sphinx -W --keep-going

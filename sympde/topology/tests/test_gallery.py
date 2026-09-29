@@ -4,8 +4,8 @@ from sympy.abc import x,y,z
 from sympy import Tuple
 from sympy import symbols
 
-from sympde.topology import Interval, ProductDomain, InteriorDomain, Domain
-from sympde.topology import Line, Square, Cube, NCubeInterior
+from sympde.api import Interval, ProductDomain, InteriorDomain, Domain
+from sympde.api import Line, Square, Cube, NCubeInterior
 
 
 x1, x2, x3 = symbols('x1, x2, x3', real=True)
