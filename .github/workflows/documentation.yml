@@ -2,56 +2,56 @@ name: Documentation
 
 on:
   push:
-    branches: [master]
+    branches: [ master ]
     paths:
+      - 'README.rst'
       - 'doc/**'
-      - 'sympde/**'
+      - 'sympde/**.py'
       - 'pyproject.toml'
       - '.readthedocs.yaml'
       - '.github/workflows/documentation.yml'
+
   pull_request:
-    branches: [master]
-    paths:
-      - 'doc/**'
-      - 'sympde/**'
-      - 'pyproject.toml'
-      - '.readthedocs.yaml'
-      - '.github/workflows/documentation.yml'
+    branches: [ master ]
+    types:
+      - ready_for_review
+
   workflow_dispatch:
 
 permissions:
   contents: read
 
-concurrency:
-  group: documentation-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
-  build:
-    runs-on: ubuntu-24.04
+  build_docs:
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
+    - name: Checkout
+      uses: actions/checkout@v6
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
-          cache: pip
-          cache-dependency-path: pyproject.toml
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+        cache-dependency-path: |
+          pyproject.toml
 
-      - name: Install project and documentation dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install ".[docs]"
+    - name: Upgrade pip, setuptools, and wheel
+      run: |
+        pip install --upgrade pip setuptools wheel
 
-      - name: Build documentation
-        run: >-
-          python -m sphinx -W --keep-going
-          -b html doc doc/_build/html
+    - name: Install project and documentation dependencies
+      run: |
+        pip install .[docs]
+        pip freeze
 
-      - name: Upload rendered documentation
-        uses: actions/upload-artifact@v4
-        with:
-          name: sympde-documentation
-          path: doc/_build/html
+    - name: Make the Sphinx documentation
+      run: >-
+        python -m sphinx -W --keep-going
+        -b html doc doc/_build/html
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: sympde-documentation
+        path: 'doc/_build/html'
