@@ -1,7 +1,7 @@
 SymPDE
 ======
 
-|CI status|  |binder|  |docs|
+|CI status|  |docs|
 
 **SymPDE** is a symbolic calculus library for partial differential equations and variational forms.
 It can be used to have similar capabilities as the fenics_ project, by extending and writing your own *printing* functions.
@@ -68,6 +68,16 @@ To check out a specific branch/tag/commit named ``<TAG>``, just use ``git checko
 
     python3 -m pip install --editable ".[test]"
 
+Public API
+^^^^^^^^^^
+
+User-facing objects can be imported from the flat, explicit API without
+knowing which internal module defines them::
+
+  from sympde.api import Cube, Mapping, Constant
+  from sympde.api import ScalarFunctionSpace, VectorFunctionSpace, elements_of
+  from sympde.api import BilinearForm, LinearForm, Norm
+
 Running the tests
 ^^^^^^^^^^^^^^^^^
 
@@ -114,7 +124,3 @@ Also, pay attention to the words ``head`` and ``tags`` in the path: the former i
 .. |docs| image:: https://github.com/pyccel/sympde/actions/workflows/documentation.yml/badge.svg
    :alt: Documentation Status
    :target: https://github.com/pyccel/sympde/actions/workflows/documentation.yml
-
-.. |binder| image:: https://mybinder.org/badge_logo.svg
-   :alt: Run notebooks in Binder
-   :target: https://mybinder.org/v2/gh/pyccel/sympde/master

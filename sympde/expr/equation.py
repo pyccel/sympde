@@ -5,14 +5,13 @@ from sympy.core.containers import Tuple
 from sympy.core import Expr
 from sympy.parsing.sympy_parser import parse_expr
 
-from sympde.topology.basic import Boundary, Union
-from sympde.topology.space  import VectorFunctionSpace, ScalarFunctionSpace
+from sympde.topology.basic import Union
+from sympde.topology.domain import NormalVector
+from sympde.topology.space import IndexedVectorFunction
 from sympde.topology.space import ScalarFunction
-from sympde.topology.space import VectorFunction, IndexedVectorFunction
-from sympde.topology import Boundary, NormalVector, TangentVector
-from sympde.topology import Trace, trace_0, trace_1
-from sympde.calculus import grad, dot
-from sympde.core.utils import random_string
+from sympde.topology.space import Trace
+from sympde.topology.space import VectorFunction, VectorFunctionSpace
+from sympde.calculus.core import dot, grad
 from sympde.core.basic import (
     _is_none_argument,
     _new_basic,
@@ -21,8 +20,8 @@ from sympde.core.basic import (
 
 from .expr import BilinearForm, LinearForm
 from .expr import linearize
-from .errors import ( UnconsistentLhsError, UnconsistentRhsError,
-                      UnconsistentArgumentsError, UnconsistentBCError )
+from .errors import (UnconsistentLhsError, UnconsistentRhsError,
+                     UnconsistentArgumentsError)
 
 
 #==============================================================================
