@@ -75,13 +75,6 @@ The complete test suite can be run from any directory with::
 
   pytest -n auto --dist loadgroup --pyargs sympde -ra
 
-The documentation dependencies are installed separately and the HTML pages
-are built with warnings treated as errors::
-
-  python3 -m pip install --editable ".[docs]"
-  python3 -m sphinx -W --keep-going -b html doc doc/_build/html
-
-
 For developers
 **************
 
@@ -113,7 +106,7 @@ Also, pay attention to the words ``head`` and ``tags`` in the path: the former i
 
 .. |docs| image:: https://readthedocs.org/projects/sympde/badge/?version=latest
    :alt: Documentation Status
-   :target: https://sympde.readthedocs.io/en/latest/?badge=latest
+   :target: http://sympde.readthedocs.io/en/latest/?badge=latest
 
 .. |binder| image:: https://mybinder.org/badge_logo.svg
    :alt: Run notebooks in Binder

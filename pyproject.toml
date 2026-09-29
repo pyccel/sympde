@@ -37,13 +37,8 @@ test = [
     "pytest-cov >= 5",
     "pytest-xdist >= 3",
 ]
-docs = [
-    "sphinx >= 7",
-    "sphinxcontrib-bibtex >= 2.6",
-]
 
 [project.urls]
-Documentation = "https://sympde.readthedocs.io/"
 Issues = "https://github.com/pyccel/sympde/issues"
 Repository = "https://github.com/pyccel/sympde"
 
