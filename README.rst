@@ -66,7 +66,7 @@ To check out a specific branch/tag/commit named ``<TAG>``, just use ``git checko
 
   In order to make changes to the library, and see these changes when the package is imported, SymPDE should be installed in **editable** mode::
 
-    python3 -m pip install --editable ".[test]"
+    pip install --editable ".[test]"
 
 Running the tests
 ^^^^^^^^^^^^^^^^^
