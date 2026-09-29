@@ -13,14 +13,26 @@ from sympde.topology import Projector
 def test_function_symbol_identity():
     domain = Domain('Omega', dim=2)
     scalar_space = ScalarFunctionSpace('V', domain)
+    equivalent_scalar_space = ScalarFunctionSpace('V', domain)
+    other_scalar_space = ScalarFunctionSpace('W', domain)
     vector_space = VectorFunctionSpace('X', domain)
+    other_vector_space = VectorFunctionSpace('Y', domain)
 
     u = ScalarFunction(scalar_space, 'u')
-    same_u = ScalarFunction(scalar_space, 'u')
+    same_u = ScalarFunction(equivalent_scalar_space, 'u')
+    other_u = ScalarFunction(other_scalar_space, 'u')
     v = VectorFunction(vector_space, 'v')
+    other_v = VectorFunction(other_vector_space, 'v')
 
+    assert scalar_space == equivalent_scalar_space
+    assert hash(scalar_space) == hash(equivalent_scalar_space)
+    assert scalar_space != other_scalar_space
     assert u == same_u
     assert hash(u) == hash(same_u)
+    assert u != other_u
+    assert v != other_v
+    assert u + other_u != 2 * u
+    assert (u + other_u).free_symbols == {u, other_u}
     assert u.is_commutative
     assert not v.is_commutative
     assert u.free_symbols == {u}
