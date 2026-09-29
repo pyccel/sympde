@@ -19,7 +19,7 @@ from sympy.core import Add, Mul, Pow
 from sympy.core.expr import AtomicExpr
 
 from sympde.old_sympy_utilities import is_sequence, with_metaclass
-from sympde.core.basic import CalculusFunction
+from sympde.core.basic import CalculusFunction, _is_none_argument, _new_basic
 from .basic            import BasicDomain, InteriorDomain, Boundary, Union, Connectivity
 from .basic            import Interval, Interface, CornerBoundary, CornerInterface
 from .basic            import ProductDomain
@@ -149,7 +149,7 @@ class Domain(BasicDomain):
         # ...
         boundaries = Union(*boundaries)
 
-        obj = Basic.__new__(cls, name, interiors, boundaries, mapping)
+        obj = _new_basic(cls, name, interiors, boundaries, mapping)
         obj._connectivity   = connectivity
         obj._corners        = None
         obj._dtype          = dtype
@@ -159,7 +159,7 @@ class Domain(BasicDomain):
 
     @property
     def name(self) -> str:
-        return self.args[0]
+        return self.args[0].name
 
     @property
     def interior(self) -> TypeUnion[Union, InteriorDomain]:
@@ -171,12 +171,14 @@ class Domain(BasicDomain):
     def boundary(self) -> TypeUnion[Union, Boundary]:
         """Either a Union object containing the boundaries or just a boundary 
         if there is only one"""
-        return self.args[2]
+        boundary = self.args[2]
+        return None if _is_none_argument(boundary) else boundary
 
     @property
     def mapping(self) -> Optional[Mapping]:
         """The mapping that maps the logical domain to the physical domain"""
-        return self.args[3]
+        mapping = self.args[3]
+        return None if _is_none_argument(mapping) else mapping
 
     @property
     def subdomains(self) -> tuple:
