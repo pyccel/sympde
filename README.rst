@@ -73,7 +73,7 @@ Running the tests
 
 The complete test suite can be run from any directory with::
 
-  python3 -m pytest -n auto --dist loadgroup --pyargs sympde -ra
+  pytest -n auto --dist loadgroup --pyargs sympde -ra
 
 The documentation dependencies are installed separately and the HTML pages
 are built with warnings treated as errors::
