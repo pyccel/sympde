@@ -221,6 +221,9 @@ class BasicFunctionSpace(Basic):
     def __hash__(self):
         return hash((self.name, self.domain, self.shape, self.kind))
 
+    def _hashable_content(self):
+        return (self.name, self.domain, self.shape, self.kind)
+
 #==============================================================================
 class ScalarFunctionSpace(BasicFunctionSpace):
     """
@@ -466,6 +469,9 @@ class ScalarFunction(Symbol):
         sstr = printer.doprint
         return sstr(self.name)
 
+    def _hashable_content(self):
+        return Symbol._hashable_content(self) + (self.space,)
+
 #==============================================================================
 # this class is needed, otherwise sympy will convert VectorFunction to
 # IndexedBase
@@ -584,6 +590,9 @@ class VectorFunction(Symbol, IndexedBase):
     def _sympystr(self, printer):
         sstr = printer.doprint
         return sstr(self.name)
+
+    def _hashable_content(self):
+        return Symbol._hashable_content(self) + (self.space,)
 
 #==============================================================================
 # this is implemented as a function, it would be better to have it as a class
