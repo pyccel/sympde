@@ -14,8 +14,8 @@ from sympy.core.containers import Tuple
 from sympy.tensor import IndexedBase, Indexed
 from sympy.core import Add
 from sympy.core.expr import AtomicExpr
+from sympy.utilities.iterables import is_sequence
 
-from sympde.old_sympy_utilities import is_sequence, with_metaclass
 from sympde.core.basic import CalculusFunction, _is_none_argument, _new_basic
 from .basic            import BasicDomain, InteriorDomain, Boundary, Union, Connectivity
 from .basic            import Interval, Interface, CornerBoundary, CornerInterface
@@ -981,7 +981,7 @@ class TangentVector(BoundaryVector):
     pass
 
 #==============================================================================
-class ElementDomain(with_metaclass(Singleton, Basic)):
+class ElementDomain(Basic, metaclass=Singleton):
     pass
 
 #==============================================================================

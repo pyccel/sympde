@@ -7,6 +7,7 @@ from sympy import Add, Mul
 from sympy import S
 from sympy import Indexed
 from sympy import Tuple
+from sympy.utilities.iterables import is_sequence
 
 from sympde.core.basic import _coeffs_registery
 from sympde.core.basic import CalculusFunction

@@ -5,10 +5,8 @@ from sympy.core import Basic
 from sympy.core import Symbol
 from sympy.core.singleton import Singleton
 
-from sympde.old_sympy_utilities import with_metaclass
-
 #==============================================================================
-class FormType(with_metaclass(Singleton, Basic)):
+class FormType(Basic, metaclass=Singleton):
     """Base class representing differential form types"""
     _index = None
 

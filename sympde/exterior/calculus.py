@@ -6,6 +6,7 @@ from sympy.core import Basic
 from sympy.tensor import Indexed
 from sympy.core import Add, Mul
 from sympy.core.singleton import S
+from sympy.utilities.iterables import is_sequence
 
 from sympde.core.basic import _coeffs_registery
 from sympde.core.algebra import LinearOperator

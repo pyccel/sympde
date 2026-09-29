@@ -5,8 +5,8 @@ from sympy.core import Add, Basic, Mul
 from sympy.core.containers import Tuple
 from sympy.core.singleton import S
 from sympy.simplify.simplify import simplify
+from sympy.utilities.iterables import is_sequence
 
-from sympde.old_sympy_utilities import is_sequence
 from .basic import CalculusFunction
 from .basic import _coeffs_registery
 
