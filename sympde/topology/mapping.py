@@ -808,7 +808,7 @@ class Covariant(MappingApplication):
             the basis function
 
         Returns
-        ----------
+        -------
          expr : Tuple
             the covariant transformation
         """
