@@ -23,6 +23,7 @@ from sympde.topology import CzarnyMapping
 from sympde.topology import CollelaMapping2D
 from sympde.topology import TorusMapping
 from sympde.topology import TwistedTargetMapping
+from sympde.topology.mapping import get_logical_test_function
 
 from sympde.expr     import BilinearForm, integral
 from sympde.calculus import grad, div, curl, dot
@@ -426,11 +427,10 @@ def test_logical_expr_3d_2():
 
     mapped_domain = M(domain)
 
-    V  = ScalarFunctionSpace('V' , domain, kind='h1')
     VM = ScalarFunctionSpace('VM', mapped_domain, kind='h1')
 
-    u,v   = elements_of(V, names='u,v')
     um,vm = elements_of(VM, names='u,v')
+    u, v = [get_logical_test_function(field) for field in (um, vm)]
 
     J   = M.jacobian
 
@@ -448,11 +448,10 @@ def test_logical_expr_3d_3():
 
     mapped_domain = M(domain)
 
-    V  = VectorFunctionSpace('V' , domain, kind='hcurl')
     VM = VectorFunctionSpace('VM', mapped_domain, kind='hcurl')
 
-    u,v   = elements_of(V, names='u,v')
     um,vm = elements_of(VM, names='u,v')
+    u, v = [get_logical_test_function(field) for field in (um, vm)]
 
     J   = M.jacobian
 
@@ -469,11 +468,10 @@ def test_logical_expr_3d_4():
 
     mapped_domain = M(domain)
 
-    V  = VectorFunctionSpace('V' , domain, kind='hdiv')
     VM = VectorFunctionSpace('VM', mapped_domain, kind='hdiv')
 
-    u,v   = elements_of(V, names='u,v')
     um,vm = elements_of(VM, names='u,v')
+    u, v = [get_logical_test_function(field) for field in (um, vm)]
 
     J   = M.jacobian
 
@@ -490,12 +488,11 @@ def test_logical_expr_3d_5():
 
     mapped_domain = M(domain)
 
-    V  = VectorFunctionSpace('V' , domain, kind='hcurl')
     VM = VectorFunctionSpace('VM', mapped_domain, kind='hcurl')
 
     J   = M.jacobian
-    u,v   = elements_of(V,  names='u,v')
     um,vm = elements_of(VM, names='u,v')
+    u, v = [get_logical_test_function(field) for field in (um, vm)]
 
     int_md = lambda expr: integral(mapped_domain , expr)
     int_ld = lambda expr: integral(domain , expr)
@@ -617,10 +614,12 @@ def test_identity_mapping_2d_2():
 
     V = ScalarFunctionSpace('V', domain, kind='h1')
     u = element_of(V, name='u')
+    logical_u = get_logical_test_function(u)
 
     # ...
-    assert(LogicalExpr(dx(u), domain) == dx1(u))
-    assert(LogicalExpr(dy(u), domain) == dx2(u))
+    assert logical_u.space.domain == domain.logical_domain
+    assert(LogicalExpr(dx(u), domain) == dx1(logical_u))
+    assert(LogicalExpr(dy(u), domain) == dx2(logical_u))
     # ...
 
 #==============================================================================
