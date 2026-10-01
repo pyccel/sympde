@@ -88,7 +88,9 @@ sphinx-build -W --keep-going -b html doc doc/_build/html
 
 Because many important SymPDE features are only tested in Psydac, new pull requests should also be tested against the Psydac test suite.
 This can be done by opening a pull request in Psydac whose only change is to install the corresponding SymPDE branch.
-To achieve this, modify the line corresponding to `sympde` in Psydac's `pyproject.toml` file.
+Because many important SymPDE features are only tested in PSYDAC, new pull requests should also be tested against the PSYDAC test suite.
+This can be done by opening a pull request in PSYDAC whose only change is to install the corresponding SymPDE branch.
+To achieve this, modify the line corresponding to `sympde` in PSYDAC's `pyproject.toml` file.
 
 For instance, to test a new SymPDE branch called `my_feature`, use:
 
