@@ -80,8 +80,8 @@ The documentation dependencies are installed separately, and the HTML pages
 are built with warnings treated as errors:
 
 ```bash
-python3 -m pip install --editable ".[docs]"
-python3 -m sphinx -W --keep-going -b html doc doc/_build/html
+pip install --editable ".[docs]"
+sphinx-build -W --keep-going -b html doc doc/_build/html
 ```
 
 ## For developers
