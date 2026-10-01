@@ -6,7 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- [DEVELOPER] Test supported Python versions 3.9 through 3.14 on the latest Ubuntu and macOS runners.
+- [DEVELOPER] Add a `CHANGELOG.md` file listing changes between different versions.
+- [DEVELOPER] Add Python version 3.14 to the testing workflow.
 - [DEVELOPER] Add separate documentation dependencies and a strict Sphinx workflow that checks pull requests and publishes the documentation to GitHub Pages.
 - [DEVELOPER] Add an `AUTHORS` file listing the project maintainers and contributors.
 
@@ -24,6 +25,8 @@ All notable changes to this project will be documented in this file.
 ### Removed
 
 - [DEVELOPER] Remove obsolete CI configuration, the standalone pytest configuration, and the legacy test runner script.
+
+### Deprecated
 
 ## [0.20.0] - 2026-09-07
 
