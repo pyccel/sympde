@@ -2,7 +2,7 @@
 
 [![CI status](https://github.com/pyccel/sympde/actions/workflows/testing.yml/badge.svg?branch=master&event=push)](https://github.com/pyccel/sympde/actions/workflows/testing.yml)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/pyccel/sympde/master)
-[![Documentation Status](https://readthedocs.org/projects/sympde/badge/?version=latest)](http://sympde.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://github.com/pyccel/sympde/actions/workflows/documentation.yml/badge.svg)](https://github.com/pyccel/sympde/actions/workflows/documentation.yml)
 
 **SymPDE** is a symbolic calculus library for partial differential equations and variational forms.
 It can be used to provide capabilities similar to the [FEniCS](https://fenicsproject.org/) project by extending and writing your own *printing* functions.
@@ -76,11 +76,21 @@ The complete test suite can be run from any directory with:
 pytest -n auto --dist loadgroup --pyargs sympde -ra
 ```
 
+The documentation dependencies are installed separately, and the HTML pages
+are built with warnings treated as errors:
+
+```bash
+pip install --editable ".[docs]"
+sphinx-build -W --keep-going -b html doc doc/_build/html
+```
+
 ## For developers
 
 Because many important SymPDE features are only tested in Psydac, new pull requests should also be tested against the Psydac test suite.
 This can be done by opening a pull request in Psydac whose only change is to install the corresponding SymPDE branch.
-To achieve this, modify the line corresponding to `sympde` in Psydac's `pyproject.toml` file.
+Because many important SymPDE features are only tested in PSYDAC, new pull requests should also be tested against the PSYDAC test suite.
+This can be done by opening a pull request in PSYDAC whose only change is to install the corresponding SymPDE branch.
+To achieve this, modify the line corresponding to `sympde` in PSYDAC's `pyproject.toml` file.
 
 For instance, to test a new SymPDE branch called `my_feature`, use:
 

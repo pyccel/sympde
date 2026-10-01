@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Added
+
+- [DEVELOPER] Add a `CHANGELOG.md` file listing changes between different versions.
+- [DEVELOPER] Add Python version 3.14 to the testing workflow.
+- [DEVELOPER] Add separate documentation dependencies and a strict Sphinx workflow that checks pull requests and publishes the documentation to GitHub Pages.
+- [DEVELOPER] Add an `AUTHORS` file listing the project maintainers and contributors.
+
+### Changed
+
+- Convert the README to Markdown and expand the installation, testing, and documentation-build instructions.
+- [DEVELOPER] Modernize the package metadata and consolidate the pytest and coverage configuration in `pyproject.toml`.
+- [DEVELOPER] Modernize the Sphinx configuration, API-documentation generation, and API docstring markup.
+
+### Fixed
+
+- #140: Fix the rendering of the `Domain.join()` API documentation.
+- #166: Restore warning-free documentation builds, including bibliography and mathematical notation support.
+
+### Removed
+
+- [DEVELOPER] Remove obsolete CI configuration, the standalone pytest configuration, and the legacy test runner script.
+
+### Deprecated
+
 ## [0.20.0] - 2026-09-07
 
 ### Added
