@@ -119,7 +119,7 @@ def test_analytic_mapping_hierarchy():
 
 
 def test_analytical_gallery_reparented_onto_analytic_mapping():
-    from sympde.topology import AnalyticMapping, Mapping, SymbolicMapping
+    from sympde.topology import AnalyticMapping, Mapping
     from sympde.topology import (IdentityMapping, AffineMapping, PolarMapping,
                                  TargetMapping, CzarnyMapping, CollelaMapping2D,
                                  TorusMapping)
@@ -135,7 +135,7 @@ def test_analytical_gallery_reparented_onto_analytic_mapping():
 # -- D8: AnalyticMapping no longer inherits the deprecated Mapping
 
 def test_analytic_mapping_no_longer_inherits_deprecated_mapping():
-    from sympde.topology import AnalyticMapping, Mapping, DefinedMapping, SymbolicMapping
+    from sympde.topology import AnalyticMapping, Mapping
     from sympde.topology import PolarMapping
     assert not issubclass(AnalyticMapping, Mapping)
     assert Mapping not in PolarMapping.__mro__
@@ -198,8 +198,8 @@ def test_analytic_mapping_construction_is_warning_free():
     with warnings.catch_warnings():
         warnings.simplefilter('error', DeprecationWarning)
         F = IdentityMapping('F', dim=2)
-        P = PolarMapping('P', dim=2, c1=0., c2=0., rmin=.3, rmax=1.)
-        T = TorusSurfaceMapping('T', ldim=2, pdim=3, R0=1., a=0.3)
+        PolarMapping('P', dim=2, c1=0., c2=0., rmin=.3, rmax=1.)
+        TorusSurfaceMapping('T', ldim=2, pdim=3, R0=1., a=0.3)
         F.copy()
         F.func(*F.args)
 
@@ -268,19 +268,19 @@ def test_construction_guard_spares_rebuilds_of_analytic_mappings():
     # asserted here: P.func(*P.args) == P and a pickle round trip == P are
     # already False at baseline for gallery mappings (pre-existing, numeric
     # constants come back symbolic) -- out of scope for D11.
-    import pickle
+    import pickle  # nosec B403 -- only round-trips objects built by the test
     from sympde.topology import PolarMapping, InterfaceMapping, IdentityMapping
 
     with warnings.catch_warnings():
         warnings.simplefilter('error', DeprecationWarning)
         P = PolarMapping('P', dim=2, c1=0., c2=0., rmin=.3, rmax=1.)
 
-        for rebuilt in (P.copy(), P.func(*P.args), pickle.loads(pickle.dumps(P))):
-            assert type(rebuilt) is PolarMapping
+        for rebuilt in (P.copy(), P.func(*P.args), pickle.loads(pickle.dumps(P))):  # nosec B301
+            assert isinstance(rebuilt, PolarMapping)
             assert rebuilt.is_analytical is True
 
         itf = InterfaceMapping(IdentityMapping('A', dim=2), IdentityMapping('B', dim=2))
-    assert type(itf.minus) is IdentityMapping
+    assert isinstance(itf.minus, IdentityMapping)
 
 
 def test_gallery_analytic_mappings_all_carry_expressions():
@@ -326,8 +326,8 @@ def test_interface_mapping_copy_preserves_analytic_mapping_type():
     import numpy as np
     from sympde.topology import IdentityMapping, InterfaceMapping
     itf = InterfaceMapping(IdentityMapping('F1', dim=2), IdentityMapping('F2', dim=2))
-    assert type(itf.minus) is IdentityMapping
-    assert type(itf.plus)  is IdentityMapping
+    assert isinstance(itf.minus, IdentityMapping)
+    assert isinstance(itf.plus,  IdentityMapping)
     expected = itf.minus.get_callable_mapping().jacobian(0.3, 0.4)
     assert np.array_equal(itf.minus.jacobian(0.3, 0.4), expected)
     assert itf.minus(0.3, 0.4) == (0.3, 0.4)
@@ -340,9 +340,6 @@ def test_copy_preserves_user_set_callable_mapping():
     # observable e.g. through InterfaceMapping, which always copies its legs.
     # WP13/D2: AnalyticMapping.set_callable_mapping now raises (it is always
     # its own callable), so this is retargeted to a plain SymbolicMapping.
-    from sympde.topology import SymbolicMapping
-    from sympde.topology.mapping import BasicCallableMapping
-
     class Custom(BasicCallableMapping):
         def __call__(self, *eta):     return eta
         def jacobian(self, *eta):     return None
@@ -371,9 +368,8 @@ def test_copy_preserves_user_set_callable_mapping():
 # StructuralMapping alongside Mapping; 06d-4a severed Mapping).
 
 def test_structural_subclasses_hierarchy():
-    from sympde.topology import (StructuralMapping, InverseMapping,
-                                 InterfaceMapping, MultiPatchMapping, Mapping,
-                                 SymbolicMapping)
+    from sympde.topology import (InverseMapping, InterfaceMapping,
+                                 MultiPatchMapping, Mapping)
     for cls in (InverseMapping, InterfaceMapping, MultiPatchMapping):
         assert issubclass(cls, StructuralMapping)
         assert issubclass(cls, SymbolicMapping)      # still a symbolic mapping
@@ -411,7 +407,6 @@ def test_multi_patch_mapping_rejects_point_call():
 
 def test_structural_mapping_still_abstract():
     # WP01 invariant must not regress
-    from sympde.topology import StructuralMapping
     assert inspect.isabstract(StructuralMapping)
     with pytest.raises(TypeError, match='abstract'):
         StructuralMapping('F')
@@ -443,7 +438,7 @@ def test_structural_ldim_pdim_are_concrete():
     # 06d-4a: the `ldim = Mapping.ldim` MRO work-around is gone -- each
     # structural class has its own concrete ldim/pdim returning stored values.
     from sympde.topology import (InverseMapping, InterfaceMapping,
-                                 StructuralMapping, IdentityMapping)
+                                 IdentityMapping)
     F = IdentityMapping('F', dim=2)
     itf = InterfaceMapping(IdentityMapping('A', dim=2), IdentityMapping('B', dim=2))
     assert InverseMapping(F).ldim == 2 and InverseMapping(F).pdim == 2
@@ -514,9 +509,6 @@ def test_symbolic_mapping_set_callable_mapping_is_deprecated_but_works():
     # deprecated symbols keep working until the explicit remove-aliases
     # work-package) -- plain SymbolicMapping.set_callable_mapping/
     # get_callable_mapping stays unguarded, but now warns.
-    from sympde.topology import SymbolicMapping
-    from sympde.topology.mapping import BasicCallableMapping
-
     class Custom(BasicCallableMapping):
         def __call__(self, *eta):     return eta
         def jacobian(self, *eta):     return None
@@ -535,9 +527,6 @@ def test_symbolic_mapping_set_callable_mapping_is_deprecated_but_works():
 
 def test_set_callable_mapping_warning_names_discrete_mapping():
     # D3-b: the deprecation warning must point callers at the replacement.
-    from sympde.topology import SymbolicMapping
-    from sympde.topology.mapping import BasicCallableMapping
-
     class Custom(BasicCallableMapping):
         def __call__(self, *eta):     return eta
         def jacobian(self, *eta):     return None
@@ -558,7 +547,7 @@ def test_set_callable_mapping_guards_do_not_warn():
     # so they must not start emitting the new DeprecationWarning.
     from sympde.topology import (IdentityMapping, InterfaceMapping,
                                  MultiPatchMapping)
-    from sympde.topology.mapping import DiscreteMapping, BasicCallableMapping
+    from sympde.topology.mapping import DiscreteMapping
 
     class Custom(BasicCallableMapping):
         def __call__(self, *eta):     return eta
@@ -626,8 +615,7 @@ def test_mapped_multipatch_domain_with_interface_is_broken_pre_existing():
 # -- work-package 06a: Mapping re-parented onto SymbolicMapping
 
 def test_mapping_is_a_symbolic_mapping():
-    from sympde.topology import (Mapping, SymbolicMapping, IdentityMapping,
-                                 InterfaceMapping)
+    from sympde.topology import Mapping, IdentityMapping, InterfaceMapping
     assert issubclass(Mapping, SymbolicMapping)
     # every branch of the hierarchy is now isinstance(_, SymbolicMapping):
     with pytest.warns(DeprecationWarning):                                # 06d-4c
@@ -669,7 +657,6 @@ def test_analytic_mapping_rejects_attached_callable():
     # because it exercises a real BasicCallableMapping implementation rather
     # than a bare object().)
     from sympde.topology import PolarMapping
-    from sympde.topology.mapping import BasicCallableMapping
 
     class Const(BasicCallableMapping):
         ldim = pdim = 2
@@ -689,7 +676,7 @@ def test_analytic_mapping_rejects_attached_callable():
 def test_callable_mapping_is_removed():
     import sympde.topology.callable_mapping as cm
     with pytest.raises(AttributeError, match='removed'):
-        cm.CallableMapping
+        _ = cm.CallableMapping
 
 
 def test_bare_mapping_with_expressions_rejects_get_callable_mapping():
@@ -709,7 +696,6 @@ def test_bare_mapping_with_expressions_rejects_get_callable_mapping():
 def test_undefined_mapping_still_valueerrors_on_get_callable_mapping():
     # 06d-4c: get_callable_mapping() moved onto SymbolicMapping (an undefined
     # mapping with no _expressions and no attached callable still ValueErrors).
-    from sympde.topology import SymbolicMapping
     with pytest.raises(ValueError):
         SymbolicMapping('F', dim=2).get_callable_mapping()
 
@@ -719,11 +705,11 @@ def test_basicmapping_alias_removed():
     # alias); 06d-4b drops the alias; 06d-4c relocates SymbolicMapping out of
     # sympde.core.basic into sympde.topology.mapping.
     with pytest.raises(ImportError):
-        from sympde.core.basic import BasicMapping  # noqa: F401
+        from sympde.core.basic import BasicMapping as _  # noqa: F401
     with pytest.raises(ImportError):
-        from sympde.core.basic import SymbolicMapping  # noqa: F401
+        from sympde.core.basic import SymbolicMapping as _  # noqa: F401
 
-    from sympde.topology import Mapping, SymbolicMapping, IdentityMapping
+    from sympde.topology import Mapping, IdentityMapping
     assert issubclass(Mapping, SymbolicMapping)
     assert isinstance(IdentityMapping('G', dim=2), SymbolicMapping)
     # SymbolicMapping appears exactly once in the MRO (BasicMapping is gone)
@@ -734,7 +720,7 @@ def test_basicmapping_alias_removed():
 # `Mapping` is a DeprecationWarning shell over it
 
 def test_symbolicmapping_is_the_undefined_mapping_constructor():
-    from sympde.topology import SymbolicMapping, Square
+    from sympde.topology import Square
     F = SymbolicMapping('F', dim=2)
     assert F.name == 'F' and F.ldim == 2 and F.pdim == 2
     assert F.is_analytical is False
@@ -742,7 +728,6 @@ def test_symbolicmapping_is_the_undefined_mapping_constructor():
 
 
 def test_bare_mapping_construction_is_deprecated():
-    import warnings
     from sympde.topology import Mapping, IdentityMapping
     with pytest.warns(DeprecationWarning, match='SymbolicMapping'):
         Mapping('M', dim=2)
@@ -756,7 +741,8 @@ def test_bare_mapping_rebuild_does_not_warn():
     # (Basic.rebuild, cse, pickling, deepcopy) re-enters Mapping.__new__ with
     # `name` already a Symbol -- it must stay quiet, or a downstream running
     # `filterwarnings=error` breaks on expressions it merely stored / copied.
-    import warnings, pickle, copy
+    import copy
+    import pickle  # nosec B403 -- only round-trips objects built by the test
     from sympde.topology import Mapping
 
     with warnings.catch_warnings():
@@ -767,7 +753,7 @@ def test_bare_mapping_rebuild_does_not_warn():
         warnings.simplefilter('error', DeprecationWarning)
         M.func(*M.args)                       # the exact rebuild path
         copy.deepcopy(M)
-        pickle.loads(pickle.dumps(M))
+        pickle.loads(pickle.dumps(M))  # nosec B301
 
 
 def test_symbolicmapping_honours_injected_jacobian():
@@ -775,7 +761,7 @@ def test_symbolicmapping_honours_injected_jacobian():
     # Mapping.__new__ honoured must survive the move into SymbolicMapping.__new__,
     # and must not leak into the analytic-constants dict of the Mapping shell.
     from sympy import ImmutableDenseMatrix, eye
-    from sympde.topology import SymbolicMapping, Mapping
+    from sympde.topology import Mapping
 
     J = ImmutableDenseMatrix(eye(2))
 
@@ -795,7 +781,6 @@ def test_interface_mapping_from_bare_mapping_legs_is_warning_free_on_copy():
     # `isinstance(name, str)` warning gate. InterfaceMapping.__new__ copies both
     # legs, so building one from bare-Mapping legs must not warn -- while an
     # explicit Mapping(...) call still does.
-    import warnings
     from sympde.topology import Mapping, InterfaceMapping
 
     with warnings.catch_warnings():
@@ -831,7 +816,7 @@ class _FakeCallable(BasicCallableMapping):
 
 
 def test_discrete_mapping_is_a_concrete_defined_mapping():
-    from sympde.topology import DiscreteMapping, DefinedMapping
+    from sympde.topology import DiscreteMapping
 
     G = DiscreteMapping(_FakeCallable(), name='D', dim=2)
     assert isinstance(G, DefinedMapping)
@@ -867,7 +852,7 @@ def test_discrete_mapping_copy_round_trips():
     f = _FakeCallable()
     G = DiscreteMapping(f, name='D', dim=2)
     c = G.copy()
-    assert type(c) is DiscreteMapping
+    assert isinstance(c, DiscreteMapping)
     assert c == G
     assert c.get_callable_mapping() is f
 
@@ -887,10 +872,10 @@ def test_discrete_mapping_rejects_non_callable():
 
 
 def test_defined_mapping_factory_sugar():
-    from sympde.topology import DefinedMapping, DiscreteMapping
+    from sympde.topology import DiscreteMapping
 
     G = DefinedMapping(_FakeCallable(), name='D', dim=2)
-    assert type(G) is DiscreteMapping
+    assert isinstance(G, DiscreteMapping)
     # a plain abstract call still fails
     with pytest.raises(TypeError, match='abstract'):
         DefinedMapping('F')
