@@ -34,7 +34,7 @@ source <ENV-PATH>/bin/activate
 Make sure that the preferred virtual environment is activated, then run:
 
 ```bash
-pip3 install sympde
+pip install sympde
 ```
 
 This downloads the correct version of SymPDE from [PyPI](https://pypi.org/project/sympde/) and installs it in the virtual environment.
