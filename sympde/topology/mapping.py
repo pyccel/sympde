@@ -857,7 +857,7 @@ class Contravariant(MappingApplication):
             the basis function
 
         Returns
-        ----------
+        -------
          expr : Tuple
             the contravariant transformation
         """
