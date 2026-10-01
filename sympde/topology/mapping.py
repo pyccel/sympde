@@ -757,7 +757,7 @@ class Jacobian(MappingApplication):
             mapping object
 
         Returns
-        ----------
+        -------
          expr : ImmutableDenseMatrix
             the jacobian matrix
         """
