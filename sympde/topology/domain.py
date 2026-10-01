@@ -442,11 +442,11 @@ class Domain(BasicDomain):
             Atomic patches in the joined domain.
 
         connectivity : sequence of tuple
-            Interface descriptions of the form ``(minus, plus, orientation)``.
-            Each side is ``(patch, axis, ext)``, where ``patch`` is a patch
-            object or its index in ``patches`` and ``ext`` is ``-1`` or ``1``.
-            A 2D orientation is ``-1`` or ``1``. A 3D orientation is a tuple
-            of three values, each equal to ``-1`` or ``1``.
+            Interface descriptions of the form `(minus, plus, orientation)`.
+            Each side is `(patch, axis, ext)`, where `patch` is a patch
+            object or its index in `patches` and `ext` is `-1` or `1`.
+            A 2D orientation is `-1` or `1`. A 3D orientation is a tuple
+            of three values, each equal to `-1` or `1`.
 
         name : str
             Name of the domain.

@@ -55,6 +55,7 @@ templates_path = ['_templates']
 #
 # source_suffix = ['.rst', '.md']
 source_suffix = {'.rst': 'restructuredtext'}
+default_role = 'py:obj'
 
 # The master toctree document.
 master_doc = 'index'
