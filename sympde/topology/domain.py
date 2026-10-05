@@ -1,13 +1,10 @@
 # coding: utf-8
 from __future__ import annotations
 
-import numpy as np
-import h5py
-import yaml
 import os
 
-from collections import abc, OrderedDict
-from typing import Union as TypeUnion, Optional, List, Dict, Iterable, TYPE_CHECKING
+from collections import OrderedDict
+from typing import Union as TypeUnion, Optional, List, Iterable, TYPE_CHECKING
 # Union clashes with core.basic.Union
 
 from sympy import Integer
@@ -15,7 +12,7 @@ from sympy.core.singleton import Singleton
 from sympy.core import Basic, symbols
 from sympy.core.containers import Tuple
 from sympy.tensor import IndexedBase, Indexed
-from sympy.core import Add, Mul, Pow
+from sympy.core import Add
 from sympy.core.expr import AtomicExpr
 from sympy.utilities.iterables import is_sequence
 
@@ -369,6 +366,9 @@ class Domain(BasicDomain):
         return dict(sorted(d.items()))
 
     def export( self, filename ):
+        import h5py
+        import numpy as np
+        import yaml
 
         yml = self.todict()
 
@@ -401,6 +401,9 @@ class Domain(BasicDomain):
         Domain
             Multipatch domain.
         """
+        import h5py
+        import yaml
+
         # ... check extension of the file
         _, ext = os.path.splitext(filename)
 

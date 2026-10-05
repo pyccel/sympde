@@ -5,14 +5,14 @@ from sympy import Tuple
 from sympy import Matrix
 from sympy import srepr
 
-from sympde.core import Constant
-from sympde.calculus import grad, dot, inner
-from sympde.topology import Domain, element_of
-from sympde.topology import get_index_derivatives_atom
-from sympde.topology import get_max_partial_derivatives
-from sympde.topology import ScalarFunctionSpace
-from sympde.topology import (dx, dy, dz)
-from sympde.topology import Mapping
+from sympde.api import Constant
+from sympde.api import grad, dot, inner
+from sympde.api import Domain, element_of
+from sympde.api import get_index_derivatives_atom
+from sympde.api import get_max_partial_derivatives
+from sympde.api import ScalarFunctionSpace
+from sympde.api import (dx, dy, dz)
+from sympde.api import Mapping
 
 
 def indices_as_str(a):

@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Add `sympde.api` as the supported flat public API.
+- Add executable examples to the documentation.
 - [DEVELOPER] Add a `CHANGELOG.md` file listing changes between different versions.
 - [DEVELOPER] Add Python version 3.14 to the testing workflow.
 - [DEVELOPER] Add separate documentation dependencies and a strict Sphinx workflow that checks pull requests and publishes the documentation to GitHub Pages.
@@ -14,6 +16,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Convert the README to Markdown and expand the installation, testing, and documentation-build instructions.
+- Use explicit internal imports and load optional dependencies only when needed.
 - #106: Require SymPy 1.12 or newer and support maintained SymPy releases below 1.15.
 - #106: Update SymPDE's symbolic objects for modern SymPy's structural arguments, traversal, substitution, and reconstruction requirements.
 - [DEVELOPER] Modernize the package metadata and consolidate the pytest and coverage configuration in `pyproject.toml`.
@@ -33,6 +36,8 @@ All notable changes to this project will be documented in this file.
 - [DEVELOPER] Remove obsolete CI configuration, the standalone pytest configuration, and the legacy test runner script.
 
 ### Deprecated
+
+- Package and subpackage imports no longer re-export public objects. Replace imports such as `from sympde.topology import Square` with `from sympde.api import Square`.
 
 ## [0.20.0] - 2026-09-07
 

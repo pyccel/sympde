@@ -4,7 +4,7 @@ from pathlib import Path
 
 from sphinx.ext.apidoc import main as sphinx_apidoc
 
-from sympde import __version__
+from sympde.version import __version__
 
 # -- Path setup --------------------------------------------------------------
 
@@ -197,4 +197,5 @@ apidoc_args = [
     str(doc_dir.parent / 'sympde'),
 ]
 apidoc_args.extend(str(path) for path in (doc_dir.parent / 'sympde').glob('*/tests'))
+apidoc_args.append(str(doc_dir.parent / 'sympde' / 'api'))
 sphinx_apidoc(apidoc_args)
