@@ -7,14 +7,14 @@ from sympy import Matrix
 from sympy import srepr
 from sympy import Symbol
 
-from sympde import Constant
+from sympde.api import Constant
 
-from sympde.exterior import d, wedge, ip, jp, delta, hodge
-from sympde.exterior import DifferentialForm
-from sympde.exterior import PullBack
-from sympde.exterior import infere_type
-from sympde.exterior import ZeroFormType, OneFormType, TwoFormType, ThreeFormType
-from sympde.exterior import FourFormType, FiveFormType, SixFormType
+from sympde.api import d, wedge, ip, jp, delta, hodge
+from sympde.api import DifferentialForm
+from sympde.api import PullBack
+from sympde.api import infere_type
+from sympde.api import ZeroFormType, OneFormType, TwoFormType, ThreeFormType
+from sympde.api import FourFormType, FiveFormType, SixFormType
 
 
 #==============================================================================

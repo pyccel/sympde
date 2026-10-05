@@ -7,23 +7,23 @@ from sympy import Function
 from sympy import pi, cos, sin, exp
 from sympy import ImmutableDenseMatrix as Matrix
 
-from sympde.core     import Constant
-from sympde.calculus import grad, dot, inner, rot, div
-from sympde.calculus import laplace, bracket, convect
-from sympde.calculus import jump, avg, Dn, minus, plus
+from sympde.api import Constant
+from sympde.api import grad, dot, inner, rot, div
+from sympde.api import laplace, bracket, convect
+from sympde.api import jump, avg, Dn, minus, plus
 
-from sympde.topology import dx1, dx2, dx3
-from sympde.topology import dx, dy, dz
-from sympde.topology import Mapping
-from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
-from sympde.topology import element_of, elements_of
-from sympde.topology import InteriorDomain, Union
-from sympde.topology import Boundary, NormalVector
-from sympde.topology import Domain
+from sympde.api import dx1, dx2, dx3
+from sympde.api import dx, dy, dz
+from sympde.api import Mapping
+from sympde.api import ScalarFunctionSpace, VectorFunctionSpace
+from sympde.api import element_of, elements_of
+from sympde.api import InteriorDomain, Union
+from sympde.api import Boundary, NormalVector
+from sympde.api import Domain
 #from sympde.topology import trace_1  # TODO [YG, 27.01.2021]: fix trace
-from sympde.topology import Square
-from sympde.topology import ElementDomain
-from sympde.topology import Area
+from sympde.api import Square
+from sympde.api import ElementDomain
+from sympde.api import Area
 
 from sympde.expr.expr import LinearExpr
 from sympde.expr.expr import LinearForm, BilinearForm

@@ -6,15 +6,15 @@ from sympy import Function
 from sympy import Integer, Float, Rational
 from sympy import expand
 
-from sympde.core     import Constant
-from sympde.calculus import grad, dot, inner, outer, cross, rot, curl, div
-from sympde.calculus import laplace, hessian, bracket, convect, D, conv
-from sympde.calculus import ArgumentTypeError
-from sympde.calculus import jump, avg, Dn, minus, plus
-from sympde.topology import Domain
-from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
-from sympde.topology import ProductSpace
-from sympde.topology import element_of, elements_of
+from sympde.api import Constant
+from sympde.api import grad, dot, inner, outer, cross, rot, curl, div
+from sympde.api import laplace, hessian, bracket, convect, D, conv
+from sympde.api import ArgumentTypeError
+from sympde.api import jump, avg, Dn, minus, plus
+from sympde.api import Domain
+from sympde.api import ScalarFunctionSpace, VectorFunctionSpace
+from sympde.api import ProductSpace
+from sympde.api import element_of, elements_of
 
 #==============================================================================
 @pytest.mark.parametrize('dim', [1, 2, 3])

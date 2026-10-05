@@ -1,12 +1,12 @@
 from sympy import Symbol
 from sympy import sympify
 
-from sympde.topology import Domain, ScalarFunctionSpace, element_of
-from sympde.topology import dx, dy, dz
-from sympde.topology import dx1, dx2, dx3
-from sympde.topology import Mapping, Jacobian
-from sympde.topology import LogicalExpr
-from sympde.topology import SymbolicExpr
+from sympde.api import Domain, ScalarFunctionSpace, element_of
+from sympde.api import dx, dy, dz
+from sympde.api import dx1, dx2, dx3
+from sympde.api import Mapping, Jacobian
+from sympde.api import LogicalExpr
+from sympde.api import SymbolicExpr
 
 #==============================================================================
 def test_derivatives_2d_without_mapping():
