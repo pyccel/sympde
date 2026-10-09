@@ -14,12 +14,11 @@ from sympy.core.singleton import Singleton
 from sympy.core import Add, Mul
 from sympy.core.singleton import S
 
-from sympde.old_sympy_utilities import with_metaclass
 from sympde.core.basic import _coeffs_registery
 from sympde.core import LinearOperator
 
 #==============================================================================
-class FormType(with_metaclass(Singleton, Basic)):
+class FormType(Basic, metaclass=Singleton):
     """Base class representing differential form types"""
     _index = None
 

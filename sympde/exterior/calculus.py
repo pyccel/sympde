@@ -14,6 +14,7 @@ from sympy import Integer, Float
 from sympy.core.singleton import Singleton
 from sympy.core import Add, Mul
 from sympy.core.singleton import S
+from sympy.utilities.iterables import is_sequence
 
 from sympde.core.basic import _coeffs_registery
 from sympde.core import LinearOperator

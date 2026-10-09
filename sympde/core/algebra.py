@@ -33,8 +33,8 @@ from sympy import simplify
 from sympy import S
 from sympy import Basic
 from sympy import Indexed, IndexedBase
+from sympy.utilities.iterables import is_sequence
 
-from sympde.old_sympy_utilities import is_sequence
 from .basic import CalculusFunction
 from .basic import _coeffs_registery
 

@@ -8,6 +8,7 @@ from sympy.simplify.simplify import simplify
 
 from sympde.core.basic import _coeffs_registery
 from sympde.core.basic import CalculusFunction
+from sympde.core.basic import _new_basic
 from sympde.core.algebra import (Dot_1d,
                                  Dot_2d, Inner_2d, Cross_2d,
                                  Dot_3d, Inner_3d, Cross_3d)
@@ -973,15 +974,15 @@ def _tensorize_atomic_expr(expr, d_atoms):
 class Basic1dForm(AtomicExpr):
 
     def __new__(cls, name, axis, weight=S.One):
-        return Basic.__new__(cls, name, axis, weight)
+        return _new_basic(cls, name, axis, weight)
 
     @property
     def name(self):
-        return self._args[0]
+        return self._args[0].name
 
     @property
     def axis(self):
-        return self._args[1]
+        return int(self._args[1])
 
     @property
     def weight(self):
@@ -1003,38 +1004,48 @@ class Basic1dForm(AtomicExpr):
 
 class Mass(Basic1dForm):
 
-    def __new__(cls, axis, weight=S.One):
+    def __new__(cls, axis, weight=S.One, *structural_args):
+        if structural_args:
+            return Basic1dForm.__new__(cls, axis, weight, *structural_args)
 #        name = 'Mass'
         name = 'M'
-        return Basic.__new__(cls, name, axis, weight)
+        return Basic1dForm.__new__(cls, name, axis, weight)
 
 class Stiffness(Basic1dForm):
 
-    def __new__(cls, axis, weight=S.One):
+    def __new__(cls, axis, weight=S.One, *structural_args):
+        if structural_args:
+            return Basic1dForm.__new__(cls, axis, weight, *structural_args)
 #        name = 'Stiffness'
         name = 'S'
-        return Basic.__new__(cls, name, axis, weight)
+        return Basic1dForm.__new__(cls, name, axis, weight)
 
 class Advection(Basic1dForm):
 
-    def __new__(cls, axis, weight=S.One):
+    def __new__(cls, axis, weight=S.One, *structural_args):
+        if structural_args:
+            return Basic1dForm.__new__(cls, axis, weight, *structural_args)
 #        name = 'Advection'
         name = 'A'
-        return Basic.__new__(cls, name, axis, weight)
+        return Basic1dForm.__new__(cls, name, axis, weight)
 
 class AdvectionT(Basic1dForm):
 
-    def __new__(cls, axis, weight=S.One):
+    def __new__(cls, axis, weight=S.One, *structural_args):
+        if structural_args:
+            return Basic1dForm.__new__(cls, axis, weight, *structural_args)
 #        name = 'AdvectionT'
         name = 'AT'
-        return Basic.__new__(cls, name, axis, weight)
+        return Basic1dForm.__new__(cls, name, axis, weight)
 
 class Bilaplacian(Basic1dForm):
 
-    def __new__(cls, axis, weight=S.One):
+    def __new__(cls, axis, weight=S.One, *structural_args):
+        if structural_args:
+            return Basic1dForm.__new__(cls, axis, weight, *structural_args)
 #        name = 'Bilaplacian'
         name = 'B'
-        return Basic.__new__(cls, name, axis, weight)
+        return Basic1dForm.__new__(cls, name, axis, weight)
 
 
 Mass_0 = Mass(0)
