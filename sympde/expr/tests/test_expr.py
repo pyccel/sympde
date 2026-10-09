@@ -14,7 +14,7 @@ from sympde.calculus import jump, avg, Dn, minus, plus
 
 from sympde.topology import dx1, dx2, dx3
 from sympde.topology import dx, dy, dz
-from sympde.topology import Mapping
+from sympde.topology import SymbolicMapping
 from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
 from sympde.topology import element_of, elements_of
 from sympde.topology import InteriorDomain, Union
@@ -658,7 +658,7 @@ def test_terminal_expr_bilinear_2d_4():
 def test_terminal_expr_bilinear_3d_1():
 
     domain = Domain('Omega', dim=3)
-    M      = Mapping('M', dim=3)
+    M      = SymbolicMapping('M', dim=3)
 
     mapped_domain = M(domain)
 
@@ -686,6 +686,72 @@ def test_terminal_expr_bilinear_3d_1():
     assert e1[0].expr          == dx1(u)*dx1(v) + dx2(u)*dx2(v) + dx3(u)*dx3(v)
     assert e2[0].expr          == dx(um)*dx(vm) + dy(um)*dy(vm) + dz(um)*dz(vm)
     assert e3[0].expr.factor() == (dx1(u)*dx1(v) + dx2(u)*dx2(v) + dx3(u)*dx3(v))*det
+
+#==============================================================================
+def test_terminal_expr_kernel_expression_structure_linear_2d():
+    """Check that TerminalExpr splits a mixed interior/boundary LinearForm into
+    the expected number and kind of KernelExpression objects."""
+
+    domain = Domain('Omega', dim=2)
+    B1 = Boundary(r'\Gamma_1', domain)
+
+    x, y = domain.coordinates
+    nn   = NormalVector('nn')
+
+    V = ScalarFunctionSpace('V', domain)
+    v = element_of(V, name='v')
+
+    int_0 = lambda expr: integral(domain, expr)
+    int_1 = lambda expr: integral(B1, expr)
+
+    g = Matrix((x**2, y**2))
+    l = LinearForm(v, int_1(v*dot(g, nn)) + int_0(x*y*v))
+
+    kernel_expr = TerminalExpr(l, domain)
+    assert len(kernel_expr) == 2
+
+    domain_exprs   = [k for k in kernel_expr if isinstance(k.target, InteriorDomain)]
+    boundary_exprs = [k for k in kernel_expr if isinstance(k.target, Boundary)]
+    assert len(domain_exprs) == 1
+    assert len(boundary_exprs) == 1
+
+    assert domain_exprs[0].target   == domain.interior
+    assert boundary_exprs[0].target == B1
+
+    assert domain_exprs[0].expr   == x*y*v
+    assert boundary_exprs[0].expr == v*(x**2*nn[0] + y**2*nn[1])
+
+#==============================================================================
+def test_terminal_expr_kernel_expression_structure_bilinear_2d():
+    """Check that TerminalExpr splits a mixed interior/boundary BilinearForm
+    into the expected number and kind of KernelExpression objects."""
+
+    domain = Domain('Omega', dim=2)
+    B1 = Boundary(r'\Gamma_1', domain)
+
+    nn = NormalVector('nn')
+
+    V = ScalarFunctionSpace('V', domain)
+    u, v = elements_of(V, names='u, v')
+
+    int_0 = lambda expr: integral(domain, expr)
+    int_1 = lambda expr: integral(B1, expr)
+
+    a = BilinearForm((u, v), int_0(u*v + dot(grad(u), grad(v))) + int_1(v*dot(grad(u), nn)))
+
+    kernel_expr = TerminalExpr(a, domain)
+    assert len(kernel_expr) == 2
+
+    domain_exprs   = [k for k in kernel_expr if isinstance(k.target, InteriorDomain)]
+    boundary_exprs = [k for k in kernel_expr if isinstance(k.target, Boundary)]
+    assert len(domain_exprs) == 1
+    assert len(boundary_exprs) == 1
+
+    assert domain_exprs[0].target   == domain.interior
+    assert boundary_exprs[0].target == B1
+
+    assert domain_exprs[0].expr   == u*v + dx1(u)*dx1(v) + dx2(u)*dx2(v)
+    assert boundary_exprs[0].expr == v*(dx1(u)*nn[0] + dx2(u)*nn[1])
 
 #==============================================================================
 def test_terminal_expr_1d_1():

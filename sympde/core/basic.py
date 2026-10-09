@@ -5,7 +5,6 @@ from sympy        import Number
 from sympy        import NumberSymbol
 from sympy.core   import Basic
 from sympy.core   import Symbol
-from sympy.tensor import IndexedBase
 
 #==============================================================================
 class Constant(Symbol):
@@ -32,13 +31,6 @@ class Constant(Symbol):
 class CalculusFunction(Function):
     """this class is needed to distinguish between functions and calculus
     functions when manipulating our expressions"""
-    pass
-
-#==============================================================================
-class BasicMapping(IndexedBase):
-    """
-    Represents a basic class for mapping.
-    """
     pass
 
 #==============================================================================

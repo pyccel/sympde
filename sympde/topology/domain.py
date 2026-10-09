@@ -26,7 +26,7 @@ from .basic            import ProductDomain
 
 # TODO fix circular dependency between domain and mapping
 if TYPE_CHECKING:
-    from sympde.topology.mapping import Mapping
+    from sympde.topology.mapping import SymbolicMapping
 # TODO add pdim
 
 iterable_types = (tuple, list, Tuple, Union)
@@ -46,7 +46,7 @@ class Domain(BasicDomain):
             boundaries : TypeUnion[Iterable[Boundary], Boundary, None] = None,
             dim : Optional[int] = None,
             connectivity : Optional[Connectivity] = None,
-            mapping : Optional[Mapping] = None,
+            mapping : Optional[SymbolicMapping] = None,
             logical_domain : Optional[Domain] = None):
         """
         Interiors or connectivity must be given. When the mapping is given 
@@ -174,7 +174,7 @@ class Domain(BasicDomain):
         return self.args[2]
 
     @property
-    def mapping(self) -> Optional[Mapping]:
+    def mapping(self) -> Optional[SymbolicMapping]:
         """The mapping that maps the logical domain to the physical domain"""
         return self.args[3]
 
@@ -375,7 +375,7 @@ class Domain(BasicDomain):
         if ext != '.h5':
             raise ValueError('> Only h5 files are supported')
         # ...
-        from sympde.topology.mapping import Mapping
+        from sympde.topology.mapping import SymbolicMapping
 
         h5  = h5py.File( filename, mode='r' )
         yml = yaml.load( h5['topology.yml'][()], Loader=yaml.SafeLoader )
@@ -398,7 +398,7 @@ class Domain(BasicDomain):
 
         constructors = [globals()[dt['type']] for dt in dtype]
         interiors    = [cs(i['name'], **dt['parameters']) for cs,i,dt in zip(constructors, d_interior, dtype)]
-        mappings     = [Mapping(I['mapping'], dim=dim) if I.get('mapping', "None") != "None" else None for I in d_interior]
+        mappings     = [SymbolicMapping(I['mapping'], dim=dim) if I.get('mapping', "None") != "None" else None for I in d_interior]
         domains      = [mapping(i) if mapping else i for i,mapping in zip(interiors, mappings)]
         patch_index  = {I.name:ind for ind,I in enumerate(interiors)}
 

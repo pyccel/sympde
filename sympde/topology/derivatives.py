@@ -22,7 +22,6 @@ from sympde.old_sympy_utilities import is_sequence
 
 from sympde.core.basic    import CalculusFunction
 from sympde.core.basic    import _coeffs_registery
-from sympde.core.basic    import BasicMapping
 from sympde.core.algebra  import LinearOperator
 from sympde.calculus.core import minus, plus
 from sympde.calculus.core import has
@@ -97,7 +96,7 @@ class DifferentialOperator(LinearOperator):
         elif isinstance(expr, (minus, plus)):
             return cls(expr, evaluate=False)
 
-        elif isinstance(expr, Indexed) and isinstance(expr.base, BasicMapping):
+        elif isinstance(expr, Indexed) and isinstance(expr.base, SymbolicMapping):
             return cls(expr, evaluate=False)
         elif not has(expr, types):
             if expr.is_number:
@@ -106,13 +105,23 @@ class DifferentialOperator(LinearOperator):
             elif isinstance(expr, Expr):
                 x = Symbol(cls.coordinate, real=True)
                 if cls.logical:
-                    M = expr.atoms(Mapping)
-                    if len(M)>0:
-                        M = list(M)[0]
-                        expr_primes = [diff(expr, M[i]) for i in range(M.pdim)]
-                        Jj = Jacobian(M)[:,cls.grad_index]
-                        expr_prime = sum([ei*Jji for ei,Jji in zip(expr_primes, Jj)])
-                        return expr_prime + diff(expr, x)
+                    # Chain rule here indexes the mapping (`M[i]`), so only an
+                    # indexable point mapping qualifies. A MultiPatchMapping
+                    # (Basic.__new__, no `_shape`) is not indexable and is
+                    # lowered elsewhere.
+                    M = [m for m in expr.atoms(SymbolicMapping)
+                         if getattr(m, '_shape', None) is not None]
+                    if M:
+                        # Chain rule through *every* mapping whose components
+                        # appear in `expr` (D-1). Each contributes
+                        # Sum_i (d expr / d m[i]) * Jacobian(m)[i, k],
+                        # k = cls.grad_index; summation order is irrelevant.
+                        total = diff(expr, x)
+                        for m in M:
+                            Jj = Jacobian(m)[:, cls.grad_index]
+                            total += sum(diff(expr, m[i]) * Jj[i]
+                                         for i in range(m.pdim))
+                        return total
                 return diff(expr, x)
 
 
@@ -1288,5 +1297,5 @@ def get_max_logical_partial_derivatives(expr, F=None):
             if v > d[k]: d[k] = v
     return d
 
-from .mapping import Mapping, Jacobian
+from .mapping import Jacobian, SymbolicMapping
 
