@@ -1562,13 +1562,13 @@ class Jacobian(MappingApplication):
         """
         this class methods computes the jacobian of a mapping
 
-        Parameters:
+        Parameters
         ----------
          F: Mapping
             mapping object
 
-        Returns:
-        ----------
+        Returns
+        -------
          expr : ImmutableDenseMatrix
             the jacobian matrix
         """
@@ -1614,7 +1614,7 @@ class Covariant(MappingApplication):
         """
         This class methods computes the covariant transformation
 
-        Parameters:
+        Parameters
         ----------
          F: Mapping
             mapping object
@@ -1622,8 +1622,8 @@ class Covariant(MappingApplication):
          v: <tuple|list|Tuple|ImmutableDenseMatrix|Matrix>
             the basis function
 
-        Returns:
-        ----------
+        Returns
+        -------
          expr : Tuple
             the covariant transformation
         """
@@ -1663,7 +1663,7 @@ class Contravariant(MappingApplication):
         """
         This class methods computes the contravariant transformation
 
-        Parameters:
+        Parameters
         ----------
          F: Mapping
             mapping object
@@ -1671,8 +1671,8 @@ class Contravariant(MappingApplication):
          v: <tuple|list|Tuple|ImmutableDenseMatrix|Matrix>
             the basis function
 
-        Returns:
-        ----------
+        Returns
+        -------
          expr : Tuple
             the contravariant transformation
         """

@@ -143,8 +143,6 @@ class Domain(BasicDomain):
             interiors = Union(*interiors)
             dtype = [i.dtype for i in interiors]
 
-
-
         assert mapping is None and logical_domain is None or \
         mapping is not None and logical_domain  is not None
 
@@ -248,7 +246,6 @@ class Domain(BasicDomain):
         elif isinstance(self.interior, Union):
             return [i.name for i in self.interior.args]
 
-
     def set_interfaces(self, *interfaces):
         for i in interfaces:
             self.connectivity[i.name] = i
@@ -258,25 +255,39 @@ class Domain(BasicDomain):
         return '{}'.format(sstr(self.name))
 
     def get_boundary(self, axis, ext):
-        """return boundary by name or (axis, ext)."""
-        # ...
+        """
+        Return the domain boundary at the given extremity of the required axis.
+
+        Parameters
+        ----------
+        axis : int | None
+            Index of the coordinate (0 <= axis < ndim) which has constant value at the boundary.
+            In 1D passing `axis=None` is accepted, in which case it is interpreted as 0.
+        ext : {-1, +1}
+            Extremity identifier:
+              * If -1, the boundary is at the minimum value of $x_{axis}$
+              * If +1, the boundary is at the maximum value of $x_{axis}$
+        
+        Returns
+        -------
+        Boundary (from sympde.topology.basic)
+            The domain boundary of interest.
+        """
         if axis is None:
             assert(self.interior.dim == 1)
             axis = 0
-        # ...
 
         if isinstance(self.boundary, Union):
             x = [i for i in self.boundary.args if i.ext == ext and i.axis == axis]
             if len(x) == 0:
-                raise ValueError('> could not find boundary with axis {} and ext {}'.format(axis, ext))
-
+                raise ValueError(f'> could not find boundary with axis {axis} and ext {ext}')
             return x[0]
 
         elif isinstance(self.boundary, Boundary):
             if self.boundary.axis == axis and self.boundary.ext == ext:
                 return self.boundary
 
-        raise ValueError('> could not find boundary with axis {} and ext {}'.format(axis, ext))
+        raise ValueError(f'> could not find boundary with axis {axis} and ext {ext}')
 
     def get_interface(self, domain1, domain2):
         interfaces = []
@@ -343,12 +354,25 @@ class Domain(BasicDomain):
         h5.close()
 
     @classmethod
-    def from_file( cls, filename ):
+    def from_file(cls, filename):
+        """
+        Read the "topology.yml" portion of an HDF5 geometry file and create a (mapped)
+        multipatch domain using the information therein.
 
+        Parameters
+        ----------
+        filename : str
+            Name of the HDF5 geometry file to be read.
+
+        Returns
+        -------
+        Domain
+            Multipatch domain.
+        """
         # ... check extension of the file
         _, ext = os.path.splitext(filename)
 
-        if not(ext == '.h5'):
+        if ext != '.h5':
             raise ValueError('> Only h5 files are supported')
         # ...
         from sympde.topology.mapping import SymbolicMapping
@@ -363,7 +387,8 @@ class Domain(BasicDomain):
         d_boundary     = yml['boundary']
         d_connectivity = yml['connectivity']
 
-        if dtype == 'None': dtype = None
+        if dtype == 'None':
+            dtype = None
 
         assert dtype is not None
         assert all(dtype)
@@ -402,93 +427,89 @@ class Domain(BasicDomain):
 
             connectivity.append(interface)
 
-        if len(domains)==1:
+        if len(domains) == 1:
             return domains[0]
 
         return Domain.join(domains, connectivity, domain_name)
 
-
     @classmethod
     def join(cls, patches, connectivity, name):
-        """
-        creates a multipatch domain by joining two or more patches in 2D or 3D
+        """Create a multipatch domain by joining patches in 2D or 3D.
 
         Parameters
         ----------
-        patches : list
-            list of patches
+        patches : sequence of Domain
+            Atomic patches in the joined domain.
 
-        connectivity : list
-            list of interfaces, identified by a tuple of 2 boundaries and an orientation: (bound_minus, bound_plus, ornt)
-            where 
-            - each boundary is identified by a tuple of 3 integers: (patch, axis, ext)
-              with patches given as objects (or by their indices in the patches list)
-            and 
-            - In 2D, ornt is an integer that can take the value of 1 or -1
-            - In 3D, ornt is a tuple of 3 integers that can take the value of 1 or -1
-            (see below for more details)
-            
-        
+        connectivity : sequence of tuple
+            Interface descriptions of the form `(minus, plus, orientation)`.
+            Each side is `(patch, axis, ext)`, where `patch` is a patch
+            object or its index in `patches` and `ext` is `-1` or `1`.
+            A 2D orientation is `-1` or `1`. A 3D orientation is a tuple
+            of three values, each equal to `-1` or `1`.
+
         name : str
-            name of the domain
+            Name of the domain.
 
         Returns
         -------
-        domain : Domain
-            multipatch domain
+        Domain
+            Multipatch domain.
 
         Notes
         -----
         The orientations are specified in the same manner as in GeoPDES, see e.g.
         <https://github.com/rafavzqz/geopdes/blob/master/geopdes/doc/geo_specs_mp_v21.txt#L193-L237>
-        and 
+        and
         T. Dokken, E. Quak, V. Skytt. Requirements from Isogeometric Analysis for changes in product design ontologies, 2010.
 
         Example
         -------
-        # list of patches (mapped domains)
-        Omega_0 = F0(A)
-        Omega_1 = F1(A)
-        Omega_2 = F2(A)
-        Omega_3 = F3(A)
+        .. code-block:: python
 
-        patches = [Omega_0, Omega_1, Omega_2, Omega_3]
-        
-        # integers representing the axes 
-        axis_0 = 0
-        axis_1 = 1
-        axis_2 = 2
+            # list of patches (mapped domains)
+            Omega_0 = F0(A)
+            Omega_1 = F1(A)
+            Omega_2 = F2(A)
+            Omega_3 = F3(A)
 
-        # integers representing the extremities: left (-1) or right (+1)
-        ext_0 = -1
-        ext_1 = +1
-    
-        # A connectivity list in 2D
-        connectivity = [((Omega_0, axis_0, ext_0), (Omega_1, axis_0, ext_1),  1),
-                        ((Omega_1, axis_1, ext_0), (Omega_3, axis_1, ext_1), -1),
-                        ((Omega_0, axis_1, ext_0), (Omega_2, axis_1, ext_1),  1),
-                        ((Omega_2, axis_0, ext_0), (Omega_3, axis_0, ext_1), -1)]
+            patches = [Omega_0, Omega_1, Omega_2, Omega_3]
 
-        # alternative option (passing interface patches by their indices in the patches list):
-        connectivity = [((0, axis_0, ext_0), (1, axis_0, ext_1),  1),
-                        ((1, axis_1, ext_0), (3, axis_1, ext_1), -1),
-                        ((0, axis_1, ext_0), (2, axis_1, ext_1),  1),
-                        ((2, axis_0, ext_0), (3, axis_0, ext_1), -1)]
+            # integers representing the axes
+            axis_0 = 0
+            axis_1 = 1
+            axis_2 = 2
 
-        # A connectivity list in 3D
-        connectivity = [((Omega_0, axis_0, ext_1), (Omega_1, axis_0, ext_0), ( 1,  1,  1)),
-                        ((Omega_0, axis_1, ext_1), (Omega_2, axis_1, ext_0), ( 1, -1,  1)),
-                        ((Omega_1, axis_1, ext_1), (Omega_3, axis_1, ext_0), (-1,  1, -1)),
-                        ((Omega_2, axis_0, ext_1), (Omega_3, axis_0, ext_0), (-1,  1,  1))]
+            # integers representing the extremities: left (-1) or right (+1)
+            ext_0 = -1
+            ext_1 = +1
 
-        # alternative option (passing interface patches by their indices in the patches list):
-        connectivity = [((0, axis_0, ext_1), (1, axis_0, ext_0), ( 1,  1,  1)),
-                        ((0, axis_1, ext_1), (2, axis_1, ext_0), ( 1, -1,  1)),
-                        ((1, axis_1, ext_1), (3, axis_1, ext_0), (-1,  1, -1)),
-                        ((2, axis_0, ext_1), (3, axis_0, ext_0), (-1,  1,  1))]
+            # A connectivity list in 2D
+            connectivity = [((Omega_0, axis_0, ext_0), (Omega_1, axis_0, ext_1),  1),
+                            ((Omega_1, axis_1, ext_0), (Omega_3, axis_1, ext_1), -1),
+                            ((Omega_0, axis_1, ext_0), (Omega_2, axis_1, ext_1),  1),
+                            ((Omega_2, axis_0, ext_0), (Omega_3, axis_0, ext_1), -1)]
 
-        # the multi-patch domain
-        Omega = Domain.join(patches=patches, connectivity=connectivity, name='Omega')
+            # alternative option (passing interface patches by their indices in the patches list):
+            connectivity = [((0, axis_0, ext_0), (1, axis_0, ext_1),  1),
+                            ((1, axis_1, ext_0), (3, axis_1, ext_1), -1),
+                            ((0, axis_1, ext_0), (2, axis_1, ext_1),  1),
+                            ((2, axis_0, ext_0), (3, axis_0, ext_1), -1)]
+
+            # A connectivity list in 3D
+            connectivity = [((Omega_0, axis_0, ext_1), (Omega_1, axis_0, ext_0), ( 1,  1,  1)),
+                            ((Omega_0, axis_1, ext_1), (Omega_2, axis_1, ext_0), ( 1, -1,  1)),
+                            ((Omega_1, axis_1, ext_1), (Omega_3, axis_1, ext_0), (-1,  1, -1)),
+                            ((Omega_2, axis_0, ext_1), (Omega_3, axis_0, ext_0), (-1,  1,  1))]
+
+            # alternative option (passing interface patches by their indices in the patches list):
+            connectivity = [((0, axis_0, ext_1), (1, axis_0, ext_0), ( 1,  1,  1)),
+                            ((0, axis_1, ext_1), (2, axis_1, ext_0), ( 1, -1,  1)),
+                            ((1, axis_1, ext_1), (3, axis_1, ext_0), (-1,  1, -1)),
+                            ((2, axis_0, ext_1), (3, axis_0, ext_0), (-1,  1,  1))]
+
+            # the multi-patch domain
+            Omega = Domain.join(patches=patches, connectivity=connectivity, name='Omega')
         """
         assert isinstance(patches, (tuple, list))
         assert isinstance(connectivity, (tuple, list))
@@ -567,8 +588,8 @@ class Domain(BasicDomain):
                             boundaries=logical_boundaries,
                             connectivity=logical_connectivity)
         else:
-            mapping              = None
-            logical_domain       = None
+            mapping        = None
+            logical_domain = None
 
         # ...
         return Domain(name,
@@ -1118,5 +1139,3 @@ def split(domain, value):
 
     else:
         raise NotImplementedError('TODO')
-
-

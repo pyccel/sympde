@@ -450,7 +450,7 @@ class Interface(BasicDomain):
     bnd_plus : Boundary
         Boundary on the "plus" side of the interface.
 
-    mapping : Mapping, optional
+    mapping : SymbolicMapping, optional
         Mapping from the logical domain to the physical domain, if available.
 
     logical_domain : BasicDomain, optional
