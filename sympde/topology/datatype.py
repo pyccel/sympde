@@ -13,10 +13,9 @@ from sympy.core import Symbol
 from sympy.core import Expr
 from sympy.core.containers import Tuple
 from sympy.core.singleton import Singleton
-from sympde.old_sympy_utilities import with_metaclass
 
 #==============================================================================
-class SpaceType(with_metaclass(Singleton, Basic)):
+class SpaceType(Basic, metaclass=Singleton):
     """Base class representing function space types"""
     pass
 
@@ -48,7 +47,7 @@ dtype_space_registry = {'h1':        H1Space,
                         'undefined': UndefinedSpace}
 
 #==============================================================================
-class RegularityType(with_metaclass(Singleton, Basic)):
+class RegularityType(Basic, metaclass=Singleton):
     """Base class representing the regularity of a space of functions"""
     _index = None
 

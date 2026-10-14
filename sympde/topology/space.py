@@ -16,6 +16,7 @@ from sympde.core.utils import expand_name_patterns
 from sympde.core.utils import random_string
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import _coeffs_registery
+from sympde.core.basic import _new_basic
 
 from .basic    import BasicDomain, Union, Interval
 from .datatype import SpaceType, dtype_space_registry
@@ -219,6 +220,10 @@ class BasicFunctionSpace(Basic):
 
     def __hash__(self):
         return hash((self.name, self.domain, self.shape, self.kind))
+
+    def _hashable_content(self):
+        return (self.name, self.domain, self.shape, self.kind)
+
 #==============================================================================
 class ScalarFunctionSpace(BasicFunctionSpace):
     """
@@ -438,18 +443,13 @@ class ScalarFunction(Symbol):
     def __new__(cls, space, name):
         if not isinstance(space, ScalarFunctionSpace):
             raise ValueError('Expecting a ScalarFunctionSpace')
-        obj = Expr.__new__(cls)
+        obj = Symbol.__xnew__(cls, name, commutative=True)
         obj._space = space
-        obj._name  = name
         return obj
 
     @property
     def space(self):
         return self._space
-
-    @property
-    def name(self):
-        return self._name
 
     @property
     def ldim(self):
@@ -469,8 +469,9 @@ class ScalarFunction(Symbol):
         sstr = printer.doprint
         return sstr(self.name)
 
-    def __hash__(self):
-        return hash((self.name, self.space))
+    def _hashable_content(self):
+        return Symbol._hashable_content(self) + (self.space,)
+
 #==============================================================================
 # this class is needed, otherwise sympy will convert VectorFunction to
 # IndexedBase
@@ -547,18 +548,13 @@ class VectorFunction(Symbol, IndexedBase):
     def __new__(cls, space, name):
         if not isinstance(space, VectorFunctionSpace):
             raise ValueError('Expecting a VectorFunctionSpace')
-        obj        = Expr.__new__(cls)
+        obj        = Symbol.__xnew__(cls, name, commutative=False)
         obj._space = space
-        obj._name = name
         return obj
 
     @property
     def space(self):
         return self._space
-
-    @property
-    def name(self):
-        return self._name
 
     @property
     def shape(self):
@@ -595,8 +591,8 @@ class VectorFunction(Symbol, IndexedBase):
         sstr = printer.doprint
         return sstr(self.name)
 
-    def __hash__(self):
-        return hash((self.name, self.space))
+    def _hashable_content(self):
+        return Symbol._hashable_content(self) + (self.space,)
 
 #==============================================================================
 # this is implemented as a function, it would be better to have it as a class
@@ -646,7 +642,7 @@ class Trace(AtomicExpr):
         if options.pop('evaluate',True):
             return cls.eval(expr, boundary, order)
 
-        obj = Basic.__new__(cls, expr, boundary, order)
+        obj = _new_basic(cls, expr, boundary, order)
         obj.is_commutative = expr.is_commutative
         return obj
 
@@ -660,7 +656,7 @@ class Trace(AtomicExpr):
 
     @property
     def order(self):
-        return self._args[2]
+        return int(self._args[2])
 
     @classmethod
     def eval(cls, expr, boundary, order):

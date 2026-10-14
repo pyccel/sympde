@@ -9,7 +9,7 @@ from sympde.core     import Constant
 from sympde.calculus import grad, dot, inner, rot, div
 from sympde.calculus import laplace, bracket, convect
 from sympde.calculus import jump, avg, Dn, minus, plus
-from sympde.topology import Domain, Mapping, Square
+from sympde.topology import Domain, SymbolicMapping, Square
 from sympde.topology import dx, dy
 from sympde.topology import dx1, dx2, dx3
 from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
@@ -23,6 +23,7 @@ from sympde.topology import CzarnyMapping
 from sympde.topology import CollelaMapping2D
 from sympde.topology import TorusMapping
 from sympde.topology import TwistedTargetMapping
+from sympde.topology.mapping import get_logical_test_function
 
 from sympde.expr     import BilinearForm, integral
 from sympde.calculus import grad, div, curl, dot
@@ -33,7 +34,7 @@ from sympde.topology.mapping import Jacobian
 def test_logical_expr_1d_1():
     dim = 1
 
-    M = Mapping('M', dim=dim)
+    M = SymbolicMapping('M', dim=dim)
     domain = M(Domain('Omega', dim=dim))
 
     alpha = Constant('alpha')
@@ -80,7 +81,7 @@ def test_logical_expr_1d_1():
 def test_symbolic_expr_1d_1():
     dim = 1
 
-    M = Mapping('M', dim=dim)
+    M = SymbolicMapping('M', dim=dim)
     domain = M(Domain('Omega', dim=dim))
 
     V = ScalarFunctionSpace('V', domain, kind='h1')
@@ -149,7 +150,7 @@ def test_symbolic_expr_1d_1():
 def test_logical_expr_2d_1():
     dim = 2
 
-    M = Mapping('M', dim=dim)
+    M = SymbolicMapping('M', dim=dim)
     domain = M(Domain('Omega', dim=dim))
 
     alpha = Constant('alpha')
@@ -215,8 +216,8 @@ def test_logical_expr_2d_2():
     A = Square('A')
     B = Square('B')
 
-    M1 = Mapping('M1', dim=dim)
-    M2 = Mapping('M2', dim=dim)
+    M1 = SymbolicMapping('M1', dim=dim)
+    M2 = SymbolicMapping('M2', dim=dim)
 
     D1 = M1(A)
     D2 = M2(B)
@@ -268,8 +269,8 @@ def test_logical_expr_2d_3():
     A = Square('A')
     B = Square('B')
 
-    M1 = Mapping('M1', dim=dim)
-    M2 = Mapping('M2', dim=dim)
+    M1 = SymbolicMapping('M1', dim=dim)
+    M2 = SymbolicMapping('M2', dim=dim)
 
     D1 = M1(A)
     D2 = M2(B)
@@ -293,7 +294,7 @@ def test_logical_expr_2d_3():
 #==============================================================================
 def test_symbolic_expr_2d_1():
     dim    = 2
-    M      = Mapping('M', dim=dim)
+    M      = SymbolicMapping('M', dim=dim)
     domain = M(Domain('Omega', dim=dim))
 
     V = ScalarFunctionSpace('V', domain, kind='h1')
@@ -369,7 +370,7 @@ def test_symbolic_expr_2d_1():
 def test_logical_expr_3d_1():
     dim = 3
 
-    M = Mapping('M', dim=dim)
+    M = SymbolicMapping('M', dim=dim)
     domain = M(Domain('Omega', dim=dim))
 
     alpha = Constant('alpha')
@@ -422,17 +423,16 @@ def test_logical_expr_3d_2():
 
     dim   = 3
     domain = Domain('Omega', dim=dim)
-    M      = Mapping('M', dim=dim)
+    M      = SymbolicMapping('M', dim=dim)
 
     mapped_domain = M(domain)
 
-    V  = ScalarFunctionSpace('V' , domain, kind='h1')
     VM = ScalarFunctionSpace('VM', mapped_domain, kind='h1')
 
-    u,v   = elements_of(V, names='u,v')
     um,vm = elements_of(VM, names='u,v')
+    u, v = [get_logical_test_function(field) for field in (um, vm)]
 
-    J   = M.jacobian
+    J   = M.jacobian_symbol
 
     a = dot(grad(um),grad(vm))
     e = LogicalExpr(a, mapped_domain)
@@ -444,17 +444,16 @@ def test_logical_expr_3d_3():
 
     dim    = 3
     domain = Domain('Omega', dim=dim)
-    M      = Mapping('M', dim=dim)
+    M      = SymbolicMapping('M', dim=dim)
 
     mapped_domain = M(domain)
 
-    V  = VectorFunctionSpace('V' , domain, kind='hcurl')
     VM = VectorFunctionSpace('VM', mapped_domain, kind='hcurl')
 
-    u,v   = elements_of(V, names='u,v')
     um,vm = elements_of(VM, names='u,v')
+    u, v = [get_logical_test_function(field) for field in (um, vm)]
 
-    J   = M.jacobian
+    J   = M.jacobian_symbol
 
     a = dot(curl(um), curl(vm))
     e = LogicalExpr(a, mapped_domain)
@@ -465,17 +464,16 @@ def test_logical_expr_3d_4():
 
     dim    = 3
     domain = Domain('Omega', dim=dim)
-    M      = Mapping('M', dim=dim)
+    M      = SymbolicMapping('M', dim=dim)
 
     mapped_domain = M(domain)
 
-    V  = VectorFunctionSpace('V' , domain, kind='hdiv')
     VM = VectorFunctionSpace('VM', mapped_domain, kind='hdiv')
 
-    u,v   = elements_of(V, names='u,v')
     um,vm = elements_of(VM, names='u,v')
+    u, v = [get_logical_test_function(field) for field in (um, vm)]
 
-    J   = M.jacobian
+    J   = M.jacobian_symbol
 
     a = div(um)*div(vm)
     e = LogicalExpr(a, mapped_domain)
@@ -486,16 +484,15 @@ def test_logical_expr_3d_5():
 
     dim    = 3
     domain = Domain('Omega', dim=dim)
-    M      = Mapping('M', dim=dim)
+    M      = SymbolicMapping('M', dim=dim)
 
     mapped_domain = M(domain)
 
-    V  = VectorFunctionSpace('V' , domain, kind='hcurl')
     VM = VectorFunctionSpace('VM', mapped_domain, kind='hcurl')
 
-    J   = M.jacobian
-    u,v   = elements_of(V,  names='u,v')
+    J   = M.jacobian_symbol
     um,vm = elements_of(VM, names='u,v')
+    u, v = [get_logical_test_function(field) for field in (um, vm)]
 
     int_md = lambda expr: integral(mapped_domain , expr)
     int_ld = lambda expr: integral(domain , expr)
@@ -510,7 +507,7 @@ def test_logical_expr_3d_5():
 #==============================================================================
 def test_symbolic_expr_3d_1():
     dim    = 3
-    M      = Mapping('M', dim=dim)
+    M      = SymbolicMapping('M', dim=dim)
     domain = M(Domain('Omega', dim=dim))
 
     V = ScalarFunctionSpace('V', domain, kind='h1')
@@ -617,10 +614,12 @@ def test_identity_mapping_2d_2():
 
     V = ScalarFunctionSpace('V', domain, kind='h1')
     u = element_of(V, name='u')
+    logical_u = get_logical_test_function(u)
 
     # ...
-    assert(LogicalExpr(dx(u), domain) == dx1(u))
-    assert(LogicalExpr(dy(u), domain) == dx2(u))
+    assert logical_u.space.domain == domain.logical_domain
+    assert(LogicalExpr(dx(u), domain) == dx1(logical_u))
+    assert(LogicalExpr(dy(u), domain) == dx2(logical_u))
     # ...
 
 #==============================================================================

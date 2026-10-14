@@ -109,6 +109,7 @@ def test_equation_2d_1():
     a = BilinearForm((v,u), a1(v,u) + a_B1(v,u))
     l = LinearForm(v, l1(v) + l2(v))
     equation = Equation(a, l, tests=v, trials=u)
+    assert equation.func(*equation.args) == equation
     # ...
 
     # ...
@@ -415,4 +416,3 @@ def teardown_module():
 def teardown_function():
     from sympy.core import cache
     cache.clear_cache()
-

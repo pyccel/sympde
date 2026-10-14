@@ -14,13 +14,19 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Convert the README to Markdown and expand the installation, testing, and documentation-build instructions.
+- #106: Require SymPy 1.12 or newer and support maintained SymPy releases below 1.15.
+- #106: Update SymPDE's symbolic objects for modern SymPy's structural arguments, traversal, substitution, and reconstruction requirements.
 - [DEVELOPER] Modernize the package metadata and consolidate the pytest and coverage configuration in `pyproject.toml`.
 - [DEVELOPER] Modernize the Sphinx configuration, API-documentation generation, and API docstring markup.
+- [DEVELOPER] Test the minimum supported SymPy version in a dedicated CI job.
 
 ### Fixed
 
 - #140: Fix the rendering of the `Domain.join()` API documentation.
 - #166: Restore warning-free documentation builds, including bibliography and mathematical notation support.
+- #106: Preserve symbol assumptions and free-symbol information with modern SymPy.
+- #106: Keep same-named functions from different function spaces distinct during symbolic simplification.
+- #106: Fix form-linearity checks involving integral sums with modern SymPy.
 
 ### Removed
 

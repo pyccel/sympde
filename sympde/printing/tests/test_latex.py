@@ -4,13 +4,26 @@ from sympy import sin, cos, pi
 
 from sympde.calculus import grad, dot, inner, rot, div
 #from sympde.topology import (dx, dy, dz)
-from sympde.topology import Domain, Boundary
+from sympde.topology import Domain, Boundary, Square
 from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
 from sympde.topology import element_of
 from sympde.expr     import BilinearForm, LinearForm, integral
 from sympde.exterior import d, wedge, ip, jp, delta, hodge
 from sympde.exterior import DifferentialForm
 from sympde.printing.latex import latex
+
+
+def test_latex_domain_subclasses_use_their_names():
+    patch_a = Square('A')
+    patch_b = Square('B')
+    domain = Domain.join(
+        [patch_a, patch_b],
+        [((0, 0, 1), (1, 0, -1), 1)],
+        'Omega',
+    )
+
+    assert latex(patch_a.interior) == 'A'
+    assert latex(domain.interfaces) == 'A|B'
 
 
 #==============================================================================
@@ -300,4 +313,3 @@ def teardown_module():
 def teardown_function():
     from sympy.core import cache
     cache.clear_cache()
-

@@ -12,7 +12,7 @@ from sympde.topology import get_index_derivatives_atom
 from sympde.topology import get_max_partial_derivatives
 from sympde.topology import ScalarFunctionSpace
 from sympde.topology import (dx, dy, dz)
-from sympde.topology import Mapping
+from sympde.topology import SymbolicMapping
 
 
 def indices_as_str(a):
@@ -30,7 +30,7 @@ def test_partial_derivatives_1():
 
     # ...
     domain = Domain('Omega', dim=2)
-    M      = Mapping('M', dim=2)
+    M      = SymbolicMapping('M', dim=2)
 
     mapped_domain = M(domain)
 
@@ -78,7 +78,7 @@ def test_partial_derivatives_2():
 
     # ...
     domain = Domain('Omega', dim=2)
-    M      = Mapping('M', dim=2)
+    M      = SymbolicMapping('M', dim=2)
 
     mapped_domain = M(domain)
 
@@ -127,6 +127,99 @@ def test_partial_derivatives_2():
     d = get_max_partial_derivatives(expr)
     assert(indices_as_str(d) == 'xxy')
     # ...
+# ...
+
+
+# ...
+def test_logical_derivative_through_symbolic_mapping_index():
+    # /code-review finding 1 (WP06d-4c-1a): `_DifferentialOperator.eval`'s
+    # logical chain-rule branch matched `expr.atoms(Mapping)`, which no longer
+    # catches a bare `SymbolicMapping` (the constructor WP06d-4c recommends and
+    # migrated every test to). The chain-rule term through the mapping component
+    # `M[i]` was then silently dropped and `dx1(M[0]**2)` collapsed to 0.
+    from sympde.topology import dx1, dx2
+
+    M = SymbolicMapping('M', dim=2)
+
+    assert dx1(M[0]**2) == 2 * M[0] * dx1(M[0])
+    assert dx2(M[1]**2) == 2 * M[1] * dx2(M[1])
+
+    N = SymbolicMapping('N', dim=3)
+    assert dx1(N[2]**3) == 3 * N[2]**2 * dx1(N[2])
+# ...
+
+
+# ...
+def test_logical_derivative_through_interface_mapping_component():
+    # /code-review finding 1 (WP06d-4c-1b): the 06d-4c-1a widening to
+    # `expr.atoms(SymbolicMapping)` now also selects structural mappings. The
+    # indexable ones (InterfaceMapping, InverseMapping) must still be
+    # chain-ruled through -- the `_shape` filter added in 4c-1b keeps them.
+    from sympde.topology import dx1, InterfaceMapping, IdentityMapping
+
+    itf = InterfaceMapping(IdentityMapping('A', dim=2), IdentityMapping('B', dim=2))
+    assert dx1(itf[0]**2) == 2 * itf[0] * dx1(itf[0])
+
+
+def test_multipatch_mapping_is_excluded_from_the_chain_rule_branch():
+    # WP06d-4c-1b: the chain-rule branch indexes the mapping (`M[i]`), so it
+    # filters `expr.atoms(SymbolicMapping)` to indexable mappings via
+    # `getattr(m, '_shape', None) is not None`. MultiPatchMapping is built via
+    # Basic.__new__ and has no `_shape`; without the filter `M[i]` raised
+    # AttributeError. (It cannot actually be built into a scalar Expr reaching
+    # that branch -- its `.args` is a raw dict, which breaks Expr.is_number
+    # first -- so the filter is a defensive guard; lock the discriminator here.)
+    from sympde.topology import (MultiPatchMapping, InterfaceMapping,
+                                 IdentityMapping)
+
+    mp  = MultiPatchMapping({'p': IdentityMapping('F', dim=2)})
+    itf = InterfaceMapping(IdentityMapping('A', dim=2), IdentityMapping('B', dim=2))
+    assert getattr(mp,  '_shape', None) is None
+    assert getattr(itf, '_shape', None) is not None
+# ...
+
+
+# ...
+def test_logical_derivative_sums_over_all_mappings():
+    # D-1: `_DifferentialOperator.eval`'s logical chain-rule branch used to pick
+    # ONE mapping out of `expr.atoms(SymbolicMapping)` and treat the rest as
+    # constants -- a silently wrong derivative when two or more mappings' indexed
+    # components appear in the same expression.
+    from sympy import sqrt, simplify
+    from sympde.topology import dx1
+
+    F = SymbolicMapping('F', dim=2)
+    G = SymbolicMapping('G', dim=2)
+
+    r = dx1(sqrt(F[0]**2 + G[0]**2))
+    expected = (F[0]*dx1(F[0]) + G[0]*dx1(G[0])) / sqrt(F[0]**2 + G[0]**2)
+    assert simplify(r - expected) == 0
+    assert dx1(F[0]) in r.atoms(type(dx1(F[0])))
+    assert dx1(G[0]) in r.atoms(type(dx1(G[0])))
+
+
+def test_logical_derivative_single_mapping_is_unchanged():
+    # D-1 generalisation must not perturb the common one-mapping path.
+    from sympy import sqrt, simplify
+    from sympde.topology import dx1, dx2
+
+    F = SymbolicMapping('F', dim=2)
+
+    r = dx1(sqrt(F[0]**2 + F[1]**2))
+    assert simplify(r - (F[0]*dx1(F[0]) + F[1]*dx1(F[1])) / sqrt(F[0]**2 + F[1]**2)) == 0
+    assert dx2(F[0]**3) == 3 * F[0]**2 * dx2(F[0])
+
+
+def test_logical_derivative_through_patch_map_and_interface_mapping():
+    # D-1: a patch SymbolicMapping and an InterfaceMapping routinely co-occur;
+    # both must contribute a chain-rule term.
+    from sympde.topology import dx1, InterfaceMapping, IdentityMapping
+
+    F   = SymbolicMapping('F', dim=2)
+    itf = InterfaceMapping(IdentityMapping('A', dim=2), IdentityMapping('B', dim=2))
+
+    r = dx1(F[0]*itf[0])
+    assert r == F[0]*dx1(itf[0]) + itf[0]*dx1(F[0])
 # ...
 
 

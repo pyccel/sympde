@@ -202,6 +202,9 @@ class LatexPrinter(LatexPrinterSympy):
     def _print_Nil(self, expr):
         return r'\ldots'
 
+    def _print_BasicDomain(self, expr):
+        return translate(expr.name)
+
     def _print_Domain(self, expr):
         return translate(expr.name)
 
