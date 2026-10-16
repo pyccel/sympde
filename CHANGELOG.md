@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 
 - #140: Fix the rendering of the `Domain.join()` API documentation.
 - #166: Restore warning-free documentation builds, including bibliography and mathematical notation support.
+- #200: Keep the physical dimension of the mappings in `Domain.export` and `Domain.from_file`. The `topology.yml` metadata now stores `ldim` and `pdim` instead of `dim`, and `Domain.from_file` raises an error for files with the old `dim` key.
 
 ### Removed
 
