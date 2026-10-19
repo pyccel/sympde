@@ -1,9 +1,9 @@
 Examples
 ========
 
-These examples are executable Python scripts. The documentation workflow runs
-all of them before building the HTML pages, ensuring that their imports and
-demonstrated APIs remain current.
+These examples are complete Python scripts that can be run on their own. The
+documentation workflow runs all of them before building the HTML pages,
+ensuring that their imports and demonstrated APIs remain current.
 
 Variational forms
 -----------------

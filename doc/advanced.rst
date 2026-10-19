@@ -11,8 +11,8 @@ structure consumed by tensor-product discretizations.
 .. literalinclude:: examples/tensorization.py
    :language: python
 
-The example is an executable documentation source and is run by the
-documentation workflow before Sphinx builds the page.
+The example is a complete script, which the documentation workflow runs
+before Sphinx builds the page.
 
 Logical expressions
 ^^^^^^^^^^^^^^^^^^^

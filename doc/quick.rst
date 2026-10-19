@@ -34,8 +34,9 @@ declares its test field:
    :end-before: # [forms-end]
 
 The :func:`sympde.api.find` helper combines those forms into a symbolic
-equation. Boundary conditions can be supplied with ``EssentialBC`` through
-the optional ``bc`` argument.
+equation. It is possible to impose essential boundary conditions (BCs)
+on the solution (typically, homogeneous Dirichlet BCs) by passing an
+``EssentialBC`` object through the optional ``bc`` argument.
 
 Expression lowering
 ^^^^^^^^^^^^^^^^^^^
@@ -52,9 +53,11 @@ Mappings and multipatch domains
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Mappings turn logical domains into physical domains. Multiple patches can be
-joined by declaring their connected sides and orientation. See the executable
+joined by declaring their connected sides and orientation. See the
 :doc:`examples/index` for analytical mappings, interface forms, exterior
-calculus, and nonlinear linearization.
+calculus, and the linearization of nonlinear problems. Each example is a
+complete script that the documentation workflow runs before building the
+pages.
 
 Printing
 ^^^^^^^^
