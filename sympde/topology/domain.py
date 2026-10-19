@@ -44,57 +44,51 @@ class Domain(BasicDomain):
     Represents an undefined domain.
     A domain is defined by at least one interior domain and possible boundaries.
     A domain without a boundary is either infinite or periodic.
-    A domain can also be constructed from a connectivity, in which case, only the
-    name and connectivity need to be passed.
+    Instead of interior domains, only a dimension can be given, in which case
+    a single interior domain with the name of the domain is created.
+    Multi-patch domains additionally carry a connectivity, which describes the
+    interfaces between their patches.
     """
 
-    def __new__(cls, name : str, *structural_args,
+    def __new__(cls, name : str,
             interiors : TypeUnion[Iterable[InteriorDomain], InteriorDomain, None] = None,
             boundaries : TypeUnion[Iterable[Boundary], Boundary, None] = None,
-            dim : Optional[int] = None,
-            connectivity : Optional[Connectivity] = None,
             mapping : Optional[Mapping] = None,
-            logical_domain : Optional[Domain] = None):
+            logical_domain : Optional[Domain] = None,
+            connectivity : TypeUnion[Connectivity, Iterable[Interface], None] = None,
+            *, dim : Optional[int] = None):
         """
-        Interiors or connectivity must be given. When the mapping is given 
-        then logical_domain must be specified as well.
-    
+        Either interiors or dim must be given. The mapping and the
+        logical_domain must be given together, or not at all.
+
+        The positional arguments follow the order of ``self.args``, so that
+        ``domain.func(*domain.args)`` reconstructs the domain.
+
         Parameters
         ----------
         name : str
             Name of the domain
-        interiors : Iterable[InteriorDomain], InteriorDomain or None, optional
-            Interior domains
-        boundaries : Iterable[Boundary], Boundary or None, optional
+        interiors : Iterable[InteriorDomain], Union, InteriorDomain or None, optional
+            Interior domains. Nested iterables are flattened by one level.
+        boundaries : Iterable[Boundary], Union, Boundary or None, optional
             The boundaries of the domain
-        dim : int, optional
-            Dimension of the space of the domain
-        connectivity : Connectivity or None, optional
-            Connectivity object with the interfaces of the domain
         mapping : Mapping or None, optional
             Maps the logical domain to the physical domain
         logical_domain : Domain or None, optional
             Logical domain that is mapped to the physical domain
+        connectivity : Connectivity, Iterable[Interface] or None, optional
+            Interfaces of the domain, either as a Connectivity object or as an
+            iterable of Interface objects
+        dim : int, optional
+            Dimension of the domain. Only used to create a single interior
+            domain if interiors is not given; otherwise the dimension is taken
+            from the interiors.
         """
-        if structural_args:
-            if len(structural_args) != 5:
-                raise TypeError(
-                    'A reconstructed Domain expects five structural arguments'
-                )
-            if any(value is not None for value in (
-                    interiors, boundaries, dim, connectivity,
-                    mapping, logical_domain)):
-                raise TypeError(
-                    'Structural and keyword Domain arguments cannot be mixed'
-                )
-            interiors, boundaries, mapping, logical_domain, interfaces = structural_args
-            boundaries = restore_optional_argument(boundaries)
-            mapping = restore_optional_argument(mapping)
-            logical_domain = restore_optional_argument(logical_domain)
-            interfaces = restore_container_argument(interfaces)
-            connectivity = Connectivity({str(i.name): i for i in interfaces})
-
         name = restore_string_argument(name)
+        boundaries = restore_optional_argument(boundaries)
+        mapping = restore_optional_argument(mapping)
+        logical_domain = restore_optional_argument(logical_domain)
+        connectivity = restore_container_argument(connectivity)
         dim = restore_int_argument(dim)
 
         # ...
@@ -103,8 +97,8 @@ class Domain(BasicDomain):
         # ...
 
         # ...
-        if ( ( interiors is None ) and ( connectivity is None ) and ( dim is None) ):
-            raise ValueError('> either interiors or connectivity must be given')
+        if interiors is None and dim is None:
+            raise ValueError('> either interiors or dim must be given')
         # ...
 
         # ...
@@ -147,13 +141,19 @@ class Domain(BasicDomain):
 
         boundaries = Tuple(*boundaries)
 
-        if not( connectivity is None ):
-            if not isinstance( connectivity, Connectivity ):
-                raise TypeError('> Expecting a Connectivity')
-
-            # TODO check that patches appearing in connectivity are in interiors
-        else:
+        if connectivity is None:
             connectivity = Connectivity()
+
+        elif not isinstance( connectivity, Connectivity ):
+            if not isinstance( connectivity, iterable_types ):
+                raise TypeError('> Expecting a Connectivity or an iterable of Interface')
+
+            if not all([isinstance(i, Interface) for i in connectivity]):
+                raise TypeError('> all interfaces must be of type Interface')
+
+            connectivity = Connectivity({str(i.name): i for i in connectivity})
+
+        # TODO check that patches appearing in connectivity are in interiors
 
         # ...
         if interiors is None and dim:

@@ -41,6 +41,21 @@ def test_structural_arguments_are_sympy_objects():
     assert replaced_interface.plus == replacement_boundary
 
 
+def test_multipatch_domain_reconstruction():
+    A = Square('A')
+    B = Square('B', bounds1=(1, 2))
+    domain = Domain.join([A, B], [((0, 0, 1), (1, 0, -1), 1)], name='Omega')
+
+    rebuilt = domain.func(*domain.args)
+    assert rebuilt == domain
+    assert dict(rebuilt.connectivity) == dict(domain.connectivity)
+
+    interfaces = list(domain.connectivity.values())
+    rebuilt = Domain('Omega', domain.interior, domain.boundary,
+                     connectivity=interfaces)
+    assert dict(rebuilt.connectivity) == dict(domain.connectivity)
+
+
 #==============================================================================
 def test_interior_domain():
     D1 = InteriorDomain('D1', dim=2)
