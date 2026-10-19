@@ -1,5 +1,6 @@
 """Sphinx configuration for the SymPDE documentation."""
 
+import runpy
 from pathlib import Path
 
 from sphinx.ext.apidoc import main as sphinx_apidoc
@@ -44,6 +45,7 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
+    'sphinx.ext.graphviz',
     'sphinxcontrib.bibtex',
 ]
 
@@ -182,6 +184,9 @@ todo_include_todos = True
 
 bibtex_bibfiles = ['math/refs_feec.bib']
 
+# Draw graphs as SVG, so that they scale with the page
+graphviz_output_format = 'svg'
+
 
 # -- APIDOC ----------------------------------------------
 doc_dir = Path(__file__).resolve().parent
@@ -199,3 +204,13 @@ apidoc_args = [
 apidoc_args.extend(str(path) for path in (doc_dir.parent / 'sympde').glob('*/tests'))
 apidoc_args.append(str(doc_dir.parent / 'sympde' / 'api'))
 sphinx_apidoc(apidoc_args)
+
+
+# -- Expression trees ------------------------------------
+# Run the example and write its graphs, which the documentation draws with
+# Graphviz. They are generated at build time, so they always match the code.
+generated_dir = doc_dir / '_generated'
+generated_dir.mkdir(exist_ok=True)
+trees = runpy.run_path(str(doc_dir / 'examples' / 'expression_trees.py'))
+for name, graph in trees['graphs'].items():
+    (generated_dir / f'{name}.dot').write_text(graph)

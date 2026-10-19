@@ -49,6 +49,40 @@ for a specific domain with ``TerminalExpr``:
    :start-after: # [lowering-start]
    :end-before: # [lowering-end]
 
+Expression trees
+^^^^^^^^^^^^^^^^
+
+Like any SymPy expression, a SymPDE expression is a tree of operators and
+operands. SymPy's ``dotprint`` function writes this tree in the DOT language
+of `Graphviz <https://graphviz.org>`_. For the operator
+:math:`\mathcal{L} u := - \nabla^2 u + u`:
+
+.. literalinclude:: examples/expression_trees.py
+   :language: python
+   :start-after: # [operator-start]
+   :end-before: # [operator-end]
+
+.. graphviz:: /_generated/operator.dot
+   :caption: Expression tree of :math:`\mathcal{L} u := - \nabla^2 u + u`.
+   :align: center
+
+Generic operators such as ``grad`` and ``div`` are kept unevaluated. The
+atomic derivatives ``dx`` and ``dy`` are linear operators that apply the
+product rule immediately, so the tree of :math:`\partial_x \partial_y (uv)`
+contains the expanded result:
+
+.. literalinclude:: examples/expression_trees.py
+   :language: python
+   :start-after: # [derivative-start]
+   :end-before: # [derivative-end]
+
+.. graphviz:: /_generated/derivative.dot
+   :caption: Expression tree of :math:`\partial_x \partial_y (uv)`.
+   :align: center
+
+To draw a tree outside of the documentation, save the output of ``dotprint``
+to a file such as ``tree.dot`` and run ``dot -Tpng tree.dot -o tree.png``.
+
 Mappings and multipatch domains
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

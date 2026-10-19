@@ -87,7 +87,9 @@ pytest -n auto --dist loadgroup --pyargs sympde -ra
 ```
 
 The documentation dependencies are installed separately, and the HTML pages
-are built with warnings treated as errors:
+are built with warnings treated as errors. Drawing the expression trees also
+requires [Graphviz](https://graphviz.org) (for example `sudo apt install
+graphviz` on Ubuntu):
 
 ```bash
 pip install --editable ".[docs]"

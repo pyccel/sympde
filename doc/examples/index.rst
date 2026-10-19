@@ -45,6 +45,17 @@ operators, products, contractions, and Lie derivatives.
    :language: python
    :linenos:
 
+Expression trees
+----------------
+
+This example writes the expression trees of a differential operator and of an
+expanded derivative in the DOT language of Graphviz. The quickstart guide draws
+both trees.
+
+.. literalinclude:: expression_trees.py
+   :language: python
+   :linenos:
+
 Linearization of nonlinear problems
 -----------------------------------
 

@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 
 - #194: Add `sympde.api` as the supported flat public API. It contains the objects used by PSYDAC, IGA-Python, GeLaTo and the SymPDE documentation.
 - #194: Add example scripts to the documentation, which are run by the documentation workflow.
+- #194: Draw expression trees in the documentation with Graphviz, generated from the current code at build time.
 - #106: Accept the connectivity of a `Domain` as an iterable of `Interface` objects, in addition to a `Connectivity` object.
 - [DEVELOPER] Add a `CHANGELOG.md` file listing changes between different versions.
 - [DEVELOPER] Add Python version 3.14 to the testing workflow.
