@@ -654,7 +654,6 @@ class Connectivity(abc.Mapping):
         self._data[key] = value
 
     # ==========================================
-
     #  abstract methods
     # ==========================================
     def __getitem__(self, key):
