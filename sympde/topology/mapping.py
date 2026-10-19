@@ -212,10 +212,8 @@ class Mapping(BasicMapping):
         obj._logical_coordinates = Tuple(*lcoords_symbols_real) # coordinates must be symbols with real=True      
         lcoords_general_symbols = [Symbol(i) for i in lcoords_names] #list of symbols without real=True       
 
-
         if not( obj._expressions is None ):
             coords_names = ['x', 'y', 'z'][:pdim]
-
 
             args = []
             for i in coords_names:
@@ -225,13 +223,11 @@ class Mapping(BasicMapping):
 
             args = Tuple(*args)
 
-
             zero_coords = ['x1', 'x2', 'x3'][ldim:]
 
             for i in zero_coords:
                 x = sympify(i)
                 args = args.subs(x,0)
-
 
             # get constants by subtracting coordinates from list of free symbols
             constants        = list(set(args.free_symbols) - set(lcoords_general_symbols))
@@ -1131,7 +1127,6 @@ class LogicalExpr(CalculusFunction):
             elif isinstance(arg, MatrixElement):
                 arg = TerminalExpr(arg, domain=domain.logical_domain)
 
-
             if dim == 1:
                 lgrad_arg = LogicalGrad_1d(arg)
 
@@ -1188,7 +1183,6 @@ class LogicalExpr(CalculusFunction):
                 arg = TerminalExpr(arg, domain=domain.logical_domain)
             elif isinstance(arg, MatrixElement):
                 arg = TerminalExpr(arg, domain=domain.logical_domain)
-
 
             if dim == 1:
                 lgrad_arg = LogicalGrad_1d(arg)

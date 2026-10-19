@@ -28,7 +28,6 @@ def test_essential_bc_1():
     assert( bc.normal_component == False )
     assert( bc.index_component == None )
 
-
     # ... scalar case
     bc = EssentialBC(dot(grad(v), nn), 0, B1)
 
@@ -37,14 +36,12 @@ def test_essential_bc_1():
     assert( bc.normal_component == False )
     assert( bc.index_component == None )
 
-
     # ... vector case
     bc = EssentialBC(w, 0, B1)
     assert( bc.variable == w )
     assert( bc.order == 0 )
     assert( bc.normal_component == False )
     assert( bc.index_component == [0,1] )
-
 
     # ... vector case
     bc = EssentialBC(dot(w, nn), 0, B1)
@@ -53,7 +50,6 @@ def test_essential_bc_1():
     assert( bc.order == 0 )
     assert( bc.normal_component == True )
     assert( bc.index_component == None )
-
 
     # ... vector case
     bc = EssentialBC(w[0], 0, B1)

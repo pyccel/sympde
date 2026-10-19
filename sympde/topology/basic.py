@@ -642,7 +642,6 @@ class Connectivity(abc.Mapping):
             connectivity[name] = [v.minus.todict(), v.plus.todict(), v.ornt]
         connectivity = dict(sorted(connectivity.items()))
 
-
         return connectivity
 
     def __setitem__(self, key, value):

@@ -534,15 +534,11 @@ class SemiNorm(Functional):
         kind = kind.lower()
         if kind not in ['l2', 'h1', 'h2']:
             raise ValueError('> Only L2, H1, H2 norms are available')
-        # ...
 
-        # ...
         is_vector = isinstance(expr, (Matrix, ImmutableDenseMatrix, Tuple, list, tuple))
         if is_vector:
             expr = ImmutableDenseMatrix(expr)
-        # ...
 
-        # ...
         exponent = None
         if kind == 'l2' and evaluate:
             exponent = 2
@@ -581,7 +577,6 @@ class SemiNorm(Functional):
 
             else:
                 raise NotImplementedError('TODO')
-        # ...
 
         obj = Functional.__new__(cls, expr, domain, evaluate=evaluate)
         obj._exponent = exponent
@@ -606,15 +601,11 @@ class Norm(Functional):
         kind = kind.lower()
         if kind not in ['l2', 'h1', 'h2']:
             raise ValueError('> Only L2, H1, H2 norms are available')
-        # ...
 
-        # ...
         is_vector = isinstance(expr, (Matrix, ImmutableDenseMatrix, Tuple, list, tuple))
         if is_vector:
             expr = ImmutableDenseMatrix(expr)
-        # ...
 
-        # ...
         exponent = None
         if kind == 'l2' and evaluate:
             exponent = 2
@@ -654,7 +645,6 @@ class Norm(Functional):
 
             else:
                 raise NotImplementedError('TODO')
-        # ...
 
         obj = Functional.__new__(cls, expr, domain, evaluate=evaluate)
         obj._exponent = exponent
@@ -694,14 +684,12 @@ def linearize(form, fields, trials=None):
     if not isinstance(form, LinearForm):
         raise TypeError('> Expecting a LinearForm')
 
-
     if not isinstance(fields, (list, tuple, Tuple)):
         fields = [fields]
 
     for field in fields:
         if not isinstance(field, (ScalarFunction, VectorFunction)):
             raise TypeError('> Expecting a {Scalar|Vector}Function', field)
-
 
     if trials:
         if not isinstance(trials, (list, tuple, Tuple)):
@@ -712,7 +700,6 @@ def linearize(form, fields, trials=None):
                 raise TypeError('> Expecting a {Scalar|Vector}Function', trial)
     else:
         trials = [x.space.element(x.name + '_trial_' + random_string(4)) for x in fields]
-
 
     eps        = Constant('eps_' + random_string(4))
     new_fields = [field + eps*trial for field, trial in zip(fields, trials)]

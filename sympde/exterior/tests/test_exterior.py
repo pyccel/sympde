@@ -31,7 +31,6 @@ def test_exterior_1():
     a = Constant('a')
     n = Symbol('n')
 
-
     u_0 = DifferentialForm('u_0', index=0, dim=n)
     v_0 = DifferentialForm('v_0', index=0, dim=n)
 
@@ -47,7 +46,6 @@ def test_exterior_1():
     u_n = DifferentialForm('u_n', index=n, dim=n)
     v_n = DifferentialForm('v_n', index=n, dim=n)
 
-
     # ... exterior derivative
     assert(d(d(u_0)) == 0)
     assert(d(u_0+v_0) == d(u_0) + d(v_0))
@@ -56,21 +54,17 @@ def test_exterior_1():
     assert(d(u_n) == 0)
     assert(not(d(u_0) == 0))
 
-
     assert(delta(u_0) == 0)
     assert(delta(u_1+v_1) == delta(u_1) + delta(v_1))
     assert(delta(2*u_1) == 2*delta(u_1))
     assert(delta(a*u_1+v_1) == a*delta(u_1) + delta(v_1))
     assert(not(delta(u_n) == 0))
 
-
     # ... exterior product
     print('> ', wedge(u_0, u_1))
 
-
     # ... hodge operator
     print('> ', hodge(u_0))
-
 
     print(hodge(hodge(u_0)))
     print(hodge(hodge(u_1)))

@@ -89,14 +89,11 @@ class LatexPrinter(LatexPrinterSympy):
 
         return arg + r' \cdot ' + nn
 
-
     def _print_Jump(self, expr):
         return r'[\![ ' + self._print(expr.args[0]) + r' ]\!]'
 
-
     def _print_Average(self, expr):
         return r'\{ ' + self._print(expr.args[0]) + r' \}'
-
 
     def _print_NormalVector(self, expr):
         return r'\mathbf{n}'
@@ -110,10 +107,8 @@ class LatexPrinter(LatexPrinterSympy):
     def _print_TangentVector(self, expr):
         return r'\mathbf{t}'
 
-
     def _print_VectorFunction(self, expr):
         return r'\mathbf{' + expr.name + '}'
-
 
     # ... algebraic operators
     def _print_Dot(self, expr):
@@ -145,7 +140,6 @@ class LatexPrinter(LatexPrinterSympy):
 
     def _print_Outer(self, expr):
         raise NotImplementedError('TODO')
-
 
     def _print_Integral(self, expr):
 
@@ -193,7 +187,6 @@ class LatexPrinter(LatexPrinterSympy):
     def _print_Kron(self, expr):
         raise NotImplementedError('TODO')
 
-
     def _print_Nil(self, expr):
         return r'\ldots'
 
@@ -240,9 +233,7 @@ class LatexPrinter(LatexPrinterSympy):
         else:
             test_spaces = tests.space
             tests = self._print(tests)
-        # ...
 
-        # ...
         if isinstance(trials, (list, tuple, Tuple)):
             if len(trials) == 1:
                 trials = trials[0]
@@ -260,7 +251,6 @@ class LatexPrinter(LatexPrinterSympy):
         else:
             trial_spaces = trials.space
             trials = self._print(trials)
-        # ...
 
         test_spaces = self._print(test_spaces)
         trial_spaces = self._print(trial_spaces)

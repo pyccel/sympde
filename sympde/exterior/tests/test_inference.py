@@ -25,7 +25,6 @@ def test_type_inference_1():
 #    n = Symbol('n')
     n = 3
 
-
     u_0 = DifferentialForm('u_0', index=0, dim=n)
     v_0 = DifferentialForm('v_0', index=0, dim=n)
 
@@ -38,22 +37,17 @@ def test_type_inference_1():
     u_3 = DifferentialForm('u_3', index=3, dim=n)
     v_3 = DifferentialForm('v_3', index=3, dim=n)
 
-
     expr = u_0
     assert(isinstance(infere_type(expr), ZeroFormType))
-
 
     expr = d(u_1)
     assert(isinstance(infere_type(expr), TwoFormType))
 
-
     expr = delta(u_1)
     assert(isinstance(infere_type(expr), ZeroFormType))
 
-
     expr = hodge(u_1)
     assert(isinstance(infere_type(expr), TwoFormType))
-
 
     expr = wedge(u_2, u_2)
     assert(isinstance(infere_type(expr), FourFormType))

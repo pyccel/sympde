@@ -91,7 +91,6 @@ def test_topology_1():
     A = Square('A')
     B = Square('B')
 
-
     M1 = Mapping('M1', dim=2)
     M2 = Mapping('M2', dim=2)
 
@@ -107,7 +106,6 @@ def test_topology_1():
 
     # export
     Omega.export('omega.h5')
-
 
     # read it again and check that it has the same description as Omega
     D = Domain.from_file('omega.h5')
@@ -201,7 +199,6 @@ def test_domain_join_line():
     B = Line('B')
     C = Line('C')
 
-
     AB_bnd_minus = A.get_boundary(axis=0, ext=1)
     AB_bnd_plus  = B.get_boundary(axis=0, ext=-1)
 
@@ -220,7 +217,6 @@ def test_domain_join_line():
     assert AB.interfaces == Interface('A|B', AB_bnd_minus, AB_bnd_plus)
     print(AB.connectivity)
     print('')
-
 
     domains = [A, B, C]
     connectivity = [((0, 0, 1), (1, 0, -1)), ((1, 0, 1), (2, 0, -1))]
@@ -241,7 +237,6 @@ def test_domain_join_square():
     B = Square('B')
     C = Square('C')
 
-
     patches = [A, B]
     connectivity = [((0, 0, 1), (1, 0, -1), 1)]
     AB = Domain.join(patches, connectivity, 'AB')
@@ -256,7 +251,6 @@ def test_domain_join_square():
     assert AB.interior   == Union(A.interior, B.interior)
     assert AB.interfaces == Interface('A|B', AB_bnd_minus, AB_bnd_plus, ornt=1)
     print(AB.connectivity)
-
 
     patches = [A, B, C]
     connectivity = [((0, 0, 1), (1, 0, -1), 1),
@@ -278,11 +272,9 @@ def test_get_subdomain():
     B = Square('B')
     C = Square('C')
 
-
     patches = [A, B]
     connectivity = [((0, 0, 1), (1, 0, -1), 1)]
     AB = Domain.join(patches, connectivity, 'AB')
-
 
     patches = [A, B, C]
     connectivity = [((0, 0, 1), (1, 0, -1), 1), ((1, 0, 1), (2, 0, -1), 1)]

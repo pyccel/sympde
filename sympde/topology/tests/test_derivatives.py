@@ -26,7 +26,6 @@ def indices_as_str(a):
 def test_partial_derivatives_1():
     print('============ test_partial_derivatives_1 ==============')
 
-
     domain = Domain('Omega', dim=2)
     M      = Mapping('M', dim=2)
 
@@ -41,7 +40,6 @@ def test_partial_derivatives_1():
 
     alpha = Constant('alpha')
     beta = Constant('beta')
-
 
     assert(dx(x**2) == 2*x)
     assert(dy(x**2) == 0)
@@ -73,7 +71,6 @@ def test_partial_derivatives_1():
 def test_partial_derivatives_2():
     print('============ test_partial_derivatives_2 ==============')
 
-
     domain = Domain('Omega', dim=2)
     M      = Mapping('M', dim=2)
 
@@ -85,31 +82,26 @@ def test_partial_derivatives_2():
     alpha = Constant('alpha')
     beta = Constant('beta')
 
-
     expr = alpha * dx(F)
 
     indices = get_index_derivatives_atom(expr, F)[0]
     assert(indices_as_str(indices) == 'x')
-
 
     expr = dy(dx(F))
 
     indices = get_index_derivatives_atom(expr, F)[0]
     assert(indices_as_str(indices) == 'xy')
 
-
     expr = alpha * dx(dy(dx(F)))
 
     indices = get_index_derivatives_atom(expr, F)[0]
     assert(indices_as_str(indices) == 'xxy')
-
 
     expr = alpha * dx(dx(F)) + beta * dy(F) + dx(dy(F))
 
     indices = get_index_derivatives_atom(expr, F)
     indices = [indices_as_str(i) for i in indices]
     assert(sorted(indices) == ['xx', 'xy', 'y'])
-
 
     expr = alpha * dx(dx(F)) + beta * dy(F) + dx(dy(F))
 

@@ -34,7 +34,6 @@ def _sanitize_arguments(arguments, is_bilinear=False, is_linear=False):
 
         test_functions = Tuple(*test_functions)
 
-
     if is_bilinear:
 
         trial_functions = arguments[0]
@@ -50,7 +49,6 @@ def _sanitize_arguments(arguments, is_bilinear=False, is_linear=False):
             raise TypeError(msg)
 
         trial_functions = Tuple(*trial_functions)
-
 
     args = Tuple(trial_functions, test_functions) if is_bilinear else Tuple(*test_functions)
     return args
@@ -150,6 +148,5 @@ class BasicForm(Expr):
 
             var = _kwargs[name]
             expr = expr.xreplace({var: v})
-
 
         return expr

@@ -947,7 +947,6 @@ class Rot(DiffOperator):
                 msg = '> Wrong space kind, given {}'.format(expr.space.kind)
                 raise ArgumentTypeError(msg)
 
-
         return cls(expr, evaluate=False)
 
 #==============================================================================
@@ -1053,7 +1052,6 @@ class Div(DiffOperator):
                 msg = '> Wrong space kind, given {}'.format(expr.space.kind)
                 raise ArgumentTypeError(msg)
 
-
         return cls(expr, evaluate=False)
 
 #==============================================================================
@@ -1138,7 +1136,6 @@ class Laplace(DiffOperator):
                 msg = '> Wrong space kind, given {}'.format(expr.space.kind)
                 raise ArgumentTypeError(msg)
 
-
         return cls(expr, evaluate=False)
 
 #==============================================================================
@@ -1217,7 +1214,6 @@ class Hessian(DiffOperator):
             if not isinstance(expr.space.kind, UndefinedSpaceType):
                 msg = '> Wrong space kind, given {}'.format(expr.space.kind)
                 raise ArgumentTypeError(msg)
-
 
         return cls(expr, evaluate=False)
 
@@ -1329,23 +1325,19 @@ class Convolution(BasicOperator):
         if (left == 0) or (right == 0):
             return 0
 
-
         if isinstance(left, (list, tuple, Tuple)) and isinstance(right, (list, tuple, Tuple)):
             assert( len(left) == len(right) )
             n = len(left)
             args = [left[i]*right[i] for i in range(0,n)]
             return Add(*args)
 
-
         if isinstance(left, Add):
             args = [cls.eval(i, right) for i in left.args]
             return Add(*args)
 
-
         if isinstance(right, Add):
             args = [cls.eval(left, i) for i in right.args]
             return Add(*args)
-
 
         # ... from now on, we construct left and right with some coeffs
         #     return is done at the end
@@ -1392,7 +1384,6 @@ class Convolution(BasicOperator):
             alpha *= a
             right  = b
 
-
         # ... this is a hack to ensure commutativity
         #     TODO to be improved
         try:
@@ -1401,7 +1392,6 @@ class Convolution(BasicOperator):
 
         except:
             pass
-
 
         return alpha*cls(left, right, evaluate=False)
 

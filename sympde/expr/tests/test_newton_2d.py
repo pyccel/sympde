@@ -33,11 +33,9 @@ def test_newton_2d_1():
     u  = element_of(V, name='u')
     eq = NewtonIteration(l, Un, trials=u)
 
-
     expected = int_0(-4.0*u*v*exp(-Un) + dot(grad(u), grad(v)))
 
     assert(eq.lhs.expr == expected)
-
 
     bc = EssentialBC(u, 0, B1)
     eq = NewtonIteration(l, Un, bc=bc, trials=u)
