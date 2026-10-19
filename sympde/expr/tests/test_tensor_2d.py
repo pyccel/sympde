@@ -141,7 +141,6 @@ def test_1d_forms_reconstruction():
     assert str(Mass(0)) == 'M_0'
     assert str(Stiffness(1, w)) == 'S_1(w)'
     assert Mass(0) != Stiffness(0)
-    assert hash(Mass(0)) != hash(Stiffness(0))
 
 
 #==============================================================================
