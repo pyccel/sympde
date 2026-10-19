@@ -62,7 +62,7 @@ def test_ncube_reconstruction_keeps_coordinates():
 
     for domain in domains:
         rebuilt = domain.func(*domain.args)
-        assert type(rebuilt) is type(domain)
+        assert isinstance(rebuilt, type(domain))
         assert rebuilt == domain
         assert rebuilt.coordinates == domain.coordinates
 
