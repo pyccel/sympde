@@ -264,7 +264,7 @@ def sort_partial_derivatives(expr):
 #            ls.append(a)
 #    # ...
 
-    # ...
+
     d = {}
     for a in args:
         n = get_number_derivatives(a)
@@ -272,24 +272,23 @@ def sort_partial_derivatives(expr):
             d[n] += [a]
         else:
             d[n] = [a]
-    # ...
 
-    # ...
+
     if not d:
         return []
-    # ...
+
 
     # ... sort keys from high to low
     keys = np.asarray(list(d.keys()))
     keys.sort()
     keys = keys[::-1]
-    # ...
+
 
     # ... construct a list of partial derivatives from high to low order
     ls = []
     for k in keys:
         ls += d[k]
-    # ...
+
 
     return tuple(ls)
 

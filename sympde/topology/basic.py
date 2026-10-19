@@ -641,7 +641,7 @@ class Connectivity(abc.Mapping):
         for name, v in data.items():
             connectivity[name] = [v.minus.todict(), v.plus.todict(), v.ornt]
         connectivity = dict(sorted(connectivity.items()))
-        # ...
+
 
         return connectivity
 

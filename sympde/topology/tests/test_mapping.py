@@ -32,7 +32,8 @@ def test_multipatch_mapping_reconstruction():
     assert rebuilt == multipatch_mapping
     assert rebuilt.mappings == multipatch_mapping.mappings
     assert replaced.mappings == {patch: replacement}
-# ...
+
+
 def test_mapping_1d():
     print('============ test_mapping_1d ==============')
 
@@ -42,18 +43,15 @@ def test_mapping_1d():
 
     assert(F.name == 'F')
 
-    # ...
+
     expected = Matrix([[dx1(F[0])]])
     assert(Jacobian(F) == expected)
-    # ...
 
-    # ...
+
     expected = dx1(F[0])
     assert(Jacobian(F).det() == expected)
-    # ...
-# ...
 
-# ...
+
 def test_mapping_2d():
     print('============ test_mapping_2d ==============')
 
@@ -66,34 +64,30 @@ def test_mapping_2d():
 
     assert(F.name == 'F')
 
-    # ...
+
     expected = Matrix([[dx1(F[0]), dx2(F[0])],
                        [dx1(F[1]), dx2(F[1])]])
     assert(Jacobian(F) == expected)
-    # ...
 
-    # ...
+
     expected = dx1(F[0])*dx2(F[1]) - dx1(F[1])*dx2(F[0])
     assert(Jacobian(F).det() == expected)
-    # ...
 
-    # ...
+
     expected = Tuple(a*dx2(F[1])/(dx1(F[0])*dx2(F[1]) - dx1(F[1])*dx2(F[0]))
                      - b*dx1(F[1])/(dx1(F[0])*dx2(F[1]) - dx1(F[1])*dx2(F[0])),
                      - a*dx2(F[0])/(dx1(F[0])*dx2(F[1]) - dx1(F[1])*dx2(F[0]))
                      + b*dx1(F[0])/(dx1(F[0])*dx2(F[1]) - dx1(F[1])*dx2(F[0])))
     assert(Covariant(F, ab) == expected)
-    # ...
 
-    # ...
+
     expected = Tuple(a*dx1(F[0])/(dx1(F[0])*dx2(F[1]) - dx1(F[1])*dx2(F[0]))
                      + b*dx2(F[0])/(dx1(F[0])*dx2(F[1]) - dx1(F[1])*dx2(F[0])),
                      a*dx1(F[1])/(dx1(F[0])*dx2(F[1]) - dx1(F[1])*dx2(F[0]))
                      + b*dx2(F[1])/(dx1(F[0])*dx2(F[1]) - dx1(F[1])*dx2(F[0])))
     assert(simplify(Contravariant(F, ab)) == simplify(expected))
-    # ...
 
-# ...
+
 def test_mapping_3d():
     print('============ test_mapping_3d ==============')
 
@@ -106,21 +100,19 @@ def test_mapping_3d():
 
     assert(F.name == 'F')
 
-    # ...
+
     expected = Matrix([[dx1(F[0]), dx2(F[0]), dx3(F[0])],
                        [dx1(F[1]), dx2(F[1]), dx3(F[1])],
                        [dx1(F[2]), dx2(F[2]), dx3(F[2])]])
     assert(Jacobian(F) == expected)
-    # ...
 
-    # ...
+
     expected = (dx1(F[0])*dx2(F[1])*dx3(F[2]) - dx1(F[0])*dx2(F[2])*dx3(F[1]) -
                 dx1(F[1])*dx2(F[0])*dx3(F[2]) + dx1(F[1])*dx2(F[2])*dx3(F[0]) +
                 dx1(F[2])*dx2(F[0])*dx3(F[1]) - dx1(F[2])*dx2(F[1])*dx3(F[0]))
     assert(Jacobian(F).det() == expected)
-    # ...
 
-    # ...
+
     expected = Tuple (a*(dx2(F[1])*dx3(F[2]) - dx2(F[2])*dx3(F[1]))/(dx1(F[0])*dx2(F[1])*dx3(F[2]) - dx1(F[0])*dx2(F[2])*dx3(F[1]) - dx1(F[1])*dx2(F[0])*dx3(F[2]) + dx1(F[1])*dx2(F[2])*dx3(F[0]) + dx1(F[2])*dx2(F[0])*dx3(F[1]) - dx1(F[2])*dx2(F[1])*dx3(F[0])) + b*(-dx1(F[1])*dx3(F[2]) + dx1(F[2])*dx3(F[1]))/(dx1(F[0])*dx2(F[1])*dx3(F[2]) - dx1(F[0])*dx2(F[2])*dx3(F[1]) - dx1(F[1])*dx2(F[0])*dx3(F[2]) + dx1(F[1])*dx2(F[2])*dx3(F[0]) + dx1(F[2])*dx2(F[0])*dx3(F[1]) - dx1(F[2])*dx2(F[1])*dx3(F[0])) + c*(dx1(F[1])*dx2(F[2]) - dx1(F[2])*dx2(F[1]))/(dx1(F[0])*dx2(F[1])*dx3(F[2]) - dx1(F[0])*dx2(F[2])*dx3(F[1]) - dx1(F[1])*dx2(F[0])*dx3(F[2]) + dx1(F[1])*dx2(F[2])*dx3(F[0]) + dx1(F[2])*dx2(F[0])*dx3(F[1]) - dx1(F[2])*dx2(F[1])*dx3(F[0])), a*(-dx2(F[0])*dx3(F[2]) + dx2(F[2])*dx3(F[0]))/(dx1(F[0])*dx2(F[1])*dx3(F[2]) - dx1(F[0])*dx2(F[2])*dx3(F[1]) - dx1(F[1])*dx2(F[0])*dx3(F[2]) + dx1(F[1])*dx2(F[2])*dx3(F[0]) + dx1(F[2])*dx2(F[0])*dx3(F[1]) - dx1(F[2])*dx2(F[1])*dx3(F[0])) + b*(dx1(F[0])*dx3(F[2]) - dx1(F[2])*dx3(F[0]))/(dx1(F[0])*dx2(F[1])*dx3(F[2]) - dx1(F[0])*dx2(F[2])*dx3(F[1]) - dx1(F[1])*dx2(F[0])*dx3(F[2]) + dx1(F[1])*dx2(F[2])*dx3(F[0]) + dx1(F[2])*dx2(F[0])*dx3(F[1]) - dx1(F[2])*dx2(F[1])*dx3(F[0])) + c*(-dx1(F[0])*dx2(F[2]) + dx1(F[2])*dx2(F[0]))/(dx1(F[0])*dx2(F[1])*dx3(F[2]) - dx1(F[0])*dx2(F[2])*dx3(F[1]) - dx1(F[1])*dx2(F[0])*dx3(F[2]) + dx1(F[1])*dx2(F[2])*dx3(F[0]) + dx1(F[2])*dx2(F[0])*dx3(F[1]) - dx1(F[2])*dx2(F[1])*dx3(F[0])), a*(dx2(F[0])*dx3(F[1]) - dx2(F[1])*dx3(F[0]))/(dx1(F[0])*dx2(F[1])*dx3(F[2]) - dx1(F[0])*dx2(F[2])*dx3(F[1]) - dx1(F[1])*dx2(F[0])*dx3(F[2]) + dx1(F[1])*dx2(F[2])*dx3(F[0]) + dx1(F[2])*dx2(F[0])*dx3(F[1]) - dx1(F[2])*dx2(F[1])*dx3(F[0])) + b*(-dx1(F[0])*dx3(F[1]) + dx1(F[1])*dx3(F[0]))/(dx1(F[0])*dx2(F[1])*dx3(F[2]) - dx1(F[0])*dx2(F[2])*dx3(F[1]) - dx1(F[1])*dx2(F[0])*dx3(F[2]) + dx1(F[1])*dx2(F[2])*dx3(F[0]) + dx1(F[2])*dx2(F[0])*dx3(F[1]) - dx1(F[2])*dx2(F[1])*dx3(F[0])) + c*(dx1(F[0])*dx2(F[1]) - dx1(F[1])*dx2(F[0]))/(dx1(F[0])*dx2(F[1])*dx3(F[2]) - dx1(F[0])*dx2(F[2])*dx3(F[1]) - dx1(F[1])*dx2(F[0])*dx3(F[2]) + dx1(F[1])*dx2(F[2])*dx3(F[0]) + dx1(F[2])*dx2(F[0])*dx3(F[1]) - dx1(F[2])*dx2(F[1])*dx3(F[0])))
     cov      = Covariant(F, abc)
     cov      = Matrix(cov)
@@ -129,17 +121,13 @@ def test_mapping_3d():
     diff.simplify()
 
     assert(diff.dot(diff).is_zero)
-    # ...
 
-    # ...
+
     expected = Tuple (a*dx1(F[0])/(dx1(F[0])*dx2(F[1])*dx3(F[2]) - dx1(F[0])*dx2(F[2])*dx3(F[1]) - dx1(F[1])*dx2(F[0])*dx3(F[2]) + dx1(F[1])*dx2(F[2])*dx3(F[0]) + dx1(F[2])*dx2(F[0])*dx3(F[1]) - dx1(F[2])*dx2(F[1])*dx3(F[0])) + b*dx2(F[0])/(dx1(F[0])*dx2(F[1])*dx3(F[2]) - dx1(F[0])*dx2(F[2])*dx3(F[1]) - dx1(F[1])*dx2(F[0])*dx3(F[2]) + dx1(F[1])*dx2(F[2])*dx3(F[0]) + dx1(F[2])*dx2(F[0])*dx3(F[1]) - dx1(F[2])*dx2(F[1])*dx3(F[0])) + c*dx3(F[0])/(dx1(F[0])*dx2(F[1])*dx3(F[2]) - dx1(F[0])*dx2(F[2])*dx3(F[1]) - dx1(F[1])*dx2(F[0])*dx3(F[2]) + dx1(F[1])*dx2(F[2])*dx3(F[0]) + dx1(F[2])*dx2(F[0])*dx3(F[1]) - dx1(F[2])*dx2(F[1])*dx3(F[0])), a*dx1(F[1])/(dx1(F[0])*dx2(F[1])*dx3(F[2]) - dx1(F[0])*dx2(F[2])*dx3(F[1]) - dx1(F[1])*dx2(F[0])*dx3(F[2]) + dx1(F[1])*dx2(F[2])*dx3(F[0]) + dx1(F[2])*dx2(F[0])*dx3(F[1]) - dx1(F[2])*dx2(F[1])*dx3(F[0])) + b*dx2(F[1])/(dx1(F[0])*dx2(F[1])*dx3(F[2]) - dx1(F[0])*dx2(F[2])*dx3(F[1]) - dx1(F[1])*dx2(F[0])*dx3(F[2]) + dx1(F[1])*dx2(F[2])*dx3(F[0]) + dx1(F[2])*dx2(F[0])*dx3(F[1]) - dx1(F[2])*dx2(F[1])*dx3(F[0])) + c*dx3(F[1])/(dx1(F[0])*dx2(F[1])*dx3(F[2]) - dx1(F[0])*dx2(F[2])*dx3(F[1]) - dx1(F[1])*dx2(F[0])*dx3(F[2]) + dx1(F[1])*dx2(F[2])*dx3(F[0]) + dx1(F[2])*dx2(F[0])*dx3(F[1]) - dx1(F[2])*dx2(F[1])*dx3(F[0])), a*dx1(F[2])/(dx1(F[0])*dx2(F[1])*dx3(F[2]) - dx1(F[0])*dx2(F[2])*dx3(F[1]) - dx1(F[1])*dx2(F[0])*dx3(F[2]) + dx1(F[1])*dx2(F[2])*dx3(F[0]) + dx1(F[2])*dx2(F[0])*dx3(F[1]) - dx1(F[2])*dx2(F[1])*dx3(F[0])) + b*dx2(F[2])/(dx1(F[0])*dx2(F[1])*dx3(F[2]) - dx1(F[0])*dx2(F[2])*dx3(F[1]) - dx1(F[1])*dx2(F[0])*dx3(F[2]) + dx1(F[1])*dx2(F[2])*dx3(F[0]) + dx1(F[2])*dx2(F[0])*dx3(F[1]) - dx1(F[2])*dx2(F[1])*dx3(F[0])) + c*dx3(F[2])/(dx1(F[0])*dx2(F[1])*dx3(F[2]) - dx1(F[0])*dx2(F[2])*dx3(F[1]) - dx1(F[1])*dx2(F[0])*dx3(F[2]) + dx1(F[1])*dx2(F[2])*dx3(F[0]) + dx1(F[2])*dx2(F[0])*dx3(F[1]) - dx1(F[2])*dx2(F[1])*dx3(F[0])))
     cov = Contravariant(F, abc)
     assert(simplify(cov) == simplify(expected))
-    # ...
 
-# ...
 
-# ...
 def test_mapping_2d_2():
     print('============ test_mapping_2d_2 ==============')
 

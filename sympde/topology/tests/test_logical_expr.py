@@ -47,35 +47,32 @@ def test_logical_expr_1d_1():
     #print('det = ', det_M)
     det   = Symbol('det')
 
-    # ...
+
     expr = 2*u + alpha*v
     expr = LogicalExpr(expr, domain)
     #print(expr)
     #print('')
-    # ...
 
-    # ...
+
     expr = dx(u)
     expr = LogicalExpr(expr, domain)
     #print(expr.subs(det_M, det))
     #print('')
-    # ...
 
-    # ...
+
     expr = dx(det_M)
     expr = LogicalExpr(expr, domain)
     expr = expr.subs(det_M, det)
     expr = expand(expr)
     #print(expr)
     #print('')
-    # ...
 
-    # ...
+
     expr = dx(dx(u))
     expr = LogicalExpr(expr, domain)
     #print(expr.subs(det_M, det))
     #print('')
-    # ...
+
 
 #==============================================================================
 def test_symbolic_expr_1d_1():
@@ -93,58 +90,52 @@ def test_symbolic_expr_1d_1():
     #print('>>> ', det_M)
     det   = Symbol('det')
 
-    # ...
+
     expr = u
     expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     #print(expr)
-    # ...
 
-    # ...
+
     expr = dx1(u)
     expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     #print(expr)
-    # ...
 
-    # ...
+
     expr = dx1(M[0])
     expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     #print(expr)
-    # ...
 
-    # ...
+
     expr = dx(u)
     expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     expr = expr.subs(det_M, det)
     #print(expr)
-    # ...
 
-    # ...
+
     expr = dx(Jacobian(M).det())
     expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     expr = expr.subs(det_M, det)
     #print(expand(expr))
-    # ...
 
-    # ...
+
     expr = dx(dx(u))
     expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     expr = expr.subs(det_M, det)
     #print(expand(expr))
-    # ...
 
-    # ...
+
     expr = dx(dx(dx(u)))
     expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     expr = expr.subs(det_M, det)
     #print(expand(expr))
-    # ...
+
 
 #==============================================================================
 def test_logical_expr_2d_1():
@@ -165,49 +156,44 @@ def test_logical_expr_2d_1():
     #print('det = ', det_M)
     det   = Symbol('det')
 
-    # ...
+
     expr = 2*u + alpha*v
     expr = LogicalExpr(expr, domain)
     #print(expr)
     #print('')
-    # ...
 
-    # ...
+
     expr = dx(u)
     expr = LogicalExpr(expr, domain)
     #print(expr.subs(det_M, det))
     #print('')
-    # ...
 
-    # ...
+
     expr = dy(u)
     expr = LogicalExpr(expr, domain)
     #print(expr.subs(det_M, det))
     #print('')
-    # ...
 
-    # ...
+
     expr = dx(det_M)
     expr = LogicalExpr(expr, domain)
     expr = expr.subs(det_M, det)
     expr = expand(expr)
     #print(expr)
     #print('')
-    # ...
 
-    # ...
+
     expr = dx(dx(u))
     expr = LogicalExpr(expr, domain)
     #print(expr.subs(det_M, det))
     #print('')
-    # ...
 
-    # ...
+
     expr = dx(w[0])
     expr = LogicalExpr(expr, domain)
     #print(expr.subs(det_M, det))
     #print('')
-    # ...
+
 
 #==============================================================================
 def test_logical_expr_2d_2():
@@ -306,65 +292,58 @@ def test_symbolic_expr_2d_1():
     #print('>>> ', det_M)
     det   = Symbol('det')
 
-    # ...
+
     expr = u
     expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     #print(expr)
-    # ...
 
-    # ...
+
     expr = dx1(u)
     expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     #print(expr)
-    # ...
 
-    # ...
+
     expr = dx1(dx2(u))
     expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     #print(expr)
-    # ...
 
-    # ...
+
     expr = dx1(M[0])
     expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     #print(expr)
-    # ...
 
-    # ...
+
     expr = dx(u)
     expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     expr = expr.subs(det_M, det)
     #print(expr)
-    # ...
 
-    # ...
+
     expr = dx(Jacobian(M).det())
     expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     expr = expr.subs(det_M, det)
     #print(expand(expr))
-    # ...
 
-    # ...
+
     expr = dx(dx(u))
     expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     expr = expr.subs(det_M, det)
     #print(expand(expr))
-    # ...
 
-    # ...
+
     expr = dx(dx(dx(u)))
     expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     expr = expr.subs(det_M, det)
     #print(expand(expr))
-    # ...
+
 
 #==============================================================================
 def test_logical_expr_3d_1():
@@ -383,41 +362,37 @@ def test_logical_expr_3d_1():
     #print('det = ', det_M)
     det   = Symbol('det')
 
-    # ...
+
     expr = 2*u + alpha*v
     expr = LogicalExpr(expr, domain)
     #print(expr)
     #print('')
-    # ...
 
-    # ...
+
     expr = dx(u)
     expr = LogicalExpr(expr, domain)
     #print(expr.subs(det_M, det))
     #print('')
-    # ...
 
-    # ...
+
     expr = dy(u)
     expr = LogicalExpr(expr, domain)
     #print(expr.subs(det_M, det))
     #print('')
-    # ...
 
-    # ...
+
     expr = dx(det_M)
     expr = LogicalExpr(expr, domain)
     expr = expr.subs(det_M, det)
     #print(expr)
     #print('')
-    # ...
 
-    # ...
+
     expr = dx(dx(u))
     expr = LogicalExpr(expr, domain)
     #print(expr.subs(det_M, det))
     #print('')
-    # ...
+
 
 def test_logical_expr_3d_2():
 
@@ -518,66 +493,58 @@ def test_symbolic_expr_3d_1():
     #print('>>> ', det_M)
     det   = Symbol('det')
 
-    # ...
+
     expr = u
     expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     #print(expr)
-    # ...
 
-    # ...
+
     expr = dx1(u)
     expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     #print(expr)
-    # ...
 
-    # ...
+
     expr = dx1(dx2(u))
     expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     #print(expr)
-    # ...
 
-    # ...
+
     expr = dx1(M[0])
     expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     #print(expr)
-    # ...
 
-    # ...
+
     expr = dx(u)
     expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     expr = expr.subs(det_M, det)
     #print(expr)
-    # ...
 
-    # ...
+
     expr = dx(Jacobian(M).det())
     expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     expr = expr.subs(det_M, det)
     #print(expand(expr))
-    # ...
 
-    # ...
+
     expr = dx(dx(u))
     expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     expr = expr.subs(det_M, det)
     #print(expand(expr))
-    # ...
 
-    # ...
+
     expr = dx(dx(dx(u)))
     expr = LogicalExpr(expr, domain)
     expr = SymbolicExpr(expr)
     expr = expr.subs(det_M, det)
     #print(expand(expr))
 
-    # ...
 
 #==============================================================================
 def test_identity_mapping_2d_1():
@@ -616,11 +583,11 @@ def test_identity_mapping_2d_2():
     u = element_of(V, name='u')
     logical_u = get_logical_test_function(u)
 
-    # ...
+
     assert logical_u.space.domain == domain.logical_domain
     assert LogicalExpr(dx(u), domain) == dx1(logical_u)
     assert LogicalExpr(dy(u), domain) == dx2(logical_u)
-    # ...
+
 
 #==============================================================================
 def test_polar_mapping_2d_1():

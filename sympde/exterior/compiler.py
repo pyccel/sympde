@@ -531,7 +531,7 @@ def augmented_expression(expr, tests, atoms, weak=True):
         expr = expr.subs(delta(u), aux)
 
         constraints[delta(u)] = aux
-    # ...
+
 
     if constraints:
         constraints = [k-v for k,v in constraints.items()]

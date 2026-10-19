@@ -107,7 +107,7 @@ def FormTypeFactory(argnames=["_index"], index=None):
 
     name = 'Dynamic{}FormType'.format(index)
 
-    # ...
+
     def __init__(self, **kwargs):
         for key, value in list(kwargs.items()):
             # here, the argnames variable is the one passed to the
@@ -117,7 +117,7 @@ def FormTypeFactory(argnames=["_index"], index=None):
                     % (key, self.__class__.__name__))
             setattr(self, key, value)
         FormType.__init__(self)
-    # ...
+
 
     if index is None:
         raise ValueError('index must be given')

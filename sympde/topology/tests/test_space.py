@@ -76,23 +76,21 @@ def test_space_2d_1():
     U2 = ScalarFunctionSpace('U2', domain)
     U3 = VectorFunctionSpace('U3', domain)
 
-    # ...
+
     V = V1 * V2 * V3
 
     assert(V.ldim == DIM)
     assert(V.shape == 3)
     assert(V.name == 'V1V2V3')
-    # ...
 
-    # ...
+
     U = U1 * U2 * U3
 
     assert(U.ldim == DIM)
     assert(U.shape == 4)
     assert(U.name == 'U1U2U3')
-    # ...
 
-    # ...
+
     v1, v2, v3 = element_of(V, 'v1, v2, v3')
 
     assert(isinstance(v1, ScalarFunction))
@@ -104,9 +102,8 @@ def test_space_2d_1():
     assert(v1.name == 'v1')
     assert(v2.name == 'v2')
     assert(v3.name == 'v3')
-    # ...
 
-    # ...
+
     u1, u2, u3 = element_of(U, 'u1, u2, u3')
 
     assert(isinstance(u1, ScalarFunction))
@@ -115,7 +112,6 @@ def test_space_2d_1():
     assert(u1.name == 'u1')
     assert(u2.name == 'u2')
     assert(u3.name == 'u3')
-    # ...
 
 
 #==============================================================================
@@ -177,7 +173,7 @@ def test_projector_2d_1():
 
     v, w = element_of(V*W, ['v', 'w'])
 
-    # ...
+
     P_V = Projector(V)
     assert(P_V.space == V)
 
@@ -188,9 +184,8 @@ def test_projector_2d_1():
 
     Pdiv_w = P_V(div(w))
     assert(isinstance(Pdiv_w, ScalarFunction))
-    # ...
 
-    # ...
+
     P_W = Projector(W)
     assert(P_W.space == W)
 
@@ -201,7 +196,6 @@ def test_projector_2d_1():
     Pgrad_v = P_W(grad(v))
     assert(isinstance(Pgrad_v, VectorFunction))
     assert(P_W(Pgrad_v) == Pgrad_v)
-    # ...
 
 
 #==============================================================================

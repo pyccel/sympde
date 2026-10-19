@@ -31,7 +31,7 @@ def test_tensorize_2d_1():
 
     int_0 = lambda expr: integral(domain , expr)
 
-    # ...
+
 #    a = BilinearForm((u,v), u*v)
     a = BilinearForm((u,v), int_0(mu*u*v + dot(grad(u),grad(v))))
 #    a = BilinearForm((u,v), dot(grad(u),grad(v)))
@@ -40,7 +40,7 @@ def test_tensorize_2d_1():
 
     expr = TensorExpr(a, domain=domain)
     print(expr)
-    # ...
+
 
 #==============================================================================
 def test_tensorize_2d_2():
@@ -51,13 +51,14 @@ def test_tensorize_2d_2():
     u, v = elements_of(V, names='u, v')
 
     int_0 = lambda expr: integral(domain , expr)
-    # ...
+
+
 #    a = BilinearForm((u,v), dot(u,v))
     a = BilinearForm((u,v), int_0(curl(u)*curl(v) + div(u)*div(v)))
 
     expr = TensorExpr(a, domain=domain)
     print(expr)
-    # ...
+
 
 #==============================================================================
 def test_tensorize_2d_1_mapping():
@@ -74,7 +75,8 @@ def test_tensorize_2d_1_mapping():
     u, v = elements_of(V, names='u, v')
 
     int_0 = lambda expr: integral(domain , expr)
-    # ...
+
+
 #    a = BilinearForm((u,v), u*v)
 #    a = BilinearForm((u,v), mu*u*v + dot(grad(u),grad(v)))
     a = BilinearForm((u,v), int_0(dot(grad(u),grad(v))))
@@ -83,7 +85,7 @@ def test_tensorize_2d_1_mapping():
 
     expr = TensorExpr(a, domain=domain)
     print(expr)
-    # ...
+
 
 #==============================================================================
 def test_tensorize_2d_2_mapping():

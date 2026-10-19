@@ -91,17 +91,15 @@ class Domain(BasicDomain):
         connectivity = restore_container_argument(connectivity)
         dim = restore_int_argument(dim)
 
-        # ...
+
         if not isinstance(name, str):
             raise TypeError('> name must be a string')
-        # ...
 
-        # ...
+
         if interiors is None and dim is None:
             raise ValueError('> either interiors or dim must be given')
-        # ...
 
-        # ...
+
         if not( interiors is None ):
             if not isinstance( interiors, (*iterable_types, InteriorDomain)):
                 raise TypeError('> Expecting an iterable or a InteriorDomain')
@@ -123,7 +121,7 @@ class Domain(BasicDomain):
                     raise TypeError('> all interiors must be of type InteriorDomain')
 
             interiors = Tuple(*interiors)
-        # ...
+
 
         if not( boundaries is None ):
             if not isinstance( boundaries, (*iterable_types, Boundary)):
@@ -155,7 +153,7 @@ class Domain(BasicDomain):
 
         # TODO check that patches appearing in connectivity are in interiors
 
-        # ...
+
         if interiors is None and dim:
             interiors = [InteriorDomain(name, dim=dim)]
 
@@ -174,7 +172,7 @@ class Domain(BasicDomain):
         assert mapping is None and logical_domain is None or \
         mapping is not None and logical_domain  is not None
 
-        # ...
+
         boundaries = Union(*boundaries)
 
         obj = new_basic(cls, name, interiors, boundaries, mapping,
@@ -403,7 +401,8 @@ class Domain(BasicDomain):
 
         if ext != '.h5':
             raise ValueError('> Only h5 files are supported')
-        # ...
+
+
         from sympde.topology.mapping import Mapping
 
         h5  = h5py.File( filename, mode='r' )
@@ -620,7 +619,7 @@ class Domain(BasicDomain):
             mapping        = None
             logical_domain = None
 
-        # ...
+
         return Domain(name,
                       interiors=interiors,
                       boundaries=boundaries,
@@ -897,7 +896,8 @@ class NCubeInterior(InteriorDomain):
 
     def get_boundary(self, axis=None, ext=None):
         """return boundary by (axis, ext)."""
-        # ...
+
+
         assert(not( ext  is None ))
 
         if axis is None:
@@ -1215,17 +1215,17 @@ def split(domain, value):
         bounds = (bounds[0], value)
         I_left = Line(name='{name}_l'.format(name=domain.name),
                       bounds=bounds)
-        # ...
+
 
         # ... right
         bounds = (value, bounds[1])
         I_right = Line(name='{name}_r'.format(name=domain.name),
                        bounds=bounds)
-        # ...
+
 
         # ... interiors
         interiors = [I_left.interior, I_right.interior]
-        # ...
+
 
         # ... external boundaries
         bnd_left = [b for b in I_left.boundary.as_tuple() if b.ext == -1]
@@ -1235,7 +1235,7 @@ def split(domain, value):
         bnd_right = bnd_right[0]
 
         boundaries = [bnd_left, bnd_right]
-        # ...
+
 
         # ... connectivity: internal interfaces
         int_left = [b for b in I_left.boundary.as_tuple() if b.ext == 1]
@@ -1246,7 +1246,7 @@ def split(domain, value):
 
         connectivity = Connectivity()
         connectivity['I'] = (int_left, int_right)
-        # ...
+
 
         return Domain(domain.name,
                       interiors=interiors,

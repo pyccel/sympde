@@ -146,7 +146,7 @@ class BasicFunctionSpace(Basic):
         obj._domain = domain
         obj._shape  = shape
 
-        # ...
+
         if kind is None:
             kind = 'undefined'
 
@@ -161,12 +161,11 @@ class BasicFunctionSpace(Basic):
         kind_str  = kind.name
         obj._kind = kind
 
-        # ...
+
         if not(kind_str == 'undefined'):
             obj._regularity = dtype_regularity_registry[kind_str]
-        # ...
 
-        # ...
+
         # TODO remove this if => bug in tensor form
         if isinstance(domain, Interval):
             is_broken = False
@@ -175,7 +174,7 @@ class BasicFunctionSpace(Basic):
             is_broken = len(domain) > 1
 
         obj._is_broken = is_broken
-        # ...
+
 
         return obj
 
@@ -290,7 +289,6 @@ class Derham:
         self._shape  = shape
 
 
-    # ...
     @property
     def spaces(self):
         return self._spaces
@@ -330,13 +328,10 @@ class ProductSpace(BasicFunctionSpace):
 
     """
     def __new__(cls, *spaces):
-
-        # ...
         if not (isinstance(spaces, (tuple, list, Tuple))):
             raise TypeError('> Expecting a tuple, list or Tuple')
-        # ...
 
-        # ...
+
         args = []
         for V in spaces:
             if isinstance(V, ProductSpace):
@@ -346,7 +341,7 @@ class ProductSpace(BasicFunctionSpace):
                 args += [V]
 
         spaces = Tuple(*args)
-        # ...
+
 
         # ... all spaces must have the same domain
 
@@ -354,18 +349,17 @@ class ProductSpace(BasicFunctionSpace):
         #for space in spaces:
         #    if not(space.domain is domain):
         #        raise ValueError('> all spaces must have the same domain')
-        # ...
 
-        # ...
+
         shape = sum([i.shape for i in spaces])
-        # ...
 
-        # ...
+
         name = ''.join(i.name for i in spaces)
-        # ...
+
 
         assert all(i.is_broken for i in spaces) or all(not i.is_broken for i in spaces)
-        # ...
+
+
         def _get_name(V):
             if V.ldim == 1:
                 return V.coordinates.name
@@ -380,16 +374,15 @@ class ProductSpace(BasicFunctionSpace):
         coordinates = spaces[0].coordinates
         if isinstance(coordinates, Symbol):
             coordinates = [coordinates]
-        # ...
 
-        # ...
+
         obj = Basic.__new__(cls, spaces)
 
         obj._shape       = shape
         obj._coordinates = coordinates
         obj._name        = name
         obj._is_broken   = spaces[0].is_broken
-        # ...
+
 
         return obj
 

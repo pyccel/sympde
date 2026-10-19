@@ -88,19 +88,16 @@ class LatexPrinter(LatexPrinterSympy):
             arg = r'\nabla \left( ' + self._print(arg) + r' \right)'
 
         return arg + r' \cdot ' + nn
-    # ...
 
-    # ...
+
     def _print_Jump(self, expr):
         return r'[\![ ' + self._print(expr.args[0]) + r' ]\!]'
-    # ...
 
-    # ...
+
     def _print_Average(self, expr):
         return r'\{ ' + self._print(expr.args[0]) + r' \}'
-    # ...
 
-    # ...
+
     def _print_NormalVector(self, expr):
         return r'\mathbf{n}'
 
@@ -112,12 +109,11 @@ class LatexPrinter(LatexPrinterSympy):
 
     def _print_TangentVector(self, expr):
         return r'\mathbf{t}'
-    # ...
 
-    # ...
+
     def _print_VectorFunction(self, expr):
         return r'\mathbf{' + expr.name + '}'
-    # ...
+
 
     # ... algebraic operators
     def _print_Dot(self, expr):
@@ -149,9 +145,8 @@ class LatexPrinter(LatexPrinterSympy):
 
     def _print_Outer(self, expr):
         raise NotImplementedError('TODO')
-    # ...
 
-    # ...
+
     def _print_Integral(self, expr):
 
         if expr.is_domain_integral:
@@ -197,7 +192,7 @@ class LatexPrinter(LatexPrinterSympy):
 
     def _print_Kron(self, expr):
         raise NotImplementedError('TODO')
-    # ...
+
 
     def _print_Nil(self, expr):
         return r'\ldots'

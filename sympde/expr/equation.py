@@ -39,11 +39,9 @@ class EssentialBC(BasicBoundaryCondition):
     _position = None
 
     def __new__(cls, lhs, rhs, boundary, position=None, index_component=None):
-        # ...
         normal_component = False
-        # ...
 
-        # ...
+
         indexed = list(lhs.atoms(IndexedVectorFunction))
 
         u  = list(lhs.atoms(ScalarFunction))
@@ -58,24 +56,22 @@ class EssentialBC(BasicBoundaryCondition):
             raise ValueError('Expecting one test function')
 
         u = u[0]
-        # ...
+
 
         # ... do not allow to use Trace operator
         trace = list(lhs.atoms(Trace))
         if trace:
             raise TypeError('Trace operator is not allowed')
-        # ...
 
-        # ...
+
         order_0_expr = [u]
         order_1_expr = []
-        # ...
 
-        # ...
+
         nn               = list(lhs.atoms(NormalVector))
         normal_component = isinstance(u, VectorFunction) and (len(nn) > 0)
-        # ...
-        # ...
+
+
         if nn:
             assert(len(nn) == 1)
 
@@ -84,9 +80,8 @@ class EssentialBC(BasicBoundaryCondition):
                 order_0_expr += [dot(u, nn)]
 
             order_1_expr += [dot(grad(u), nn)]
-        # ...
 
-        # ...
+
         if lhs in order_0_expr:
             order = 0
             if isinstance(u, (IndexedVectorFunction)):
@@ -110,7 +105,7 @@ class EssentialBC(BasicBoundaryCondition):
         else:
             # TODO change error to unconsistent error
             raise ValueError('Wrong lhs')
-        # ...
+
 
 #        # ... for simple geometries we can compute the indices for the normal
 #        # compoenent
@@ -203,13 +198,11 @@ class Equation(Basic):
 
         if not isinstance(rhs, LinearForm):
             raise UnconsistentRhsError('> rhs must be a linear')
-        # ...
 
-        # ...
+
         _is_test_function = lambda u: isinstance(u, (ScalarFunction, VectorFunction))
-        # ...
 
-        # ...
+
         if isinstance(tests, (ScalarFunction, VectorFunction)):
             tests = [tests]
 
@@ -218,9 +211,8 @@ class Equation(Basic):
             tests = [*tests]
 
             assert(all([_is_test_function(i) for i in tests]))
-        # ...
 
-        # ...
+
         if isinstance(trials, (ScalarFunction, VectorFunction)):
             trials = [trials]
 
@@ -229,7 +221,7 @@ class Equation(Basic):
             trials = [*trials]
 
             assert(all([_is_test_function(i) for i in trials]))
-        # ...
+
 
 #        # ...
 #        # find unknowns and tests of the equation

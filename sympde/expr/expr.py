@@ -694,7 +694,7 @@ def linearize(form, fields, trials=None):
     if not isinstance(form, LinearForm):
         raise TypeError('> Expecting a LinearForm')
 
-    # ...
+
     if not isinstance(fields, (list, tuple, Tuple)):
         fields = [fields]
 
@@ -702,7 +702,7 @@ def linearize(form, fields, trials=None):
         if not isinstance(field, (ScalarFunction, VectorFunction)):
             raise TypeError('> Expecting a {Scalar|Vector}Function', field)
 
-    # ...
+
     if trials:
         if not isinstance(trials, (list, tuple, Tuple)):
             trials = [trials]
@@ -713,7 +713,6 @@ def linearize(form, fields, trials=None):
     else:
         trials = [x.space.element(x.name + '_trial_' + random_string(4)) for x in fields]
 
-    # ...
 
     eps        = Constant('eps_' + random_string(4))
     new_fields = [field + eps*trial for field, trial in zip(fields, trials)]

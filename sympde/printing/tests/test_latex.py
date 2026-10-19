@@ -194,8 +194,8 @@ def test_latex_2d_3():
 
     int_0 = lambda expr: integral(domain , expr)
     int_1 = lambda expr: integral(B1, expr)
-    
-    # ...
+
+
     expr = dot(grad(v), grad(u))
     a_0 = BilinearForm((v,u), int_0(expr))
 
@@ -209,7 +209,7 @@ def test_latex_2d_3():
     print(latex(a))
 #    print(a)
     print('')
-    # ...
+
 
 #==============================================================================
 def test_latex_2d_4():
@@ -236,7 +236,7 @@ def test_latex_2d_4():
     print(latex(A))
 #    print(latex(tensorize(A)))
     print('')
-    # ...
+
 
 #==============================================================================
 def test_latex_2d_5():
@@ -251,27 +251,26 @@ def test_latex_2d_5():
     F  = element_of(W1, 'F')
 
     int_0 = lambda expr: integral(domain , expr)
-    
-    # ...
+
+
     l1 = LinearForm(w1, int_0(dot(w1, F)))
 
     print(latex(l1))
     print('')
-    # ...
 
-    # ...
+
     l2 = LinearForm(w1, int_0(rot(w1)*rot(F) + div(w1)*div(F)))
 
     print(latex(l2))
     print('')
-    # ...
+
 
 #==============================================================================
 def test_latex_ec_3d_1():
 
     n = 3
 
-    # ...
+
     u_0 = DifferentialForm('u_0', index=0, dim=n)
     v_0 = DifferentialForm('v_0', index=0, dim=n)
 
@@ -283,14 +282,13 @@ def test_latex_ec_3d_1():
 
     u_3 = DifferentialForm('u_3', index=3, dim=n)
     v_3 = DifferentialForm('v_3', index=3, dim=n)
-    # ...
 
-    # ...
+
     domain = Domain('Omega', dim=3)
     V = VectorFunctionSpace('V', domain)
 
     beta = element_of(V, 'beta')
-    # ...
+
 
     print(latex(u_0))
     print(latex(d(u_0)))

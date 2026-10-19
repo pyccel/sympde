@@ -13,7 +13,7 @@ from sympde.topology import element_of
 DIM = 2
 domain = Domain('Omega', dim=DIM)
 
-# ...
+
 def test_field_2d_1():
     print('============ test_field_2d_1 =============')
 

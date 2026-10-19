@@ -135,17 +135,16 @@ class ExteriorProduct(LinearOperator):
         right = _args[1]
         # TODO add properties in the spirit of ExteriorDerivative
 
-        # ...
+
         if isinstance(left, Add):
             args = [cls.eval(i, right) for i in left.args]
             return Add(*args)
-        # ...
 
-        # ...
+
         if isinstance(right, Add):
             args = [cls.eval(left, i) for i in right.args]
             return Add(*args)
-        # ...
+
 
         # ... from now on, we construct left and right with some coeffs
         #     return is done at the end
@@ -179,7 +178,7 @@ class ExteriorProduct(LinearOperator):
 
             alpha *= a
             right  = b
-        # ...
+
 
         return alpha*cls(left, right, evaluate=False)
 
@@ -595,4 +594,3 @@ jp = AdjointInteriorProduct
 Ld = AdjointLieDerivative
 
 hodge = Hodge
-# ...
