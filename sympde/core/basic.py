@@ -41,13 +41,9 @@ def _new_basic(cls, *args, **options):
     return Basic.__new__(cls, *args, **options)
 
 
-def _is_none_argument(value):
-    return value is _none
-
-
 def _restore_optional_argument(value):
     """Restore an optional value stored in a symbolic argument list."""
-    return None if _is_none_argument(value) else value
+    return None if value is _none else value
 
 
 def _restore_string_argument(value):

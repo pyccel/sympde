@@ -14,7 +14,6 @@ from sympde.topology import Trace, trace_0, trace_1
 from sympde.calculus import grad, dot
 from sympde.core.utils import random_string
 from sympde.core.basic import (
-    _is_none_argument,
     _new_basic,
     _restore_optional_argument,
 )
@@ -359,13 +358,11 @@ class Equation(Basic):
 
     @property
     def bc(self):
-        bc = self._args[4]
-        return None if _is_none_argument(bc) else bc
+        return _restore_optional_argument(self._args[4])
 
     @property
     def constraint(self):
-        constraint = self._args[5]
-        return None if _is_none_argument(constraint) else constraint
+        return _restore_optional_argument(self._args[5])
 
 #==============================================================================
 # TODO must subtitute expr by given args => call then create BasicForm

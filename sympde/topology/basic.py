@@ -9,7 +9,6 @@ from sympy.core.containers import Tuple
 from sympy.tensor import IndexedBase
 
 from sympde.core.basic import (
-    _is_none_argument,
     _new_basic,
     _restore_container_argument,
     _restore_int_argument,
@@ -314,13 +313,11 @@ class Boundary(BasicDomain):
 
     @property
     def axis(self):
-        axis = self.args[2]
-        return None if _is_none_argument(axis) else int(axis)
+        return _restore_int_argument(self.args[2])
 
     @property
     def ext(self):
-        ext = self.args[3]
-        return None if _is_none_argument(ext) else int(ext)
+        return _restore_int_argument(self.args[3])
 
     @property
     def mapping(self):
@@ -578,12 +575,7 @@ class Interface(BasicDomain):
 
     @property
     def ornt(self):
-        ornt = self.args[3]
-        if _is_none_argument(ornt):
-            return None
-        if isinstance(ornt, Tuple):
-            return tuple(int(o) for o in ornt)
-        return int(ornt)
+        return _restore_container_argument(self.args[3])
 
     @property
     def axis(self):

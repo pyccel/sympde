@@ -21,7 +21,6 @@ from sympy.utilities.iterables import is_sequence
 
 from sympde.core.basic import (
     CalculusFunction,
-    _is_none_argument,
     _new_basic,
     _restore_container_argument,
     _restore_int_argument,
@@ -201,14 +200,12 @@ class Domain(BasicDomain):
     def boundary(self) -> TypeUnion[Union, Boundary]:
         """Either a Union object containing the boundaries or just a boundary 
         if there is only one"""
-        boundary = self.args[2]
-        return None if _is_none_argument(boundary) else boundary
+        return _restore_optional_argument(self.args[2])
 
     @property
     def mapping(self) -> Optional[Mapping]:
         """The mapping that maps the logical domain to the physical domain"""
-        mapping = self.args[3]
-        return None if _is_none_argument(mapping) else mapping
+        return _restore_optional_argument(self.args[3])
 
     @property
     def subdomains(self) -> tuple:
