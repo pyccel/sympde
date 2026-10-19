@@ -45,8 +45,8 @@ operators, products, contractions, and Lie derivatives.
    :language: python
    :linenos:
 
-Nonlinear linearization
------------------------
+Linearization of nonlinear problems
+-----------------------------------
 
 This example constructs a nonlinear Poisson residual and derives its Jacobian
 form symbolically.
