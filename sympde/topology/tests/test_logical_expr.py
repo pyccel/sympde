@@ -6,7 +6,7 @@ from sympy import expand
 from sympy import cos, sin, sqrt, pi
 
 from sympde.core.basic import Constant
-from sympde.calculus.core import grad, dot, inner, rot, div
+from sympde.calculus.core import grad, dot, inner, rot, div, curl
 from sympde.calculus.core import laplace, bracket, convect
 from sympde.calculus.core import jump, avg, Dn, minus, plus
 from sympde.topology.domain import Domain
@@ -28,7 +28,6 @@ from sympde.topology.analytical_mapping import TorusMapping
 from sympde.topology.analytical_mapping import TwistedTargetMapping
 
 from sympde.expr.expr import BilinearForm, integral
-from sympde.calculus.core import grad, div, curl, dot
 
 from sympde.topology.mapping import Jacobian
 
