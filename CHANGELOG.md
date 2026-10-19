@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- #194: Add `sympde.api` as the supported flat public API.
+- #194: Add `sympde.api` as the supported flat public API. It contains the objects used by PSYDAC, IGA-Python, GeLaTo and the SymPDE documentation.
 - #194: Add example scripts to the documentation, which are run by the documentation workflow.
 - #106: Accept the connectivity of a `Domain` as an iterable of `Interface` objects, in addition to a `Connectivity` object.
 - [DEVELOPER] Add a `CHANGELOG.md` file listing changes between different versions.
