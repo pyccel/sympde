@@ -104,8 +104,8 @@ class DifferentialOperator(LinearOperator):
             elif isinstance(expr, Expr):
                 x = Symbol(cls.coordinate, real=True)
                 if cls.logical:
-                    # Imported lazily to avoid a module cycle: mapping depends
-                    # on the differential-operator definitions in this module.
+                    # Imported lazily to avoid a circular dependency: mapping
+                    # depends on the differential operators in this module.
                     from .mapping import Jacobian, Mapping
 
                     M = expr.atoms(Mapping)
