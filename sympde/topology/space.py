@@ -218,12 +218,8 @@ class BasicFunctionSpace(Basic):
     def __mul__(self, other):
         return ProductSpace(self, other)
 
-    def __hash__(self):
-        return hash((self.name, self.domain, self.shape, self.kind))
-
     def _hashable_content(self):
         return (self.name, self.domain, self.shape, self.kind)
-
 #==============================================================================
 class ScalarFunctionSpace(BasicFunctionSpace):
     """
