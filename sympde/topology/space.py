@@ -16,7 +16,7 @@ from sympde.core.utils import expand_name_patterns
 from sympde.core.utils import random_string
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import _coeffs_registery
-from sympde.core.basic import _new_basic
+from sympde.core.basic import new_basic
 
 from .basic    import BasicDomain, Union, Interval
 from .datatype import SpaceType, dtype_space_registry
@@ -638,7 +638,7 @@ class Trace(AtomicExpr):
         if options.pop('evaluate',True):
             return cls.eval(expr, boundary, order)
 
-        obj = _new_basic(cls, expr, boundary, order)
+        obj = new_basic(cls, expr, boundary, order)
         obj.is_commutative = expr.is_commutative
         return obj
 

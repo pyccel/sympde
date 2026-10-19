@@ -14,8 +14,8 @@ from sympde.topology import Trace, trace_0, trace_1
 from sympde.calculus import grad, dot
 from sympde.core.utils import random_string
 from sympde.core.basic import (
-    _new_basic,
-    _restore_optional_argument,
+    new_basic,
+    restore_optional_argument,
 )
 
 from .expr import BilinearForm, LinearForm
@@ -195,8 +195,8 @@ class Mean(BasicConstraint):
 class Equation(Basic):
 
     def __new__(cls, lhs, rhs, trials, tests, bc=None, constraint=None):
-        bc = _restore_optional_argument(bc)
-        constraint = _restore_optional_argument(constraint)
+        bc = restore_optional_argument(bc)
+        constraint = restore_optional_argument(constraint)
         # ...
         if not isinstance(lhs, BilinearForm):
             raise UnconsistentLhsError('> lhs must be a bilinear')
@@ -338,7 +338,7 @@ class Equation(Basic):
         tests  = Tuple(*tests)
         # ...
 
-        return _new_basic(cls, lhs, rhs, trials, tests, bc, constraint)
+        return new_basic(cls, lhs, rhs, trials, tests, bc, constraint)
 
     @property
     def lhs(self):
@@ -358,11 +358,11 @@ class Equation(Basic):
 
     @property
     def bc(self):
-        return _restore_optional_argument(self._args[4])
+        return restore_optional_argument(self._args[4])
 
     @property
     def constraint(self):
-        return _restore_optional_argument(self._args[5])
+        return restore_optional_argument(self._args[5])
 
 #==============================================================================
 # TODO must subtitute expr by given args => call then create BasicForm

@@ -20,7 +20,7 @@ from sympde.core              import Constant
 from sympde.core.basic        import BasicMapping
 from sympde.core.basic        import CalculusFunction
 from sympde.core.basic        import _coeffs_registery
-from sympde.core.basic        import _new_basic
+from sympde.core.basic        import new_basic
 from sympde.calculus.core     import PlusInterfaceOperator, MinusInterfaceOperator
 from sympde.calculus.core     import grad, div, curl, laplace #, hessian
 from sympde.calculus.core     import dot, inner, outer, _diff_ops
@@ -566,7 +566,7 @@ class MultiPatchMapping(Mapping):
             dic = dict(dic.items())
         if not isinstance(dic, dict):
             raise TypeError('Expecting a dictionary of patch mappings')
-        obj = _new_basic(cls, dic)
+        obj = new_basic(cls, dic)
         obj._mappings = dict(dic)
         return obj
 

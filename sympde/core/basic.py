@@ -35,41 +35,41 @@ def _sympify_argument(value):
     return sympify(value)
 
 
-def _new_basic(cls, *args, **options):
+def new_basic(cls, *args, **options):
     """Construct a ``Basic`` after normalizing all structural arguments."""
     args = tuple(_sympify_argument(arg) for arg in args)
     return Basic.__new__(cls, *args, **options)
 
 
-def _restore_optional_argument(value):
+def restore_optional_argument(value):
     """Restore an optional value stored in a symbolic argument list."""
     return None if value is _none else value
 
 
-def _restore_string_argument(value):
+def restore_string_argument(value):
     """Restore a Python string stored as a SymPy ``Str`` object."""
-    value = _restore_optional_argument(value)
+    value = restore_optional_argument(value)
     return value.name if isinstance(value, Str) else value
 
 
-def _restore_int_argument(value):
+def restore_int_argument(value):
     """Restore a Python integer stored as a SymPy ``Integer`` object."""
-    value = _restore_optional_argument(value)
+    value = restore_optional_argument(value)
     return int(value) if isinstance(value, Integer) else value
 
 
-def _restore_container_argument(value):
+def restore_container_argument(value):
     """Restore Python containers used as non-expression metadata."""
-    value = _restore_optional_argument(value)
+    value = restore_optional_argument(value)
     if isinstance(value, Str):
         return value.name
     if isinstance(value, Dict):
         return {
-            _restore_container_argument(k): _restore_container_argument(v)
+            restore_container_argument(k): restore_container_argument(v)
             for k, v in value.items()
         }
     if isinstance(value, Tuple):
-        return tuple(_restore_container_argument(v) for v in value)
+        return tuple(restore_container_argument(v) for v in value)
     if isinstance(value, Integer):
         return int(value)
     return value

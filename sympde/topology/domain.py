@@ -21,11 +21,11 @@ from sympy.utilities.iterables import is_sequence
 
 from sympde.core.basic import (
     CalculusFunction,
-    _new_basic,
-    _restore_container_argument,
-    _restore_int_argument,
-    _restore_optional_argument,
-    _restore_string_argument,
+    new_basic,
+    restore_container_argument,
+    restore_int_argument,
+    restore_optional_argument,
+    restore_string_argument,
 )
 from .basic            import BasicDomain, InteriorDomain, Boundary, Union, Connectivity
 from .basic            import Interval, Interface, CornerBoundary, CornerInterface
@@ -88,14 +88,14 @@ class Domain(BasicDomain):
                     'Structural and keyword Domain arguments cannot be mixed'
                 )
             interiors, boundaries, mapping, logical_domain, interfaces = structural_args
-            boundaries = _restore_optional_argument(boundaries)
-            mapping = _restore_optional_argument(mapping)
-            logical_domain = _restore_optional_argument(logical_domain)
-            interfaces = _restore_container_argument(interfaces)
+            boundaries = restore_optional_argument(boundaries)
+            mapping = restore_optional_argument(mapping)
+            logical_domain = restore_optional_argument(logical_domain)
+            interfaces = restore_container_argument(interfaces)
             connectivity = Connectivity({str(i.name): i for i in interfaces})
 
-        name = _restore_string_argument(name)
-        dim = _restore_int_argument(dim)
+        name = restore_string_argument(name)
+        dim = restore_int_argument(dim)
 
         # ...
         if not isinstance(name, str):
@@ -177,7 +177,7 @@ class Domain(BasicDomain):
         # ...
         boundaries = Union(*boundaries)
 
-        obj = _new_basic(cls, name, interiors, boundaries, mapping,
+        obj = new_basic(cls, name, interiors, boundaries, mapping,
                          logical_domain, tuple(connectivity.values()))
         obj._connectivity   = connectivity
         obj._corners        = None
@@ -200,12 +200,12 @@ class Domain(BasicDomain):
     def boundary(self) -> TypeUnion[Union, Boundary]:
         """Either a Union object containing the boundaries or just a boundary 
         if there is only one"""
-        return _restore_optional_argument(self.args[2])
+        return restore_optional_argument(self.args[2])
 
     @property
     def mapping(self) -> Optional[Mapping]:
         """The mapping that maps the logical domain to the physical domain"""
-        return _restore_optional_argument(self.args[3])
+        return restore_optional_argument(self.args[3])
 
     @property
     def subdomains(self) -> tuple:
@@ -839,15 +839,15 @@ class NCubeInterior(InteriorDomain):
     def __new__(cls, name, dim=None, dtype=None, min_coords=None, max_coords=None,
                     mapping=None, logical_domain=None):
 
-        name = _restore_string_argument(name)
-        dim = _restore_int_argument(dim)
-        dtype = _restore_container_argument(dtype)
-        min_coords = _restore_container_argument(min_coords)
-        max_coords = _restore_container_argument(max_coords)
-        mapping = _restore_optional_argument(mapping)
-        logical_domain = _restore_optional_argument(logical_domain)
+        name = restore_string_argument(name)
+        dim = restore_int_argument(dim)
+        dtype = restore_container_argument(dtype)
+        min_coords = restore_container_argument(min_coords)
+        max_coords = restore_container_argument(max_coords)
+        mapping = restore_optional_argument(mapping)
+        logical_domain = restore_optional_argument(logical_domain)
 
-        obj = _new_basic(cls, name, dim, dtype, min_coords, max_coords,
+        obj = new_basic(cls, name, dim, dtype, min_coords, max_coords,
                          mapping, logical_domain)
         obj._dim = dim
         obj._target = None
@@ -922,10 +922,10 @@ class NCube(Domain):
                 cls, name, dim, min_coords, max_coords, *structural_args
             )
 
-        name = _restore_string_argument(name)
-        dim = _restore_int_argument(dim)
-        min_coords = _restore_container_argument(min_coords)
-        max_coords = _restore_container_argument(max_coords)
+        name = restore_string_argument(name)
+        dim = restore_int_argument(dim)
+        min_coords = restore_container_argument(min_coords)
+        max_coords = restore_container_argument(max_coords)
 
         assert isinstance(name, str)
         assert isinstance(dim, (int, Integer))

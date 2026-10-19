@@ -8,7 +8,7 @@ from sympy.simplify.simplify import simplify
 
 from sympde.core.basic import _coeffs_registery
 from sympde.core.basic import CalculusFunction
-from sympde.core.basic import _new_basic
+from sympde.core.basic import new_basic
 from sympde.core.algebra import (Dot_1d,
                                  Dot_2d, Inner_2d, Cross_2d,
                                  Dot_3d, Inner_3d, Cross_3d)
@@ -974,7 +974,7 @@ def _tensorize_atomic_expr(expr, d_atoms):
 class Basic1dForm(AtomicExpr):
 
     def __new__(cls, name, axis, weight=S.One):
-        return _new_basic(cls, name, axis, weight)
+        return new_basic(cls, name, axis, weight)
 
     @property
     def name(self):
