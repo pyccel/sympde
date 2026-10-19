@@ -972,21 +972,22 @@ def _tensorize_atomic_expr(expr, d_atoms):
 
 #==============================================================================
 class Basic1dForm(AtomicExpr):
+    _name = None
 
-    def __new__(cls, name, axis, weight=S.One):
-        return new_basic(cls, name, axis, weight)
+    def __new__(cls, axis, weight=S.One):
+        return new_basic(cls, axis, weight)
 
     @property
     def name(self):
-        return self._args[0].name
+        return self._name
 
     @property
     def axis(self):
-        return int(self._args[1])
+        return int(self._args[0])
 
     @property
     def weight(self):
-        return self._args[2]
+        return self._args[1]
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -1003,49 +1004,19 @@ class Basic1dForm(AtomicExpr):
 
 
 class Mass(Basic1dForm):
-
-    def __new__(cls, axis, weight=S.One, *structural_args):
-        if structural_args:
-            return Basic1dForm.__new__(cls, axis, weight, *structural_args)
-#        name = 'Mass'
-        name = 'M'
-        return Basic1dForm.__new__(cls, name, axis, weight)
+    _name = 'M'
 
 class Stiffness(Basic1dForm):
-
-    def __new__(cls, axis, weight=S.One, *structural_args):
-        if structural_args:
-            return Basic1dForm.__new__(cls, axis, weight, *structural_args)
-#        name = 'Stiffness'
-        name = 'S'
-        return Basic1dForm.__new__(cls, name, axis, weight)
+    _name = 'S'
 
 class Advection(Basic1dForm):
-
-    def __new__(cls, axis, weight=S.One, *structural_args):
-        if structural_args:
-            return Basic1dForm.__new__(cls, axis, weight, *structural_args)
-#        name = 'Advection'
-        name = 'A'
-        return Basic1dForm.__new__(cls, name, axis, weight)
+    _name = 'A'
 
 class AdvectionT(Basic1dForm):
-
-    def __new__(cls, axis, weight=S.One, *structural_args):
-        if structural_args:
-            return Basic1dForm.__new__(cls, axis, weight, *structural_args)
-#        name = 'AdvectionT'
-        name = 'AT'
-        return Basic1dForm.__new__(cls, name, axis, weight)
+    _name = 'AT'
 
 class Bilaplacian(Basic1dForm):
-
-    def __new__(cls, axis, weight=S.One, *structural_args):
-        if structural_args:
-            return Basic1dForm.__new__(cls, axis, weight, *structural_args)
-#        name = 'Bilaplacian'
-        name = 'B'
-        return Basic1dForm.__new__(cls, name, axis, weight)
+    _name = 'B'
 
 
 Mass_0 = Mass(0)

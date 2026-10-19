@@ -16,6 +16,7 @@ from sympde.topology import Mapping
 
 from sympde.expr.expr import BilinearForm, integral
 from sympde.expr.evaluation import TensorExpr
+from sympde.expr.evaluation import Mass, Stiffness, Advection, AdvectionT, Bilaplacian
 
 
 #==============================================================================
@@ -119,6 +120,26 @@ def test_tensorize_2d_3():
 
     print(TensorExpr(a, domain=domain))
     print('')
+
+
+#==============================================================================
+def test_1d_forms_reconstruction():
+    w = Constant('w')
+
+    for cls, name in [(Mass, 'M'), (Stiffness, 'S'), (Advection, 'A'),
+                      (AdvectionT, 'AT'), (Bilaplacian, 'B')]:
+        for form in (cls(1), cls(1, w)):
+            assert form.name == name
+            assert form.axis == 1
+            rebuilt = form.func(*form.args)
+            assert isinstance(rebuilt, cls)
+            assert rebuilt == form
+            assert rebuilt.weight == form.weight
+
+    assert str(Mass(0)) == 'M_0'
+    assert str(Stiffness(1, w)) == 'S_1(w)'
+    assert Mass(0) != Stiffness(0)
+    assert hash(Mass(0)) != hash(Stiffness(0))
 
 
 #==============================================================================
