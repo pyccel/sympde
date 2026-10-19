@@ -42,6 +42,7 @@ All notable changes to this project will be documented in this file.
 
 - #194: Remove the re-exports of public objects from the package and subpackage initializers. Replace imports such as `from sympde.topology import Square` with `from sympde.api import Square`. `from sympde import __version__` keeps working.
 - #194: Remove the `sympde.old_sympy_utilities` module. Use `sympy.utilities.iterables.is_sequence` and Python's `metaclass` keyword instead of its `is_sequence` and `with_metaclass`.
+- #194: Remove the outdated Jupyter notebooks and the Binder badge. The example scripts in the documentation replace them.
 - [DEVELOPER] Remove obsolete CI configuration, the standalone pytest configuration, and the legacy test runner script.
 
 ### Deprecated
