@@ -247,8 +247,7 @@ class Integral(CalculusFunction):
     def _hashable_content(self):
         return (self.expr , self.domain)
 
-    def __hash__(self):
-        return hash(self._hashable_content())
+    __hash__ = CalculusFunction.__hash__
 
     @classmethod
     def subs_boundary_expr(cls, expr, domain):
