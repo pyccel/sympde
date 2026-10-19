@@ -4,11 +4,11 @@ The calculus subpackage provides different operators, as generic as possible,
 but knowning properties between them. For instance, the following statement will
 naturally give 0
 
->>> from sympde.calculus import grad, curl
->>> from sympde.topology import Domain
->>> from sympde.topology import ScalarFunctionSpace
->>> from sympde.topology import ScalarFunction
->>> from sympde.topology import element_of
+>>> from sympde.api import grad, curl
+>>> from sympde.api import Domain
+>>> from sympde.api import ScalarFunctionSpace
+>>> from sympde.api import ScalarFunction
+>>> from sympde.api import element_of
 
 >>> domain = Domain('Omega', dim=2)
 >>> V = ScalarFunctionSpace('V', domain)
@@ -276,7 +276,7 @@ class Dot(BasicOperator):
 
     Examples
 
-    >>> from sympde.calculus import Dot
+    >>> from sympde.calculus.core import Dot
     >>> from sympy import Tuple
     >>> from sympy.abc import x,y
 
@@ -287,10 +287,10 @@ class Dot(BasicOperator):
 
     This operator implements the properties of addition and multiplication
 
-    >>> from sympde.core import Constant
-    >>> from sympde.topology import Domain
-    >>> from sympde.topology import VectorFunctionSpace
-    >>> from sympde.topology import VectorFunction
+    >>> from sympde.api import Constant
+    >>> from sympde.api import Domain
+    >>> from sympde.api import VectorFunctionSpace
+    >>> from sympde.api import VectorFunction
 
     >>> domain = Domain('Omega', dim=2)
     >>> V = VectorFunctionSpace('V', domain)
@@ -444,10 +444,10 @@ class Inner(BasicOperator):
 
     Examples
 
-    >>> from sympde.calculus import inner, grad
-    >>> from sympde.topology import Domain
-    >>> from sympde.topology import VectorFunctionSpace
-    >>> from sympde.topology import VectorFunction
+    >>> from sympde.api import inner, grad
+    >>> from sympde.api import Domain
+    >>> from sympde.api import VectorFunctionSpace
+    >>> from sympde.api import VectorFunction
 
     >>> domain = Domain('Omega', dim=2)
     >>> V = VectorFunctionSpace('V', domain)
@@ -673,10 +673,10 @@ class Grad(DiffOperator):
     Examples
 
 
-    >>> from sympde.core import Constant
-    >>> from sympde.topology import Domain
-    >>> from sympde.topology import VectorFunctionSpace
-    >>> from sympde.topology import VectorFunction
+    >>> from sympde.api import Constant
+    >>> from sympde.api import Domain
+    >>> from sympde.api import VectorFunctionSpace
+    >>> from sympde.api import VectorFunction
 
     >>> domain = Domain('Omega', dim=2)
     >>> V = ScalarFunctionSpace('V', domain)
@@ -791,10 +791,10 @@ class Curl(DiffOperator):
     Examples
 
 
-    >>> from sympde.core import Constant
-    >>> from sympde.topology import Domain
-    >>> from sympde.topology import VectorFunctionSpace
-    >>> from sympde.topology import VectorFunction
+    >>> from sympde.api import Constant
+    >>> from sympde.api import Domain
+    >>> from sympde.api import VectorFunctionSpace
+    >>> from sympde.api import VectorFunction
 
     >>> domain = Domain('Omega', dim=2)
     >>> V = VectorFunctionSpace('V', domain)
@@ -880,10 +880,10 @@ class Rot(DiffOperator):
     Examples
 
 
-    >>> from sympde.core import Constant
-    >>> from sympde.topology import Domain
-    >>> from sympde.topology import VectorFunctionSpace
-    >>> from sympde.topology import VectorFunction
+    >>> from sympde.api import Constant
+    >>> from sympde.api import Domain
+    >>> from sympde.api import VectorFunctionSpace
+    >>> from sympde.api import VectorFunction
 
     >>> domain = Domain('Omega', dim=2)
     >>> V = ScalarFunctionSpace('V', domain)
@@ -959,10 +959,10 @@ class Div(DiffOperator):
     Examples
 
 
-    >>> from sympde.core import Constant
-    >>> from sympde.topology import Domain
-    >>> from sympde.topology import VectorFunctionSpace
-    >>> from sympde.topology import VectorFunction
+    >>> from sympde.api import Constant
+    >>> from sympde.api import Domain
+    >>> from sympde.api import VectorFunctionSpace
+    >>> from sympde.api import VectorFunction
 
     >>> domain = Domain('Omega', dim=2)
     >>> V = VectorFunctionSpace('V', domain)
@@ -1064,10 +1064,10 @@ class Laplace(DiffOperator):
     Examples
 
 
-    >>> from sympde.core import Constant
-    >>> from sympde.topology import Domain
-    >>> from sympde.topology import VectorFunctionSpace
-    >>> from sympde.topology import VectorFunction
+    >>> from sympde.api import Constant
+    >>> from sympde.api import Domain
+    >>> from sympde.api import VectorFunctionSpace
+    >>> from sympde.api import VectorFunction
 
     >>> domain = Domain('Omega', dim=2)
     >>> V = ScalarFunctionSpace('V', domain)
@@ -1148,10 +1148,10 @@ class Hessian(DiffOperator):
     Examples
 
 
-    >>> from sympde.core import Constant
-    >>> from sympde.topology import Domain
-    >>> from sympde.topology import VectorFunctionSpace
-    >>> from sympde.topology import VectorFunction
+    >>> from sympde.api import Constant
+    >>> from sympde.api import Domain
+    >>> from sympde.api import VectorFunctionSpace
+    >>> from sympde.api import VectorFunction
 
     >>> domain = Domain('Omega', dim=2)
     >>> V = ScalarFunctionSpace('V', domain)
