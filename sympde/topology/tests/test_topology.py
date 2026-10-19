@@ -8,7 +8,7 @@ from sympde.topology import Boundary
 from sympde.topology import Domain, ElementDomain
 from sympde.topology import Area, Mapping
 from sympde.topology import Interface
-from sympde.topology import Line, Square, Cube
+from sympde.topology import Line, Square, Cube, NCube
 from sympde.topology import IdentityMapping
 
 base_dir = os.path.dirname(os.path.realpath(__file__))
@@ -54,6 +54,17 @@ def test_multipatch_domain_reconstruction():
     rebuilt = Domain('Omega', domain.interior, domain.boundary,
                      connectivity=interfaces)
     assert dict(rebuilt.connectivity) == dict(domain.connectivity)
+
+
+def test_ncube_reconstruction_keeps_coordinates():
+    domains = (Line('L'), Square('S'), Cube('C'),
+               NCube('N', 4, (0,)*4, (1,)*4))
+
+    for domain in domains:
+        rebuilt = domain.func(*domain.args)
+        assert type(rebuilt) is type(domain)
+        assert rebuilt == domain
+        assert rebuilt.coordinates == domain.coordinates
 
 
 #==============================================================================
