@@ -61,8 +61,8 @@ class Domain(BasicDomain):
         Either interiors or dim must be given. The mapping and the
         logical_domain must be given together, or not at all.
 
-        The positional arguments follow the order of ``self.args``, so that
-        ``domain.func(*domain.args)`` reconstructs the domain.
+        The positional arguments follow the order of `self.args`, so that
+        `domain.func(*domain.args)` reconstructs the domain.
 
         Parameters
         ----------
@@ -920,10 +920,10 @@ class NCube(Domain):
         Create an n-dimensional box [min_coords, max_coords]. Depending on
         dim, a Line, Square or Cube is returned for dim <= 3.
 
-        When SymPy rebuilds the object via ``func(*args)``, the positional
-        parameters receive the stored Domain arguments instead (``name``,
-        ``interiors``, ``boundaries``, ``mapping``, ``logical_domain`` and
-        ``connectivity``). These are forwarded unchanged to Domain.__new__.
+        When SymPy rebuilds the object via `func(*args)`, the positional
+        parameters receive the stored Domain arguments instead (`name`,
+        `interiors`, `boundaries`, `mapping`, `logical_domain` and
+        `connectivity`). These are forwarded unchanged to `Domain.__new__`.
 
         Parameters
         ----------
@@ -1040,9 +1040,9 @@ class Line(NCube):
         """
         Create the interval [bounds[0], bounds[1]].
 
-        When SymPy rebuilds the object via ``func(*args)``, the positional
+        When SymPy rebuilds the object via `func(*args)`, the positional
         parameters receive the stored Domain arguments instead, see
-        NCube.__new__.
+        `NCube.__new__`.
         """
         if structural_args:
             return cls._rebuild(name, bounds, *structural_args)
@@ -1063,9 +1063,9 @@ class Square(NCube):
         """
         Create the rectangle bounds1 x bounds2.
 
-        When SymPy rebuilds the object via ``func(*args)``, the positional
+        When SymPy rebuilds the object via `func(*args)`, the positional
         parameters receive the stored Domain arguments instead, see
-        NCube.__new__.
+        `NCube.__new__`.
         """
         if structural_args:
             return cls._rebuild(name, bounds1, bounds2, *structural_args)
@@ -1090,9 +1090,9 @@ class Cube(NCube):
         """
         Create the box bounds1 x bounds2 x bounds3.
 
-        When SymPy rebuilds the object via ``func(*args)``, the positional
+        When SymPy rebuilds the object via `func(*args)`, the positional
         parameters receive the stored Domain arguments instead, see
-        NCube.__new__.
+        `NCube.__new__`.
         """
         if structural_args:
             return cls._rebuild(name, bounds1, bounds2, bounds3,

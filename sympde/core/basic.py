@@ -13,14 +13,14 @@ from sympy.tensor import IndexedBase
 
 
 class _NoneArgument(Basic):
-    """SymPy-compatible representation of ``None`` in expression arguments."""
+    """SymPy-compatible representation of `None` in expression arguments."""
 
 
 _none = _NoneArgument()
 
 
 def _sympify_argument(value):
-    """Convert structural metadata to objects accepted in ``Basic.args``."""
+    """Convert structural metadata to objects accepted in `Basic.args`."""
     if isinstance(value, Basic):
         return value
     if value is None:
@@ -36,7 +36,7 @@ def _sympify_argument(value):
 
 
 def new_basic(cls, *args, **options):
-    """Construct a ``Basic`` after normalizing all structural arguments."""
+    """Construct a `Basic` after normalizing all structural arguments."""
     args = tuple(_sympify_argument(arg) for arg in args)
     return Basic.__new__(cls, *args, **options)
 
@@ -47,13 +47,13 @@ def restore_optional_argument(value):
 
 
 def restore_string_argument(value):
-    """Restore a Python string stored as a SymPy ``Str`` object."""
+    """Restore a Python string stored as a SymPy `Str` object."""
     value = restore_optional_argument(value)
     return value.name if isinstance(value, Str) else value
 
 
 def restore_int_argument(value):
-    """Restore a Python integer stored as a SymPy ``Integer`` object."""
+    """Restore a Python integer stored as a SymPy `Integer` object."""
     value = restore_optional_argument(value)
     return int(value) if isinstance(value, Integer) else value
 
