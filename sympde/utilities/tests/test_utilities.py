@@ -5,7 +5,7 @@ from sympy import Matrix, symbols, Array
 from sympy import S
 from sympde.utilities.utils import lambdify_sympde
 from sympde.utilities.utils import plot_domain
-from sympde.api import Square
+from sympde.topology.domain import Square
 
 
 

@@ -2,12 +2,13 @@
 
 from sympy import exp
 
-from sympde.api import grad, dot
-from sympde.api import ScalarFunctionSpace
-from sympde.api import element_of
-from sympde.api import Domain, Boundary
-from sympde.api import LinearForm, integral
-from sympde.api import EssentialBC, NewtonIteration
+from sympde.calculus.core import grad, dot
+from sympde.topology.space import ScalarFunctionSpace
+from sympde.topology.space import element_of
+from sympde.topology.domain import Domain
+from sympde.topology.basic import Boundary
+from sympde.expr.expr import LinearForm, integral
+from sympde.expr.equation import EssentialBC, NewtonIteration
 
 DIM = 2
 domain = Domain('Omega', dim=DIM)

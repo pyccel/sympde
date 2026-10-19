@@ -3,13 +3,14 @@ import os
 from sympy import preorder_traversal
 from sympy.core import Basic
 
-from sympde.api import InteriorDomain, Union
-from sympde.api import Boundary
-from sympde.api import Domain, ElementDomain
-from sympde.api import Area, Mapping
-from sympde.api import Interface
-from sympde.api import Line, Square, Cube, NCube
-from sympde.api import IdentityMapping
+from sympde.topology.basic import InteriorDomain, Union
+from sympde.topology.basic import Boundary
+from sympde.topology.domain import Domain, ElementDomain
+from sympde.topology.domain import Area
+from sympde.topology.mapping import Mapping
+from sympde.topology.basic import Interface
+from sympde.topology.domain import Line, Square, Cube, NCube
+from sympde.topology.analytical_mapping import IdentityMapping
 
 base_dir = os.path.dirname(os.path.realpath(__file__))
 topo_dir = os.path.join(base_dir, 'data')

@@ -5,28 +5,30 @@ from sympy import Matrix
 from sympy import expand
 from sympy import cos, sin, sqrt, pi
 
-from sympde.api import Constant
-from sympde.api import grad, dot, inner, rot, div
-from sympde.api import laplace, bracket, convect
-from sympde.api import jump, avg, Dn, minus, plus
-from sympde.api import Domain, Mapping, Square
-from sympde.api import dx, dy
-from sympde.api import dx1, dx2, dx3
-from sympde.api import ScalarFunctionSpace, VectorFunctionSpace
-from sympde.api import element_of, elements_of
-from sympde.api import LogicalExpr
-from sympde.api import get_logical_test_function
-from sympde.api import SymbolicExpr
-from sympde.api import IdentityMapping
-from sympde.api import PolarMapping
-from sympde.api import TargetMapping
-from sympde.api import CzarnyMapping
-from sympde.api import CollelaMapping2D
-from sympde.api import TorusMapping
-from sympde.api import TwistedTargetMapping
+from sympde.core.basic import Constant
+from sympde.calculus.core import grad, dot, inner, rot, div
+from sympde.calculus.core import laplace, bracket, convect
+from sympde.calculus.core import jump, avg, Dn, minus, plus
+from sympde.topology.domain import Domain
+from sympde.topology.mapping import Mapping
+from sympde.topology.domain import Square
+from sympde.topology.derivatives import dx, dy
+from sympde.topology.derivatives import dx1, dx2, dx3
+from sympde.topology.space import ScalarFunctionSpace, VectorFunctionSpace
+from sympde.topology.space import element_of, elements_of
+from sympde.topology.mapping import LogicalExpr
+from sympde.topology.mapping import get_logical_test_function
+from sympde.topology.mapping import SymbolicExpr
+from sympde.topology.analytical_mapping import IdentityMapping
+from sympde.topology.analytical_mapping import PolarMapping
+from sympde.topology.analytical_mapping import TargetMapping
+from sympde.topology.analytical_mapping import CzarnyMapping
+from sympde.topology.analytical_mapping import CollelaMapping2D
+from sympde.topology.analytical_mapping import TorusMapping
+from sympde.topology.analytical_mapping import TwistedTargetMapping
 
-from sympde.api import BilinearForm, integral
-from sympde.api import grad, div, curl, dot
+from sympde.expr.expr import BilinearForm, integral
+from sympde.calculus.core import grad, div, curl, dot
 
 from sympde.topology.mapping import Jacobian
 

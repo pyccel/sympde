@@ -7,11 +7,11 @@ from sympy import Matrix
 from sympy import srepr
 from sympy import Symbol
 
-from sympde.api import Constant
+from sympde.core.basic import Constant
 
-from sympde.api import d, wedge, ip, jp, delta, hodge
-from sympde.api import ZeroForm, OneForm, TwoForm
-from sympde.api import ThreeForm, FourForm, FiveForm, SixForm
+from sympde.exterior.calculus import d, wedge, ip, jp, delta, hodge
+from sympde.exterior.datatype import ZeroForm, OneForm, TwoForm
+from sympde.exterior.datatype import ThreeForm, FourForm, FiveForm, SixForm
 
 
 #==============================================================================

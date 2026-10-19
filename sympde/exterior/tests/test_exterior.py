@@ -7,10 +7,10 @@ from sympy import Matrix
 from sympy import srepr
 from sympy import Symbol
 
-from sympde.api import Constant
+from sympde.core.basic import Constant
 
-from sympde.api import d, wedge, ip, jp, delta, hodge
-from sympde.api import DifferentialForm
+from sympde.exterior.calculus import d, wedge, ip, jp, delta, hodge
+from sympde.exterior.form import DifferentialForm
 
 
 def test_differential_form_symbol_identity():

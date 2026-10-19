@@ -4,15 +4,15 @@
 
 from sympy.core.containers import Tuple
 
-from sympde.api import Constant
-from sympde.api import grad, dot, curl, div
+from sympde.core.basic import Constant
+from sympde.calculus.core import grad, dot, curl, div
 #from sympde.calculus import laplace
 #from sympde.topology import dx
-from sympde.api import ScalarFunctionSpace, VectorFunctionSpace
-from sympde.api import elements_of
-from sympde.api import Boundary
-from sympde.api import Domain
-from sympde.api import Mapping
+from sympde.topology.space import ScalarFunctionSpace, VectorFunctionSpace
+from sympde.topology.space import elements_of
+from sympde.topology.basic import Boundary
+from sympde.topology.domain import Domain
+from sympde.topology.mapping import Mapping
 
 from sympde.expr.expr import BilinearForm, integral
 from sympde.expr.evaluation import TensorExpr
