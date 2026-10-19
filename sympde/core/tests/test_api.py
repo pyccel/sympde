@@ -1,13 +1,23 @@
 from pathlib import Path
 
 
-def test_non_api_package_initializers_are_empty():
+def test_package_initializers_are_minimal():
     package_dir = Path(__file__).parents[2]
     initializers = package_dir.rglob('__init__.py')
 
     for initializer in initializers:
-        if initializer.parent != package_dir / 'api':
+        if initializer.parent == package_dir:
+            # The top-level package only exposes its version
+            assert initializer.read_text() == 'from .version import __version__\n'
+        elif initializer.parent != package_dir / 'api':
             assert initializer.read_text() == ''
+
+
+def test_version_is_available_from_top_level_package():
+    from sympde import __version__
+    from sympde.version import __version__ as version
+
+    assert __version__ is version
 
 
 def test_api_has_only_explicit_exports():

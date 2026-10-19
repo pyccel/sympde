@@ -4,7 +4,7 @@ from pathlib import Path
 
 from sphinx.ext.apidoc import main as sphinx_apidoc
 
-from sympde.version import __version__
+from sympde import __version__
 
 # -- Path setup --------------------------------------------------------------
 
