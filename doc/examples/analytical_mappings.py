@@ -31,7 +31,11 @@ np.testing.assert_allclose(numerical_mapping(0.25, 0.5), (-0.5, 0.0))
 
 # Define a custom mapping by specifying its coordinate expressions.
 class ComplexSquareMapping(Mapping):
-    """Map ``(x1, x2)`` through the square of a complex number."""
+    """
+    Map (x1, x2) to (x, y) such that x + i*y = A * (x1 + i*x2)**2.
+
+    Expanding the square gives x = A * (x1**2 - x2**2) and y = 2 * A * x1 * x2.
+    """
 
     _expressions = {
         'x': 'A * (x1**2 - x2**2)',
