@@ -91,7 +91,7 @@ def plot_domain(domain, draw=True, isolines=False, refinement=None):
 
     Parameters
     ----------
-    domain : sympde.topology.Domain
+    domain : sympde.topology.domain.Domain
         Domain to plot
 
     draw : bool, default=True
@@ -123,7 +123,7 @@ def plot_2d(domain, draw=True, isolines=False, refinement=40):
 
     Parameters
     ----------
-    domain : sympde.topology.Domain
+    domain : sympde.topology.domain.Domain
         Domain to plot
 
     draw : bool
@@ -159,7 +159,7 @@ def plot_3d(domain, draw=True, refinement=15):
 
     Parameters
     ----------
-    domain : sympde.topology.Domain
+    domain : sympde.topology.domain.Domain
         Domain to plot
 
     draw : bool
@@ -197,7 +197,7 @@ def plot_3d_single_patch(patch, mapping, ax, refinement=15):
 
     Parameters
     ----------
-    patch : sympde.topology.InteriorDomain
+    patch : sympde.topology.basic.InteriorDomain
 
     mapping : sympde.topology.mapping
 
@@ -253,7 +253,7 @@ def plot_2d_single_patch(patch, mapping, ax, isolines=False, refinement=40):
 
     Parameters
     ----------
-    patch : sympde.topology.InteriorDomain
+    patch : sympde.topology.basic.InteriorDomain
 
     mapping : sympde.topology.mapping
 
