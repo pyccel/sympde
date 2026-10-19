@@ -24,7 +24,6 @@ def test_differential_form_symbol_identity():
     assert u.args == ()
 
 
-
 #==============================================================================
 def test_exterior_1():
 
