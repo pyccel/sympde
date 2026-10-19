@@ -52,6 +52,7 @@ def _restore_optional_argument(value):
 
 def _restore_string_argument(value):
     """Restore a Python string stored as a SymPy ``Str`` object."""
+    value = _restore_optional_argument(value)
     return value.name if isinstance(value, Str) else value
 
 
