@@ -618,8 +618,8 @@ def test_identity_mapping_2d_2():
 
     # ...
     assert logical_u.space.domain == domain.logical_domain
-    assert(LogicalExpr(dx(u), domain) == dx1(logical_u))
-    assert(LogicalExpr(dy(u), domain) == dx2(logical_u))
+    assert LogicalExpr(dx(u), domain) == dx1(logical_u)
+    assert LogicalExpr(dy(u), domain) == dx2(logical_u)
     # ...
 
 #==============================================================================
