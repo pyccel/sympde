@@ -6,6 +6,11 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- #188: Support multipatch interfaces between faces with different normal axes and with any edge or face orientation, several interfaces between the same pair of patches, and periodic and self-interfaces.
+- #188: Add `Domain.patches`, `Domain.interface_map`, `Domain.exterior_sides`, `Domain.shared_vertices`, `Boundary.patch`, `Boundary.normal_axis` and `Interface.axis_map` to inspect the topology of multipatch domains, and the aliases `PatchVertex` and `SharedVertex` of `CornerBoundary` and `CornerInterface`.
+- #188: Add the module `sympde.utilities.plotting`, with `plot_domain()` for plotting 2D and 3D domains with optional topology annotations, and `collect_topology_vertices()`, `format_topology()` and `print_topology()` for inspecting their shared vertices. `plot_domain()`, `collect_topology_vertices()` and `print_topology()` are available in `sympde.api`.
+- #188: Add the module `sympde.topology.multipatch_gallery`, which builds a collection of multipatch domains (previously in PSYDAC), and the analytical mapping `TransposedPolarMapping`.
+- #188: Document the multipatch topology in a new page of the user guide.
 - #194: Add `sympde.api` as the supported flat public API. It contains the objects used by PSYDAC, IGA-Python, GeLaTo and the SymPDE documentation.
 - #194: Add example scripts to the documentation, which are run by the documentation workflow.
 - #194: Draw expression trees in the documentation with Graphviz, generated from the current code at build time.
@@ -18,17 +23,17 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- #190: Convert the README to Markdown and expand the installation, testing, and documentation-build instructions.
+- #143: Replace the `ornt` argument of `Interface` and `Boundary.join()` with a required `orientation` argument: `None` in 1D, `+1` or `-1` in 2D, and `(flag, sign1, sign2)` in 3D. Use `interface.orientation` instead of `interface.ornt`.
+- #188: Accept the connectivity of `Domain.join()` only as `(minus, plus, orientation[, name])` tuples, and name repeated interfaces between the same pair of patches `A|B`, `A|B#2`, and so on.
 - #194: Use explicit internal imports and load optional dependencies only when needed.
 - #194: Remove the leading underscore from `partial_derivatives`, `logical_partial_derivatives` (`sympde.topology.derivatives`) and `split_test_function` (`sympde.expr.evaluation`), and add them to `sympde.api`.
 - #194: List only public names in the `__all__` of every module.
 - #106: Require SymPy 1.12 or newer and support maintained SymPy releases below 1.15.
 - #106: Update SymPDE's symbolic objects for modern SymPy's structural arguments, traversal, substitution, and reconstruction requirements.
 - #106: Order the parameters of `Domain` like its `args` (`name`, `interiors`, `boundaries`, `mapping`, `logical_domain`, `connectivity`) and allow passing them positionally. `dim` is now keyword-only.
-- #106: Allow passing `ornt`, `mapping` and `logical_domain` of an `Interface` positionally, in this order.
+- #106: Allow passing `mapping` and `logical_domain` of an `Interface` positionally, in this order.
 - #106: Store only `axis` and `weight` in the `args` of the 1D forms (`Mass`, `Stiffness`, `Advection`, `AdvectionT`, `Bilaplacian`). Their name is now a class attribute.
-- [DEVELOPER] Modernize the package metadata and consolidate the pytest and coverage configuration in `pyproject.toml`.
-- [DEVELOPER] Modernize the Sphinx configuration, API-documentation generation, and API docstring markup.
+- #190: Convert the README to Markdown and expand the installation, testing, and documentation-build instructions.
 - [DEVELOPER] Remove the leading underscore from the module-level names used by other SymPDE modules, and rename `_coeffs_registery` to `coefficient_types`.
 - [DEVELOPER] Modernize the package metadata and consolidate the pytest and coverage configuration in `pyproject.toml`.
 - [DEVELOPER] Modernize the Sphinx configuration, API-documentation generation, and API docstring markup.
@@ -36,12 +41,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- #140: Fix the rendering of the `Domain.join()` API documentation.
-- #166: Restore warning-free documentation builds, including bibliography and mathematical notation support.
-- #106: Preserve symbol assumptions and free-symbol information with modern SymPy.
-- #106: Keep same-named functions from different function spaces distinct during symbolic simplification.
-- #106: Fix form-linearity checks involving integral sums with modern SymPy.
-- #194: Fix plotting of unmapped two-dimensional domains with `plot_2d()`.
+- #144: Restore the interface names and exterior boundaries of a domain read with `Domain.from_file()` as they were exported.
 - #106: Preserve symbol assumptions and free-symbol information with modern SymPy.
 - #106: Keep same-named functions from different function spaces distinct during symbolic simplification.
 - #106: Fix form-linearity checks involving integral sums with modern SymPy.
@@ -51,6 +51,8 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 
+- #73: Remove the `Edge` class and the `Interface.axis` property. Use `Boundary`, and `interface.minus.axis` and `interface.plus.axis`.
+- #188: Remove `plot_domain()`, `plot_2d()`, `plot_3d()`, `plot_2d_single_patch()` and `plot_3d_single_patch()` from `sympde.utilities.utils`. Use `plot_domain()` from `sympde.api` instead.
 - #194: Remove the re-exports of public objects from the package and subpackage initializers. Replace imports such as `from sympde.topology import Square` with `from sympde.api import Square`. `from sympde import __version__` keeps working.
 - #194: Remove the `sympde.old_sympy_utilities` module. Use `sympy.utilities.iterables.is_sequence` and Python's `metaclass` keyword instead of its `is_sequence` and `with_metaclass`.
 - #194: Remove the outdated Jupyter notebooks and the Binder badge. The example scripts in the documentation replace them.
