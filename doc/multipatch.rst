@@ -57,7 +57,7 @@ The usual logical patches are ``Line``, ``Square``, and ``Cube``:
 
 .. code-block:: python
 
-   from sympde.topology import Line, Square, Cube
+   from sympde.api import Line, Square, Cube
 
    interval = Line('I', bounds=(-1, 2))
    square = Square('A', bounds1=(0, 2), bounds2=(-1, 1))
@@ -92,7 +92,7 @@ A mapping is applied to a logical patch by calling it:
 
 .. code-block:: python
 
-   from sympde.topology import AffineMapping, IdentityMapping, Square
+   from sympde.api import AffineMapping, IdentityMapping, Square
 
    logical_a = Square('A')
    logical_b = Square('B')
@@ -284,7 +284,7 @@ plus normal is axis 1:
 
 .. code-block:: python
 
-   from sympde.topology import Cube, Domain
+   from sympde.api import Cube, Domain
 
    patch_a = Cube('A')
    patch_b = Cube('B')
@@ -326,7 +326,7 @@ tangential coordinate, while the outer seam reverses it:
 
 .. code-block:: python
 
-   from sympde.topology import (
+   from sympde.api import (
        AffineMapping, Domain, IdentityMapping, Square,
    )
 
@@ -433,7 +433,7 @@ discretization is created:
 
 .. code-block:: python
 
-   from sympde.utilities import (
+   from sympde.api import (
        collect_topology_vertices,
        plot_domain,
        print_topology,
@@ -579,7 +579,7 @@ multipatch callers should apply the following replacements:
    * - omitted interface orientation
      - an explicit dimension-appropriate orientation
    * - ``sympde.utilities.utils.plot_domain``
-     - ``sympde.utilities.plot_domain``
+     - ``sympde.api.plot_domain``
 
 The topology file-format migration is described in `Serialization`_.  In
 particular, legacy interface entries without an explicit orientation are not
