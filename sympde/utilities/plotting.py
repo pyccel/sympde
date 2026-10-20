@@ -7,8 +7,6 @@ from dataclasses import dataclass
 from itertools import product
 import sys
 
-import matplotlib.pyplot as plt
-from matplotlib.patches import FancyArrowPatch, Patch
 import numpy as np
 
 __all__ = (
@@ -339,6 +337,9 @@ def _plot_domain_2d(
     matplotlib.figure.Figure
         The containing figure.
     """
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import FancyArrowPatch, Patch
+
     _check_topology_dimension(domain)
     physical_dim = _physical_dimension(domain)
     if physical_dim != 2:
@@ -583,6 +584,9 @@ def _plot_domain_3d(
         patch_labels=True, interface_labels=True, vertex_labels=True,
         legend=True):
     """Plot a 3D domain, optionally with symbolic topology annotations."""
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Patch
+
     if not isinstance(refinement, int) or refinement < 2:
         raise ValueError('refinement must be an integer greater than one')
 
