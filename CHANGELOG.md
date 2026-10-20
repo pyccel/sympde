@@ -41,7 +41,13 @@ All notable changes to this project will be documented in this file.
 - #106: Preserve symbol assumptions and free-symbol information with modern SymPy.
 - #106: Keep same-named functions from different function spaces distinct during symbolic simplification.
 - #106: Fix form-linearity checks involving integral sums with modern SymPy.
+- #194: Fix plotting of unmapped two-dimensional domains with `plot_2d()`.
+- #106: Preserve symbol assumptions and free-symbol information with modern SymPy.
+- #106: Keep same-named functions from different function spaces distinct during symbolic simplification.
+- #106: Fix form-linearity checks involving integral sums with modern SymPy.
 - #106: Raise a `ValueError` when a `Domain` is created without `interiors` or `dim`, instead of failing with a `TypeError` when only a connectivity is given.
+- #191: Fix the rendering of the `Domain.join()` API documentation.
+- #166: Restore warning-free documentation builds, including bibliography and mathematical notation support.
 
 ### Removed
 
