@@ -588,7 +588,7 @@ class Interface(BasicDomain):
     A cube interface may exchange its two tangential axes and reverse one of
     them, even when the faces have different normal axes:
 
-    >>> from sympde.topology import Cube, Interface
+    >>> from sympde.api import Cube, Interface
     >>> A = Cube('A')
     >>> B = Cube('B')
     >>> interface = Interface(

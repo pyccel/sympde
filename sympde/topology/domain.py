@@ -637,7 +637,7 @@ class Domain(BasicDomain):
         --------
         A four-patch 2D connectivity may reference patch objects directly:
 
-        >>> from sympde.topology import Cube, Domain, Square
+        >>> from sympde.api import Cube, Domain, Square
         >>> patches = [Square(f'P{i}') for i in range(4)]
         >>> connectivity = [
         ...     ((patches[0], 0, -1), (patches[1], 0, +1), +1),

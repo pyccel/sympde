@@ -77,7 +77,7 @@ def collect_topology_vertices(domain):
 
     Parameters
     ----------
-    domain : sympde.topology.Domain
+    domain : sympde.topology.domain.Domain
         A two- or three-dimensional logical or mapped domain.
 
     Returns
@@ -319,7 +319,7 @@ def _plot_domain_2d(
 
     Parameters
     ----------
-    domain : sympde.topology.Domain
+    domain : sympde.topology.domain.Domain
         Two-dimensional logical or mapped domain.
     draw : bool, default=True
         Call ``matplotlib.pyplot.show`` after constructing the figure.
@@ -789,7 +789,7 @@ def plot_domain(
 
     Parameters
     ----------
-    domain : sympde.topology.Domain
+    domain : sympde.topology.domain.Domain
         Two- or three-dimensional logical or mapped domain with equal logical
         and physical dimensions.
     draw : bool, default=True
