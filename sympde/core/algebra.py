@@ -8,7 +8,7 @@ from sympy.simplify.simplify import simplify
 from sympy.utilities.iterables import is_sequence
 
 from .basic import CalculusFunction
-from .basic import _coeffs_registery
+from .basic import coefficient_types
 
 
 # TODO update default name
@@ -47,7 +47,7 @@ class LinearOperator(CalculusFunction):
             return Add(*args)
 
         if isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            coeffs  = [a for a in expr.args if isinstance(a, coefficient_types)]
             vectors = [a for a in expr.args if not(a in coeffs)]
 
             a = S.One

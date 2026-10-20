@@ -96,6 +96,8 @@ from sympde.topology.derivatives import (
     get_index_logical_derivatives,
     get_index_logical_derivatives_atom,
     get_max_logical_partial_derivatives,
+    logical_partial_derivatives,
+    partial_derivatives,
 )
 from sympde.topology.datatype import (
     H1Space,
@@ -133,6 +135,7 @@ from sympde.expr.evaluation import (
     Stiffness,
     TensorExpr,
     TerminalExpr,
+    split_test_function,
 )
 from sympde.expr.expr import (
     BilinearForm,
@@ -242,6 +245,8 @@ __all__ = (
     'get_index_logical_derivatives',
     'get_index_logical_derivatives_atom',
     'get_max_logical_partial_derivatives',
+    'logical_partial_derivatives',
+    'partial_derivatives',
     'trace_0',
     'trace_1',
     # Expressions
@@ -268,6 +273,7 @@ __all__ = (
     'find',
     'integral',
     'linearize',
+    'split_test_function',
     # Exterior calculus
     'DifferentialForm',
     'd',

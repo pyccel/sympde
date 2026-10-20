@@ -6,7 +6,7 @@ from sympy.core.expr import AtomicExpr
 from sympy.core.containers import Tuple
 from sympy.simplify.simplify import simplify
 
-from sympde.core.basic import _coeffs_registery
+from sympde.core.basic import coefficient_types
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import new_basic
 from sympde.core.algebra import (Dot_1d,
@@ -16,7 +16,7 @@ from sympde.core.algebra import (Dot_1d,
 
 from sympde.calculus.core import Jump, is_zero
 from sympde.calculus.core import jump, minus, plus
-from sympde.calculus.core import _generic_ops, _diff_ops
+from sympde.calculus.core import generic_ops, diff_ops
 from sympde.calculus.core import MinusInterfaceOperator, PlusInterfaceOperator
 from sympde.calculus.matrices import SymbolicDeterminant, Inverse, Transpose
 from sympde.calculus.matrices import MatrixElement, SymbolicTrace
@@ -36,8 +36,8 @@ from sympde.topology.space import IndexedVectorFunction
 from sympde.topology.space import Trace
 from sympde.topology.space import ScalarFunctionSpace
 
-from sympde.topology.derivatives import _partial_derivatives
-from sympde.topology.derivatives import _logical_partial_derivatives
+from sympde.topology.derivatives import partial_derivatives
+from sympde.topology.derivatives import logical_partial_derivatives
 from sympde.topology.derivatives import get_atom_derivatives
 from sympde.topology.derivatives import get_atom_logical_derivatives
 from sympde.topology.derivatives import dx, dy, dz
@@ -59,7 +59,7 @@ from .basic import BasicExpr, BasicForm
 from .expr  import BilinearForm
 from .expr  import Integral
 from .expr  import Functional
-from .expr  import _get_domain
+from .expr  import get_domain
 
 __all__ = (
     'Advection',
@@ -74,14 +74,8 @@ __all__ = (
     'Stiffness',
     'TensorExpr',
     'TerminalExpr',
-    '_get_trials_tests',
-    '_replace_atomic_expr',
-    '_split_expr_over_interface',
-    '_split_test_function',
-    '_tensorize_atomic_expr',
-    '_to_matrix_form',
-    '_unpack_functions',
     'is_sequence',
+    'split_test_function',
 )
 
 #==============================================================================
@@ -688,7 +682,7 @@ class TerminalExpr(CalculusFunction):
 
             if isinstance(expr.expr, Add):
                 for a in expr.expr.args:
-                    domains = _get_domain(a)
+                    domains = get_domain(a)
                     if not isinstance(domains, Union):
                         domains = (domains, )
 
@@ -700,7 +694,7 @@ class TerminalExpr(CalculusFunction):
                     domains = expr.domain
 
                 else:
-                    domains = _get_domain(expr.expr)
+                    domains = get_domain(expr.expr)
 
                 if isinstance(domains, Union):
                     domains = list(domains._args)
@@ -806,7 +800,7 @@ class TerminalExpr(CalculusFunction):
         elif isinstance(expr, BasicExpr):
             return cls.eval(expr.expr, domain=domain)
 
-        elif isinstance(expr, _diff_ops):
+        elif isinstance(expr, diff_ops):
             op   = type(expr)
             if domain.mapping is None:
                 new  = eval('Logical{0}_{1}d'.format(op, dim))
@@ -816,7 +810,7 @@ class TerminalExpr(CalculusFunction):
             args = [cls.eval(i, domain=domain) for i in expr.args]
             return new(*args)
 
-        elif isinstance(expr, _generic_ops):
+        elif isinstance(expr, generic_ops):
             # if i = Dot(...) then type(i) is Grad
             op = type(expr)
             new  = eval('{0}_{1}d'.format(op, dim))
@@ -870,7 +864,7 @@ class TerminalExpr(CalculusFunction):
 
 #==============================================================================
 # TODO use random_string for space name and use it for 1d test function
-def _split_test_function(expr):
+def split_test_function(expr):
 
     if isinstance(expr, ScalarFunction):
 
@@ -921,10 +915,10 @@ def _split_test_function(expr):
 #==============================================================================
 def _tensorize_atomic_expr(expr, d_atoms):
 
-    if (isinstance(expr, _partial_derivatives) or
-        isinstance(expr,_logical_partial_derivatives)):
+    if (isinstance(expr, partial_derivatives) or
+        isinstance(expr,logical_partial_derivatives)):
 
-        if isinstance(expr, _partial_derivatives):
+        if isinstance(expr, partial_derivatives):
             atom = get_atom_derivatives(expr)
 
         else:
@@ -1107,7 +1101,7 @@ class TensorExpr(CalculusFunction):
             return Add(*args)
 
         elif isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            coeffs  = [a for a in expr.args if isinstance(a, coefficient_types)]
             stests  = [a for a in expr.args if not(a in coeffs) and a.atoms(ScalarFunction)]
             vtests  = [a for a in expr.args if not(a in coeffs) and a.atoms(VectorFunction)]
             vectors = [a for a in expr.args if (not(a in coeffs) and
@@ -1136,7 +1130,7 @@ class TensorExpr(CalculusFunction):
 
             return Mul(a, b, sb, vb)
 
-        elif isinstance(expr, _coeffs_registery):
+        elif isinstance(expr, coefficient_types):
             return expr
 
         elif isinstance(expr, Pow):
@@ -1183,7 +1177,7 @@ class TensorExpr(CalculusFunction):
             # Prepare dictionary for '_tensorize_atomic_expr', which should
             # process all variables but leave fields unchanged:
             d_atoms = dict(
-                [(v,_split_test_function(v)[v]) for v in variables] + [(f, (f,)) for f in fields])
+                [(v,split_test_function(v)[v]) for v in variables] + [(f, (f,)) for f in fields])
 
             expr = cls.eval(terminal_expr, d_atoms=d_atoms, domain=domain)
 

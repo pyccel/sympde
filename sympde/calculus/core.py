@@ -105,7 +105,7 @@ from sympy.core.decorators    import call_highest_priority
 from sympy.utilities.iterables import is_sequence
 
 from sympde.core.basic        import CalculusFunction
-from sympde.core.basic        import _coeffs_registery
+from sympde.core.basic        import coefficient_types
 from sympde.topology.space    import ScalarFunction, VectorFunction
 from sympde.topology.domain   import NormalVector, MinusNormalVector, PlusNormalVector
 from sympde.topology.datatype import H1SpaceType, HcurlSpaceType
@@ -145,17 +145,16 @@ __all__ = (
 #
     'D',
     'Dn',
-    '_diff_ops',
-    '_generic_ops',
-    '_is_op_test_function',
     'avg',
     'bracket',
     'conv',
     'convect',
     'cross',
     'curl',
+    'diff_ops',
     'div',
     'dot',
+    'generic_ops',
     'grad',
     'hessian',
     'inner',
@@ -250,12 +249,12 @@ class BasicOperatorAdd(Add):
 def is_constant(atom):
     """ Determine whether the given atom represents a constant number.
     """
-    if isinstance(atom, _coeffs_registery):
+    if isinstance(atom, coefficient_types):
         return True
 
     if (isinstance(atom, Pow) and
-        isinstance(atom.base, _coeffs_registery) and
-        isinstance(atom.exp , _coeffs_registery)):
+        isinstance(atom.base, coefficient_types) and
+        isinstance(atom.exp , coefficient_types)):
         return True
 
     return False
@@ -1255,7 +1254,7 @@ class Bracket(DiffOperator):
 
             # Derivative of product: d(a*b*c) = da * (b*c) + a * d(b*c)
             elif isinstance(expr, Mul):
-                coeffs = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+                coeffs = [a for a in expr.args if isinstance(a, coefficient_types)]
                 fields = [a for a in expr.args if a not in coeffs]
 
                 terms  = []
@@ -1270,7 +1269,7 @@ class Bracket(DiffOperator):
                 return Mul(a, b)
 
             # Derivative of constant: d(const) = 0
-            elif isinstance(expr, _coeffs_registery):
+            elif isinstance(expr, coefficient_types):
                 return S.Zero
 
         # Automatic evaluation to canonical form: reorder arguments by using
@@ -1343,11 +1342,11 @@ class Convolution(BasicOperator):
         #     return is done at the end
         alpha = S.One
         if isinstance(left, Mul):
-            coeffs  = [a for a in left.args if isinstance(a, _coeffs_registery)]
+            coeffs  = [a for a in left.args if isinstance(a, coefficient_types)]
             for a in left.args:
                 if ( isinstance(a, Pow) and
-                     isinstance(a.base, _coeffs_registery) and
-                     isinstance(a.exp, _coeffs_registery) ):
+                     isinstance(a.base, coefficient_types) and
+                     isinstance(a.exp, coefficient_types) ):
                     coeffs += [a]
 
             vectors = [a for a in left.args if not(a in coeffs)]
@@ -1364,11 +1363,11 @@ class Convolution(BasicOperator):
             left   = b
 
         if isinstance(right, Mul):
-            coeffs  = [a for a in right.args if isinstance(a, _coeffs_registery)]
+            coeffs  = [a for a in right.args if isinstance(a, coefficient_types)]
             for a in right.args:
                 if ( isinstance(a, Pow) and
-                     isinstance(a.base, _coeffs_registery) and
-                     isinstance(a.exp, _coeffs_registery) ):
+                     isinstance(a.base, coefficient_types) and
+                     isinstance(a.exp, coefficient_types) ):
                     coeffs += [a]
 
             vectors = [a for a in right.args if not(a in coeffs)]
@@ -1434,7 +1433,7 @@ class NormalDerivative(DiffOperator):
             return Add(*args)
 
         elif isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            coeffs  = [a for a in expr.args if isinstance(a, coefficient_types)]
             vectors = [a for a in expr.args if not(a in coeffs)]
 
             a = S.One
@@ -1507,7 +1506,7 @@ class Jump(BasicOperator):
             return Add(*args)
 
         elif isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            coeffs  = [a for a in expr.args if isinstance(a, coefficient_types)]
             vectors = [a for a in expr.args if not(a in coeffs)]
 
             a = S.One
@@ -1580,7 +1579,7 @@ class Average(BasicOperator):
             return Add(*args)
 
         elif isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            coeffs  = [a for a in expr.args if isinstance(a, coefficient_types)]
             vectors = [a for a in expr.args if not(a in coeffs)]
 
             a = S.One
@@ -1649,7 +1648,7 @@ class MinusInterfaceOperator(BasicOperator):
             return Add(*args)
 
         elif isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            coeffs  = [a for a in expr.args if isinstance(a, coefficient_types)]
             vectors = [a for a in expr.args if not(a in coeffs)]
 
             a = S.One
@@ -1744,7 +1743,7 @@ class PlusInterfaceOperator(BasicOperator):
             return Add(*args)
 
         elif isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            coeffs  = [a for a in expr.args if isinstance(a, coefficient_types)]
             vectors = [a for a in expr.args if not(a in coeffs)]
 
             a = S.One
@@ -1806,10 +1805,10 @@ class PlusInterfaceOperator(BasicOperator):
 
 #==============================================================================
 
-_generic_ops  = (Dot, Cross, Inner, Outer, Convect, Convolution)
+generic_ops = (Dot, Cross, Inner, Outer, Convect, Convolution)
 
-_diff_ops  = (Grad, Curl, Rot, Div,
-              Bracket, Laplace, Hessian)
+diff_ops = (Grad, Curl, Rot, Div,
+            Bracket, Laplace, Hessian)
 
 # ... alias for ufl compatibility
 # user friendly functions
@@ -1836,9 +1835,6 @@ Dn    = NormalDerivative
 minus = MinusInterfaceOperator
 plus  = PlusInterfaceOperator
 
-
-_is_op_test_function = lambda op: (isinstance(op, (Grad, Curl, Div)) and
-                                   isinstance(op._args[0], (ScalarFunction, VectorFunction)))
 
 _is_sympde_atom   = lambda a: isinstance(a, (ScalarFunction, VectorFunction, minus, plus))
 

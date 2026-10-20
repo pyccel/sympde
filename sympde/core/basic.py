@@ -113,4 +113,4 @@ class BasicDerivable(Basic):
     pass
 
 #==============================================================================
-_coeffs_registery = (int, float, complex, Number, NumberSymbol, Constant)
+coefficient_types = (int, float, complex, Number, NumberSymbol, Constant)
