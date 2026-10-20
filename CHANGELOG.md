@@ -29,6 +29,9 @@ All notable changes to this project will be documented in this file.
 - #106: Store only `axis` and `weight` in the `args` of the 1D forms (`Mass`, `Stiffness`, `Advection`, `AdvectionT`, `Bilaplacian`). Their name is now a class attribute.
 - [DEVELOPER] Modernize the package metadata and consolidate the pytest and coverage configuration in `pyproject.toml`.
 - [DEVELOPER] Modernize the Sphinx configuration, API-documentation generation, and API docstring markup.
+- [DEVELOPER] Remove the leading underscore from the module-level names used by other SymPDE modules, and rename `_coeffs_registery` to `coefficient_types`.
+- [DEVELOPER] Modernize the package metadata and consolidate the pytest and coverage configuration in `pyproject.toml`.
+- [DEVELOPER] Modernize the Sphinx configuration, API-documentation generation, and API docstring markup.
 - [DEVELOPER] Test the minimum supported SymPy version in a dedicated CI job.
 
 ### Fixed
