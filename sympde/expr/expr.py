@@ -9,8 +9,8 @@ from sympy.core import Basic, S
 from sympy.core import Expr, Add, Mul
 from sympy.core.numbers import Zero as sy_Zero
 from sympy.core.containers import Tuple
+from sympy.utilities.iterables import is_sequence
 
-from sympde.old_sympy_utilities import is_sequence
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import Constant
 from sympde.core.utils import random_string
@@ -247,8 +247,7 @@ class Integral(CalculusFunction):
     def _hashable_content(self):
         return (self.expr , self.domain)
 
-    def __hash__(self):
-        return hash(self._hashable_content())
+    __hash__ = CalculusFunction.__hash__
 
     @classmethod
     def subs_boundary_expr(cls, expr, domain):
@@ -402,7 +401,7 @@ class LinearForm(BasicForm):
         # Make sure that 'values' is always a list
         if len(tests) == 1:
             values = tests[0]
-            if not is_sequence(values, vector=isinstance(values, VectorFunction)):
+            if isinstance(values, VectorFunction) or not is_sequence(values):
                 values = [values]
         else:
             values = tests
@@ -513,8 +512,8 @@ class BilinearForm(BasicForm):
         expr = self._update_free_variables(**kwargs)
 
         # If needed, convert positional arguments to lists
-        if not is_sequence(trials, vector=isinstance(trials, VectorFunction)): trials = [trials]
-        if not is_sequence(tests, vector=isinstance(tests, VectorFunction)): tests  = [tests ]
+        if isinstance(trials, VectorFunction) or not is_sequence(trials): trials = [trials]
+        if isinstance(tests, VectorFunction) or not is_sequence(tests): tests  = [tests ]
 
         # Concatenate input values into single list
         values = [*trials, *tests]
@@ -535,15 +534,11 @@ class SemiNorm(Functional):
         kind = kind.lower()
         if kind not in ['l2', 'h1', 'h2']:
             raise ValueError('> Only L2, H1, H2 norms are available')
-        # ...
 
-        # ...
         is_vector = isinstance(expr, (Matrix, ImmutableDenseMatrix, Tuple, list, tuple))
         if is_vector:
             expr = ImmutableDenseMatrix(expr)
-        # ...
 
-        # ...
         exponent = None
         if kind == 'l2' and evaluate:
             exponent = 2
@@ -582,7 +577,6 @@ class SemiNorm(Functional):
 
             else:
                 raise NotImplementedError('TODO')
-        # ...
 
         obj = Functional.__new__(cls, expr, domain, evaluate=evaluate)
         obj._exponent = exponent
@@ -607,15 +601,11 @@ class Norm(Functional):
         kind = kind.lower()
         if kind not in ['l2', 'h1', 'h2']:
             raise ValueError('> Only L2, H1, H2 norms are available')
-        # ...
 
-        # ...
         is_vector = isinstance(expr, (Matrix, ImmutableDenseMatrix, Tuple, list, tuple))
         if is_vector:
             expr = ImmutableDenseMatrix(expr)
-        # ...
 
-        # ...
         exponent = None
         if kind == 'l2' and evaluate:
             exponent = 2
@@ -655,7 +645,6 @@ class Norm(Functional):
 
             else:
                 raise NotImplementedError('TODO')
-        # ...
 
         obj = Functional.__new__(cls, expr, domain, evaluate=evaluate)
         obj._exponent = exponent
@@ -695,7 +684,6 @@ def linearize(form, fields, trials=None):
     if not isinstance(form, LinearForm):
         raise TypeError('> Expecting a LinearForm')
 
-    # ...
     if not isinstance(fields, (list, tuple, Tuple)):
         fields = [fields]
 
@@ -703,7 +691,6 @@ def linearize(form, fields, trials=None):
         if not isinstance(field, (ScalarFunction, VectorFunction)):
             raise TypeError('> Expecting a {Scalar|Vector}Function', field)
 
-    # ...
     if trials:
         if not isinstance(trials, (list, tuple, Tuple)):
             trials = [trials]
@@ -713,8 +700,6 @@ def linearize(form, fields, trials=None):
                 raise TypeError('> Expecting a {Scalar|Vector}Function', trial)
     else:
         trials = [x.space.element(x.name + '_trial_' + random_string(4)) for x in fields]
-
-    # ...
 
     eps        = Constant('eps_' + random_string(4))
     new_fields = [field + eps*trial for field, trial in zip(fields, trials)]
@@ -855,7 +840,7 @@ def mul_integral(expr):
 def mul_add(expr):
     args_int = [a for a in expr.args if isinstance(a, IntAdd)]
     coeff    = Mul(*[a for a in expr.args if not a in args_int])
-    args_int[0] = [IntAdd(*[coeff*i for i in args_int[0].args])]
+    args_int[0] = IntAdd(*[coeff*i for i in args_int[0].args])
     return Mul(*args_int)
 
 def add_int(expr):

@@ -33,12 +33,12 @@ from sympy import simplify
 from sympy import S
 from sympy import Basic
 from sympy import Indexed, IndexedBase
+from sympy.utilities.iterables import is_sequence
 
-from sympde.old_sympy_utilities import is_sequence
 from .basic import CalculusFunction
 from .basic import _coeffs_registery
 
-# ...
+
 # TODO update default name
 class LinearOperator(CalculusFunction):
 
@@ -88,9 +88,8 @@ class LinearOperator(CalculusFunction):
 
             return Mul(a, b)
         return cls(expr, evaluate=False)
-# ...
 
-# ...
+
 class DotBasic(CalculusFunction):
 
     nargs = None
@@ -196,9 +195,8 @@ class Dot_3d(DotBasic):
             v = simplify(v)
 
         return u[0]*v[0] + u[1]*v[1] + u[2]*v[2]
-# ...
 
-# ...
+
 class CrossBasic(CalculusFunction):
 
     nargs = None
@@ -252,10 +250,8 @@ class Cross_3d(CrossBasic):
         return Tuple(u[1]*v[2] - u[2]*v[1],
                      u[2]*v[0] - u[0]*v[2],
                      u[0]*v[1] - u[1]*v[0])
-# ...
 
 
-# ...
 class InnerBasic(CalculusFunction):
 
     nargs = None
@@ -318,4 +314,3 @@ class Inner_3d(InnerBasic):
         # TODO add conjugate
         M = u.transpose()*v
         return M.trace()
-# ...

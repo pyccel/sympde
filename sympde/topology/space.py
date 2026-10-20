@@ -16,6 +16,7 @@ from sympde.core.utils import expand_name_patterns
 from sympde.core.utils import random_string
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import _coeffs_registery
+from sympde.core.basic import new_basic
 
 from .basic    import BasicDomain, Union, Interval
 from .datatype import SpaceType, dtype_space_registry
@@ -145,7 +146,6 @@ class BasicFunctionSpace(Basic):
         obj._domain = domain
         obj._shape  = shape
 
-        # ...
         if kind is None:
             kind = 'undefined'
 
@@ -160,12 +160,9 @@ class BasicFunctionSpace(Basic):
         kind_str  = kind.name
         obj._kind = kind
 
-        # ...
         if not(kind_str == 'undefined'):
             obj._regularity = dtype_regularity_registry[kind_str]
-        # ...
 
-        # ...
         # TODO remove this if => bug in tensor form
         if isinstance(domain, Interval):
             is_broken = False
@@ -174,7 +171,6 @@ class BasicFunctionSpace(Basic):
             is_broken = len(domain) > 1
 
         obj._is_broken = is_broken
-        # ...
 
         return obj
 
@@ -217,8 +213,8 @@ class BasicFunctionSpace(Basic):
     def __mul__(self, other):
         return ProductSpace(self, other)
 
-    def __hash__(self):
-        return hash((self.name, self.domain, self.shape, self.kind))
+    def _hashable_content(self):
+        return (self.name, self.domain, self.shape, self.kind)
 #==============================================================================
 class ScalarFunctionSpace(BasicFunctionSpace):
     """
@@ -288,8 +284,6 @@ class Derham:
         self._domain = domain
         self._shape  = shape
 
-
-    # ...
     @property
     def spaces(self):
         return self._spaces
@@ -329,13 +323,9 @@ class ProductSpace(BasicFunctionSpace):
 
     """
     def __new__(cls, *spaces):
-
-        # ...
         if not (isinstance(spaces, (tuple, list, Tuple))):
             raise TypeError('> Expecting a tuple, list or Tuple')
-        # ...
 
-        # ...
         args = []
         for V in spaces:
             if isinstance(V, ProductSpace):
@@ -345,7 +335,6 @@ class ProductSpace(BasicFunctionSpace):
                 args += [V]
 
         spaces = Tuple(*args)
-        # ...
 
         # ... all spaces must have the same domain
 
@@ -353,18 +342,13 @@ class ProductSpace(BasicFunctionSpace):
         #for space in spaces:
         #    if not(space.domain is domain):
         #        raise ValueError('> all spaces must have the same domain')
-        # ...
 
-        # ...
         shape = sum([i.shape for i in spaces])
-        # ...
 
-        # ...
         name = ''.join(i.name for i in spaces)
-        # ...
 
         assert all(i.is_broken for i in spaces) or all(not i.is_broken for i in spaces)
-        # ...
+
         def _get_name(V):
             if V.ldim == 1:
                 return V.coordinates.name
@@ -379,16 +363,13 @@ class ProductSpace(BasicFunctionSpace):
         coordinates = spaces[0].coordinates
         if isinstance(coordinates, Symbol):
             coordinates = [coordinates]
-        # ...
 
-        # ...
         obj = Basic.__new__(cls, spaces)
 
         obj._shape       = shape
         obj._coordinates = coordinates
         obj._name        = name
         obj._is_broken   = spaces[0].is_broken
-        # ...
 
         return obj
 
@@ -438,18 +419,13 @@ class ScalarFunction(Symbol):
     def __new__(cls, space, name):
         if not isinstance(space, ScalarFunctionSpace):
             raise ValueError('Expecting a ScalarFunctionSpace')
-        obj = Expr.__new__(cls)
+        obj = Symbol.__xnew__(cls, name, commutative=True)
         obj._space = space
-        obj._name  = name
         return obj
 
     @property
     def space(self):
         return self._space
-
-    @property
-    def name(self):
-        return self._name
 
     @property
     def ldim(self):
@@ -469,8 +445,9 @@ class ScalarFunction(Symbol):
         sstr = printer.doprint
         return sstr(self.name)
 
-    def __hash__(self):
-        return hash((self.name, self.space))
+    def _hashable_content(self):
+        return Symbol._hashable_content(self) + (self.space,)
+
 #==============================================================================
 # this class is needed, otherwise sympy will convert VectorFunction to
 # IndexedBase
@@ -547,18 +524,13 @@ class VectorFunction(Symbol, IndexedBase):
     def __new__(cls, space, name):
         if not isinstance(space, VectorFunctionSpace):
             raise ValueError('Expecting a VectorFunctionSpace')
-        obj        = Expr.__new__(cls)
+        obj        = Symbol.__xnew__(cls, name, commutative=False)
         obj._space = space
-        obj._name = name
         return obj
 
     @property
     def space(self):
         return self._space
-
-    @property
-    def name(self):
-        return self._name
 
     @property
     def shape(self):
@@ -595,8 +567,8 @@ class VectorFunction(Symbol, IndexedBase):
         sstr = printer.doprint
         return sstr(self.name)
 
-    def __hash__(self):
-        return hash((self.name, self.space))
+    def _hashable_content(self):
+        return Symbol._hashable_content(self) + (self.space,)
 
 #==============================================================================
 # this is implemented as a function, it would be better to have it as a class
@@ -646,7 +618,7 @@ class Trace(AtomicExpr):
         if options.pop('evaluate',True):
             return cls.eval(expr, boundary, order)
 
-        obj = Basic.__new__(cls, expr, boundary, order)
+        obj = new_basic(cls, expr, boundary, order)
         obj.is_commutative = expr.is_commutative
         return obj
 
@@ -660,7 +632,7 @@ class Trace(AtomicExpr):
 
     @property
     def order(self):
-        return self._args[2]
+        return int(self._args[2])
 
     @classmethod
     def eval(cls, expr, boundary, order):

@@ -9,6 +9,35 @@ from sympde.topology import H1Space, HcurlSpace, HdivSpace, L2Space, UndefinedSp
 from sympde.topology import ScalarFunction, VectorFunction
 from sympde.topology import Projector
 
+
+def test_function_symbol_identity():
+    domain = Domain('Omega', dim=2)
+    scalar_space = ScalarFunctionSpace('V', domain)
+    equivalent_scalar_space = ScalarFunctionSpace('V', domain)
+    other_scalar_space = ScalarFunctionSpace('W', domain)
+    vector_space = VectorFunctionSpace('X', domain)
+    other_vector_space = VectorFunctionSpace('Y', domain)
+
+    u = ScalarFunction(scalar_space, 'u')
+    same_u = ScalarFunction(equivalent_scalar_space, 'u')
+    other_u = ScalarFunction(other_scalar_space, 'u')
+    v = VectorFunction(vector_space, 'v')
+    other_v = VectorFunction(other_vector_space, 'v')
+
+    assert scalar_space == equivalent_scalar_space
+    assert hash(scalar_space) == hash(equivalent_scalar_space)
+    assert scalar_space != other_scalar_space
+    assert u == same_u
+    assert hash(u) == hash(same_u)
+    assert u != other_u
+    assert v != other_v
+    assert u + other_u != 2 * u
+    assert (u + other_u).free_symbols == {u, other_u}
+    assert u.is_commutative
+    assert not v.is_commutative
+    assert u.free_symbols == {u}
+    assert v.free_symbols == {v}
+
 #==============================================================================
 def test_space_1d_1():
 
@@ -47,23 +76,18 @@ def test_space_2d_1():
     U2 = ScalarFunctionSpace('U2', domain)
     U3 = VectorFunctionSpace('U3', domain)
 
-    # ...
     V = V1 * V2 * V3
 
     assert(V.ldim == DIM)
     assert(V.shape == 3)
     assert(V.name == 'V1V2V3')
-    # ...
 
-    # ...
     U = U1 * U2 * U3
 
     assert(U.ldim == DIM)
     assert(U.shape == 4)
     assert(U.name == 'U1U2U3')
-    # ...
 
-    # ...
     v1, v2, v3 = element_of(V, 'v1, v2, v3')
 
     assert(isinstance(v1, ScalarFunction))
@@ -75,9 +99,7 @@ def test_space_2d_1():
     assert(v1.name == 'v1')
     assert(v2.name == 'v2')
     assert(v3.name == 'v3')
-    # ...
 
-    # ...
     u1, u2, u3 = element_of(U, 'u1, u2, u3')
 
     assert(isinstance(u1, ScalarFunction))
@@ -86,7 +108,6 @@ def test_space_2d_1():
     assert(u1.name == 'u1')
     assert(u2.name == 'u2')
     assert(u3.name == 'u3')
-    # ...
 
 
 #==============================================================================
@@ -148,7 +169,6 @@ def test_projector_2d_1():
 
     v, w = element_of(V*W, ['v', 'w'])
 
-    # ...
     P_V = Projector(V)
     assert(P_V.space == V)
 
@@ -159,9 +179,7 @@ def test_projector_2d_1():
 
     Pdiv_w = P_V(div(w))
     assert(isinstance(Pdiv_w, ScalarFunction))
-    # ...
 
-    # ...
     P_W = Projector(W)
     assert(P_W.space == W)
 
@@ -172,7 +190,6 @@ def test_projector_2d_1():
     Pgrad_v = P_W(grad(v))
     assert(isinstance(Pgrad_v, VectorFunction))
     assert(P_W(Pgrad_v) == Pgrad_v)
-    # ...
 
 
 #==============================================================================

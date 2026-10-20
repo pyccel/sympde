@@ -17,9 +17,16 @@ from sympy.core.containers import Tuple
 from sympy.tensor import IndexedBase, Indexed
 from sympy.core import Add, Mul, Pow
 from sympy.core.expr import AtomicExpr
+from sympy.utilities.iterables import is_sequence
 
-from sympde.old_sympy_utilities import is_sequence, with_metaclass
-from sympde.core.basic import CalculusFunction
+from sympde.core.basic import (
+    CalculusFunction,
+    new_basic,
+    restore_container_argument,
+    restore_int_argument,
+    restore_optional_argument,
+    restore_string_argument,
+)
 from .basic            import BasicDomain, InteriorDomain, Boundary, Union, Connectivity
 from .basic            import Interval, Interface, CornerBoundary, CornerInterface
 from .basic            import ProductDomain
@@ -37,49 +44,59 @@ class Domain(BasicDomain):
     Represents an undefined domain.
     A domain is defined by at least one interior domain and possible boundaries.
     A domain without a boundary is either infinite or periodic.
-    A domain can also be constructed from a connectivity, in which case, only the
-    name and connectivity need to be passed.
+    Instead of interior domains, only a dimension can be given, in which case
+    a single interior domain with the name of the domain is created.
+    Multi-patch domains additionally carry a connectivity, which describes the
+    interfaces between their patches.
     """
 
-    def __new__(cls, name : str, *,
+    def __new__(cls, name : str,
             interiors : TypeUnion[Iterable[InteriorDomain], InteriorDomain, None] = None,
             boundaries : TypeUnion[Iterable[Boundary], Boundary, None] = None,
-            dim : Optional[int] = None,
-            connectivity : Optional[Connectivity] = None,
             mapping : Optional[Mapping] = None,
-            logical_domain : Optional[Domain] = None):
+            logical_domain : Optional[Domain] = None,
+            connectivity : TypeUnion[Connectivity, Iterable[Interface], None] = None,
+            *, dim : Optional[int] = None):
         """
-        Interiors or connectivity must be given. When the mapping is given 
-        then logical_domain must be specified as well.
-    
+        Either interiors or dim must be given. The mapping and the
+        logical_domain must be given together, or not at all.
+
+        The positional arguments follow the order of `self.args`, so that
+        `domain.func(*domain.args)` reconstructs the domain.
+
         Parameters
         ----------
         name : str
             Name of the domain
-        interiors : Iterable[InteriorDomain], InteriorDomain or None, optional
-            Interior domains
-        boundaries : Iterable[Boundary], Boundary or None, optional
+        interiors : Iterable[InteriorDomain], Union, InteriorDomain or None, optional
+            Interior domains. Nested iterables are flattened by one level.
+        boundaries : Iterable[Boundary], Union, Boundary or None, optional
             The boundaries of the domain
-        dim : int, optional
-            Dimension of the space of the domain
-        connectivity : Connectivity or None, optional
-            Connectivity object with the interfaces of the domain
         mapping : Mapping or None, optional
             Maps the logical domain to the physical domain
         logical_domain : Domain or None, optional
             Logical domain that is mapped to the physical domain
+        connectivity : Connectivity, Iterable[Interface] or None, optional
+            Interfaces of the domain, either as a Connectivity object or as an
+            iterable of Interface objects
+        dim : int, optional
+            Dimension of the domain. Only used to create a single interior
+            domain if interiors is not given; otherwise the dimension is taken
+            from the interiors.
         """
-        # ...
+        name = restore_string_argument(name)
+        boundaries = restore_optional_argument(boundaries)
+        mapping = restore_optional_argument(mapping)
+        logical_domain = restore_optional_argument(logical_domain)
+        connectivity = restore_container_argument(connectivity)
+        dim = restore_int_argument(dim)
+
         if not isinstance(name, str):
             raise TypeError('> name must be a string')
-        # ...
 
-        # ...
-        if ( ( interiors is None ) and ( connectivity is None ) and ( dim is None) ):
-            raise ValueError('> either interiors or connectivity must be given')
-        # ...
+        if interiors is None and dim is None:
+            raise ValueError('> either interiors or dim must be given')
 
-        # ...
         if not( interiors is None ):
             if not isinstance( interiors, (*iterable_types, InteriorDomain)):
                 raise TypeError('> Expecting an iterable or a InteriorDomain')
@@ -101,7 +118,6 @@ class Domain(BasicDomain):
                     raise TypeError('> all interiors must be of type InteriorDomain')
 
             interiors = Tuple(*interiors)
-        # ...
 
         if not( boundaries is None ):
             if not isinstance( boundaries, (*iterable_types, Boundary)):
@@ -119,15 +135,20 @@ class Domain(BasicDomain):
 
         boundaries = Tuple(*boundaries)
 
-        if not( connectivity is None ):
-            if not isinstance( connectivity, Connectivity ):
-                raise TypeError('> Expecting a Connectivity')
-
-            # TODO check that patches appearing in connectivity are in interiors
-        else:
+        if connectivity is None:
             connectivity = Connectivity()
 
-        # ...
+        elif not isinstance( connectivity, Connectivity ):
+            if not isinstance( connectivity, iterable_types ):
+                raise TypeError('> Expecting a Connectivity or an iterable of Interface')
+
+            if not all([isinstance(i, Interface) for i in connectivity]):
+                raise TypeError('> all interfaces must be of type Interface')
+
+            connectivity = Connectivity({str(i.name): i for i in connectivity})
+
+        # TODO check that patches appearing in connectivity are in interiors
+
         if interiors is None and dim:
             interiors = [InteriorDomain(name, dim=dim)]
 
@@ -146,10 +167,10 @@ class Domain(BasicDomain):
         assert mapping is None and logical_domain is None or \
         mapping is not None and logical_domain  is not None
 
-        # ...
         boundaries = Union(*boundaries)
 
-        obj = Basic.__new__(cls, name, interiors, boundaries, mapping)
+        obj = new_basic(cls, name, interiors, boundaries, mapping,
+                         logical_domain, tuple(connectivity.values()))
         obj._connectivity   = connectivity
         obj._corners        = None
         obj._dtype          = dtype
@@ -159,7 +180,7 @@ class Domain(BasicDomain):
 
     @property
     def name(self) -> str:
-        return self.args[0]
+        return self.args[0].name
 
     @property
     def interior(self) -> TypeUnion[Union, InteriorDomain]:
@@ -171,12 +192,12 @@ class Domain(BasicDomain):
     def boundary(self) -> TypeUnion[Union, Boundary]:
         """Either a Union object containing the boundaries or just a boundary 
         if there is only one"""
-        return self.args[2]
+        return restore_optional_argument(self.args[2])
 
     @property
     def mapping(self) -> Optional[Mapping]:
         """The mapping that maps the logical domain to the physical domain"""
-        return self.args[3]
+        return restore_optional_argument(self.args[3])
 
     @property
     def subdomains(self) -> tuple:
@@ -374,7 +395,7 @@ class Domain(BasicDomain):
 
         if ext != '.h5':
             raise ValueError('> Only h5 files are supported')
-        # ...
+
         from sympde.topology.mapping import Mapping
 
         h5  = h5py.File( filename, mode='r' )
@@ -591,7 +612,6 @@ class Domain(BasicDomain):
             mapping        = None
             logical_domain = None
 
-        # ...
         return Domain(name,
                       interiors=interiors,
                       boundaries=boundaries,
@@ -810,8 +830,21 @@ class NCubeInterior(InteriorDomain):
     def __new__(cls, name, dim=None, dtype=None, min_coords=None, max_coords=None,
                     mapping=None, logical_domain=None):
 
-        obj = InteriorDomain.__new__(cls, name, dim=dim, dtype=dtype,
-                    mapping=mapping, logical_domain=logical_domain)
+        name = restore_string_argument(name)
+        dim = restore_int_argument(dim)
+        dtype = restore_container_argument(dtype)
+        min_coords = restore_container_argument(min_coords)
+        max_coords = restore_container_argument(max_coords)
+        mapping = restore_optional_argument(mapping)
+        logical_domain = restore_optional_argument(logical_domain)
+
+        obj = new_basic(cls, name, dim, dtype, min_coords, max_coords,
+                         mapping, logical_domain)
+        obj._dim = dim
+        obj._target = None
+        obj._dtype = dtype
+        obj._mapping = mapping
+        obj._logical_domain = logical_domain
 
         obj._min_coords = min_coords
         obj._max_coords = max_coords
@@ -839,15 +872,20 @@ class NCubeInterior(InteriorDomain):
         return self._max_coords
 
     @property
+    def mapping(self):
+        return self._mapping
+
+    @property
+    def logical_domain(self):
+        return self._logical_domain
+
+    @property
     def boundary(self):
         return self._boundary
 
-    def __hash__(self):
-        return hash((self.args, self.min_coords, self.max_coords))
-
     def get_boundary(self, axis=None, ext=None):
         """return boundary by (axis, ext)."""
-        # ...
+
         assert(not( ext  is None ))
 
         if axis is None:
@@ -865,7 +903,35 @@ class NCubeInterior(InteriorDomain):
 #
 class NCube(Domain):
 
-    def __new__(cls, name, dim, min_coords, max_coords):
+    def __new__(cls, name, dim, min_coords, max_coords, *structural_args):
+        """
+        Create an n-dimensional box [min_coords, max_coords]. Depending on
+        dim, a Line, Square or Cube is returned for dim <= 3.
+
+        When SymPy rebuilds the object via `func(*args)`, the positional
+        parameters receive the stored Domain arguments instead (`name`,
+        `interiors`, `boundaries`, `mapping`, `logical_domain` and
+        `connectivity`). These are forwarded unchanged to `Domain.__new__`.
+
+        Parameters
+        ----------
+        name : str
+            Name of the domain
+        dim : int
+            Number of dimensions
+        min_coords : Iterable[float]
+            Lower bounds of the domain, one per dimension
+        max_coords : Iterable[float]
+            Upper bounds of the domain, one per dimension
+        """
+        if structural_args:
+            return cls._rebuild(name, dim, min_coords, max_coords,
+                                *structural_args)
+
+        name = restore_string_argument(name)
+        dim = restore_int_argument(dim)
+        min_coords = restore_container_argument(min_coords)
+        max_coords = restore_container_argument(max_coords)
 
         assert isinstance(name, str)
         assert isinstance(dim, (int, Integer))
@@ -883,10 +949,6 @@ class NCube(Domain):
 
         if not all(xmin < xmax for xmin, xmax in zip(min_coords, max_coords)):
             raise ValueError("Min coordinates must be smaller than max")
-
-        coord_names = 'x1:{}'.format(dim + 1)
-
-        coordinates = symbols(coord_names, real=True)
 
         # Choose which type to use:
         #   a) if dim <= 3, use Line, Square or Cube;
@@ -930,10 +992,22 @@ class NCube(Domain):
         obj = super().__new__(cls, name, interiors=[interior], boundaries=interior.boundary)
 
         # Store attributes in object
-        obj._coordinates = tuple(coordinates)
+        obj._coordinates = cls._make_coordinates(dim)
 
         # Return object
         return obj
+
+    @classmethod
+    def _rebuild(cls, *args):
+        """Rebuild the domain from the stored Domain arguments."""
+        obj = Domain.__new__(cls, *args)
+        obj._coordinates = cls._make_coordinates(obj.dim)
+        return obj
+
+    @staticmethod
+    def _make_coordinates(dim):
+        """Return the coordinate symbols x1, ..., x{dim}."""
+        return tuple(symbols('x1:{}'.format(dim + 1), real=True))
 
     @classmethod
     def from_file(cls, filename):
@@ -950,7 +1024,16 @@ class NCube(Domain):
 #==============================================================================
 class Line(NCube):
 
-    def __new__(cls, name='Line', bounds=(0, 1)):
+    def __new__(cls, name='Line', bounds=(0, 1), *structural_args):
+        """
+        Create the interval [bounds[0], bounds[1]].
+
+        When SymPy rebuilds the object via `func(*args)`, the positional
+        parameters receive the stored Domain arguments instead, see
+        `NCube.__new__`.
+        """
+        if structural_args:
+            return cls._rebuild(name, bounds, *structural_args)
         dim = 1
         min_coords = (bounds[0],)
         max_coords = (bounds[1],)
@@ -963,7 +1046,17 @@ class Line(NCube):
 #==============================================================================
 class Square(NCube):
 
-    def __new__(cls, name='Square', bounds1=(0, 1), bounds2=(0, 1)):
+    def __new__(cls, name='Square', bounds1=(0, 1), bounds2=(0, 1),
+                *structural_args):
+        """
+        Create the rectangle bounds1 x bounds2.
+
+        When SymPy rebuilds the object via `func(*args)`, the positional
+        parameters receive the stored Domain arguments instead, see
+        `NCube.__new__`.
+        """
+        if structural_args:
+            return cls._rebuild(name, bounds1, bounds2, *structural_args)
         dim = 2
         min_coords = (bounds1[0], bounds2[0])
         max_coords = (bounds1[1], bounds2[1])
@@ -980,7 +1073,18 @@ class Square(NCube):
 #==============================================================================
 class Cube(NCube):
 
-    def __new__(cls, name='Cube', bounds1=(0, 1), bounds2=(0, 1), bounds3=(0, 1)):
+    def __new__(cls, name='Cube', bounds1=(0, 1), bounds2=(0, 1),
+                bounds3=(0, 1), *structural_args):
+        """
+        Create the box bounds1 x bounds2 x bounds3.
+
+        When SymPy rebuilds the object via `func(*args)`, the positional
+        parameters receive the stored Domain arguments instead, see
+        `NCube.__new__`.
+        """
+        if structural_args:
+            return cls._rebuild(name, bounds1, bounds2, bounds3,
+                                *structural_args)
         dim = 3
         min_coords = (bounds1[0], bounds2[0], bounds3[0])
         max_coords = (bounds1[1], bounds2[1], bounds3[1])
@@ -1015,7 +1119,7 @@ class TangentVector(BoundaryVector):
     pass
 
 #==============================================================================
-class ElementDomain(with_metaclass(Singleton, Basic)):
+class ElementDomain(Basic, metaclass=Singleton):
     pass
 
 #==============================================================================
@@ -1099,17 +1203,14 @@ def split(domain, value):
         bounds = (bounds[0], value)
         I_left = Line(name='{name}_l'.format(name=domain.name),
                       bounds=bounds)
-        # ...
 
         # ... right
         bounds = (value, bounds[1])
         I_right = Line(name='{name}_r'.format(name=domain.name),
                        bounds=bounds)
-        # ...
 
         # ... interiors
         interiors = [I_left.interior, I_right.interior]
-        # ...
 
         # ... external boundaries
         bnd_left = [b for b in I_left.boundary.as_tuple() if b.ext == -1]
@@ -1119,7 +1220,6 @@ def split(domain, value):
         bnd_right = bnd_right[0]
 
         boundaries = [bnd_left, bnd_right]
-        # ...
 
         # ... connectivity: internal interfaces
         int_left = [b for b in I_left.boundary.as_tuple() if b.ext == 1]
@@ -1130,7 +1230,6 @@ def split(domain, value):
 
         connectivity = Connectivity()
         connectivity['I'] = (int_left, int_right)
-        # ...
 
         return Domain(domain.name,
                       interiors=interiors,

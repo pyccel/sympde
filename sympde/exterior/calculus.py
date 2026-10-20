@@ -14,6 +14,7 @@ from sympy import Integer, Float
 from sympy.core.singleton import Singleton
 from sympy.core import Add, Mul
 from sympy.core.singleton import S
+from sympy.utilities.iterables import is_sequence
 
 from sympde.core.basic import _coeffs_registery
 from sympde.core import LinearOperator
@@ -134,17 +135,13 @@ class ExteriorProduct(LinearOperator):
         right = _args[1]
         # TODO add properties in the spirit of ExteriorDerivative
 
-        # ...
         if isinstance(left, Add):
             args = [cls.eval(i, right) for i in left.args]
             return Add(*args)
-        # ...
 
-        # ...
         if isinstance(right, Add):
             args = [cls.eval(left, i) for i in right.args]
             return Add(*args)
-        # ...
 
         # ... from now on, we construct left and right with some coeffs
         #     return is done at the end
@@ -178,7 +175,6 @@ class ExteriorProduct(LinearOperator):
 
             alpha *= a
             right  = b
-        # ...
 
         return alpha*cls(left, right, evaluate=False)
 
@@ -594,4 +590,3 @@ jp = AdjointInteriorProduct
 Ld = AdjointLieDerivative
 
 hodge = Hodge
-# ...

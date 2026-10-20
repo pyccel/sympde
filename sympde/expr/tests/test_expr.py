@@ -725,47 +725,34 @@ def test_linearize_expr_2d_1():
     F = element_of(V1, name='F')
     G = element_of(W1, 'G')
 
-    # ...
     l = LinearExpr(v1, F**2*v1)
     a = linearize(l, F, trials='u1')
     print(a)
-    # ...
 
-    # ...
     l = LinearExpr(v1, dot(grad(F), grad(F))*v1)
     a = linearize(l, F, trials='u1')
     print(a)
-    # ...
 
-    # ...
     l = LinearExpr(v1, exp(-F)*v1)
     a = linearize(l, F, trials='u1')
     print(a)
-    # ...
 
-    # ...
     l = LinearExpr(v1, cos(F)*v1)
     a = linearize(l, F, trials='u1')
     print(a)
-    # ...
 
-    # ...
     l = LinearExpr(v1, cos(F**2)*v1)
     a = linearize(l, F, trials='u1')
     print(a)
-    # ...
 
-    # ...
     l = LinearExpr(v1, F**2*dot(grad(F), grad(v1)))
     a = linearize(l, F, trials='u1')
     print(a)
-    # ...
 
-    # ...
     l = LinearExpr(w1, dot(rot(G), grad(G))*w1)
     a = linearize(l, G, trials='u1')
     print(a)
-    # ...
+
 
 #==============================================================================
 @pytest.mark.skip(reason="New linearize() function does not accept 'LinearExpr' objects")
@@ -776,7 +763,6 @@ def test_linearize_expr_2d_2():
     v1 = element_of(V1, name='v1')
     F  = element_of(V1, name='F')
 
-    # ...
     l1 = LinearExpr(v1, F**2*v1)
     l  = LinearExpr(v1, l1(v1))
 
@@ -785,7 +771,7 @@ def test_linearize_expr_2d_2():
 
     expected = linearize(l1, F, trials='u1')
     assert linearize(l, F, trials='u1') == expected
-    # ...
+
 
 #==============================================================================
 def test_linearize_form_2d_1():
@@ -799,47 +785,34 @@ def test_linearize_form_2d_1():
 
     int_0 = lambda expr: integral(domain , expr)
 
-    # ...
     l  = LinearForm(v, int_0(F**2*v))
     a  = linearize(l, F, trials=u)
     assert a(u, v) == int_0(2 * F * u * v)
-    # ...
 
-    # ...
     l = LinearForm(v, int_0(dot(grad(F), grad(F))*v))
     a = linearize(l, F, trials=u)
     assert a(u, v) == int_0(2 * dot(grad(F), grad(u)) * v)
-    # ...
 
-    # ...
     l = LinearForm(v, int_0(exp(-F)*v))
     a = linearize(l, F, trials=u)
     assert a(u, v) == int_0(-exp(-F) * u * v)
-    # ...
 
-    # ...
     l = LinearForm(v, int_0(cos(F)*v))
     a = linearize(l, F, trials=u)
     assert a(u, v) == int_0(-sin(F) * u * v)
-    # ...
 
-    # ...
     l = LinearForm(v, int_0(cos(F**2)*v))
     a = linearize(l, F, trials=u)
     assert a(u, v) == int_0(-2 * F *sin(F**2) * u * v)
-    # ...
 
-    # ...
     l = LinearForm(v, int_0(F**2*dot(grad(F), grad(v))))
     a = linearize(l, F, trials=u)
     assert a(u, v) == int_0(2 * F * u * dot(grad(F), grad(v)) + F**2 * dot(grad(u), grad(v)))
-    # ...
 
-    # ...
     l = LinearForm(w, int_0(dot(rot(G), grad(G))*w))
     a = linearize(l, G, trials=m)
     assert a(m, w) == int_0((dot(rot(m), grad(G)) + dot(rot(G), grad(m))) * w)
-    # ...
+
 
 #==============================================================================
 def test_linearize_form_2d_2():
@@ -851,7 +824,6 @@ def test_linearize_form_2d_2():
 
     int_0 = lambda expr: integral(domain , expr)
 
-    # ...
     l1 = LinearForm(v, int_0(F**2*v))
     l  = LinearForm(v, l1(v))
 
@@ -859,7 +831,7 @@ def test_linearize_form_2d_2():
 
     expected = linearize(l1, F, trials=u)
     assert a == expected
-    # ...
+
 
 #==============================================================================
 def test_linearize_form_2d_3():
@@ -897,7 +869,6 @@ def test_linearize_form_2d_3():
 
     e3 = div(P_0 * U_0)
     l3 = LinearForm(q, int_0(e3 * q))
-    # ...
 
     # Linearize l1, l2 and l3 separately
     a1 = linearize(l1, fields=[Rho_0, U_0     ], trials=[d_rho, d_u     ])
@@ -961,10 +932,9 @@ def test_area_2d_1():
 
     int_0 = lambda expr: integral(domain, expr)
 
-    # ...
     a = BilinearForm((v,u), int_0(area * u * v))
     print(TerminalExpr(a, domain))
-    # ...
+
 
 #==============================================================================
 def test_stabilization_2d_1():
@@ -991,54 +961,38 @@ def test_stabilization_2d_1():
 
     int_0 = lambda expr: integral(domain , expr)
 
-    # ...
     expr = kappa * dot(grad(u), grad(v)) + dot(b, grad(u)) * v
     a = BilinearForm((v,u), int_0(expr))
-    # ...
 
-    # ...
     expr = f * v
     l = LinearForm(v, int_0(expr))
-    # ...
 
-    # ...
     expr = (- kappa * laplace(u) + dot(b, grad(u))) * dot(b, grad(v))
     s1 = BilinearForm((v,u), int_0(expr))
 
     expr = - f * dot(b, grad(v))
     l1 = LinearForm(v, int_0(expr))
-    # ...
 
-    # ...
     expr = (- kappa * laplace(u) + dot(b, grad(u))) * ( dot(b, grad(v)) - kappa * laplace(v))
     s2 = BilinearForm((v,u), int_0(expr))
 
     expr = - f * ( dot(b, grad(v)) - kappa * laplace(v))
     l2 = LinearForm(v, int_0(expr))
-    # ...
 
-    # ...
     expr = (- kappa * laplace(u) + dot(b, grad(u))) * ( dot(b, grad(v)) + kappa * laplace(v))
     s3 = BilinearForm((v,u), int_0(expr))
 
     expr = - f * ( dot(b, grad(v)) + kappa * laplace(v))
     l3 = LinearForm(v, int_0(expr))
-    # ...
 
-    # ...
     expr = a(v,u) + mu*area*s1(v,u)
     a1 = BilinearForm((v,u), expr)
-    # ...
 
-    # ...
     expr = a(v,u) + mu*area*s2(v,u)
     a2 = BilinearForm((v,u), expr)
-    # ...
 
-    # ...
     expr = a(v,u) + mu*area*s3(v,u)
     a3 = BilinearForm((v,u), expr)
-    # ...
 
     print(a1)
     print(TerminalExpr(a1, domain))
@@ -1067,23 +1021,20 @@ def test_user_function_2d_1():
 
     int_0 = lambda expr: integral(domain , expr)
 
-    # ...
     expr = dot(grad(u), grad(v)) + f(x,y) * u * v
     a = BilinearForm((v,u), int_0(expr))
 
     print(a)
     print(TerminalExpr(a, domain))
     print('')
-    # ...
 
-    # ...
     expr = f(x,y) * v
     l = LinearForm(v, int_0(expr))
 
     print(l)
     print(TerminalExpr(l, domain))
     print('')
-    # ...
+
 
 #==============================================================================
 def test_functional_2d_1():
@@ -1096,16 +1047,13 @@ def test_functional_2d_1():
 
     int_0 = lambda expr: integral(domain, expr)
 
-    # ...
     expr = x*y
     a = Functional(int_0(expr), domain)
 
     print(a)
     print(TerminalExpr(a, domain))
     print('')
-    # ...
 
-    # ...
     expr = F - cos(2*pi*x)*cos(3*pi*y)
     expr = dot(grad(expr), grad(expr))
     a = Functional(int_0(expr), domain)
@@ -1113,7 +1061,7 @@ def test_functional_2d_1():
     print(a)
     print(TerminalExpr(a, domain))
     print('')
-    # ...
+
 
 #==============================================================================
 def test_norm_2d_1():
@@ -1124,7 +1072,6 @@ def test_norm_2d_1():
     V = ScalarFunctionSpace('V', domain)
     F = element_of(V, name='F')
 
-    # ...
     expr = x*y
     l2_norm_u = Norm(expr, domain, kind='l2')
     h1_norm_u = Norm(expr, domain, kind='h1')
@@ -1132,9 +1079,7 @@ def test_norm_2d_1():
     print('> l2 norm = ', TerminalExpr(l2_norm_u, domain))
     print('> h1 norm = ', TerminalExpr(h1_norm_u, domain))
     print('')
-    # ...
 
-    # ...
     expr = sin(pi*x)*sin(pi*y)
     l2_norm_u = Norm(expr, domain, kind='l2')
     h1_norm_u = Norm(expr, domain, kind='h1')
@@ -1142,9 +1087,7 @@ def test_norm_2d_1():
     print('> l2 norm = ', TerminalExpr(l2_norm_u, domain))
     print('> h1 norm = ', TerminalExpr(h1_norm_u, domain))
     print('')
-    # ...
 
-    # ...
     expr = F-x*y
     l2_norm_u = Norm(expr, domain, kind='l2')
     h1_norm_u = Norm(expr, domain, kind='h1')
@@ -1152,9 +1095,7 @@ def test_norm_2d_1():
     print('> l2 norm = ', TerminalExpr(l2_norm_u, domain))
     print('> h1 norm = ', TerminalExpr(h1_norm_u, domain))
     print('')
-    # ...
 
-    # ...
     expr = F-sin(pi*x)*sin(pi*y)
     l2_norm_u = Norm(expr, domain, kind='l2')
     h1_norm_u = Norm(expr, domain, kind='h1')
@@ -1162,9 +1103,7 @@ def test_norm_2d_1():
     print('> l2 norm = ', TerminalExpr(l2_norm_u, domain))
     print('> h1 norm = ', TerminalExpr(h1_norm_u, domain))
     print('')
-    # ...
 
-    # ...
     expr = F-sin(0.5*pi*(1.-x))*sin(pi*y)
     l2_norm_u = Norm(expr, domain, kind='l2')
     h1_norm_u = Norm(expr, domain, kind='h1')
@@ -1172,9 +1111,7 @@ def test_norm_2d_1():
     print('> l2 norm = ', TerminalExpr(l2_norm_u, domain))
     print('> h1 norm = ', TerminalExpr(h1_norm_u, domain))
     print('')
-    # ...
 
-    # ...
     expr = F-cos(0.5*pi*x)*sin(pi*y)
     l2_norm_u = Norm(expr, domain, kind='l2')
     h1_norm_u = Norm(expr, domain, kind='h1')
@@ -1182,7 +1119,7 @@ def test_norm_2d_1():
     print('> l2 norm = ', TerminalExpr(l2_norm_u, domain))
     print('> h1 norm = ', TerminalExpr(h1_norm_u, domain))
     print('')
-    # ...
+
 
 #==============================================================================
 def test_norm_2d_2():
@@ -1193,7 +1130,6 @@ def test_norm_2d_2():
     V = VectorFunctionSpace('V', domain)
     F = element_of(V, 'F')
 
-    # ...
     f = Matrix((sin(pi*x)*sin(pi*y), sin(pi*x)*sin(pi*y)))
     expr = Matrix([F[0]-f[0], F[1]-f[1]])
     l2_norm_u = Norm(expr, domain, kind='l2')
@@ -1202,7 +1138,7 @@ def test_norm_2d_2():
     print('> l2 norm = ', TerminalExpr(l2_norm_u, domain))
     print('> h1 norm = ', TerminalExpr(h1_norm_u, domain))
     print('')
-    # ...
+
 
 #==============================================================================
 # this test checks some properties of bilinear forms
@@ -1215,15 +1151,12 @@ def test_bilinear_form_2d_3():
 
     int_0 = lambda expr: integral(domain, expr)
 
-    # ...
     a = BilinearForm((u,v), int_0(u*v))
     assert a.is_symmetric
-    # ...
 
-    # ...
     a = BilinearForm((u,v), int_0(dot(grad(u), grad(v))))
     assert a.is_symmetric
-    # ...
+
 
 #==============================================================================
 # this test checks some properties of bilinear forms
@@ -1236,15 +1169,12 @@ def test_bilinear_form_2d_4():
 
     int_0 = lambda expr: integral(domain, expr)
 
-    # ...
     a = BilinearForm((u, v), int_0(dot(u, v)))
     assert a.is_symmetric
-    # ...
 
-    # ...
     a = BilinearForm((u, v), int_0(inner(grad(u), grad(v))))
     assert a.is_symmetric
-    # ...
+
 
 #==============================================================================
 def test_linearity_linear_form_2d_1():
@@ -1266,7 +1196,6 @@ def test_linearity_linear_form_2d_1():
     v, v1, v2 = elements_of(V, names='v, v1, v2')
     w = element_of(W, name='w')
 
-    # ...
     int_0 = lambda expr: integral(domain , expr)
     int_1 = lambda expr: integral(B1, expr)
 
@@ -1351,8 +1280,6 @@ def test_linearity_bilinear_form_2d_1():
     u, u1, u2 = elements_of(V, names='u, u1, u2')
     v, v1, v2 = elements_of(V, names='v, v1, v2')
 
-    # ...
-
     int_0 = lambda expr: integral(domain , expr)
     int_1 = lambda expr: integral(B1, expr)
 
@@ -1388,7 +1315,6 @@ def test_linearity_bilinear_form_2d_1():
                                - v*dot(grad(u), nn)
                                + u*v / eps))
     _ = BilinearForm((u,v), a0(u,v) + a_B1(u,v))
-    # ...
 
     # The following integral expressions are not bilinear, hence BilinearForm must
     # raise an exception
@@ -1436,7 +1362,6 @@ def test_interface_2d_1():
 #        return Omega
 #    # ...
 
-    # ...
     def two_patches():
 
         A = Square('A')
@@ -1445,13 +1370,11 @@ def test_interface_2d_1():
         patches = [A, B]
         connectivity = [((A, 0, 1), (B, 0, -1), 1)]
         return Domain.join(patches, connectivity, 'Omega')
-    # ...
 
     # create a domain with an interface
     domain = two_patches()
     interface = domain.interfaces
 
-    # ...
     # Make as many checks as possible on the Interface object
     from sympde.topology.basic import Interface
     assert isinstance(interface, Interface)
@@ -1461,7 +1384,6 @@ def test_interface_2d_1():
     assert interface.dim  == 2
     assert interface.mapping is None
     assert interface.logical_domain is None
-    # ...
 
     V = ScalarFunctionSpace('V', domain)
     assert V.is_broken
@@ -1478,15 +1400,12 @@ def test_interface_2d_1():
 
 #==============================================================================
 def test_interface_integral_1():
-
-    # ...
     A = Square('A')
     B = Square('B')
 
     domains = [A, B]
     connectivity = [((0, 0, 1), (1, 0, -1), 1)]
     domain = Domain.join(domains, connectivity, 'domain')
-    # ...
 
     x,y = domain.coordinates
 
@@ -1495,9 +1414,8 @@ def test_interface_integral_1():
 
     u, v = elements_of(V, names='u, v')
 
-    # ...
     I = domain.interfaces
-    # ...
+
 
 #    expr = minus(Dn(u))
 #    print(expr)
@@ -1530,7 +1448,7 @@ def test_interface_integral_1():
 
     expr = TerminalExpr(a, domain)
     print(expr)
-    # ...
+
 
 #    # ... linear forms
 #    b = LinearForm(v, integral(domain, sin(x+y)*v)
@@ -1542,8 +1460,6 @@ def test_interface_integral_1():
 
 #==============================================================================
 def test_interface_integral_2():
-
-    # ...
     A = Square('A')
     B = Square('B')
 
@@ -1551,7 +1467,6 @@ def test_interface_integral_2():
     patches = [A, B]
     connectivity = [((0, 0, 1), (1, 0, -1), 1)]
     domain = Domain.join(patches, connectivity, 'domain')
-    # ...
 
     x,y = domain.coordinates
 
@@ -1561,7 +1476,6 @@ def test_interface_integral_2():
     u, u1, u2, u3 = elements_of(V, names='u, u1, u2, u3')
     v, v1, v2, v3 = elements_of(V, names='v, v1, v2, v3')
 
-    # ...
     I = domain.interfaces
 
     a = BilinearForm((u,v), integral(domain, dot(grad(u),grad(v))))
@@ -1572,7 +1486,6 @@ def test_interface_integral_2():
 
     print(TerminalExpr(A, domain))
     print(TerminalExpr(B, domain))
-    # ...
 
     # ... linear forms
     b = LinearForm(v, integral(I, jump(v)))
@@ -1580,12 +1493,10 @@ def test_interface_integral_2():
     b = LinearForm((v1,v2), b(v1) + b(v2) )
     expr = TerminalExpr(b, domain)
     print(expr)
-    # ...
+
 
 #==============================================================================
 def test_interface_integral_3():
-
-    # ...
     A = Square('A')
     B = Square('B')
     C = Square('C')
@@ -1603,7 +1514,6 @@ def test_interface_integral_3():
 
     u, v = elements_of(V, names='u, v')
 
-    # ...
     I = domain.interfaces
 #    print(I)
 #    print(integral(I, jump(u) * jump(v)))
@@ -1617,7 +1527,6 @@ def test_interface_integral_3():
 
     expr = TerminalExpr(a, domain)
     print(expr)
-    # ...
 
     # ... linear forms
     b = LinearForm(v, integral(domain, sin(x+y)*v)
@@ -1625,12 +1534,10 @@ def test_interface_integral_3():
 
     expr = TerminalExpr(b, domain)
     print(expr)
-    # ...
+
 
 #==============================================================================
 def test_interface_integral_4():
-
-    # ...
     A = Square('A')
     B = Square('B')
 
@@ -1648,7 +1555,6 @@ def test_interface_integral_4():
     u1, v1 = elements_of(V1, names='u1, v1')
     u2, v2 = elements_of(V2, names='u2, v2')
 
-    # ...
     I = domain.interfaces
 
     a1 = BilinearForm((u1,v1), integral(I, plus(u1)*plus(v1)))
@@ -1698,7 +1604,6 @@ def test_terminal_expressions_for_navier_stokes():
     uy = x*(x-1)
     ue = Matrix([[ux], [uy]])
     pe = sin(pi*y)
-    # ...
 
     # ... Compute right-hand side
     a = TerminalExpr(-mu*laplace(ue), domain)

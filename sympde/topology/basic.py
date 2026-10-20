@@ -8,6 +8,14 @@ from sympy.core import Basic, Symbol, Expr
 from sympy.core.containers import Tuple
 from sympy.tensor import IndexedBase
 
+from sympde.core.basic import (
+    new_basic,
+    restore_container_argument,
+    restore_int_argument,
+    restore_optional_argument,
+    restore_string_argument,
+)
+
 #==============================================================================
 class BasicDomain(Basic):
     _dim         = None
@@ -52,8 +60,15 @@ class InteriorDomain(BasicDomain):
     Examples
 
     """
-    def __new__(cls, name, dim=None, dtype=None, mapping=None, logical_domain=None):
-        target = None
+    def __new__(cls, name, dim=None, dtype=None, mapping=None,
+                logical_domain=None, target=None):
+        name = restore_string_argument(name)
+        dim = restore_int_argument(dim)
+        dtype = restore_container_argument(dtype)
+        mapping = restore_optional_argument(mapping)
+        logical_domain = restore_optional_argument(logical_domain)
+        target = restore_optional_argument(target)
+
         if not isinstance(name, str):
             target = name
             name   = name.name
@@ -64,7 +79,8 @@ class InteriorDomain(BasicDomain):
         assert mapping is None and logical_domain is None or \
         mapping is not None and logical_domain  is not None
 
-        obj = Basic.__new__(cls, name)
+        obj = new_basic(cls, name, dim, dtype, mapping,
+                         logical_domain, target)
 
         obj._dim            = dim
         obj._target         = target
@@ -76,7 +92,7 @@ class InteriorDomain(BasicDomain):
 
     @property
     def name(self):
-        return self.args[0]
+        return self.args[0].name
 
     @property
     def target(self):
@@ -231,13 +247,17 @@ class Interval(InteriorDomain):
     _dim = 1
 
     def __new__(cls, name=None, coordinate=None, bounds=None):
+        name = restore_string_argument(name)
+        coordinate = restore_optional_argument(coordinate)
+        bounds = restore_container_argument(bounds)
+
         if name is None:
             name = 'Interval'
 
         if bounds is None:
             bounds = (0, 1)
 
-        obj = Basic.__new__(cls, name)
+        obj = new_basic(cls, name, coordinate, bounds)
         if coordinate:
             obj._coordinates = [coordinate]
 
@@ -247,7 +267,7 @@ class Interval(InteriorDomain):
 
     @property
     def name(self):
-        return self.args[0]
+        return self.args[0].name
 
     @property
     def bounds(self):
@@ -264,13 +284,20 @@ class Boundary(BasicDomain):
     """
     def __new__(cls, name, domain, axis=None, ext=None, mapping=None, logical_domain=None):
 
+        name = restore_string_argument(name)
+        axis = restore_int_argument(axis)
+        ext = restore_int_argument(ext)
+        mapping = restore_optional_argument(mapping)
+        logical_domain = restore_optional_argument(logical_domain)
+
         if axis is not None:
             assert isinstance(axis, int)
 
         if ext is not None:
             assert isinstance(ext, int)
 
-        obj                 = Basic.__new__(cls, name, domain, axis, ext)
+        obj                 = new_basic(cls, name, domain, axis, ext,
+                                         mapping, logical_domain)
         obj._mapping        = mapping
         obj._logical_domain = logical_domain
 
@@ -278,7 +305,7 @@ class Boundary(BasicDomain):
 
     @property
     def name(self):
-        return self.args[0]
+        return self.args[0].name
 
     @property
     def domain(self):
@@ -286,11 +313,11 @@ class Boundary(BasicDomain):
 
     @property
     def axis(self):
-        return self.args[2]
+        return restore_int_argument(self.args[2])
 
     @property
     def ext(self):
-        return self.args[3]
+        return restore_int_argument(self.args[3])
 
     @property
     def mapping(self):
@@ -470,7 +497,13 @@ class Interface(BasicDomain):
     and
     T. Dokken, E. Quak, V. Skytt. Requirements from Isogeometric Analysis for changes in product design ontologies, 2010.
     """
-    def __new__(cls, name, bnd_minus, bnd_plus, *, mapping=None, logical_domain=None, ornt=None):
+    def __new__(cls, name, bnd_minus, bnd_plus, ornt=None,
+                mapping=None, logical_domain=None):
+
+        name = restore_string_argument(name)
+        ornt = restore_container_argument(ornt)
+        mapping = restore_optional_argument(mapping)
+        logical_domain = restore_optional_argument(logical_domain)
 
         if not isinstance(name     , str     ): raise TypeError(name)
         if not isinstance(bnd_minus, Boundary): raise TypeError(bnd_minus)
@@ -518,7 +551,8 @@ class Interface(BasicDomain):
         # TODO [YG 10.02.2026]: relax this requirement ASAP
         assert bnd_minus.axis == bnd_plus.axis
 
-        obj = Basic.__new__(cls, name, bnd_minus, bnd_plus, ornt)
+        obj = new_basic(cls, name, bnd_minus, bnd_plus, ornt,
+                         mapping, logical_domain)
         obj._mapping        = mapping
         obj._logical_domain = logical_domain
         return obj
@@ -529,7 +563,7 @@ class Interface(BasicDomain):
 
     @property
     def name(self):
-        return self.args[0]
+        return self.args[0].name
 
     @property
     def minus(self):
@@ -541,7 +575,7 @@ class Interface(BasicDomain):
 
     @property
     def ornt(self):
-        return self.args[3]
+        return restore_container_argument(self.args[3])
 
     @property
     def axis(self):
@@ -607,7 +641,6 @@ class Connectivity(abc.Mapping):
         for name, v in data.items():
             connectivity[name] = [v.minus.todict(), v.plus.todict(), v.ornt]
         connectivity = dict(sorted(connectivity.items()))
-        # ...
 
         return connectivity
 
@@ -639,5 +672,4 @@ class Connectivity(abc.Mapping):
         return 0
 
     # ==========================================
-
 
