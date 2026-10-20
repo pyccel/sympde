@@ -375,6 +375,29 @@ def test_hash():
     assert hash_1 != hash_2
 
 #==============================================================================
+def test_ncube_interior_equality_includes_bounds():
+    # Regression test for #198: equality used to ignore the parametric bounds
+    P = Square('P', bounds1=(0, 1), bounds2=(0, 1)).interior
+    Q = Square('P', bounds1=(0, 2), bounds2=(0, 1)).interior
+    R = Square('P', bounds1=(0, 1), bounds2=(0, 1)).interior
+
+    assert P != Q
+    assert P == R
+
+#==============================================================================
+def test_multipatch_domain_equality():
+    # Regression test for #197: comparing mapped multipatch domains raised an
+    # AttributeError, because MultiPatchMapping had no name
+    A = Mapping('FA', dim=2)(Square('A'))
+    B = Mapping('FB', dim=2)(Square('B'))
+    D1 = Domain.join([A, B], [((0, 0, 1), (1, 0, -1),  1)], 'Omega')
+    D2 = Domain.join([A, B], [((0, 0, 1), (1, 0, -1), -1)], 'Omega')
+    D3 = Domain.join([A, B], [((0, 0, 1), (1, 0, -1),  1)], 'Omega')
+
+    assert D1 != D2
+    assert D1 == D3
+
+#==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
 
