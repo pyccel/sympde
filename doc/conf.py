@@ -3,7 +3,9 @@
 import runpy
 from pathlib import Path
 
+from docutils.statemachine import StringList
 from sphinx.ext.apidoc import main as sphinx_apidoc
+from sphinx.ext.graphviz import Graphviz
 
 from sympde import __version__
 
@@ -207,10 +209,21 @@ sphinx_apidoc(apidoc_args)
 
 
 # -- Expression trees ------------------------------------
-# Run the example and write its graphs, which the documentation draws with
-# Graphviz. They are generated at build time, so they always match the code.
-generated_dir = doc_dir / '_generated'
-generated_dir.mkdir(exist_ok=True)
+# Run the example and draw its graphs with Graphviz. They are generated at
+# build time, so they always match the code.
 trees = runpy.run_path(str(doc_dir / 'examples' / 'expression_trees.py'))
-for name, graph in trees['graphs'].items():
-    (generated_dir / f'{name}.dot').write_text(graph)
+
+
+class ExpressionTree(Graphviz):
+    """Draw a graph of the expression-tree example, given by its name."""
+    required_arguments = 1
+    optional_arguments = 0
+
+    def run(self):
+        graph = trees['graphs'][self.arguments.pop()]
+        self.content = StringList(graph.splitlines())
+        return super().run()
+
+
+def setup(app):
+    app.add_directive('expression-tree', ExpressionTree)

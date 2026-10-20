@@ -62,7 +62,7 @@ of `Graphviz <https://graphviz.org>`_. For the operator
    :start-after: # [operator-start]
    :end-before: # [operator-end]
 
-.. graphviz:: /_generated/operator.dot
+.. expression-tree:: operator
    :caption: Expression tree of :math:`\mathcal{L} u := - \nabla^2 u + u`.
    :align: center
 
@@ -76,7 +76,7 @@ contains the expanded result:
    :start-after: # [derivative-start]
    :end-before: # [derivative-end]
 
-.. graphviz:: /_generated/derivative.dot
+.. expression-tree:: derivative
    :caption: Expression tree of :math:`\partial_x \partial_y (uv)`.
    :align: center
 
