@@ -12,6 +12,7 @@ Welcome to sympde's documentation!
 
    quick
    advanced
+   examples/index
 
 Mathematical background
 =======================
@@ -28,6 +29,7 @@ API
 .. toctree::
    :maxdepth: 1
 
+   api
    source/modules
 
 Indices and tables

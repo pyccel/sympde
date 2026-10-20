@@ -1,13 +1,19 @@
 # coding: utf-8
 
-from sympde.calculus import grad, div
-from sympde.topology import Domain
-from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
+from sympde.calculus.core import grad, div
+from sympde.topology.domain import Domain
+from sympde.topology.space import ScalarFunctionSpace, VectorFunctionSpace
 #from sympde.topology import ProductSpace
-from sympde.topology import element_of
-from sympde.topology import H1Space, HcurlSpace, HdivSpace, L2Space, UndefinedSpace
-from sympde.topology import ScalarFunction, VectorFunction
-from sympde.topology import Projector
+from sympde.topology.space import element_of
+from sympde.topology.datatype import (
+    H1Space,
+    HcurlSpace,
+    HdivSpace,
+    L2Space,
+    UndefinedSpace,
+)
+from sympde.topology.space import ScalarFunction, VectorFunction
+from sympde.topology.space import Projector
 
 
 def test_function_symbol_identity():

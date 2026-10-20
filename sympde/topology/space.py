@@ -15,7 +15,7 @@ from sympy.tensor import Indexed, IndexedBase
 from sympde.core.utils import expand_name_patterns
 from sympde.core.utils import random_string
 from sympde.core.basic import CalculusFunction
-from sympde.core.basic import _coeffs_registery
+from sympde.core.basic import coefficient_types
 from sympde.core.basic import new_basic
 
 from .basic    import BasicDomain, Union, Interval
@@ -469,7 +469,7 @@ class IndexedVectorFunction(Indexed):
             return Add(*[cls(b, *args, **kw_args) for b in base.args])
 
         elif isinstance(base, Mul):
-            scalar_types = (*_coeffs_registery, ScalarFunction)
+            scalar_types = (*coefficient_types, ScalarFunction)
             scalars = [s for s in base.args if isinstance(s, scalar_types)]
             others  = [s for s in base.args if s not in scalars]
             return Mul(*scalars) * Mul(*[cls(b, *args, **kw_args) for b in others])
@@ -652,7 +652,7 @@ class Trace(AtomicExpr):
 
         if isinstance(expr, Mul):
             args = expr.args
-            coeffs = [a for a in args if isinstance(a, _coeffs_registery)]
+            coeffs = [a for a in args if isinstance(a, coefficient_types)]
             a      = Mul(*coeffs)
             args   = [a for a in args if not(a in coeffs)]
 

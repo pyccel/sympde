@@ -6,6 +6,9 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- #194: Add `sympde.api` as the supported flat public API. It contains the objects used by PSYDAC, IGA-Python, GeLaTo and the SymPDE documentation.
+- #194: Add example scripts to the documentation, which are run by the documentation workflow.
+- #194: Draw expression trees in the documentation with Graphviz, generated from the current code at build time.
 - #106: Accept the connectivity of a `Domain` as an iterable of `Interface` objects, in addition to a `Connectivity` object.
 - [DEVELOPER] Add a `CHANGELOG.md` file listing changes between different versions.
 - [DEVELOPER] Add Python version 3.14 to the testing workflow.
@@ -15,7 +18,10 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Convert the README to Markdown and expand the installation, testing, and documentation-build instructions.
+- #190: Convert the README to Markdown and expand the installation, testing, and documentation-build instructions.
+- #194: Use explicit internal imports and load optional dependencies only when needed.
+- #194: Remove the leading underscore from `partial_derivatives`, `logical_partial_derivatives` (`sympde.topology.derivatives`) and `split_test_function` (`sympde.expr.evaluation`), and add them to `sympde.api`.
+- #194: List only public names in the `__all__` of every module.
 - #106: Require SymPy 1.12 or newer and support maintained SymPy releases below 1.15.
 - #106: Update SymPDE's symbolic objects for modern SymPy's structural arguments, traversal, substitution, and reconstruction requirements.
 - #106: Order the parameters of `Domain` like its `args` (`name`, `interiors`, `boundaries`, `mapping`, `logical_domain`, `connectivity`) and allow passing them positionally. `dim` is now keyword-only.
@@ -23,20 +29,33 @@ All notable changes to this project will be documented in this file.
 - #106: Store only `axis` and `weight` in the `args` of the 1D forms (`Mass`, `Stiffness`, `Advection`, `AdvectionT`, `Bilaplacian`). Their name is now a class attribute.
 - [DEVELOPER] Modernize the package metadata and consolidate the pytest and coverage configuration in `pyproject.toml`.
 - [DEVELOPER] Modernize the Sphinx configuration, API-documentation generation, and API docstring markup.
+- [DEVELOPER] Remove the leading underscore from the module-level names used by other SymPDE modules, and rename `_coeffs_registery` to `coefficient_types`.
+- [DEVELOPER] Modernize the package metadata and consolidate the pytest and coverage configuration in `pyproject.toml`.
+- [DEVELOPER] Modernize the Sphinx configuration, API-documentation generation, and API docstring markup.
 - [DEVELOPER] Test the minimum supported SymPy version in a dedicated CI job.
 
 ### Fixed
 
+- #200: Keep the physical dimension of the mappings in `Domain.export` and `Domain.from_file`. The `topology.yml` metadata now stores `ldim` and `pdim` instead of `dim`, and `Domain.from_file` raises an error for files with the old `dim` key.
 - #140: Fix the rendering of the `Domain.join()` API documentation.
 - #166: Restore warning-free documentation builds, including bibliography and mathematical notation support.
 - #106: Preserve symbol assumptions and free-symbol information with modern SymPy.
 - #106: Keep same-named functions from different function spaces distinct during symbolic simplification.
 - #106: Fix form-linearity checks involving integral sums with modern SymPy.
+- #194: Fix plotting of unmapped two-dimensional domains with `plot_2d()`.
+- #106: Preserve symbol assumptions and free-symbol information with modern SymPy.
+- #106: Keep same-named functions from different function spaces distinct during symbolic simplification.
+- #106: Fix form-linearity checks involving integral sums with modern SymPy.
 - #106: Raise a `ValueError` when a `Domain` is created without `interiors` or `dim`, instead of failing with a `TypeError` when only a connectivity is given.
-- #200: Keep the physical dimension of the mappings in `Domain.export` and `Domain.from_file`. The `topology.yml` metadata now stores `ldim` and `pdim` instead of `dim`, and `Domain.from_file` raises an error for files with the old `dim` key.
+- #191: Fix the rendering of the `Domain.join()` API documentation.
+- #166: Restore warning-free documentation builds, including bibliography and mathematical notation support.
 
 ### Removed
 
+- #194: Remove the re-exports of public objects from the package and subpackage initializers. Replace imports such as `from sympde.topology import Square` with `from sympde.api import Square`. `from sympde import __version__` keeps working.
+- #194: Remove the `sympde.old_sympy_utilities` module. Use `sympy.utilities.iterables.is_sequence` and Python's `metaclass` keyword instead of its `is_sequence` and `with_metaclass`.
+- #194: Remove the outdated Jupyter notebooks and the Binder badge. The example scripts in the documentation replace them.
+- #194: Remove the unused `_is_op_test_function` from `sympde.calculus.core`.
 - [DEVELOPER] Remove obsolete CI configuration, the standalone pytest configuration, and the legacy test runner script.
 
 ### Deprecated

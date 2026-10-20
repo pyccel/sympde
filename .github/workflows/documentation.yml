@@ -44,10 +44,21 @@ jobs:
       run: |
         pip install --upgrade pip setuptools wheel
 
+    - name: Install Graphviz
+      run: |
+        sudo apt-get update
+        sudo apt-get install --yes graphviz
+
     - name: Install project and documentation dependencies
       run: |
         pip install .[docs]
         pip freeze
+
+    - name: Run documentation examples
+      run: |
+        for example in doc/examples/*.py; do
+          python "$example"
+        done
 
     - name: Make the Sphinx documentation
       run: >-

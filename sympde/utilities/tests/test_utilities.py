@@ -4,6 +4,8 @@ import numpy as np
 from sympy import Matrix, symbols, Array
 from sympy import S
 from sympde.utilities.utils import lambdify_sympde
+from sympde.utilities.utils import plot_domain
+from sympde.topology.domain import Square
 
 
 
@@ -51,6 +53,28 @@ def test_lambdify_sympde_1d():
     expected_a_da[0, 0, ...] = np.linspace(0, 1, 10)[None, None, Ellipsis]
     expected_a_da[1, ...] = np.linspace(0, 1, 10)[None, None, Ellipsis]
     assert np.array_equal(array_input_da, expected_a_da)
+
+
+def test_plot_domain_without_mapping(monkeypatch, tmp_path):
+    """
+    Plot a 2D domain without a mapping.
+
+    plot_domain falls back to an identity mapping for unmapped patches. This
+    mapping used to be 3D, so evaluating it with two coordinates failed.
+    """
+    monkeypatch.setenv('MPLCONFIGDIR', str(tmp_path))
+    matplotlib = pytest.importorskip('matplotlib')
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+
+    plot_domain(Square('Omega'), draw=False)
+
+    # The boundary of the unit square is drawn unchanged
+    ax = plt.gcf().axes[0]
+    x = np.concatenate([line.get_xdata() for line in ax.lines])
+    y = np.concatenate([line.get_ydata() for line in ax.lines])
+    assert np.allclose([x.min(), x.max(), y.min(), y.max()], [0, 1, 0, 1])
+    plt.close('all')
 
 
 def test_lambdify_sympde_2d():

@@ -2,14 +2,16 @@
 
 from sympy import sin, cos, pi
 
-from sympde.calculus import grad, dot, inner, rot, div
+from sympde.calculus.core import grad, dot, inner, rot, div
 #from sympde.topology import (dx, dy, dz)
-from sympde.topology import Domain, Boundary, Square
-from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
-from sympde.topology import element_of
-from sympde.expr     import BilinearForm, LinearForm, integral
-from sympde.exterior import d, wedge, ip, jp, delta, hodge
-from sympde.exterior import DifferentialForm
+from sympde.topology.domain import Domain
+from sympde.topology.basic import Boundary
+from sympde.topology.domain import Square
+from sympde.topology.space import ScalarFunctionSpace, VectorFunctionSpace
+from sympde.topology.space import element_of
+from sympde.expr.expr import BilinearForm, LinearForm, integral
+from sympde.exterior.calculus import d, wedge, ip, jp, delta, hodge
+from sympde.exterior.form import DifferentialForm
 from sympde.printing.latex import latex
 
 

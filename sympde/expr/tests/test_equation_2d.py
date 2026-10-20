@@ -6,18 +6,20 @@ from sympy.core.containers import Tuple
 from sympy import pi, cos, sin
 from sympy import ImmutableDenseMatrix as Matrix
 
-from sympde.core        import Constant
-from sympde.calculus    import grad, dot, inner
-from sympde.calculus    import laplace, bracket
-from sympde.topology    import ScalarFunctionSpace, VectorFunctionSpace
-from sympde.topology    import element_of
-from sympde.topology    import ProductSpace
-from sympde.topology    import Domain, Boundary, NormalVector
-from sympde.topology    import Square
-from sympde.topology    import ElementDomain
-from sympde.topology    import Area
-from sympde.expr        import BilinearForm, LinearForm, integral
-from sympde.expr        import Equation, EssentialBC
+from sympde.core.basic import Constant
+from sympde.calculus.core import grad, dot, inner
+from sympde.calculus.core import laplace, bracket
+from sympde.topology.space import ScalarFunctionSpace, VectorFunctionSpace
+from sympde.topology.space import element_of
+from sympde.topology.space import ProductSpace
+from sympde.topology.domain import Domain
+from sympde.topology.basic import Boundary
+from sympde.topology.domain import NormalVector
+from sympde.topology.domain import Square
+from sympde.topology.domain import ElementDomain
+from sympde.topology.domain import Area
+from sympde.expr.expr import BilinearForm, LinearForm, integral
+from sympde.expr.equation import Equation, EssentialBC
 from sympde.expr.errors import UnconsistentLhsError
 from sympde.expr.errors import UnconsistentRhsError
 from sympde.expr.errors import UnconsistentBCError
