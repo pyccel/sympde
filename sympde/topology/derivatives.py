@@ -2,8 +2,6 @@
 
 # TODO add action of diff operators on sympy known functions
 
-from itertools   import groupby
-
 import numpy as np
 
 from sympy import Basic
@@ -18,10 +16,10 @@ from sympy import diff
 from sympy import log
 from sympy import preorder_traversal
 from sympy import cacheit
-from sympde.old_sympy_utilities import is_sequence
+from sympy.utilities.iterables import is_sequence
 
 from sympde.core.basic    import CalculusFunction
-from sympde.core.basic    import _coeffs_registery
+from sympde.core.basic    import coefficient_types
 from sympde.core.basic    import BasicMapping
 from sympde.core.algebra  import LinearOperator
 from sympde.calculus.core import minus, plus
@@ -54,21 +52,21 @@ class DifferentialOperator(LinearOperator):
 
         types = (VectorFunction, ScalarFunction, DifferentialOperator)
 
-        if isinstance(expr, _logical_partial_derivatives):
+        if isinstance(expr, logical_partial_derivatives):
             atom    = get_atom_logical_derivatives(expr)
             indices = get_index_logical_derivatives(expr)
 
-            if cls in _logical_partial_derivatives:
+            if cls in logical_partial_derivatives:
                 indices[cls.coordinate] += 1
 
             for i,n in enumerate(list(indices.values())[::-1]):
-                d = _logical_partial_derivatives[-i-1]
+                d = logical_partial_derivatives[-i-1]
                 for _ in range(n):
                     atom = d(atom, evaluate=False)
 
-            if cls in _partial_derivatives:
+            if cls in partial_derivatives:
                 atom = cls(atom, evaluate=False)
-            elif cls not in _logical_partial_derivatives:
+            elif cls not in logical_partial_derivatives:
                 raise NotImplementedError('TODO')
 
             return atom
@@ -106,6 +104,10 @@ class DifferentialOperator(LinearOperator):
             elif isinstance(expr, Expr):
                 x = Symbol(cls.coordinate, real=True)
                 if cls.logical:
+                    # Imported lazily to avoid a circular dependency: mapping
+                    # depends on the differential operators in this module.
+                    from .mapping import Jacobian, Mapping
+
                     M = expr.atoms(Mapping)
                     if len(M)>0:
                         M = list(M)[0]
@@ -122,7 +124,7 @@ class DifferentialOperator(LinearOperator):
             return v
 
         elif isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            coeffs  = [a for a in expr.args if isinstance(a, coefficient_types)]
             vectors = [a for a in expr.args if not(a in coeffs)]
 
             c = S.One
@@ -186,7 +188,7 @@ class dz(DifferentialOperator):
     grad_index = 2 # index in grad
 
 
-_partial_derivatives = (dx, dy, dz)
+partial_derivatives = (dx, dy, dz)
 
 #==============================================================================
 class dx1(DifferentialOperator):
@@ -204,7 +206,7 @@ class dx3(DifferentialOperator):
     grad_index = 2 # index in grad
     logical    = True
 
-_logical_partial_derivatives = (dx1, dx2, dx3)
+logical_partial_derivatives = (dx1, dx2, dx3)
 
 #==============================================================================
 @cacheit
@@ -224,10 +226,10 @@ def find_partial_derivatives(expr):
             args += find_partial_derivatives(a)
         return args
 
-    elif isinstance(expr, _partial_derivatives):
+    elif isinstance(expr, partial_derivatives):
         return (expr,)
 
-    elif isinstance(expr, _logical_partial_derivatives):
+    elif isinstance(expr, logical_partial_derivatives):
         return (expr,)
 
     return ()
@@ -241,7 +243,7 @@ def get_number_derivatives(expr):
     form d(a) where a is a single atom.
     """
     n = 0
-    if isinstance(expr, _partial_derivatives):
+    if isinstance(expr, partial_derivatives):
         assert(len(expr.args) == 1)
 
         n += 1 + get_number_derivatives(expr.args[0])
@@ -264,7 +266,6 @@ def sort_partial_derivatives(expr):
 #            ls.append(a)
 #    # ...
 
-    # ...
     d = {}
     for a in args:
         n = get_number_derivatives(a)
@@ -272,24 +273,19 @@ def sort_partial_derivatives(expr):
             d[n] += [a]
         else:
             d[n] = [a]
-    # ...
 
-    # ...
     if not d:
         return []
-    # ...
 
     # ... sort keys from high to low
     keys = np.asarray(list(d.keys()))
     keys.sort()
     keys = keys[::-1]
-    # ...
 
     # ... construct a list of partial derivatives from high to low order
     ls = []
     for k in keys:
         ls += d[k]
-    # ...
 
     return tuple(ls)
 
@@ -304,7 +300,7 @@ def get_index_derivatives(expr):
     for c in coord:
         d[c] = 0
 
-    ops = [a for a in preorder_traversal(expr) if isinstance(a, _partial_derivatives)]
+    ops = [a for a in preorder_traversal(expr) if isinstance(a, partial_derivatives)]
     for i in ops:
 
         if isinstance(i, dx):
@@ -324,7 +320,7 @@ def get_atom_derivatives(expr):
     """
     """
 
-    if isinstance(expr, _partial_derivatives):
+    if isinstance(expr, partial_derivatives):
         assert(len(expr.args) == 1)
 
         return get_atom_derivatives(expr.args[0])
@@ -342,7 +338,7 @@ def get_index_logical_derivatives(expr):
     for c in coord:
         d[c] = 0
 
-    ops = [a for a in preorder_traversal(expr) if isinstance(a, _logical_partial_derivatives)]
+    ops = [a for a in preorder_traversal(expr) if isinstance(a, logical_partial_derivatives)]
     for i in ops:
 
         if isinstance(i, dx1):
@@ -362,7 +358,7 @@ def get_atom_logical_derivatives(expr):
     """
     """
 
-    if isinstance(expr, _logical_partial_derivatives):
+    if isinstance(expr, logical_partial_derivatives):
         assert(len(expr.args) == 1)
 
         return get_atom_logical_derivatives(expr.args[0])
@@ -1287,6 +1283,3 @@ def get_max_logical_partial_derivatives(expr, F=None):
         for k,v in dd.items():
             if v > d[k]: d[k] = v
     return d
-
-from .mapping import Mapping, Jacobian
-

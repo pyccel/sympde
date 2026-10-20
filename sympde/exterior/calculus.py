@@ -2,21 +2,14 @@
 
 # TODO - use BasicOperator instead of LinearOperator
 
-from numpy import unique
-
 from sympy.core import Basic
-from sympy.tensor import Indexed, IndexedBase
-from sympy.core import Symbol
-from sympy.core import Expr
-from sympy.core.containers import Tuple
-from sympy import Function
-from sympy import Integer, Float
-from sympy.core.singleton import Singleton
+from sympy.tensor import Indexed
 from sympy.core import Add, Mul
 from sympy.core.singleton import S
+from sympy.utilities.iterables import is_sequence
 
-from sympde.core.basic import _coeffs_registery
-from sympde.core import LinearOperator
+from sympde.core.basic import coefficient_types
+from sympde.core.algebra import LinearOperator
 from sympde.core.basic import CalculusFunction
 
 from .form import DifferentialForm
@@ -69,7 +62,7 @@ class ExteriorDerivative(LinearOperator):
         if isinstance(expr, ExteriorDerivative):
             return 0
 
-        if isinstance(expr, _coeffs_registery):
+        if isinstance(expr, coefficient_types):
             return 0
 
         if isinstance(expr, DifferentialForm):
@@ -82,7 +75,7 @@ class ExteriorDerivative(LinearOperator):
             return Add(*args)
 
         elif isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            coeffs  = [a for a in expr.args if isinstance(a, coefficient_types)]
             vectors = [a for a in expr.args if not(a in coeffs)]
 
             a = S.One
@@ -134,23 +127,19 @@ class ExteriorProduct(LinearOperator):
         right = _args[1]
         # TODO add properties in the spirit of ExteriorDerivative
 
-        # ...
         if isinstance(left, Add):
             args = [cls.eval(i, right) for i in left.args]
             return Add(*args)
-        # ...
 
-        # ...
         if isinstance(right, Add):
             args = [cls.eval(left, i) for i in right.args]
             return Add(*args)
-        # ...
 
         # ... from now on, we construct left and right with some coeffs
         #     return is done at the end
         alpha = S.One
         if isinstance(left, Mul):
-            coeffs  = [a for a in left.args if isinstance(a, _coeffs_registery)]
+            coeffs  = [a for a in left.args if isinstance(a, coefficient_types)]
             vectors = [a for a in left.args if not(a in coeffs)]
 
             a = S.One
@@ -165,7 +154,7 @@ class ExteriorProduct(LinearOperator):
             left   = b
 
         if isinstance(right, Mul):
-            coeffs  = [a for a in right.args if isinstance(a, _coeffs_registery)]
+            coeffs  = [a for a in right.args if isinstance(a, coefficient_types)]
             vectors = [a for a in right.args if not(a in coeffs)]
 
             a = S.One
@@ -178,7 +167,6 @@ class ExteriorProduct(LinearOperator):
 
             alpha *= a
             right  = b
-        # ...
 
         return alpha*cls(left, right, evaluate=False)
 
@@ -401,7 +389,7 @@ class AdjointExteriorDerivative(LinearOperator):
         if isinstance(expr, AdjointExteriorDerivative):
             return 0
 
-        if isinstance(expr, _coeffs_registery):
+        if isinstance(expr, coefficient_types):
             return 0
 
         if isinstance(expr, DifferentialForm):
@@ -414,7 +402,7 @@ class AdjointExteriorDerivative(LinearOperator):
             return Add(*args)
 
         elif isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            coeffs  = [a for a in expr.args if isinstance(a, coefficient_types)]
             vectors = [a for a in expr.args if not(a in coeffs)]
 
             a = S.One
@@ -552,7 +540,7 @@ class Hodge(LinearOperator):
                 c = (-1)**(k*(n-k))
                 return c*arg
 
-        if isinstance(expr, _coeffs_registery):
+        if isinstance(expr, coefficient_types):
             return 0
 
         elif isinstance(expr, Add):
@@ -562,7 +550,7 @@ class Hodge(LinearOperator):
 
         # TODO improve
         elif isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            coeffs  = [a for a in expr.args if isinstance(a, coefficient_types)]
             vectors = [a for a in expr.args if not(a in coeffs)]
 
             a = S.One
@@ -594,4 +582,3 @@ jp = AdjointInteriorProduct
 Ld = AdjointLieDerivative
 
 hodge = Hodge
-# ...

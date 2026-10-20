@@ -2,15 +2,15 @@
 
 import pytest
 
-from sympde.topology import Domain
-from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
-from sympde.topology import element_of
-from sympde.calculus import grad, dot, inner, cross, curl, div
+from sympde.topology.domain import Domain
+from sympde.topology.space import ScalarFunctionSpace, VectorFunctionSpace
+from sympde.topology.space import element_of
+from sympde.calculus.core import grad, dot, inner, cross, curl, div
 
 #from sympde.exterior import d, wedge, ip, delta, jp
-from sympde.exterior import ld
-from sympde.exterior import DifferentialForm
-from sympde.exterior import ExteriorCalculusExpr, augmented_expression
+from sympde.exterior.calculus import ld
+from sympde.exterior.form import DifferentialForm
+from sympde.exterior.compiler import ExteriorCalculusExpr, augmented_expression
 from sympde.calculus.errors import ArgumentTypeError
 
 #==============================================================================
@@ -118,33 +118,26 @@ def test_compiler_3d_1():
     # ..................................................
     #     LIE DERIVATIVES
     # ..................................................
-    # ...
+
     expr = dot(beta, grad(v0))
     expected = ld(beta, DifferentialForm('v0', index=0, dim=domain.dim))
 
     assert(ExteriorCalculusExpr(expr) == expected)
-    # ...
 
-    # ...
     expr = grad(dot(beta,v1)) + cross(curl(v1), beta)
     expected = ld(beta, DifferentialForm('v1', index=1, dim=domain.dim))
 
     assert(ExteriorCalculusExpr(expr) == expected)
-    # ...
 
-    # ...
     expr = curl(cross(v2, beta)) + div(v2)*beta
     expected = ld(beta, DifferentialForm('v2', index=2, dim=domain.dim))
 
     #assert(ExteriorCalculusExpr(expr) == expected)
-    # ...
 
-    # ...
     expr = div(beta*v3)
     expected = ld(beta, DifferentialForm('v3', index=3, dim=domain.dim))
 
     assert(ExteriorCalculusExpr(expr) == expected)
-    # ...
 
     # ... TODO commutativity of LieDerivative
 #    expr = grad(dot(beta,v1)) + cross(curl(v1), beta) + div(beta*v3)
@@ -152,7 +145,7 @@ def test_compiler_3d_1():
 #    expected += ld(beta, DifferentialForm('v3', index=3, dim=domain.dim))
 #
 #    assert(ExteriorCalculusExpr(expr) == expected)
-    # ...
+
 
 #    print(expr)
 #    print('')
@@ -204,7 +197,7 @@ def test_compiler_3d_2():
 
     expr = v[0] * div(u[2])
     print(ExteriorCalculusExpr(expr, tests=[v[0]]))
-    # ...
+
 
 #    # ... Add operator
 #    expr = dot(u1, v1) + dot(u2, v2)
@@ -242,7 +235,6 @@ def test_compiler_3d_stokes():
 
     domain = Domain('Omega', dim=3)
 
-    # ...
     #    by setting the space type, we cannot evaluate grad of Hdiv function, then
     #    ArgumentTypeError will be raised.
     #    In order to avoid this problem, we need first to declare our space as an
@@ -257,9 +249,7 @@ def test_compiler_3d_stokes():
 
     with pytest.raises(ArgumentTypeError):
         expr = inner(grad(u), grad(v)) - div(v)*p + q*div(u)
-    # ...
 
-    # ...
     Hdiv  = VectorFunctionSpace('V2', domain)
     L2    = ScalarFunctionSpace('V3', domain)
 
@@ -280,7 +270,7 @@ def test_compiler_3d_stokes():
     newexpr = augmented_expression(newexpr, tests=[v,q], atoms=atoms, weak=False)
     print('===== AFTER  =====')
     print(newexpr)
-    # ...
+
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE

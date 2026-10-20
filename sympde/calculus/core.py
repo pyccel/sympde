@@ -4,11 +4,11 @@ The calculus subpackage provides different operators, as generic as possible,
 but knowning properties between them. For instance, the following statement will
 naturally give 0
 
->>> from sympde.calculus import grad, curl
->>> from sympde.topology import Domain
->>> from sympde.topology import ScalarFunctionSpace
->>> from sympde.topology import ScalarFunction
->>> from sympde.topology import element_of
+>>> from sympde.api import grad, curl
+>>> from sympde.api import Domain
+>>> from sympde.api import ScalarFunctionSpace
+>>> from sympde.api import ScalarFunction
+>>> from sympde.api import element_of
 
 >>> domain = Domain('Omega', dim=2)
 >>> V = ScalarFunctionSpace('V', domain)
@@ -102,10 +102,10 @@ from sympy.core               import Add, Mul, Pow
 from sympy.core.containers    import Tuple
 from sympy.core.singleton     import S
 from sympy.core.decorators    import call_highest_priority
+from sympy.utilities.iterables import is_sequence
 
-from sympde.old_sympy_utilities import is_sequence
 from sympde.core.basic        import CalculusFunction
-from sympde.core.basic        import _coeffs_registery
+from sympde.core.basic        import coefficient_types
 from sympde.topology.space    import ScalarFunction, VectorFunction
 from sympde.topology.domain   import NormalVector, MinusNormalVector, PlusNormalVector
 from sympde.topology.datatype import H1SpaceType, HcurlSpaceType
@@ -145,17 +145,16 @@ __all__ = (
 #
     'D',
     'Dn',
-    '_diff_ops',
-    '_generic_ops',
-    '_is_op_test_function',
     'avg',
     'bracket',
     'conv',
     'convect',
     'cross',
     'curl',
+    'diff_ops',
     'div',
     'dot',
+    'generic_ops',
     'grad',
     'hessian',
     'inner',
@@ -250,12 +249,12 @@ class BasicOperatorAdd(Add):
 def is_constant(atom):
     """ Determine whether the given atom represents a constant number.
     """
-    if isinstance(atom, _coeffs_registery):
+    if isinstance(atom, coefficient_types):
         return True
 
     if (isinstance(atom, Pow) and
-        isinstance(atom.base, _coeffs_registery) and
-        isinstance(atom.exp , _coeffs_registery)):
+        isinstance(atom.base, coefficient_types) and
+        isinstance(atom.exp , coefficient_types)):
         return True
 
     return False
@@ -276,7 +275,7 @@ class Dot(BasicOperator):
 
     Examples
 
-    >>> from sympde.calculus import Dot
+    >>> from sympde.calculus.core import Dot
     >>> from sympy import Tuple
     >>> from sympy.abc import x,y
 
@@ -287,10 +286,10 @@ class Dot(BasicOperator):
 
     This operator implements the properties of addition and multiplication
 
-    >>> from sympde.core import Constant
-    >>> from sympde.topology import Domain
-    >>> from sympde.topology import VectorFunctionSpace
-    >>> from sympde.topology import VectorFunction
+    >>> from sympde.api import Constant
+    >>> from sympde.api import Domain
+    >>> from sympde.api import VectorFunctionSpace
+    >>> from sympde.api import VectorFunction
 
     >>> domain = Domain('Omega', dim=2)
     >>> V = VectorFunctionSpace('V', domain)
@@ -444,10 +443,10 @@ class Inner(BasicOperator):
 
     Examples
 
-    >>> from sympde.calculus import inner, grad
-    >>> from sympde.topology import Domain
-    >>> from sympde.topology import VectorFunctionSpace
-    >>> from sympde.topology import VectorFunction
+    >>> from sympde.api import inner, grad
+    >>> from sympde.api import Domain
+    >>> from sympde.api import VectorFunctionSpace
+    >>> from sympde.api import VectorFunction
 
     >>> domain = Domain('Omega', dim=2)
     >>> V = VectorFunctionSpace('V', domain)
@@ -673,10 +672,10 @@ class Grad(DiffOperator):
     Examples
 
 
-    >>> from sympde.core import Constant
-    >>> from sympde.topology import Domain
-    >>> from sympde.topology import VectorFunctionSpace
-    >>> from sympde.topology import VectorFunction
+    >>> from sympde.api import Constant
+    >>> from sympde.api import Domain
+    >>> from sympde.api import VectorFunctionSpace
+    >>> from sympde.api import VectorFunction
 
     >>> domain = Domain('Omega', dim=2)
     >>> V = ScalarFunctionSpace('V', domain)
@@ -791,10 +790,10 @@ class Curl(DiffOperator):
     Examples
 
 
-    >>> from sympde.core import Constant
-    >>> from sympde.topology import Domain
-    >>> from sympde.topology import VectorFunctionSpace
-    >>> from sympde.topology import VectorFunction
+    >>> from sympde.api import Constant
+    >>> from sympde.api import Domain
+    >>> from sympde.api import VectorFunctionSpace
+    >>> from sympde.api import VectorFunction
 
     >>> domain = Domain('Omega', dim=2)
     >>> V = VectorFunctionSpace('V', domain)
@@ -880,10 +879,10 @@ class Rot(DiffOperator):
     Examples
 
 
-    >>> from sympde.core import Constant
-    >>> from sympde.topology import Domain
-    >>> from sympde.topology import VectorFunctionSpace
-    >>> from sympde.topology import VectorFunction
+    >>> from sympde.api import Constant
+    >>> from sympde.api import Domain
+    >>> from sympde.api import VectorFunctionSpace
+    >>> from sympde.api import VectorFunction
 
     >>> domain = Domain('Omega', dim=2)
     >>> V = ScalarFunctionSpace('V', domain)
@@ -946,7 +945,6 @@ class Rot(DiffOperator):
             if not isinstance(expr.space.kind, (UndefinedSpaceType, H1SpaceType)):
                 msg = '> Wrong space kind, given {}'.format(expr.space.kind)
                 raise ArgumentTypeError(msg)
-        # ...
 
         return cls(expr, evaluate=False)
 
@@ -960,10 +958,10 @@ class Div(DiffOperator):
     Examples
 
 
-    >>> from sympde.core import Constant
-    >>> from sympde.topology import Domain
-    >>> from sympde.topology import VectorFunctionSpace
-    >>> from sympde.topology import VectorFunction
+    >>> from sympde.api import Constant
+    >>> from sympde.api import Domain
+    >>> from sympde.api import VectorFunctionSpace
+    >>> from sympde.api import VectorFunction
 
     >>> domain = Domain('Omega', dim=2)
     >>> V = VectorFunctionSpace('V', domain)
@@ -1052,7 +1050,6 @@ class Div(DiffOperator):
                                                 H1SpaceType)):
                 msg = '> Wrong space kind, given {}'.format(expr.space.kind)
                 raise ArgumentTypeError(msg)
-        # ...
 
         return cls(expr, evaluate=False)
 
@@ -1066,10 +1063,10 @@ class Laplace(DiffOperator):
     Examples
 
 
-    >>> from sympde.core import Constant
-    >>> from sympde.topology import Domain
-    >>> from sympde.topology import VectorFunctionSpace
-    >>> from sympde.topology import VectorFunction
+    >>> from sympde.api import Constant
+    >>> from sympde.api import Domain
+    >>> from sympde.api import VectorFunctionSpace
+    >>> from sympde.api import VectorFunction
 
     >>> domain = Domain('Omega', dim=2)
     >>> V = ScalarFunctionSpace('V', domain)
@@ -1137,7 +1134,6 @@ class Laplace(DiffOperator):
             if not isinstance(expr.space.kind, UndefinedSpaceType):
                 msg = '> Wrong space kind, given {}'.format(expr.space.kind)
                 raise ArgumentTypeError(msg)
-        # ...
 
         return cls(expr, evaluate=False)
 
@@ -1151,10 +1147,10 @@ class Hessian(DiffOperator):
     Examples
 
 
-    >>> from sympde.core import Constant
-    >>> from sympde.topology import Domain
-    >>> from sympde.topology import VectorFunctionSpace
-    >>> from sympde.topology import VectorFunction
+    >>> from sympde.api import Constant
+    >>> from sympde.api import Domain
+    >>> from sympde.api import VectorFunctionSpace
+    >>> from sympde.api import VectorFunction
 
     >>> domain = Domain('Omega', dim=2)
     >>> V = ScalarFunctionSpace('V', domain)
@@ -1217,7 +1213,6 @@ class Hessian(DiffOperator):
             if not isinstance(expr.space.kind, UndefinedSpaceType):
                 msg = '> Wrong space kind, given {}'.format(expr.space.kind)
                 raise ArgumentTypeError(msg)
-        # ...
 
         return cls(expr, evaluate=False)
 
@@ -1259,7 +1254,7 @@ class Bracket(DiffOperator):
 
             # Derivative of product: d(a*b*c) = da * (b*c) + a * d(b*c)
             elif isinstance(expr, Mul):
-                coeffs = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+                coeffs = [a for a in expr.args if isinstance(a, coefficient_types)]
                 fields = [a for a in expr.args if a not in coeffs]
 
                 terms  = []
@@ -1274,7 +1269,7 @@ class Bracket(DiffOperator):
                 return Mul(a, b)
 
             # Derivative of constant: d(const) = 0
-            elif isinstance(expr, _coeffs_registery):
+            elif isinstance(expr, coefficient_types):
                 return S.Zero
 
         # Automatic evaluation to canonical form: reorder arguments by using
@@ -1329,35 +1324,29 @@ class Convolution(BasicOperator):
         if (left == 0) or (right == 0):
             return 0
 
-        # ...
         if isinstance(left, (list, tuple, Tuple)) and isinstance(right, (list, tuple, Tuple)):
             assert( len(left) == len(right) )
             n = len(left)
             args = [left[i]*right[i] for i in range(0,n)]
             return Add(*args)
-        # ...
 
-        # ...
         if isinstance(left, Add):
             args = [cls.eval(i, right) for i in left.args]
             return Add(*args)
-        # ...
 
-        # ...
         if isinstance(right, Add):
             args = [cls.eval(left, i) for i in right.args]
             return Add(*args)
-        # ...
 
         # ... from now on, we construct left and right with some coeffs
         #     return is done at the end
         alpha = S.One
         if isinstance(left, Mul):
-            coeffs  = [a for a in left.args if isinstance(a, _coeffs_registery)]
+            coeffs  = [a for a in left.args if isinstance(a, coefficient_types)]
             for a in left.args:
                 if ( isinstance(a, Pow) and
-                     isinstance(a.base, _coeffs_registery) and
-                     isinstance(a.exp, _coeffs_registery) ):
+                     isinstance(a.base, coefficient_types) and
+                     isinstance(a.exp, coefficient_types) ):
                     coeffs += [a]
 
             vectors = [a for a in left.args if not(a in coeffs)]
@@ -1374,11 +1363,11 @@ class Convolution(BasicOperator):
             left   = b
 
         if isinstance(right, Mul):
-            coeffs  = [a for a in right.args if isinstance(a, _coeffs_registery)]
+            coeffs  = [a for a in right.args if isinstance(a, coefficient_types)]
             for a in right.args:
                 if ( isinstance(a, Pow) and
-                     isinstance(a.base, _coeffs_registery) and
-                     isinstance(a.exp, _coeffs_registery) ):
+                     isinstance(a.base, coefficient_types) and
+                     isinstance(a.exp, coefficient_types) ):
                     coeffs += [a]
 
             vectors = [a for a in right.args if not(a in coeffs)]
@@ -1393,7 +1382,6 @@ class Convolution(BasicOperator):
 
             alpha *= a
             right  = b
-        # ...
 
         # ... this is a hack to ensure commutativity
         #     TODO to be improved
@@ -1403,7 +1391,6 @@ class Convolution(BasicOperator):
 
         except:
             pass
-        # ...
 
         return alpha*cls(left, right, evaluate=False)
 
@@ -1446,7 +1433,7 @@ class NormalDerivative(DiffOperator):
             return Add(*args)
 
         elif isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            coeffs  = [a for a in expr.args if isinstance(a, coefficient_types)]
             vectors = [a for a in expr.args if not(a in coeffs)]
 
             a = S.One
@@ -1519,7 +1506,7 @@ class Jump(BasicOperator):
             return Add(*args)
 
         elif isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            coeffs  = [a for a in expr.args if isinstance(a, coefficient_types)]
             vectors = [a for a in expr.args if not(a in coeffs)]
 
             a = S.One
@@ -1592,7 +1579,7 @@ class Average(BasicOperator):
             return Add(*args)
 
         elif isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            coeffs  = [a for a in expr.args if isinstance(a, coefficient_types)]
             vectors = [a for a in expr.args if not(a in coeffs)]
 
             a = S.One
@@ -1661,7 +1648,7 @@ class MinusInterfaceOperator(BasicOperator):
             return Add(*args)
 
         elif isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            coeffs  = [a for a in expr.args if isinstance(a, coefficient_types)]
             vectors = [a for a in expr.args if not(a in coeffs)]
 
             a = S.One
@@ -1756,7 +1743,7 @@ class PlusInterfaceOperator(BasicOperator):
             return Add(*args)
 
         elif isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            coeffs  = [a for a in expr.args if isinstance(a, coefficient_types)]
             vectors = [a for a in expr.args if not(a in coeffs)]
 
             a = S.One
@@ -1818,10 +1805,10 @@ class PlusInterfaceOperator(BasicOperator):
 
 #==============================================================================
 
-_generic_ops  = (Dot, Cross, Inner, Outer, Convect, Convolution)
+generic_ops = (Dot, Cross, Inner, Outer, Convect, Convolution)
 
-_diff_ops  = (Grad, Curl, Rot, Div,
-              Bracket, Laplace, Hessian)
+diff_ops = (Grad, Curl, Rot, Div,
+            Bracket, Laplace, Hessian)
 
 # ... alias for ufl compatibility
 # user friendly functions
@@ -1847,10 +1834,7 @@ avg   = Average
 Dn    = NormalDerivative
 minus = MinusInterfaceOperator
 plus  = PlusInterfaceOperator
-# ...
 
-_is_op_test_function = lambda op: (isinstance(op, (Grad, Curl, Div)) and
-                                   isinstance(op._args[0], (ScalarFunction, VectorFunction)))
 
 _is_sympde_atom   = lambda a: isinstance(a, (ScalarFunction, VectorFunction, minus, plus))
 
@@ -1860,4 +1844,3 @@ def add_basicop(expr):
 Basic._constructor_postprocessor_mapping[BasicOperator] = {
     "Add": [add_basicop],
 }
-

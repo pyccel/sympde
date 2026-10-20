@@ -9,16 +9,15 @@ from sympy.core import Basic, S
 from sympy.core import Expr, Add, Mul
 from sympy.core.numbers import Zero as sy_Zero
 from sympy.core.containers import Tuple
+from sympy.utilities.iterables import is_sequence
 
-from sympde.old_sympy_utilities import is_sequence
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import Constant
 from sympde.core.utils import random_string
-from sympde.calculus import Dot, Inner, BasicOperator
-from sympde.calculus import Grad, Hessian
-from sympde.topology import BasicDomain, Union
-from sympde.topology import NormalVector
-from sympde.topology import Boundary, Interface, Domain, InteriorDomain
+from sympde.calculus.core import BasicOperator, Dot, Grad, Hessian, Inner
+from sympde.topology.basic import BasicDomain, Boundary, Interface
+from sympde.topology.basic import InteriorDomain, Union
+from sympde.topology.domain import Domain, NormalVector
 from sympde.topology.space import ScalarFunction
 from sympde.topology.space import VectorFunction
 from sympde.topology.space import Trace, trace_0, trace_1
@@ -26,7 +25,7 @@ from sympde.topology.space import Trace, trace_0, trace_1
 from .errors import UnconsistentLinearExpressionError
 from .basic  import BasicForm
 from .basic  import BasicExpr
-from .basic  import _sanitize_arguments
+from .basic  import sanitize_arguments
 
 __all__ = (
     'BilinearForm',
@@ -38,9 +37,9 @@ __all__ = (
     'SemiNorm',
     'Norm',
 #
-    '_get_domain',
     'add_int',
     'expand',
+    'get_domain',
     'integral',
     'is_linear_expression',
     'linearize',
@@ -101,7 +100,7 @@ def expand(expr):
     return expr
 
 #==============================================================================
-def _get_domain(expr):
+def get_domain(expr):
     # expr is an integral of BasicExpr or Add of Integral of BasicExpr
     if isinstance(expr, Integral):
         return expr.domain
@@ -109,7 +108,7 @@ def _get_domain(expr):
     elif isinstance(expr, (Add, Mul)):
         domains = []
         for a in expr.args:
-            a = _get_domain(a)
+            a = get_domain(a)
             if isinstance(a, Union):
                 domains.extend(list(a.args))
             elif isinstance(a, BasicDomain):
@@ -125,7 +124,7 @@ class LinearExpr(BasicExpr):
         if expr.atoms(Integral):
             raise TypeError('')
 
-        args = _sanitize_arguments(arguments, is_linear=True)
+        args = sanitize_arguments(arguments, is_linear=True)
 
         if not is_linear_expression(expr, args):
             msg = '> Expression is not linear'
@@ -142,7 +141,7 @@ class LinearExpr(BasicExpr):
         return self._args[1]
 
     def __call__(self, *args):
-        args = _sanitize_arguments(args, is_linear=True)
+        args = sanitize_arguments(args, is_linear=True)
         expr, _ =  self.expr._xreplace(dict(list(zip(self.variables, args))))
         return expr
 
@@ -247,8 +246,7 @@ class Integral(CalculusFunction):
     def _hashable_content(self):
         return (self.expr , self.domain)
 
-    def __hash__(self):
-        return hash(self._hashable_content())
+    __hash__ = CalculusFunction.__hash__
 
     @classmethod
     def subs_boundary_expr(cls, expr, domain):
@@ -345,7 +343,7 @@ class LinearForm(BasicForm):
             raise ValueError('Expecting an integral Expression')
 
         # TODO: why do we 'sanitize' here?
-        args = _sanitize_arguments(arguments, is_linear=True)
+        args = sanitize_arguments(arguments, is_linear=True)
 
         # Check linearity with respect to the given arguments
         if check_linearity and not is_linear_expression(expr, args):
@@ -362,7 +360,7 @@ class LinearForm(BasicForm):
 
         # Compute 'domain' property (scalar or tuple)
         # TODO: is this is useful?
-        obj._domain = _get_domain(expr)
+        obj._domain = get_domain(expr)
 
         return obj
 
@@ -402,7 +400,7 @@ class LinearForm(BasicForm):
         # Make sure that 'values' is always a list
         if len(tests) == 1:
             values = tests[0]
-            if not is_sequence(values, vector=isinstance(values, VectorFunction)):
+            if isinstance(values, VectorFunction) or not is_sequence(values):
                 values = [values]
         else:
             values = tests
@@ -431,7 +429,7 @@ class BilinearForm(BasicForm):
             raise ValueError('Expecting integral Expression')
 
         # TODO: why do we 'sanitize' here?
-        args = _sanitize_arguments(arguments, is_bilinear=True)
+        args = sanitize_arguments(arguments, is_bilinear=True)
 
         # Distinguish between trial and test functions
         trial_functions, test_functions = args
@@ -458,7 +456,7 @@ class BilinearForm(BasicForm):
 
         # Compute 'domain' property (scalar or tuple)
         # TODO: is this is useful?
-        obj._domain = _get_domain(expr)
+        obj._domain = get_domain(expr)
 
         return obj
 
@@ -513,8 +511,8 @@ class BilinearForm(BasicForm):
         expr = self._update_free_variables(**kwargs)
 
         # If needed, convert positional arguments to lists
-        if not is_sequence(trials, vector=isinstance(trials, VectorFunction)): trials = [trials]
-        if not is_sequence(tests, vector=isinstance(tests, VectorFunction)): tests  = [tests ]
+        if isinstance(trials, VectorFunction) or not is_sequence(trials): trials = [trials]
+        if isinstance(tests, VectorFunction) or not is_sequence(tests): tests  = [tests ]
 
         # Concatenate input values into single list
         values = [*trials, *tests]
@@ -535,15 +533,11 @@ class SemiNorm(Functional):
         kind = kind.lower()
         if kind not in ['l2', 'h1', 'h2']:
             raise ValueError('> Only L2, H1, H2 norms are available')
-        # ...
 
-        # ...
         is_vector = isinstance(expr, (Matrix, ImmutableDenseMatrix, Tuple, list, tuple))
         if is_vector:
             expr = ImmutableDenseMatrix(expr)
-        # ...
 
-        # ...
         exponent = None
         if kind == 'l2' and evaluate:
             exponent = 2
@@ -582,7 +576,6 @@ class SemiNorm(Functional):
 
             else:
                 raise NotImplementedError('TODO')
-        # ...
 
         obj = Functional.__new__(cls, expr, domain, evaluate=evaluate)
         obj._exponent = exponent
@@ -607,15 +600,11 @@ class Norm(Functional):
         kind = kind.lower()
         if kind not in ['l2', 'h1', 'h2']:
             raise ValueError('> Only L2, H1, H2 norms are available')
-        # ...
 
-        # ...
         is_vector = isinstance(expr, (Matrix, ImmutableDenseMatrix, Tuple, list, tuple))
         if is_vector:
             expr = ImmutableDenseMatrix(expr)
-        # ...
 
-        # ...
         exponent = None
         if kind == 'l2' and evaluate:
             exponent = 2
@@ -655,7 +644,6 @@ class Norm(Functional):
 
             else:
                 raise NotImplementedError('TODO')
-        # ...
 
         obj = Functional.__new__(cls, expr, domain, evaluate=evaluate)
         obj._exponent = exponent
@@ -695,7 +683,6 @@ def linearize(form, fields, trials=None):
     if not isinstance(form, LinearForm):
         raise TypeError('> Expecting a LinearForm')
 
-    # ...
     if not isinstance(fields, (list, tuple, Tuple)):
         fields = [fields]
 
@@ -703,7 +690,6 @@ def linearize(form, fields, trials=None):
         if not isinstance(field, (ScalarFunction, VectorFunction)):
             raise TypeError('> Expecting a {Scalar|Vector}Function', field)
 
-    # ...
     if trials:
         if not isinstance(trials, (list, tuple, Tuple)):
             trials = [trials]
@@ -713,8 +699,6 @@ def linearize(form, fields, trials=None):
                 raise TypeError('> Expecting a {Scalar|Vector}Function', trial)
     else:
         trials = [x.space.element(x.name + '_trial_' + random_string(4)) for x in fields]
-
-    # ...
 
     eps        = Constant('eps_' + random_string(4))
     new_fields = [field + eps*trial for field, trial in zip(fields, trials)]
@@ -855,7 +839,7 @@ def mul_integral(expr):
 def mul_add(expr):
     args_int = [a for a in expr.args if isinstance(a, IntAdd)]
     coeff    = Mul(*[a for a in expr.args if not a in args_int])
-    args_int[0] = [IntAdd(*[coeff*i for i in args_int[0].args])]
+    args_int[0] = IntAdd(*[coeff*i for i in args_int[0].args])
     return Mul(*args_int)
 
 def add_int(expr):
@@ -869,4 +853,3 @@ Basic._constructor_postprocessor_mapping[Integral] = {
 Basic._constructor_postprocessor_mapping[IntAdd] = {
     "Mul": [mul_add],
 }
-

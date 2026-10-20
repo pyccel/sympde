@@ -2,16 +2,12 @@
 #
 
 from sympy.core import Symbol
-from sympy import Mul, Tuple
+from sympy import Tuple
 from sympy.printing.latex import LatexPrinter as LatexPrinterSympy
 from sympy.printing.latex import translate
-from sympy import Indexed, IndexedBase, Matrix, ImmutableDenseMatrix
+from sympy import Indexed, IndexedBase
 
-from sympde.topology import NormalVector, TangentVector
-from sympde.topology import Line, Square, Cube, Domain
-from sympde.topology.derivatives import sort_partial_derivatives
-from sympde.topology.derivatives import get_index_derivatives
-from sympde.topology.derivatives import get_atom_derivatives
+from sympde.topology.domain import NormalVector
 from sympde.topology.space import ProductSpace
 from sympde.topology.space import ScalarFunction, VectorFunction
 
@@ -88,19 +84,13 @@ class LatexPrinter(LatexPrinterSympy):
             arg = r'\nabla \left( ' + self._print(arg) + r' \right)'
 
         return arg + r' \cdot ' + nn
-    # ...
 
-    # ...
     def _print_Jump(self, expr):
         return r'[\![ ' + self._print(expr.args[0]) + r' ]\!]'
-    # ...
 
-    # ...
     def _print_Average(self, expr):
         return r'\{ ' + self._print(expr.args[0]) + r' \}'
-    # ...
 
-    # ...
     def _print_NormalVector(self, expr):
         return r'\mathbf{n}'
 
@@ -112,12 +102,9 @@ class LatexPrinter(LatexPrinterSympy):
 
     def _print_TangentVector(self, expr):
         return r'\mathbf{t}'
-    # ...
 
-    # ...
     def _print_VectorFunction(self, expr):
         return r'\mathbf{' + expr.name + '}'
-    # ...
 
     # ... algebraic operators
     def _print_Dot(self, expr):
@@ -149,9 +136,7 @@ class LatexPrinter(LatexPrinterSympy):
 
     def _print_Outer(self, expr):
         raise NotImplementedError('TODO')
-    # ...
 
-    # ...
     def _print_Integral(self, expr):
 
         if expr.is_domain_integral:
@@ -197,10 +182,12 @@ class LatexPrinter(LatexPrinterSympy):
 
     def _print_Kron(self, expr):
         raise NotImplementedError('TODO')
-    # ...
 
     def _print_Nil(self, expr):
         return r'\ldots'
+
+    def _print_BasicDomain(self, expr):
+        return translate(expr.name)
 
     def _print_Domain(self, expr):
         return translate(expr.name)
@@ -242,9 +229,7 @@ class LatexPrinter(LatexPrinterSympy):
         else:
             test_spaces = tests.space
             tests = self._print(tests)
-        # ...
 
-        # ...
         if isinstance(trials, (list, tuple, Tuple)):
             if len(trials) == 1:
                 trials = trials[0]
@@ -262,7 +247,6 @@ class LatexPrinter(LatexPrinterSympy):
         else:
             trial_spaces = trials.space
             trials = self._print(trials)
-        # ...
 
         test_spaces = self._print(test_spaces)
         trial_spaces = self._print(trial_spaces)

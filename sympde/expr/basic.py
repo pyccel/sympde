@@ -7,12 +7,10 @@ from sympde.core.basic     import Constant
 from sympde.topology.space import ScalarFunction
 from sympde.topology.space import VectorFunction
 
-__all__ = ('BasicExpr', 'BasicForm', '_sanitize_arguments')
+__all__ = ('BasicExpr', 'BasicForm', 'sanitize_arguments')
 
 #==============================================================================
-def _sanitize_arguments(arguments, is_bilinear=False, is_linear=False):
-
-    # ...
+def sanitize_arguments(arguments, is_bilinear=False, is_linear=False):
     if is_bilinear or is_linear:
 
         if is_bilinear:
@@ -35,7 +33,6 @@ def _sanitize_arguments(arguments, is_bilinear=False, is_linear=False):
             raise TypeError(msg)
 
         test_functions = Tuple(*test_functions)
-    # ...
 
     if is_bilinear:
 
@@ -52,7 +49,6 @@ def _sanitize_arguments(arguments, is_bilinear=False, is_linear=False):
             raise TypeError(msg)
 
         trial_functions = Tuple(*trial_functions)
-    # ...
 
     args = Tuple(trial_functions, test_functions) if is_bilinear else Tuple(*test_functions)
     return args
@@ -152,6 +148,5 @@ class BasicForm(Expr):
 
             var = _kwargs[name]
             expr = expr.xreplace({var: v})
-        # ...
 
         return expr

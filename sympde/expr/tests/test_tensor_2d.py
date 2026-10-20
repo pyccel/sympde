@@ -4,18 +4,19 @@
 
 from sympy.core.containers import Tuple
 
-from sympde.core     import Constant
-from sympde.calculus import grad, dot, curl, div
+from sympde.core.basic import Constant
+from sympde.calculus.core import grad, dot, curl, div
 #from sympde.calculus import laplace
 #from sympde.topology import dx
-from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
-from sympde.topology import elements_of
-from sympde.topology import Boundary
-from sympde.topology import Domain
-from sympde.topology import Mapping
+from sympde.topology.space import ScalarFunctionSpace, VectorFunctionSpace
+from sympde.topology.space import elements_of
+from sympde.topology.basic import Boundary
+from sympde.topology.domain import Domain
+from sympde.topology.mapping import Mapping
 
 from sympde.expr.expr import BilinearForm, integral
 from sympde.expr.evaluation import TensorExpr
+from sympde.expr.evaluation import Mass, Stiffness, Advection, AdvectionT, Bilaplacian
 
 
 #==============================================================================
@@ -30,7 +31,7 @@ def test_tensorize_2d_1():
 
     int_0 = lambda expr: integral(domain , expr)
 
-    # ...
+
 #    a = BilinearForm((u,v), u*v)
     a = BilinearForm((u,v), int_0(mu*u*v + dot(grad(u),grad(v))))
 #    a = BilinearForm((u,v), dot(grad(u),grad(v)))
@@ -39,7 +40,7 @@ def test_tensorize_2d_1():
 
     expr = TensorExpr(a, domain=domain)
     print(expr)
-    # ...
+
 
 #==============================================================================
 def test_tensorize_2d_2():
@@ -50,13 +51,14 @@ def test_tensorize_2d_2():
     u, v = elements_of(V, names='u, v')
 
     int_0 = lambda expr: integral(domain , expr)
-    # ...
+
+
 #    a = BilinearForm((u,v), dot(u,v))
     a = BilinearForm((u,v), int_0(curl(u)*curl(v) + div(u)*div(v)))
 
     expr = TensorExpr(a, domain=domain)
     print(expr)
-    # ...
+
 
 #==============================================================================
 def test_tensorize_2d_1_mapping():
@@ -73,7 +75,8 @@ def test_tensorize_2d_1_mapping():
     u, v = elements_of(V, names='u, v')
 
     int_0 = lambda expr: integral(domain , expr)
-    # ...
+
+
 #    a = BilinearForm((u,v), u*v)
 #    a = BilinearForm((u,v), mu*u*v + dot(grad(u),grad(v)))
     a = BilinearForm((u,v), int_0(dot(grad(u),grad(v))))
@@ -82,7 +85,7 @@ def test_tensorize_2d_1_mapping():
 
     expr = TensorExpr(a, domain=domain)
     print(expr)
-    # ...
+
 
 #==============================================================================
 def test_tensorize_2d_2_mapping():
@@ -119,6 +122,25 @@ def test_tensorize_2d_3():
 
     print(TensorExpr(a, domain=domain))
     print('')
+
+
+#==============================================================================
+def test_1d_forms_reconstruction():
+    w = Constant('w')
+
+    for cls, name in [(Mass, 'M'), (Stiffness, 'S'), (Advection, 'A'),
+                      (AdvectionT, 'AT'), (Bilaplacian, 'B')]:
+        for form in (cls(1), cls(1, w)):
+            assert form.name == name
+            assert form.axis == 1
+            rebuilt = form.func(*form.args)
+            assert isinstance(rebuilt, cls)
+            assert rebuilt == form
+            assert rebuilt.weight == form.weight
+
+    assert str(Mass(0)) == 'M_0'
+    assert str(Stiffness(1, w)) == 'S_1(w)'
+    assert Mass(0) != Stiffness(0)
 
 
 #==============================================================================

@@ -2,18 +2,18 @@
 
 from sympy import Matrix
 
-from sympde.calculus import grad, inner
-from sympde.topology import Domain
-from sympde.topology import dx
-from sympde.topology import VectorFunctionSpace
-from sympde.topology import element_of
+from sympde.calculus.core import grad, inner
+from sympde.topology.domain import Domain
+from sympde.topology.derivatives import dx
+from sympde.topology.space import VectorFunctionSpace
+from sympde.topology.space import element_of
 
 #==============================================================================
 
 DIM = 2
 domain = Domain('Omega', dim=DIM)
 
-# ...
+
 def test_field_2d_1():
     print('============ test_field_2d_1 =============')
 

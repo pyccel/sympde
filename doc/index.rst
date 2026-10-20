@@ -13,6 +13,7 @@ Welcome to sympde's documentation!
    quick
    multipatch
    advanced
+   examples/index
 
 Mathematical background
 =======================
@@ -29,6 +30,7 @@ API
 .. toctree::
    :maxdepth: 1
 
+   api
    source/modules
 
 Indices and tables

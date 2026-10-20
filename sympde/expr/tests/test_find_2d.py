@@ -3,16 +3,17 @@
 from sympy import cos
 #from sympy import exp
 
-from sympde.core     import Constant
-from sympde.calculus import grad, dot
+from sympde.core.basic import Constant
+from sympde.calculus.core import grad, dot
 #from sympde.topology import dx, dy
-from sympde.topology import ScalarFunctionSpace
-from sympde.topology import element_of
-from sympde.topology import Domain, Boundary
-from sympde.expr     import BilinearForm, LinearForm, integral
-from sympde.expr     import TerminalExpr
-from sympde.expr     import find
-from sympde.expr     import EssentialBC
+from sympde.topology.space import ScalarFunctionSpace
+from sympde.topology.space import element_of
+from sympde.topology.domain import Domain
+from sympde.topology.basic import Boundary
+from sympde.expr.expr import BilinearForm, LinearForm, integral
+from sympde.expr.evaluation import TerminalExpr
+from sympde.expr.equation import find
+from sympde.expr.equation import EssentialBC
 #from sympde.expr     import NewtonIteration
 
 DIM = 2
@@ -58,37 +59,26 @@ def test_find_2d_1():
 
     expr = x*y*v
     l_B2 = LinearForm(v, int_1(expr))
-    # ...
 
-    # ...
     equation = find(u, forall=v, lhs=a1(u,v), rhs=l1(v))
-    # ...
 
-    # ...
     a = BilinearForm((v,u), a1(v,u) + alpha*a2(v,u))
     equation = find(u, forall=v, lhs=a(u,v), rhs=l1(v))
-    # ...
 
-    # ...
     a = BilinearForm((v,u), a1(v,u) + a_B1(v,u))
     equation = find(u, forall=v, lhs=a(u,v), rhs=l1(v))
-    # ...
 
-    # ...
     a = BilinearForm((v,u), a1(v,u) + a_B1(v,u))
     l = LinearForm(v, l1(v) + l2(v))
     equation = find(u, forall=v, lhs=a(u,v), rhs=l(v))
-    # ...
 
-    # ...
     a = BilinearForm((v,u), a1(v,u) + a_B1(v,u))
     l = LinearForm(v, l1(v) + alpha*l_B2(v))
     equation = find(u, forall=v, lhs=a(u,v), rhs=l(v))
-    # ...
 
     # ... using bc
     equation = find(u, forall=v, lhs=a(u,v), rhs=l(v), bc=EssentialBC(u, 0, B1))
-    # ...
+
 
 ##==============================================================================
 # TODO shall we have 'find' with Newton?

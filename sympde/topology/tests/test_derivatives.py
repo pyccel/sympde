@@ -5,14 +5,15 @@ from sympy import Tuple
 from sympy import Matrix
 from sympy import srepr
 
-from sympde.core import Constant
-from sympde.calculus import grad, dot, inner
-from sympde.topology import Domain, element_of
-from sympde.topology import get_index_derivatives_atom
-from sympde.topology import get_max_partial_derivatives
-from sympde.topology import ScalarFunctionSpace
-from sympde.topology import (dx, dy, dz)
-from sympde.topology import Mapping
+from sympde.core.basic import Constant
+from sympde.calculus.core import grad, dot, inner
+from sympde.topology.domain import Domain
+from sympde.topology.space import element_of
+from sympde.topology.derivatives import get_index_derivatives_atom
+from sympde.topology.derivatives import get_max_partial_derivatives
+from sympde.topology.space import ScalarFunctionSpace
+from sympde.topology.derivatives import dx, dy, dz
+from sympde.topology.mapping import Mapping
 
 
 def indices_as_str(a):
@@ -23,12 +24,9 @@ def indices_as_str(a):
     return code
 
 
-
-# ...
 def test_partial_derivatives_1():
     print('============ test_partial_derivatives_1 ==============')
 
-    # ...
     domain = Domain('Omega', dim=2)
     M      = Mapping('M', dim=2)
 
@@ -43,7 +41,6 @@ def test_partial_derivatives_1():
 
     alpha = Constant('alpha')
     beta = Constant('beta')
-    # ...
 
     assert(dx(x**2) == 2*x)
     assert(dy(x**2) == 0)
@@ -63,20 +60,18 @@ def test_partial_derivatives_1():
                         alpha*dx(v) + beta*dy(v),
                         alpha*dx(w) + beta*dy(w)]])
     assert(alpha * dx(uvw) + beta * dy(uvw) == expected)
-    # ...
+
 
 #    expr = alpha * dx(uvw) + beta * dy(uvw)
 #    print(expr)
 
 #    print('> ', srepr(expr))
 #    print('')
-# ...
 
-# ...
+
 def test_partial_derivatives_2():
     print('============ test_partial_derivatives_2 ==============')
 
-    # ...
     domain = Domain('Omega', dim=2)
     M      = Mapping('M', dim=2)
 
@@ -87,38 +82,28 @@ def test_partial_derivatives_2():
 
     alpha = Constant('alpha')
     beta = Constant('beta')
-    # ...
 
-    # ...
     expr = alpha * dx(F)
 
     indices = get_index_derivatives_atom(expr, F)[0]
     assert(indices_as_str(indices) == 'x')
-    # ...
 
-    # ...
     expr = dy(dx(F))
 
     indices = get_index_derivatives_atom(expr, F)[0]
     assert(indices_as_str(indices) == 'xy')
-    # ...
 
-    # ...
     expr = alpha * dx(dy(dx(F)))
 
     indices = get_index_derivatives_atom(expr, F)[0]
     assert(indices_as_str(indices) == 'xxy')
-    # ...
 
-    # ...
     expr = alpha * dx(dx(F)) + beta * dy(F) + dx(dy(F))
 
     indices = get_index_derivatives_atom(expr, F)
     indices = [indices_as_str(i) for i in indices]
     assert(sorted(indices) == ['xx', 'xy', 'y'])
-    # ...
 
-    # ...
     expr = alpha * dx(dx(F)) + beta * dy(F) + dx(dy(F))
 
     d = get_max_partial_derivatives(expr, F)
@@ -126,8 +111,6 @@ def test_partial_derivatives_2():
 
     d = get_max_partial_derivatives(expr)
     assert(indices_as_str(d) == 'xxy')
-    # ...
-# ...
 
 
 #==============================================================================

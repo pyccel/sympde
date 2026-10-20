@@ -9,21 +9,23 @@ from sympy.core            import Basic
 from sympy.core            import Symbol,Integer
 from sympy.core            import Add, Mul, Pow
 from sympy.core.numbers    import ImaginaryUnit
-from sympy.core.containers import Tuple
+from sympy.core.containers import Dict, Tuple
 from sympy                 import S
 from sympy                 import sqrt, symbols
 from sympy.core.exprtools  import factor_terms
 from sympy.polys.polytools import parallel_poly_from_expr
+from sympy.utilities.iterables import is_sequence
 
-from sympde.core              import Constant
+from sympde.core.basic        import Constant
 from sympde.core.basic        import BasicMapping
 from sympde.core.basic        import CalculusFunction
-from sympde.core.basic        import _coeffs_registery
+from sympde.core.basic        import coefficient_types
+from sympde.core.basic        import new_basic
 from sympde.calculus.core     import PlusInterfaceOperator, MinusInterfaceOperator
 from sympde.calculus.core     import grad, div, curl, laplace #, hessian
-from sympde.calculus.core     import dot, inner, outer, _diff_ops
+from sympde.calculus.core     import dot, inner, outer, diff_ops
 from sympde.calculus.core     import has, DiffOperator
-from sympde.calculus.matrices import MatrixSymbolicExpr, MatrixElement, SymbolicTrace, Inverse
+from sympde.calculus.matrices import MatrixSymbolicExpr, MatrixElement, SymbolicTrace
 from sympde.calculus.matrices import SymbolicDeterminant, Transpose
 
 from .basic       import BasicDomain, Union, InteriorDomain
@@ -34,9 +36,9 @@ from .space       import ScalarFunction, VectorFunction, IndexedVectorFunction
 from .space       import Trace
 from .datatype    import HcurlSpaceType, H1SpaceType, L2SpaceType, HdivSpaceType, UndefinedSpaceType
 from .derivatives import dx, dy, dz, DifferentialOperator
-from .derivatives import _partial_derivatives
+from .derivatives import partial_derivatives
 from .derivatives import get_atom_derivatives, get_index_derivatives_atom
-from .derivatives import _logical_partial_derivatives
+from .derivatives import logical_partial_derivatives
 from .derivatives import get_atom_logical_derivatives, get_index_logical_derivatives_atom
 from .derivatives import LogicalGrad_1d, LogicalGrad_2d, LogicalGrad_3d
 
@@ -210,11 +212,9 @@ class Mapping(BasicMapping):
         obj._logical_coordinates = Tuple(*lcoords_symbols_real) # coordinates must be symbols with real=True      
         lcoords_general_symbols = [Symbol(i) for i in lcoords_names] #list of symbols without real=True       
 
-        # ...
         if not( obj._expressions is None ):
             coords_names = ['x', 'y', 'z'][:pdim]
 
-            # ...
             args = []
             for i in coords_names:
                 x = obj._expressions[i]
@@ -222,13 +222,13 @@ class Mapping(BasicMapping):
                 args.append(x)
 
             args = Tuple(*args)
-            # ...
+
             zero_coords = ['x1', 'x2', 'x3'][ldim:]
 
             for i in zero_coords:
                 x = sympify(i)
                 args = args.subs(x,0)
-            # ...
+
             # get constants by subtracting coordinates from list of free symbols
             constants        = list(set(args.free_symbols) - set(lcoords_general_symbols))
             constants_values = {a.name:Constant(a.name) for a in constants}
@@ -560,12 +560,17 @@ class InterfaceMapping(Mapping):
 class MultiPatchMapping(Mapping):
 
     def __new__(cls, dic):
-        assert isinstance( dic, dict)
-        return Basic.__new__(cls, dic)
+        if isinstance(dic, Dict):
+            dic = dict(dic.items())
+        if not isinstance(dic, dict):
+            raise TypeError('Expecting a dictionary of patch mappings')
+        obj = new_basic(cls, dic)
+        obj._mappings = dict(dic)
+        return obj
 
     @property
     def mappings(self):
-        return self.args[0]
+        return self._mappings
 
     @property
     def is_analytical(self):
@@ -589,8 +594,8 @@ class MultiPatchMapping(Mapping):
     def _eval_simplify(self, **kwargs):
         return self
 
-    def __hash__(self):
-        return hash((*self.mappings.values(), *self.mappings.keys()))
+    def _hashable_content(self):
+        return self.args
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -917,7 +922,7 @@ class LogicalExpr(CalculusFunction):
         """."""
 
         from sympde.expr.evaluation import TerminalExpr, DomainExpression
-        from sympde.expr.expr import BilinearForm, LinearForm, BasicForm, Norm
+        from sympde.expr.expr import BilinearForm, LinearForm, Norm
         from sympde.expr.expr import Integral
 
         types = (ScalarFunction, VectorFunction, DifferentialOperator, Trace, Integral)
@@ -967,7 +972,7 @@ class LogicalExpr(CalculusFunction):
                 v *= i
             return v
 
-        elif isinstance(expr, _logical_partial_derivatives):
+        elif isinstance(expr, logical_partial_derivatives):
             if mapping.is_analytical:
                 Ms   = [mapping[i] for i in range(dim)]
                 expr = expr.subs(list(zip(Ms, mapping.expressions)))
@@ -1100,7 +1105,7 @@ class LogicalExpr(CalculusFunction):
             args = [cls.eval(arg, domain) for arg in expr.args]
             return type(expr)(*args)
 
-        elif isinstance(expr, _diff_ops):
+        elif isinstance(expr, diff_ops):
             raise NotImplementedError('TODO')
 
         # TODO MUST BE MOVED AFTER TREATING THE CASES OF GRAD, CURL, DIV IN FEEC
@@ -1127,7 +1132,7 @@ class LogicalExpr(CalculusFunction):
                 arg = TerminalExpr(arg, domain=domain.logical_domain)
             elif isinstance(arg, MatrixElement):
                 arg = TerminalExpr(arg, domain=domain.logical_domain)
-            # ...
+
             if dim == 1:
                 lgrad_arg = LogicalGrad_1d(arg)
 
@@ -1184,7 +1189,7 @@ class LogicalExpr(CalculusFunction):
                 arg = TerminalExpr(arg, domain=domain.logical_domain)
             elif isinstance(arg, MatrixElement):
                 arg = TerminalExpr(arg, domain=domain.logical_domain)
-            # ...
+
             if dim == 1:
                 lgrad_arg = LogicalGrad_1d(arg)
 
@@ -1332,7 +1337,7 @@ class SymbolicExpr(CalculusFunction):
             v = Pow(cls.eval(b, code=code), e)
             return v
 
-        elif isinstance(expr, _coeffs_registery):
+        elif isinstance(expr, coefficient_types):
             return expr
 
         elif isinstance(expr, (list, tuple, Tuple)):
@@ -1385,7 +1390,7 @@ class SymbolicExpr(CalculusFunction):
 
             return Symbol(name)
 
-        elif isinstance(expr, _partial_derivatives):
+        elif isinstance(expr, partial_derivatives):
             atom = get_atom_derivatives(expr)
             indices = get_index_derivatives_atom(expr, atom)
             code = None
@@ -1398,7 +1403,7 @@ class SymbolicExpr(CalculusFunction):
                     code += k*n
             return cls.eval(atom, code=code)
 
-        elif isinstance(expr, _logical_partial_derivatives):
+        elif isinstance(expr, logical_partial_derivatives):
             atom = get_atom_logical_derivatives(expr)
             indices = get_index_logical_derivatives_atom(expr, atom)
             code = None

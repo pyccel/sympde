@@ -1,11 +1,13 @@
 # coding: utf-8
 
-from sympde.core     import Constant
-from sympde.calculus import grad, dot
-from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
-from sympde.topology import element_of
-from sympde.topology import Domain, Boundary, NormalVector
-from sympde.expr     import EssentialBC
+from sympde.core.basic import Constant
+from sympde.calculus.core import grad, dot
+from sympde.topology.space import ScalarFunctionSpace, VectorFunctionSpace
+from sympde.topology.space import element_of
+from sympde.topology.domain import Domain
+from sympde.topology.basic import Boundary
+from sympde.topology.domain import NormalVector
+from sympde.expr.equation import EssentialBC
 
 #==============================================================================
 def test_essential_bc_1():
@@ -27,7 +29,6 @@ def test_essential_bc_1():
     assert( bc.order == 0 )
     assert( bc.normal_component == False )
     assert( bc.index_component == None )
-    # ...
 
     # ... scalar case
     bc = EssentialBC(dot(grad(v), nn), 0, B1)
@@ -36,7 +37,6 @@ def test_essential_bc_1():
     assert( bc.order == 1 )
     assert( bc.normal_component == False )
     assert( bc.index_component == None )
-    # ...
 
     # ... vector case
     bc = EssentialBC(w, 0, B1)
@@ -44,7 +44,6 @@ def test_essential_bc_1():
     assert( bc.order == 0 )
     assert( bc.normal_component == False )
     assert( bc.index_component == [0,1] )
-    # ...
 
     # ... vector case
     bc = EssentialBC(dot(w, nn), 0, B1)
@@ -53,7 +52,6 @@ def test_essential_bc_1():
     assert( bc.order == 0 )
     assert( bc.normal_component == True )
     assert( bc.index_component == None )
-    # ...
 
     # ... vector case
     bc = EssentialBC(w[0], 0, B1)
@@ -61,7 +59,6 @@ def test_essential_bc_1():
     assert( bc.order == 0 )
     assert( bc.normal_component == False )
     assert( bc.index_component == [0] )
-    # ...
 
 
 #==============================================================================

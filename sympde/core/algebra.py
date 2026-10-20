@@ -1,44 +1,16 @@
 # coding: utf-8
 
-import numpy as np
-from itertools import groupby
-
-#from sympy.core.sympify import sympify
-from sympy.simplify.simplify import simplify
-from sympy import Symbol
-from sympy import Lambda
-from sympy import Function
-from sympy import bspline_basis
-from sympy import lambdify
-from sympy import cos
-from sympy import sin
-from sympy import Rational
-from sympy import diff
-from sympy import Matrix, ImmutableDenseMatrix
-from sympy import latex
-from sympy import I as sympy_I
-from sympy.core import Basic
-from sympy.core.singleton import S
-from sympy.simplify.simplify import nsimplify
-from sympy.utilities.lambdify import implemented_function
-from sympy.matrices.dense import MutableDenseMatrix
-from sympy import Mul, Add
-from sympy import postorder_traversal
-from sympy import preorder_traversal
-from sympy.core.expr import Expr
+from sympy import Indexed, Matrix, ImmutableDenseMatrix
+from sympy.core import Add, Basic, Mul
 from sympy.core.containers import Tuple
-from sympy import Integer, Float
-from sympy import Add, Mul
-from sympy import simplify
-from sympy import S
-from sympy import Basic
-from sympy import Indexed, IndexedBase
+from sympy.core.singleton import S
+from sympy.simplify.simplify import simplify
+from sympy.utilities.iterables import is_sequence
 
-from sympde.old_sympy_utilities import is_sequence
 from .basic import CalculusFunction
-from .basic import _coeffs_registery
+from .basic import coefficient_types
 
-# ...
+
 # TODO update default name
 class LinearOperator(CalculusFunction):
 
@@ -75,7 +47,7 @@ class LinearOperator(CalculusFunction):
             return Add(*args)
 
         if isinstance(expr, Mul):
-            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            coeffs  = [a for a in expr.args if isinstance(a, coefficient_types)]
             vectors = [a for a in expr.args if not(a in coeffs)]
 
             a = S.One
@@ -88,9 +60,8 @@ class LinearOperator(CalculusFunction):
 
             return Mul(a, b)
         return cls(expr, evaluate=False)
-# ...
 
-# ...
+
 class DotBasic(CalculusFunction):
 
     nargs = None
@@ -196,9 +167,8 @@ class Dot_3d(DotBasic):
             v = simplify(v)
 
         return u[0]*v[0] + u[1]*v[1] + u[2]*v[2]
-# ...
 
-# ...
+
 class CrossBasic(CalculusFunction):
 
     nargs = None
@@ -252,10 +222,8 @@ class Cross_3d(CrossBasic):
         return Tuple(u[1]*v[2] - u[2]*v[1],
                      u[2]*v[0] - u[0]*v[2],
                      u[0]*v[1] - u[1]*v[0])
-# ...
 
 
-# ...
 class InnerBasic(CalculusFunction):
 
     nargs = None
@@ -318,4 +286,3 @@ class Inner_3d(InnerBasic):
         # TODO add conjugate
         M = u.transpose()*v
         return M.trace()
-# ...

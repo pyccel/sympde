@@ -1,10 +1,13 @@
-# -*- coding: utf-8 -*-
-#
-# Configuration file for the Sphinx documentation builder.
-#
-# This file does only contain a selection of the most common options. For a
-# full list see the documentation:
-# http://www.sphinx-doc.org/en/master/config
+"""Sphinx configuration for the SymPDE documentation."""
+
+import runpy
+from pathlib import Path
+
+from docutils.statemachine import StringList
+from sphinx.ext.apidoc import main as sphinx_apidoc
+from sphinx.ext.graphviz import Graphviz
+
+from sympde import __version__
 
 # -- Path setup --------------------------------------------------------------
 
@@ -19,21 +22,21 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'sympde'
-copyright = '2018, A. Ratnani, S. Hadjout'
-author = 'A. Ratnani, S. Hadjout'
+project = 'SymPDE'
+copyright = '2018-2026, SymPDE developers'
+author = 'SymPDE developers'
 
 # The short X.Y version
-version = ''
+version = __version__.split('-dev', maxsplit=1)[0]
 # The full version, including alpha/beta/rc tags
-release = ''
+release = version
 
 
 # -- General configuration ---------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
 #
-# needs_sphinx = '1.0'
+needs_sphinx = '7.0'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -44,6 +47,7 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
+    'sphinx.ext.graphviz',
     'sphinxcontrib.bibtex',
 ]
 
@@ -94,7 +98,8 @@ templates_path = ['_templates']
 # You can specify multiple suffix as a list of string:
 #
 # source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+source_suffix = {'.rst': 'restructuredtext'}
+default_role = 'py:obj'
 
 # The master toctree document.
 master_doc = 'index'
@@ -187,6 +192,9 @@ latex_elements = {
     'preamble' : r'\usepackage{amsmath} \usepackage{amssymb} \usepackage{latex_macros}',
     }
 
+#####################################################
+# add LaTeX macros
+
 # -- Options for manual page output ------------------------------------------
 
 # One entry per manual page. List of tuples
@@ -216,14 +224,46 @@ texinfo_documents = [
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
 
-# Bibliography used by ``math/feec.rst``.
 bibtex_bibfiles = ['math/refs_feec.bib']
+
+# Draw graphs as SVG, so that they scale with the page
+graphviz_output_format = 'svg'
 
 
 # -- APIDOC ----------------------------------------------
-import subprocess
-cmd = 'rm -rf source; sphinx-apidoc --force --maxdepth=3 -o source/ ../sympde'
-subprocess.call(cmd, shell=True)
+doc_dir = Path(__file__).resolve().parent
+source_dir = doc_dir / 'source'
+static_dir = doc_dir / '_static'
+source_dir.mkdir(exist_ok=True)
+static_dir.mkdir(exist_ok=True)
+apidoc_args = [
+    '--force',
+    '--remove-old',
+    '--maxdepth', '3',
+    '--output-dir', str(source_dir),
+    str(doc_dir.parent / 'sympde'),
+]
+apidoc_args.extend(str(path) for path in (doc_dir.parent / 'sympde').glob('*/tests'))
+apidoc_args.append(str(doc_dir.parent / 'sympde' / 'api'))
+sphinx_apidoc(apidoc_args)
 
-# create _static directory
-subprocess.call('mkdir -p _static', shell=True)
+
+# -- Expression trees ------------------------------------
+# Run the example and draw its graphs with Graphviz. They are generated at
+# build time, so they always match the code.
+trees = runpy.run_path(str(doc_dir / 'examples' / 'expression_trees.py'))
+
+
+class ExpressionTree(Graphviz):
+    """Draw a graph of the expression-tree example, given by its name."""
+    required_arguments = 1
+    optional_arguments = 0
+
+    def run(self):
+        graph = trees['graphs'][self.arguments.pop()]
+        self.content = StringList(graph.splitlines())
+        return super().run()
+
+
+def setup(app):
+    app.add_directive('expression-tree', ExpressionTree)

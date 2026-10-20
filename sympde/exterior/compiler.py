@@ -7,14 +7,15 @@ from sympy import Add, Mul
 from sympy import S
 from sympy import Indexed
 from sympy import Tuple
+from sympy.utilities.iterables import is_sequence
 
-from sympde.core.basic import _coeffs_registery
+from sympde.core.basic import coefficient_types
 from sympde.core.basic import CalculusFunction
-from sympde.topology   import H1SpaceType, HcurlSpaceType, HdivSpaceType
-from sympde.topology   import L2SpaceType, UndefinedSpaceType
-from sympde.topology   import ScalarFunction, VectorFunction
-from sympde.calculus   import Grad, Curl, Div
-from sympde.calculus   import Dot, Inner, Cross
+from sympde.topology.datatype import H1SpaceType, HcurlSpaceType, HdivSpaceType
+from sympde.topology.datatype import L2SpaceType, UndefinedSpaceType
+from sympde.topology.space import ScalarFunction, VectorFunction
+from sympde.calculus.core import Curl, Div, Grad
+from sympde.calculus.core import Cross, Dot, Inner
 #from sympde.calculus import grad, dot, inner, cross, rot, curl, div
 
 from .form     import DifferentialForm
@@ -139,7 +140,7 @@ class ExteriorCalculusExpr(CalculusFunction):
         if isinstance(expr, (tuple, list, Tuple)):
             return expr
 
-        if isinstance(expr, _coeffs_registery):
+        if isinstance(expr, coefficient_types):
             return expr
 
         if _is_test_function(expr):
@@ -435,7 +436,7 @@ class ExteriorCalculusExpr(CalculusFunction):
 
         if isinstance(expr, Mul):
 
-            coeffs  = [a for a in expr.args if isinstance(a, _coeffs_registery)]
+            coeffs  = [a for a in expr.args if isinstance(a, coefficient_types)]
             vectors = [a for a in expr.args if not(a in coeffs)]
 
             alpha = S.One
@@ -530,7 +531,6 @@ def augmented_expression(expr, tests, atoms, weak=True):
         expr = expr.subs(delta(u), aux)
 
         constraints[delta(u)] = aux
-    # ...
 
     if constraints:
         constraints = [k-v for k,v in constraints.items()]
