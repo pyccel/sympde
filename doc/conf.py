@@ -51,6 +51,46 @@ extensions = [
     'sphinxcontrib.bibtex',
 ]
 
+# Keep the custom commands used by ``math/feec.rst`` available in HTML
+# output.  The corresponding LaTeX definitions live in ``latex_macros.sty``
+# and are loaded separately for PDF builds below.
+mathjax4_config = {
+    'tex': {
+        'macros': {
+            'Alt': r'\mathrm{Alt}\,',
+            'Curl': r'\nabla \times',
+            'Div': r'\nabla \cdot',
+            'Grad': r'\boldsymbol{\nabla}',
+            'Hcurl': r'{H}(\mbox{curl}, \Omega)',
+            'HcurlLogical': r'{H}(\mbox{curl}, \hat{\Omega})',
+            'Hdiv': r'{H}(\mbox{div}, \Omega)',
+            'HdivLogical': r'{H}(\mbox{div}, \hat{\Omega})',
+            'Hgrad': r'H^1(\Omega)',
+            'HgradLogical': r'H^1(\hat{\Omega})',
+            'Ltwo': r'L^2(\Omega)',
+            'LtwoLogical': r'L^2(\hat{\Omega})',
+            'Vcurl': r'V_h(\mbox{curl}, \Omega)',
+            'Vdiv': r'V_h(\mbox{div}, \Omega)',
+            'Vgrad': r'V_h(\mbox{grad}, \Omega)',
+            'Vltwo': r'V_h(L^2, \Omega)',
+            'diff': r'\mathrm{d}\,',
+            'divs': r'\mathrm{div}\,',
+            'icurl': r'\imath^{1}',
+            'id': r'\mathrm{id}\,',
+            'idiv': r'\imath^{2}',
+            'igrad': r'\imath^{0}',
+            'iltwo': r'\imath^{3}',
+            'nn': r'\mathbf{n}',
+            'rots': r'\mathrm{rot}\,',
+            'tr': r'\operatorname{tr}',
+            'trace': r'\mathrm{Tr}\,',
+            'uu': r'\mathbf{u}',
+            'volume': r'\mathrm{vol}\,',
+            'xx': r'\mathbf{x}',
+        },
+    },
+}
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 

@@ -1332,44 +1332,13 @@ def test_linearity_bilinear_form_2d_1():
 #==============================================================================
 def test_interface_2d_1():
 
-#    # ...
-#    def two_patches():
-#
-#        from sympde.topology import Connectivity, Interface
-#
-#        A = Square('A')
-#        B = Square('B')
-#
-#        A = A.interior
-#        B = B.interior
-#
-#        bnd_A_1 = Boundary(r'\Gamma_1', A, axis=0, ext=-1)
-#        bnd_A_2 = Boundary(r'\Gamma_2', A, axis=0, ext=1)
-#        bnd_A_3 = Boundary(r'\Gamma_3', A, axis=1, ext=-1)
-#        bnd_A_4 = Boundary(r'\Gamma_4', A, axis=1, ext=1)
-#
-#        bnd_B_1 = Boundary(r'\Gamma_1', B, axis=0, ext=-1)
-#        bnd_B_2 = Boundary(r'\Gamma_2', B, axis=0, ext=1)
-#        bnd_B_3 = Boundary(r'\Gamma_3', B, axis=1, ext=-1)
-#        bnd_B_4 = Boundary(r'\Gamma_4', B, axis=1, ext=1)
-#
-#        connectivity = Connectivity()
-#        connectivity['I'] = Interface('I', bnd_A_2, bnd_B_1, ornt=1)
-#        Omega = Domain('Omega',
-#                       interiors=[A, B],
-#                       boundaries=[bnd_A_1, bnd_A_2, bnd_A_3, bnd_A_4, bnd_B_1, bnd_B_2, bnd_B_3, bnd_B_4],
-#                       connectivity=connectivity)
-#
-#        return Omega
-#    # ...
-
     def two_patches():
 
         A = Square('A')
         B = Square('B')
 
         patches = [A, B]
-        connectivity = [((A, 0, 1), (B, 0, -1), 1)]
+        connectivity = [((A, 0, 1), (B, 0, -1), +1)]
         return Domain.join(patches, connectivity, 'Omega')
 
     # create a domain with an interface
@@ -1381,7 +1350,7 @@ def test_interface_2d_1():
     assert isinstance(interface, Interface)
     assert interface.minus is domain.subdomains[0].get_boundary(axis=0, ext= 1)
     assert interface.plus  is domain.subdomains[1].get_boundary(axis=0, ext=-1)
-    assert interface.ornt == 1
+    assert interface.orientation == +1
     assert interface.dim  == 2
     assert interface.mapping is None
     assert interface.logical_domain is None
@@ -1405,7 +1374,7 @@ def test_interface_integral_1():
     B = Square('B')
 
     domains = [A, B]
-    connectivity = [((0, 0, 1), (1, 0, -1), 1)]
+    connectivity = [((0, 0, 1), (1, 0, -1), +1)]
     domain = Domain.join(domains, connectivity, 'domain')
 
     x,y = domain.coordinates
@@ -1466,7 +1435,7 @@ def test_interface_integral_2():
 
 
     patches = [A, B]
-    connectivity = [((0, 0, 1), (1, 0, -1), 1)]
+    connectivity = [((0, 0, 1), (1, 0, -1), +1)]
     domain = Domain.join(patches, connectivity, 'domain')
 
     x,y = domain.coordinates
@@ -1504,8 +1473,8 @@ def test_interface_integral_3():
 
 
     patches = [A, B, C]
-    connectivity = [((0, 0, 1), (1, 0, -1), 1),
-                    ((1, 0, 1), (2, 0, -1), 1)]
+    connectivity = [((0, 0, 1), (1, 0, -1), +1),
+                    ((1, 0, 1), (2, 0, -1), +1)]
     domain = Domain.join(patches, connectivity, 'domain')
 
     x,y = domain.coordinates
@@ -1543,7 +1512,7 @@ def test_interface_integral_4():
     B = Square('B')
 
     patches = [A, B]
-    connectivity = [((0, 0, 1), (1, 0, -1), 1)]
+    connectivity = [((0, 0, 1), (1, 0, -1), +1)]
     domain = Domain.join(patches, connectivity, 'AB')
 
     x,y = domain.coordinates

@@ -38,6 +38,19 @@ class PolarMapping(Mapping):
     _pdim        = 2
 
 #==============================================================================
+class TransposedPolarMapping(Mapping):
+    """Polar 2D mapping with angle and radius coordinates transposed.
+
+    The first logical coordinate is the angle and the second one is the
+    radius. This is the coordinate ordering opposite to :class:`PolarMapping`.
+    """
+    _expressions = {'x': 'c1 + (rmin*(1-x2)+rmax*x2)*cos(x1)',
+                    'y': 'c2 + (rmin*(1-x2)+rmax*x2)*sin(x1)'}
+
+    _ldim        = 2
+    _pdim        = 2
+
+#==============================================================================
 class TargetMapping(Mapping):
     """
     Represents a Target 2D Mapping object.
