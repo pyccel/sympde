@@ -18,7 +18,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Convert the README to Markdown and expand the installation, testing, and documentation-build instructions.
+- #190: Convert the README to Markdown and expand the installation, testing, and documentation-build instructions.
 - #194: Use explicit internal imports and load optional dependencies only when needed.
 - #194: Remove the leading underscore from `partial_derivatives`, `logical_partial_derivatives` (`sympde.topology.derivatives`) and `split_test_function` (`sympde.expr.evaluation`), and add them to `sympde.api`.
 - #194: List only public names in the `__all__` of every module.
