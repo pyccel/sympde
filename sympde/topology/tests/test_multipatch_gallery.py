@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from sympde.topology import TransposedPolarMapping
+from sympde.topology.analytical_mapping import TransposedPolarMapping
 from sympde.topology.multipatch_gallery import (
     build_annulus_3,
     build_annulus_4,

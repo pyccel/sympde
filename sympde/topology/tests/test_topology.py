@@ -22,13 +22,13 @@ topo_dir = os.path.join(base_dir, 'data')
 def test_structural_arguments_are_sympy_objects():
     domain = Domain('Omega', dim=2)
     boundary = Boundary(r'\Gamma_1', domain)
-    interface = Interface('I', boundary, boundary, ornt=1)
+    interface = Interface('I', boundary, boundary, 1)
     square = Square('S', bounds1=(-1, 2), bounds2=(3, 4))
 
     assert domain.name == 'Omega'
     assert boundary.name == r'\Gamma_1'
     assert boundary.axis is None
-    assert interface.ornt == 1
+    assert interface.orientation == 1
 
     for expr in (domain, domain.interior, boundary, interface, square,
                  square.interior, square.boundary.args[0]):

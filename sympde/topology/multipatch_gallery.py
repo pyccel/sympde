@@ -1422,7 +1422,7 @@ def plot_multipatch_domain(
             f'choose from {choices}')
 
     import matplotlib.pyplot as plt
-    from sympde.utilities import plot_domain, print_topology
+    from sympde.utilities.plotting import plot_domain, print_topology
 
     print_topology(domain)
     figure = plot_domain(

@@ -603,7 +603,7 @@ class Interface(BasicDomain):
     ((1, 2, 1), (2, 0, -1))
 
     """
-    def __new__(cls, name, bnd_minus, bnd_plus, orientation, *, mapping=None,
+    def __new__(cls, name, bnd_minus, bnd_plus, orientation, mapping=None,
                 logical_domain=None):
 
         name = restore_string_argument(name)

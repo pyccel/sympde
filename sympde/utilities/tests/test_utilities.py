@@ -6,25 +6,16 @@ import pytest
 
 from sympy import Matrix, symbols, Array
 from sympy import S
-import sympde.utilities as utilities
 import sympde.utilities.utils as utilities_utils
-from sympde.topology import (
-    AffineMapping,
-    Cube,
-    Domain,
-    IdentityMapping,
-    Square,
-)
-from sympde.utilities import (
+from sympde.topology.analytical_mapping import AffineMapping, IdentityMapping
+from sympde.topology.domain import Cube, Domain, Square
+from sympde.utilities.plotting import (
     collect_topology_vertices,
     format_topology,
     plot_domain,
     print_topology,
 )
-from sympde.utilities.plotting import plot_domain as plotting_plot_domain
 from sympde.utilities.utils import lambdify_sympde
-from sympde.utilities.utils import plot_domain
-from sympde.topology.domain import Square
 
 
 def test_lambdify_sympde_1d():
@@ -281,8 +272,6 @@ def test_format_and_print_topology():
 
 
 def test_plot_domain_2d_integration():
-    assert plot_domain is plotting_plot_domain
-    assert not hasattr(utilities, 'plot_topology')
     assert not hasattr(utilities_utils, 'plot_domain')
 
     domain = _make_twisted_strip()

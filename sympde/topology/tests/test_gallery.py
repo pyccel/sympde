@@ -7,6 +7,7 @@ from sympy.abc import x,y,z
 from sympy import Tuple
 from sympy import symbols
 
+from sympde.topology.analytical_mapping import IdentityMapping
 from sympde.topology.basic import Interval, ProductDomain, InteriorDomain
 from sympde.topology.domain import Domain
 from sympde.topology.domain import Line, Square, Cube, NCubeInterior
