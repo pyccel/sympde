@@ -2,15 +2,15 @@
 
 import pytest
 
-from sympde.topology import Domain
-from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
-from sympde.topology import element_of
-from sympde.calculus import grad, dot, inner, cross, curl, div
+from sympde.topology.domain import Domain
+from sympde.topology.space import ScalarFunctionSpace, VectorFunctionSpace
+from sympde.topology.space import element_of
+from sympde.calculus.core import grad, dot, inner, cross, curl, div
 
 #from sympde.exterior import d, wedge, ip, delta, jp
-from sympde.exterior import ld
-from sympde.exterior import DifferentialForm
-from sympde.exterior import ExteriorCalculusExpr, augmented_expression
+from sympde.exterior.calculus import ld
+from sympde.exterior.form import DifferentialForm
+from sympde.exterior.compiler import ExteriorCalculusExpr, augmented_expression
 from sympde.calculus.errors import ArgumentTypeError
 
 #==============================================================================

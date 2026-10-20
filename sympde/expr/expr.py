@@ -14,11 +14,10 @@ from sympy.utilities.iterables import is_sequence
 from sympde.core.basic import CalculusFunction
 from sympde.core.basic import Constant
 from sympde.core.utils import random_string
-from sympde.calculus import Dot, Inner, BasicOperator
-from sympde.calculus import Grad, Hessian
-from sympde.topology import BasicDomain, Union
-from sympde.topology import NormalVector
-from sympde.topology import Boundary, Interface, Domain, InteriorDomain
+from sympde.calculus.core import BasicOperator, Dot, Grad, Hessian, Inner
+from sympde.topology.basic import BasicDomain, Boundary, Interface
+from sympde.topology.basic import InteriorDomain, Union
+from sympde.topology.domain import Domain, NormalVector
 from sympde.topology.space import ScalarFunction
 from sympde.topology.space import VectorFunction
 from sympde.topology.space import Trace, trace_0, trace_1
@@ -26,7 +25,7 @@ from sympde.topology.space import Trace, trace_0, trace_1
 from .errors import UnconsistentLinearExpressionError
 from .basic  import BasicForm
 from .basic  import BasicExpr
-from .basic  import _sanitize_arguments
+from .basic  import sanitize_arguments
 
 __all__ = (
     'BilinearForm',
@@ -38,9 +37,9 @@ __all__ = (
     'SemiNorm',
     'Norm',
 #
-    '_get_domain',
     'add_int',
     'expand',
+    'get_domain',
     'integral',
     'is_linear_expression',
     'linearize',
@@ -101,7 +100,7 @@ def expand(expr):
     return expr
 
 #==============================================================================
-def _get_domain(expr):
+def get_domain(expr):
     # expr is an integral of BasicExpr or Add of Integral of BasicExpr
     if isinstance(expr, Integral):
         return expr.domain
@@ -109,7 +108,7 @@ def _get_domain(expr):
     elif isinstance(expr, (Add, Mul)):
         domains = []
         for a in expr.args:
-            a = _get_domain(a)
+            a = get_domain(a)
             if isinstance(a, Union):
                 domains.extend(list(a.args))
             elif isinstance(a, BasicDomain):
@@ -125,7 +124,7 @@ class LinearExpr(BasicExpr):
         if expr.atoms(Integral):
             raise TypeError('')
 
-        args = _sanitize_arguments(arguments, is_linear=True)
+        args = sanitize_arguments(arguments, is_linear=True)
 
         if not is_linear_expression(expr, args):
             msg = '> Expression is not linear'
@@ -142,7 +141,7 @@ class LinearExpr(BasicExpr):
         return self._args[1]
 
     def __call__(self, *args):
-        args = _sanitize_arguments(args, is_linear=True)
+        args = sanitize_arguments(args, is_linear=True)
         expr, _ =  self.expr._xreplace(dict(list(zip(self.variables, args))))
         return expr
 
@@ -344,7 +343,7 @@ class LinearForm(BasicForm):
             raise ValueError('Expecting an integral Expression')
 
         # TODO: why do we 'sanitize' here?
-        args = _sanitize_arguments(arguments, is_linear=True)
+        args = sanitize_arguments(arguments, is_linear=True)
 
         # Check linearity with respect to the given arguments
         if check_linearity and not is_linear_expression(expr, args):
@@ -361,7 +360,7 @@ class LinearForm(BasicForm):
 
         # Compute 'domain' property (scalar or tuple)
         # TODO: is this is useful?
-        obj._domain = _get_domain(expr)
+        obj._domain = get_domain(expr)
 
         return obj
 
@@ -430,7 +429,7 @@ class BilinearForm(BasicForm):
             raise ValueError('Expecting integral Expression')
 
         # TODO: why do we 'sanitize' here?
-        args = _sanitize_arguments(arguments, is_bilinear=True)
+        args = sanitize_arguments(arguments, is_bilinear=True)
 
         # Distinguish between trial and test functions
         trial_functions, test_functions = args
@@ -457,7 +456,7 @@ class BilinearForm(BasicForm):
 
         # Compute 'domain' property (scalar or tuple)
         # TODO: is this is useful?
-        obj._domain = _get_domain(expr)
+        obj._domain = get_domain(expr)
 
         return obj
 
@@ -854,4 +853,3 @@ Basic._constructor_postprocessor_mapping[Integral] = {
 Basic._constructor_postprocessor_mapping[IntAdd] = {
     "Mul": [mul_add],
 }
-

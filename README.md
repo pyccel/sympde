@@ -1,7 +1,6 @@
 # SymPDE
 
 [![CI status](https://github.com/pyccel/sympde/actions/workflows/testing.yml/badge.svg?branch=master&event=push)](https://github.com/pyccel/sympde/actions/workflows/testing.yml)
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/pyccel/sympde/master)
 [![Documentation Status](https://github.com/pyccel/sympde/actions/workflows/documentation.yml/badge.svg)](https://github.com/pyccel/sympde/actions/workflows/documentation.yml)
 
 **SymPDE** is a symbolic calculus library for partial differential equations and variational forms.
@@ -68,6 +67,17 @@ To check out a specific branch, tag, or commit named `<TAG>`, run `git checkout 
   pip install --editable ".[test]"
   ```
 
+### Public API
+
+User-facing objects can be imported from the flat, explicit API without
+knowing which internal module defines them:
+
+```python
+from sympde.api import Cube, Mapping, Constant
+from sympde.api import ScalarFunctionSpace, VectorFunctionSpace, elements_of
+from sympde.api import BilinearForm, LinearForm, Norm
+```
+
 ### Running the tests
 
 The complete test suite can be run from any directory with:
@@ -77,7 +87,9 @@ pytest -n auto --dist loadgroup --pyargs sympde -ra
 ```
 
 The documentation dependencies are installed separately, and the HTML pages
-are built with warnings treated as errors:
+are built with warnings treated as errors. Drawing the expression trees also
+requires [Graphviz](https://graphviz.org) (for example `sudo apt install
+graphviz` on Ubuntu):
 
 ```bash
 pip install --editable ".[docs]"

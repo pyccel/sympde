@@ -5,28 +5,29 @@ from sympy import Matrix
 from sympy import expand
 from sympy import cos, sin, sqrt, pi
 
-from sympde.core     import Constant
-from sympde.calculus import grad, dot, inner, rot, div
-from sympde.calculus import laplace, bracket, convect
-from sympde.calculus import jump, avg, Dn, minus, plus
-from sympde.topology import Domain, Mapping, Square
-from sympde.topology import dx, dy
-from sympde.topology import dx1, dx2, dx3
-from sympde.topology import ScalarFunctionSpace, VectorFunctionSpace
-from sympde.topology import element_of, elements_of
-from sympde.topology import LogicalExpr
-from sympde.topology import SymbolicExpr
-from sympde.topology import IdentityMapping
-from sympde.topology import PolarMapping
-from sympde.topology import TargetMapping
-from sympde.topology import CzarnyMapping
-from sympde.topology import CollelaMapping2D
-from sympde.topology import TorusMapping
-from sympde.topology import TwistedTargetMapping
+from sympde.core.basic import Constant
+from sympde.calculus.core import grad, dot, inner, rot, div, curl
+from sympde.calculus.core import laplace, bracket, convect
+from sympde.calculus.core import jump, avg, Dn, minus, plus
+from sympde.topology.domain import Domain
+from sympde.topology.mapping import Mapping
+from sympde.topology.domain import Square
+from sympde.topology.derivatives import dx, dy
+from sympde.topology.derivatives import dx1, dx2, dx3
+from sympde.topology.space import ScalarFunctionSpace, VectorFunctionSpace
+from sympde.topology.space import element_of, elements_of
+from sympde.topology.mapping import LogicalExpr
 from sympde.topology.mapping import get_logical_test_function
+from sympde.topology.mapping import SymbolicExpr
+from sympde.topology.analytical_mapping import IdentityMapping
+from sympde.topology.analytical_mapping import PolarMapping
+from sympde.topology.analytical_mapping import TargetMapping
+from sympde.topology.analytical_mapping import CzarnyMapping
+from sympde.topology.analytical_mapping import CollelaMapping2D
+from sympde.topology.analytical_mapping import TorusMapping
+from sympde.topology.analytical_mapping import TwistedTargetMapping
 
-from sympde.expr     import BilinearForm, integral
-from sympde.calculus import grad, div, curl, dot
+from sympde.expr.expr import BilinearForm, integral
 
 from sympde.topology.mapping import Jacobian
 

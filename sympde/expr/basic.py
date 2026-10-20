@@ -7,10 +7,10 @@ from sympde.core.basic     import Constant
 from sympde.topology.space import ScalarFunction
 from sympde.topology.space import VectorFunction
 
-__all__ = ('BasicExpr', 'BasicForm', '_sanitize_arguments')
+__all__ = ('BasicExpr', 'BasicForm', 'sanitize_arguments')
 
 #==============================================================================
-def _sanitize_arguments(arguments, is_bilinear=False, is_linear=False):
+def sanitize_arguments(arguments, is_bilinear=False, is_linear=False):
     if is_bilinear or is_linear:
 
         if is_bilinear:
