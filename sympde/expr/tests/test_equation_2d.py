@@ -67,7 +67,7 @@ def test_equation_2d_1():
 
     expr = x*y*v
     l_B2 = LinearForm(v, int_2(expr))
-    # ...
+
 
 #    # ...
 #    with pytest.raises(UnconsistentLhsError):
@@ -91,35 +91,25 @@ def test_equation_2d_1():
 #        equation = Equation(a1(v,u), l1(v) + l2(v))
 #    # ...
 
-    # ...
     equation = Equation(a1, l1, tests=v, trials=u)
-    # ...
 
-    # ...
     a = BilinearForm((v,u), a1(v,u) + alpha*a2(v,u))
     equation = Equation(a, l1, tests=v, trials=u)
-    # ...
 
-    # ...
     a = BilinearForm((v,u), a1(v,u) + a_B1(v,u))
     equation = Equation(a, l1, tests=v, trials=u)
-    # ...
 
-    # ...
     a = BilinearForm((v,u), a1(v,u) + a_B1(v,u))
     l = LinearForm(v, l1(v) + l2(v))
     equation = Equation(a, l, tests=v, trials=u)
-    # ...
+    assert equation.func(*equation.args) == equation
 
-    # ...
     a = BilinearForm((v,u), a1(v,u) + a_B1(v,u))
     l = LinearForm(v, l1(v) + alpha*l_B2(v))
     equation = Equation(a, l, tests=v, trials=u)
-    # ...
 
     # ... using bc
     equation = Equation(a1, l1, tests=v, trials=u, bc=EssentialBC(u, 0, B1))
-    # ...
 
     # ... Poisson with Nitsch method
     g = cos(pi*x)*cos(pi*y)
@@ -132,7 +122,7 @@ def test_equation_2d_1():
     a = BilinearForm((u,v), a0(u,v) + a_B1(u,v))
     l = LinearForm(v, int_0(g*v/eps) - int_1(kappa*v*g))
     equation = Equation(a, l, tests=v, trials=u)
-    # ...
+
 
 #    # ... TODO FIX THIS, NOT RAISED ANYMORE!
 #    with pytest.raises(UnconsistentBCError):
@@ -212,18 +202,14 @@ def test_equation_2d_3():
 
     l1 = LinearForm(v, int_0(x*y*v))
     l2 = LinearForm(v, int_0(cos(x+y)*v))
-    # ...
 
-    # ...
     bc = EssentialBC(u, 0, B1)
     eq = Equation(a1, l1, tests=v, trials=u, bc=bc)
-    # ...
 
-    # ...
     nn = NormalVector('nn')
     bc = EssentialBC(dot(grad(u), nn), 0, B1)
     eq = Equation(a1, l1, tests=v, trials=u, bc=bc)
-    # ...
+
 
 #==============================================================================
 def test_equation_2d_4():
@@ -244,23 +230,17 @@ def test_equation_2d_4():
 
     f = Matrix([x*y, sin(pi*x)*sin(pi*y)])
     l1 = LinearForm(v, int_0(dot(f,v)))
-    # ...
 
-    # ...
     bc = EssentialBC(u, 0, B1)
     eq = Equation(a1, l1, tests=v, trials=u, bc=bc)
-    # ...
 
-    # ...
     bc = EssentialBC(u[0], 0, B1)
     eq = Equation(a1, l1, tests=v, trials=u, bc=bc)
-    # ...
 
-    # ...
     nn = NormalVector('nn')
     bc = EssentialBC(dot(u, nn), 0, B1)
     eq = Equation(a1, l1, tests=v, trials=u, bc=bc)
-    # ...
+
 
 #==============================================================================
 def test_equation_2d_5():
@@ -299,17 +279,14 @@ def test_equation_2d_5():
     bc = EssentialBC(u, 0, domain.boundary)
     equation = Equation(a, l, tests=[v,q], trials=[u,p], bc=bc)
 
-    # ...
     print('=======')
     print(equation.lhs.expr)
     print('')
-    # ...
 
-    # ...
     print('=======')
     print(equation.rhs.expr)
     print('')
-    # ...
+
 
 #==============================================================================
 def test_equation_2d_6():
@@ -335,74 +312,54 @@ def test_equation_2d_6():
     u,v = [element_of(V, name=i) for i in ['u', 'v']]
 
     int_0 = lambda expr: integral(domain , expr)
-    
-    # ...
+
     expr = kappa * dot(grad(u), grad(v)) + dot(b, grad(u)) * v
     a = BilinearForm((v,u), int_0(expr))
-    # ...
-    # ...
+
     expr = f * v
     l0 = LinearForm(v, int_0(expr))
-    # ...
 
-    # ...
     expr = (- kappa * laplace(u) + dot(b, grad(u))) * dot(b, grad(v))
     s1 = BilinearForm((v,u), int_0(expr))
 
     expr = - f * dot(b, grad(v))
     l1 = LinearForm(v, int_0(expr))
-    # ...
 
-    # ...
     expr = (- kappa * laplace(u) + dot(b, grad(u))) * ( dot(b, grad(v)) - kappa * laplace(v))
     s2 = BilinearForm((v,u), int_0(expr))
 
     expr = - f * ( dot(b, grad(v)) - kappa * laplace(v))
     l2 = LinearForm(v, int_0(expr))
-    # ...
 
-    # ...
     expr = (- kappa * laplace(u) + dot(b, grad(u))) * ( dot(b, grad(v)) + kappa * laplace(v))
     s3 = BilinearForm((v,u), int_0(expr))
 
     expr = - f * ( dot(b, grad(v)) + kappa * laplace(v))
     l3 = LinearForm(v, int_0(expr))
-    # ...
 
-    # ...
     expr = a(v,u) + mu*area*s1(v,u)
     a1 = BilinearForm((v,u), expr)
-    # ...
 
-    # ...
     expr = a(v,u) + mu*area*s2(v,u)
     a2 = BilinearForm((v,u), expr)
-    # ...
 
-    # ...
     expr = a(v,u) + mu*area*s3(v,u)
     a3 = BilinearForm((v,u), expr)
-    # ...
 
     bc = EssentialBC(u, 0, domain.boundary)
 
-    # ...
     l = LinearForm(v, l0(v) + mu*area*l1(v))
 
     eq_1 = Equation(a1, l, tests=v, trials=u, bc=bc)
-    # ...
 
-    # ...
     l = LinearForm(v, l0(v) + mu*area*l2(v))
 
     eq_2 = Equation(a2, l, tests=v, trials=u, bc=bc)
-    # ...
 
-    # ...
     l = LinearForm(v, l0(v) + mu*area*l3(v))
 
     eq_3 = Equation(a3, l, tests=v, trials=u, bc=bc)
-    # ...
+
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
@@ -415,4 +372,3 @@ def teardown_module():
 def teardown_function():
     from sympy.core import cache
     cache.clear_cache()
-

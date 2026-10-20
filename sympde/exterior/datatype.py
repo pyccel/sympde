@@ -14,12 +14,11 @@ from sympy.core.singleton import Singleton
 from sympy.core import Add, Mul
 from sympy.core.singleton import S
 
-from sympde.old_sympy_utilities import with_metaclass
 from sympde.core.basic import _coeffs_registery
 from sympde.core import LinearOperator
 
 #==============================================================================
-class FormType(with_metaclass(Singleton, Basic)):
+class FormType(Basic, metaclass=Singleton):
     """Base class representing differential form types"""
     _index = None
 
@@ -108,7 +107,6 @@ def FormTypeFactory(argnames=["_index"], index=None):
 
     name = 'Dynamic{}FormType'.format(index)
 
-    # ...
     def __init__(self, **kwargs):
         for key, value in list(kwargs.items()):
             # here, the argnames variable is the one passed to the
@@ -118,7 +116,6 @@ def FormTypeFactory(argnames=["_index"], index=None):
                     % (key, self.__class__.__name__))
             setattr(self, key, value)
         FormType.__init__(self)
-    # ...
 
     if index is None:
         raise ValueError('index must be given')

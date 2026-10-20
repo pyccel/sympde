@@ -4,17 +4,72 @@ import h5py
 import numpy as np
 import pytest
 import yaml
+from sympy import preorder_traversal
+from sympy.core import Basic
 
 from sympde.topology import InteriorDomain, Union
 from sympde.topology import Boundary
 from sympde.topology import Domain, ElementDomain
 from sympde.topology import Area, Mapping
 from sympde.topology import Interface
-from sympde.topology import Line, Square, Cube
+from sympde.topology import Line, Square, Cube, NCube
 from sympde.topology import IdentityMapping
 
 base_dir = os.path.dirname(os.path.realpath(__file__))
 topo_dir = os.path.join(base_dir, 'data')
+
+
+def test_structural_arguments_are_sympy_objects():
+    domain = Domain('Omega', dim=2)
+    boundary = Boundary(r'\Gamma_1', domain)
+    interface = Interface('I', boundary, boundary, ornt=1)
+    square = Square('S', bounds1=(-1, 2), bounds2=(3, 4))
+
+    assert domain.name == 'Omega'
+    assert boundary.name == r'\Gamma_1'
+    assert boundary.axis is None
+    assert interface.ornt == 1
+
+    for expr in (domain, domain.interior, boundary, interface, square,
+                 square.interior, square.boundary.args[0]):
+        assert all(isinstance(arg, Basic) for arg in preorder_traversal(expr))
+        assert expr.func(*expr.args) == expr
+
+    replacement = Domain('Replacement', dim=2)
+    replaced_boundary = boundary.xreplace({domain: replacement})
+    assert replaced_boundary.domain == replacement
+
+    replacement_boundary = Boundary(r'\Gamma_2', domain)
+    replaced_interface = interface.xreplace({boundary: replacement_boundary})
+    assert replaced_interface.minus == replacement_boundary
+    assert replaced_interface.plus == replacement_boundary
+
+
+def test_multipatch_domain_reconstruction():
+    A = Square('A')
+    B = Square('B', bounds1=(1, 2))
+    domain = Domain.join([A, B], [((0, 0, 1), (1, 0, -1), 1)], name='Omega')
+
+    rebuilt = domain.func(*domain.args)
+    assert rebuilt == domain
+    assert dict(rebuilt.connectivity) == dict(domain.connectivity)
+
+    interfaces = list(domain.connectivity.values())
+    rebuilt = Domain('Omega', domain.interior, domain.boundary,
+                     connectivity=interfaces)
+    assert dict(rebuilt.connectivity) == dict(domain.connectivity)
+
+
+def test_ncube_reconstruction_keeps_coordinates():
+    domains = (Line('L'), Square('S'), Cube('C'),
+               NCube('N', 4, (0,)*4, (1,)*4))
+
+    for domain in domains:
+        rebuilt = domain.func(*domain.args)
+        assert isinstance(rebuilt, type(domain))
+        assert rebuilt == domain
+        assert rebuilt.coordinates == domain.coordinates
+
 
 #==============================================================================
 def test_interior_domain():
@@ -39,7 +94,6 @@ def test_topology_1():
     # ... create a domain with 2 subdomains D1 and D2
     A = Square('A')
     B = Square('B')
-    # ...
 
     M1 = Mapping('M1', dim=2)
     M2 = Mapping('M2', dim=2)
@@ -56,7 +110,6 @@ def test_topology_1():
 
     # export
     Omega.export('omega.h5')
-    # ...
 
     # read it again and check that it has the same description as Omega
     D = Domain.from_file('omega.h5')
@@ -174,7 +227,6 @@ def test_domain_join_line():
     A = Line('A')
     B = Line('B')
     C = Line('C')
-    # ...
 
     AB_bnd_minus = A.get_boundary(axis=0, ext=1)
     AB_bnd_plus  = B.get_boundary(axis=0, ext=-1)
@@ -194,7 +246,6 @@ def test_domain_join_line():
     assert AB.interfaces == Interface('A|B', AB_bnd_minus, AB_bnd_plus)
     print(AB.connectivity)
     print('')
-    # ...
 
     domains = [A, B, C]
     connectivity = [((0, 0, 1), (1, 0, -1)), ((1, 0, 1), (2, 0, -1))]
@@ -205,7 +256,7 @@ def test_domain_join_line():
                                    Interface('B|C', BC_bnd_minus, BC_bnd_plus))
     print(list(ABC.connectivity.items()))
     print('')
-    # ...
+
 
 #==============================================================================
 def test_domain_join_square():
@@ -214,8 +265,6 @@ def test_domain_join_square():
     A = Square('A')
     B = Square('B')
     C = Square('C')
-    # ...
-
 
     patches = [A, B]
     connectivity = [((0, 0, 1), (1, 0, -1), 1)]
@@ -231,7 +280,6 @@ def test_domain_join_square():
     assert AB.interior   == Union(A.interior, B.interior)
     assert AB.interfaces == Interface('A|B', AB_bnd_minus, AB_bnd_plus, ornt=1)
     print(AB.connectivity)
-    # ...
 
     patches = [A, B, C]
     connectivity = [((0, 0, 1), (1, 0, -1), 1),
@@ -245,20 +293,17 @@ def test_domain_join_square():
                                    Interface('B|C', BC_bnd_minus, BC_bnd_plus, ornt=1))
     print(list(ABC.connectivity.items()))
     print('')
-    # ...
+
 
 #==============================================================================
 def test_get_subdomain():
     A = Square('A')
     B = Square('B')
     C = Square('C')
-    # ...
 
     patches = [A, B]
     connectivity = [((0, 0, 1), (1, 0, -1), 1)]
     AB = Domain.join(patches, connectivity, 'AB')
-
-    # ...
 
     patches = [A, B, C]
     connectivity = [((0, 0, 1), (1, 0, -1), 1), ((1, 0, 1), (2, 0, -1), 1)]
@@ -357,6 +402,29 @@ def test_hash():
     hash_2 = hash(A)
 
     assert hash_1 != hash_2
+
+#==============================================================================
+def test_ncube_interior_equality_includes_bounds():
+    # Regression test for #198: equality used to ignore the parametric bounds
+    P = Square('P', bounds1=(0, 1), bounds2=(0, 1)).interior
+    Q = Square('P', bounds1=(0, 2), bounds2=(0, 1)).interior
+    R = Square('P', bounds1=(0, 1), bounds2=(0, 1)).interior
+
+    assert P != Q
+    assert P == R
+
+#==============================================================================
+def test_multipatch_domain_equality():
+    # Regression test for #197: comparing mapped multipatch domains raised an
+    # AttributeError, because MultiPatchMapping had no name
+    A = Mapping('FA', dim=2)(Square('A'))
+    B = Mapping('FB', dim=2)(Square('B'))
+    D1 = Domain.join([A, B], [((0, 0, 1), (1, 0, -1),  1)], 'Omega')
+    D2 = Domain.join([A, B], [((0, 0, 1), (1, 0, -1), -1)], 'Omega')
+    D3 = Domain.join([A, B], [((0, 0, 1), (1, 0, -1),  1)], 'Omega')
+
+    assert D1 != D2
+    assert D1 == D3
 
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE

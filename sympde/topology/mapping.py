@@ -9,16 +9,18 @@ from sympy.core            import Basic
 from sympy.core            import Symbol,Integer
 from sympy.core            import Add, Mul, Pow
 from sympy.core.numbers    import ImaginaryUnit
-from sympy.core.containers import Tuple
+from sympy.core.containers import Dict, Tuple
 from sympy                 import S
 from sympy                 import sqrt, symbols
 from sympy.core.exprtools  import factor_terms
 from sympy.polys.polytools import parallel_poly_from_expr
+from sympy.utilities.iterables import is_sequence
 
 from sympde.core              import Constant
 from sympde.core.basic        import BasicMapping
 from sympde.core.basic        import CalculusFunction
 from sympde.core.basic        import _coeffs_registery
+from sympde.core.basic        import new_basic
 from sympde.calculus.core     import PlusInterfaceOperator, MinusInterfaceOperator
 from sympde.calculus.core     import grad, div, curl, laplace #, hessian
 from sympde.calculus.core     import dot, inner, outer, _diff_ops
@@ -210,11 +212,9 @@ class Mapping(BasicMapping):
         obj._logical_coordinates = Tuple(*lcoords_symbols_real) # coordinates must be symbols with real=True      
         lcoords_general_symbols = [Symbol(i) for i in lcoords_names] #list of symbols without real=True       
 
-        # ...
         if not( obj._expressions is None ):
             coords_names = ['x', 'y', 'z'][:pdim]
 
-            # ...
             args = []
             for i in coords_names:
                 x = obj._expressions[i]
@@ -222,13 +222,13 @@ class Mapping(BasicMapping):
                 args.append(x)
 
             args = Tuple(*args)
-            # ...
+
             zero_coords = ['x1', 'x2', 'x3'][ldim:]
 
             for i in zero_coords:
                 x = sympify(i)
                 args = args.subs(x,0)
-            # ...
+
             # get constants by subtracting coordinates from list of free symbols
             constants        = list(set(args.free_symbols) - set(lcoords_general_symbols))
             constants_values = {a.name:Constant(a.name) for a in constants}
@@ -560,12 +560,17 @@ class InterfaceMapping(Mapping):
 class MultiPatchMapping(Mapping):
 
     def __new__(cls, dic):
-        assert isinstance( dic, dict)
-        return Basic.__new__(cls, dic)
+        if isinstance(dic, Dict):
+            dic = dict(dic.items())
+        if not isinstance(dic, dict):
+            raise TypeError('Expecting a dictionary of patch mappings')
+        obj = new_basic(cls, dic)
+        obj._mappings = dict(dic)
+        return obj
 
     @property
     def mappings(self):
-        return self.args[0]
+        return self._mappings
 
     @property
     def is_analytical(self):
@@ -589,8 +594,8 @@ class MultiPatchMapping(Mapping):
     def _eval_simplify(self, **kwargs):
         return self
 
-    def __hash__(self):
-        return hash((*self.mappings.values(), *self.mappings.keys()))
+    def _hashable_content(self):
+        return self.args
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -1121,7 +1126,7 @@ class LogicalExpr(CalculusFunction):
                 arg = TerminalExpr(arg, domain=domain.logical_domain)
             elif isinstance(arg, MatrixElement):
                 arg = TerminalExpr(arg, domain=domain.logical_domain)
-            # ...
+
             if dim == 1:
                 lgrad_arg = LogicalGrad_1d(arg)
 
@@ -1178,7 +1183,7 @@ class LogicalExpr(CalculusFunction):
                 arg = TerminalExpr(arg, domain=domain.logical_domain)
             elif isinstance(arg, MatrixElement):
                 arg = TerminalExpr(arg, domain=domain.logical_domain)
-            # ...
+
             if dim == 1:
                 lgrad_arg = LogicalGrad_1d(arg)
 

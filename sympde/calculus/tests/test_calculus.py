@@ -226,7 +226,6 @@ def test_calculus_2d_1():
     assert( grad(f/g) == -f*grad(g)/g**2 + grad(f)/g )
 
     assert( expand(grad(f*g*h)) == f*g*grad(h) + f*h*grad(g) + g*h*grad(f) )
-    # ...
 
     # ... vector gradient properties
     assert( grad(F+G) == grad(F) + grad(G) )
@@ -234,19 +233,16 @@ def test_calculus_2d_1():
     assert( grad(alpha*F + beta*G) == alpha*grad(F) + beta*grad(G)  )
 
     #assert( grad(dot(F,G)) == convect(F, G) + convect(G, F) + cross(F, curl(G)) - cross(curl(F), G) )
-    # ...
 
     # ... curl properties
     assert( curl(f+g) == curl(f) + curl(g) )
     assert( curl(alpha*h) == alpha*curl(h) )
     assert( curl(alpha*f + beta*g) == alpha*curl(f) + beta*curl(g)  )
-    # ...
 
     # ... laplace properties
     assert( laplace(f+g) == laplace(f) + laplace(g) )
     assert( laplace(alpha*h) == alpha*laplace(h) )
     assert( laplace(alpha*f + beta*g) == alpha*laplace(f) + beta*laplace(g)  )
-    # ...
 
     # ... divergence properties
     assert( div(F+G) == div(F) + div(G) )
@@ -254,13 +250,11 @@ def test_calculus_2d_1():
     assert( div(alpha*F + beta*G) == alpha*div(F) + beta*div(G)  )
 
     #assert( div(cross(F,G)) == -dot(F, curl(G)) + dot(G, curl(F)) )
-    # ...
 
     # ... rot properties
     assert( rot(F+G) == rot(F) + rot(G) )
     assert( rot(alpha*H) == alpha*rot(H) )
     assert( rot(alpha*F + beta*G) == alpha*rot(F) + beta*rot(G)  )
-    # ...
 
     # ... Poisson's bracket properties
     assert bracket(alpha * f, g) == alpha * bracket(f, g)
@@ -270,7 +264,7 @@ def test_calculus_2d_1():
     assert bracket(f, f) == 0
     assert bracket(f, g) == -bracket(g, f)
     assert bracket(f, g * h) == g * bracket(f, h) + bracket(f, g) * h
-    # ...
+
 
 #==============================================================================
 def test_calculus_2d_2():
@@ -286,7 +280,7 @@ def test_calculus_2d_2():
     assert( convect(F+G, H) == convect(F,H) + convect(G,H) )
     assert( convect(alpha*F,H) == alpha*convect(F,H) )
     assert( convect(F,alpha*H) == alpha*convect(F,H) )
-    # ...
+
 
 #==============================================================================
 def test_calculus_2d_3():
@@ -304,7 +298,7 @@ def test_calculus_2d_3():
     # ... scalar gradient properties
     assert(conv(K, alpha*f+beta*g) == alpha*conv(K,f) + beta*conv(K,g))
     assert(conv(alpha*K+beta*S, f) == alpha*conv(K,f) + beta*conv(S,f))
-    # ...
+
 
 #==============================================================================
 def test_calculus_3d():
@@ -327,7 +321,6 @@ def test_calculus_3d():
     assert( grad(f/g) == -f*grad(g)/g**2 + grad(f)/g )
 
     assert( expand(grad(f*g*h)) == f*g*grad(h) + f*h*grad(g) + g*h*grad(f) )
-    # ...
 
     # ... curl properties
     assert( curl(F+G) == curl(F) + curl(G) )
@@ -336,14 +329,12 @@ def test_calculus_3d():
 
     #assert( curl(cross(F,G)) == F*div(G) - G*div(F) - convect(F, G) + convect(G, F) )
     #assert( curl(f*F) == f*curl(F) + cross(grad(f), F) )
-    # ...
 
     # ... laplace properties
     assert( laplace(f+g) == laplace(f) + laplace(g) )
     assert( laplace(alpha*h) == alpha*laplace(h) )
     assert( laplace(alpha*f + beta*g) == alpha*laplace(f) + beta*laplace(g)  )
     #assert( laplace(f*g) == f*laplace(g) + g*laplace(f) + 2*dot(grad(f), grad(g)) )
-    # ...
 
     # ... divergence properties
     assert( div(F+G) == div(F) + div(G) )
@@ -352,15 +343,12 @@ def test_calculus_3d():
 
     #assert( div(cross(F,G)) == -dot(F, curl(G)) + dot(G, curl(F)) )
     #assert( div(f*F) == f*div(F) + dot(F, grad(f)))
-    # ...
 
-    # ...
     assert( curl(grad(h)) == 0 )
     assert( div(curl(H)) == 0 )
     #assert( div(cross(grad(f), grad(g))) == 0 )
     #assert( curl(curl(F)) == grad(div(F)) - laplace(F))
     #assert( curl(f*grad(g)) == cross(grad(f), grad(g)) )
-    # ...
 
 
 #==============================================================================
@@ -394,7 +382,6 @@ def test_calculus_3d_3():
 
     # wa cannot apply grad to a function in L2
     with pytest.raises(ArgumentTypeError): expr = grad(v3)
-    # ...
 
     # ... consistency of curl operator
     # we can apply curl on an undefined space type, H1 or Hcurl
@@ -408,7 +395,6 @@ def test_calculus_3d_3():
 
     # wa cannot apply curl to a function in L2
     with pytest.raises(ArgumentTypeError): expr = curl(v3)
-    # ...
 
     # ... consistency of div operator
     # we can apply div on an undefined space type, H1 or Hdiv
@@ -422,7 +408,7 @@ def test_calculus_3d_3():
 
     # wa cannot apply div to a function in L2
     with pytest.raises(ArgumentTypeError): expr = div(v3)
-    # ...
+
 
 #==============================================================================
 def test_calculus_3d_4():
@@ -434,10 +420,9 @@ def test_calculus_3d_4():
 
     F, G, H = elements_of(W, names='F, G, H')
 
-    # ...
     expected = alpha*inner(D(F), D(G)) + beta*inner(D(F), D(H))
     assert(inner(D(F), D(alpha*G+beta*H)) == expected)
-    # ...
+
 
 #==============================================================================
 def test_calculus_3d_5():
@@ -449,10 +434,9 @@ def test_calculus_3d_5():
 
     F, G, H = elements_of(W, names='F, G, H')
 
-    # ...
     expected = alpha*outer(F, G) + beta*outer(F, H)
     assert(outer(F, alpha*G+beta*H) == expected)
-    # ...
+
 
 #    # ... TODO
 #    expr = outer(E*F, G*H)
@@ -474,27 +458,23 @@ def test_calculus_2d_4():
     # ... jump operator
     assert(jump(u+v) == jump(u) + jump(v))
     assert(jump(a*u) == a*jump(u))
-    # ...
 
     # ... avg operator
     assert(avg(u+v) == avg(u) + avg(v))
     assert(avg(a*u) == a*avg(u))
-    # ...
 
     # ... Dn operator
     assert(Dn(u+v) == Dn(u) + Dn(v))
     assert(Dn(a*u) == a*Dn(u))
-    # ...
 
     # ... minus operator
     assert(minus(u+v) == minus(u) + minus(v))
     assert(minus(a*u) == a*minus(u))
-    # ...
 
     # ... plus operator
     assert(plus(u+v) == plus(u) + plus(v))
     assert(plus(a*u) == a*plus(u))
-    # ...
+
 
 def test_calculus_2d_5():
 
@@ -510,23 +490,19 @@ def test_calculus_2d_5():
     # ... jump operator
     assert(jump(u+v) == jump(u) + jump(v))
     assert(jump(a*u) == a*jump(u))
-    # ...
 
     # ... avg operator
     assert(avg(u+v) == avg(u) + avg(v))
     assert(avg(a*u) == a*avg(u))
-    # ...
 
     # ... Dn operator
     assert(Dn(u+v) == Dn(u) + Dn(v))
     assert(Dn(a*u) == a*Dn(u))
-    # ...
 
     # ... minus operator
     assert(minus(u+v)      == minus(u) + minus(v))
     assert(minus(a*u)      == a*minus(u))
     assert(div(minus(u+v)) == div(minus(u)) + div(minus(v)))
-    # ...
 
     # ... plus operator
     assert(plus(u+v)      == plus(u) + plus(v))

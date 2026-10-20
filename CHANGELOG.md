@@ -6,21 +6,33 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- #106: Accept the connectivity of a `Domain` as an iterable of `Interface` objects, in addition to a `Connectivity` object.
 - [DEVELOPER] Add a `CHANGELOG.md` file listing changes between different versions.
 - [DEVELOPER] Add Python version 3.14 to the testing workflow.
 - [DEVELOPER] Add separate documentation dependencies and a strict Sphinx workflow that checks pull requests and publishes the documentation to GitHub Pages.
 - [DEVELOPER] Add an `AUTHORS` file listing the project maintainers and contributors.
+- [DEVELOPER] #106: Add the public helpers `new_basic()` and `restore_*_argument()` in `sympde.core.basic` for storing non-expression arguments in SymPy objects.
 
 ### Changed
 
 - Convert the README to Markdown and expand the installation, testing, and documentation-build instructions.
+- #106: Require SymPy 1.12 or newer and support maintained SymPy releases below 1.15.
+- #106: Update SymPDE's symbolic objects for modern SymPy's structural arguments, traversal, substitution, and reconstruction requirements.
+- #106: Order the parameters of `Domain` like its `args` (`name`, `interiors`, `boundaries`, `mapping`, `logical_domain`, `connectivity`) and allow passing them positionally. `dim` is now keyword-only.
+- #106: Allow passing `ornt`, `mapping` and `logical_domain` of an `Interface` positionally, in this order.
+- #106: Store only `axis` and `weight` in the `args` of the 1D forms (`Mass`, `Stiffness`, `Advection`, `AdvectionT`, `Bilaplacian`). Their name is now a class attribute.
 - [DEVELOPER] Modernize the package metadata and consolidate the pytest and coverage configuration in `pyproject.toml`.
 - [DEVELOPER] Modernize the Sphinx configuration, API-documentation generation, and API docstring markup.
+- [DEVELOPER] Test the minimum supported SymPy version in a dedicated CI job.
 
 ### Fixed
 
 - #140: Fix the rendering of the `Domain.join()` API documentation.
 - #166: Restore warning-free documentation builds, including bibliography and mathematical notation support.
+- #106: Preserve symbol assumptions and free-symbol information with modern SymPy.
+- #106: Keep same-named functions from different function spaces distinct during symbolic simplification.
+- #106: Fix form-linearity checks involving integral sums with modern SymPy.
+- #106: Raise a `ValueError` when a `Domain` is created without `interiors` or `dim`, instead of failing with a `TypeError` when only a connectivity is given.
 - #200: Keep the physical dimension of the mappings in `Domain.export` and `Domain.from_file`. The `topology.yml` metadata now stores `ldim` and `pdim` instead of `dim`, and `Domain.from_file` raises an error for files with the old `dim` key.
 
 ### Removed

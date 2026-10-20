@@ -18,7 +18,7 @@ from sympy import diff
 from sympy import log
 from sympy import preorder_traversal
 from sympy import cacheit
-from sympde.old_sympy_utilities import is_sequence
+from sympy.utilities.iterables import is_sequence
 
 from sympde.core.basic    import CalculusFunction
 from sympde.core.basic    import _coeffs_registery
@@ -264,7 +264,6 @@ def sort_partial_derivatives(expr):
 #            ls.append(a)
 #    # ...
 
-    # ...
     d = {}
     for a in args:
         n = get_number_derivatives(a)
@@ -272,24 +271,19 @@ def sort_partial_derivatives(expr):
             d[n] += [a]
         else:
             d[n] = [a]
-    # ...
 
-    # ...
     if not d:
         return []
-    # ...
 
     # ... sort keys from high to low
     keys = np.asarray(list(d.keys()))
     keys.sort()
     keys = keys[::-1]
-    # ...
 
     # ... construct a list of partial derivatives from high to low order
     ls = []
     for k in keys:
         ls += d[k]
-    # ...
 
     return tuple(ls)
 

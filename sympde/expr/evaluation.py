@@ -8,6 +8,7 @@ from sympy.simplify.simplify import simplify
 
 from sympde.core.basic import _coeffs_registery
 from sympde.core.basic import CalculusFunction
+from sympde.core.basic import new_basic
 from sympde.core.algebra import (Dot_1d,
                                  Dot_2d, Inner_2d, Cross_2d,
                                  Dot_3d, Inner_3d, Cross_3d)
@@ -238,27 +239,23 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
 
     Returns: sympde expression
     """
-    # ...
+
     is_bilinear = not( trials is None ) and not( tests is None )
     is_linear   =    ( trials is None ) and not( tests is None )
 
     if trials is None: trials = []
     if tests  is None: tests  = []
-    # ...
 
     int_expressions = {}
     bnd_expressions = {}
 
-    # ...
     # we replace all jumps
     jumps = expr.atoms(Jump)
     args = [j._args[0] for j in jumps]
 
     for a in args:
         expr = expr.subs({jump(a): minus(a) - plus(a)})
-    # ...
 
-    # ...
     d_trials = {}
     for u in trials:
         u_minus = minus(u)
@@ -276,9 +273,7 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
 
 #        # TODO add sub for avg
 #        expr = expr.subs({jump(v): v_minus - v_plus})
-    # ...
 
-    # ...
     trials = []
     for u in d_trials.keys():
         u_minus = d_trials[u]['-']
@@ -290,16 +285,14 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
         u_minus = d_tests[u]['-']
         u_plus  = d_tests[u]['+']
         tests += [u_minus, u_plus]
-    # ...
 
-    # ...
     def _nullify(expr, u, us):
         """nullifies all symbols in us except u."""
         others = list(set(us) - set([u]))
         for other in others:
             expr = expr.subs({other: 0})
         return expr
-    # ...
+
     if is_bilinear:
         for u in d_trials.keys():
             for v in d_tests.keys():
@@ -308,7 +301,6 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                 v_minus = d_tests[v]['-']
                 v_plus  = d_tests[v]['+']
 
-                # ...
                 newexpr = _nullify(expr, u_minus, trials)
                 newexpr = _nullify(newexpr, v_minus, tests)
                 newexpr = newexpr.subs({u_minus: u, v_minus: v})
@@ -322,7 +314,6 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                         newexpr += bnd_expressions[interface.minus]
                     bnd_expressions[interface.minus] = newexpr.subs(interface, interface.minus)
 
-                # ...
                 newexpr = _nullify(expr, u_plus, trials)
                 newexpr = _nullify(newexpr, v_plus, tests)
                 newexpr = newexpr.subs({u_plus: u, v_plus: v})
@@ -340,7 +331,6 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                         newexpr += bnd_expressions[interface.plus]
                     bnd_expressions[interface.plus] = newexpr.subs(interface, interface.plus)
 
-                # ...
                 # TODO must call InterfaceExpression afterward
                 newexpr = _nullify(expr, u_minus, trials)
                 newexpr = _nullify(newexpr, v_plus, tests)
@@ -362,7 +352,6 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
 
                     int_expressions[u_minus, v_plus] = InterfaceExpression(interface, u_minus, v_plus, newexpr)
 
-                # ...
                 # TODO must call InterfaceExpression afterward
                 newexpr = _nullify(expr, u_plus, trials)
                 newexpr = _nullify(newexpr, v_minus, tests)
@@ -388,7 +377,6 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
             v_minus = d_tests[v]['-']
             v_plus  = d_tests[v]['+']
 
-            # ...
             newexpr = _nullify(expr, v_minus, tests)
             newexpr = newexpr.subs({v_minus: v})
             mapping = newexpr.atoms(InterfaceMapping)
@@ -401,8 +389,7 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                     newexpr += bnd_expressions[interface.minus]
 
                 bnd_expressions[interface.minus] = newexpr
-            # ...
-            # ...
+
             newexpr = _nullify(expr, v_plus, tests)
             newexpr = newexpr.subs({v_plus: v})
             mapping = newexpr.atoms(InterfaceMapping)
@@ -415,7 +402,6 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                      newexpr += bnd_expressions[interface.plus]
 
                 bnd_expressions[interface.plus] = newexpr
-            # ...
 
     int_expressions = list(int_expressions.values())
     return int_expressions, bnd_expressions
@@ -689,30 +675,27 @@ class TerminalExpr(CalculusFunction):
             return base[expr.indices]
 
         elif isinstance(expr, BasicForm):
-            # ...
             dim     = expr.ldim
             domains  = expr.domain
 
             if not isinstance(domains, Union):
                 domains  = (domains,)
-            # ...
+
             d_expr = {}
             d_int  = {}
             for d in domains:
                 d_expr[d] = S.Zero
-            # ...
+
             if isinstance(expr.expr, Add):
                 for a in expr.expr.args:
                     domains = _get_domain(a)
                     if not isinstance(domains, Union):
                         domains = (domains, )
 
-                    # ...
                     for d in domains:
                         d_expr[d] += a
-                    # ...
+
             else:
-                # ...
                 if isinstance(expr, Functional):
                     domains = expr.domain
 
@@ -724,12 +707,9 @@ class TerminalExpr(CalculusFunction):
 
                 elif not is_sequence(domains):
                     domains = (domains,)
-                # ...
 
-                # ...
                 for d in domains:
                     d_expr[d] = expr.expr
-                # ...
 
             trials, tests = _get_trials_tests(expr, flatten=False)
             # ... treating interfaces
@@ -739,7 +719,7 @@ class TerminalExpr(CalculusFunction):
                 ls_int, d_bnd = _split_expr_over_interface(newexpr, interface,
                                                        tests=tests,
                                                        trials=trials)
-                # ...
+
                 for a in ls_int:
                     if (a.target, a.trial, a.test) in d_int:
                         d_int[a.target, a.trial, a.test] += a.expr
@@ -752,7 +732,7 @@ class TerminalExpr(CalculusFunction):
 
                     else:
                         d_expr[k] = v
-            # ...
+
             trials, tests = _get_trials_tests(expr, flatten=True)
             d_new = {}
             for domain, a in d_expr.items():
@@ -781,7 +761,7 @@ class TerminalExpr(CalculusFunction):
             for domain in keys:
                 newexpr = d_new.pop(domain)
                 d       = dict((interior, newexpr) for interior in domain.as_tuple())
-                            # ...
+
                 for k, v in d.items():
                     if k in d_new.keys():
                         d_new[k] += v
@@ -807,7 +787,7 @@ class TerminalExpr(CalculusFunction):
 
                 else:
                     raise TypeError('not implemented for {}'.format(type(domain)))
-            # ...
+
             return tuple(ls)
 
         elif isinstance(expr, Integral):
@@ -971,21 +951,22 @@ def _tensorize_atomic_expr(expr, d_atoms):
 
 #==============================================================================
 class Basic1dForm(AtomicExpr):
+    _name = None
 
-    def __new__(cls, name, axis, weight=S.One):
-        return Basic.__new__(cls, name, axis, weight)
+    def __new__(cls, axis, weight=S.One):
+        return new_basic(cls, axis, weight)
 
     @property
     def name(self):
-        return self._args[0]
+        return self._name
 
     @property
     def axis(self):
-        return self._args[1]
+        return int(self._args[0])
 
     @property
     def weight(self):
-        return self._args[2]
+        return self._args[1]
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -1002,39 +983,19 @@ class Basic1dForm(AtomicExpr):
 
 
 class Mass(Basic1dForm):
-
-    def __new__(cls, axis, weight=S.One):
-#        name = 'Mass'
-        name = 'M'
-        return Basic.__new__(cls, name, axis, weight)
+    _name = 'M'
 
 class Stiffness(Basic1dForm):
-
-    def __new__(cls, axis, weight=S.One):
-#        name = 'Stiffness'
-        name = 'S'
-        return Basic.__new__(cls, name, axis, weight)
+    _name = 'S'
 
 class Advection(Basic1dForm):
-
-    def __new__(cls, axis, weight=S.One):
-#        name = 'Advection'
-        name = 'A'
-        return Basic.__new__(cls, name, axis, weight)
+    _name = 'A'
 
 class AdvectionT(Basic1dForm):
-
-    def __new__(cls, axis, weight=S.One):
-#        name = 'AdvectionT'
-        name = 'AT'
-        return Basic.__new__(cls, name, axis, weight)
+    _name = 'AT'
 
 class Bilaplacian(Basic1dForm):
-
-    def __new__(cls, axis, weight=S.One):
-#        name = 'Bilaplacian'
-        name = 'B'
-        return Basic.__new__(cls, name, axis, weight)
+    _name = 'B'
 
 
 Mass_0 = Mass(0)
@@ -1208,38 +1169,29 @@ class TensorExpr(CalculusFunction):
 
             # ... # TODO improve
             terminal_expr = TerminalExpr(expr, domain)[0]
-            # ...
 
-            # ...
             # Collect all variables in the expression (fields must be excluded)
             variables  = [e for e in terminal_expr.atoms(ScalarFunction) if e not in fields]
             variables += [e for e in terminal_expr.atoms(IndexedVectorFunction) if e.base not in fields]
-            # ...
 
-            # ...
             if domain is not None and getattr(domain, 'mapping', None):
                 terminal_expr = LogicalExpr(terminal_expr.expr, domain)
                 variables     = [LogicalExpr(e, domain) for e in variables ]
                 trials        = [LogicalExpr(e, domain) for e in trials ]
                 tests         = [LogicalExpr(e, domain) for e in tests ]
-            # ...
 
             # Prepare dictionary for '_tensorize_atomic_expr', which should
             # process all variables but leave fields unchanged:
             d_atoms = dict(
                 [(v,_split_test_function(v)[v]) for v in variables] + [(f, (f,)) for f in fields])
 
-            # ...
             expr = cls.eval(terminal_expr, d_atoms=d_atoms, domain=domain)
-            # ...
 
-            # ...
             trials = [a for a in variables if ((isinstance(a, ScalarFunction) and a in trials) or
                                                (isinstance(a, IndexedVectorFunction) and a.base in trials))]
 
             tests = [a for a in variables if ((isinstance(a, ScalarFunction) and a in tests) or
                                               (isinstance(a, IndexedVectorFunction) and a.base in tests))]
-            # ...
 
             expr = _replace_atomic_expr(expr, trials, tests, d_atoms,
                                         logical=True, expand=expand)

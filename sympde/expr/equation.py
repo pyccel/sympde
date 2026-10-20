@@ -13,6 +13,10 @@ from sympde.topology import Boundary, NormalVector, TangentVector
 from sympde.topology import Trace, trace_0, trace_1
 from sympde.calculus import grad, dot
 from sympde.core.utils import random_string
+from sympde.core.basic import (
+    new_basic,
+    restore_optional_argument,
+)
 
 from .expr import BilinearForm, LinearForm
 from .expr import linearize
@@ -35,11 +39,8 @@ class EssentialBC(BasicBoundaryCondition):
     _position = None
 
     def __new__(cls, lhs, rhs, boundary, position=None, index_component=None):
-        # ...
         normal_component = False
-        # ...
 
-        # ...
         indexed = list(lhs.atoms(IndexedVectorFunction))
 
         u  = list(lhs.atoms(ScalarFunction))
@@ -54,24 +55,18 @@ class EssentialBC(BasicBoundaryCondition):
             raise ValueError('Expecting one test function')
 
         u = u[0]
-        # ...
 
         # ... do not allow to use Trace operator
         trace = list(lhs.atoms(Trace))
         if trace:
             raise TypeError('Trace operator is not allowed')
-        # ...
 
-        # ...
         order_0_expr = [u]
         order_1_expr = []
-        # ...
 
-        # ...
         nn               = list(lhs.atoms(NormalVector))
         normal_component = isinstance(u, VectorFunction) and (len(nn) > 0)
-        # ...
-        # ...
+
         if nn:
             assert(len(nn) == 1)
 
@@ -80,9 +75,7 @@ class EssentialBC(BasicBoundaryCondition):
                 order_0_expr += [dot(u, nn)]
 
             order_1_expr += [dot(grad(u), nn)]
-        # ...
 
-        # ...
         if lhs in order_0_expr:
             order = 0
             if isinstance(u, (IndexedVectorFunction)):
@@ -106,7 +99,7 @@ class EssentialBC(BasicBoundaryCondition):
         else:
             # TODO change error to unconsistent error
             raise ValueError('Wrong lhs')
-        # ...
+
 
 #        # ... for simple geometries we can compute the indices for the normal
 #        # compoenent
@@ -191,19 +184,17 @@ class Mean(BasicConstraint):
 class Equation(Basic):
 
     def __new__(cls, lhs, rhs, trials, tests, bc=None, constraint=None):
-        # ...
+        bc = restore_optional_argument(bc)
+        constraint = restore_optional_argument(constraint)
+
         if not isinstance(lhs, BilinearForm):
             raise UnconsistentLhsError('> lhs must be a bilinear')
 
         if not isinstance(rhs, LinearForm):
             raise UnconsistentRhsError('> rhs must be a linear')
-        # ...
 
-        # ...
         _is_test_function = lambda u: isinstance(u, (ScalarFunction, VectorFunction))
-        # ...
 
-        # ...
         if isinstance(tests, (ScalarFunction, VectorFunction)):
             tests = [tests]
 
@@ -212,9 +203,7 @@ class Equation(Basic):
             tests = [*tests]
 
             assert(all([_is_test_function(i) for i in tests]))
-        # ...
 
-        # ...
         if isinstance(trials, (ScalarFunction, VectorFunction)):
             trials = [trials]
 
@@ -223,7 +212,7 @@ class Equation(Basic):
             trials = [*trials]
 
             assert(all([_is_test_function(i) for i in trials]))
-        # ...
+
 
 #        # ...
 #        # find unknowns and tests of the equation
@@ -268,7 +257,6 @@ class Equation(Basic):
 #                raise UnconsistentArgumentsError(msg)
 #        # ...
 
-        # ...
         if constraint:
             if isinstance(constraint, BasicConstraint):
                 constraint = [constraint]
@@ -325,14 +313,12 @@ class Equation(Basic):
                     newbc += [i]
 
             bc = Tuple(*newbc)
-        # ...
 
         # ... sympify tests/trials
         trials = Tuple(*trials)
         tests  = Tuple(*tests)
-        # ...
 
-        return Basic.__new__(cls, lhs, rhs, trials, tests, bc, constraint)
+        return new_basic(cls, lhs, rhs, trials, tests, bc, constraint)
 
     @property
     def lhs(self):
@@ -352,11 +338,11 @@ class Equation(Basic):
 
     @property
     def bc(self):
-        return self._args[4]
+        return restore_optional_argument(self._args[4])
 
     @property
     def constraint(self):
-        return self._args[5]
+        return restore_optional_argument(self._args[5])
 
 #==============================================================================
 # TODO must subtitute expr by given args => call then create BasicForm
