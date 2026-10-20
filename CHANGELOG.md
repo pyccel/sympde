@@ -20,7 +20,7 @@ All notable changes to this project will be documented in this file.
 
 - Convert the README to Markdown and expand the installation, testing, and documentation-build instructions.
 - #194: Use explicit internal imports and load optional dependencies only when needed.
-- #194: Remove the leading underscore from the module-level names used outside their module, and add those used by PSYDAC to `sympde.api`: `partial_derivatives`, `logical_partial_derivatives` (`sympde.topology.derivatives`) and `split_test_function` (`sympde.expr.evaluation`). Rename `_coeffs_registery` to `coefficient_types` (`sympde.core.basic`), and `_diff_ops`, `_generic_ops`, `_sanitize_arguments` and `_get_domain` to `diff_ops`, `generic_ops`, `sanitize_arguments` and `get_domain`.
+- #194: Remove the leading underscore from `partial_derivatives`, `logical_partial_derivatives` (`sympde.topology.derivatives`) and `split_test_function` (`sympde.expr.evaluation`), and add them to `sympde.api`.
 - #194: List only public names in the `__all__` of every module.
 - #106: Require SymPy 1.12 or newer and support maintained SymPy releases below 1.15.
 - #106: Update SymPDE's symbolic objects for modern SymPy's structural arguments, traversal, substitution, and reconstruction requirements.
