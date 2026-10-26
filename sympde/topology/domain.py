@@ -658,8 +658,9 @@ class Domain(BasicDomain):
             Ordered non-empty collection of atomic, unconnected patches. All
             patches must have the same logical dimension and the same
             physical dimension, which is the logical dimension for a patch
-            without a mapping. Their positions define the integer patch
-            indices accepted by an interface side.
+            without a mapping. Either all patches or none have a mapping.
+            Their positions define the integer patch indices accepted by an
+            interface side.
             Patch objects, interior names, and serialized logical names must be
             unique. Joined multipatch domains must be flattened before being
             passed to this method.
@@ -800,6 +801,8 @@ class Domain(BasicDomain):
         pdims = {p.mapping.pdim if p.mapping is not None else p.dim for p in patches}
         if len(pdims) > 1:
             raise ValueError('all patches must have the same physical dimension')
+        if len({p.mapping is None for p in patches}) > 1:
+            raise ValueError('either all patches or none must have a mapping')
         ldim = int(patches[0].dim)
 
         normalized_connectivity = []

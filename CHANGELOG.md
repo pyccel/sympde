@@ -42,6 +42,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - #188: Reject interfaces in `Domain.join()` that join a face with itself or use a face that is already part of another interface.
+- #188: Reject patches in `Domain.join()` of which only some have a mapping, instead of dropping the mapping of the domain.
 - #140: Reject patches with different physical dimensions in `Domain.join()`, instead of creating an inconsistent domain.
 - #144: Restore the interface names and exterior boundaries of a domain read with `Domain.from_file()` as they were exported, and read domains whose patches are `InteriorDomain` objects without a `dtype` instead of failing with an `AssertionError`.
 - #106: Preserve symbol assumptions and free-symbol information with modern SymPy.

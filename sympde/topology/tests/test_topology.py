@@ -470,8 +470,13 @@ def test_domain_join_rejects_different_physical_dimensions():
     with pytest.raises(ValueError, match='same physical dimension'):
         Domain.join([B, C], [((0, 0, 1), (1, 0, -1), 1)], 'Omega')
 
-    # A patch without a mapping has the same physical and logical dimension
-    Domain.join([A, C], [((0, 0, 1), (1, 0, -1), 1)], 'Omega')
+#==============================================================================
+def test_domain_join_rejects_mapped_and_unmapped_patches():
+    A = Mapping('F', dim=2)(Square('A'))
+    B = Square('B')
+
+    with pytest.raises(ValueError, match='all patches or none'):
+        Domain.join([A, B], [((0, 0, 1), (1, 0, -1), 1)], 'Omega')
 
 #==============================================================================
 def test_domain_join_rejects_degenerate_connectivity():
