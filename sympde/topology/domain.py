@@ -39,6 +39,16 @@ if TYPE_CHECKING:
 iterable_types = (tuple, list, Tuple, Union)
 
 #==============================================================================
+def _serialized_integer(value, name):
+    """Read legacy decimal strings without accepting numeric floats."""
+    if isinstance(value, str):
+        try:
+            return int(value)
+        except ValueError as error:
+            raise TypeError(f'{name} must be an integer') from error
+    return _as_integer(value, name)
+
+#==============================================================================
 class Domain(BasicDomain):
     """
     Represents an undefined domain.
@@ -479,12 +489,20 @@ class Domain(BasicDomain):
 
         if dtype == 'None':
             dtype = None
-
-        assert dtype is not None
-        assert all(dtype)
         if isinstance(d_interior, dict):
             d_interior = [d_interior]
             dtype      = [dtype]
+        if dtype is None:
+            dtype = [None] * len(d_interior)
+
+        # Patches without a dtype are topological InteriorDomain objects,
+        # whose boundaries cannot be derived from a parametric box
+        if not any(dtype):
+            return cls._from_topological_dict(
+                domain_name, dim, d_interior, d_boundary, d_connectivity)
+        if not all(dtype):
+            raise ValueError(
+                'either all or none of the serialized patches must have a dtype')
 
         constructors = [globals()[dt['type']] for dt in dtype]
         interiors    = [cs(i['name'], **dt['parameters']) for cs,i,dt in zip(constructors, d_interior, dtype)]
@@ -492,23 +510,14 @@ class Domain(BasicDomain):
         domains      = [mapping(i) if mapping else i for i,mapping in zip(interiors, mappings)]
         patch_index  = {I.name:ind for ind,I in enumerate(interiors)}
 
-        def serialized_integer(value, name):
-            """Read legacy decimal strings without accepting numeric floats."""
-            if isinstance(value, str):
-                try:
-                    return int(value)
-                except ValueError as error:
-                    raise TypeError(f'{name} must be an integer') from error
-            return _as_integer(value, name)
-
         stored_boundary_sides = []
         for boundary_data in d_boundary:
             if not isinstance(boundary_data, dict):
                 raise TypeError('each serialized boundary must be a dictionary')
             name = boundary_data['patch']
-            axis = serialized_integer(
+            axis = _serialized_integer(
                 boundary_data['axis'], 'serialized boundary axis')
-            ext  = serialized_integer(
+            ext  = _serialized_integer(
                 boundary_data['ext'], 'serialized boundary extremity')
             if name not in patch_index:
                 raise ValueError(
@@ -531,16 +540,16 @@ class Domain(BasicDomain):
             minus, plus, orientation = interface_data
 
             minus_name = minus['patch']
-            minus_axis = serialized_integer(
+            minus_axis = _serialized_integer(
                 minus['axis'], 'serialized interface axis')
-            minus_ext  = serialized_integer(
+            minus_ext  = _serialized_integer(
                 minus['ext'], 'serialized interface extremity')
             minus_patch_i = patch_index[minus_name]
 
             plus_name = plus['patch']
-            plus_axis = serialized_integer(
+            plus_axis = _serialized_integer(
                 plus['axis'], 'serialized interface axis')
-            plus_ext  = serialized_integer(
+            plus_ext  = _serialized_integer(
                 plus['ext'], 'serialized interface extremity')
             plus_patch_i = patch_index[plus_name]
             interface = ((minus_patch_i, minus_axis, minus_ext),
@@ -569,6 +578,63 @@ class Domain(BasicDomain):
                 'derived from connectivity')
 
         return domain
+
+    @classmethod
+    def _from_topological_dict(cls, name, dim, d_interior, d_boundary,
+                               d_connectivity):
+        """
+        Create a domain whose patches are `InteriorDomain` objects without a
+        dtype, as read by `from_file`.
+
+        The exterior boundaries cannot be derived from the patches, so they are
+        restored as they were stored, with their names, and with their axes
+        and extremities when these are known.
+        """
+        if any(I.get('mapping', 'None') != 'None' for I in d_interior):
+            raise NotImplementedError(
+                'reading mapped patches without a dtype is not supported')
+
+        interiors = {I['name']: InteriorDomain(I['name'], dim=dim)
+                     for I in d_interior}
+
+        def boundary(data, kind):
+            if not isinstance(data, dict):
+                raise TypeError(f'each serialized {kind} side must be a dictionary')
+            patch = data['patch']
+            if patch not in interiors:
+                raise ValueError(
+                    f'serialized {kind} references unknown patch: {patch}')
+
+            def optional_integer(key, label):
+                value = data[key]
+                if value in (None, 'None'):
+                    return None
+                return _serialized_integer(value, f'serialized {kind} {label}')
+
+            axis = optional_integer('axis', 'axis')
+            ext  = optional_integer('ext', 'extremity')
+            return Boundary(data['name'], interiors[patch], axis=axis, ext=ext)
+
+        boundaries = [boundary(data, 'boundary') for data in d_boundary]
+
+        interfaces = []
+        for interface_name, interface_data in d_connectivity.items():
+            if not isinstance(interface_name, str):
+                raise TypeError('serialized interface names must be strings')
+            if len(interface_data) != 3:
+                raise ValueError(
+                    'multipatch topology files must store two interface sides '
+                    'and an explicit orientation; regenerate legacy files '
+                    'that contain only two interface sides')
+            minus, plus, orientation = interface_data
+            if isinstance(orientation, list):
+                orientation = tuple(orientation)
+            interfaces.append(Interface(
+                interface_name, boundary(minus, 'interface'),
+                boundary(plus, 'interface'), orientation))
+
+        return Domain(name, interiors=list(interiors.values()),
+                      boundaries=boundaries, connectivity=interfaces)
 
     @classmethod
     def join(cls, patches, connectivity=None, name=None, *, interfaces=None):

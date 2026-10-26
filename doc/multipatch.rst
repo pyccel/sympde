@@ -621,6 +621,12 @@ file when that result disagrees with boundary metadata that is present. Missing
 or null legacy metadata is treated as unavailable and replaced by the derived
 boundary.
 
+A domain whose patches are ``InteriorDomain`` objects without a ``dtype`` has
+no parametric box from which to derive its boundary. The loader restores its
+exterior boundaries and interfaces as they were stored instead, including
+their names and any boundary without an axis or extremity. Such patches are
+only supported without a mapping.
+
 SymPDE's ``Domain.export`` stores symbolic topology only.  A Psydac geometry
 file additionally stores spline or NURBS knots, control points, weights, and
 parallelizable mapping data; see Psydac's multipatch discretization tutorial.

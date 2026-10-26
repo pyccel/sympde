@@ -117,6 +117,43 @@ def test_topology_1():
     assert D.todict() == Omega.todict()
 
 #==============================================================================
+def test_topological_domain_export_and_from_file(tmp_path):
+    # Regression test for #144: the patches are InteriorDomain objects without
+    # a dtype, and their boundaries have no axis or extremity
+    A = InteriorDomain('A', dim=2)
+    B = InteriorDomain('B', dim=2)
+    A1, A2, A3 = [Boundary(f'Gamma_{i}', A) for i in (1, 2, 3)]
+    B1, B2, B3 = [Boundary(f'Gamma_{i}', B) for i in (1, 2, 3)]
+
+    Omega = Domain('Omega',
+                   interiors=[A, B],
+                   boundaries=[A2, A3, B1, B3],
+                   connectivity=[Interface('I', A1, B2, 1)])
+
+    filename = str(tmp_path / 'omega.h5')
+    Omega.export(filename)
+    D = Domain.from_file(filename)
+
+    assert D == Omega
+    assert D.todict() == Omega.todict()
+
+    # 3D patches with known boundary axes and extremities
+    C = InteriorDomain('C', dim=3)
+    E = InteriorDomain('E', dim=3)
+    interface = Interface('I',
+                          Boundary('Gamma_1', C, axis=0, ext=1),
+                          Boundary('Gamma_2', E, axis=1, ext=-1),
+                          (-1, 1, -1))
+    Omega = Domain('Omega', interiors=[C, E], boundaries=[],
+                   connectivity=[interface])
+
+    Omega.export(filename)
+    D = Domain.from_file(filename)
+
+    assert D == Omega
+    assert D.interface_map['I'].orientation == (-1, 1, -1)
+
+#==============================================================================
 def test_domain_1():
     Omega_1 = InteriorDomain('Omega_1', dim=2)
     Omega_2 = InteriorDomain('Omega_2', dim=2)
