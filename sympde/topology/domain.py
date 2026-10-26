@@ -832,8 +832,7 @@ class Domain(BasicDomain):
         boundaries = []
         # Reserve every explicit name before allocating generated ones. This
         # makes explicit identity independent of the interface input order.
-        physical_interface_names = set(explicit_interface_names)
-        logical_interface_names = set()
+        interface_names = set(explicit_interface_names)
 
         def get_unique_interface_name(base, used_names):
             """Return an unused name while preserving the historical pattern."""
@@ -847,6 +846,10 @@ class Domain(BasicDomain):
             name = f'{base}#{occurrence}'
             used_names.add(name)
             return name
+
+        def logical_patch_name(boundary):
+            patch = boundary.logical_domain or boundary
+            return patch.domain.name
 
         def get_boundary(boundary_spec):
             if not isinstance(boundary_spec, tuple) or len(boundary_spec) != 3:
@@ -887,25 +890,20 @@ class Domain(BasicDomain):
 
             bnd_minus = get_boundary(minus_spec)
             bnd_plus  = get_boundary(plus_spec)
+            # A mapped interface and its logical interface share one name,
+            # generated from the logical patch names. This keeps the name of
+            # the logical interface when the domain is read from a file.
             if explicit_name is None:
-                physical_base = (
-                    f'{bnd_minus.domain.name}|{bnd_plus.domain.name}')
+                base = (f'{logical_patch_name(bnd_minus)}|'
+                        f'{logical_patch_name(bnd_plus)}')
                 interface_name = get_unique_interface_name(
-                    physical_base, physical_interface_names)
+                    base, interface_names)
             else:
                 interface_name = explicit_name
 
-            logical_name = None
-            if bnd_minus.logical_domain and bnd_plus.logical_domain:
-                logical_base = (
-                    f'{bnd_minus.logical_domain.domain.name}|'
-                    f'{bnd_plus.logical_domain.domain.name}')
-                logical_name = get_unique_interface_name(
-                    logical_base, logical_interface_names)
-
             interface = bnd_minus.join(
                 bnd_plus, orientation, name=interface_name,
-                logical_name=logical_name)
+                logical_name=interface_name)
 
             interfaces[str(interface.name)] = interface
             boundaries.append(bnd_minus)

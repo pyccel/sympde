@@ -853,6 +853,20 @@ def test_domain_does_not_depend_on_interface_order(tmp_path):
     domain.export(filename)
     assert Domain.from_file(filename) == domain
 
+    # A mapped interface and its logical interface have the same name, also
+    # after an export/from_file round trip
+    F = Mapping('F', dim=2)
+    G = Mapping('G', dim=2)
+    mapped = Domain.join([F(A), G(B)], [first, second], 'Omega')
+    assert tuple(mapped.interface_map) == ('A|B', 'zz')
+    assert mapped.logical_domain == domain
+
+    mapped.export(filename)
+    restored = Domain.from_file(filename)
+    assert restored == mapped
+    for name, interface in restored.interface_map.items():
+        assert str(interface.logical_domain.name) == name
+
     interface = domain.interface_map['zz']
     with pytest.raises(ValueError, match='interface names must be unique'):
         Domain('Omega', interiors=[A.interior, B.interior],

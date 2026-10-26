@@ -446,10 +446,8 @@ def test_explicit_interface_name_roundtrip(tmp_path):
 
     assert set(restored.interface_map) == {'lower-seam', 'upper-seam'}
     assert restored.todict() == domain.todict()
-    assert {
-        str(interface.logical_domain.name)
-        for interface in restored.interface_map.values()
-    } == {'A|B', 'A|B#2'}
+    for name, interface in restored.interface_map.items():
+        assert str(interface.logical_domain.name) == name
 
 
 #==============================================================================

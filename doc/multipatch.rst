@@ -354,11 +354,14 @@ This example illustrates two independent facts:
 * the same ordered patch pair can have more than one interface; and
 * the orientation belongs to each interface, not to the patch pair.
 
-Interface names are generated from the side-domain names.  If that base name
-is repeated, later occurrences receive ``#2``, ``#3``, and so on.  The names
-are checked against all previously generated names, including names which
-already contain ``#`` or ``|``, so one interface cannot overwrite another.
-They are stable keys in ``omega.interface_map``.  ``omega.connectivity`` is
+Interface names are generated from the side-domain names; for mapped patches,
+from the names of their logical patches, so that ``F(A)`` and ``G(B)`` give
+``A|B``.  If that base name is repeated, later occurrences receive ``#2``,
+``#3``, and so on.  The names are checked against all previously generated
+names, including names which already contain ``#`` or ``|``, so one interface
+cannot overwrite another.  A mapped interface and its logical interface have
+the same name.  The names are stable keys in ``omega.interface_map``, which
+is ordered by name.  ``omega.connectivity`` is
 the unchanged symbolic storage object behind that descriptive view.
 
 Self-interfaces
