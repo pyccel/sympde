@@ -474,6 +474,18 @@ def test_domain_join_rejects_different_physical_dimensions():
     Domain.join([A, C], [((0, 0, 1), (1, 0, -1), 1)], 'Omega')
 
 #==============================================================================
+def test_domain_join_rejects_degenerate_connectivity():
+    A = Square('A')
+    B = Square('B')
+
+    with pytest.raises(ValueError, match='with itself'):
+        Domain.join([A], [((0, 0, 1), (0, 0, 1), 1)], 'Omega')
+
+    with pytest.raises(ValueError, match='more than one interface'):
+        Domain.join([A, B], [((0, 0, 1), (1, 0, -1), 1),
+                             ((0, 0, 1), (1, 1, -1), 1)], 'Omega')
+
+#==============================================================================
 def test_2d_domain_without_bnd():
 
     OmegaLog1 = Square('OmegaLog1', bounds1 = (0,.5), bounds2 = (0,.5))

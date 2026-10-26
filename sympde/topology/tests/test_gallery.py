@@ -9,6 +9,7 @@ from sympy import symbols
 
 from sympde.topology.analytical_mapping import IdentityMapping
 from sympde.topology.basic import Interval, ProductDomain, InteriorDomain
+from sympde.topology.basic import Boundary
 from sympde.topology.domain import Domain
 from sympde.topology.domain import Line, Square, Cube, NCubeInterior
 
@@ -389,11 +390,11 @@ def test_boundary_free_cube_roundtrip(tmp_path, mapped):
 #==============================================================================
 @pytest.mark.xdist_group('h5py')
 def test_single_boundary_and_legacy_dictionary_roundtrip(tmp_path):
-    patch = Line('A')
-    domain = Domain.join(
-        [patch],
-        [((0, 0, -1), (0, 0, -1), None, 'identified-left')],
-        'half-open-line')
+    # Every interface of a joined domain uses two faces, so a domain with a
+    # single exterior side is a topological one
+    patch = InteriorDomain('A', dim=1)
+    domain = Domain('half-open-line', interiors=[patch],
+                    boundaries=[Boundary('Gamma_1', patch, axis=0, ext=-1)])
     canonical_filename = tmp_path / 'single_boundary.h5'
     legacy_filename = tmp_path / 'legacy_single_boundary.h5'
     topology = domain.todict()
@@ -413,13 +414,22 @@ def test_single_boundary_and_legacy_dictionary_roundtrip(tmp_path):
     legacy = Domain.from_file(str(legacy_filename))
     assert legacy.todict() == domain.todict()
 
+
+#==============================================================================
+@pytest.mark.xdist_group('h5py')
+def test_missing_boundary_is_derived_from_connectivity(tmp_path):
+    domain = Domain.join(
+        [Line('A'), Line('B')],
+        [((0, 0, +1), (1, 0, -1), None)],
+        'line')
+
     for legacy_value in ('missing', None):
         topology = domain.todict()
         if legacy_value == 'missing':
             topology.pop('boundary')
         else:
             topology['boundary'] = None
-        incomplete_filename = tmp_path / f'single_boundary_{legacy_value}.h5'
+        incomplete_filename = tmp_path / f'boundary_{legacy_value}.h5'
         with h5py.File(incomplete_filename, mode='w') as h5:
             h5['topology.yml'] = np.array(
                 yaml.safe_dump(topology, sort_keys=None), dtype='S')

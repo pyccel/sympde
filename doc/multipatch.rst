@@ -535,6 +535,8 @@ What SymPDE validates
   dimension;
 * patch indices are in range and patch objects belong to ``patches``;
 * axes are valid and extremities are ``-1`` or ``+1``;
+* every face is part of at most one interface, and no face is joined with
+  itself;
 * every interface has an explicit dimension-appropriate orientation; and
 * every orientation flag and sign belongs to ``{-1, +1}``.
 
@@ -547,9 +549,7 @@ is responsible for ensuring that:
 
 * the mapped physical faces coincide to the desired tolerance;
 * patch maps are regular and have the intended physical dimension;
-* the face parameterizations satisfy the declared orientation;
-* a boundary face is not reused in a way that creates an unintended
-  non-manifold topology; and
+* the face parameterizations satisfy the declared orientation; and
 * later discrete trace meshes and spaces meet the requirements of the chosen
   Psydac operator.
 

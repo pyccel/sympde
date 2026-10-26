@@ -669,6 +669,8 @@ class Domain(BasicDomain):
             `(minus, plus, orientation)` or
             `(minus, plus, orientation, name)`. The optional name is
             preserved exactly and must be unique among all interfaces.
+            A face may be part of at most one interface, and an interface
+            cannot join a face with itself.
             If both this argument and `interfaces` are omitted, the
             connectivity is empty.
 
@@ -885,11 +887,22 @@ class Domain(BasicDomain):
                 raise ValueError('boundary extremity must be either -1 or 1')
             return patch.get_boundary(axis=axis, ext=ext)
 
+        joined_boundaries = set()
         for minus_spec, plus_spec, orientation, explicit_name \
                 in normalized_connectivity:
 
             bnd_minus = get_boundary(minus_spec)
             bnd_plus  = get_boundary(plus_spec)
+            # A face is part of at most one interface, and it is not joined
+            # with itself
+            if bnd_minus == bnd_plus:
+                raise ValueError(
+                    f'an interface joins the face {bnd_minus} with itself')
+            for bnd in (bnd_minus, bnd_plus):
+                if bnd in joined_boundaries:
+                    raise ValueError(
+                        f'the face {bnd} is part of more than one interface')
+                joined_boundaries.add(bnd)
             # A mapped interface and its logical interface share one name,
             # generated from the logical patch names. This keeps the name of
             # the logical interface when the domain is read from a file.
