@@ -155,7 +155,14 @@ class Domain(BasicDomain):
             if not all([isinstance(i, Interface) for i in connectivity]):
                 raise TypeError('> all interfaces must be of type Interface')
 
-            connectivity = Connectivity({str(i.name): i for i in connectivity})
+            names = [str(i.name) for i in connectivity]
+            if len(names) != len(set(names)):
+                raise ValueError('> interface names must be unique')
+            connectivity = Connectivity(dict(zip(names, connectivity)))
+
+        # Order the interfaces by name, so that the domain does not depend on
+        # the order in which they are given
+        connectivity = Connectivity(dict(sorted(connectivity.items())))
 
         # TODO check that patches appearing in connectivity are in interiors
 

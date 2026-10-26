@@ -838,6 +838,27 @@ def test_generated_interface_names_do_not_collide_with_patch_names():
 
 
 #==============================================================================
+def test_domain_does_not_depend_on_interface_order(tmp_path):
+    A = Square('A')
+    B = Square('B')
+    first  = ((0, 0, +1), (1, 0, -1), +1, 'zz')
+    second = ((0, 1, +1), (1, 1, -1), +1)
+
+    domain = Domain.join([A, B], [first, second], 'Omega')
+
+    assert domain == Domain.join([A, B], [second, first], 'Omega')
+    assert tuple(domain.interface_map) == ('A|B', 'zz')
+
+    filename = str(tmp_path / 'omega.h5')
+    domain.export(filename)
+    assert Domain.from_file(filename) == domain
+
+    interface = domain.interface_map['zz']
+    with pytest.raises(ValueError, match='interface names must be unique'):
+        Domain('Omega', interiors=[A.interior, B.interior],
+               connectivity=[interface, interface])
+
+#==============================================================================
 def test_explicit_interface_names_are_reserved_and_unique():
     patch_a = Square('A')
     patch_b = Square('B')
@@ -849,8 +870,9 @@ def test_explicit_interface_names_are_reserved_and_unique():
         ],
         'named')
 
-    assert tuple(domain.interface_map) == ('A|B#2', 'A|B')
+    assert tuple(domain.interface_map) == ('A|B', 'A|B#2')
     assert str(domain.interface_map['A|B'].name) == 'A|B'
+    assert domain.interface_map['A|B'].minus.ext == +1
 
     with pytest.raises(ValueError, match='duplicate explicit interface name'):
         Domain.join(
