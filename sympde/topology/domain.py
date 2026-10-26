@@ -965,6 +965,17 @@ class Domain(BasicDomain):
             return None
         interfaces = (interfaces,) if isinstance(interfaces, Interface) else tuple(interfaces)
 
+        # The vertices of a patch are the corners of its parametric box. A
+        # topological InteriorDomain, as read from a file without dtype, has
+        # no such box.
+        for interface in interfaces:
+            for side in (interface.minus, interface.plus):
+                if not hasattr(side.domain, 'get_boundary'):
+                    raise ValueError(
+                        'shared vertices are only defined for patches with a '
+                        f'parametric box, such as Square or Cube; patch '
+                        f'{side.domain.name} is a topological InteriorDomain')
+
         parent = {}
 
         def find(vertex):

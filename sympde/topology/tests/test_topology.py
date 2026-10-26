@@ -153,6 +153,10 @@ def test_topological_domain_export_and_from_file(tmp_path):
     assert D == Omega
     assert D.interface_map['I'].orientation == (-1, 1, -1)
 
+    # Topological patches have no parametric box, hence no vertices
+    with pytest.raises(ValueError, match='parametric box'):
+        D.shared_vertices
+
 #==============================================================================
 def test_domain_1():
     Omega_1 = InteriorDomain('Omega_1', dim=2)
