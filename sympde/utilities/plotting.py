@@ -586,29 +586,34 @@ def _draw_isolines_2d(ax, patch, samples):
                     linewidth=_STYLE['isoline_width'], zorder=2)
 
 
-def _draw_side_2d(ax, face, color, linestyle, samples):
+def _draw_side_2d(ax, face, color, linestyle, samples, direction=1):
     """Draw an interface side inside its patch, with an arrow along its
-    increasing tangential coordinate."""
+    tangential coordinate, reversed if `direction` is -1."""
     from matplotlib.patches import FancyArrowPatch
 
     curve = _map_face(face.domain, int(face.axis), int(face.ext), samples,
                       inset=_STYLE['side_inset'])
     ax.plot(*curve.T, color=color, linewidth=_STYLE['side_width'],
             linestyle=linestyle, solid_capstyle='butt', zorder=4)
+    start, end = curve[int(0.45 * samples)], curve[int(0.62 * samples)]
+    if direction == -1:
+        start, end = end, start
     ax.add_patch(FancyArrowPatch(
-        curve[int(0.45 * samples)], curve[int(0.62 * samples)],
-        arrowstyle='-|>', mutation_scale=_STYLE['arrow_size'], color=color,
-        linewidth=0, zorder=5))
+        start, end, arrowstyle='-|>', mutation_scale=_STYLE['arrow_size'],
+        color=color, linewidth=0, zorder=5))
 
 
 def _draw_interfaces_2d(ax, model):
     from matplotlib.patches import FancyArrowPatch
 
     for item in model.interfaces:
+        # The arrow of the plus side shows where the coordinate of the minus
+        # side goes, so that it is reversed for a reversing interface
+        (_, _, direction), = item.interface.axis_map
         _draw_side_2d(ax, item.interface.minus, item.color, '-',
                       model.refinement)
         _draw_side_2d(ax, item.interface.plus, item.color, _PLUS_LINESTYLE,
-                      model.refinement)
+                      model.refinement, direction)
         if item.separated:
             ax.add_patch(FancyArrowPatch(
                 item.minus_center, item.plus_center, arrowstyle='-',
@@ -669,15 +674,16 @@ def _draw_patches_3d(ax, model, isolines, topology, labels):
                   fontsize=_STYLE['patch_fontsize'], fontweight='bold')
 
 
-def _draw_side_arrows_3d(ax, face, color, linestyle, alpha,
-                         labels_at_start=()):
-    """Draw arrows along the two increasing tangential coordinates of a
-    face, labelled by the coordinate."""
+def _draw_side_arrows_3d(ax, face, color, linestyle, alpha, arrows):
+    """Draw arrows on a face along its tangential axes.
+
+    Each arrow is given by `(axis, direction, label)`: it follows the logical
+    `axis` of the face, reversed if `direction` is -1, and is labelled with
+    the coordinate eta of index `label`.
+    """
     lower, upper = _logical_limits(face.domain)
     outward = 0.10 * (_face_center(face) - _patch_center(face.domain))
-    for tangent in range(3):
-        if tangent == face.axis:
-            continue
+    for tangent, direction, label in arrows:
         start = (lower + upper) / 2
         start[face.axis] = (lower if face.ext == -1 else upper)[face.axis]
         end = start.copy()
@@ -685,13 +691,13 @@ def _draw_side_arrows_3d(ax, face, color, linestyle, alpha,
         start[tangent] = lower[tangent] + 0.25 * width
         end[tangent] = lower[tangent] + 0.72 * width
         start, end = _map_points(face.domain, [start, end])
+        if direction == -1:
+            start, end = end, start
         delta = end - start
         ax.quiver(*start, *delta, color=color, linestyles=linestyle,
                   linewidth=1.5, arrow_length_ratio=0.18, alpha=alpha)
-        position = (start - 0.08 * delta if tangent in labels_at_start
-                    else end + 0.08 * delta) + outward
-        _text(ax, position, rf'$\eta_{tangent + 1}$', color=color,
-              fontsize=_STYLE['label_fontsize'])
+        _text(ax, end + 0.08 * delta + outward, rf'$\eta_{label + 1}$',
+              color=color, fontsize=_STYLE['label_fontsize'])
 
 
 def _draw_interfaces_3d(ax, model):
@@ -702,14 +708,16 @@ def _draw_interfaces_3d(ax, model):
         ax.plot_surface(*np.moveaxis(surface, -1, 0), color=item.color,
                         alpha=_STYLE['interface_alpha'], linewidth=0,
                         shade=False)
-        _draw_side_arrows_3d(ax, interface.minus, item.color, '-', 1.0)
-        # Label the plus arrows at their start when they point like the
-        # minus arrows, so that the two labels do not overlap
-        plus_at_start = {
-            plus_axis for _, plus_axis, direction in interface.axis_map
-            if direction == 1}
-        _draw_side_arrows_3d(ax, interface.plus, item.color, '--', 0.7,
-                             labels_at_start=plus_at_start)
+        # The arrows of the plus face show where the coordinates of the
+        # minus face go, with the labels of the minus coordinates
+        axis_map = interface.axis_map
+        _draw_side_arrows_3d(
+            ax, interface.minus, item.color, '-', 1.0,
+            [(minus_axis, 1, minus_axis) for minus_axis, _, _ in axis_map])
+        _draw_side_arrows_3d(
+            ax, interface.plus, item.color, '--', 0.7,
+            [(plus_axis, direction, minus_axis)
+             for minus_axis, plus_axis, direction in axis_map])
         if item.separated:
             ax.plot(*np.column_stack((item.minus_center, item.plus_center)),
                     color=item.color, linestyle=':',
@@ -752,8 +760,10 @@ def plot_domain(
 
     With ``topology=True``, each side of an interface is drawn inside its own
     patch, the minus side solid and the plus side dashed, in a colour shared
-    by both sides. Arrows show the increasing tangential coordinates of each
-    side, so that the orientation of the interface can be read from the plot.
+    by both sides. The arrows of the minus side show its increasing
+    tangential coordinates, and those of the plus side where these go on the
+    plus side: they point the other way for a reversing interface. In 3D, the
+    arrows are labelled with the coordinates of the minus side.
     A dotted connector joins the two sides of an interface when they are drawn
     at different places, as for periodic or self-interfaces. The exterior
     boundary is drawn in black, and the vertices are marked: white for

@@ -479,9 +479,10 @@ and integer patch indices are both recorded.
 
 In a 2D annotated topology plot, each side of an interface is drawn slightly
 inside its own patch: the minus side solid, the plus side dashed, in a colour
-shared by both sides. Arrows point along each side's increasing native
-tangential coordinate, so the orientation of an interface can be read from the
-plot. If identified sides are separated in the drawing, they are labelled
+shared by both sides. The arrow of the minus side points along its increasing
+tangential coordinate, and the arrow of the plus side shows where that
+coordinate goes on the plus side: it points against the plus side's own
+coordinate for a reversing interface, such as the twisted strip. If identified sides are separated in the drawing, they are labelled
 ``I0-`` and ``I0+`` and a dotted curve connects their midpoints; this makes
 cut-open periodic or quotient topologies visible without moving the patches.
 The exterior boundary is drawn in black, and the vertices are marked white on
@@ -491,8 +492,10 @@ neighbouring patches get different colours.
 
 The 3D view is intentionally lighter. It draws the exterior patch faces as
 translucent surfaces, fills the minus face of every interface in the
-interface colour, and places arrows along both native tangential directions of
-both faces, solid on the minus face and dashed on the plus face. The result is
+interface colour, and places arrows along the two tangential coordinates of the
+minus face, solid, and along their images on the plus face, dashed. All arrows
+are labelled with the coordinates of the minus face, so the arrows of the two
+faces coincide when the declared orientation matches the geometry. The result is
 intended for connectivity inspection rather than publication-quality
 rendering of a complex volume decomposition. :func:`print_topology` reports
 the same topology as text, including the signed ``axis_map`` of every
