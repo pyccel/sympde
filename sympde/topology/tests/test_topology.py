@@ -870,6 +870,11 @@ def test_domain_does_not_depend_on_interface_order(tmp_path):
     assert domain == Domain.join([A, B], [second, first], 'Omega')
     assert tuple(domain.interface_map) == ('A|B', 'zz')
 
+    # Generated names do not depend on the order of the interfaces either
+    unnamed = first[:3]
+    assert Domain.join([A, B], [unnamed, second], 'Omega') == \
+           Domain.join([A, B], [second, unnamed], 'Omega')
+
     filename = str(tmp_path / 'omega.h5')
     domain.export(filename)
     assert Domain.from_file(filename) == domain

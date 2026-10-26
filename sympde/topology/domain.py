@@ -890,6 +890,7 @@ class Domain(BasicDomain):
                 raise ValueError('boundary extremity must be either -1 or 1')
             return patch.get_boundary(axis=axis, ext=ext)
 
+        sides = []
         joined_boundaries = set()
         for minus_spec, plus_spec, orientation, explicit_name \
                 in normalized_connectivity:
@@ -906,9 +907,20 @@ class Domain(BasicDomain):
                     raise ValueError(
                         f'the face {bnd} is part of more than one interface')
                 joined_boundaries.add(bnd)
-            # A mapped interface and its logical interface share one name,
-            # generated from the logical patch names. This keeps the name of
-            # the logical interface when the domain is read from a file.
+            sides.append((bnd_minus, bnd_plus, orientation, explicit_name))
+
+        def side_key(side):
+            bnd_minus, bnd_plus = side[:2]
+            return (logical_patch_name(bnd_minus), bnd_minus.axis, bnd_minus.ext,
+                    logical_patch_name(bnd_plus), bnd_plus.axis, bnd_plus.ext)
+
+        # Generate the missing names in the order of the faces, so that they
+        # do not depend on the order of the connectivity. A mapped interface
+        # and its logical interface share one name, generated from the
+        # logical patch names. This keeps the name of the logical interface
+        # when the domain is read from a file.
+        for bnd_minus, bnd_plus, orientation, explicit_name \
+                in sorted(sides, key=side_key):
             if explicit_name is None:
                 base = (f'{logical_patch_name(bnd_minus)}|'
                         f'{logical_patch_name(bnd_plus)}')

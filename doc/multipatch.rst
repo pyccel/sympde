@@ -359,8 +359,10 @@ This example illustrates two independent facts:
 
 Interface names are generated from the side-domain names; for mapped patches,
 from the names of their logical patches, so that ``F(A)`` and ``G(B)`` give
-``A|B``.  If that base name is repeated, later occurrences receive ``#2``,
-``#3``, and so on.  The names are checked against all previously generated
+``A|B``.  If that base name is repeated, the interfaces receive ``#2``,
+``#3``, and so on, in the order of their faces (patch, axis and extremity of
+the minus side, then of the plus side), so that the names do not depend on
+the order of the connectivity.  The names are checked against all previously generated
 names, including names which already contain ``#`` or ``|``, so one interface
 cannot overwrite another.  A mapped interface and its logical interface have
 the same name.  The names are stable keys in ``omega.interface_map``, which
