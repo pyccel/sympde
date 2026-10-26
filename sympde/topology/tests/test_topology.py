@@ -155,7 +155,7 @@ def test_topological_domain_export_and_from_file(tmp_path):
 
     # Topological patches have no parametric box, hence no vertices
     with pytest.raises(ValueError, match='parametric box'):
-        D.shared_vertices
+        _ = D.shared_vertices
 
 #==============================================================================
 def test_domain_1():
