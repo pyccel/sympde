@@ -189,9 +189,11 @@ The public constructor is
 
 ``patches``
    A non-empty ordered list or tuple of ``Domain`` objects.  All patches must
-   have the same logical dimension.  The order defines the integer patch
-   indices accepted in the interface specifications.  Patch objects, physical
-   interior names, and logical names used by serialization must all be unique.
+   have the same logical dimension and the same physical dimension, which is
+   the logical dimension for a patch without a mapping.  The order defines the
+   integer patch indices accepted in the interface specifications.  Patch
+   objects, physical interior names, and logical names used by serialization
+   must all be unique.
 
 ``interfaces``
    A list or tuple of interface descriptions.  Each description is the tuple
@@ -526,7 +528,8 @@ What SymPDE validates
 * ``patches`` and ``connectivity`` have the expected container types;
 * every input to ``Domain.join`` is an atomic, unconnected patch domain;
 * patch objects, interior names, and serialized logical names are unique;
-* all patch objects have a common logical dimension;
+* all patch objects have a common logical dimension and a common physical
+  dimension;
 * patch indices are in range and patch objects belong to ``patches``;
 * axes are valid and extremities are ``-1`` or ``+1``;
 * every interface has an explicit dimension-appropriate orientation; and

@@ -418,6 +418,21 @@ def test_domain_join_rejects_nested_multipatch_inputs():
         Domain.join([joined, patch_c], [], 'ABC')
 
 #==============================================================================
+def test_domain_join_rejects_different_physical_dimensions():
+    # Regression test for #140: a planar patch joined with a surface in 3D
+    A = Mapping('FA', ldim=2, pdim=2)(Square('A'))
+    B = Mapping('FB', ldim=2, pdim=3)(Square('B'))
+    C = Square('C')
+
+    with pytest.raises(ValueError, match='same physical dimension'):
+        Domain.join([A, B], [((0, 0, 1), (1, 0, -1), 1)], 'Omega')
+    with pytest.raises(ValueError, match='same physical dimension'):
+        Domain.join([B, C], [((0, 0, 1), (1, 0, -1), 1)], 'Omega')
+
+    # A patch without a mapping has the same physical and logical dimension
+    Domain.join([A, C], [((0, 0, 1), (1, 0, -1), 1)], 'Omega')
+
+#==============================================================================
 def test_2d_domain_without_bnd():
 
     OmegaLog1 = Square('OmegaLog1', bounds1 = (0,.5), bounds2 = (0,.5))

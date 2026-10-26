@@ -41,6 +41,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- #140: Reject patches with different physical dimensions in `Domain.join()`, instead of creating an inconsistent domain.
 - #144: Restore the interface names and exterior boundaries of a domain read with `Domain.from_file()` as they were exported.
 - #106: Preserve symbol assumptions and free-symbol information with modern SymPy.
 - #106: Keep same-named functions from different function spaces distinct during symbolic simplification.
