@@ -158,7 +158,10 @@ and polar patch mappings are available.
 
 The gallery also contains 3D domains. ``build_two_cube_3d`` constructs two
 sheared cubes with a cross-axis interface, and ``build_torus_3d`` constructs
-the four-patch hollow or solid toroidal volume. Additional diagnostic domains
+the four-patch hollow or solid toroidal volume. In the solid torus, the faces
+at minor radius zero collapse onto the centreline of the tube. They are still
+exterior sides of the domain, so they must be excluded when boundary
+conditions are imposed on ``domain.boundary``. Additional diagnostic domains
 exercise oriented cube faces and three patches sharing an edge.
 ``build_multipatch_domain_3d`` selects these builders by name, including
 ``two_cube`` and ``torus``, and forwards optional arguments to the selected
