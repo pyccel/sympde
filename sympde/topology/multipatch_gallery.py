@@ -1436,9 +1436,6 @@ def plot_multipatch_domain(
         interface_labels=topology,
         vertex_labels=topology,
     )
-    if not topology:
-        figure.axes[0].set_title(str(domain.name).replace('_', ' '))
-
     if output is not None:
         output = Path(output)
         output.parent.mkdir(parents=True, exist_ok=True)

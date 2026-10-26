@@ -278,9 +278,9 @@ def test_plot_domain_2d_integration():
     figure = plot_domain(
         domain, draw=False, refinement=8, isolines=True, topology=True)
     labels = {text.get_text() for text in figure.axes[0].texts}
-    assert {'A', 'B', 'I0-', 'I0+', 'I1-', 'I1+'}.issubset(labels)
+    # The sides of I0 are drawn at different places, those of I1 coincide
+    assert {'A', 'B', 'I0-', 'I0+', 'I1'}.issubset(labels)
     assert any(label.startswith('V') for label in labels)
-    assert any('\n    axis map:' in label for label in labels)
     assert figure.axes[0].get_title() == 'twisted strip'
     plt.close(figure)
 
@@ -295,15 +295,44 @@ def test_plot_domain_3d_integration():
         domain, draw=False, refinement=4, isolines=True, topology=True)
     axis = figure.axes[0]
     labels = {text.get_text() for text in axis.texts}
-    assert {'A3', 'B3', 'I0 -/+'}.issubset(labels)
+    assert {'A3', 'B3', 'I0'}.issubset(labels)
     assert any(label.startswith('V') for label in labels)
-    assert any('\n    axis map:' in label for label in labels)
-    assert axis.get_zlabel() == 'physical z'
+    assert axis.get_zlabel() == 'z'
     assert figure.axes[0].get_title() == 'oriented cubes'
     plt.close(figure)
 
     figure = plot_domain(Cube('single3d'), draw=False, refinement=4)
     axis = figure.axes[0]
-    assert axis.get_zlabel() == 'Z'
+    assert axis.get_zlabel() == 'z'
     assert len(axis.collections) == 6
     plt.close(figure)
+
+
+def test_plot_domain_on_existing_axes_with_numpy_refinement():
+    figure, (axis_2d, axis_3d) = plt.subplots(1, 2)
+
+    returned = plot_domain(
+        _make_three_patch_vertex(), draw=False, refinement=np.int64(6),
+        ax=axis_2d, topology=True)
+    assert returned is figure
+
+    with pytest.raises(ValueError, match='3D Matplotlib axes'):
+        plot_domain(Cube('C'), draw=False, ax=axis_3d)
+    with pytest.raises(ValueError, match='refinement'):
+        plot_domain(Square('S'), draw=False, refinement=True, ax=axis_2d)
+    plt.close(figure)
+
+
+def test_neighbouring_patches_have_different_colors():
+    from sympde.topology.multipatch_gallery import build_multipatch_domain_2d
+    from sympde.utilities.plotting import _color_patches, _patch_neighbours
+
+    # More patches than colours in the palette
+    domain = build_multipatch_domain_2d('pretzel_f')
+    patches = domain.patches
+    colors = _color_patches(domain, patches)
+    neighbours = _patch_neighbours(domain, patches)
+
+    assert len(patches) > len(set(colors))
+    assert all(colors[i] != colors[j]
+               for i in neighbours for j in neighbours[i])

@@ -5,6 +5,7 @@
 
 from dataclasses import dataclass
 from itertools import product
+import numbers
 import sys
 
 import numpy as np
@@ -208,6 +209,57 @@ def print_topology(domain, file=None):
     print(format_topology(domain), file=sys.stdout if file is None else file)
 
 
+#==============================================================================
+# Plotting style
+#==============================================================================
+# Okabe-Ito palette, which is safe for colour-blind readers
+_PATCH_COLORS = (
+    '#E69F00', '#56B4E9', '#009E73', '#F0E442',
+    '#0072B2', '#D55E00', '#CC79A7', '#999999',
+)
+_INTERFACE_COLORMAP = 'tab10'
+_PLUS_LINESTYLE = (0, (3, 2))
+
+_STYLE = {
+    # Patches
+    'patch_alpha'         : 0.3,   # 2D patch fill
+    'surface_alpha'       : 0.6,   # 3D patch faces, geometry plot
+    'face_alpha'          : 0.08,  # 3D exterior faces, topology plot
+    'interface_alpha'     : 0.3,   # 3D minus faces of the interfaces
+    'boundary_width'      : 1.8,   # exterior boundary
+    'edge_width'          : 0.8,   # other patch edges
+    'edge_color'          : '0.45',
+    'isoline_width'       : 0.5,
+    'isoline_color'       : '0.55',
+    'isoline_count'       : 7,     # interior isolines per direction
+    # Interface sides
+    'side_width'          : 2.2,
+    'side_inset'          : 0.06,  # fraction of the patch width, in 2D
+    'arrow_size'          : 14,
+    'connector_width'     : 1.2,
+    # Labels and vertices
+    'patch_fontsize'      : 11,
+    'label_fontsize'      : 9,
+    'vertex_fontsize'     : 7,
+    'vertex_size'         : 5,
+    'halo_width'          : 2.5,
+    # Figures
+    'figsize_2d'          : (7.5, 6.5),
+    'figsize_3d'          : (8.0, 7.0),
+    'view'                : (24, -58),  # elevation and azimuth in 3D
+    'min_box_aspect'      : 0.3,   # smallest 3D box side, relative
+}
+
+
+def _halo():
+    import matplotlib.patheffects as path_effects
+    return [path_effects.withStroke(
+        linewidth=_STYLE['halo_width'], foreground='white')]
+
+
+#==============================================================================
+# Sampling of the geometry
+#==============================================================================
 def _logical_limits(patch):
     logical_patch = patch.logical_domain
     parameter_domain = logical_patch if logical_patch is not None else patch
@@ -218,12 +270,16 @@ def _logical_limits(patch):
 
 
 def _map_points(patch, logical_points):
+    """Map an array of logical points, of shape (n, dim), to the physical
+    space."""
     logical_points = np.asarray(logical_points, dtype=float)
     if patch.mapping is None:
         return logical_points
     mapping = patch.mapping.get_callable_mapping()
-    return np.asarray(
-        [mapping(*point) for point in logical_points], dtype=float)
+    components = mapping(*logical_points.T)
+    return np.column_stack([
+        np.broadcast_to(np.asarray(c, dtype=float), len(logical_points))
+        for c in components])
 
 
 def _physical_dimension(domain):
@@ -237,29 +293,44 @@ def _physical_dimension(domain):
     return dimensions.pop()
 
 
-def _patch_polygon(patch, samples):
+def _face_points(patch, axis, ext, samples, inset=0.0):
+    """Logical points on a face of a patch, of shape (samples, ..., dim).
+
+    The face is moved into the patch by the fraction `inset` of the patch
+    width along its normal axis.
+    """
     lower, upper = _logical_limits(patch)
-    x_values = np.linspace(lower[0], upper[0], samples)
-    y_values = np.linspace(lower[1], upper[1], samples)
-    boundary = np.vstack((
-        np.column_stack((x_values, np.full(samples, lower[1]))),
-        np.column_stack((np.full(samples, upper[0]), y_values)),
-        np.column_stack((x_values[::-1], np.full(samples, upper[1]))),
-        np.column_stack((np.full(samples, lower[0]), y_values[::-1])),
-    ))
-    return _map_points(patch, boundary)
+    dim = len(lower)
+    tangents = [a for a in range(dim) if a != axis]
+    grids = np.meshgrid(
+        *[np.linspace(lower[a], upper[a], samples) for a in tangents],
+        indexing='ij')
+    width = upper[axis] - lower[axis]
+    position = lower[axis] + inset * width if ext == -1 else \
+               upper[axis] - inset * width
+    points = np.empty((*grids[0].shape, dim))
+    points[..., axis] = position
+    for a, grid in zip(tangents, grids):
+        points[..., a] = grid
+    return points
 
 
-def _face_curve(face, samples):
-    patch = face.domain
+def _map_face(patch, axis, ext, samples, inset=0.0):
+    points = _face_points(patch, axis, ext, samples, inset)
+    shape = points.shape
+    return _map_points(patch, points.reshape(-1, shape[-1])).reshape(shape)
+
+
+def _patch_center(patch):
     lower, upper = _logical_limits(patch)
-    tangent = 1 - int(face.axis)
-    values = np.linspace(lower[tangent], upper[tangent], samples)
-    points = np.empty((samples, 2))
-    points[:, tangent] = values
-    points[:, face.axis] = (
-        lower[face.axis] if face.ext == -1 else upper[face.axis])
-    return _map_points(patch, points)
+    return _map_points(patch, [(lower + upper) / 2])[0]
+
+
+def _face_center(face):
+    lower, upper = _logical_limits(face.domain)
+    point = (lower + upper) / 2
+    point[face.axis] = lower[face.axis] if face.ext == -1 else upper[face.axis]
+    return _map_points(face.domain, [point])[0]
 
 
 def _corner_point(patch, logical_corner):
@@ -268,506 +339,405 @@ def _corner_point(patch, logical_corner):
     return _map_points(patch, [point])[0]
 
 
-def _draw_parameter_arrow(axis, curve, color, linestyle):
-    axis.plot(
-        curve[:, 0], curve[:, 1], color=color, linewidth=5,
-        linestyle=linestyle, solid_capstyle='round', zorder=4,
-    )
-    start = curve[len(curve) * 3 // 10]
-    end = curve[len(curve) * 7 // 10]
-    axis.annotate(
-        '', xy=end, xytext=start,
-        arrowprops={
-            'arrowstyle': '-|>', 'color': color, 'linewidth': 1.8,
-        },
-        zorder=6,
-    )
+def _patch_polygon(patch, samples):
+    """Closed boundary of a 2D patch, counter-clockwise in logical space."""
+    return np.vstack((
+        _map_face(patch, 1, -1, samples),
+        _map_face(patch, 0, +1, samples),
+        _map_face(patch, 1, +1, samples)[::-1],
+        _map_face(patch, 0, -1, samples)[::-1],
+    ))
 
 
-def _draw_isolines(axis, patch, samples, count=9):
-    lower, upper = _logical_limits(patch)
-    fractions = np.linspace(0.0, 1.0, count)[1:-1]
-    for fixed_axis in range(2):
-        tangent = 1 - fixed_axis
-        tangent_values = np.linspace(
-            lower[tangent], upper[tangent], samples)
-        for fraction in fractions:
-            points = np.empty((samples, 2))
-            points[:, tangent] = tangent_values
-            points[:, fixed_axis] = (
-                lower[fixed_axis]
-                + fraction * (upper[fixed_axis] - lower[fixed_axis]))
-            curve = _map_points(patch, points)
-            axis.plot(
-                curve[:, 0], curve[:, 1], color='darkgrey',
-                linewidth=0.6, alpha=0.7, zorder=2,
-            )
+#==============================================================================
+# Plot model: what is drawn, independently of Matplotlib
+#==============================================================================
+@dataclass(frozen=True)
+class _PlotInterface:
+    """An interface with the points needed to draw it."""
+
+    index: int
+    interface: object
+    color: tuple
+    minus_center: np.ndarray
+    plus_center: np.ndarray
+    separated: bool   # the two sides are drawn at different places
 
 
-def _plot_domain_2d(
-        domain, draw=True, refinement=40, isolines=False, ax=None,
-        topology=False,
-        patch_labels=True, interface_labels=True, vertex_labels=True,
-        legend=True):
-    """Plot a 2D domain, optionally with symbolic topology annotations.
+@dataclass(frozen=True)
+class _PlotModel:
+    """The sampled geometry and topology of a domain."""
 
-    Interface sides use a common color. The minus side is solid, the plus
-    side is dashed, and arrows show each side's increasing native tangential
-    coordinate. A dotted connector is drawn when identified sides occupy
-    different physical locations, which is useful for cut-open quotient
-    topologies and self-identifications.
+    domain: object
+    dim: int
+    refinement: int
+    patches: tuple
+    patch_colors: tuple
+    faces: tuple           # per patch, {(axis, ext): sampled face}
+    exterior_faces: frozenset  # (patch index, axis, ext)
+    interfaces: tuple      # _PlotInterface
+    vertices: tuple        # (TopologyVertex, tuple of physical points)
+    extent: np.ndarray     # size of the bounding box
 
-    Parameters
-    ----------
-    domain : sympde.topology.domain.Domain
-        Two-dimensional logical or mapped domain.
-    draw : bool, default=True
-        Call ``matplotlib.pyplot.show`` after constructing the figure.
-    refinement : int, default=40
-        Number of sample points used for each curved edge.
-    isolines : bool, default=False
-        Draw logical-coordinate isolines inside each patch.
-    ax : matplotlib.axes.Axes, optional
-        Existing axes on which to draw. New axes are created when omitted.
-    patch_labels, interface_labels, vertex_labels, legend : bool
-        Control topology annotations.
+    @property
+    def scale(self):
+        return max(float(np.max(self.extent)), 1.0)
 
-    Returns
-    -------
-    matplotlib.figure.Figure
-        The containing figure.
-    """
+
+def _patch_neighbours(domain, patches):
+    """Pairs of distinct patches that share an interface or a vertex."""
+    index = {patch: i for i, patch in enumerate(patches)}
+    neighbours = {i: set() for i in range(len(patches))}
+
+    def connect(group):
+        for i in group:
+            neighbours[i].update(j for j in group if j != i)
+
+    for interface in _interfaces(domain):
+        connect({index[interface.minus.domain], index[interface.plus.domain]})
+    for vertex in collect_topology_vertices(domain):
+        connect(set(vertex.patch_indices))
+    return neighbours
+
+
+def _color_patches(domain, patches):
+    """Give every patch its own colour if the palette is large enough, and
+    otherwise give neighbouring patches different colours, when possible."""
+    if len(patches) <= len(_PATCH_COLORS):
+        return _PATCH_COLORS[:len(patches)]
+    neighbours = _patch_neighbours(domain, patches)
+    colors = {}
+    for i in range(len(patches)):
+        used = {colors[j] for j in neighbours[i] if j in colors}
+        free = [c for c in range(len(_PATCH_COLORS)) if c not in used]
+        colors[i] = free[0] if free else i % len(_PATCH_COLORS)
+    return tuple(_PATCH_COLORS[colors[i]] for i in range(len(patches)))
+
+
+def _build_model(domain, refinement, topology):
     import matplotlib.pyplot as plt
-    from matplotlib.patches import FancyArrowPatch, Patch
 
-    _check_topology_dimension(domain)
-    physical_dim = _physical_dimension(domain)
-    if physical_dim != 2:
-        raise ValueError('2D domain plotting requires physical dimension 2')
-    if not isinstance(refinement, int) or refinement < 2:
-        raise ValueError('refinement must be an integer greater than one')
-
-    created_axes = ax is None
-    if created_axes:
-        if topology:
-            figure, axis = plt.subplots(figsize=(10, 6.5))
-        else:
-            figure, axis = plt.subplots()
-    else:
-        axis = ax
-        figure = axis.figure
-        if hasattr(axis, 'zaxis'):
-            raise ValueError('a 2D Matplotlib axes is required for a 2D domain')
-
+    dim = int(domain.dim)
     patches = domain.patches
-    patch_by_index = dict(enumerate(patches))
-    patch_colors = plt.get_cmap('Pastel1').colors
-    interface_colors = plt.get_cmap('Dark2').colors
-    legend_handles = []
-    all_points = []
+    faces = tuple(
+        {(axis, ext): _map_face(patch, axis, ext, refinement)
+         for axis in range(dim) for ext in (-1, 1)}
+        for patch in patches)
+    points = np.vstack([
+        face.reshape(-1, dim) for patch_faces in faces
+        for face in patch_faces.values()])
+    extent = np.ptp(points, axis=0)
 
-    for index, patch in enumerate(patches):
-        polygon = _patch_polygon(patch, refinement)
-        all_points.append(polygon)
-        color = patch_colors[index % len(patch_colors)]
-        if topology:
-            axis.fill(
-                polygon[:, 0], polygon[:, 1], facecolor=color,
-                edgecolor='black', linewidth=1.2, alpha=0.8, zorder=1,
-            )
-        else:
-            for normal_axis in range(2):
-                for ext in (-1, 1):
-                    face = patch.get_boundary(axis=normal_axis, ext=ext)
-                    curve = _face_curve(face, refinement)
-                    axis.plot(
-                        curve[:, 0], curve[:, 1], color='black',
-                        linewidth=1.0)
-        if isolines:
-            _draw_isolines(axis, patch, refinement)
-        if topology and patch_labels:
-            lower, upper = _logical_limits(patch)
-            center = _map_points(patch, [(lower + upper) / 2.0])[0]
-            axis.text(
-                *center, _patch_name(patch), ha='center', va='center',
-                fontsize=14, fontweight='bold', zorder=3,
-            )
-        if topology and legend:
-            legend_handles.append(Patch(
-                facecolor=color, edgecolor='black', label=_patch_name(patch)))
+    patch_index = {patch: i for i, patch in enumerate(patches)}
+    glued_faces = {
+        (patch_index[face.domain], int(face.axis), int(face.ext))
+        for interface in _interfaces(domain)
+        for face in (interface.minus, interface.plus)}
+    exterior_faces = frozenset(
+        (i, axis, ext) for i in range(len(patches))
+        for axis in range(dim) for ext in (-1, 1)
+        if (i, axis, ext) not in glued_faces)
 
-    point_extent = np.ptp(np.vstack(all_points), axis=0)
-    scale = max(float(np.max(point_extent)), 1.0)
-    interface_text = []
-    interfaces = _interfaces(domain) if topology else ()
-    for index, interface in enumerate(interfaces):
-        color = interface_colors[index % len(interface_colors)]
-        minus_curve = _face_curve(interface.minus, refinement)
-        plus_curve = _face_curve(interface.plus, refinement)
-        _draw_parameter_arrow(axis, minus_curve, color, '-')
-        _draw_parameter_arrow(axis, plus_curve, color, '--')
+    if not topology:
+        return _PlotModel(
+            domain, dim, refinement, patches,
+            _color_patches(domain, patches),
+            faces, exterior_faces, (), (), extent)
 
-        minus_midpoint = minus_curve[len(minus_curve) // 2]
-        plus_midpoint = plus_curve[len(plus_curve) // 2]
-        if interface_labels:
-            axis.text(
-                *minus_midpoint, f'I{index}-', color=color,
-                fontsize=9, zorder=7)
-            axis.text(
-                *plus_midpoint, f'I{index}+', color=color,
-                fontsize=9, zorder=7)
-
-        if np.linalg.norm(minus_midpoint - plus_midpoint) > 1e-10 * scale:
-            axis.add_patch(FancyArrowPatch(
-                minus_midpoint, plus_midpoint,
-                arrowstyle='-', connectionstyle='arc3,rad=0.25',
-                linestyle=':', linewidth=1.8, color=color, zorder=2,
-            ))
-
-        interface_text.append(_format_interface_axis_map(index, interface))
-
-    vertex_colors = plt.get_cmap('tab20').colors
-    vertices = collect_topology_vertices(domain) if topology else ()
-    for vertex in vertices:
-        color = vertex_colors[vertex.index % len(vertex_colors)]
-        plotted_locations = set()
-        for incidence in vertex.incidences:
-            point = _corner_point(
-                patch_by_index[incidence.patch_index],
-                incidence.logical_corner)
-            location = tuple(np.round(point, decimals=12))
-            if location in plotted_locations:
-                continue
-            plotted_locations.add(location)
-            axis.scatter(
-                *point, s=42, color=color, edgecolor='black', zorder=8)
-            if vertex_labels:
-                axis.annotate(
-                    f'V{vertex.index}', point, xytext=(5, 5),
-                    textcoords='offset points', fontsize=8,
-                    color='black', zorder=9,
-                )
-
-    if topology and legend:
-        axis.legend(
-            handles=legend_handles, loc='upper left',
-            bbox_to_anchor=(1.02, 1.0))
-    if topology and interface_labels:
-        axis.text(
-            1.02, 0.72,
-            'solid: minus side\n'
-            'dashed: plus side\n'
-            'arrows: increasing local coordinate\n\n'
-            + '\n'.join(interface_text),
-            transform=axis.transAxes, va='top', fontsize=9,
-        )
-
-    if topology:
-        axis.set_title(str(domain.name).replace('_', ' '))
-    axis.set_aspect('equal', adjustable='box')
-    axis.set_xlabel('physical x' if topology else 'X')
-    axis.set_ylabel('physical y' if topology else 'Y')
-    if topology:
-        axis.margins(0.12)
-    if topology and created_axes and (legend or interface_labels):
-        figure.subplots_adjust(right=0.72)
-
-    if draw:
-        plt.show()
-    return figure
-
-
-def _face_surface(face, samples):
-    """Return mapped points on a 3D patch face and its tangent axes."""
-    patch = face.domain
-    lower, upper = _logical_limits(patch)
-    normal_axis = int(face.axis)
-    tangent_axes = tuple(axis for axis in range(3) if axis != normal_axis)
-    first_values = np.linspace(
-        lower[tangent_axes[0]], upper[tangent_axes[0]], samples)
-    second_values = np.linspace(
-        lower[tangent_axes[1]], upper[tangent_axes[1]], samples)
-    first, second = np.meshgrid(
-        first_values, second_values, indexing='ij')
-
-    points = np.empty((samples * samples, 3))
-    points[:, normal_axis] = (
-        lower[normal_axis] if face.ext == -1 else upper[normal_axis])
-    points[:, tangent_axes[0]] = first.ravel()
-    points[:, tangent_axes[1]] = second.ravel()
-    surface = _map_points(patch, points).reshape(samples, samples, 3)
-    return surface, tangent_axes
-
-
-def _surface_boundary_curves(surface):
-    return (
-        surface[0, :, :],
-        surface[-1, :, :],
-        surface[:, 0, :],
-        surface[:, -1, :],
-    )
-
-
-def _face_center(face):
-    lower, upper = _logical_limits(face.domain)
-    point = (lower + upper) / 2.0
-    point[face.axis] = (
-        lower[face.axis] if face.ext == -1 else upper[face.axis])
-    return _map_points(face.domain, [point])[0]
-
-
-def _face_parameter_arrow(face, tangent_axis):
-    lower, upper = _logical_limits(face.domain)
-    start = (lower + upper) / 2.0
-    end = start.copy()
-    start[face.axis] = (
-        lower[face.axis] if face.ext == -1 else upper[face.axis])
-    end[face.axis] = start[face.axis]
-    width = upper[tangent_axis] - lower[tangent_axis]
-    start[tangent_axis] = lower[tangent_axis] + 0.25 * width
-    end[tangent_axis] = lower[tangent_axis] + 0.72 * width
-    return _map_points(face.domain, [start, end])
-
-
-def _draw_3d_parameter_arrows(
-        axis, face, color, linestyle, alpha, label_at_start_axes=()):
-    lower, upper = _logical_limits(face.domain)
-    patch_center = _map_points(face.domain, [(lower + upper) / 2.0])[0]
-    outward_offset = 0.10 * (_face_center(face) - patch_center)
-
-    for tangent_axis in range(3):
-        if tangent_axis == face.axis:
-            continue
-        start, end = _face_parameter_arrow(face, tangent_axis)
-        delta = end - start
-        axis.plot(
-            [start[0], end[0]], [start[1], end[1]],
-            [start[2], end[2]],
-            color=color, linestyle=linestyle, linewidth=1.8,
-            alpha=alpha, zorder=7,
-        )
-        axis.quiver(
-            start[0], start[1], start[2],
-            delta[0], delta[1], delta[2],
-            color=color, linewidth=1.3, arrow_length_ratio=0.18,
-            alpha=alpha, zorder=8,
-        )
-        if tangent_axis in label_at_start_axes:
-            label_position = start - 0.08 * delta + outward_offset
-        else:
-            label_position = end + 0.08 * delta + outward_offset
-        axis.text(
-            label_position[0], label_position[1], label_position[2],
-            f'eta{tangent_axis + 1}',
-            color=color, fontsize=7, zorder=9,
-        )
-
-
-def _format_interface_axis_map(index, interface):
-    mappings = '; '.join(
-        f'eta{minus_axis + 1} -> '
-        f'{"+" if direction == 1 else "-"}eta{plus_axis + 1}'
-        for minus_axis, plus_axis, direction in interface.axis_map
-    )
-    return (
-        f'I{index}: {_patch_name(interface.minus.domain)} '
-        f'(axis={interface.minus.axis}, ext={int(interface.minus.ext):+d}) '
-        f'<-> {_patch_name(interface.plus.domain)} '
-        f'(axis={interface.plus.axis}, ext={int(interface.plus.ext):+d})\n'
-        f'    axis map: {mappings}'
-    )
-
-
-def _plot_domain_3d(
-        domain, draw=True, refinement=15, isolines=False, ax=None,
-        topology=False,
-        patch_labels=True, interface_labels=True, vertex_labels=True,
-        legend=True):
-    """Plot a 3D domain, optionally with symbolic topology annotations."""
-    import matplotlib.pyplot as plt
-    from matplotlib.patches import Patch
-
-    if not isinstance(refinement, int) or refinement < 2:
-        raise ValueError('refinement must be an integer greater than one')
-
-    created_axes = ax is None
-    if created_axes:
-        figure = plt.figure(figsize=(12, 8) if topology else None)
-        axis = figure.add_subplot(111, projection='3d')
-    else:
-        axis = ax
-        figure = axis.figure
-        if not hasattr(axis, 'zaxis'):
-            raise ValueError('a 3D Matplotlib axes is required for a 3D domain')
-
-    patches = domain.patches
-    patch_by_index = dict(enumerate(patches))
-    patch_colors = plt.get_cmap('Pastel1').colors
-    interface_colors = plt.get_cmap('Dark2').colors
-    legend_handles = []
-    all_points = []
-
-    for patch_index, patch in enumerate(patches):
-        color = patch_colors[patch_index % len(patch_colors)]
-        for normal_axis in range(3):
-            for ext in (-1, 1):
-                face = patch.get_boundary(axis=normal_axis, ext=ext)
-                surface, _ = _face_surface(face, refinement)
-                all_points.append(surface.reshape(-1, 3))
-                if topology:
-                    axis.plot_surface(
-                        surface[:, :, 0], surface[:, :, 1], surface[:, :, 2],
-                        color=color, alpha=0.10, linewidth=0,
-                        shade=False, zorder=1,
-                    )
-                    for curve in _surface_boundary_curves(surface):
-                        axis.plot(
-                            curve[:, 0], curve[:, 1], curve[:, 2],
-                            color='0.35', linewidth=0.7, alpha=0.65,
-                            zorder=2,
-                        )
-                else:
-                    axis.plot_surface(
-                        surface[:, :, 0], surface[:, :, 1], surface[:, :, 2],
-                        color='c', alpha=0.7,
-                    )
-                if isolines:
-                    stride = max(1, refinement // 5)
-                    axis.plot_wireframe(
-                        surface[:, :, 0], surface[:, :, 1],
-                        surface[:, :, 2],
-                        rstride=stride, cstride=stride,
-                        color='0.45', linewidth=0.35, alpha=0.35,
-                        zorder=2,
-                    )
-
-        if topology and patch_labels:
-            lower, upper = _logical_limits(patch)
-            center = _map_points(patch, [(lower + upper) / 2.0])[0]
-            axis.text(
-                center[0], center[1], center[2], _patch_name(patch),
-                ha='center', va='center', fontsize=12,
-                fontweight='bold', zorder=5,
-            )
-        if topology and legend:
-            legend_handles.append(Patch(
-                facecolor=color, edgecolor='0.35',
-                label=_patch_name(patch)))
-
-    point_cloud = np.vstack(all_points)
-    point_extent = np.ptp(point_cloud, axis=0)
-    scale = max(float(np.max(point_extent)), 1.0)
-    interface_text = []
-    interfaces = _interfaces(domain) if topology else ()
-    for index, interface in enumerate(interfaces):
-        color = interface_colors[index % len(interface_colors)]
-        minus_surface, _ = _face_surface(interface.minus, refinement)
-        plus_surface, _ = _face_surface(interface.plus, refinement)
-
-        for surface, alpha, linestyle in (
-                (minus_surface, 0.34, '-'), (plus_surface, 0.20, '--')):
-            axis.plot_surface(
-                surface[:, :, 0], surface[:, :, 1], surface[:, :, 2],
-                color=color, alpha=alpha, linewidth=0,
-                shade=False, zorder=4,
-            )
-            for curve in _surface_boundary_curves(surface):
-                axis.plot(
-                    curve[:, 0], curve[:, 1], curve[:, 2],
-                    color=color, linestyle=linestyle, linewidth=2.0,
-                    alpha=0.9, zorder=5,
-                )
-
-        _draw_3d_parameter_arrows(
-            axis, interface.minus, color, '-', 1.0)
-        plus_labels_at_start = {
-            plus_axis
-            for _, plus_axis, direction in interface.axis_map
-            if direction == 1
-        }
-        _draw_3d_parameter_arrows(
-            axis, interface.plus, color, '--', 0.72,
-            label_at_start_axes=plus_labels_at_start)
-
+    scale = max(float(np.max(extent)), 1.0)
+    interface_colors = plt.get_cmap(_INTERFACE_COLORMAP).colors
+    interfaces = []
+    for index, interface in enumerate(_interfaces(domain)):
         minus_center = _face_center(interface.minus)
         plus_center = _face_center(interface.plus)
-        centers_coincide = (
-            np.linalg.norm(minus_center - plus_center) <= 1e-10 * scale)
-        if interface_labels:
-            if centers_coincide:
-                axis.text(
-                    minus_center[0], minus_center[1], minus_center[2],
-                    f'I{index} -/+', color=color, fontsize=9,
-                    fontweight='bold', zorder=10)
-            else:
-                axis.text(
-                    minus_center[0], minus_center[1], minus_center[2],
-                    f'I{index}-', color=color, fontsize=9,
-                    fontweight='bold', zorder=10)
-                axis.text(
-                    plus_center[0], plus_center[1], plus_center[2],
-                    f'I{index}+', color=color, fontsize=9,
-                    fontweight='bold', zorder=10)
-                axis.plot(
-                    [minus_center[0], plus_center[0]],
-                    [minus_center[1], plus_center[1]],
-                    [minus_center[2], plus_center[2]],
-                    color=color, linestyle=':', linewidth=1.7,
-                    alpha=0.8, zorder=3,
-                )
-        interface_text.append(_format_interface_axis_map(index, interface))
+        separated = (
+            np.linalg.norm(minus_center - plus_center) > 1e-10 * scale)
+        interfaces.append(_PlotInterface(
+            index, interface,
+            interface_colors[index % len(interface_colors)],
+            minus_center, plus_center, separated))
 
-    vertex_colors = plt.get_cmap('tab20').colors
-    vertices = collect_topology_vertices(domain) if topology else ()
-    for vertex in vertices:
-        color = vertex_colors[vertex.index % len(vertex_colors)]
-        plotted_locations = set()
+    vertices = []
+    for vertex in collect_topology_vertices(domain):
+        locations = {}
         for incidence in vertex.incidences:
             point = _corner_point(
-                patch_by_index[incidence.patch_index],
-                incidence.logical_corner)
-            location = tuple(np.round(point, decimals=12))
-            if location in plotted_locations:
-                continue
-            plotted_locations.add(location)
-            axis.scatter(
-                point[0], point[1], point[2], s=28, color=color,
-                edgecolor='black', depthshade=False, zorder=11)
-            if vertex_labels:
-                axis.text(
-                    point[0], point[1], point[2], f'V{vertex.index}',
-                    fontsize=7, color='black', zorder=12)
+                patches[incidence.patch_index], incidence.logical_corner)
+            locations.setdefault(tuple(np.round(point, decimals=12)), point)
+        vertices.append((vertex, tuple(locations.values())))
 
-    if topology and legend:
-        axis.legend(
-            handles=legend_handles, loc='upper left',
-            bbox_to_anchor=(1.02, 1.0))
-    if topology and interface_labels:
-        axis.text2D(
-            1.02, 0.72,
-            'solid: minus face\n'
-            'dashed: plus face\n'
-            'arrows: native tangential coordinates\n\n'
-            + '\n'.join(interface_text),
-            transform=axis.transAxes, va='top', fontsize=8,
-        )
+    return _PlotModel(
+        domain, dim, refinement, patches, _color_patches(domain, patches),
+        faces, exterior_faces, tuple(interfaces), tuple(vertices), extent)
 
+
+#==============================================================================
+# Drawing helpers shared by 2D and 3D
+#==============================================================================
+def _new_axes(dim, ax, topology):
+    import matplotlib.pyplot as plt
+
+    if ax is None:
+        figsize = _STYLE['figsize_2d'] if dim == 2 else _STYLE['figsize_3d']
+        figure = plt.figure(
+            figsize=figsize if topology else None, layout='constrained')
+        ax = figure.add_subplot(projection='3d' if dim == 3 else None)
+        return figure, ax
+
+    if hasattr(ax, 'zaxis') != (dim == 3):
+        raise ValueError(
+            f'a {dim}D Matplotlib axes is required for a {dim}D domain')
+    return ax.figure, ax
+
+
+def _text(ax, point, text, **options):
+    """Write a label with a white halo, in 2D or 3D."""
+    options.setdefault('ha', 'center')
+    options.setdefault('va', 'center')
+    ax.text(*point, text, path_effects=_halo(), **options)
+
+
+def _draw_interface_labels(ax, model):
+    for item in model.interfaces:
+        style = dict(
+            color=item.color, fontsize=_STYLE['label_fontsize'],
+            fontweight='bold', zorder=7,
+            bbox=dict(boxstyle='round,pad=0.15', facecolor='white',
+                      edgecolor=item.color, linewidth=0.6))
+        if not item.separated:
+            _text(ax, item.minus_center, f'I{item.index}', **style)
+            continue
+        _text(ax, item.minus_center, f'I{item.index}-', **style)
+        _text(ax, item.plus_center, f'I{item.index}+', **style)
+
+
+def _draw_vertices(ax, model, labels):
+    for vertex, points in model.vertices:
+        face_color = 'white' if vertex.is_boundary else 'black'
+        for point in points:
+            ax.plot(*([coordinate] for coordinate in point), marker='o',
+                    linestyle='', markersize=_STYLE['vertex_size'],
+                    markerfacecolor=face_color, markeredgecolor='black',
+                    zorder=8)
+            if labels:
+                _text(ax, point, f'V{vertex.index}', ha='left', va='bottom',
+                      fontsize=_STYLE['vertex_fontsize'], color='0.2',
+                      zorder=9)
+
+
+def _draw_legend(ax, dim):
+    from matplotlib.lines import Line2D
+
+    side = 'side' if dim == 2 else 'face arrows'
+    handles = [
+        Line2D([], [], color='0.3', linewidth=_STYLE['side_width'],
+               label=f'minus {side}'),
+        Line2D([], [], color='0.3', linewidth=_STYLE['side_width'],
+               linestyle=_PLUS_LINESTYLE, label=f'plus {side}'),
+    ]
+    if dim == 2:
+        handles.append(Line2D(
+            [], [], color='black', linewidth=_STYLE['boundary_width'],
+            label='exterior boundary'))
+    handles += [
+        Line2D([], [], marker='o', linestyle='', markerfacecolor='white',
+               markeredgecolor='black', label='boundary vertex'),
+        Line2D([], [], marker='o', linestyle='', markerfacecolor='black',
+               markeredgecolor='black', label='interior vertex'),
+    ]
+    ax.legend(handles=handles, loc='upper center', bbox_to_anchor=(0.5, 0.0),
+              ncol=3, fontsize=8, frameon=False)
+
+
+#==============================================================================
+# 2D plots
+#==============================================================================
+def _draw_patches_2d(ax, model, isolines, topology, labels):
+    for i, patch in enumerate(model.patches):
+        polygon = _patch_polygon(patch, model.refinement)
+        ax.fill(*polygon.T, facecolor=model.patch_colors[i],
+                alpha=_STYLE['patch_alpha'], linewidth=0, zorder=1)
+        if isolines:
+            _draw_isolines_2d(ax, patch, model.refinement)
+        for (axis, ext), curve in model.faces[i].items():
+            exterior = (i, axis, ext) in model.exterior_faces
+            ax.plot(*curve.T, zorder=3, **(
+                dict(color='black', linewidth=_STYLE['boundary_width'])
+                if exterior or not topology else
+                dict(color=_STYLE['edge_color'],
+                     linewidth=_STYLE['edge_width'])))
+        if labels:
+            _text(ax, _patch_center(patch), _patch_name(patch),
+                  fontsize=_STYLE['patch_fontsize'], fontweight='bold',
+                  zorder=6)
+
+
+def _draw_isolines_2d(ax, patch, samples):
+    lower, upper = _logical_limits(patch)
+    fractions = np.linspace(0, 1, _STYLE['isoline_count'] + 2)[1:-1]
+    for axis in range(2):
+        tangent = 1 - axis
+        points = np.empty((samples, 2))
+        points[:, tangent] = np.linspace(lower[tangent], upper[tangent], samples)
+        for fraction in fractions:
+            points[:, axis] = lower[axis] + fraction * (upper[axis] - lower[axis])
+            ax.plot(*_map_points(patch, points).T,
+                    color=_STYLE['isoline_color'],
+                    linewidth=_STYLE['isoline_width'], zorder=2)
+
+
+def _draw_side_2d(ax, face, color, linestyle, samples):
+    """Draw an interface side inside its patch, with an arrow along its
+    increasing tangential coordinate."""
+    from matplotlib.patches import FancyArrowPatch
+
+    curve = _map_face(face.domain, int(face.axis), int(face.ext), samples,
+                      inset=_STYLE['side_inset'])
+    ax.plot(*curve.T, color=color, linewidth=_STYLE['side_width'],
+            linestyle=linestyle, solid_capstyle='butt', zorder=4)
+    ax.add_patch(FancyArrowPatch(
+        curve[int(0.45 * samples)], curve[int(0.62 * samples)],
+        arrowstyle='-|>', mutation_scale=_STYLE['arrow_size'], color=color,
+        linewidth=0, zorder=5))
+
+
+def _draw_interfaces_2d(ax, model):
+    from matplotlib.patches import FancyArrowPatch
+
+    for item in model.interfaces:
+        _draw_side_2d(ax, item.interface.minus, item.color, '-',
+                      model.refinement)
+        _draw_side_2d(ax, item.interface.plus, item.color, _PLUS_LINESTYLE,
+                      model.refinement)
+        if item.separated:
+            ax.add_patch(FancyArrowPatch(
+                item.minus_center, item.plus_center, arrowstyle='-',
+                connectionstyle='arc3,rad=0.25', linestyle=':',
+                linewidth=_STYLE['connector_width'], color=item.color,
+                zorder=2))
+
+
+def _plot_domain_2d(model, ax, isolines, topology, patch_labels,
+                    interface_labels, vertex_labels, legend):
+    _draw_patches_2d(ax, model, isolines, topology, topology and patch_labels)
     if topology:
-        axis.set_title(str(domain.name).replace('_', ' '))
-    axis.set_xlabel('physical x' if topology else 'X')
-    axis.set_ylabel('physical y' if topology else 'Y')
-    axis.set_zlabel('physical z' if topology else 'Z')
-    axis.set_box_aspect(np.maximum(point_extent, 1e-12))
+        _draw_interfaces_2d(ax, model)
+        if interface_labels:
+            _draw_interface_labels(ax, model)
+        _draw_vertices(ax, model, vertex_labels)
+        if legend:
+            _draw_legend(ax, 2)
+        ax.set_axis_off()
+        ax.margins(0.03)
+    else:
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+    ax.set_aspect('equal', adjustable='datalim')
+
+
+#==============================================================================
+# 3D plots
+#==============================================================================
+def _surface_edges(surface):
+    return (surface[0], surface[-1], surface[:, 0], surface[:, -1])
+
+
+def _draw_patches_3d(ax, model, isolines, topology, labels):
+    for i, patch in enumerate(model.patches):
+        color = model.patch_colors[i]
+        for (axis, ext), surface in model.faces[i].items():
+            if not topology:
+                ax.plot_surface(*np.moveaxis(surface, -1, 0), color=color,
+                                alpha=_STYLE['surface_alpha'], linewidth=0,
+                                shade=True)
+            elif (i, axis, ext) in model.exterior_faces:
+                ax.plot_surface(*np.moveaxis(surface, -1, 0), color=color,
+                                alpha=_STYLE['face_alpha'], linewidth=0,
+                                shade=False)
+            for edge in _surface_edges(surface):
+                ax.plot(*edge.T, color=_STYLE['edge_color'],
+                        linewidth=_STYLE['edge_width'])
+            if isolines:
+                stride = max(1, model.refinement // 5)
+                ax.plot_wireframe(*np.moveaxis(surface, -1, 0),
+                                  rstride=stride, cstride=stride,
+                                  color=_STYLE['isoline_color'],
+                                  linewidth=_STYLE['isoline_width'],
+                                  alpha=0.5)
+        if labels:
+            _text(ax, _patch_center(patch), _patch_name(patch),
+                  fontsize=_STYLE['patch_fontsize'], fontweight='bold')
+
+
+def _draw_side_arrows_3d(ax, face, color, linestyle, alpha,
+                         labels_at_start=()):
+    """Draw arrows along the two increasing tangential coordinates of a
+    face, labelled by the coordinate."""
+    lower, upper = _logical_limits(face.domain)
+    outward = 0.10 * (_face_center(face) - _patch_center(face.domain))
+    for tangent in range(3):
+        if tangent == face.axis:
+            continue
+        start = (lower + upper) / 2
+        start[face.axis] = (lower if face.ext == -1 else upper)[face.axis]
+        end = start.copy()
+        width = upper[tangent] - lower[tangent]
+        start[tangent] = lower[tangent] + 0.25 * width
+        end[tangent] = lower[tangent] + 0.72 * width
+        start, end = _map_points(face.domain, [start, end])
+        delta = end - start
+        ax.quiver(*start, *delta, color=color, linestyles=linestyle,
+                  linewidth=1.5, arrow_length_ratio=0.18, alpha=alpha)
+        position = (start - 0.08 * delta if tangent in labels_at_start
+                    else end + 0.08 * delta) + outward
+        _text(ax, position, rf'$\eta_{tangent + 1}$', color=color,
+              fontsize=_STYLE['label_fontsize'])
+
+
+def _draw_interfaces_3d(ax, model):
+    for item in model.interfaces:
+        interface = item.interface
+        surface = model.faces[model.patches.index(interface.minus.domain)][
+            (int(interface.minus.axis), int(interface.minus.ext))]
+        ax.plot_surface(*np.moveaxis(surface, -1, 0), color=item.color,
+                        alpha=_STYLE['interface_alpha'], linewidth=0,
+                        shade=False)
+        _draw_side_arrows_3d(ax, interface.minus, item.color, '-', 1.0)
+        # Label the plus arrows at their start when they point like the
+        # minus arrows, so that the two labels do not overlap
+        plus_at_start = {
+            plus_axis for _, plus_axis, direction in interface.axis_map
+            if direction == 1}
+        _draw_side_arrows_3d(ax, interface.plus, item.color, '--', 0.7,
+                             labels_at_start=plus_at_start)
+        if item.separated:
+            ax.plot(*np.column_stack((item.minus_center, item.plus_center)),
+                    color=item.color, linestyle=':',
+                    linewidth=_STYLE['connector_width'])
+
+
+def _plot_domain_3d(model, ax, isolines, topology, patch_labels,
+                    interface_labels, vertex_labels, legend):
+    _draw_patches_3d(ax, model, isolines, topology, topology and patch_labels)
     if topology:
-        axis.view_init(elev=24, azim=-58)
-    if topology and created_axes and (legend or interface_labels):
-        figure.subplots_adjust(right=0.72)
+        _draw_interfaces_3d(ax, model)
+        if interface_labels:
+            _draw_interface_labels(ax, model)
+        _draw_vertices(ax, model, vertex_labels)
+        if legend:
+            _draw_legend(ax, 3)
+        ax.view_init(*_STYLE['view'])
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.set_zlabel('z')
+    extent = np.maximum(model.extent, 1e-12)
+    ax.set_box_aspect(np.maximum(extent,
+                                 _STYLE['min_box_aspect'] * extent.max()))
 
-    if draw:
-        plt.show()
-    return figure
 
-
+#==============================================================================
+# Entry point
+#==============================================================================
 def plot_domain(
         domain, draw=True, refinement=None, isolines=False, ax=None,
         topology=False,
@@ -776,16 +746,19 @@ def plot_domain(
     """Plot a 2D or 3D domain, optionally with topology annotations.
 
     This is the common plotting entry point for ordinary geometry plots and
-    annotated multipatch topology plots. Both modes use the same mapped-edge
-    and mapped-face sampling. Setting ``topology=True`` adds patch labels,
-    oriented interface sides, parameter arrows, interface descriptions, and
-    topological vertices.
+    annotated multipatch topology plots. Both modes use the same sampling of
+    the mapped patch edges and faces, and colour neighbouring patches
+    differently.
 
-    In topology mode, the 2D view draws oriented interface edges and cut-open
-    seam connectors. The lightweight 3D view draws translucent patch
-    boundaries, highlights both sides of every interface, displays native
-    tangential-coordinate arrows and the signed ``axis_map``, and labels
-    topological vertices.
+    With ``topology=True``, each side of an interface is drawn inside its own
+    patch, the minus side solid and the plus side dashed, in a colour shared
+    by both sides. Arrows show the increasing tangential coordinates of each
+    side, so that the orientation of the interface can be read from the plot.
+    A dotted connector joins the two sides of an interface when they are drawn
+    at different places, as for periodic or self-interfaces. The exterior
+    boundary is drawn in black, and the vertices are marked: white for
+    boundary vertices, black for interior ones. :func:`print_topology` gives
+    the same information as text, including the axis map of every interface.
 
     Parameters
     ----------
@@ -811,35 +784,28 @@ def plot_domain(
     matplotlib.figure.Figure
         The containing figure.
     """
-    logical_dim = int(domain.dim)
-    if logical_dim not in (2, 3):
+    import matplotlib.pyplot as plt
+
+    dim = int(domain.dim)
+    if dim not in (2, 3):
         raise ValueError('domain plotting supports only dimensions 2 and 3')
-    physical_dim = _physical_dimension(domain)
-    if logical_dim != physical_dim:
+    if _physical_dimension(domain) != dim:
         raise ValueError(
             'domain plotting currently requires equal logical and physical '
             'dimensions')
+    if refinement is None:
+        refinement = 40 if dim == 2 else 15
+    if isinstance(refinement, bool) or not isinstance(
+            refinement, numbers.Integral) or refinement < 2:
+        raise ValueError('refinement must be an integer greater than one')
 
-    if not topology:
-        patch_labels = False
-        interface_labels = False
-        vertex_labels = False
-        legend = False
+    model = _build_model(domain, int(refinement), topology)
+    figure, ax = _new_axes(dim, ax, topology)
+    plot = _plot_domain_2d if dim == 2 else _plot_domain_3d
+    plot(model, ax, isolines, topology, patch_labels, interface_labels,
+         vertex_labels, legend)
+    ax.set_title(str(domain.name).replace('_', ' '))
 
-    options = dict(
-        domain=domain,
-        draw=draw,
-        isolines=isolines,
-        ax=ax,
-        patch_labels=patch_labels,
-        interface_labels=interface_labels,
-        vertex_labels=vertex_labels,
-        legend=legend,
-        topology=topology,
-    )
-    if logical_dim == 2:
-        options['refinement'] = 40 if refinement is None else refinement
-        return _plot_domain_2d(**options)
-
-    options['refinement'] = 15 if refinement is None else refinement
-    return _plot_domain_3d(**options)
+    if draw:
+        plt.show()
+    return figure
