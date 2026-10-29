@@ -143,6 +143,15 @@ def test_from_file_with_old_dim_key(tmp_path):
         Domain.from_file(filename)
 
 #==============================================================================
+def test_export_mappings_with_different_pdim(tmp_path):
+    A = Mapping('FA', ldim=2, pdim=3)(Square('A'))
+    B = Mapping('FB', ldim=2, pdim=2)(Square('B'))
+
+    with pytest.raises(ValueError):
+        domain = Domain.join([A, B], [((0, 0, 1), (1, 0, -1), 1)], name='Omega')
+        domain.export(str(tmp_path / 'omega.h5'))
+
+#==============================================================================
 def test_domain_1():
     Omega_1 = InteriorDomain('Omega_1', dim=2)
     Omega_2 = InteriorDomain('Omega_2', dim=2)

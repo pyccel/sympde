@@ -27,6 +27,7 @@ All notable changes to this project will be documented in this file.
 - #106: Order the parameters of `Domain` like its `args` (`name`, `interiors`, `boundaries`, `mapping`, `logical_domain`, `connectivity`) and allow passing them positionally. `dim` is now keyword-only.
 - #106: Allow passing `ornt`, `mapping` and `logical_domain` of an `Interface` positionally, in this order.
 - #106: Store only `axis` and `weight` in the `args` of the 1D forms (`Mass`, `Stiffness`, `Advection`, `AdvectionT`, `Bilaplacian`). Their name is now a class attribute.
+- #200: Store `ldim` and `pdim` instead of `dim` in the topology of domain files. This is a breaking change: `Domain.from_file()` rejects files with `dim`.
 - [DEVELOPER] Modernize the package metadata and consolidate the pytest and coverage configuration in `pyproject.toml`.
 - [DEVELOPER] Modernize the Sphinx configuration, API-documentation generation, and API docstring markup.
 - [DEVELOPER] Remove the leading underscore from the module-level names used by other SymPDE modules, and rename `_coeffs_registery` to `coefficient_types`.
@@ -36,7 +37,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- #200: Keep the physical dimension of the mappings in `Domain.export` and `Domain.from_file`. The `topology.yml` metadata now stores `ldim` and `pdim` instead of `dim`, and `Domain.from_file` raises an error for files with the old `dim` key.
+- #200: Keep the physical dimension of the mappings in `Domain.export()` and `Domain.from_file()`.
 - #140: Fix the rendering of the `Domain.join()` API documentation.
 - #166: Restore warning-free documentation builds, including bibliography and mathematical notation support.
 - #106: Preserve symbol assumptions and free-symbol information with modern SymPy.

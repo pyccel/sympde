@@ -336,8 +336,10 @@ class Domain(BasicDomain):
     def todict(self):
         name         = str(self.name)
         ldim         = str(self.dim)
-        mappings     = [m for m in self.mappings.values() if m is not None]
-        pdim         = str(mappings[0].pdim) if mappings else ldim
+        pdims        = {m.pdim for m in self.mappings.values() if m is not None}
+        if len(pdims) > 1:
+            raise ValueError(f'all mappings must have the same physical dimension, got {sorted(pdims)}')
+        pdim         = str(pdims.pop()) if pdims else ldim
         interior     = self.interior.todict()
         boundary     = self.boundary.todict()
         connectivity = self.connectivity.todict()
