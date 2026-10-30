@@ -34,7 +34,6 @@ from .basic            import _as_integer
 # TODO fix circular dependency between domain and mapping
 if TYPE_CHECKING:
     from sympde.topology.mapping import Mapping
-# TODO add pdim
 
 iterable_types = (tuple, list, Tuple, Union)
 
@@ -407,7 +406,11 @@ class Domain(BasicDomain):
 
     def todict(self):
         name         = str(self.name)
-        dim          = str(self.dim)
+        ldim         = str(self.dim)
+        pdims        = {m.pdim for m in self.mappings.values() if m is not None}
+        if len(pdims) > 1:
+            raise ValueError(f'all mappings must have the same physical dimension, got {sorted(pdims)}')
+        pdim         = str(pdims.pop()) if pdims else ldim
         interior     = self.interior.todict()
         boundary     = [side.todict() for side in self.exterior_sides]
         connectivity = self.connectivity.todict()
@@ -417,7 +420,8 @@ class Domain(BasicDomain):
             dtype = 'None'
 
         d = {'name':         name,
-             'dim':          dim,
+             'ldim':         ldim,
+             'pdim':         pdim,
              'dtype':        dtype,
              'interior':     interior,
              'boundary':     boundary,
@@ -470,8 +474,13 @@ class Domain(BasicDomain):
         with h5py.File(filename, mode='r') as h5:
             yml = yaml.safe_load(h5['topology.yml'][()])
 
+        if 'dim' in yml:
+            raise ValueError(f"'{filename}' was written by an older version of SymPDE:"
+                             " replace its 'dim' key with the keys 'ldim' and 'pdim'")
+
         domain_name    = yml['name']
-        dim            = int(yml['dim'])
+        ldim           = int(yml['ldim'])
+        pdim           = int(yml['pdim'])
         dtype          = yml['dtype']
         d_interior     = yml['interior']
         has_boundary_metadata = (
@@ -513,7 +522,7 @@ class Domain(BasicDomain):
 
         constructors = [globals()[dt['type']] for dt in dtype]
         interiors    = [cs(i['name'], **dt['parameters']) for cs,i,dt in zip(constructors, d_interior, dtype)]
-        mappings     = [Mapping(I['mapping'], dim=dim) if I.get('mapping', "None") != "None" else None for I in d_interior]
+        mappings     = [Mapping(I['mapping'], ldim=ldim, pdim=pdim) if I.get('mapping', "None") != "None" else None for I in d_interior]
         domains      = [mapping(i) if mapping else i for i,mapping in zip(interiors, mappings)]
         patch_index  = {I.name:ind for ind,I in enumerate(interiors)}
 

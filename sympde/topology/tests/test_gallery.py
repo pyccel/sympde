@@ -1,6 +1,6 @@
-import pytest
-import h5py
 import numpy as np
+import h5py
+import pytest
 import yaml
 
 from sympy.abc import x,y,z
@@ -29,8 +29,7 @@ def test_interval():
     assert(D_xy.dim == 2)
 
 #==============================================================================
-@pytest.mark.xdist_group('h5py')
-def test_unit_line():
+def test_unit_line(tmp_path):
 
     # Create 1D domain (Line) from interval [0, 1]
     domain = Line('line')
@@ -56,13 +55,13 @@ def test_unit_line():
     assert domain.bounds == (0, 1)
 
     # Export to file, read it again and compare with original domain
-    domain.export('domain.h5')
-    D = Domain.from_file('domain.h5')
+    filename = tmp_path / 'domain.h5'
+    domain.export(filename)
+    D = Domain.from_file(filename)
     assert D == domain
 
 #==============================================================================
-@pytest.mark.xdist_group('h5py')
-def test_generic_line():
+def test_generic_line(tmp_path):
 
     # Create 1D domain (Line) from interval [-3, 4]
     domain = Line('line', bounds=(-3, 4))
@@ -88,13 +87,13 @@ def test_generic_line():
     assert domain.bounds == (-3, 4)
 
     # Export to file, read it again and compare with original domain
-    domain.export('domain.h5')
-    D = Domain.from_file('domain.h5')
+    filename = tmp_path / 'domain.h5'
+    domain.export(filename)
+    D = Domain.from_file(filename)
     assert D == domain
 
 #==============================================================================
-@pytest.mark.xdist_group('h5py')
-def test_unit_square():
+def test_unit_square(tmp_path):
 
     # Create 2D square domain [0, 1]^2
     domain = Square('square')
@@ -123,13 +122,13 @@ def test_unit_square():
     assert domain.bounds2 == (0, 1)
 
     # Export to file, read it again and compare with original domain
-    domain.export('domain.h5')
-    D = Domain.from_file('domain.h5')
+    filename = tmp_path / 'domain.h5'
+    domain.export(filename)
+    D = Domain.from_file(filename)
     assert D == domain
 
 #==============================================================================
-@pytest.mark.xdist_group('h5py')
-def test_rectangle():
+def test_rectangle(tmp_path):
 
     # Create 2D rectangular domain [1, 5] X [3, 7]
     domain = Square('rectangle', bounds1=(1, 5), bounds2=(3, 7))
@@ -157,13 +156,13 @@ def test_rectangle():
     assert domain.bounds2 == (3, 7)
 
     # Export to file, read it again and compare with original domain
-    domain.export('domain.h5')
-    D = Domain.from_file('domain.h5')
+    filename = tmp_path / 'domain.h5'
+    domain.export(filename)
+    D = Domain.from_file(filename)
     assert D == domain
 
 #==============================================================================
-@pytest.mark.xdist_group('h5py')
-def test_unit_cube():
+def test_unit_cube(tmp_path):
 
     # Create 3D cube domain [0, 1]^3
     domain = Cube('cube')
@@ -193,13 +192,13 @@ def test_unit_cube():
     assert domain.bounds3 == (0, 1)
 
     # Export to file, read it again and compare with original domain
-    domain.export('domain.h5')
-    D = Domain.from_file('domain.h5')
+    filename = tmp_path / 'domain.h5'
+    domain.export(filename)
+    D = Domain.from_file(filename)
     assert D == domain
 
 #==============================================================================
-@pytest.mark.xdist_group('h5py')
-def test_orthogonal_hexahedron():
+def test_orthogonal_hexahedron(tmp_path):
 
     # Create 3D orthogonal hexahedron [-1, 1] X [0, 10] X [0, 2]
     domain = Cube('hexahedron', bounds1=(-1, 1), bounds2=(0, 10), bounds3=(0, 2))
@@ -229,13 +228,13 @@ def test_orthogonal_hexahedron():
     assert domain.bounds3 == (0,  2)
 
     # Export to file, read it again and compare with original domain
-    domain.export('domain.h5')
-    D = Domain.from_file('domain.h5')
+    filename = tmp_path / 'domain.h5'
+    domain.export(filename)
+    D = Domain.from_file(filename)
     assert D == domain
 
 
 #==============================================================================
-@pytest.mark.xdist_group('h5py')
 def test_multipatch_orientation_roundtrip(tmp_path):
     domain = Domain.join(
         [Cube('A'), Cube('B')],
@@ -253,7 +252,6 @@ def test_multipatch_orientation_roundtrip(tmp_path):
 
 
 #==============================================================================
-@pytest.mark.xdist_group('h5py')
 def test_multipatch_file_requires_explicit_orientation(tmp_path):
     domain = Domain.join(
         [Square('A'), Square('B')],
@@ -273,7 +271,6 @@ def test_multipatch_file_requires_explicit_orientation(tmp_path):
 
 
 #==============================================================================
-@pytest.mark.xdist_group('h5py')
 def test_multipatch_file_rejects_legacy_orientation_mapping(tmp_path):
     domain = Domain.join(
         [Square('A'), Square('B')],
@@ -296,7 +293,6 @@ def test_multipatch_file_rejects_legacy_orientation_mapping(tmp_path):
 
 
 #==============================================================================
-@pytest.mark.xdist_group('h5py')
 @pytest.mark.parametrize('location, message', [
     ('boundary-axis', 'serialized boundary axis must be an integer'),
     ('interface-extremity',
@@ -326,7 +322,6 @@ def test_multipatch_file_rejects_non_integer_side_metadata(
 
 
 #==============================================================================
-@pytest.mark.xdist_group('h5py')
 def test_self_interface_roundtrip(tmp_path):
     patch = Square('A')
     domain = Domain.join(
@@ -343,7 +338,6 @@ def test_self_interface_roundtrip(tmp_path):
 
 
 #==============================================================================
-@pytest.mark.xdist_group('h5py')
 @pytest.mark.parametrize('mapped', [False, True])
 def test_boundary_free_cube_roundtrip(tmp_path, mapped):
     logical_patch = Cube('A')
@@ -388,7 +382,6 @@ def test_boundary_free_cube_roundtrip(tmp_path, mapped):
 
 
 #==============================================================================
-@pytest.mark.xdist_group('h5py')
 def test_single_boundary_and_legacy_dictionary_roundtrip(tmp_path):
     # Every interface of a joined domain uses two faces, so a domain with a
     # single exterior side is a topological one
@@ -416,7 +409,6 @@ def test_single_boundary_and_legacy_dictionary_roundtrip(tmp_path):
 
 
 #==============================================================================
-@pytest.mark.xdist_group('h5py')
 def test_missing_boundary_is_derived_from_connectivity(tmp_path):
     domain = Domain.join(
         [Line('A'), Line('B')],
@@ -438,7 +430,6 @@ def test_missing_boundary_is_derived_from_connectivity(tmp_path):
 
 
 #==============================================================================
-@pytest.mark.xdist_group('h5py')
 def test_explicit_interface_name_roundtrip(tmp_path):
     patch_a = IdentityMapping('FA', dim=2)(Square('A'))
     patch_b = IdentityMapping('FB', dim=2)(Square('B'))
@@ -461,7 +452,6 @@ def test_explicit_interface_name_roundtrip(tmp_path):
 
 
 #==============================================================================
-@pytest.mark.xdist_group('h5py')
 def test_file_boundary_must_match_connectivity(tmp_path):
     domain = Domain.join(
         [Square('A'), Square('B')],
@@ -485,12 +475,6 @@ def test_file_boundary_must_match_connectivity(tmp_path):
 def teardown_module():
     from sympy.core import cache
     cache.clear_cache()
-
-    # Remove output file generated by tests
-    import os
-    fname = 'domain.h5'
-    if os.path.exists(fname):
-        os.remove(fname)
 
 def teardown_function():
     from sympy.core import cache

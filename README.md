@@ -83,7 +83,7 @@ from sympde.api import BilinearForm, LinearForm, Norm
 The complete test suite can be run from any directory with:
 
 ```bash
-pytest -n auto --dist loadgroup --pyargs sympde -ra
+pytest -n auto --pyargs sympde -ra
 ```
 
 The documentation dependencies are installed separately, and the HTML pages
