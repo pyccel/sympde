@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- #200: Store `ldim` and `pdim` instead of `dim` in the topology of domain files. This is a breaking change: `Domain.from_file()` rejects files with `dim`.
 - #190: Convert the README to Markdown and expand the installation, testing, and documentation-build instructions.
 - #194: Use explicit internal imports and load optional dependencies only when needed.
 - #194: Remove the leading underscore from `partial_derivatives`, `logical_partial_derivatives` (`sympde.topology.derivatives`) and `split_test_function` (`sympde.expr.evaluation`), and add them to `sympde.api`.
@@ -37,6 +38,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- #200: Keep the physical dimension of the mappings in `Domain.export()` and `Domain.from_file()`.
 - #140: Fix the rendering of the `Domain.join()` API documentation.
 - #166: Restore warning-free documentation builds, including bibliography and mathematical notation support.
 - #106: Preserve symbol assumptions and free-symbol information with modern SymPy.

@@ -1,5 +1,9 @@
 import os
 
+import h5py
+import numpy as np
+import pytest
+import yaml
 from sympy import preorder_traversal
 from sympy.core import Basic
 
@@ -113,6 +117,40 @@ def test_topology_1(tmp_path):
     D = Domain.from_file(filename)
 
     assert D.todict() == Omega.todict()
+
+#==============================================================================
+def test_export_surface_mapping(tmp_path):
+    domain = Mapping('F', ldim=2, pdim=3)(Square('Omega'))
+
+    filename = str(tmp_path / 'surface.h5')
+    domain.export(filename)
+    D = Domain.from_file(filename)
+
+    assert D.mapping.ldim == 2
+    assert D.mapping.pdim == 3
+    assert D.todict() == domain.todict()
+
+#==============================================================================
+def test_from_file_with_old_dim_key(tmp_path):
+    yml = Mapping('F', dim=2)(Square('Omega')).todict()
+    yml['dim'] = yml.pop('ldim')
+    del yml['pdim']
+
+    filename = str(tmp_path / 'old.h5')
+    with h5py.File(filename, mode='w') as h5:
+        h5['topology.yml'] = np.array(yaml.dump(data=yml, sort_keys=None), dtype='S')
+
+    with pytest.raises(ValueError, match="older version of SymPDE"):
+        Domain.from_file(filename)
+
+#==============================================================================
+def test_export_mappings_with_different_pdim(tmp_path):
+    A = Mapping('FA', ldim=2, pdim=3)(Square('A'))
+    B = Mapping('FB', ldim=2, pdim=2)(Square('B'))
+
+    with pytest.raises(ValueError):
+        domain = Domain.join([A, B], [((0, 0, 1), (1, 0, -1), 1)], name='Omega')
+        domain.export(str(tmp_path / 'omega.h5'))
 
 #==============================================================================
 def test_domain_1():
