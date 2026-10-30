@@ -162,7 +162,7 @@ def test_topological_domain_export_and_from_file(tmp_path):
     with pytest.raises(ValueError, match='parametric box'):
         _ = D.shared_vertices
 
-#==============================================================================        
+#==============================================================================
 def test_export_surface_mapping(tmp_path):
     domain = Mapping('F', ldim=2, pdim=3)(Square('Omega'))
 
