@@ -61,16 +61,14 @@ jobs:
       if: runner.os == 'macOS'
       working-directory: ./scratch
       run: >-
-        pytest -n auto --dist loadgroup
+        pytest -n auto
         --cov sympde --cov-report term-missing --cov-report xml
         --pyargs sympde -ra
 
     - name: Run tests on Ubuntu
       if: runner.os == 'Linux'
       working-directory: ./scratch
-      run: >-
-        pytest -n auto --dist loadgroup
-        --pyargs sympde -ra
+      run: pytest -n auto --pyargs sympde -ra
 
     - name: Upload coverage report
       if: runner.os == 'macOS'
@@ -115,6 +113,4 @@ jobs:
 
     - name: Run tests
       working-directory: ./scratch
-      run: >-
-        pytest -n auto --dist loadgroup
-        --pyargs sympde -ra
+      run: pytest -n auto --pyargs sympde -ra
