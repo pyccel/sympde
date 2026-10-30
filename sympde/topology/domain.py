@@ -515,7 +515,7 @@ class Domain(BasicDomain):
         # whose boundaries cannot be derived from a parametric box
         if not any(dtype):
             return cls._from_topological_dict(
-                domain_name, dim, d_interior, d_boundary, d_connectivity)
+                domain_name, ldim, d_interior, d_boundary, d_connectivity)
         if not all(dtype):
             raise ValueError(
                 'either all or none of the serialized patches must have a dtype')
