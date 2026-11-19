@@ -47,8 +47,8 @@ A multipatch domain has four important levels::
 
 ``patches``, ``interface_map`` and ``exterior_sides`` are views of the
 symbolic objects used in expressions; ``domain.interior``,
-``domain.connectivity`` and ``domain.boundary`` retain
-their original behavior.  ``indexed_interfaces``, ``indexed_exterior_sides``,
+``domain.interfaces`` and ``domain.boundary`` retain their original
+behavior.  ``indexed_interfaces``, ``indexed_exterior_sides``,
 ``vertices`` and ``edges`` describe the topology with plain Python data for
 discretization codes.
 
@@ -369,12 +369,11 @@ from the names of their logical patches, so that ``F(A)`` and ``G(B)`` give
 ``A|B``.  If that base name is repeated, the interfaces receive ``#2``,
 ``#3``, and so on, in the order of their faces (patch, axis and extremity of
 the minus side, then of the plus side), so that the names do not depend on
-the order of the connectivity.  The names are checked against all previously generated
-names, including names which already contain ``#`` or ``|``, so one interface
-cannot overwrite another.  A mapped interface and its logical interface have
-the same name.  The names are stable keys in ``omega.interface_map``, which
-is ordered by name.  ``omega.connectivity`` is
-the unchanged symbolic storage object behind that descriptive view.
+the order of the connectivity.  The names are checked against all previously
+generated names, including names which already contain ``#`` or ``|``, so one
+interface cannot overwrite another.  A mapped interface and its logical
+interface have the same name.  The names are stable keys in
+``omega.interface_map``, a read-only mapping ordered by name.
 
 Self-interfaces
 ===============

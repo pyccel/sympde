@@ -628,10 +628,10 @@ class MappedDomain(BasicDomain):
             elif boundaries:
                 kwargs['boundaries'] = mapping(boundaries)
 
-            if logical_domain.connectivity:
+            if logical_domain.interface_map:
                 connectivity = {
                     name: mapping(interface)
-                    for name, interface in logical_domain.connectivity.items()
+                    for name, interface in logical_domain.interface_map.items()
                 }
                 kwargs['connectivity'] = Connectivity(connectivity)
 

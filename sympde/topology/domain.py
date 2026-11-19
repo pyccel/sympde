@@ -249,18 +249,14 @@ class Domain(BasicDomain):
         return self._logical_domain
 
     @property
-    def connectivity(self) -> Connectivity:
-        """Contains information about the interfaces"""
-        return self._connectivity
-
-    @property
     def interface_map(self) -> Connectivity:
         """Interfaces keyed by their unique names.
 
         Unlike the symbolic :attr:`interfaces` property, this view always has
         mapping semantics, including when the domain has zero or one interface.
+        The mapping is read-only and ordered by name.
         """
-        return self.connectivity
+        return self._connectivity
 
     @property
     def indexed_interfaces(self):
@@ -355,7 +351,7 @@ class Domain(BasicDomain):
         one interface it returns the interface object and None if there is no 
         interface.
         """
-        return self.connectivity.interfaces
+        return self._connectivity.interfaces
 
     @property
     def vertices(self) -> tuple:
@@ -500,7 +496,7 @@ class Domain(BasicDomain):
         pdim         = str(self.pdim)
         interior     = self.interior.todict()
         boundary     = [side.todict() for side in self.exterior_sides]
-        connectivity = self.connectivity.todict()
+        connectivity = self._connectivity.todict()
 
         dtype = self.dtype
         if dtype is None:
@@ -861,7 +857,7 @@ class Domain(BasicDomain):
             raise ValueError('patches must not contain the same object twice')
 
         if any(not isinstance(patch.interior, InteriorDomain) or
-               patch.connectivity for patch in patches):
+               patch.interface_map for patch in patches):
             raise ValueError(
                 'Domain.join expects atomic patch domains without existing '
                 'connectivity; flatten joined domains before joining them')
@@ -1138,7 +1134,7 @@ class Domain(BasicDomain):
         # Connectivity induces both the retained interfaces and the new cut
         # boundary. Iterating the original mapping preserves interface keys and
         # distinguishes repeated interfaces between the same patch pair.
-        for key, interface in self.connectivity.items():
+        for key, interface in self.interface_map.items():
             minus_selected = interface.minus.domain.name in selected_names
             plus_selected = interface.plus.domain.name in selected_names
 

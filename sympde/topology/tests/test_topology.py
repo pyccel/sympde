@@ -56,12 +56,12 @@ def test_multipatch_domain_reconstruction():
 
     rebuilt = domain.func(*domain.args)
     assert rebuilt == domain
-    assert dict(rebuilt.connectivity) == dict(domain.connectivity)
+    assert dict(rebuilt.interface_map) == dict(domain.interface_map)
 
-    interfaces = list(domain.connectivity.values())
+    interfaces = list(domain.interface_map.values())
     rebuilt = Domain('Omega', domain.interior, domain.boundary,
                      connectivity=interfaces)
-    assert dict(rebuilt.connectivity) == dict(domain.connectivity)
+    assert dict(rebuilt.interface_map) == dict(domain.interface_map)
 
 
 def test_ncube_reconstruction_keeps_coordinates():
@@ -300,7 +300,7 @@ def test_domain_join_line():
     assert AB.interior   == Union(A.interior, B.interior)
     assert AB.interfaces == Interface(
         'A|B', AB_bnd_minus, AB_bnd_plus, None)
-    print(AB.connectivity)
+    print(AB.interface_map)
     print('')
 
     domains = [A, B, C]
@@ -312,7 +312,7 @@ def test_domain_join_line():
     assert ABC.interfaces == Union(
         Interface('A|B', AB_bnd_minus, AB_bnd_plus, None),
         Interface('B|C', BC_bnd_minus, BC_bnd_plus, None))
-    print(list(ABC.connectivity.items()))
+    print(list(ABC.interface_map.items()))
     print('')
 
 
@@ -338,7 +338,7 @@ def test_domain_join_square():
     assert AB.interior   == Union(A.interior, B.interior)
     assert AB.interfaces == Interface(
         'A|B', AB_bnd_minus, AB_bnd_plus, +1)
-    print(AB.connectivity)
+    print(AB.interface_map)
 
     patches = [A, B, C]
     connectivity = [((0, 0, 1), (1, 0, -1), +1),
@@ -351,7 +351,7 @@ def test_domain_join_square():
     assert ABC.interfaces == Union(
         Interface('A|B', AB_bnd_minus, AB_bnd_plus, +1),
         Interface('B|C', BC_bnd_minus, BC_bnd_plus, +1))
-    print(list(ABC.connectivity.items()))
+    print(list(ABC.interface_map.items()))
     print('')
 
 
@@ -853,7 +853,6 @@ def test_named_multipatch_api_preserves_single_patch_domain_api():
 
     assert Domain.join([single_patch], [], 'unused') is single_patch
     assert single_patch.patches == (single_patch.interior,)
-    assert single_patch.interface_map is single_patch.connectivity
     assert tuple(single_patch.interface_map.values()) == ()
     assert single_patch.exterior_sides == single_patch.boundary.as_tuple()
     assert len(single_patch.vertices) == 4

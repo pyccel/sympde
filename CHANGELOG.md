@@ -67,6 +67,7 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 
+- #188: Remove the `Domain.connectivity` property, which was the same as the new `Domain.interface_map`. Use `Domain.interface_map`, a read-only mapping from interface names to interfaces. The `connectivity` argument of `Domain` and `Domain.join()` is unchanged.
 - #188: Remove `Domain.subdomains`, which was the same as the new `Domain.patches`. Use `Domain.patches`.
 - #188: Remove `Domain.set_interfaces()`, the item assignment of `Connectivity` and `Connectivity.patches`. The interfaces of a domain are read-only.
 - #188: Remove `Domain.corners`, `Domain.get_shared_corners()` and the classes `CornerBoundary` and `CornerInterface`. Use `Domain.vertices`, which contains all vertices of a domain with their patch indices, and tells whether they lie on the exterior boundary.
