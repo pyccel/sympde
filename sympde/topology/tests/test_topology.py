@@ -13,9 +13,9 @@ from sympy.core import Basic
 from sympde.topology.analytical_mapping import IdentityMapping
 from sympde.topology.basic import InteriorDomain, Union
 from sympde.topology.basic import Boundary
-from sympde.topology.basic import Interface
+from sympde.topology.basic import Connectivity, Interface
 from sympde.topology.domain import Area, Domain, ElementDomain
-from sympde.topology.domain import Line, Square, Cube, NCube
+from sympde.topology.domain import Line, Square, Cube, NCube, split
 from sympde.topology.mapping import InterfaceMapping, Mapping, MultiPatchMapping
 
 
@@ -538,6 +538,36 @@ def test_logical_and_physical_dimensions():
         Domain('X', interiors=[
             Mapping('H', ldim=2, pdim=2)(Square('C')).interior,
             Mapping('K', ldim=2, pdim=3)(Square('E')).interior])
+
+#==============================================================================
+def test_interfaces_cannot_be_changed():
+    A, B = Square('A'), Square('B')
+    domain = Domain.join([A, B], [((0, 0, 1), (1, 0, -1), 1)], 'Omega')
+    interface = domain.interface_map['A|B']
+
+    with pytest.raises(TypeError):
+        domain.interface_map['other'] = interface
+    assert not hasattr(domain, 'set_interfaces')
+
+    # The domain does not share the dictionary it was created from
+    interfaces = {'A|B': interface}
+    domain = Domain('Omega', interiors=[A.interior, B.interior],
+                    connectivity=Connectivity(interfaces))
+    interfaces['other'] = interface
+    assert tuple(domain.interface_map) == ('A|B',)
+
+#==============================================================================
+def test_split_line():
+    domain = split(Line('L', bounds=(0, 2)), 0.5)
+
+    left, right = domain.patches
+    assert (left.min_coords, left.max_coords) == ((0,), (0.5,))
+    assert (right.min_coords, right.max_coords) == ((0.5,), (2,))
+    assert tuple(domain.interface_map) == ('L_l|L_r',)
+    assert len(domain.exterior_sides) == 2
+
+    with pytest.raises(ValueError, match='between'):
+        split(Line('L', bounds=(0, 2)), 3)
 
 #==============================================================================
 def test_domain_join_rejects_mapped_and_unmapped_patches():

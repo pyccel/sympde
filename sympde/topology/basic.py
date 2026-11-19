@@ -686,7 +686,7 @@ class Interface(BasicDomain):
 
 #==============================================================================
 class Connectivity(abc.Mapping):
-    _patches  = []
+    """Read-only mapping from interface names to interfaces."""
 
     def __init__(self, data=None):
         if data is None:
@@ -696,11 +696,7 @@ class Connectivity(abc.Mapping):
             for k, v in data.items():
                 assert isinstance(k, str)
                 assert isinstance(v, Interface)
-        self._data = data
-
-    @property
-    def patches(self):
-        return self._patches
+        self._data = dict(data)
 
     @property
     def interfaces(self):
@@ -723,14 +719,6 @@ class Connectivity(abc.Mapping):
         connectivity = dict(sorted(connectivity.items()))
 
         return connectivity
-
-    def __setitem__(self, key, value):
-
-        assert( isinstance( key, str ) )
-        assert( isinstance(value, Interface) )
-        assert( str(value.name) == key )
-
-        self._data[key] = value
 
     # ==========================================
     #  abstract methods

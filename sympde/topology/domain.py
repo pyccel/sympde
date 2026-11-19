@@ -408,10 +408,6 @@ class Domain(BasicDomain):
         elif isinstance(self.interior, Union):
             return [i.name for i in self.interior.args]
 
-    def set_interfaces(self, *interfaces):
-        for i in interfaces:
-            self.connectivity[i.name] = i
-
     def _sympystr(self, printer):
         sstr = printer.doprint
         return '{}'.format(sstr(self.name))
@@ -1043,9 +1039,7 @@ class Domain(BasicDomain):
             boundaries.append(bnd_minus)
             boundaries.append(bnd_plus)
 
-        connectivity = Connectivity()
-        for k,v in interfaces.items():
-            connectivity[k] = v
+        connectivity = Connectivity(interfaces)
 
         # ... boundary
         boundaries = Union(*[b for p in patches for b in p.boundary]).complement(Union(*boundaries))
@@ -1063,9 +1057,9 @@ class Domain(BasicDomain):
         if all(e.mapping for e in interior_patches):
             logical_interiors    = Union(*[e.logical_domain for e in interior_patches])
             logical_boundaries   = [e.logical_domain for e in boundaries]
-            logical_connectivity = Connectivity()
-            for k,v in connectivity.items():
-                logical_connectivity[v.logical_domain.name] = v.logical_domain
+            logical_connectivity = Connectivity({
+                str(v.logical_domain.name): v.logical_domain
+                for v in connectivity.values()})
 
             patch_mappings = {
                 e.logical_domain: e.mapping for e in interior_patches}
@@ -1634,48 +1628,31 @@ class Area(BasicGeometryOperator):
 
 #==============================================================================
 def split(domain, value):
-    if domain.dtype['type'] == 'Line':
-        assert(isinstance(value, (int, float)))
+    """Split a Line domain at `value` into two Lines joined by an interface.
 
-        # TODO assert value <- bounds
-        bounds = domain.interior.bounds
+    Parameters
+    ----------
+    domain : Line
+        The domain to split.
+    value : int or float
+        The coordinate at which the domain is split, between its bounds.
 
-        # ... left
-        bounds = (bounds[0], value)
-        I_left = Line(name='{name}_l'.format(name=domain.name),
-                      bounds=bounds)
+    Returns
+    -------
+    Domain
+        The two-patch domain, with the name of `domain`, made of the Lines
+        `{name}_l` and `{name}_r`.
+    """
+    if domain.dtype['type'] != 'Line':
+        raise NotImplementedError('only Line domains can be split')
+    if not isinstance(value, (int, float)):
+        raise TypeError('value must be a number')
 
-        # ... right
-        bounds = (value, bounds[1])
-        I_right = Line(name='{name}_r'.format(name=domain.name),
-                       bounds=bounds)
+    lower, upper = domain.bounds
+    if not lower < value < upper:
+        raise ValueError(f'value must be between {lower} and {upper}')
 
-        # ... interiors
-        interiors = [I_left.interior, I_right.interior]
-
-        # ... external boundaries
-        bnd_left = [b for b in I_left.boundary.as_tuple() if b.ext == -1]
-        bnd_left = bnd_left[0]
-
-        bnd_right = [b for b in I_right.boundary.as_tuple() if b.ext == 1]
-        bnd_right = bnd_right[0]
-
-        boundaries = [bnd_left, bnd_right]
-
-        # ... connectivity: internal interfaces
-        int_left = [b for b in I_left.boundary.as_tuple() if b.ext == 1]
-        int_left = int_left[0]
-
-        int_right = [b for b in I_right.boundary.as_tuple() if b.ext == -1]
-        int_right = int_right[0]
-
-        connectivity = Connectivity()
-        connectivity['I'] = (int_left, int_right)
-
-        return Domain(domain.name,
-                      interiors=interiors,
-                      boundaries=boundaries,
-                      connectivity=connectivity)
-
-    else:
-        raise NotImplementedError('TODO')
+    left  = Line(name='{name}_l'.format(name=domain.name), bounds=(lower, value))
+    right = Line(name='{name}_r'.format(name=domain.name), bounds=(value, upper))
+    return Domain.join([left, right], [((0, 0, 1), (1, 0, -1), None)],
+                       domain.name)
