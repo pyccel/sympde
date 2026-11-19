@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- #203: Add the logical and physical dimensions `ldim` and `pdim` to the domain classes. `pdim` is the physical dimension of the mapping, or `ldim` without a mapping; for a boundary or an interface, they are the dimensions of its patches.
 - #188: Support multipatch interfaces between faces with different normal axes and with any edge or face orientation, several interfaces between the same pair of patches, and periodic and self-interfaces.
 - #188: Add `Domain.patches`, `Domain.interface_map`, `Domain.exterior_sides`, `Boundary.patch`, `Boundary.normal_axis` and `Interface.axis_map` to inspect the topology of multipatch domains.
 - #188: Add `Domain.vertices`, `Domain.edges` (in 3D), `Domain.indexed_interfaces`, `Domain.indexed_exterior_sides` and `Domain.patch_index()`, which describe the topology of a multipatch domain with patch indices, for discretization codes. The vertices and edges include unshared ones, record their patch incidences and whether they lie on the exterior boundary, and the edges the direction of each incidence. Their data classes are defined in the new module `sympde.topology.incidence`.
@@ -24,6 +25,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- #203: Replace the `dim` property and the `dim` argument of the domain classes (`Domain`, `InteriorDomain`, `NCube`, `Boundary`, `Interface`, ...) with `ldim`. This is a breaking change: use `domain.ldim` and `Domain(name, ldim=...)`. The `dim` argument of the mappings, a shorthand for `ldim = pdim = dim`, is kept.
+- #203: Build the physical coordinates of a mapped domain from its physical dimension, so that a surface in 3D has the coordinates `[x, y, z]`, and map all of them in `LogicalExpr` and `TerminalExpr`.
 - #188: Drop support for Python 3.9 and require Python 3.10 or newer.
 - #143: Replace the `ornt` argument of `Interface` and `Boundary.join()` with a required `orientation` argument: `None` in 1D, `+1` or `-1` in 2D, and `(flag, sign1, sign2)` in 3D. Use `interface.orientation` instead of `interface.ornt`.
 - #188: Accept the connectivity of `Domain.join()` only as `(minus, plus, orientation[, name])` tuples, and name repeated interfaces between the same pair of patches `A|B`, `A|B#2`, and so on. `interfaces=` is accepted as an alias of `connectivity=`. For mapped patches, the names are built from the logical patch names, and a mapped interface and its logical interface have the same name.
@@ -45,6 +48,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- #203: Check in the `Domain` constructor that all interiors have the same physical dimension, as `Domain.join()` does.
 - #188: Reject interfaces in `Domain.join()` that join a face with itself or use a face that is already part of another interface.
 - #188: Reject patches in `Domain.join()` of which only some have a mapping, instead of dropping the mapping of the domain.
 - #140: Reject patches with different physical dimensions in `Domain.join()`, instead of creating an inconsistent domain.
