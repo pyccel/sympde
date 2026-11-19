@@ -227,21 +227,12 @@ class Domain(BasicDomain):
         return restore_optional_argument(self.args[3])
 
     @property
-    def subdomains(self) -> tuple:
-        """Return top-dimensional interior regions as a tuple."""
-        if isinstance( self.interior, iterable_types):
-            subs = self.interior
-        else:
-            subs = [self.interior]
-        return tuple(subs)
-
-    @property
     def patches(self) -> tuple:
-        """Top-dimensional patch regions as a stable tuple.
+        """The patches (interior domains) as a tuple.
 
-        This additive multipatch view leaves the symbolic ``interior`` and
-        ``subdomains`` APIs unchanged.  For a single-patch domain it contains
-        exactly that domain's interior.
+        Unlike the symbolic :attr:`interior`, which is a ``Union`` of several
+        patches or a single patch, this is always a tuple. For a single-patch
+        domain it contains exactly that domain's interior.
         """
         if isinstance(self.interior, InteriorDomain):
             return (self.interior,)
@@ -250,7 +241,7 @@ class Domain(BasicDomain):
     @property
     def mappings(self) -> OrderedDict:
         return OrderedDict([(P.logical_domain, P.mapping)
-                           for P in self.subdomains])
+                           for P in self.patches])
 
     @property
     def logical_domain(self) -> Domain:

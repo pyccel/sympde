@@ -1348,8 +1348,8 @@ def test_interface_2d_1():
     # Make as many checks as possible on the Interface object
     from sympde.topology.basic import Interface
     assert isinstance(interface, Interface)
-    assert interface.minus is domain.subdomains[0].get_boundary(axis=0, ext= 1)
-    assert interface.plus  is domain.subdomains[1].get_boundary(axis=0, ext=-1)
+    assert interface.minus is domain.patches[0].get_boundary(axis=0, ext= 1)
+    assert interface.plus  is domain.patches[1].get_boundary(axis=0, ext=-1)
     assert interface.orientation == +1
     assert interface.ldim  == 2
     assert interface.mapping is None

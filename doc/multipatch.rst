@@ -47,7 +47,7 @@ A multipatch domain has four important levels::
 
 ``patches``, ``interface_map`` and ``exterior_sides`` are views of the
 symbolic objects used in expressions; ``domain.interior``,
-``domain.subdomains``, ``domain.connectivity`` and ``domain.boundary`` retain
+``domain.connectivity`` and ``domain.boundary`` retain
 their original behavior.  ``indexed_interfaces``, ``indexed_exterior_sides``,
 ``vertices`` and ``edges`` describe the topology with plain Python data for
 discretization codes.
