@@ -58,6 +58,9 @@ class Domain(BasicDomain):
     Multi-patch domains additionally carry a connectivity, which describes the
     interfaces between their patches.
     """
+    # Vertices and edges, computed when they are first needed
+    _vertices = None
+    _edges    = None
 
     def __new__(cls, name : str,
             interiors : TypeUnion[Iterable[InteriorDomain], InteriorDomain, None] = None,
@@ -188,8 +191,6 @@ class Domain(BasicDomain):
         obj = new_basic(cls, name, interiors, boundaries, mapping,
                          logical_domain, tuple(connectivity.values()))
         obj._connectivity   = connectivity
-        obj._vertices       = None
-        obj._edges          = None
         obj._dtype          = dtype
         obj._dim            = dim
         obj._logical_domain = logical_domain
