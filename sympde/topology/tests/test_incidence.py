@@ -4,7 +4,7 @@ import pytest
 from sympde.topology.analytical_mapping import AffineMapping, IdentityMapping
 from sympde.topology.basic import Boundary, InteriorDomain, Interface
 from sympde.topology.domain import Cube, Domain, Square
-from sympde.topology.incidence import IndexedInterface, InterfaceSide
+from sympde.topology.incidence import IndexedInterface, PatchSide
 from sympde.topology.multipatch_gallery import (
     build_multipatch_domain_2d,
     build_multipatch_domain_3d,
@@ -99,14 +99,10 @@ def test_edges_directions():
         for edge in shared if edge.incidences[1].direction == -1}
     assert reversed_edges == {(2, 0)}
 
-    # In 2D, the edges are the patch sides, and the twisted interface of the
-    # strip joins two of them in opposite directions
+    # In 2D, the edges of the patches are their sides, given by the interfaces
     strip = build_multipatch_domain_2d('two_patch_twisted_strip')
-    directions = sorted(
-        tuple(incidence.direction for incidence in edge.incidences)
-        for edge in strip.edges
-        if len(edge.incidences) == 2)
-    assert directions == [(1, -1), (1, 1)]
+    with pytest.raises(ValueError, match='indexed_interfaces'):
+        _ = strip.edges
 
 
 @pytest.mark.parametrize('name', [
@@ -181,12 +177,25 @@ def test_indexed_interfaces():
     assert tuple(interfaces) == tuple(domain.interface_map) == ('A|B', 'top')
     assert interfaces['A|B'] == IndexedInterface(
         name='A|B',
-        minus=InterfaceSide(patch_index=0, axis=0, ext=+1),
-        plus=InterfaceSide(patch_index=1, axis=1, ext=-1),
+        minus=PatchSide(patch_index=0, axis=0, ext=+1),
+        plus=PatchSide(patch_index=1, axis=1, ext=-1),
         orientation=(-1, +1, -1),
         axis_map=((1, 2, +1), (2, 0, -1)),
     )
-    assert interfaces['top'].minus == InterfaceSide(0, 2, +1)
+    assert interfaces['top'].minus == PatchSide(0, 2, +1)
+
+    # Every face of the two cubes is an exterior side or a side of one
+    # interface
+    exterior = domain.indexed_exterior_sides
+    assert len(exterior) == 2 * 6 - 2 * len(interfaces)
+    assert len(set(exterior)) == len(exterior)
+    glued = {side for i in interfaces.values() for side in (i.minus, i.plus)}
+    assert set(exterior) | glued == {
+        PatchSide(patch, axis, ext)
+        for patch in range(2) for axis in range(3) for ext in (-1, 1)}
+    assert exterior == tuple(
+        PatchSide(domain.patch_index(side), side.axis, side.ext)
+        for side in domain.exterior_sides)
 
     with pytest.raises(TypeError):
         interfaces['other'] = interfaces['top']

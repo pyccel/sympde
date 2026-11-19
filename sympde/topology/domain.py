@@ -29,7 +29,8 @@ from .basic            import BasicDomain, InteriorDomain, Boundary, Union, Conn
 from .basic            import Interval, Interface
 from .basic            import ProductDomain
 from .basic            import _as_integer
-from .incidence        import collect_edges, collect_vertices, index_interfaces
+from .incidence        import collect_edges, collect_vertices
+from .incidence        import index_exterior_sides, index_interfaces
 
 # TODO fix circular dependency between domain and mapping
 if TYPE_CHECKING:
@@ -319,6 +320,17 @@ class Domain(BasicDomain):
         return boundary.as_tuple()
 
     @property
+    def indexed_exterior_sides(self) -> tuple:
+        """Exterior boundary sides with patch indices instead of SymPy
+        objects.
+
+        Each side is a :class:`~sympde.topology.incidence.PatchSide` with the
+        patch index, the normal axis and the extremity of the face, in the
+        order of :attr:`exterior_sides`.
+        """
+        return index_exterior_sides(self)
+
+    @property
     def dim(self) -> int:
         """Dimension of the space"""
         return self._dim
@@ -353,12 +365,14 @@ class Domain(BasicDomain):
 
     @property
     def edges(self) -> tuple:
-        """All edges of a 2D or 3D domain, as plain data with patch indices.
+        """All edges of a 3D domain, as plain data with patch indices.
 
         Each edge is a :class:`~sympde.topology.incidence.TopologyEdge`,
         which lists the edges of the patches identified with it through the
         interfaces, with their directions, and tells whether it lies on the
-        exterior boundary. In 2D, the edges are the sides of the patches.
+        exterior boundary. In 2D, the edges of the patches are their sides,
+        given by :attr:`indexed_interfaces` and :attr:`indexed_exterior_sides`,
+        so that this property raises a ``ValueError``.
         """
         if self._edges is None:
             self._edges = collect_edges(self)
