@@ -4,7 +4,7 @@ from sympde.api import BilinearForm, Constant, Domain, ScalarFunctionSpace
 from sympde.api import TensorExpr, dot, elements_of, grad, integral
 
 
-domain = Domain('Omega', dim=2)
+domain = Domain('Omega', ldim=2)
 space = ScalarFunctionSpace('V', domain)
 trial, test = elements_of(space, names='u, v')
 coefficient = Constant('mu', real=True)

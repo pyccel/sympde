@@ -184,7 +184,7 @@ class BasicFunctionSpace(Basic):
 
     @property
     def ldim(self):
-        return self.domain.dim
+        return self.domain.ldim
 
     @property
     def shape(self):
@@ -233,7 +233,7 @@ class VectorFunctionSpace(BasicFunctionSpace):
     Represents a basic continuous vector Function space.
     """
     def __new__(cls, name, domain, kind=None):
-        shape = domain.dim
+        shape = domain.ldim
         return BasicFunctionSpace.__new__(cls, name, domain, shape, kind)
 
     def element(self, name):
@@ -243,7 +243,7 @@ class VectorFunctionSpace(BasicFunctionSpace):
 class Derham:
     """."""
     def __init__(self, domain, sequence=None):
-        shape = domain.dim
+        shape = domain.ldim
         self._V0  = None
         self._V1  = None
         self._V2  = None

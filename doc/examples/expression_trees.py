@@ -5,7 +5,7 @@ from sympy.printing.dot import dotprint
 from sympde.api import Domain, ScalarFunctionSpace, div, dx, dy, elements_of, grad
 
 
-domain = Domain('Omega', dim=2)
+domain = Domain('Omega', ldim=2)
 space = ScalarFunctionSpace('V', domain)
 u, v = elements_of(space, names='u, v')
 

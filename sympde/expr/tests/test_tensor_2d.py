@@ -22,7 +22,7 @@ from sympde.expr.evaluation import Mass, Stiffness, Advection, AdvectionT, Bilap
 #==============================================================================
 def test_tensorize_2d_1():
 
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
 
     mu    = Constant('mu'   , is_real=True)
 
@@ -45,7 +45,7 @@ def test_tensorize_2d_1():
 #==============================================================================
 def test_tensorize_2d_2():
 
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
 
     V = VectorFunctionSpace('V', domain)
     u, v = elements_of(V, names='u, v')
@@ -67,7 +67,7 @@ def test_tensorize_2d_1_mapping():
 
     M = Mapping('Map', dim=DIM)
 
-    domain = M(Domain('Omega', dim=DIM))
+    domain = M(Domain('Omega', ldim=DIM))
 
 #    mu    = Constant('mu'   , is_real=True)
 
@@ -92,7 +92,7 @@ def test_tensorize_2d_2_mapping():
 
     DIM = 2
     M = Mapping('M', dim=DIM)
-    domain = M(Domain('Omega', dim=DIM))
+    domain = M(Domain('Omega', ldim=DIM))
 
     V = VectorFunctionSpace('V', domain)
     u, v = elements_of(V, names='u, v')
@@ -108,7 +108,7 @@ def test_tensorize_2d_2_mapping():
 #==============================================================================
 def test_tensorize_2d_3():
 
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
 
     V = ScalarFunctionSpace('V', domain)
     u, v = elements_of(V, names='u,v')

@@ -11,7 +11,7 @@ from sympde.expr.expr import LinearForm, integral
 from sympde.expr.equation import EssentialBC, NewtonIteration
 
 DIM = 2
-domain = Domain('Omega', dim=DIM)
+domain = Domain('Omega', ldim=DIM)
 
 #==============================================================================
 def test_newton_2d_1():

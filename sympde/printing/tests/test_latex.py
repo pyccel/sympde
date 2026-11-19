@@ -32,7 +32,7 @@ def test_latex_domain_subclasses_use_their_names():
 def test_latex_1d():
 
     DIM = 1
-    domain = Domain('Omega', dim=DIM)
+    domain = Domain('Omega', ldim=DIM)
 
     V = ScalarFunctionSpace('V', domain)
 
@@ -63,7 +63,7 @@ def test_latex_1d():
 def test_latex_2d_1():
 
     DIM = 2
-    domain = Domain('Omega', dim=DIM)
+    domain = Domain('Omega', ldim=DIM)
 
     V = ScalarFunctionSpace('V', domain)
 
@@ -94,7 +94,7 @@ def test_latex_2d_1():
 def test_latex_2d_2():
 
     DIM = 2
-    domain = Domain('Omega', dim=DIM)
+    domain = Domain('Omega', ldim=DIM)
 
     V = VectorFunctionSpace('V', domain)
 
@@ -122,7 +122,7 @@ def test_latex_2d_2():
 def test_latex_3d_1():
 
     DIM = 3
-    domain = Domain('Omega', dim=DIM)
+    domain = Domain('Omega', ldim=DIM)
 
     V = ScalarFunctionSpace('V', domain)
 
@@ -153,7 +153,7 @@ def test_latex_3d_1():
 def test_latex_3d_2():
 
     DIM = 3
-    domain = Domain('Omega', dim=DIM)
+    domain = Domain('Omega', ldim=DIM)
 
     V = VectorFunctionSpace('V', domain)
 
@@ -181,7 +181,7 @@ def test_latex_3d_2():
 def test_latex_2d_3():
     DIM = 2
 
-    domain = Domain('Omega', dim=DIM)
+    domain = Domain('Omega', ldim=DIM)
 
     B1 = Boundary(r'\Gamma_1', domain)
     B2 = Boundary(r'\Gamma_2', domain)
@@ -216,7 +216,7 @@ def test_latex_2d_3():
 def test_latex_2d_4():
     DIM = 2
 
-    domain = Domain('Omega', dim=DIM)
+    domain = Domain('Omega', ldim=DIM)
 
     # ... abstract model
     V = VectorFunctionSpace('V', domain)
@@ -242,7 +242,7 @@ def test_latex_2d_4():
 def test_latex_2d_5():
     DIM = 2
 
-    domain = Domain('Omega', dim=DIM)
+    domain = Domain('Omega', ldim=DIM)
 
     # ... abstract model
     W1 = VectorFunctionSpace('W1', domain)
@@ -280,7 +280,7 @@ def test_latex_ec_3d_1():
     u_3 = DifferentialForm('u_3', index=3, dim=n)
     v_3 = DifferentialForm('v_3', index=3, dim=n)
 
-    domain = Domain('Omega', dim=3)
+    domain = Domain('Omega', ldim=3)
     V = VectorFunctionSpace('V', domain)
 
     beta = element_of(V, 'beta')

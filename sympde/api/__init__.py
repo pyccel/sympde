@@ -153,7 +153,7 @@ from sympde.exterior.calculus import d, delta, hodge, ip, jp, ld, wedge
 from sympde.exterior.form import DifferentialForm
 
 from sympde.printing.latex import latex
-from sympde.utilities.utils import plot_domain
+from sympde.utilities.plotting import plot_domain, print_topology
 
 __all__ = (
     'Constant',
@@ -286,4 +286,5 @@ __all__ = (
     # Output and utilities
     'latex',
     'plot_domain',
+    'print_topology',
 )

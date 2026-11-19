@@ -36,7 +36,7 @@ def test_logical_expr_1d_1():
     dim = 1
 
     M = Mapping('M', dim=dim)
-    domain = M(Domain('Omega', dim=dim))
+    domain = M(Domain('Omega', ldim=dim))
 
     alpha = Constant('alpha')
 
@@ -72,11 +72,21 @@ def test_logical_expr_1d_1():
 
 
 #==============================================================================
+def test_logical_expr_surface_in_3d():
+    # Regression test for #203: all physical coordinates are mapped
+    F = Mapping('F', ldim=2, pdim=3)
+    domain = F(Domain('Omega', ldim=2))
+    x, y, z = domain.coordinates
+
+    assert LogicalExpr(z, domain) == F[2]
+    assert LogicalExpr(x + y + z, domain) == F[0] + F[1] + F[2]
+
+#==============================================================================
 def test_symbolic_expr_1d_1():
     dim = 1
 
     M = Mapping('M', dim=dim)
-    domain = M(Domain('Omega', dim=dim))
+    domain = M(Domain('Omega', ldim=dim))
 
     V = ScalarFunctionSpace('V', domain, kind='h1')
 
@@ -132,7 +142,7 @@ def test_logical_expr_2d_1():
     dim = 2
 
     M = Mapping('M', dim=dim)
-    domain = M(Domain('Omega', dim=dim))
+    domain = M(Domain('Omega', ldim=dim))
 
     alpha = Constant('alpha')
 
@@ -193,7 +203,7 @@ def test_logical_expr_2d_2():
     D2 = M2(B)
 
     patches = [D1, D2]
-    connectivity = [((0, 0, 1), (1, 0, -1), 1)]
+    connectivity = [((0, 0, 1), (1, 0, -1), +1)]
     domain = Domain.join(patches, connectivity, 'domain')
 
 
@@ -233,6 +243,24 @@ def test_logical_expr_2d_2():
     assert str(expr) == 'Integral(A|B, Dot((Jacobian(M2)**(-1)).T * Grad(PlusInterfaceOperator(u2)), (Jacobian(M2)**(-1)).T * Grad(PlusInterfaceOperator(v2)))*sqrt(det(Jacobian(M1|M2).T * Jacobian(M1|M2))))'
 
 
+#==============================================================================
+def test_logical_expr_on_mapped_multipatch_interface():
+    logical_domain = Domain.join(
+        [Square('A'), Square('B')],
+        [((0, 0, +1), (1, 1, -1), -1)],
+        'AB')
+    mapped_domain = Mapping('M', dim=2)(logical_domain)
+    V = ScalarFunctionSpace('V', mapped_domain, kind='h1')
+    u = element_of(V, name='u')
+
+    expr = LogicalExpr(integral(mapped_domain.interfaces, u**2), mapped_domain)
+
+    assert expr.domain is logical_domain.interfaces
+    assert str(expr) == (
+        'Integral(A|B, u**2*sqrt(det('
+        'Jacobian(M|M).T * Jacobian(M|M))))')
+
+
 def test_logical_expr_2d_3():
     dim = 2
 
@@ -247,7 +275,7 @@ def test_logical_expr_2d_3():
 
 
     patches = [D1, D2]
-    connectivity = [((0, 0, 1), (1, 0, -1), 1)]
+    connectivity = [((0, 0, 1), (1, 0, -1), +1)]
     domain = Domain.join(patches, connectivity, 'domain')
 
     V = VectorFunctionSpace('V', domain, kind='hcurl')
@@ -265,7 +293,7 @@ def test_logical_expr_2d_3():
 def test_symbolic_expr_2d_1():
     dim    = 2
     M      = Mapping('M', dim=dim)
-    domain = M(Domain('Omega', dim=dim))
+    domain = M(Domain('Omega', ldim=dim))
 
     V = ScalarFunctionSpace('V', domain, kind='h1')
 
@@ -326,7 +354,7 @@ def test_logical_expr_3d_1():
     dim = 3
 
     M = Mapping('M', dim=dim)
-    domain = M(Domain('Omega', dim=dim))
+    domain = M(Domain('Omega', ldim=dim))
 
     alpha = Constant('alpha')
 
@@ -368,7 +396,7 @@ def test_logical_expr_3d_1():
 def test_logical_expr_3d_2():
 
     dim   = 3
-    domain = Domain('Omega', dim=dim)
+    domain = Domain('Omega', ldim=dim)
     M      = Mapping('M', dim=dim)
 
     mapped_domain = M(domain)
@@ -389,7 +417,7 @@ def test_logical_expr_3d_2():
 def test_logical_expr_3d_3():
 
     dim    = 3
-    domain = Domain('Omega', dim=dim)
+    domain = Domain('Omega', ldim=dim)
     M      = Mapping('M', dim=dim)
 
     mapped_domain = M(domain)
@@ -409,7 +437,7 @@ def test_logical_expr_3d_3():
 def test_logical_expr_3d_4():
 
     dim    = 3
-    domain = Domain('Omega', dim=dim)
+    domain = Domain('Omega', ldim=dim)
     M      = Mapping('M', dim=dim)
 
     mapped_domain = M(domain)
@@ -429,7 +457,7 @@ def test_logical_expr_3d_4():
 def test_logical_expr_3d_5():
 
     dim    = 3
-    domain = Domain('Omega', dim=dim)
+    domain = Domain('Omega', ldim=dim)
     M      = Mapping('M', dim=dim)
 
     mapped_domain = M(domain)
@@ -454,7 +482,7 @@ def test_logical_expr_3d_5():
 def test_symbolic_expr_3d_1():
     dim    = 3
     M      = Mapping('M', dim=dim)
-    domain = M(Domain('Omega', dim=dim))
+    domain = M(Domain('Omega', ldim=dim))
 
     V = ScalarFunctionSpace('V', domain, kind='h1')
     u = element_of(V, 'u')
@@ -517,7 +545,7 @@ def test_identity_mapping_2d_1():
 
     M = IdentityMapping('M', dim=dim)
 
-    domain = M(Domain('Omega', dim=dim))
+    domain = M(Domain('Omega', ldim=dim))
 
     assert(not( M[0] == x1 ))
     assert(not( M[1] == x2 ))
@@ -539,7 +567,7 @@ def test_identity_mapping_2d_1():
 def test_identity_mapping_2d_2():
     dim    = 2
     M      = IdentityMapping('F', dim=dim)
-    domain = M(Domain('Omega', dim=dim))
+    domain = M(Domain('Omega', ldim=dim))
 
 
     V = ScalarFunctionSpace('V', domain, kind='h1')
@@ -562,7 +590,7 @@ def test_polar_mapping_2d_1():
 
     M = PolarMapping('M', dim=dim)
 
-    domain = M(Domain('Omega', dim=dim))
+    domain = M(Domain('Omega', ldim=dim))
 
     assert(not( M[0] == x1 ))
     assert(not( M[1] == x2 ))
@@ -592,7 +620,7 @@ def test_target_mapping_2d_1():
 
     M = TargetMapping('M', dim=dim)
 
-    domain = M(Domain('Omega', dim=dim))
+    domain = M(Domain('Omega', ldim=dim))
 
     assert(not( M[0] == x1 ))
     assert(not( M[1] == x2 ))
@@ -624,7 +652,7 @@ def test_czarny_mapping_2d_1():
 
     M = CzarnyMapping('M', dim=dim)
 
-    domain = M(Domain('Omega', dim=dim))
+    domain = M(Domain('Omega', ldim=dim))
 
     assert(not( M[0] == x1 ))
     assert(not( M[1] == x2 ))
@@ -661,7 +689,7 @@ def test_collela_mapping_2d_1():
 
     M = CollelaMapping2D('M', dim)
 
-    domain = M(Domain('Omega', dim=dim))
+    domain = M(Domain('Omega', ldim=dim))
 
     assert(not( M[0] == x1 ))
     assert(not( M[1] == x2 ))
@@ -697,7 +725,7 @@ def test_torus_mapping_3d_1():
 
     M = TorusMapping('M', dim=dim)
 
-    domain = M(Domain('Omega', dim=dim))
+    domain = M(Domain('Omega', ldim=dim))
 
     assert(not( M[0] == x1 ))
     assert(not( M[1] == x2 ))
@@ -748,7 +776,7 @@ def test_twisted_target_mapping_3d_1():
 
     M = TwistedTargetMapping('M', dim=dim)
 
-    domain = M(Domain('Omega', dim=dim))
+    domain = M(Domain('Omega', ldim=dim))
 
     assert(not( M[0] == x1 ))
     assert(not( M[1] == x2 ))

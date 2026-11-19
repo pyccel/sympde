@@ -482,7 +482,7 @@ class TerminalExpr(CalculusFunction):
 
     Parameters
     ----------
-    expr : Expr or Matrix or ImmutableDenseMatrix or LogicalExpr
+    expr : Expr | Matrix | ImmutableDenseMatrix | LogicalExpr
         The mathematical expression.
 
     domain : BasicDomain (from sympde.topology.basic)
@@ -560,7 +560,7 @@ class TerminalExpr(CalculusFunction):
             returned if `evaluate is False`.
         """
 
-        dim = domain.dim
+        dim = domain.ldim
 
         if isinstance(expr, Add):
             args = [cls.eval(a, domain=domain) for a in expr.args]
@@ -633,8 +633,8 @@ class TerminalExpr(CalculusFunction):
                     J = J.subs(subs)
                 elif mapping.is_plus:
                     M = list(J.atoms(type(mapping)))[0]
-                    coordinates = [M[i] for i in range(domain.dim)]
-                    newcoords   = [mapping[i] for i in range(domain.dim)]
+                    coordinates = [M[i] for i in range(domain.pdim)]
+                    newcoords   = [mapping[i] for i in range(domain.pdim)]
                     subs = list(zip(coordinates, newcoords))
                     J = J.subs(subs)
             return J

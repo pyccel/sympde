@@ -36,7 +36,7 @@ from sympde.expr.evaluation import TerminalExpr
 #==============================================================================
 def test_linear_expr_2d_1():
 
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
     x, y = domain.coordinates
     V = ScalarFunctionSpace('V', domain)
     u, u1, u2 = elements_of(V, names='u, u1, u2')
@@ -57,7 +57,7 @@ def test_linear_expr_2d_1():
 #==============================================================================
 def test_linear_expr_2d_2():
 
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
     x, y = domain.coordinates
     V = VectorFunctionSpace('V', domain)
     u, u1, u2 = elements_of(V, names='u, u1, u2')
@@ -81,7 +81,7 @@ def test_linear_expr_2d_2():
 #==============================================================================
 def test_linear_form_2d_1():
 
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
     B1 = Boundary(r'\Gamma_1', domain)
 
     x, y = domain.coordinates
@@ -145,7 +145,7 @@ def test_linear_form_2d_1():
 #==============================================================================
 def test_linear_form_2d_2():
 
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
     x, y = domain.coordinates
 
     V = VectorFunctionSpace('V', domain)
@@ -182,7 +182,7 @@ def test_linear_form_2d_2():
 #==============================================================================
 def test_bilinear_form_2d_1():
 
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
     B1 = Boundary(r'\Gamma_1', domain)
 
     kappa = Constant('kappa', is_real=True)
@@ -237,7 +237,7 @@ def test_bilinear_form_2d_1():
 #==============================================================================
 def test_bilinear_form_2d_2():
 
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
     kappa = Constant('kappa', is_real=True)
     V = VectorFunctionSpace('V', domain)
     u, u1, u2 = elements_of(V, names='u, u1, u2')
@@ -275,7 +275,7 @@ def test_bilinear_form_2d_2():
 #==============================================================================
 def test_terminal_expr_linear_2d_1():
 
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
     B1 = Boundary(r'\Gamma_1', domain)
 
     x, y = domain.coordinates
@@ -338,7 +338,7 @@ def test_terminal_expr_linear_2d_1():
 #==============================================================================
 def test_terminal_expr_linear_2d_2():
 
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
     B1 = Boundary(r'\Gamma_1', domain)
 
     x, y = domain.coordinates
@@ -414,8 +414,8 @@ def test_terminal_expr_linear_2d_3():
 #==============================================================================
 def test_terminal_expr_linear_2d_4():
 
-    D1 = InteriorDomain('D1', dim=2)
-    D2 = InteriorDomain('D2', dim=2)
+    D1 = InteriorDomain('D1', ldim=2)
+    D2 = InteriorDomain('D2', ldim=2)
     domain = Union(D1, D2)
     x, y = domain.coordinates
     V = ScalarFunctionSpace('V', domain)
@@ -476,7 +476,7 @@ def test_terminal_expr_linear_2d_5():
 #==============================================================================
 def test_terminal_expr_bilinear_2d_1():
 
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
     B1     = Boundary(r'\Gamma_1', domain)
 
     kappa = Constant('kappa', is_real=True)
@@ -558,7 +558,7 @@ def test_terminal_expr_bilinear_2d_1():
 #==============================================================================
 def test_terminal_expr_bilinear_2d_2():
 
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
     V = VectorFunctionSpace('V', domain)
     u, v = elements_of(V, names='u, v')
 
@@ -635,7 +635,7 @@ def test_terminal_expr_bilinear_2d_3():
 #==============================================================================
 def test_terminal_expr_bilinear_2d_4():
 
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
 
     V = VectorFunctionSpace('V', domain)
     W = ScalarFunctionSpace('W', domain)
@@ -658,7 +658,7 @@ def test_terminal_expr_bilinear_2d_4():
 #==============================================================================
 def test_terminal_expr_bilinear_3d_1():
 
-    domain = Domain('Omega', dim=3)
+    domain = Domain('Omega', ldim=3)
     M      = Mapping('M', dim=3)
 
     mapped_domain = M(domain)
@@ -690,14 +690,14 @@ def test_terminal_expr_bilinear_3d_1():
 
 #==============================================================================
 def test_terminal_expr_1d_1():
-    domain = Domain('Omega', dim=1)
+    domain = Domain('Omega', ldim=1)
     x = domain.coordinates
     assert TerminalExpr(grad(x), domain) == 1
     assert TerminalExpr(grad(exp(1j*x) - x + 7), domain) == 1j*exp(1j*x) - 1
 
 #==============================================================================
 def test_terminal_expr_2d_1():
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
     x, y = domain.coordinates
     assert TerminalExpr(grad(x), domain) == Matrix([[1], [0]])
     assert TerminalExpr(grad(y), domain) == Matrix([[0], [1]])
@@ -705,7 +705,7 @@ def test_terminal_expr_2d_1():
 
 #==============================================================================
 def test_terminal_expr_3d_1():
-    domain = Domain('Omega', dim=3)
+    domain = Domain('Omega', ldim=3)
     x, y, z = domain.coordinates
     assert TerminalExpr(grad(x), domain) == Matrix([[1], [0], [0]])
     assert TerminalExpr(grad(y), domain) == Matrix([[0], [1], [0]])
@@ -715,7 +715,7 @@ def test_terminal_expr_3d_1():
 #==============================================================================
 @pytest.mark.skip(reason="New linearize() function does not accept 'LinearExpr' objects")
 def test_linearize_expr_2d_1():
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
 
     V1 = ScalarFunctionSpace('V1', domain)
     W1 = VectorFunctionSpace('W1', domain)
@@ -758,7 +758,7 @@ def test_linearize_expr_2d_1():
 #==============================================================================
 @pytest.mark.skip(reason="New linearize() function does not accept 'LinearExpr' objects")
 def test_linearize_expr_2d_2():
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
 
     V1 = ScalarFunctionSpace('V1', domain)
     v1 = element_of(V1, name='v1')
@@ -776,7 +776,7 @@ def test_linearize_expr_2d_2():
 
 #==============================================================================
 def test_linearize_form_2d_1():
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
 
     V = ScalarFunctionSpace('V', domain)
     W = VectorFunctionSpace('W', domain)
@@ -817,7 +817,7 @@ def test_linearize_form_2d_1():
 
 #==============================================================================
 def test_linearize_form_2d_2():
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
 
     V = ScalarFunctionSpace('V', domain)
 
@@ -837,7 +837,7 @@ def test_linearize_form_2d_2():
 #==============================================================================
 def test_linearize_form_2d_3():
     """steady Euler equation."""
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
 
     U = VectorFunctionSpace('U', domain)
     W = ScalarFunctionSpace('W', domain)
@@ -897,7 +897,7 @@ def test_linearize_form_2d_3():
 
 #==============================================================================
 def test_linearize_form_2d_4():
-    domain  = Domain('Omega', dim=2)
+    domain  = Domain('Omega', ldim=2)
     Gamma_N = Boundary(r'\Gamma_N', domain)
 
     V = ScalarFunctionSpace('V', domain)
@@ -922,7 +922,7 @@ def test_linearize_form_2d_4():
 #==============================================================================
 def test_area_2d_1():
 
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
 
     e = ElementDomain()
     area = Area(e)
@@ -940,7 +940,7 @@ def test_area_2d_1():
 #==============================================================================
 def test_stabilization_2d_1():
 
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
     x,y = domain.coordinates
 
     kappa = Constant('kappa', is_real=True)
@@ -1010,7 +1010,7 @@ def test_stabilization_2d_1():
 #==============================================================================
 def test_user_function_2d_1():
 
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
     x,y = domain.coordinates
 
     # right hand side
@@ -1040,7 +1040,7 @@ def test_user_function_2d_1():
 #==============================================================================
 def test_functional_2d_1():
 
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
     x,y = domain.coordinates
 
     V = ScalarFunctionSpace('V', domain)
@@ -1067,7 +1067,7 @@ def test_functional_2d_1():
 #==============================================================================
 def test_norm_2d_1():
 
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
     x,y = domain.coordinates
 
     V = ScalarFunctionSpace('V', domain)
@@ -1125,7 +1125,7 @@ def test_norm_2d_1():
 #==============================================================================
 def test_norm_2d_2():
 
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
     x,y = domain.coordinates
 
     V = VectorFunctionSpace('V', domain)
@@ -1145,7 +1145,7 @@ def test_norm_2d_2():
 # this test checks some properties of bilinear forms
 def test_bilinear_form_2d_3():
 
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
     V = ScalarFunctionSpace('V', domain)
     u = element_of(V, name='u')
     v = element_of(V, name='v')
@@ -1163,7 +1163,7 @@ def test_bilinear_form_2d_3():
 # this test checks some properties of bilinear forms
 def test_bilinear_form_2d_4():
 
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
     V = VectorFunctionSpace('V', domain)
     u = element_of(V, name='u')
     v = element_of(V, name='v')
@@ -1182,7 +1182,7 @@ def test_linearity_linear_form_2d_1():
 
     from sympde.expr.errors import UnconsistentLinearExpressionError
 
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
     B1 = Boundary(r'\Gamma_1', domain)
 
     x,y = domain.coordinates
@@ -1266,7 +1266,7 @@ def test_linearity_bilinear_form_2d_1():
 
     from sympde.expr.errors import UnconsistentLinearExpressionError
 
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
     B1 = Boundary(r'\Gamma_1', domain)
 
     x,y = domain.coordinates
@@ -1332,44 +1332,13 @@ def test_linearity_bilinear_form_2d_1():
 #==============================================================================
 def test_interface_2d_1():
 
-#    # ...
-#    def two_patches():
-#
-#        from sympde.topology import Connectivity, Interface
-#
-#        A = Square('A')
-#        B = Square('B')
-#
-#        A = A.interior
-#        B = B.interior
-#
-#        bnd_A_1 = Boundary(r'\Gamma_1', A, axis=0, ext=-1)
-#        bnd_A_2 = Boundary(r'\Gamma_2', A, axis=0, ext=1)
-#        bnd_A_3 = Boundary(r'\Gamma_3', A, axis=1, ext=-1)
-#        bnd_A_4 = Boundary(r'\Gamma_4', A, axis=1, ext=1)
-#
-#        bnd_B_1 = Boundary(r'\Gamma_1', B, axis=0, ext=-1)
-#        bnd_B_2 = Boundary(r'\Gamma_2', B, axis=0, ext=1)
-#        bnd_B_3 = Boundary(r'\Gamma_3', B, axis=1, ext=-1)
-#        bnd_B_4 = Boundary(r'\Gamma_4', B, axis=1, ext=1)
-#
-#        connectivity = Connectivity()
-#        connectivity['I'] = Interface('I', bnd_A_2, bnd_B_1, ornt=1)
-#        Omega = Domain('Omega',
-#                       interiors=[A, B],
-#                       boundaries=[bnd_A_1, bnd_A_2, bnd_A_3, bnd_A_4, bnd_B_1, bnd_B_2, bnd_B_3, bnd_B_4],
-#                       connectivity=connectivity)
-#
-#        return Omega
-#    # ...
-
     def two_patches():
 
         A = Square('A')
         B = Square('B')
 
         patches = [A, B]
-        connectivity = [((A, 0, 1), (B, 0, -1), 1)]
+        connectivity = [((A, 0, 1), (B, 0, -1), +1)]
         return Domain.join(patches, connectivity, 'Omega')
 
     # create a domain with an interface
@@ -1379,10 +1348,10 @@ def test_interface_2d_1():
     # Make as many checks as possible on the Interface object
     from sympde.topology.basic import Interface
     assert isinstance(interface, Interface)
-    assert interface.minus is domain.subdomains[0].get_boundary(axis=0, ext= 1)
-    assert interface.plus  is domain.subdomains[1].get_boundary(axis=0, ext=-1)
-    assert interface.ornt == 1
-    assert interface.dim  == 2
+    assert interface.minus is domain.patches[0].get_boundary(axis=0, ext= 1)
+    assert interface.plus  is domain.patches[1].get_boundary(axis=0, ext=-1)
+    assert interface.orientation == +1
+    assert interface.ldim  == 2
     assert interface.mapping is None
     assert interface.logical_domain is None
 
@@ -1405,7 +1374,7 @@ def test_interface_integral_1():
     B = Square('B')
 
     domains = [A, B]
-    connectivity = [((0, 0, 1), (1, 0, -1), 1)]
+    connectivity = [((0, 0, 1), (1, 0, -1), +1)]
     domain = Domain.join(domains, connectivity, 'domain')
 
     x,y = domain.coordinates
@@ -1466,7 +1435,7 @@ def test_interface_integral_2():
 
 
     patches = [A, B]
-    connectivity = [((0, 0, 1), (1, 0, -1), 1)]
+    connectivity = [((0, 0, 1), (1, 0, -1), +1)]
     domain = Domain.join(patches, connectivity, 'domain')
 
     x,y = domain.coordinates
@@ -1504,8 +1473,8 @@ def test_interface_integral_3():
 
 
     patches = [A, B, C]
-    connectivity = [((0, 0, 1), (1, 0, -1), 1),
-                    ((1, 0, 1), (2, 0, -1), 1)]
+    connectivity = [((0, 0, 1), (1, 0, -1), +1),
+                    ((1, 0, 1), (2, 0, -1), +1)]
     domain = Domain.join(patches, connectivity, 'domain')
 
     x,y = domain.coordinates
@@ -1543,7 +1512,7 @@ def test_interface_integral_4():
     B = Square('B')
 
     patches = [A, B]
-    connectivity = [((0, 0, 1), (1, 0, -1), 1)]
+    connectivity = [((0, 0, 1), (1, 0, -1), +1)]
     domain = Domain.join(patches, connectivity, 'AB')
 
     x,y = domain.coordinates
