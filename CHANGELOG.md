@@ -24,6 +24,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- #188: Drop support for Python 3.9 and require Python 3.10 or newer.
 - #143: Replace the `ornt` argument of `Interface` and `Boundary.join()` with a required `orientation` argument: `None` in 1D, `+1` or `-1` in 2D, and `(flag, sign1, sign2)` in 3D. Use `interface.orientation` instead of `interface.ornt`.
 - #188: Accept the connectivity of `Domain.join()` only as `(minus, plus, orientation[, name])` tuples, and name repeated interfaces between the same pair of patches `A|B`, `A|B#2`, and so on. `interfaces=` is accepted as an alias of `connectivity=`. For mapped patches, the names are built from the logical patch names, and a mapped interface and its logical interface have the same name.
 - #200: Store `ldim` and `pdim` instead of `dim` in the topology of domain files. This is a breaking change: `Domain.from_file()` rejects files with `dim`.
