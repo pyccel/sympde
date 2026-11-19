@@ -412,20 +412,25 @@ class Domain(BasicDomain):
         sstr = printer.doprint
         return '{}'.format(sstr(self.name))
 
-    def get_boundary(self, axis, ext):
+    def get_boundary(self, axis, ext, patch=None):
         """
-        Return the domain boundary at the given extremity of the required axis.
+        Return the exterior boundary at the given extremity of the required axis.
 
         Parameters
         ----------
         axis : int | None
-            Index of the coordinate (0 <= axis < ndim) which has constant value at the boundary.
+            Index of the coordinate (0 <= axis < ldim) which has constant value at the boundary.
             In 1D passing `axis=None` is accepted, in which case it is interpreted as 0.
         ext : {-1, +1}
             Extremity identifier:
               * If -1, the boundary is at the minimum value of $x_{axis}$
               * If +1, the boundary is at the maximum value of $x_{axis}$
-        
+        patch : InteriorDomain, Domain or Boundary, optional
+            The patch of the boundary, in any form accepted by
+            :meth:`patch_index`. It is required when several patches of a
+            multipatch domain have an exterior side at this axis and
+            extremity.
+
         Returns
         -------
         Boundary (from sympde.topology.basic)
@@ -445,17 +450,20 @@ class Domain(BasicDomain):
         if ext not in (-1, 1):
             raise ValueError('boundary extremity must be either -1 or 1')
 
-        if isinstance(self.boundary, Union):
-            x = [i for i in self.boundary.args if i.ext == ext and i.axis == axis]
-            if len(x) == 0:
-                raise ValueError(f'> could not find boundary with axis {axis} and ext {ext}')
-            return x[0]
+        sides = [side for side in self.exterior_sides
+                 if side.axis == axis and side.ext == ext]
+        if patch is not None:
+            index = self.patch_index(patch)
+            sides = [side for side in sides if self.patch_index(side) == index]
 
-        elif isinstance(self.boundary, Boundary):
-            if self.boundary.axis == axis and self.boundary.ext == ext:
-                return self.boundary
-
-        raise ValueError(f'> could not find boundary with axis {axis} and ext {ext}')
+        if not sides:
+            raise ValueError(f'> could not find boundary with axis {axis} and ext {ext}')
+        if len(sides) > 1:
+            patches = ', '.join(str(side.domain.name) for side in sides)
+            raise ValueError(
+                f'several patches have an exterior side with axis {axis} and '
+                f'ext {ext} ({patches}); give the patch')
+        return sides[0]
 
     def get_interface(self, patch1, patch2) -> tuple:
         """Return the interfaces that join two patches, in either order.

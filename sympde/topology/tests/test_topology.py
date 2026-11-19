@@ -570,6 +570,24 @@ def test_split_line():
         split(Line('L', bounds=(0, 2)), 3)
 
 #==============================================================================
+def test_get_boundary_of_multipatch_domain():
+    A, B = Square('A'), Square('B')
+    domain = Domain.join([A, B], [((0, 0, 1), (1, 0, -1), 1)], 'Omega')
+
+    # Only one patch has an exterior side with axis 0 and ext -1
+    assert domain.get_boundary(axis=0, ext=-1) == A.get_boundary(axis=0, ext=-1)
+
+    # Both patches have one with axis 1 and ext -1
+    with pytest.raises(ValueError, match='several patches'):
+        domain.get_boundary(axis=1, ext=-1)
+    assert domain.get_boundary(axis=1, ext=-1, patch=B) == \
+        B.get_boundary(axis=1, ext=-1)
+
+    # The faces of an interface are not exterior boundaries
+    with pytest.raises(ValueError, match='could not find'):
+        domain.get_boundary(axis=0, ext=1, patch=A)
+
+#==============================================================================
 def test_domain_join_rejects_mapped_and_unmapped_patches():
     A = Mapping('F', dim=2)(Square('A'))
     B = Square('B')
