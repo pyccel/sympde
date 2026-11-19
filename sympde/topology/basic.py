@@ -330,6 +330,7 @@ class Boundary(BasicDomain):
 
     @property
     def domain(self):
+        """The patch (interior domain) of this side."""
         return self.args[1]
 
     @property
@@ -337,21 +338,8 @@ class Boundary(BasicDomain):
         return restore_int_argument(self.args[2])
 
     @property
-    def normal_axis(self):
-        """Logical axis normal to this patch side.
-
-        This is the descriptive multipatch alias of :attr:`axis`.
-        """
-        return self.axis
-
-    @property
     def ext(self):
         return restore_int_argument(self.args[3])
-
-    @property
-    def patch(self):
-        """Patch interior owning this side; an alias of :attr:`domain`."""
-        return self.domain
 
     @property
     def intrinsic_dim(self):
@@ -638,18 +626,8 @@ class Interface(BasicDomain):
         return self.args[1]
 
     @property
-    def minus_side(self):
-        """Descriptive alias of :attr:`minus`."""
-        return self.minus
-
-    @property
     def plus(self):
         return self.args[2]
-
-    @property
-    def plus_side(self):
-        """Descriptive alias of :attr:`plus`."""
-        return self.plus
 
     @property
     def orientation(self):

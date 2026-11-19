@@ -873,11 +873,9 @@ def test_named_multipatch_api_preserves_single_patch_domain_api():
     interface, = domain.interface_map.values()
     assert domain.patches == (patch_a.interior, patch_b.interior)
     assert interface is domain.interfaces
-    assert interface.minus_side is interface.minus
-    assert interface.plus_side is interface.plus
-    assert interface.minus_side.patch is patch_a.interior
-    assert interface.minus_side.normal_axis == interface.minus.axis == 0
-    assert interface.minus_side.ext == +1
+    assert interface.minus.domain is patch_a.interior
+    assert interface.minus.axis == 0
+    assert interface.minus.ext == +1
     assert interface.orientation == -1
     assert interface.axis_map == ((1, 0, -1),)
     assert interface.ldim == 2

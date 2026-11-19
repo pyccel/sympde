@@ -322,9 +322,8 @@ face's own normal axis.  Therefore the two normal axes need not be equal.
 
 An ``Interface`` deliberately has no single ``axis`` property because its two
 faces may have different normal axes.  Read ``interface.minus.axis`` and
-``interface.plus.axis`` explicitly.  New multipatch code may use the clearer
-aliases ``interface.minus_side.normal_axis``,
-``interface.plus_side.normal_axis``, and ``interface.axis_map``.
+``interface.plus.axis`` explicitly, and ``interface.axis_map`` for the
+correspondence of the tangential axes.
 
 Identity orientation means that tangential positions retain their order and
 all signs are positive.  It does not mean that the two normal axes must be
