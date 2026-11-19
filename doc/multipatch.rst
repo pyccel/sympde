@@ -39,16 +39,16 @@ A multipatch domain has four important levels::
       |-- patches                     stable tuple of patch interiors
       |-- boundary                    faces not used by an interface
       |-- interface_map               name -> Interface
-      |-- exterior_sides              stable tuple of exterior faces
+      |-- boundary_sides              stable tuple of exterior faces
       |-- indexed_interfaces          name -> interface with patch indices
-      |-- indexed_exterior_sides      exterior faces with patch indices
+      |-- indexed_boundary_sides      exterior faces with patch indices
       |-- vertices                    all vertices, with patch indices
       `-- edges                       all edges, with patch indices
 
-``patches``, ``interface_map`` and ``exterior_sides`` are views of the
+``patches``, ``interface_map`` and ``boundary_sides`` are views of the
 symbolic objects used in expressions; ``domain.interior``,
 ``domain.interfaces`` and ``domain.boundary`` retain their original
-behavior.  ``indexed_interfaces``, ``indexed_exterior_sides``,
+behavior.  ``indexed_interfaces``, ``indexed_boundary_sides``,
 ``vertices`` and ``edges`` describe the topology with plain Python data for
 discretization codes.
 
@@ -168,7 +168,7 @@ The gallery also contains 3D domains. ``build_two_cube_3d`` constructs two
 sheared cubes with a cross-axis interface, and ``build_torus_3d`` constructs
 the four-patch hollow or solid toroidal volume. In the solid torus, the faces
 at minor radius zero collapse onto the centreline of the tube. They are still
-exterior sides of the domain, so they must be excluded when boundary
+boundary sides of the domain, so they must be excluded when boundary
 conditions are imposed on ``domain.boundary``. Additional diagnostic domains
 exercise oriented cube faces and three patches sharing an edge.
 ``build_multipatch_domain_3d`` selects these builders by name, including
@@ -400,7 +400,7 @@ Vertices, edges and indexed interfaces
 
 Discretization codes such as Psydac work with patch indices rather than with
 symbolic objects.  The properties ``indexed_interfaces``,
-``indexed_exterior_sides``, ``vertices`` and ``edges`` of a domain describe
+``indexed_boundary_sides``, ``vertices`` and ``edges`` of a domain describe
 its topology with plain Python data from the
 module ``sympde.topology.incidence``, in which a patch is given by its
 position in ``omega.patches``:
@@ -415,7 +415,7 @@ position in ``omega.patches``:
              interface.plus.ext,
              interface.orientation, interface.axis_map)
 
-   for side in omega.indexed_exterior_sides:
+   for side in omega.indexed_boundary_sides:
        print(side.patch_index, side.axis, side.ext)
 
    index = omega.patch_index(omega.patches[0])
@@ -436,7 +436,7 @@ position in ``omega.patches``:
 ``IndexedInterface``, ordered by name like ``omega.interface_map``.  Each
 side is a ``PatchSide`` with its patch index, normal axis and extremity.
 Since a face belongs to at most one interface, the interface names and the
-sides are both unique keys.  ``omega.indexed_exterior_sides`` contains the
+sides are both unique keys.  ``omega.indexed_boundary_sides`` contains the
 faces that are not part of an interface, as ``PatchSide`` objects too.  ``omega.patch_index`` returns the position of a
 patch, given by its interior, by a single-patch domain or by one of its
 boundaries; for a mapped domain, the logical patch is also accepted.
@@ -460,7 +460,7 @@ and fixes the sign of the tangential components shared along the edge.
 
 The faces, edges and vertices of the patches are best sorted by their
 codimension.  The faces (codimension 1) are glued in pairs by the interfaces,
-so that every face is an exterior side or a side of one interface.  The edges
+so that every face is a boundary side or a side of one interface.  The edges
 and vertices of higher codimension are glued transitively, through chains of
 interfaces, and any number of patches may meet at them:
 
@@ -469,7 +469,7 @@ interfaces, and any number of patches may meet at them:
 ====================  ============================  ============================
 codimension 1         ``indexed_interfaces``        ``indexed_interfaces``
                       and                           and
-                      ``indexed_exterior_sides``    ``indexed_exterior_sides``
+                      ``indexed_boundary_sides``    ``indexed_boundary_sides``
 codimension 2         ``vertices``                  ``edges``
 codimension 3                                       ``vertices``
 ====================  ============================  ============================
@@ -634,7 +634,7 @@ Serialization
 ``domain.todict()`` contains the interior, exterior boundary, and connectivity.
 ``domain.export('topology.h5')`` writes this dictionary as ``topology.yml`` in
 an HDF5 file. The exterior boundary is always represented as a list: an empty
-list for a fully closed domain, a one-element list for one exterior side, and a
+list for a fully closed domain, a one-element list for one boundary side, and a
 longer list otherwise. The reader also accepts the historical single-side
 dictionary representation.
 

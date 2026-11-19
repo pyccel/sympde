@@ -384,7 +384,7 @@ def test_boundary_free_cube_roundtrip(tmp_path, mapped):
 #==============================================================================
 def test_single_boundary_and_legacy_dictionary_roundtrip(tmp_path):
     # Every interface of a joined domain uses two faces, so a domain with a
-    # single exterior side is a topological one
+    # single boundary side is a topological one
     patch = InteriorDomain('A', ldim=1)
     domain = Domain('half-open-line', interiors=[patch],
                     boundaries=[Boundary('Gamma_1', patch, axis=0, ext=-1)])

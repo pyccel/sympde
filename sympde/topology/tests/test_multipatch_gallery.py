@@ -74,7 +74,7 @@ def test_multipatch_domain_builder(
     assert str(domain.name) == name
     assert len(domain.patches) == npatches
     assert len(domain.interface_map) == ninterfaces
-    assert len(domain.exterior_sides) == nboundaries
+    assert len(domain.boundary_sides) == nboundaries
     assert all(interface.orientation == +1
                for interface in domain.interface_map.values())
     for interface in domain.interface_map.values():
@@ -119,7 +119,7 @@ def test_build_rectangular_cartesian_multipatch_domain(mapping):
     assert tuple(str(p.logical_domain.name) for p in domain.patches) == (
         'Log_0_0', 'Log_0_2', 'Log_1_0', 'Log_1_1', 'Log_1_2')
     assert len(domain.interface_map) == 4
-    assert len(domain.exterior_sides) == 12
+    assert len(domain.boundary_sides) == 12
 
     patches = {str(p.logical_domain.name): p for p in domain.patches}
     top_left = patches['Log_0_0'].logical_domain
@@ -186,7 +186,7 @@ def test_build_two_cube_3d():
     assert str(domain.name) == 'mapped_two_cube_3d'
     assert len(domain.patches) == 2
     assert len(domain.interface_map) == 1
-    assert len(domain.exterior_sides) == 10
+    assert len(domain.boundary_sides) == 10
 
     interface, = domain.interface_map.values()
     assert interface.orientation == (-1, +1, -1)
@@ -214,7 +214,7 @@ def test_build_torus_3d(
     assert str(domain.name) == name
     assert len(domain.patches) == 4
     assert len(domain.interface_map) == ninterfaces
-    assert len(domain.exterior_sides) == nboundaries
+    assert len(domain.boundary_sides) == nboundaries
     assert all(interface.orientation == (+1, +1, +1)
                for interface in domain.interface_map.values())
 
@@ -261,7 +261,7 @@ def test_diagnostic_domain_builder(
     assert str(domain.name) == name
     assert len(domain.patches) == npatches
     assert len(domain.interface_map) == ninterfaces
-    assert len(domain.exterior_sides) == nboundaries
+    assert len(domain.boundary_sides) == nboundaries
 
 
 @pytest.mark.parametrize('name', ['unknown', None])

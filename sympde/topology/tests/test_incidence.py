@@ -205,9 +205,9 @@ def test_indexed_interfaces():
     )
     assert interfaces['top'].minus == PatchSide(0, 2, +1)
 
-    # Every face of the two cubes is an exterior side or a side of one
+    # Every face of the two cubes is a boundary side or a side of one
     # interface
-    exterior = domain.indexed_exterior_sides
+    exterior = domain.indexed_boundary_sides
     assert len(exterior) == 2 * 6 - 2 * len(interfaces)
     assert len(set(exterior)) == len(exterior)
     glued = {side for i in interfaces.values() for side in (i.minus, i.plus)}
@@ -216,7 +216,7 @@ def test_indexed_interfaces():
         for patch in range(2) for axis in range(3) for ext in (-1, 1)}
     assert exterior == tuple(
         PatchSide(domain.patch_index(side), side.axis, side.ext)
-        for side in domain.exterior_sides)
+        for side in domain.boundary_sides)
 
     with pytest.raises(TypeError):
         interfaces['other'] = interfaces['top']

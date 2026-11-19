@@ -432,7 +432,7 @@ def test_get_subdomain_preserves_repeated_and_self_interfaces():
         domain.interface_map['A|A']
     assert {
         (side.domain.name, side.axis, side.ext)
-        for side in patch_subdomain.exterior_sides
+        for side in patch_subdomain.boundary_sides
     } == {('A', 0, -1), ('A', 0, +1)}
 
     assert tuple(pair_subdomain.interface_map) == (
@@ -442,7 +442,7 @@ def test_get_subdomain_preserves_repeated_and_self_interfaces():
         for name in pair_subdomain.interface_map)
     assert ('B', 1, +1) in {
         (side.domain.name, side.axis, side.ext)
-        for side in pair_subdomain.exterior_sides
+        for side in pair_subdomain.boundary_sides
     }
 
 
@@ -470,7 +470,7 @@ def test_get_subdomain_preserves_mapped_3d_topology():
     assert subdomain.logical_domain is not None
     assert subdomain.patches == tuple(patch.interior for patch in patches[:3])
     assert tuple(subdomain.interface_map.values()) == retained_interfaces
-    assert cut_side in subdomain.exterior_sides
+    assert cut_side in subdomain.boundary_sides
     assert tuple(
         interface.axis_map for interface in subdomain.interface_map.values()
     ) == tuple(interface.axis_map for interface in retained_interfaces)
@@ -564,7 +564,7 @@ def test_split_line():
     assert (left.min_coords, left.max_coords) == ((0,), (0.5,))
     assert (right.min_coords, right.max_coords) == ((0.5,), (2,))
     assert tuple(domain.interface_map) == ('L_l|L_r',)
-    assert len(domain.exterior_sides) == 2
+    assert len(domain.boundary_sides) == 2
 
     with pytest.raises(ValueError, match='between'):
         split(Line('L', bounds=(0, 2)), 3)
@@ -574,7 +574,7 @@ def test_get_boundary_of_multipatch_domain():
     A, B = Square('A'), Square('B')
     domain = Domain.join([A, B], [((0, 0, 1), (1, 0, -1), 1)], 'Omega')
 
-    # Only one patch has an exterior side with axis 0 and ext -1
+    # Only one patch has a boundary side with axis 0 and ext -1
     assert domain.get_boundary(axis=0, ext=-1) == A.get_boundary(axis=0, ext=-1)
 
     # Both patches have one with axis 1 and ext -1
@@ -810,7 +810,7 @@ def test_domain_join_accepts_omitted_connectivity():
     domain = Domain.join([patch_a, patch_b], name='AB')
     assert domain.patches == (patch_a.interior, patch_b.interior)
     assert domain.interfaces is None
-    assert len(domain.exterior_sides) == 8
+    assert len(domain.boundary_sides) == 8
 
 
 #==============================================================================
@@ -854,7 +854,7 @@ def test_named_multipatch_api_preserves_single_patch_domain_api():
     assert Domain.join([single_patch], [], 'unused') is single_patch
     assert single_patch.patches == (single_patch.interior,)
     assert tuple(single_patch.interface_map.values()) == ()
-    assert single_patch.exterior_sides == single_patch.boundary.as_tuple()
+    assert single_patch.boundary_sides == single_patch.boundary.as_tuple()
     assert len(single_patch.vertices) == 4
     assert all(len(vertex.incidences) == 1 for vertex in single_patch.vertices)
 
@@ -879,7 +879,7 @@ def test_named_multipatch_api_preserves_single_patch_domain_api():
     assert interface.axis_map == ((1, 0, -1),)
     assert interface.ldim == 2
     assert interface.intrinsic_dim == 1
-    assert len(domain.exterior_sides) == 6
+    assert len(domain.boundary_sides) == 6
     shared = [vertex for vertex in domain.vertices
               if len(vertex.incidences) > 1]
     assert len(shared) == 2

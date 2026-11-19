@@ -29,7 +29,7 @@ from .basic            import Interval, Interface
 from .basic            import ProductDomain
 from .basic            import _as_integer
 from .incidence        import collect_edges, collect_vertices
-from .incidence        import index_exterior_sides, index_interfaces
+from .incidence        import index_boundary_sides, index_interfaces
 
 # TODO fix circular dependency between domain and mapping
 if TYPE_CHECKING:
@@ -306,7 +306,7 @@ class Domain(BasicDomain):
         raise ValueError(f'{patch} is not a patch of the domain {self.name}')
 
     @property
-    def exterior_sides(self) -> tuple:
+    def boundary_sides(self) -> tuple:
         """Exterior boundary sides as a stable tuple."""
         boundary = self.boundary
         if boundary is None:
@@ -316,15 +316,15 @@ class Domain(BasicDomain):
         return boundary.as_tuple()
 
     @property
-    def indexed_exterior_sides(self) -> tuple:
+    def indexed_boundary_sides(self) -> tuple:
         """Exterior boundary sides with patch indices instead of SymPy
         objects.
 
         Each side is a :class:`~sympde.topology.incidence.PatchSide` with the
         patch index, the normal axis and the extremity of the face, in the
-        order of :attr:`exterior_sides`.
+        order of :attr:`boundary_sides`.
         """
-        return index_exterior_sides(self)
+        return index_boundary_sides(self)
 
     @property
     def ldim(self) -> int:
@@ -373,7 +373,7 @@ class Domain(BasicDomain):
         which lists the edges of the patches identified with it through the
         interfaces, with their directions, and tells whether it lies on the
         exterior boundary. In 2D, the edges of the patches are their sides,
-        given by :attr:`indexed_interfaces` and :attr:`indexed_exterior_sides`,
+        given by :attr:`indexed_interfaces` and :attr:`indexed_boundary_sides`,
         so that this property raises a ``ValueError``.
         """
         if self._edges is None:
@@ -415,7 +415,7 @@ class Domain(BasicDomain):
         patch : InteriorDomain, Domain or Boundary, optional
             The patch of the boundary, in any form accepted by
             :meth:`patch_index`. It is required when several patches of a
-            multipatch domain have an exterior side at this axis and
+            multipatch domain have a boundary side at this axis and
             extremity.
 
         Returns
@@ -437,7 +437,7 @@ class Domain(BasicDomain):
         if ext not in (-1, 1):
             raise ValueError('boundary extremity must be either -1 or 1')
 
-        sides = [side for side in self.exterior_sides
+        sides = [side for side in self.boundary_sides
                  if side.axis == axis and side.ext == ext]
         if patch is not None:
             index = self.patch_index(patch)
@@ -448,7 +448,7 @@ class Domain(BasicDomain):
         if len(sides) > 1:
             patches = ', '.join(str(side.domain.name) for side in sides)
             raise ValueError(
-                f'several patches have an exterior side with axis {axis} and '
+                f'several patches have a boundary side with axis {axis} and '
                 f'ext {ext} ({patches}); give the patch')
         return sides[0]
 
@@ -495,7 +495,7 @@ class Domain(BasicDomain):
         ldim         = str(self.ldim)
         pdim         = str(self.pdim)
         interior     = self.interior.todict()
-        boundary     = [side.todict() for side in self.exterior_sides]
+        boundary     = [side.todict() for side in self.boundary_sides]
         connectivity = self._connectivity.todict()
 
         dtype = self.dtype
@@ -669,7 +669,7 @@ class Domain(BasicDomain):
             domain = Domain.join(domains, connectivity, domain_name)
 
         derived_boundary_sides = []
-        for boundary in domain.exterior_sides:
+        for boundary in domain.boundary_sides:
             boundary_data = boundary.todict()
             derived_boundary_sides.append((
                 str(boundary_data['patch']),
@@ -1124,9 +1124,10 @@ class Domain(BasicDomain):
         interior_dict = {interior.name: interior for interior in self.patches}
         interiors = [interior_dict[name] for name in names]
 
-        # Existing exterior sides remain exterior when their patch is selected.
+        # Existing boundary sides remain boundary sides when their patch is
+        # selected.
         boundaries = [
-            boundary for boundary in self.exterior_sides
+            boundary for boundary in self.boundary_sides
             if boundary.domain.name in selected_names
         ]
         interfaces = OrderedDict()

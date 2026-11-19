@@ -1206,7 +1206,7 @@ def build_torus_3d(
         Keep the positive inner minor radius. If false, replace it by zero to
         fill the tube. The resulting mapping is singular on the centreline:
         the faces at minor radius zero collapse onto it, but they remain
-        exterior sides of the domain and part of ``domain.boundary``.
+        boundary sides of the domain and part of ``domain.boundary``.
         Exclude them when imposing boundary conditions on the solid torus.
     toroidal_angle : float, default=2*pi
         Total angle swept around the axis of revolution, in radians. It must

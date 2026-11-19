@@ -23,17 +23,17 @@ __all__ = (
     'TopologyVertexIncidence',
     'collect_edges',
     'collect_vertices',
-    'index_exterior_sides',
+    'index_boundary_sides',
     'index_interfaces',
 )
 
 #==============================================================================
-# Interfaces and exterior sides
+# Interfaces and boundary sides
 #==============================================================================
 @dataclass(frozen=True)
 class PatchSide:
     """A face of the patch `patch_index`: a side of an interface, or an
-    exterior side of the domain."""
+    boundary side of the domain."""
 
     patch_index: int  # position of the patch in domain.patches
     axis: int         # logical axis normal to the face
@@ -98,10 +98,10 @@ def index_interfaces(domain):
     })
 
 
-def index_exterior_sides(domain):
-    """Return the exterior sides of a domain with patch indices.
+def index_boundary_sides(domain):
+    """Return the boundary sides of a domain with patch indices.
 
-    This is the value of :attr:`Domain.indexed_exterior_sides`.
+    This is the value of :attr:`Domain.indexed_boundary_sides`.
 
     Parameters
     ----------
@@ -112,10 +112,10 @@ def index_exterior_sides(domain):
     -------
     tuple[PatchSide, ...]
         The faces of the patches that are not part of an interface, in the
-        order of ``domain.exterior_sides``.
+        order of ``domain.boundary_sides``.
     """
     patch_indices = _patch_indices(domain)
-    return tuple(_side(side, patch_indices) for side in domain.exterior_sides)
+    return tuple(_side(side, patch_indices) for side in domain.boundary_sides)
 
 #==============================================================================
 # Vertices and edges
@@ -386,7 +386,7 @@ def collect_edges(domain):
         raise ValueError(
             'edges are only defined for 3D domains; in 2D, the edges of the '
             'patches are their sides, given by domain.indexed_interfaces and '
-            'domain.indexed_exterior_sides')
+            'domain.indexed_boundary_sides')
     names = tuple(_patch_name(patch) for patch in domain.patches)
     return tuple(
         TopologyEdge(
