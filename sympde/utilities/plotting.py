@@ -4,48 +4,18 @@
 """Inspection and plotting helpers for symbolic multipatch topology."""
 
 from dataclasses import dataclass
-from itertools import product
 import numbers
 import sys
 
 import numpy as np
 
+from sympde.topology.incidence import collect_topology_vertices
+
 __all__ = (
-    'TopologyVertexIncidence',
-    'TopologyVertex',
-    'collect_topology_vertices',
     'format_topology',
     'print_topology',
     'plot_domain',
 )
-
-
-@dataclass(frozen=True)
-class TopologyVertexIncidence:
-    """One patch-local representative of a topological vertex."""
-
-    patch_index: int
-    patch_name: str
-    logical_corner: tuple
-
-
-@dataclass(frozen=True)
-class TopologyVertex:
-    """A topological vertex and all patch-local corners identified with it."""
-
-    index: int
-    incidences: tuple
-    is_boundary: bool
-
-    @property
-    def patch_indices(self):
-        """Indices of incident patches, without duplicates."""
-        return tuple(dict.fromkeys(i.patch_index for i in self.incidences))
-
-    @property
-    def patches(self):
-        """Names of incident patches, without duplicates."""
-        return tuple(dict.fromkeys(i.patch_name for i in self.incidences))
 
 
 def _patch_name(patch):
@@ -57,106 +27,11 @@ def _interfaces(domain):
     return tuple(domain.interface_map.values())
 
 
-def _shared_vertices(domain):
-    return domain.shared_vertices
-
-
 def _check_topology_dimension(domain):
     if int(domain.dim) not in (2, 3):
         raise ValueError(
-            'topology vertex collection and annotated topology plotting '
-            'support only two- and three-dimensional domains')
-
-
-def collect_topology_vertices(domain):
-    """Return all vertices of a 2D or 3D domain and their patch incidences.
-
-    Unlike ``domain.corners``, which stores only equivalence classes created
-    by interface identifications, this function also includes unshared patch
-    corners. Each returned vertex records all of its patch-local
-    representatives and whether it lies on the exterior boundary.
-
-    Parameters
-    ----------
-    domain : sympde.topology.domain.Domain
-        A two- or three-dimensional logical or mapped domain.
-
-    Returns
-    -------
-    tuple[TopologyVertex, ...]
-        Topological vertices in deterministic patch/corner order.
-    """
-    _check_topology_dimension(domain)
-
-    ndim = int(domain.dim)
-    patches = domain.patches
-    patch_indices = {patch: index for index, patch in enumerate(patches)}
-    patch_names = tuple(_patch_name(patch) for patch in patches)
-    keys = [
-        (patch_index, tuple(corner))
-        for patch_index in range(len(patches))
-        for corner in product((0, 1), repeat=ndim)
-    ]
-    parent = {key: key for key in keys}
-
-    def find(key):
-        while parent[key] != key:
-            parent[key] = parent[parent[key]]
-            key = parent[key]
-        return key
-
-    def union(first, second):
-        first_root = find(first)
-        second_root = find(second)
-        if first_root != second_root:
-            parent[second_root] = first_root
-
-    for shared_vertex in _shared_vertices(domain):
-        members = [
-            (patch_indices[corner.domain], tuple(map(int, corner.coordinates)))
-            for corner in shared_vertex.corners
-        ]
-        for member in members[1:]:
-            union(members[0], member)
-
-    groups = {}
-    for key in keys:
-        groups.setdefault(find(key), []).append(key)
-
-    glued_faces = set()
-    for interface in _interfaces(domain):
-        for face in (interface.minus, interface.plus):
-            glued_faces.add(
-                (patch_indices[face.domain], int(face.axis), int(face.ext)))
-
-    ordered_groups = sorted(
-        (sorted(group) for group in groups.values()),
-        key=lambda group: group[0],
-    )
-
-    vertices = []
-    for index, group in enumerate(ordered_groups):
-        incidences = tuple(
-            TopologyVertexIncidence(
-                patch_index=patch_index,
-                patch_name=patch_names[patch_index],
-                logical_corner=corner,
-            )
-            for patch_index, corner in group
-        )
-        local_faces = (
-            (
-                incidence.patch_index,
-                axis,
-                -1 if incidence.logical_corner[axis] == 0 else 1,
-            )
-            for incidence in incidences
-            for axis in range(ndim)
-        )
-        is_boundary = any(face not in glued_faces for face in local_faces)
-        vertices.append(TopologyVertex(index, incidences, is_boundary))
-
-    return tuple(vertices)
+            'topology summaries and annotated topology plots support only '
+            'two- and three-dimensional domains')
 
 
 def format_topology(domain):

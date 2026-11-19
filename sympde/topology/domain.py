@@ -30,6 +30,7 @@ from .basic            import Interval, Interface
 from .basic            import CornerBoundary, CornerInterface
 from .basic            import ProductDomain
 from .basic            import _as_integer
+from .incidence        import index_interfaces
 
 # TODO fix circular dependency between domain and mapping
 if TYPE_CHECKING:
@@ -259,6 +260,53 @@ class Domain(BasicDomain):
         mapping semantics, including when the domain has zero or one interface.
         """
         return self.connectivity
+
+    @property
+    def indexed_interfaces(self):
+        """Interfaces with patch indices instead of SymPy objects, keyed by
+        their names.
+
+        Each value is an :class:`~sympde.topology.incidence.IndexedInterface`
+        with the name, the two sides as (patch index, axis, extremity), the
+        orientation and the axis map of the interface. The mapping is
+        read-only and ordered by name, like :attr:`interface_map`.
+        """
+        return index_interfaces(self)
+
+    def patch_index(self, patch) -> int:
+        """Return the position in :attr:`patches` of a patch.
+
+        Parameters
+        ----------
+        patch : InteriorDomain, Domain or Boundary
+            A patch of this domain, given by its interior, by a single-patch
+            domain, or by one of its boundaries. For a mapped domain, the
+            logical patch is also accepted.
+
+        Returns
+        -------
+        int
+            The index of the patch.
+        """
+        if isinstance(patch, Interface):
+            raise TypeError(
+                'an interface has two patches; use interface.minus or '
+                'interface.plus')
+        if isinstance(patch, Boundary):
+            patch = patch.domain
+        elif isinstance(patch, Domain):
+            if len(patch.patches) != 1:
+                raise TypeError('expected a single patch, not a multipatch domain')
+            patch = patch.patches[0]
+
+        candidates = [self.patches]
+        if self.logical_domain is not None:
+            candidates.append(self.logical_domain.patches)
+        for patches in candidates:
+            for index, candidate in enumerate(patches):
+                if candidate == patch:
+                    return index
+        raise ValueError(f'{patch} is not a patch of the domain {self.name}')
 
     @property
     def exterior_sides(self) -> tuple:

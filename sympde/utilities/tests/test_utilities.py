@@ -10,7 +10,6 @@ import sympde.utilities.utils as utilities_utils
 from sympde.topology.analytical_mapping import AffineMapping, IdentityMapping
 from sympde.topology.domain import Cube, Domain, Square
 from sympde.utilities.plotting import (
-    collect_topology_vertices,
     format_topology,
     plot_domain,
     print_topology,
@@ -214,41 +213,8 @@ def _make_oriented_cubes():
     )
 
 
-def test_collect_topology_vertices_shared_and_self_interfaces():
-    vertices = collect_topology_vertices(_make_three_patch_vertex())
-    interior_vertices = [vertex for vertex in vertices if not vertex.is_boundary]
-
-    assert len(interior_vertices) == 1
-    center = interior_vertices[0]
-    assert center.patch_indices == (0, 1, 2)
-    assert center.patches == ('A', 'B', 'C')
-    assert all(
-        incidence.logical_corner == (0, 0)
-        for incidence in center.incidences)
-
-    patch = Square('P')
-    self_connected = Domain.join(
-        [patch],
-        [((0, 0, -1), (0, 0, 1), +1)],
-        'self_connected',
-    )
-    self_vertices = collect_topology_vertices(self_connected)
-    assert len(self_vertices) == 2
-    assert all(len(vertex.incidences) == 2 for vertex in self_vertices)
-    assert all(vertex.patches == ('P',) for vertex in self_vertices)
-    assert all(vertex.is_boundary for vertex in self_vertices)
-
-
-def test_collect_and_format_3d_topology():
+def test_format_3d_topology():
     domain = _make_oriented_cubes()
-    vertices = collect_topology_vertices(domain)
-    shared_vertices = [
-        vertex for vertex in vertices if len(vertex.incidences) == 2]
-
-    assert len(vertices) == 12
-    assert len(shared_vertices) == 4
-    assert all(vertex.patches == ('A3', 'B3') for vertex in shared_vertices)
-
     text = format_topology(domain)
     assert 'patches: A3, B3' in text
     assert 'orientation=(-1, 1, -1)' in text

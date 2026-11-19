@@ -434,30 +434,73 @@ it is not a list of every unshared exterior vertex.  The symbolic
 ``domain.corners`` property remains available with its original
 ``None``/object/``Union`` cardinality behavior.
 
-Inspecting and plotting 2D and 3D topology
-==========================================
+Index-based topology for discretization
+=======================================
 
-The plotting utilities can turn the symbolic connectivity into structured
-vertex data, a textual summary, or an annotated figure.  No mesh or Psydac
-discretization is created:
+Discretization codes such as Psydac work with patch indices rather than with
+symbolic objects.  The module ``sympde.topology.incidence`` describes the
+topology of a domain with plain Python data, in which a patch is given by its
+position in ``omega.patches``:
 
 .. code-block:: python
 
-   from sympde.api import (
-       collect_topology_vertices,
-       plot_domain,
-       print_topology,
-   )
+   from sympde.api import collect_topology_edges, collect_topology_vertices
 
-   vertices = collect_topology_vertices(omega)
-   for vertex in vertices:
-       print(vertex.index, vertex.patches, vertex.is_boundary)
+   for name, interface in omega.indexed_interfaces.items():
+       print(name,
+             interface.minus.patch_index, interface.minus.axis,
+             interface.minus.ext,
+             interface.plus.patch_index, interface.plus.axis,
+             interface.plus.ext,
+             interface.orientation, interface.axis_map)
+
+   index = omega.patch_index(omega.patches[0])
+
+   for vertex in collect_topology_vertices(omega):
+       print(vertex.index, vertex.patch_indices, vertex.is_boundary)
        for incidence in vertex.incidences:
-           print(
-               incidence.patch_index,
-               incidence.patch_name,
-               incidence.logical_corner,
-           )
+           print(incidence.patch_index, incidence.logical_corner)
+
+   for edge in collect_topology_edges(omega):
+       print(edge.index, edge.patch_indices, edge.is_boundary)
+       for incidence in edge.incidences:
+           print(incidence.patch_index, incidence.logical_edge,
+                 incidence.direction)
+
+``omega.indexed_interfaces`` is a read-only mapping from interface name to an
+``IndexedInterface``, ordered by name like ``omega.interface_map``.  Each
+side is an ``InterfaceSide`` with its patch index, normal axis and extremity.
+Since a face belongs to at most one interface, the interface names and the
+sides are both unique keys.  ``omega.patch_index`` returns the position of a
+patch, given by its interior, by a single-patch domain or by one of its
+boundaries; for a mapped domain, the logical patch is also accepted.
+
+``collect_topology_vertices`` and ``collect_topology_edges`` start from every
+corner and every edge of every patch, and merge those identified through any
+chain of interfaces.  Their results therefore also contain unshared vertices
+and edges, and record for each of them whether it lies on the exterior
+boundary.  A patch-local
+corner is a tuple of ``0`` (lower end) and ``1`` (upper end) for every axis;
+a patch-local edge has ``None`` for the axis along the edge.  In 3D, an edge
+where several patches meet has one incidence per patch, for example the
+central edge of ``build_three_patch_shared_edge``.  The ``direction`` of an
+edge incidence is ``+1`` or ``-1``, relative to the first incidence of the
+edge, and fixes the sign of the tangential components shared along the edge.
+In 2D, the edges are the sides of the patches.
+
+Unlike ``omega.shared_vertices``, which contains symbolic
+``SharedVertex`` objects for the shared vertices only, these functions return
+plain data for all vertices and edges.
+
+Inspecting and plotting 2D and 3D topology
+==========================================
+
+The plotting utilities turn the symbolic connectivity into a textual summary
+or an annotated figure.  No mesh or Psydac discretization is created:
+
+.. code-block:: python
+
+   from sympde.api import plot_domain, print_topology
 
    print_topology(omega)
 
@@ -470,12 +513,6 @@ discretization is created:
        vertex_labels=True,
    )
    figure.savefig('omega-topology.png', dpi=180, bbox_inches='tight')
-
-``collect_topology_vertices`` differs deliberately from ``domain.corners``:
-it begins with every corner of every patch and merges the shared-corner
-equivalence classes.  Its result therefore includes unshared exterior
-vertices as well as interior or multiply represented vertices.  Patch names
-and integer patch indices are both recorded.
 
 In a 2D annotated topology plot, each side of an interface is drawn slightly
 inside its own patch: the minus side solid, the plus side dashed, in a colour

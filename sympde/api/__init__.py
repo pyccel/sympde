@@ -121,6 +121,10 @@ from sympde.topology.analytical_mapping import (
     TwistedTargetSurfaceMapping,
 )
 from sympde.topology.callable_mapping import CallableMapping
+from sympde.topology.incidence import (
+    collect_topology_edges,
+    collect_topology_vertices,
+)
 
 from sympde.expr.basic import BasicForm
 from sympde.expr.equation import Equation, EssentialBC, find
@@ -153,11 +157,7 @@ from sympde.exterior.calculus import d, delta, hodge, ip, jp, ld, wedge
 from sympde.exterior.form import DifferentialForm
 
 from sympde.printing.latex import latex
-from sympde.utilities.plotting import (
-    collect_topology_vertices,
-    plot_domain,
-    print_topology,
-)
+from sympde.utilities.plotting import plot_domain, print_topology
 
 __all__ = (
     'Constant',
@@ -234,6 +234,8 @@ __all__ = (
     'Union',
     'VectorFunction',
     'VectorFunctionSpace',
+    'collect_topology_edges',
+    'collect_topology_vertices',
     'dx',
     'dx1',
     'dx2',
@@ -288,7 +290,6 @@ __all__ = (
     'ld',
     'wedge',
     # Output and utilities
-    'collect_topology_vertices',
     'latex',
     'plot_domain',
     'print_topology',
