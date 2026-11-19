@@ -461,16 +461,27 @@ class Domain(BasicDomain):
 
         raise ValueError(f'> could not find boundary with axis {axis} and ext {ext}')
 
-    def get_interface(self, domain1, domain2):
-        interfaces = []
-        for i in self.interface:
-            if i.plus in [domain1, domain2]:
-                if i.minus in [domain1, domain2]:
-                    interfaces.append(i)
-        if interfaces:
-            return Union(*interfaces)
+    def get_interface(self, patch1, patch2) -> tuple:
+        """Return the interfaces that join two patches, in either order.
 
-        raise ValueError('> could not find the interface of {} and {}'.format(domain1, domain2))
+        Parameters
+        ----------
+        patch1, patch2 : InteriorDomain, Domain or Boundary
+            Patches of this domain, given in any form accepted by
+            :meth:`patch_index`. They may be the same patch, for its
+            self-interfaces.
+
+        Returns
+        -------
+        tuple[Interface, ...]
+            The interfaces between the two patches, ordered by name. Two
+            patches may share several interfaces, or none.
+        """
+        pair = {self.patch_index(patch1), self.patch_index(patch2)}
+        return tuple(
+            interface for interface in self.interface_map.values()
+            if {self.patch_index(interface.minus),
+                self.patch_index(interface.plus)} == pair)
 
     def get_interior(self, name):
         """return interior by name."""

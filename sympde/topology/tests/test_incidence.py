@@ -165,6 +165,27 @@ def test_patch_index():
         domain.patch_index(Square('C'))
 
 
+def test_get_interface():
+    A, B, C = Square('A'), Square('B'), Square('C')
+    domain = Domain.join(
+        [A, B, C],
+        [((0, 0, 1), (1, 0, -1), 1),
+         ((0, 1, 1), (1, 1, -1), 1),
+         ((1, 1, +1), (2, 0, -1), 1),
+         ((2, 1, -1), (2, 1, 1), 1)],
+        'Omega')
+
+    # Two interfaces between A and B, in either order and any form
+    assert domain.get_interface(A, B) == (
+        domain.interface_map['A|B'], domain.interface_map['A|B#2'])
+    assert domain.get_interface(B.interior, A) == domain.get_interface(A, B)
+    assert domain.get_interface(B, C) == (domain.interface_map['B|C'],)
+
+    # A self-interface, and no interface
+    assert domain.get_interface(C, C) == (domain.interface_map['C|C'],)
+    assert domain.get_interface(A, C) == ()
+
+
 def test_indexed_interfaces():
     A, B = Cube('A'), Cube('B')
     domain = Domain.join(
