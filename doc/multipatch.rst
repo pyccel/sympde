@@ -648,8 +648,8 @@ name and is preserved when the file is loaded. For example:
 
    connectivity:
      A|B:
-       - {patch: A, axis: '0', ext: '1', mapping: None, name: A_0}
-       - {patch: B, axis: '1', ext: '-1', mapping: None, name: B_1}
+       - {axis: '0', ext: '1', name: \Gamma_2, patch: A, mapping: None}
+       - {axis: '1', ext: '-1', name: \Gamma_3, patch: B, mapping: None}
        - [-1, 1, -1]
 
 Load topology with ``Domain.from_file(filename)``.  Files written by the old
