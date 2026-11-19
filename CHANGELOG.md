@@ -66,7 +66,7 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 
-- #188: Remove `Domain.corners` and `Domain.get_shared_corners()`. Use `Domain.vertices`, which contains all vertices of a domain with their patch indices, and tells whether they lie on the exterior boundary.
+- #188: Remove `Domain.corners`, `Domain.get_shared_corners()` and the classes `CornerBoundary` and `CornerInterface`. Use `Domain.vertices`, which contains all vertices of a domain with their patch indices, and tells whether they lie on the exterior boundary.
 - #73: Remove the `Edge` class and the `Interface.axis` property. Use `Boundary`, and `interface.minus.axis` and `interface.plus.axis`.
 - #188: Remove `plot_domain()`, `plot_2d()`, `plot_3d()`, `plot_2d_single_patch()` and `plot_3d_single_patch()` from `sympde.utilities.utils`. Use `plot_domain()` from `sympde.api` instead.
 - #194: Remove the re-exports of public objects from the package and subpackage initializers. Replace imports such as `from sympde.topology import Square` with `from sympde.api import Square`. `from sympde import __version__` keeps working.
