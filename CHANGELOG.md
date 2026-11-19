@@ -20,7 +20,7 @@ All notable changes to this project will be documented in this file.
 - [DEVELOPER] Add Python version 3.14 to the testing workflow.
 - [DEVELOPER] Add separate documentation dependencies and a strict Sphinx workflow that checks pull requests and publishes the documentation to GitHub Pages.
 - [DEVELOPER] Add an `AUTHORS` file listing the project maintainers and contributors.
-- [DEVELOPER] #106: Add the public helpers `new_basic()` and `restore_*_argument()` in `sympde.core.basic` for storing non-expression arguments in SymPy objects.
+- [DEVELOPER] Add the public helpers `new_basic()` and `restore_*_argument()` in `sympde.core.basic` for storing non-expression arguments in SymPy objects.
 
 ### Changed
 
