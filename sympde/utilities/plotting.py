@@ -155,17 +155,6 @@ def _map_points(patch, logical_points):
         for c in components])
 
 
-def _physical_dimension(domain):
-    dimensions = {
-        int(patch.mapping.pdim) if patch.mapping is not None
-        else int(patch.dim)
-        for patch in domain.patches
-    }
-    if len(dimensions) != 1:
-        raise ValueError('all plotted patches must have one physical dimension')
-    return dimensions.pop()
-
-
 def _face_points(patch, axis, ext, samples, inset=0.0):
     """Logical points on a face of a patch, of shape (samples, ..., dim).
 
@@ -672,7 +661,7 @@ def plot_domain(
     dim = int(domain.dim)
     if dim not in (2, 3):
         raise ValueError('domain plotting supports only dimensions 2 and 3')
-    if _physical_dimension(domain) != dim:
+    if domain.pdim != dim:
         raise ValueError(
             'domain plotting currently requires equal logical and physical '
             'dimensions')

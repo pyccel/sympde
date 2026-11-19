@@ -174,7 +174,15 @@ class Domain(BasicDomain):
         if len(interiors) == 0 and dim is None:
             raise TypeError('No interior domain found')
 
-        elif len(interiors) == 1:
+        # All patches must have the same physical dimension (#140)
+        pdims = {i.pdim for i in interiors}
+        if len(pdims) > 1:
+            raise ValueError(
+                'all interiors must have the same physical dimension, '
+                f'got {sorted(pdims)}')
+        pdim = pdims.pop() if pdims else dim
+
+        if len(interiors) == 1:
             dtype = interiors[0].dtype
             dim   = interiors[0].dim
             interiors = Union(*interiors)
@@ -192,7 +200,8 @@ class Domain(BasicDomain):
                          logical_domain, tuple(connectivity.values()))
         obj._connectivity   = connectivity
         obj._dtype          = dtype
-        obj._dim            = dim
+        obj._ldim           = dim
+        obj._pdim           = pdim
         obj._logical_domain = logical_domain
         return obj
 
@@ -331,9 +340,15 @@ class Domain(BasicDomain):
         return index_exterior_sides(self)
 
     @property
-    def dim(self) -> int:
-        """Dimension of the space"""
-        return self._dim
+    def ldim(self) -> int:
+        """Logical dimension of the domain."""
+        return self._ldim
+
+    @property
+    def pdim(self) -> int:
+        """Physical dimension of the domain: the common physical dimension
+        of its patches, which equals :attr:`ldim` without a mapping."""
+        return self._pdim
 
     @property
     def dtype(self) -> dict:
@@ -475,11 +490,8 @@ class Domain(BasicDomain):
 
     def todict(self):
         name         = str(self.name)
-        ldim         = str(self.dim)
-        pdims        = {m.pdim for m in self.mappings.values() if m is not None}
-        if len(pdims) > 1:
-            raise ValueError(f'all mappings must have the same physical dimension, got {sorted(pdims)}')
-        pdim         = str(pdims.pop()) if pdims else ldim
+        ldim         = str(self.ldim)
+        pdim         = str(self.pdim)
         interior     = self.interior.todict()
         boundary     = [side.todict() for side in self.exterior_sides]
         connectivity = self.connectivity.todict()
@@ -876,8 +888,7 @@ class Domain(BasicDomain):
 
         if not all(p.dim == patches[0].dim for p in patches):
             raise ValueError('all patches must have the same logical dimension')
-        pdims = {p.mapping.pdim if p.mapping is not None else p.dim for p in patches}
-        if len(pdims) > 1:
+        if len({p.pdim for p in patches}) > 1:
             raise ValueError('all patches must have the same physical dimension')
         if len({p.mapping is None for p in patches}) > 1:
             raise ValueError('either all patches or none must have a mapping')
@@ -1212,8 +1223,12 @@ class PeriodicDomain(BasicDomain):
         return self._boundary
 
     @property
-    def dim(self):
-        return self.domain.dim
+    def ldim(self):
+        return self.domain.ldim
+
+    @property
+    def pdim(self):
+        return self.domain.pdim
 
     @property
     def coordinates(self):
@@ -1239,7 +1254,7 @@ class NCubeInterior(InteriorDomain):
 
         obj = new_basic(cls, name, dim, dtype, min_coords, max_coords,
                          mapping, logical_domain)
-        obj._dim = dim
+        obj._ldim = dim
         obj._target = None
         obj._dtype = dtype
         obj._mapping = mapping

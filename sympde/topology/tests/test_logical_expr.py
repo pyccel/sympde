@@ -72,6 +72,16 @@ def test_logical_expr_1d_1():
 
 
 #==============================================================================
+def test_logical_expr_surface_in_3d():
+    # Regression test for #203: all physical coordinates are mapped
+    F = Mapping('F', ldim=2, pdim=3)
+    domain = F(Domain('Omega', dim=2))
+    x, y, z = domain.coordinates
+
+    assert LogicalExpr(z, domain) == F[2]
+    assert LogicalExpr(x + y + z, domain) == F[0] + F[1] + F[2]
+
+#==============================================================================
 def test_symbolic_expr_1d_1():
     dim = 1
 

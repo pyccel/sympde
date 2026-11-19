@@ -25,7 +25,7 @@ def _as_integer(value, name):
 
 #==============================================================================
 class BasicDomain(Basic):
-    _dim         = None
+    _ldim        = None
     _name        = None
     _coordinates = None
 
@@ -34,23 +34,35 @@ class BasicDomain(Basic):
         return self._name
 
     @property
+    def ldim(self):
+        """Logical dimension of the domain."""
+        return self._ldim
+
+    @property
+    def pdim(self):
+        """Physical dimension of the domain: the physical dimension of its
+        mapping, or its logical dimension if it has no mapping."""
+        mapping = getattr(self, 'mapping', None)
+        return self.ldim if mapping is None else int(mapping.pdim)
+
+    @property
     def dim(self):
-        return self._dim
+        return self.ldim
 
     @property
     def coordinates(self):
-        dim = self.dim
-
+        """The logical coordinates of a domain without a mapping, and the
+        physical coordinates of a mapped domain."""
         if self._coordinates is None:
             if self.mapping is None:
-                xyz = ['x1', 'x2', 'x3'][:dim]
+                xyz = ['x1', 'x2', 'x3'][:self.ldim]
             else:
-                xyz = ['x', 'y', 'z'][:dim]
+                xyz = ['x', 'y', 'z'][:self.pdim]
 
             xyz = [Symbol(i, real=True) for i in xyz]
             self._coordinates = xyz
 
-        if dim == 1:
+        if len(self._coordinates) == 1:
             return self._coordinates[0]
         else:
             return self._coordinates
@@ -90,7 +102,7 @@ class InteriorDomain(BasicDomain):
         obj = new_basic(cls, name, dim, dtype, mapping,
                          logical_domain, target)
 
-        obj._dim            = dim
+        obj._ldim           = dim
         obj._target         = target
         obj._dtype          = dtype
         obj._mapping        = mapping
@@ -117,10 +129,6 @@ class InteriorDomain(BasicDomain):
     @property
     def dtype(self):
         return self._dtype
-
-    @property
-    def dim(self):
-        return self._dim
 
     def _sympystr(self, printer):
         sstr = printer.doprint
@@ -173,8 +181,12 @@ class Union(BasicDomain):
         return obj
 
     @property
-    def dim(self):
-        return self.args[0].dim
+    def ldim(self):
+        return self.args[0].ldim
+
+    @property
+    def pdim(self):
+        return self.args[0].pdim
 
     def __len__(self):
         return len(self.args)
@@ -234,7 +246,7 @@ class ProductDomain(BasicDomain):
         assert(len(args) > 1)
 
         obj = Basic.__new__(cls, *args)
-        obj._dim = sum(i.dim for i in args)
+        obj._ldim = sum(i.ldim for i in args)
         obj._name = name
 
         return obj
@@ -252,7 +264,7 @@ class Interval(InteriorDomain):
 
     """
 
-    _dim = 1
+    _ldim = 1
 
     def __new__(cls, name=None, coordinate=None, bounds=None):
         name = restore_string_argument(name)
@@ -364,8 +376,17 @@ class Boundary(BasicDomain):
         return self._logical_domain
 
     @property
-    def dim(self):
-        return self.domain.dim
+    def ldim(self):
+        """Logical dimension of the patch owning this side.
+
+        The dimension of the side itself is :attr:`intrinsic_dim`.
+        """
+        return self.domain.ldim
+
+    @property
+    def pdim(self):
+        """Physical dimension of the patch owning this side."""
+        return self.domain.pdim
 
     @property
     def adjacent_boundaries(self):
@@ -605,8 +626,17 @@ class Interface(BasicDomain):
         return obj
 
     @property
-    def dim(self):
-        return self.minus.dim
+    def ldim(self):
+        """Logical dimension of the patches joined by this interface.
+
+        The dimension of the interface itself is :attr:`intrinsic_dim`.
+        """
+        return self.minus.ldim
+
+    @property
+    def pdim(self):
+        """Physical dimension of the patches joined by this interface."""
+        return self.minus.pdim
 
     @property
     def name(self):

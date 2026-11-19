@@ -510,6 +510,36 @@ def test_domain_join_rejects_different_physical_dimensions():
         Domain.join([B, C], [((0, 0, 1), (1, 0, -1), 1)], 'Omega')
 
 #==============================================================================
+def test_logical_and_physical_dimensions():
+    # Regression test for #203: a surface in 3D
+    F = Mapping('F', ldim=2, pdim=3)
+    surface = F(Square('Omega'))
+    side = surface.boundary.args[0]
+
+    assert (surface.ldim, surface.pdim) == (2, 3)
+    assert [str(x) for x in surface.coordinates] == ['x', 'y', 'z']
+    assert (surface.interior.ldim, surface.interior.pdim) == (2, 3)
+    assert (side.ldim, side.pdim, side.intrinsic_dim) == (2, 3, 1)
+
+    G = Mapping('G', ldim=2, pdim=3)
+    domain = Domain.join(
+        [F(Square('A')), G(Square('B'))], [((0, 0, 1), (1, 0, -1), 1)], 'D')
+    interface = domain.interface_map['A|B']
+    assert (domain.ldim, domain.pdim) == (2, 3)
+    assert (interface.ldim, interface.pdim, interface.intrinsic_dim) == (2, 3, 1)
+
+    # Without a mapping, the physical dimension is the logical one
+    square = Square('S')
+    assert (square.ldim, square.pdim) == (2, 2)
+    assert [str(x) for x in square.coordinates] == ['x1', 'x2']
+
+    # All patches of a domain have the same physical dimension
+    with pytest.raises(ValueError, match='same physical dimension'):
+        Domain('X', interiors=[
+            Mapping('H', ldim=2, pdim=2)(Square('C')).interior,
+            Mapping('K', ldim=2, pdim=3)(Square('E')).interior])
+
+#==============================================================================
 def test_domain_join_rejects_mapped_and_unmapped_patches():
     A = Mapping('F', dim=2)(Square('A'))
     B = Square('B')

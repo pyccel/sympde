@@ -612,7 +612,7 @@ class MappedDomain(BasicDomain):
         assert(isinstance(logical_domain, BasicDomain))
         if isinstance(logical_domain, Domain):
             kwargs = dict(
-            dim            = logical_domain._dim,
+            dim            = logical_domain.ldim,
             mapping        = mapping,
             logical_domain = logical_domain)
             boundaries     = logical_domain.boundary
@@ -928,23 +928,23 @@ class LogicalExpr(CalculusFunction):
         types = (ScalarFunction, VectorFunction, DifferentialOperator, Trace, Integral)
 
         mapping   = domain.mapping
-        dim       = domain.dim
+        ldim      = domain.ldim
+        pdim      = domain.pdim
         assert mapping
 
-        # TODO this is not the dim of the domain
-        l_coords  = ['x1', 'x2', 'x3'][:dim]
+        l_coords  = ['x1', 'x2', 'x3'][:ldim]
         ph_coords = ['x', 'y', 'z']
 
         if not has(expr, types):
             if has(expr, DiffOperator):
                 return cls( expr, domain, evaluate=False)
             else:
-                syms = symbols(ph_coords[:dim], real=True)
+                syms = symbols(ph_coords[:pdim], real=True)
                 if isinstance(mapping, InterfaceMapping):
                     mapping = mapping.minus
                     # here we assume that the two mapped domains
                     # are identical in the interface so we choose one of them
-                Ms   = [mapping[i] for i in range(dim)]
+                Ms   = [mapping[i] for i in range(pdim)]
                 expr = expr.subs(list(zip(syms, Ms)))
 
                 if mapping.is_analytical:
@@ -974,7 +974,7 @@ class LogicalExpr(CalculusFunction):
 
         elif isinstance(expr, logical_partial_derivatives):
             if mapping.is_analytical:
-                Ms   = [mapping[i] for i in range(dim)]
+                Ms   = [mapping[i] for i in range(pdim)]
                 expr = expr.subs(list(zip(Ms, mapping.expressions)))
             return expr
 
@@ -1133,16 +1133,16 @@ class LogicalExpr(CalculusFunction):
             elif isinstance(arg, MatrixElement):
                 arg = TerminalExpr(arg, domain=domain.logical_domain)
 
-            if dim == 1:
+            if ldim == 1:
                 lgrad_arg = LogicalGrad_1d(arg)
 
                 if not isinstance(lgrad_arg, (list, tuple, Tuple, Matrix)):
                     lgrad_arg = Tuple(lgrad_arg)
 
-            elif dim == 2:
+            elif ldim == 2:
                 lgrad_arg = LogicalGrad_2d(arg)
 
-            elif dim == 3:
+            elif ldim == 3:
                 lgrad_arg = LogicalGrad_3d(arg)
             
             grad_arg = Covariant(mapping, lgrad_arg)
@@ -1163,13 +1163,13 @@ class LogicalExpr(CalculusFunction):
                 arg = TerminalExpr(arg, domain=domain.logical_domain)
 
             # ..p
-            if dim == 1:
+            if ldim == 1:
                 lgrad_arg = LogicalGrad_1d(arg)
 
-            elif dim == 2:
+            elif ldim == 2:
                 lgrad_arg = LogicalGrad_2d(arg)
 
-            elif dim == 3:
+            elif ldim == 3:
                 lgrad_arg = LogicalGrad_3d(arg)
 
             grad_arg = Covariant(mapping, lgrad_arg)
@@ -1190,13 +1190,13 @@ class LogicalExpr(CalculusFunction):
             elif isinstance(arg, MatrixElement):
                 arg = TerminalExpr(arg, domain=domain.logical_domain)
 
-            if dim == 1:
+            if ldim == 1:
                 lgrad_arg = LogicalGrad_1d(arg)
 
-            elif dim == 2:
+            elif ldim == 2:
                 lgrad_arg = LogicalGrad_2d(arg)
 
-            elif dim == 3:
+            elif ldim == 3:
                 lgrad_arg = LogicalGrad_3d(arg)
 
             grad_arg = Covariant(mapping, lgrad_arg)
