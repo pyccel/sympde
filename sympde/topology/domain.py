@@ -4,7 +4,6 @@ from __future__ import annotations
 import os
 
 from collections import OrderedDict
-from itertools import product
 from typing import Union as TypeUnion, Optional, List, Iterable, TYPE_CHECKING
 # Union clashes with core.basic.Union
 

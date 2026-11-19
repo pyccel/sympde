@@ -311,10 +311,10 @@ def _identify_through_interfaces(domain, dim):
         return ((patch_index, axis, -1 if value == 0 else 1)
                 for axis, value in enumerate(position) if value is not None)
 
-    result = []
     def group_key(group):
         return _sort_key(min(group, key=_sort_key))
 
+    result = []
     for group in sorted(groups.values(), key=group_key):
         group = sorted(group, key=_sort_key)
         signs = tuple(find(key)[1] * find(group[0])[1] for key in group)
