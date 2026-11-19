@@ -25,6 +25,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- #188: Add an optional `patch` argument to `Domain.get_boundary()`, which raises a `ValueError` when several patches of a multipatch domain have an exterior side with the given axis and extremity, instead of returning one of them.
 - #203: Replace the `dim` property and the `dim` argument of the domain classes (`Domain`, `InteriorDomain`, `NCube`, `Boundary`, `Interface`, ...) with `ldim`. This is a breaking change: use `domain.ldim` and `Domain(name, ldim=...)`. The `dim` argument of the mappings, a shorthand for `ldim = pdim = dim`, is kept.
 - #203: Build the physical coordinates of a mapped domain from its physical dimension, so that a surface in 3D has the coordinates `[x, y, z]`, and map all of them in `LogicalExpr` and `TerminalExpr`.
 - #188: Drop support for Python 3.9 and require Python 3.10 or newer.
@@ -48,6 +49,9 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- #188: Fix `Domain.get_interface()`, which always failed. It returns the interfaces that join two patches.
+- #188: Raise a `ValueError` in `Domain.from_file()` when an interface references an unknown patch, instead of a `KeyError`.
+- #188: Fix `split()`, which split a `Line` domain with wrong bounds and an invalid interface.
 - #203: Check in the `Domain` constructor that all interiors have the same physical dimension, as `Domain.join()` does.
 - #188: Reject interfaces in `Domain.join()` that join a face with itself or use a face that is already part of another interface.
 - #188: Reject patches in `Domain.join()` of which only some have a mapping, instead of dropping the mapping of the domain.
@@ -63,6 +67,7 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 
+- #188: Remove `Domain.set_interfaces()`, the item assignment of `Connectivity` and `Connectivity.patches`. The interfaces of a domain are read-only.
 - #188: Remove `Domain.corners`, `Domain.get_shared_corners()` and the classes `CornerBoundary` and `CornerInterface`. Use `Domain.vertices`, which contains all vertices of a domain with their patch indices, and tells whether they lie on the exterior boundary.
 - #73: Remove the `Edge` class and the `Interface.axis` property. Use `Boundary`, and `interface.minus.axis` and `interface.plus.axis`.
 - #188: Remove `plot_domain()`, `plot_2d()`, `plot_3d()`, `plot_2d_single_patch()` and `plot_3d_single_patch()` from `sympde.utilities.utils`. Use `plot_domain()` from `sympde.api` instead.
