@@ -25,7 +25,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - #143: Replace the `ornt` argument of `Interface` and `Boundary.join()` with a required `orientation` argument: `None` in 1D, `+1` or `-1` in 2D, and `(flag, sign1, sign2)` in 3D. Use `interface.orientation` instead of `interface.ornt`.
-- #188: Accept the connectivity of `Domain.join()` only as `(minus, plus, orientation[, name])` tuples, and name repeated interfaces between the same pair of patches `A|B`, `A|B#2`, and so on. For mapped patches, the names are built from the logical patch names, and a mapped interface and its logical interface have the same name.
+- #188: Accept the connectivity of `Domain.join()` only as `(minus, plus, orientation[, name])` tuples, and name repeated interfaces between the same pair of patches `A|B`, `A|B#2`, and so on. `interfaces=` is accepted as an alias of `connectivity=`. For mapped patches, the names are built from the logical patch names, and a mapped interface and its logical interface have the same name.
 - #200: Store `ldim` and `pdim` instead of `dim` in the topology of domain files. This is a breaking change: `Domain.from_file()` rejects files with `dim`.
 - #190: Convert the README to Markdown and expand the installation, testing, and documentation-build instructions.
 - #194: Use explicit internal imports and load optional dependencies only when needed.
@@ -40,8 +40,6 @@ All notable changes to this project will be documented in this file.
 - [DEVELOPER] Modernize the package metadata and consolidate the pytest and coverage configuration in `pyproject.toml`.
 - [DEVELOPER] Modernize the Sphinx configuration, API-documentation generation, and API docstring markup.
 - [DEVELOPER] Remove the leading underscore from the module-level names used by other SymPDE modules, and rename `_coeffs_registery` to `coefficient_types`.
-- [DEVELOPER] Modernize the package metadata and consolidate the pytest and coverage configuration in `pyproject.toml`.
-- [DEVELOPER] Modernize the Sphinx configuration, API-documentation generation, and API docstring markup.
 - [DEVELOPER] Test the minimum supported SymPy version in a dedicated CI job.
 
 ### Fixed
@@ -50,19 +48,13 @@ All notable changes to this project will be documented in this file.
 - #188: Reject patches in `Domain.join()` of which only some have a mapping, instead of dropping the mapping of the domain.
 - #140: Reject patches with different physical dimensions in `Domain.join()`, instead of creating an inconsistent domain.
 - #144: Restore the interface names and exterior boundaries of a domain read with `Domain.from_file()` as they were exported, and read domains whose patches are `InteriorDomain` objects without a `dtype` instead of failing with an `AssertionError`.
-- #140: Fix the rendering of the `Domain.join()` API documentation.
 - #200: Keep the physical dimension of the mappings in `Domain.export()` and `Domain.from_file()`.
 - #166: Restore warning-free documentation builds, including bibliography and mathematical notation support.
 - #106: Preserve symbol assumptions and free-symbol information with modern SymPy.
 - #106: Keep same-named functions from different function spaces distinct during symbolic simplification.
 - #106: Fix form-linearity checks involving integral sums with modern SymPy.
-- #194: Fix plotting of unmapped two-dimensional domains with `plot_2d()`.
-- #106: Preserve symbol assumptions and free-symbol information with modern SymPy.
-- #106: Keep same-named functions from different function spaces distinct during symbolic simplification.
-- #106: Fix form-linearity checks involving integral sums with modern SymPy.
 - #106: Raise a `ValueError` when a `Domain` is created without `interiors` or `dim`, instead of failing with a `TypeError` when only a connectivity is given.
 - #191: Fix the rendering of the `Domain.join()` API documentation.
-- #166: Restore warning-free documentation builds, including bibliography and mathematical notation support.
 
 ### Removed
 
