@@ -24,7 +24,7 @@ topo_dir = os.path.join(base_dir, 'data')
 
 
 def test_structural_arguments_are_sympy_objects():
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
     boundary = Boundary(r'\Gamma_1', domain)
     interface = Interface('I', boundary, boundary, 1)
     square = Square('S', bounds1=(-1, 2), bounds2=(3, 4))
@@ -39,7 +39,7 @@ def test_structural_arguments_are_sympy_objects():
         assert all(isinstance(arg, Basic) for arg in preorder_traversal(expr))
         assert expr.func(*expr.args) == expr
 
-    replacement = Domain('Replacement', dim=2)
+    replacement = Domain('Replacement', ldim=2)
     replaced_boundary = boundary.xreplace({domain: replacement})
     assert replaced_boundary.domain == replacement
 
@@ -77,8 +77,8 @@ def test_ncube_reconstruction_keeps_coordinates():
 
 #==============================================================================
 def test_interior_domain():
-    D1 = InteriorDomain('D1', dim=2)
-    D2 = InteriorDomain('D2', dim=2)
+    D1 = InteriorDomain('D1', ldim=2)
+    D2 = InteriorDomain('D2', ldim=2)
 
     assert D1.todict() == {'name': 'D1', 'mapping':'None'}
     assert D2.todict() == {'name': 'D2', 'mapping':'None'}
@@ -87,7 +87,7 @@ def test_interior_domain():
 
     D = Union(D1, D2)
 
-    assert D.dim == 2
+    assert D.ldim == 2
     assert len(D) == 2
     assert D.todict() == [{'name': 'D1', 'mapping':'None'},
                           {'name': 'D2', 'mapping':'None'}]
@@ -125,8 +125,8 @@ def test_topology_1(tmp_path):
 def test_topological_domain_export_and_from_file(tmp_path):
     # Regression test for #144: the patches are InteriorDomain objects without
     # a dtype, and their boundaries have no axis or extremity
-    A = InteriorDomain('A', dim=2)
-    B = InteriorDomain('B', dim=2)
+    A = InteriorDomain('A', ldim=2)
+    B = InteriorDomain('B', ldim=2)
     A1, A2, A3 = [Boundary(f'Gamma_{i}', A) for i in (1, 2, 3)]
     B1, B2, B3 = [Boundary(f'Gamma_{i}', B) for i in (1, 2, 3)]
 
@@ -143,8 +143,8 @@ def test_topological_domain_export_and_from_file(tmp_path):
     assert D.todict() == Omega.todict()
 
     # 3D patches with known boundary axes and extremities
-    C = InteriorDomain('C', dim=3)
-    E = InteriorDomain('E', dim=3)
+    C = InteriorDomain('C', ldim=3)
+    E = InteriorDomain('E', ldim=3)
     interface = Interface('I',
                           Boundary('Gamma_1', C, axis=0, ext=1),
                           Boundary('Gamma_2', E, axis=1, ext=-1),
@@ -198,8 +198,8 @@ def test_export_mappings_with_different_pdim(tmp_path):
 
 #==============================================================================
 def test_domain_1():
-    Omega_1 = InteriorDomain('Omega_1', dim=2)
-    Omega_2 = InteriorDomain('Omega_2', dim=2)
+    Omega_1 = InteriorDomain('Omega_1', ldim=2)
+    Omega_2 = InteriorDomain('Omega_2', ldim=2)
 
     Gamma_1 = Boundary('Gamma_1', Omega_1)
     Gamma_2 = Boundary('Gamma_2', Omega_2)
@@ -209,13 +209,13 @@ def test_domain_1():
                    interiors=[Omega_1, Omega_2],
                    boundaries=[Gamma_1, Gamma_2, Gamma_3])
 
-    assert Omega.dim == 2
+    assert Omega.ldim == 2
     assert len(Omega.interior) == 2
     assert len(Omega.boundary) == 3
 
 #==============================================================================
 def test_boundary_1():
-    Omega_1 = InteriorDomain('Omega_1', dim=2)
+    Omega_1 = InteriorDomain('Omega_1', ldim=2)
 
     Gamma_1 = Boundary('Gamma_1', Omega_1)
     Gamma_2 = Boundary('Gamma_2', Omega_1)
@@ -230,7 +230,7 @@ def test_boundary_1():
 
 #==============================================================================
 def test_boundary_2():
-    Omega_1 = InteriorDomain('Omega_1', dim=2)
+    Omega_1 = InteriorDomain('Omega_1', ldim=2)
 
     Gamma_1 = Boundary('Gamma_1', Omega_1)
     Gamma_2 = Boundary('Gamma_2', Omega_1)
@@ -246,7 +246,7 @@ def test_boundary_2():
 
 #==============================================================================
 def test_boundary_3():
-    Omega_1 = InteriorDomain('Omega_1', dim=2)
+    Omega_1 = InteriorDomain('Omega_1', ldim=2)
 
     Gamma_1 = Boundary(r'\Gamma_1', Omega_1, axis=0, ext=-1)
     Gamma_4 = Boundary(r'\Gamma_4', Omega_1, axis=1, ext= 1)
@@ -260,8 +260,8 @@ def test_boundary_3():
 
 #==============================================================================
 def test_element():
-    D1 = InteriorDomain('D1', dim=2)
-    D2 = InteriorDomain('D2', dim=2)
+    D1 = InteriorDomain('D1', ldim=2)
+    D2 = InteriorDomain('D2', ldim=2)
 
     D = Union(D1, D2)
 
@@ -832,7 +832,7 @@ def test_named_multipatch_api_preserves_single_patch_domain_api():
     assert interface.minus_side.ext == +1
     assert interface.orientation == -1
     assert interface.axis_map == ((1, 0, -1),)
-    assert interface.patch_dim == 2
+    assert interface.ldim == 2
     assert interface.intrinsic_dim == 1
     assert len(domain.exterior_sides) == 6
     shared = [vertex for vertex in domain.vertices

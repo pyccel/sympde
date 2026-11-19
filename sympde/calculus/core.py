@@ -10,7 +10,7 @@ naturally give 0
 >>> from sympde.api import ScalarFunction
 >>> from sympde.api import element_of
 
->>> domain = Domain('Omega', dim=2)
+>>> domain = Domain('Omega', ldim=2)
 >>> V = ScalarFunctionSpace('V', domain)
 >>> u,u1,u2 = [ScalarFunction(V, name=i) for i in ['u', 'u1', 'u2']]
 
@@ -18,7 +18,7 @@ naturally give 0
 0
 
 
->>> domain = Domain('Omega', dim=2)
+>>> domain = Domain('Omega', ldim=2)
 
 >>> V = ScalarFunctionSpace('V', domain)
 >>> W = VectorFunctionSpace('W', domain)
@@ -291,7 +291,7 @@ class Dot(BasicOperator):
     >>> from sympde.api import VectorFunctionSpace
     >>> from sympde.api import VectorFunction
 
-    >>> domain = Domain('Omega', dim=2)
+    >>> domain = Domain('Omega', ldim=2)
     >>> V = VectorFunctionSpace('V', domain)
     >>> u,u1,u2 = [VectorFunction(V, name=i) for i in ['u', 'u1', 'u2']]
     >>> v,v1,v2 = [VectorFunction(V, name=i) for i in ['v', 'v1', 'v2']]
@@ -448,7 +448,7 @@ class Inner(BasicOperator):
     >>> from sympde.api import VectorFunctionSpace
     >>> from sympde.api import VectorFunction
 
-    >>> domain = Domain('Omega', dim=2)
+    >>> domain = Domain('Omega', ldim=2)
     >>> V = VectorFunctionSpace('V', domain)
     >>> u,u1,u2 = [VectorFunction(V, name=i) for i in ['u', 'u1', 'u2']]
     >>> v,v1,v2 = [VectorFunction(V, name=i) for i in ['v', 'v1', 'v2']]
@@ -592,7 +592,7 @@ class Convect(BasicOperator):
 
     Examples
 
-    >>> domain = Domain('Omega', dim=2)
+    >>> domain = Domain('Omega', ldim=2)
     >>> V = ScalarFunctionSpace('V', domain)
     >>> W = VectorFunctionSpace('W', domain)
     >>> alpha, beta, gamma = [Constant(i) for i in ['alpha','beta','gamma']]
@@ -677,7 +677,7 @@ class Grad(DiffOperator):
     >>> from sympde.api import VectorFunctionSpace
     >>> from sympde.api import VectorFunction
 
-    >>> domain = Domain('Omega', dim=2)
+    >>> domain = Domain('Omega', ldim=2)
     >>> V = ScalarFunctionSpace('V', domain)
     >>> u,u1,u2 = [ScalarFunction(V, name=i) for i in ['u', 'u1', 'u2']]
     >>> v,v1,v2 = [ScalarFunction(V, name=i) for i in ['v', 'v1', 'v2']]
@@ -795,7 +795,7 @@ class Curl(DiffOperator):
     >>> from sympde.api import VectorFunctionSpace
     >>> from sympde.api import VectorFunction
 
-    >>> domain = Domain('Omega', dim=2)
+    >>> domain = Domain('Omega', ldim=2)
     >>> V = VectorFunctionSpace('V', domain)
     >>> u,u1,u2 = [VectorFunction(V, name=i) for i in ['u', 'u1', 'u2']]
     >>> v,v1,v2 = [VectorFunction(V, name=i) for i in ['v', 'v1', 'v2']]
@@ -824,8 +824,8 @@ class Curl(DiffOperator):
             r = Basic.__new__(cls, expr, **options)
 
         if r and _is_sympde_atom(expr):
-            r.is_scalar      = expr.space.domain.dim == 2
-            r.is_commutative = expr.space.domain.dim == 2
+            r.is_scalar      = expr.space.domain.ldim == 2
+            r.is_commutative = expr.space.domain.ldim == 2
 
         return r
 
@@ -884,7 +884,7 @@ class Rot(DiffOperator):
     >>> from sympde.api import VectorFunctionSpace
     >>> from sympde.api import VectorFunction
 
-    >>> domain = Domain('Omega', dim=2)
+    >>> domain = Domain('Omega', ldim=2)
     >>> V = ScalarFunctionSpace('V', domain)
     >>> u,u1,u2 = [ScalarFunction(V, name=i) for i in ['u', 'u1', 'u2']]
     >>> v,v1,v2 = [ScalarFunction(V, name=i) for i in ['v', 'v1', 'v2']]
@@ -963,7 +963,7 @@ class Div(DiffOperator):
     >>> from sympde.api import VectorFunctionSpace
     >>> from sympde.api import VectorFunction
 
-    >>> domain = Domain('Omega', dim=2)
+    >>> domain = Domain('Omega', ldim=2)
     >>> V = VectorFunctionSpace('V', domain)
     >>> u,u1,u2 = [VectorFunction(V, name=i) for i in ['u', 'u1', 'u2']]
     >>> v,v1,v2 = [VectorFunction(V, name=i) for i in ['v', 'v1', 'v2']]
@@ -1068,7 +1068,7 @@ class Laplace(DiffOperator):
     >>> from sympde.api import VectorFunctionSpace
     >>> from sympde.api import VectorFunction
 
-    >>> domain = Domain('Omega', dim=2)
+    >>> domain = Domain('Omega', ldim=2)
     >>> V = ScalarFunctionSpace('V', domain)
     >>> u,u1,u2 = [ScalarFunction(V, name=i) for i in ['u', 'u1', 'u2']]
     >>> v,v1,v2 = [ScalarFunction(V, name=i) for i in ['v', 'v1', 'v2']]
@@ -1152,7 +1152,7 @@ class Hessian(DiffOperator):
     >>> from sympde.api import VectorFunctionSpace
     >>> from sympde.api import VectorFunction
 
-    >>> domain = Domain('Omega', dim=2)
+    >>> domain = Domain('Omega', ldim=2)
     >>> V = ScalarFunctionSpace('V', domain)
     >>> u,u1,u2 = [ScalarFunction(V, name=i) for i in ['u', 'u1', 'u2']]
     >>> v,v1,v2 = [ScalarFunction(V, name=i) for i in ['v', 'v1', 'v2']]

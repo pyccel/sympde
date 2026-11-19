@@ -140,7 +140,7 @@ class LatexPrinter(LatexPrinterSympy):
     def _print_Integral(self, expr):
 
         if expr.is_domain_integral:
-            dim = expr.domain.dim
+            dim = expr.domain.ldim
             if dim == 1:
                 dx = r'~dx'
 

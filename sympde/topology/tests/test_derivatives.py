@@ -27,7 +27,7 @@ def indices_as_str(a):
 def test_partial_derivatives_1():
     print('============ test_partial_derivatives_1 ==============')
 
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
     M      = Mapping('M', dim=2)
 
     mapped_domain = M(domain)
@@ -72,7 +72,7 @@ def test_partial_derivatives_1():
 def test_partial_derivatives_2():
     print('============ test_partial_derivatives_2 ==============')
 
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
     M      = Mapping('M', dim=2)
 
     mapped_domain = M(domain)

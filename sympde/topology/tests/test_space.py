@@ -17,7 +17,7 @@ from sympde.topology.space import Projector
 
 
 def test_function_symbol_identity():
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
     scalar_space = ScalarFunctionSpace('V', domain)
     equivalent_scalar_space = ScalarFunctionSpace('V', domain)
     other_scalar_space = ScalarFunctionSpace('W', domain)
@@ -48,7 +48,7 @@ def test_function_symbol_identity():
 def test_space_1d_1():
 
     DIM = 1
-    domain = Domain('Omega', dim=DIM)
+    domain = Domain('Omega', ldim=DIM)
 
     V1 = ScalarFunctionSpace('V1', domain)
     V2 = ScalarFunctionSpace('V2', domain)
@@ -72,7 +72,7 @@ def test_space_1d_1():
 def test_space_2d_1():
 
     DIM = 2
-    domain = Domain('Omega', dim=DIM)
+    domain = Domain('Omega', ldim=DIM)
 
     V1 = ScalarFunctionSpace('V1', domain)
     V2 = ScalarFunctionSpace('V2', domain)
@@ -120,7 +120,7 @@ def test_space_2d_1():
 def test_space_3d_1():
 
     DIM = 3
-    domain = Domain('Omega', dim=DIM)
+    domain = Domain('Omega', ldim=DIM)
 
     V1 = ScalarFunctionSpace('V1', domain)
     V2 = ScalarFunctionSpace('V2', domain)
@@ -144,7 +144,7 @@ def test_space_3d_1():
 def test_space_2d_2():
 
     DIM = 2
-    domain = Domain('Omega', dim=DIM)
+    domain = Domain('Omega', ldim=DIM)
 
     H1    =       ScalarFunctionSpace('V0', domain, kind='H1')
     Hcurl = VectorFunctionSpace('V1', domain, kind='Hcurl')
@@ -168,7 +168,7 @@ def test_space_2d_2():
 def test_projector_2d_1():
 
     DIM = 2
-    domain = Domain('Omega', dim=DIM)
+    domain = Domain('Omega', ldim=DIM)
 
     V = ScalarFunctionSpace('V', domain, kind=None)
     W = VectorFunctionSpace('W', domain, kind=None)

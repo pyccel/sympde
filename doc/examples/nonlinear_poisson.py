@@ -6,7 +6,7 @@ from sympde.api import BilinearForm, Domain, LinearForm, ScalarFunctionSpace
 from sympde.api import dot, elements_of, grad, integral, linearize
 
 
-domain = Domain('Omega', dim=2)
+domain = Domain('Omega', ldim=2)
 space = ScalarFunctionSpace('V', domain)
 field, increment, test = elements_of(space, names='u, delta_u, v')
 

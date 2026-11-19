@@ -52,9 +52,11 @@ their original behavior.  ``indexed_interfaces``, ``indexed_exterior_sides``,
 ``vertices`` and ``edges`` describe the topology with plain Python data for
 discretization codes.
 
-The logical dimension is denoted by ``dim`` below.  A patch face has dimension
-``dim - 1``.  Logical axes are zero-based: a square has axes 0 and 1, and a
-cube has axes 0, 1, and 2.
+The logical dimension is denoted by ``ldim`` below.  A patch face has
+dimension ``ldim - 1``.  Logical axes are zero-based: a square has axes 0 and
+1, and a cube has axes 0, 1, and 2.  A mapped patch also has a physical
+dimension ``pdim``, the dimension of the space it lies in, for example 3 for a
+surface in 3D; without a mapping, ``pdim`` equals ``ldim``.
 
 Creating patches
 ================
@@ -86,7 +88,7 @@ The parameters have the following meanings.
    describe the parameter domain; they do not place a mapped patch in physical
    space.
 
-``NCube(name, dim, min_coords, max_coords)`` is the dimension-independent
+``NCube(name, ldim, min_coords, max_coords)`` is the dimension-independent
 constructor.  ``Line``, ``Square``, and ``Cube`` are its convenient 1D, 2D,
 and 3D forms.  Multipatch geometry is developed and tested primarily for these
 three dimensions.
@@ -229,7 +231,7 @@ Each side is the triple ``(patch, axis, ext)``:
    Either the patch object itself or its integer position in ``patches``.
 
 ``axis``
-   The logical direction normal to the face, in ``range(dim)``.
+   The logical direction normal to the face, in ``range(ldim)``.
 
 ``ext``
    ``-1`` selects the minimum-coordinate face and ``+1`` the
@@ -286,7 +288,7 @@ Thus the common orientations are:
    swap_and_flip_3d = (-1, +1, -1)
 
 The ordered tangential axes are obtained by removing the face-normal axis from
-``range(dim)`` without otherwise changing the order.  The most convenient
+``range(ldim)`` without otherwise changing the order.  The most convenient
 way to inspect the decoded result is ``interface.axis_map``.  It returns
 ``(minus_axis, plus_axis, direction)`` for every tangential direction.
 

@@ -125,7 +125,7 @@ def test_mapping_2d_2():
 
     dim   = 2
     F      = Mapping('F', dim=dim)
-    domain = Domain('Omega', dim=dim)
+    domain = Domain('Omega', ldim=dim)
     D      = F(domain)
 
 def test_AffineMapping():
@@ -142,7 +142,7 @@ def test_AffineMapping():
         a21=np.sin(alpha), a22=np.cos(alpha),
     )
 
-    domain = Domain('Omega', dim=dim)
+    domain = Domain('Omega', ldim=dim)
     D      = F(domain)
 
 #==============================================================================

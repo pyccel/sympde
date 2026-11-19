@@ -560,7 +560,7 @@ class TerminalExpr(CalculusFunction):
             returned if `evaluate is False`.
         """
 
-        dim = domain.dim
+        dim = domain.ldim
 
         if isinstance(expr, Add):
             args = [cls.eval(a, domain=domain) for a in expr.args]

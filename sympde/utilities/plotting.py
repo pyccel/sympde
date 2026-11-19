@@ -26,7 +26,7 @@ def _interfaces(domain):
 
 
 def _check_topology_dimension(domain):
-    if int(domain.dim) not in (2, 3):
+    if int(domain.ldim) not in (2, 3):
         raise ValueError(
             'topology summaries and annotated topology plots support only '
             'two- and three-dimensional domains')
@@ -279,7 +279,7 @@ def _color_patches(domain, patches):
 def _build_model(domain, refinement, topology):
     import matplotlib.pyplot as plt
 
-    dim = int(domain.dim)
+    dim = int(domain.ldim)
     patches = domain.patches
     faces = tuple(
         {(axis, ext): _map_face(patch, axis, ext, refinement)
@@ -658,7 +658,7 @@ def plot_domain(
     """
     import matplotlib.pyplot as plt
 
-    dim = int(domain.dim)
+    dim = int(domain.ldim)
     if dim not in (2, 3):
         raise ValueError('domain plotting supports only dimensions 2 and 3')
     if domain.pdim != dim:

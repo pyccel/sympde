@@ -11,7 +11,7 @@ from sympde.topology.space import element_of
 #==============================================================================
 
 DIM = 2
-domain = Domain('Omega', dim=DIM)
+domain = Domain('Omega', ldim=DIM)
 
 
 def test_field_2d_1():

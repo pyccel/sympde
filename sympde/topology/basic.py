@@ -46,10 +46,6 @@ class BasicDomain(Basic):
         return self.ldim if mapping is None else int(mapping.pdim)
 
     @property
-    def dim(self):
-        return self.ldim
-
-    @property
     def coordinates(self):
         """The logical coordinates of a domain without a mapping, and the
         physical coordinates of a mapped domain."""
@@ -80,10 +76,10 @@ class InteriorDomain(BasicDomain):
     Examples
 
     """
-    def __new__(cls, name, dim=None, dtype=None, mapping=None,
+    def __new__(cls, name, ldim=None, dtype=None, mapping=None,
                 logical_domain=None, target=None):
         name = restore_string_argument(name)
-        dim = restore_int_argument(dim)
+        ldim = restore_int_argument(ldim)
         dtype = restore_container_argument(dtype)
         mapping = restore_optional_argument(mapping)
         logical_domain = restore_optional_argument(logical_domain)
@@ -94,15 +90,15 @@ class InteriorDomain(BasicDomain):
             name   = name.name
 
         if not( target is None ):
-            dim = target.dim
+            ldim = target.ldim
 
         assert mapping is None and logical_domain is None or \
         mapping is not None and logical_domain  is not None
 
-        obj = new_basic(cls, name, dim, dtype, mapping,
+        obj = new_basic(cls, name, ldim, dtype, mapping,
                          logical_domain, target)
 
-        obj._ldim           = dim
+        obj._ldim           = ldim
         obj._target         = target
         obj._dtype          = dtype
         obj._mapping        = mapping
@@ -153,8 +149,8 @@ class Union(BasicDomain):
             raise TypeError('arguments must be of BasicDomain type')
 
         # Verify dimensionality
-        if len({a.dim for a in args}) > 1:
-            dims = ', '.join(str(a.dim) for a in args)
+        if len({a.ldim for a in args}) > 1:
+            dims = ', '.join(str(a.ldim) for a in args)
             msg  = 'arguments must have the same dimension, '\
                    'given [{}] instead'.format(dims)
             raise ValueError(msg)
@@ -312,9 +308,9 @@ class Boundary(BasicDomain):
 
         if axis is not None:
             axis = _as_integer(axis, 'boundary axis')
-            if not 0 <= axis < domain.dim:
+            if not 0 <= axis < domain.ldim:
                 raise ValueError(
-                    f'boundary axis must be between 0 and {domain.dim - 1}')
+                    f'boundary axis must be between 0 and {domain.ldim - 1}')
 
         if ext is not None:
             ext = _as_integer(ext, 'boundary extremity')
@@ -358,14 +354,9 @@ class Boundary(BasicDomain):
         return self.domain
 
     @property
-    def patch_dim(self):
-        """Logical dimension of the patch owning this side."""
-        return self.dim
-
-    @property
     def intrinsic_dim(self):
         """Intrinsic dimension of this codimension-one side."""
-        return self.dim - 1
+        return self.ldim - 1
 
     @property
     def mapping(self):
@@ -394,9 +385,9 @@ class Boundary(BasicDomain):
         return Union(*boundaries)
 
     def rotate(self, *directions):
-        assert len(directions) == self.dim-1
+        assert len(directions) == self.ldim-1
 
-        if self.dim == 2:
+        if self.ldim == 2:
             if directions[0] == 1:
                 return self
             elif directions[0] == -1:
@@ -490,7 +481,7 @@ class Interface(BasicDomain):
         Compact orientation from the minus face to the plus face. Let ``M``
         and ``P`` be the ordered tangential axes obtained by removing the
         normal axis of the minus and plus face, respectively, from
-        ``range(dim)``.
+        ``range(ldim)``.
 
         In 1D the orientation is ``None``. In 2D it is one sign, and maps
         ``M[0]`` to ``P[0]`` with that direction. In 3D it is
@@ -556,11 +547,11 @@ class Interface(BasicDomain):
         if not isinstance(bnd_plus , Boundary): raise TypeError(bnd_plus)
 
         # Check that the dimensions of the two boundaries are the same
-        if bnd_minus.dim != bnd_plus.dim:
-            raise ValueError(f'Dimension mismatch between boundaries: {bnd_minus.dim} != {bnd_plus.dim}')
+        if bnd_minus.ldim != bnd_plus.ldim:
+            raise ValueError(f'Dimension mismatch between boundaries: {bnd_minus.ldim} != {bnd_plus.ldim}')
         else:
             # Number of logical dimensions of the interface
-            ldim = bnd_minus.dim
+            ldim = bnd_minus.ldim
 
         # Mapping and logical domain must be provided together or not at all
         assert mapping is None and logical_domain is None or\
@@ -578,8 +569,8 @@ class Interface(BasicDomain):
         if logical_domain is not None:
             if not isinstance(logical_domain, BasicDomain):
                 raise TypeError(f'logical_domain must be of type BasicDomain, got {type(logical_domain)} instead')
-            if logical_domain.dim != ldim:
-                raise ValueError(f'Logical domain should have dimension = {ldim}, got {logical_domain.dim} instead')
+            if logical_domain.ldim != ldim:
+                raise ValueError(f'Logical domain should have dimension = {ldim}, got {logical_domain.ldim} instead')
 
         # Validate the public input and convert it to the canonical SymPy
         # representation stored in ``args``.  ``axis_map`` can consequently
@@ -663,9 +654,9 @@ class Interface(BasicDomain):
     @property
     def orientation(self):
         """Compact dimension-specific orientation of this interface."""
-        if self.dim == 1:
+        if self.ldim == 1:
             return None
-        if self.dim == 2:
+        if self.ldim == 2:
             return int(self.args[3])
         return restore_container_argument(self.args[3])
 
@@ -673,17 +664,12 @@ class Interface(BasicDomain):
     def axis_map(self):
         """Tangential-axis correspondence from the minus to the plus side."""
         return _interface_axis_map(
-            self.dim, self.minus.axis, self.plus.axis, self.orientation)
-
-    @property
-    def patch_dim(self):
-        """Logical dimension of each adjacent patch."""
-        return self.dim
+            self.ldim, self.minus.axis, self.plus.axis, self.orientation)
 
     @property
     def intrinsic_dim(self):
         """Intrinsic dimension of the interface."""
-        return self.dim - 1
+        return self.ldim - 1
 
     @property
     def mapping(self):

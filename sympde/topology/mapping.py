@@ -323,7 +323,7 @@ class Mapping(BasicMapping):
     def __call__(self, domain):
         assert isinstance(domain, BasicDomain)
         assert domain.logical_domain is None
-        assert domain.dim == self.ldim
+        assert domain.ldim == self.ldim
         return MappedDomain(self, domain)
 
     @property
@@ -612,7 +612,7 @@ class MappedDomain(BasicDomain):
         assert(isinstance(logical_domain, BasicDomain))
         if isinstance(logical_domain, Domain):
             kwargs = dict(
-            dim            = logical_domain.ldim,
+            ldim           = logical_domain.ldim,
             mapping        = mapping,
             logical_domain = logical_domain)
             boundaries     = logical_domain.boundary
@@ -650,18 +650,18 @@ class MappedDomain(BasicDomain):
                 logical_domain=logical_domain)
         elif isinstance(logical_domain, NCubeInterior):
             name  = logical_domain.name
-            dim   = logical_domain.dim
+            ldim  = logical_domain.ldim
             dtype = logical_domain.dtype
             min_coords = logical_domain.min_coords
             max_coords = logical_domain.max_coords
             name = '{}({})'.format(str(mapping.name), str(name))
-            return NCubeInterior(name, dim, dtype, min_coords, max_coords, mapping, logical_domain)
+            return NCubeInterior(name, ldim, dtype, min_coords, max_coords, mapping, logical_domain)
         elif isinstance(logical_domain, InteriorDomain):
             name  = logical_domain.name
-            dim   = logical_domain.dim
+            ldim  = logical_domain.ldim
             dtype = logical_domain.dtype
             name = '{}({})'.format(str(mapping.name), str(name))
-            return InteriorDomain(name, dim, dtype, mapping, logical_domain)
+            return InteriorDomain(name, ldim, dtype, mapping, logical_domain)
         elif isinstance(logical_domain, Boundary):
             name   = logical_domain.name
             axis   = logical_domain.axis

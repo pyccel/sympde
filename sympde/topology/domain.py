@@ -68,9 +68,9 @@ class Domain(BasicDomain):
             mapping : Optional[Mapping] = None,
             logical_domain : Optional[Domain] = None,
             connectivity : TypeUnion[Connectivity, Iterable[Interface], None] = None,
-            *, dim : Optional[int] = None):
+            *, ldim : Optional[int] = None):
         """
-        Either interiors or dim must be given. The mapping and the
+        Either interiors or ldim must be given. The mapping and the
         logical_domain must be given together, or not at all.
 
         The positional arguments follow the order of `self.args`, so that
@@ -91,7 +91,7 @@ class Domain(BasicDomain):
         connectivity : Connectivity, Iterable[Interface] or None, optional
             Interfaces of the domain, either as a Connectivity object or as an
             iterable of Interface objects
-        dim : int, optional
+        ldim : int, optional
             Dimension of the domain. Only used to create a single interior
             domain if interiors is not given; otherwise the dimension is taken
             from the interiors.
@@ -101,13 +101,13 @@ class Domain(BasicDomain):
         mapping = restore_optional_argument(mapping)
         logical_domain = restore_optional_argument(logical_domain)
         connectivity = restore_container_argument(connectivity)
-        dim = restore_int_argument(dim)
+        ldim = restore_int_argument(ldim)
 
         if not isinstance(name, str):
             raise TypeError('> name must be a string')
 
-        if interiors is None and dim is None:
-            raise ValueError('> either interiors or dim must be given')
+        if interiors is None and ldim is None:
+            raise ValueError('> either interiors or ldim must be given')
 
         if not( interiors is None ):
             if not isinstance( interiors, (*iterable_types, InteriorDomain)):
@@ -168,10 +168,10 @@ class Domain(BasicDomain):
 
         # TODO check that patches appearing in connectivity are in interiors
 
-        if interiors is None and dim:
-            interiors = [InteriorDomain(name, dim=dim)]
+        if interiors is None and ldim:
+            interiors = [InteriorDomain(name, ldim=ldim)]
 
-        if len(interiors) == 0 and dim is None:
+        if len(interiors) == 0 and ldim is None:
             raise TypeError('No interior domain found')
 
         # All patches must have the same physical dimension (#140)
@@ -180,14 +180,14 @@ class Domain(BasicDomain):
             raise ValueError(
                 'all interiors must have the same physical dimension, '
                 f'got {sorted(pdims)}')
-        pdim = pdims.pop() if pdims else dim
+        pdim = pdims.pop() if pdims else ldim
 
         if len(interiors) == 1:
             dtype = interiors[0].dtype
-            dim   = interiors[0].dim
+            ldim   = interiors[0].ldim
             interiors = Union(*interiors)
         else:
-            dim   = interiors[0].dim
+            ldim   = interiors[0].ldim
             interiors = Union(*interiors)
             dtype = [i.dtype for i in interiors]
 
@@ -200,7 +200,7 @@ class Domain(BasicDomain):
                          logical_domain, tuple(connectivity.values()))
         obj._connectivity   = connectivity
         obj._dtype          = dtype
-        obj._ldim           = dim
+        obj._ldim           = ldim
         obj._pdim           = pdim
         obj._logical_domain = logical_domain
         return obj
@@ -436,16 +436,16 @@ class Domain(BasicDomain):
             The domain boundary of interest.
         """
         if axis is None:
-            if self.interior.dim != 1:
+            if self.interior.ldim != 1:
                 raise ValueError('axis may be None only for a 1D domain')
             axis = 0
         else:
             axis = _as_integer(axis, 'boundary axis')
         ext = _as_integer(ext, 'boundary extremity')
 
-        if not 0 <= axis < self.dim:
+        if not 0 <= axis < self.ldim:
             raise ValueError(
-                f'boundary axis must be between 0 and {self.dim - 1}')
+                f'boundary axis must be between 0 and {self.ldim - 1}')
         if ext not in (-1, 1):
             raise ValueError('boundary extremity must be either -1 or 1')
 
@@ -677,7 +677,7 @@ class Domain(BasicDomain):
         return domain
 
     @classmethod
-    def _from_topological_dict(cls, name, dim, d_interior, d_boundary,
+    def _from_topological_dict(cls, name, ldim, d_interior, d_boundary,
                                d_connectivity):
         """
         Create a domain whose patches are `InteriorDomain` objects without a
@@ -691,7 +691,7 @@ class Domain(BasicDomain):
             raise NotImplementedError(
                 'reading mapped patches without a dtype is not supported')
 
-        interiors = {I['name']: InteriorDomain(I['name'], dim=dim)
+        interiors = {I['name']: InteriorDomain(I['name'], ldim=ldim)
                      for I in d_interior}
 
         def boundary(data, kind):
@@ -886,13 +886,13 @@ class Domain(BasicDomain):
             # self-interface and must follow the normal joining path.
             return patches[0]
 
-        if not all(p.dim == patches[0].dim for p in patches):
+        if not all(p.ldim == patches[0].ldim for p in patches):
             raise ValueError('all patches must have the same logical dimension')
         if len({p.pdim for p in patches}) > 1:
             raise ValueError('all patches must have the same physical dimension')
         if len({p.mapping is None for p in patches}) > 1:
             raise ValueError('either all patches or none must have a mapping')
-        ldim = int(patches[0].dim)
+        ldim = int(patches[0].ldim)
 
         normalized_connectivity = []
         explicit_interface_names = set()
@@ -1241,20 +1241,20 @@ class PeriodicDomain(BasicDomain):
 #==============================================================================
 class NCubeInterior(InteriorDomain):
 
-    def __new__(cls, name, dim=None, dtype=None, min_coords=None, max_coords=None,
+    def __new__(cls, name, ldim=None, dtype=None, min_coords=None, max_coords=None,
                     mapping=None, logical_domain=None):
 
         name = restore_string_argument(name)
-        dim = restore_int_argument(dim)
+        ldim = restore_int_argument(ldim)
         dtype = restore_container_argument(dtype)
         min_coords = restore_container_argument(min_coords)
         max_coords = restore_container_argument(max_coords)
         mapping = restore_optional_argument(mapping)
         logical_domain = restore_optional_argument(logical_domain)
 
-        obj = new_basic(cls, name, dim, dtype, min_coords, max_coords,
+        obj = new_basic(cls, name, ldim, dtype, min_coords, max_coords,
                          mapping, logical_domain)
-        obj._ldim = dim
+        obj._ldim = ldim
         obj._target = None
         obj._dtype = dtype
         obj._mapping = mapping
@@ -1265,7 +1265,7 @@ class NCubeInterior(InteriorDomain):
 
         boundaries = []
         i = 1
-        for axis in range(dim):
+        for axis in range(ldim):
             for ext in [-1, 1]:
                 bnd_name = r'\Gamma_{}'.format(i)
                 bd_logical_domain = logical_domain
@@ -1303,16 +1303,16 @@ class NCubeInterior(InteriorDomain):
             raise ValueError('boundary extremity must be provided')
 
         if axis is None:
-            if self.dim != 1:
+            if self.ldim != 1:
                 raise ValueError('axis may be None only for a 1D domain')
             axis = 0
         else:
             axis = _as_integer(axis, 'boundary axis')
         ext = _as_integer(ext, 'boundary extremity')
 
-        if not 0 <= axis < self.dim:
+        if not 0 <= axis < self.ldim:
             raise ValueError(
-                f'boundary axis must be between 0 and {self.dim - 1}')
+                f'boundary axis must be between 0 and {self.ldim - 1}')
         if ext not in (-1, 1):
             raise ValueError('boundary extremity must be either -1 or 1')
 
@@ -1327,10 +1327,10 @@ class NCubeInterior(InteriorDomain):
 #
 class NCube(Domain):
 
-    def __new__(cls, name, dim, min_coords, max_coords, *structural_args):
+    def __new__(cls, name, ldim, min_coords, max_coords, *structural_args):
         """
         Create an n-dimensional box [min_coords, max_coords]. Depending on
-        dim, a Line, Square or Cube is returned for dim <= 3.
+        ldim, a Line, Square or Cube is returned for ldim <= 3.
 
         When SymPy rebuilds the object via `func(*args)`, the positional
         parameters receive the stored Domain arguments instead (`name`,
@@ -1341,7 +1341,7 @@ class NCube(Domain):
         ----------
         name : str
             Name of the domain
-        dim : int
+        ldim : int
             Number of dimensions
         min_coords : Iterable[float]
             Lower bounds of the domain, one per dimension
@@ -1349,34 +1349,34 @@ class NCube(Domain):
             Upper bounds of the domain, one per dimension
         """
         if structural_args:
-            return cls._rebuild(name, dim, min_coords, max_coords,
+            return cls._rebuild(name, ldim, min_coords, max_coords,
                                 *structural_args)
 
         name = restore_string_argument(name)
-        dim = restore_int_argument(dim)
+        ldim = restore_int_argument(ldim)
         min_coords = restore_container_argument(min_coords)
         max_coords = restore_container_argument(max_coords)
 
         assert isinstance(name, str)
-        assert isinstance(dim, (int, Integer))
+        assert isinstance(ldim, (int, Integer))
         assert isinstance(min_coords, iterable_types[:-1])
         assert isinstance(max_coords, iterable_types[:-1])
 
         if not name:
             raise ValueError("Name must be provided")
 
-        if dim < 1:
+        if ldim < 1:
             raise ValueError("Number of dimensions must be at least 1")
 
-        if not (dim == len(min_coords) == len(max_coords)):
-            raise ValueError("Input arguments must have 'dim' components")
+        if not (ldim == len(min_coords) == len(max_coords)):
+            raise ValueError("Input arguments must have 'ldim' components")
 
         if not all(xmin < xmax for xmin, xmax in zip(min_coords, max_coords)):
             raise ValueError("Min coordinates must be smaller than max")
 
         # Choose which type to use:
-        #   a) if dim <= 3, use Line, Square or Cube;
-        #   b) if dim <= 4, use a generic 'NCube' type.
+        #   a) if ldim <= 3, use Line, Square or Cube;
+        #   b) if ldim <= 4, use a generic 'NCube' type.
         #
         # Moreover, store all initialization parameters in a 'dtype' dictionary.
         # This dictionary will be written to file when exporting the geometry,
@@ -1389,16 +1389,16 @@ class NCube(Domain):
         min_coords = tuple(float(i) for i in min_coords)
         max_coords = tuple(float(i) for i in max_coords)
 
-        if dim == 1:
+        if ldim == 1:
             cls = Line
             dtype = {'type': 'Line',
                      'parameters': {'bounds': [min_coords[0], max_coords[0]]}}
-        elif dim == 2:
+        elif ldim == 2:
             cls = Square
             dtype = {'type': 'Square',
                      'parameters': {'bounds1': [min_coords[0], max_coords[0]],
                                     'bounds2': [min_coords[1], max_coords[1]]}}
-        elif dim == 3:
+        elif ldim == 3:
             cls = Cube
             dtype = {'type': 'Cube',
                      'parameters': {'bounds1': [min_coords[0], max_coords[0]],
@@ -1406,17 +1406,17 @@ class NCube(Domain):
                                     'bounds3': [min_coords[2], max_coords[2]]}}
         else:
             dtype = {'type': 'NCube',
-                     'parameters': {'dim'       : dim,
+                     'parameters': {'ldim'       : ldim,
                                     'min_coords': [*min_coords],
                                     'max_coords': [*max_coords]}}
 
-        interior = NCubeInterior(name, dim=dim, dtype=dtype, min_coords=tuple(min_coords), max_coords=tuple(max_coords))
+        interior = NCubeInterior(name, ldim=ldim, dtype=dtype, min_coords=tuple(min_coords), max_coords=tuple(max_coords))
 
         # Create instance of given type
         obj = super().__new__(cls, name, interiors=[interior], boundaries=interior.boundary)
 
         # Store attributes in object
-        obj._coordinates = cls._make_coordinates(dim)
+        obj._coordinates = cls._make_coordinates(ldim)
 
         # Return object
         return obj
@@ -1425,13 +1425,13 @@ class NCube(Domain):
     def _rebuild(cls, *args):
         """Rebuild the domain from the stored Domain arguments."""
         obj = Domain.__new__(cls, *args)
-        obj._coordinates = cls._make_coordinates(obj.dim)
+        obj._coordinates = cls._make_coordinates(obj.ldim)
         return obj
 
     @staticmethod
-    def _make_coordinates(dim):
-        """Return the coordinate symbols x1, ..., x{dim}."""
-        return tuple(symbols('x1:{}'.format(dim + 1), real=True))
+    def _make_coordinates(ldim):
+        """Return the coordinate symbols x1, ..., x{ldim}."""
+        return tuple(symbols('x1:{}'.format(ldim + 1), real=True))
 
     @classmethod
     def from_file(cls, filename):
@@ -1458,10 +1458,10 @@ class Line(NCube):
         """
         if structural_args:
             return cls._rebuild(name, bounds, *structural_args)
-        dim = 1
+        ldim = 1
         min_coords = (bounds[0],)
         max_coords = (bounds[1],)
-        return super().__new__(cls, name, dim, min_coords, max_coords)
+        return super().__new__(cls, name, ldim, min_coords, max_coords)
 
     @property
     def bounds(self):
@@ -1481,10 +1481,10 @@ class Square(NCube):
         """
         if structural_args:
             return cls._rebuild(name, bounds1, bounds2, *structural_args)
-        dim = 2
+        ldim = 2
         min_coords = (bounds1[0], bounds2[0])
         max_coords = (bounds1[1], bounds2[1])
-        return super().__new__(cls, name, dim, min_coords, max_coords)
+        return super().__new__(cls, name, ldim, min_coords, max_coords)
 
     @property
     def bounds1(self):
@@ -1509,10 +1509,10 @@ class Cube(NCube):
         if structural_args:
             return cls._rebuild(name, bounds1, bounds2, bounds3,
                                 *structural_args)
-        dim = 3
+        ldim = 3
         min_coords = (bounds1[0], bounds2[0], bounds3[0])
         max_coords = (bounds1[1], bounds2[1], bounds3[1])
-        return super().__new__(cls, name, dim, min_coords, max_coords)
+        return super().__new__(cls, name, ldim, min_coords, max_coords)
 
     @property
     def bounds1(self):

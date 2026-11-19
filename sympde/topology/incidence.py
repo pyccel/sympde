@@ -246,7 +246,7 @@ def _identify_through_interfaces(domain, dim):
     members of the group, sorted, and `signs` their directions relative to
     the first one.
     """
-    ndim = int(domain.dim)
+    ndim = int(domain.ldim)
     patch_indices = _patch_indices(domain)
     interfaces = tuple(domain.interface_map.values())
     for interface in interfaces:
@@ -382,7 +382,7 @@ def collect_edges(domain):
         If the domain is not three-dimensional, or if the interfaces identify
         an edge with itself in the opposite direction.
     """
-    if int(domain.dim) != 3:
+    if int(domain.ldim) != 3:
         raise ValueError(
             'edges are only defined for 3D domains; in 2D, the edges of the '
             'patches are their sides, given by domain.indexed_interfaces and '

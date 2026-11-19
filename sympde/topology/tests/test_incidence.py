@@ -135,8 +135,8 @@ def test_vertices_and_edges_coincide_geometrically(name):
 
 
 def test_topology_requires_interface_axes():
-    A = InteriorDomain('A', dim=2)
-    B = InteriorDomain('B', dim=2)
+    A = InteriorDomain('A', ldim=2)
+    B = InteriorDomain('B', ldim=2)
     domain = Domain('Omega', interiors=[A, B], connectivity=[
         Interface('I', Boundary('G1', A), Boundary('G2', B), 1)])
 

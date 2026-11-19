@@ -288,7 +288,7 @@ def test_plot_multipatch_domain(domain_name, dimension, tmp_path):
     domain, figure = plot_multipatch_domain(
         domain_name, output=output, show=False, topology=True)
 
-    assert int(domain.dim) == dimension
+    assert int(domain.ldim) == dimension
     assert figure.axes
     assert output.is_file()
 

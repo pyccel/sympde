@@ -6,7 +6,7 @@ from sympde.api import Constant, Domain, ScalarFunctionSpace, VectorFunctionSpac
 from sympde.api import curl, div, elements_of, grad, laplace
 
 
-domain = Domain('Omega', dim=3)
+domain = Domain('Omega', ldim=3)
 scalar_space = ScalarFunctionSpace('V', domain)
 vector_space = VectorFunctionSpace('W', domain)
 

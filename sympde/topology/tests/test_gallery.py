@@ -26,7 +26,7 @@ def test_interval():
         assert(I.coordinates == i)
 
     D_xy = ProductDomain(Ix, Iy)
-    assert(D_xy.dim == 2)
+    assert(D_xy.ldim == 2)
 
 #==============================================================================
 def test_unit_line(tmp_path):
@@ -37,7 +37,7 @@ def test_unit_line(tmp_path):
     assert isinstance(domain, Line)
 
     # BasicDomain's attributes
-    assert domain.dim  == 1
+    assert domain.ldim  == 1
     assert domain.name == 'line'
     assert domain.coordinates == x1
 
@@ -69,7 +69,7 @@ def test_generic_line(tmp_path):
     assert isinstance(domain, Line)
 
     # BasicDomain's attributes
-    assert domain.dim  == 1
+    assert domain.ldim  == 1
     assert domain.name == 'line'
     assert domain.coordinates == x1
 
@@ -101,7 +101,7 @@ def test_unit_square(tmp_path):
     assert isinstance(domain, Square)
 
     # BasicDomain's attributes
-    assert domain.dim  == 2
+    assert domain.ldim  == 2
     assert domain.name == 'square'
     assert domain.coordinates == (x1, x2)
 
@@ -136,7 +136,7 @@ def test_rectangle(tmp_path):
     assert isinstance(domain, Square)
 
     # BasicDomain's attributes
-    assert domain.dim  == 2
+    assert domain.ldim  == 2
     assert domain.name == 'rectangle'
     assert domain.coordinates == (x1, x2)
 
@@ -170,7 +170,7 @@ def test_unit_cube(tmp_path):
     assert isinstance(domain, Cube)
 
     # Check object attributes
-    assert domain.dim  == 3
+    assert domain.ldim  == 3
     assert domain.name == 'cube'
     assert domain.coordinates == (x1, x2, x3)
 
@@ -206,7 +206,7 @@ def test_orthogonal_hexahedron(tmp_path):
     assert isinstance(domain, Cube)
 
     # Check object attributes
-    assert domain.dim  == 3
+    assert domain.ldim  == 3
     assert domain.name == 'hexahedron'
     assert domain.coordinates == (x1, x2, x3)
 
@@ -385,7 +385,7 @@ def test_boundary_free_cube_roundtrip(tmp_path, mapped):
 def test_single_boundary_and_legacy_dictionary_roundtrip(tmp_path):
     # Every interface of a joined domain uses two faces, so a domain with a
     # single exterior side is a topological one
-    patch = InteriorDomain('A', dim=1)
+    patch = InteriorDomain('A', ldim=1)
     domain = Domain('half-open-line', interiors=[patch],
                     boundaries=[Boundary('Gamma_1', patch, axis=0, ext=-1)])
     canonical_filename = tmp_path / 'single_boundary.h5'
