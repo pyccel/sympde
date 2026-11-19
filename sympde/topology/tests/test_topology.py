@@ -13,7 +13,7 @@ from sympy.core import Basic
 from sympde.topology.analytical_mapping import IdentityMapping
 from sympde.topology.basic import InteriorDomain, Union
 from sympde.topology.basic import Boundary
-from sympde.topology.basic import Interface, PatchVertex, SharedVertex
+from sympde.topology.basic import Interface
 from sympde.topology.domain import Area, Domain, ElementDomain
 from sympde.topology.domain import Line, Square, Cube, NCube
 from sympde.topology.mapping import InterfaceMapping, Mapping, MultiPatchMapping
@@ -158,9 +158,9 @@ def test_topological_domain_export_and_from_file(tmp_path):
     assert D == Omega
     assert D.interface_map['I'].orientation == (-1, 1, -1)
 
-    # Topological patches have no parametric box, hence no vertices
-    with pytest.raises(ValueError, match='parametric box'):
-        _ = D.shared_vertices
+    # With axes and extremities, the vertices are also defined for
+    # topological patches
+    assert len(D.vertices) == 12
 
 #==============================================================================
 def test_export_surface_mapping(tmp_path):
@@ -778,7 +778,8 @@ def test_named_multipatch_api_preserves_single_patch_domain_api():
     assert single_patch.interface_map is single_patch.connectivity
     assert tuple(single_patch.interface_map.values()) == ()
     assert single_patch.exterior_sides == single_patch.boundary.as_tuple()
-    assert single_patch.shared_vertices == ()
+    assert len(single_patch.vertices) == 4
+    assert all(len(vertex.incidences) == 1 for vertex in single_patch.vertices)
 
     patch_a = Square('A')
     patch_b = Square('B')
@@ -804,12 +805,10 @@ def test_named_multipatch_api_preserves_single_patch_domain_api():
     assert interface.patch_dim == 2
     assert interface.intrinsic_dim == 1
     assert len(domain.exterior_sides) == 6
-    assert len(domain.shared_vertices) == 2
-    assert all(isinstance(vertex, SharedVertex)
-               for vertex in domain.shared_vertices)
-    assert all(isinstance(corner, PatchVertex)
-               for vertex in domain.shared_vertices
-               for corner in vertex.corners)
+    shared = [vertex for vertex in domain.vertices
+              if len(vertex.incidences) > 1]
+    assert len(shared) == 2
+    assert all(vertex.patch_indices == (0, 1) for vertex in shared)
 
     with pytest.raises(TypeError, match='either connectivity or interfaces'):
         Domain.join(
@@ -847,13 +846,14 @@ def test_3d_interface_with_different_face_axes_and_shared_corners():
     assert interface.orientation == (-1, +1, -1)
     assert interface.axis_map == ((1, 2, 1), (2, 0, -1))
 
-    corners = domain.corners.as_tuple()
-    assert len(corners) == 4
-    coordinate_pairs = {
-        tuple(corner.coordinates for corner in shared_corner.corners)
-        for shared_corner in corners
+    shared = [vertex for vertex in domain.vertices
+              if len(vertex.incidences) > 1]
+    assert len(shared) == 4
+    corner_pairs = {
+        tuple(incidence.logical_corner for incidence in vertex.incidences)
+        for vertex in shared
     }
-    assert ((1, 0, 1), (0, 0, 0)) in coordinate_pairs
+    assert ((1, 0, 1), (0, 0, 0)) in corner_pairs
 
 
 #==============================================================================
@@ -1005,7 +1005,7 @@ def test_single_patch_self_interface():
     assert interface.plus.domain == patch.interior
     assert interface.minus.axis == interface.plus.axis == 0
     assert interface.orientation == +1
-    assert len(domain.corners) == 2
+    assert sum(len(vertex.incidences) > 1 for vertex in domain.vertices) == 2
 
 
 #==============================================================================

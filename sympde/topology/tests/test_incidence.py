@@ -4,12 +4,7 @@ import pytest
 from sympde.topology.analytical_mapping import AffineMapping, IdentityMapping
 from sympde.topology.basic import Boundary, InteriorDomain, Interface
 from sympde.topology.domain import Cube, Domain, Square
-from sympde.topology.incidence import (
-    IndexedInterface,
-    InterfaceSide,
-    collect_topology_edges,
-    collect_topology_vertices,
-)
+from sympde.topology.incidence import IndexedInterface, InterfaceSide
 from sympde.topology.multipatch_gallery import (
     build_multipatch_domain_2d,
     build_multipatch_domain_3d,
@@ -41,9 +36,8 @@ def _physical_point(patch, logical_point):
     return np.asarray(mapping(*point), dtype=float)
 
 #==============================================================================
-def test_collect_topology_vertices_shared_and_self_interfaces():
-    vertices = collect_topology_vertices(
-        build_multipatch_domain_2d('three_patch_shared_vertex'))
+def test_vertices_shared_and_self_interfaces():
+    vertices = build_multipatch_domain_2d('three_patch_shared_vertex').vertices
     interior_vertices = [vertex for vertex in vertices if not vertex.is_boundary]
 
     assert len(interior_vertices) == 1
@@ -59,15 +53,15 @@ def test_collect_topology_vertices_shared_and_self_interfaces():
         [((0, 0, -1), (0, 0, 1), +1)],
         'self_connected',
     )
-    self_vertices = collect_topology_vertices(self_connected)
+    self_vertices = self_connected.vertices
     assert len(self_vertices) == 2
     assert all(len(vertex.incidences) == 2 for vertex in self_vertices)
     assert all(vertex.patches == ('P',) for vertex in self_vertices)
     assert all(vertex.is_boundary for vertex in self_vertices)
 
 
-def test_collect_topology_vertices_3d():
-    vertices = collect_topology_vertices(_make_oriented_cubes())
+def test_vertices_3d():
+    vertices = _make_oriented_cubes().vertices
     shared_vertices = [
         vertex for vertex in vertices if len(vertex.incidences) == 2]
 
@@ -76,9 +70,9 @@ def test_collect_topology_vertices_3d():
     assert all(vertex.patches == ('A3', 'B3') for vertex in shared_vertices)
 
 #==============================================================================
-def test_collect_topology_edges_around_an_interior_edge():
+def test_edges_around_an_interior_edge():
     domain = build_multipatch_domain_3d('three_patch_shared_edge')
-    edges = collect_topology_edges(domain)
+    edges = domain.edges
 
     # 3 cubes have 36 edges, 3 interfaces identify 4 pairs of them each, and
     # the central edge is part of all three interfaces
@@ -90,8 +84,8 @@ def test_collect_topology_edges_around_an_interior_edge():
     assert all(edge.is_boundary for edge in edges if edge is not central[0])
 
 
-def test_collect_topology_edges_directions():
-    edges = collect_topology_edges(_make_oriented_cubes())
+def test_edges_directions():
+    edges = _make_oriented_cubes().edges
     shared = [edge for edge in edges if len(edge.incidences) == 2]
 
     assert len(edges) == 20
@@ -110,7 +104,7 @@ def test_collect_topology_edges_directions():
     strip = build_multipatch_domain_2d('two_patch_twisted_strip')
     directions = sorted(
         tuple(incidence.direction for incidence in edge.incidences)
-        for edge in collect_topology_edges(strip)
+        for edge in strip.edges
         if len(edge.incidences) == 2)
     assert directions == [(1, -1), (1, 1)]
 
@@ -120,13 +114,13 @@ def test_collect_topology_edges_directions():
 def test_vertices_and_edges_coincide_geometrically(name):
     domain = build_multipatch_domain_3d(name)
 
-    for vertex in collect_topology_vertices(domain):
+    for vertex in domain.vertices:
         points = [
             _physical_point(domain.patches[i.patch_index], i.logical_corner)
             for i in vertex.incidences]
         assert all(np.allclose(p, points[0], atol=1e-10) for p in points)
 
-    for edge in collect_topology_edges(domain):
+    for edge in domain.edges:
         segments = []
         for incidence in edge.incidences:
             patch = domain.patches[incidence.patch_index]
@@ -151,9 +145,9 @@ def test_topology_requires_interface_axes():
         Interface('I', Boundary('G1', A), Boundary('G2', B), 1)])
 
     with pytest.raises(ValueError, match='no axis or extremity'):
-        collect_topology_vertices(domain)
-    with pytest.raises(ValueError, match='no axis or extremity'):
         _ = domain.indexed_interfaces
+    with pytest.raises(ValueError, match='no axis or extremity'):
+        _ = domain.vertices
 
 #==============================================================================
 def test_patch_index():

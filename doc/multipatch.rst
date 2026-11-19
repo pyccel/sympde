@@ -40,11 +40,15 @@ A multipatch domain has four important levels::
       |-- boundary                    faces not used by an interface
       |-- interface_map               name -> Interface
       |-- exterior_sides              stable tuple of exterior faces
-      `-- shared_vertices             stable tuple of vertex classes
+      |-- indexed_interfaces          name -> interface with patch indices
+      |-- vertices                    all vertices, with patch indices
+      `-- edges                       all edges, with patch indices
 
-These descriptive properties are views of the existing symbolic objects.
-``domain.interior``, ``domain.subdomains``, ``domain.connectivity``,
-``domain.boundary``, and ``domain.corners`` retain their original behavior.
+``patches``, ``interface_map`` and ``exterior_sides`` are views of the
+symbolic objects used in expressions; ``domain.interior``,
+``domain.subdomains``, ``domain.connectivity`` and ``domain.boundary`` retain
+their original behavior.  ``indexed_interfaces``, ``vertices`` and ``edges``
+describe the topology with plain Python data for discretization codes.
 
 The logical dimension is denoted by ``dim`` below.  A patch face has dimension
 ``dim - 1``.  Logical axes are zero-based: a square has axes 0 and 1, and a
@@ -389,62 +393,16 @@ self-interface is part of the topology; whether a particular discretization
 consumer realizes it as periodic basis functions or as an explicit constraint
 is a separate question.
 
-Shared vertices and corners
-===========================
-
-Joining faces also identifies their corners.  SymPDE computes this transitively:
-if an interface identifies a corner of A with a corner of B and another
-identifies that B corner with a corner of C, all three belong to one
-shared vertex.  ``SharedVertex`` is the descriptive alias of the historical
-``CornerInterface`` class, while ``PatchVertex`` aliases the patch-local
-``CornerBoundary`` class.  The historical names remain canonical for SymPy
-printing and serialization.
-
-For each interface, SymPDE enumerates the ``2**(dim - 1)`` corners of its minus
-face, maps their tangential extremities with
-``interface.axis_map``, and unions the resulting minus and plus
-``PatchVertex`` objects.  This supports, for
-example, three or more 2D patches meeting at one vertex and 3D faces with
-permuted axes.
-
-Use ``domain.interface_map`` and ``domain.shared_vertices`` for stable
-multipatch collection views:
-
-.. code-block:: python
-
-   for name, interface in omega.interface_map.items():
-       print(name)
-       print(interface.minus_side.patch,
-             interface.minus_side.normal_axis,
-             interface.minus_side.ext)
-       print(interface.plus_side.patch,
-             interface.plus_side.normal_axis,
-             interface.plus_side.ext)
-       print(interface.orientation)
-       print(interface.axis_map)
-
-   for vertex in omega.shared_vertices:
-       for local_vertex in vertex.corners:
-           print(local_vertex.domain, local_vertex.coordinates)
-
-``PatchVertex.coordinates`` is a tuple of zeros and ones, one per logical
-axis.  It identifies the minimum or maximum vertex in patch-local coordinates.
-``domain.shared_vertices`` contains shared vertices induced by connectivity;
-it is not a list of every unshared exterior vertex.  The symbolic
-``domain.corners`` property remains available with its original
-``None``/object/``Union`` cardinality behavior.
-
-Index-based topology for discretization
-=======================================
+Vertices, edges and indexed interfaces
+======================================
 
 Discretization codes such as Psydac work with patch indices rather than with
-symbolic objects.  The module ``sympde.topology.incidence`` describes the
-topology of a domain with plain Python data, in which a patch is given by its
+symbolic objects.  The properties ``indexed_interfaces``, ``vertices`` and
+``edges`` of a domain describe its topology with plain Python data from the
+module ``sympde.topology.incidence``, in which a patch is given by its
 position in ``omega.patches``:
 
 .. code-block:: python
-
-   from sympde.api import collect_topology_edges, collect_topology_vertices
 
    for name, interface in omega.indexed_interfaces.items():
        print(name,
@@ -456,12 +414,12 @@ position in ``omega.patches``:
 
    index = omega.patch_index(omega.patches[0])
 
-   for vertex in collect_topology_vertices(omega):
+   for vertex in omega.vertices:
        print(vertex.index, vertex.patch_indices, vertex.is_boundary)
        for incidence in vertex.incidences:
            print(incidence.patch_index, incidence.logical_corner)
 
-   for edge in collect_topology_edges(omega):
+   for edge in omega.edges:
        print(edge.index, edge.patch_indices, edge.is_boundary)
        for incidence in edge.incidences:
            print(incidence.patch_index, incidence.logical_edge,
@@ -475,22 +433,23 @@ sides are both unique keys.  ``omega.patch_index`` returns the position of a
 patch, given by its interior, by a single-patch domain or by one of its
 boundaries; for a mapped domain, the logical patch is also accepted.
 
-``collect_topology_vertices`` and ``collect_topology_edges`` start from every
-corner and every edge of every patch, and merge those identified through any
-chain of interfaces.  Their results therefore also contain unshared vertices
-and edges, and record for each of them whether it lies on the exterior
-boundary.  A patch-local
-corner is a tuple of ``0`` (lower end) and ``1`` (upper end) for every axis;
-a patch-local edge has ``None`` for the axis along the edge.  In 3D, an edge
+Joining faces also identifies their corners and edges.  SymPDE computes this
+transitively: if an interface identifies a corner of A with a corner of B and
+another identifies that B corner with a corner of C, all three belong to one
+vertex.  For each interface, the corners and edges of its minus face are
+mapped to the plus face with ``interface.axis_map``, and the identified
+corners and edges are merged.  This supports, for example, three or more 2D patches meeting at
+one vertex, 3D patches meeting at one edge, and 3D faces with permuted axes.
+
+``omega.vertices`` and ``omega.edges`` contain every vertex and edge, shared
+or not, and record whether it lies on the exterior boundary.  A patch-local corner is a
+tuple of ``0`` (lower end) and ``1`` (upper end) for every axis; a
+patch-local edge has ``None`` for the axis along the edge.  In 3D, an edge
 where several patches meet has one incidence per patch, for example the
 central edge of ``build_three_patch_shared_edge``.  The ``direction`` of an
 edge incidence is ``+1`` or ``-1``, relative to the first incidence of the
 edge, and fixes the sign of the tangential components shared along the edge.
 In 2D, the edges are the sides of the patches.
-
-Unlike ``omega.shared_vertices``, which contains symbolic
-``SharedVertex`` objects for the shared vertices only, these functions return
-plain data for all vertices and edges.
 
 Inspecting and plotting 2D and 3D topology
 ==========================================

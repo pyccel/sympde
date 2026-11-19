@@ -503,11 +503,6 @@ class CornerInterface(BasicDomain):
         return 'CornerInterface({})'.format(corners)
 
 
-# Descriptive multipatch aliases.  The original class names remain canonical
-# SymPy and serialization names for backwards compatibility.
-PatchVertex = CornerBoundary
-SharedVertex = CornerInterface
-
 
 #==============================================================================
 def _interface_axis_map(dim, minus_axis, plus_axis, orientation):

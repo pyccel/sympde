@@ -7,8 +7,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - #188: Support multipatch interfaces between faces with different normal axes and with any edge or face orientation, several interfaces between the same pair of patches, and periodic and self-interfaces.
-- #188: Add `Domain.patches`, `Domain.interface_map`, `Domain.exterior_sides`, `Domain.shared_vertices`, `Boundary.patch`, `Boundary.normal_axis` and `Interface.axis_map` to inspect the topology of multipatch domains, and the aliases `PatchVertex` and `SharedVertex` of `CornerBoundary` and `CornerInterface`.
-- #188: Add the module `sympde.topology.incidence`, with `collect_topology_vertices()` and `collect_topology_edges()` for the vertices and edges of a multipatch domain and their patch incidences, and `Domain.indexed_interfaces` and `Domain.patch_index()` for the interfaces and patches as indices. `collect_topology_vertices()` and `collect_topology_edges()` are available in `sympde.api`.
+- #188: Add `Domain.patches`, `Domain.interface_map`, `Domain.exterior_sides`, `Boundary.patch`, `Boundary.normal_axis` and `Interface.axis_map` to inspect the topology of multipatch domains.
+- #188: Add `Domain.vertices`, `Domain.edges`, `Domain.indexed_interfaces` and `Domain.patch_index()`, which describe the topology of a multipatch domain with patch indices, for discretization codes. The vertices and edges include unshared ones, record their patch incidences and whether they lie on the exterior boundary, and the edges the direction of each incidence. Their data classes are defined in the new module `sympde.topology.incidence`.
 - #188: Add the module `sympde.utilities.plotting`, with `plot_domain()` for plotting 2D and 3D domains with optional topology annotations, and `format_topology()` and `print_topology()` for a text summary of their topology. `plot_domain()` and `print_topology()` are available in `sympde.api`.
 - #188: Add the module `sympde.topology.multipatch_gallery`, which builds a collection of multipatch domains (previously in PSYDAC), and the analytical mapping `TransposedPolarMapping`.
 - #188: Document the multipatch topology in a new page of the user guide.
@@ -66,6 +66,7 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 
+- #188: Remove `Domain.corners` and `Domain.get_shared_corners()`. Use `Domain.vertices`, which contains all vertices of a domain with their patch indices, and tells whether they lie on the exterior boundary.
 - #73: Remove the `Edge` class and the `Interface.axis` property. Use `Boundary`, and `interface.minus.axis` and `interface.plus.axis`.
 - #188: Remove `plot_domain()`, `plot_2d()`, `plot_3d()`, `plot_2d_single_patch()` and `plot_3d_single_patch()` from `sympde.utilities.utils`. Use `plot_domain()` from `sympde.api` instead.
 - #194: Remove the re-exports of public objects from the package and subpackage initializers. Replace imports such as `from sympde.topology import Square` with `from sympde.api import Square`. `from sympde import __version__` keeps working.

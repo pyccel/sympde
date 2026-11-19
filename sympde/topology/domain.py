@@ -27,10 +27,9 @@ from sympde.core.basic import (
 )
 from .basic            import BasicDomain, InteriorDomain, Boundary, Union, Connectivity
 from .basic            import Interval, Interface
-from .basic            import CornerBoundary, CornerInterface
 from .basic            import ProductDomain
 from .basic            import _as_integer
-from .incidence        import index_interfaces
+from .incidence        import collect_edges, collect_vertices, index_interfaces
 
 # TODO fix circular dependency between domain and mapping
 if TYPE_CHECKING:
@@ -189,7 +188,8 @@ class Domain(BasicDomain):
         obj = new_basic(cls, name, interiors, boundaries, mapping,
                          logical_domain, tuple(connectivity.values()))
         obj._connectivity   = connectivity
-        obj._corners        = None
+        obj._vertices       = None
+        obj._edges          = None
         obj._dtype          = dtype
         obj._dim            = dim
         obj._logical_domain = logical_domain
@@ -340,22 +340,29 @@ class Domain(BasicDomain):
         return self.connectivity.interfaces
 
     @property
-    def corners(self):
-        corners = getattr(self,'_corners', None)
-        if corners is None:
-            corners = self.get_shared_corners()
-        self._corners = corners
-        return corners
+    def vertices(self) -> tuple:
+        """All vertices of the domain, as plain data with patch indices.
+
+        Each vertex is a :class:`~sympde.topology.incidence.TopologyVertex`,
+        which lists the corners of the patches identified with it through the
+        interfaces, and tells whether it lies on the exterior boundary.
+        """
+        if self._vertices is None:
+            self._vertices = collect_vertices(self)
+        return self._vertices
 
     @property
-    def shared_vertices(self) -> tuple:
-        """Shared patch-vertex equivalence classes as a stable tuple."""
-        corners = self.corners
-        if corners is None:
-            return ()
-        if isinstance(corners, CornerInterface):
-            return (corners,)
-        return corners.as_tuple()
+    def edges(self) -> tuple:
+        """All edges of a 2D or 3D domain, as plain data with patch indices.
+
+        Each edge is a :class:`~sympde.topology.incidence.TopologyEdge`,
+        which lists the edges of the patches identified with it through the
+        interfaces, with their directions, and tells whether it lies on the
+        exterior boundary. In 2D, the edges are the sides of the patches.
+        """
+        if self._edges is None:
+            self._edges = collect_edges(self)
+        return self._edges
 
     def __len__(self):
         if isinstance(self.interior, InteriorDomain):
@@ -1037,83 +1044,6 @@ class Domain(BasicDomain):
                       connectivity=connectivity,
                       mapping=mapping,
                       logical_domain=logical_domain)
-
-    def get_shared_corners(self):
-        """Return equivalence classes of patch vertices joined by interfaces.
-
-        Face vertices are related using each interface's signed tangential-axis
-        permutation.  Connected components then handle any patch incidence in
-        both 2D and 3D, without walking around interfaces in a prescribed order.
-        """
-        interfaces = self.interfaces
-        if interfaces is None:
-            return None
-        interfaces = (interfaces,) if isinstance(interfaces, Interface) else tuple(interfaces)
-
-        # The vertices of a patch are the corners of its parametric box. A
-        # topological InteriorDomain, as read from a file without dtype, has
-        # no such box.
-        for interface in interfaces:
-            for side in (interface.minus, interface.plus):
-                if not hasattr(side.domain, 'get_boundary'):
-                    raise ValueError(
-                        'shared vertices are only defined for patches with a '
-                        f'parametric box, such as Square or Cube; patch '
-                        f'{side.domain.name} is a topological InteriorDomain')
-
-        parent = {}
-
-        def find(vertex):
-            parent.setdefault(vertex, vertex)
-            while parent[vertex] != vertex:
-                parent[vertex] = parent[parent[vertex]]
-                vertex = parent[vertex]
-            return vertex
-
-        def union(vertex_1, vertex_2):
-            root_1 = find(vertex_1)
-            root_2 = find(vertex_2)
-            if root_1 != root_2:
-                if root_2.sort_key() < root_1.sort_key():
-                    root_1, root_2 = root_2, root_1
-                parent[root_2] = root_1
-
-        def make_vertex(face, extents):
-            boundaries = [
-                face.domain.get_boundary(axis=axis, ext=ext)
-                for axis, ext in enumerate(extents)
-            ]
-            return CornerBoundary(*boundaries)
-
-        for interface in interfaces:
-            minus_axis = interface.minus.axis
-            plus_axis  = interface.plus.axis
-
-            for tangent_extents in product((-1, 1), repeat=self.dim - 1):
-                minus_extents = [None] * self.dim
-                plus_extents  = [None] * self.dim
-                minus_extents[minus_axis] = interface.minus.ext
-                plus_extents[plus_axis]   = interface.plus.ext
-                for source_position, (source_axis, target_axis, direction) \
-                        in enumerate(interface.axis_map):
-                    source_ext = tangent_extents[source_position]
-                    minus_extents[source_axis] = source_ext
-                    plus_extents[target_axis]  = direction * source_ext
-
-                union(
-                    make_vertex(interface.minus, minus_extents),
-                    make_vertex(interface.plus, plus_extents))
-
-        groups = {}
-        for vertex in parent:
-            groups.setdefault(find(vertex), []).append(vertex)
-
-        shared_corners = [
-            CornerInterface(*vertices)
-            for _, vertices in sorted(groups.items(), key=lambda item: item[0].sort_key())
-            if len(vertices) > 1
-        ]
-        return Union(*shared_corners)
 
     def get_subdomain(self, names):
         """

@@ -21,8 +21,8 @@ __all__ = (
     'TopologyEdgeIncidence',
     'TopologyVertex',
     'TopologyVertexIncidence',
-    'collect_topology_edges',
-    'collect_topology_vertices',
+    'collect_edges',
+    'collect_vertices',
     'index_interfaces',
 )
 
@@ -302,13 +302,12 @@ def _identify_through_interfaces(domain, dim):
     return result
 
 
-def collect_topology_vertices(domain):
+def collect_vertices(domain):
     """Return all vertices of a domain and their patch incidences.
 
-    Unlike ``domain.shared_vertices``, which stores only equivalence classes
-    created by interface identifications, this function also includes
-    unshared patch corners. Each returned vertex records all of its
-    patch-local representatives and whether it lies on the exterior boundary.
+    This is the value of :attr:`Domain.vertices`. Each returned vertex records
+    all of its patch-local representatives, including unshared patch corners,
+    and whether it lies on the exterior boundary.
 
     Parameters
     ----------
@@ -335,9 +334,10 @@ def collect_topology_vertices(domain):
         in enumerate(_identify_through_interfaces(domain, 0)))
 
 
-def collect_topology_edges(domain):
+def collect_edges(domain):
     """Return all edges of a 2D or 3D domain and their patch incidences.
 
+    This is the value of :attr:`Domain.edges`.
     In 3D, an edge where several patches meet has one incidence per patch
     edge identified with it, through any chain of interfaces. In 2D, the edges
     are the sides of the patches, so that an interface joins two of them.

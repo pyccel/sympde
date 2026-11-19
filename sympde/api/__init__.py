@@ -121,10 +121,6 @@ from sympde.topology.analytical_mapping import (
     TwistedTargetSurfaceMapping,
 )
 from sympde.topology.callable_mapping import CallableMapping
-from sympde.topology.incidence import (
-    collect_topology_edges,
-    collect_topology_vertices,
-)
 
 from sympde.expr.basic import BasicForm
 from sympde.expr.equation import Equation, EssentialBC, find
@@ -234,8 +230,6 @@ __all__ = (
     'Union',
     'VectorFunction',
     'VectorFunctionSpace',
-    'collect_topology_edges',
-    'collect_topology_vertices',
     'dx',
     'dx1',
     'dx2',

@@ -9,8 +9,6 @@ import sys
 
 import numpy as np
 
-from sympde.topology.incidence import collect_topology_vertices
-
 __all__ = (
     'format_topology',
     'print_topology',
@@ -66,7 +64,7 @@ def format_topology(domain):
         ))
 
     lines.append('vertices:')
-    for vertex in collect_topology_vertices(domain):
+    for vertex in domain.vertices:
         incidences = ', '.join(
             f'{incidence.patch_name}{incidence.logical_corner}'
             for incidence in vertex.incidences
@@ -270,7 +268,7 @@ def _patch_neighbours(domain, patches):
 
     for interface in _interfaces(domain):
         connect({index[interface.minus.domain], index[interface.plus.domain]})
-    for vertex in collect_topology_vertices(domain):
+    for vertex in domain.vertices:
         connect(set(vertex.patch_indices))
     return neighbours
 
@@ -333,7 +331,7 @@ def _build_model(domain, refinement, topology):
             minus_center, plus_center, separated))
 
     vertices = []
-    for vertex in collect_topology_vertices(domain):
+    for vertex in domain.vertices:
         locations = {}
         for incidence in vertex.incidences:
             point = _corner_point(
