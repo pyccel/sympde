@@ -652,6 +652,9 @@ class Domain(BasicDomain):
                 minus['axis'], 'serialized interface axis')
             minus_ext  = _serialized_integer(
                 minus['ext'], 'serialized interface extremity')
+            if minus_name not in patch_index:
+                raise ValueError(
+                    f'serialized interface references unknown patch: {minus_name}')
             minus_patch_i = patch_index[minus_name]
 
             plus_name = plus['patch']
@@ -659,6 +662,9 @@ class Domain(BasicDomain):
                 plus['axis'], 'serialized interface axis')
             plus_ext  = _serialized_integer(
                 plus['ext'], 'serialized interface extremity')
+            if plus_name not in patch_index:
+                raise ValueError(
+                    f'serialized interface references unknown patch: {plus_name}')
             plus_patch_i = patch_index[plus_name]
             interface = ((minus_patch_i, minus_axis, minus_ext),
                          (plus_patch_i, plus_axis, plus_ext), orientation,

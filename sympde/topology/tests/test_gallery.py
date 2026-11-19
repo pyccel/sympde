@@ -469,6 +469,23 @@ def test_file_boundary_must_match_connectivity(tmp_path):
         Domain.from_file(str(filename))
 
 #==============================================================================
+def test_file_interface_must_reference_known_patches(tmp_path):
+    domain = Domain.join(
+        [Square('A'), Square('B')],
+        [((0, 0, +1), (1, 0, -1), +1)],
+        'AB')
+    topology = domain.todict()
+    topology['connectivity']['A|B'][1]['patch'] = 'C'
+    filename = tmp_path / 'unknown_patch.h5'
+
+    with h5py.File(filename, mode='w') as h5:
+        h5['topology.yml'] = np.array(
+            yaml.safe_dump(topology, sort_keys=None), dtype='S')
+
+    with pytest.raises(ValueError, match='unknown patch: C'):
+        Domain.from_file(str(filename))
+
+#==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
 
