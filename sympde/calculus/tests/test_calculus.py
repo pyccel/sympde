@@ -508,6 +508,24 @@ def test_calculus_2d_5():
     assert(plus(u+v)      == plus(u) + plus(v))
     assert(plus(a*u)      == a*plus(u))
     assert(div(plus(u+v)) == div(plus(u)) + div(plus(v)))
+
+#==============================================================================
+def test_curl_scalar_2d():
+    # In 2D the curl of a scalar function is the vector curl, i.e. its rot
+    from sympde.expr.evaluation import TerminalExpr
+
+    domain = Domain('Omega', dim=2)
+    V = ScalarFunctionSpace('V', domain)
+    W = VectorFunctionSpace('W', domain)
+    u = element_of(V, name='u')
+    w = element_of(W, name='w')
+
+    assert not curl(u).is_scalar
+    assert not curl(minus(u)).is_scalar
+    assert curl(w).is_scalar
+
+    assert TerminalExpr(curl(u), domain) == TerminalExpr(rot(u), domain)
+
 #==============================================================================
 # CLEAN UP SYMPY NAMESPACE
 #==============================================================================
