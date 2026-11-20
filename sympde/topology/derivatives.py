@@ -9,6 +9,7 @@ from sympy import Symbol
 from sympy import Expr
 from sympy import Tuple
 from sympy import Matrix, ImmutableDenseMatrix
+from sympy.matrices import MatrixBase
 from sympy import Mul, Add, Pow
 from sympy import S
 from sympy import Indexed
@@ -630,6 +631,10 @@ class Curl_2d(CurlBasic):
 
         u = _args[0]
 
+        # The curl of a scalar function is the vector curl, i.e. its rot
+        if not isinstance(u, MatrixBase):
+            return Rot_2d.eval(u)
+
         return dx(u[1])-dy(u[0])
 
 class Curl_3d(CurlBasic):
@@ -987,6 +992,10 @@ class LogicalCurl_2d(CurlBasic):
             return
 
         u = _args[0]
+
+        # The curl of a scalar function is the vector curl, i.e. its rot
+        if not isinstance(u, MatrixBase):
+            return LogicalRot_2d.eval(u)
 
         return dx1(u[1])-dx2(u[0])
 

@@ -38,6 +38,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- #152: Treat the 2D `curl` of a scalar function as the vector curl (same as `rot`): it is no longer marked scalar, and `TerminalExpr` no longer fails on it.
 - #200: Keep the physical dimension of the mappings in `Domain.export()` and `Domain.from_file()`.
 - #140: Fix the rendering of the `Domain.join()` API documentation.
 - #166: Restore warning-free documentation builds, including bibliography and mathematical notation support.

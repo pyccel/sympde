@@ -107,6 +107,7 @@ from sympy.utilities.iterables import is_sequence
 from sympde.core.basic        import CalculusFunction
 from sympde.core.basic        import coefficient_types
 from sympde.topology.space    import ScalarFunction, VectorFunction
+from sympde.topology.space    import ScalarFunctionSpace
 from sympde.topology.domain   import NormalVector, MinusNormalVector, PlusNormalVector
 from sympde.topology.datatype import H1SpaceType, HcurlSpaceType
 from sympde.topology.datatype import HdivSpaceType, UndefinedSpaceType
@@ -824,8 +825,12 @@ class Curl(DiffOperator):
             r = Basic.__new__(cls, expr, **options)
 
         if r and _is_sympde_atom(expr):
-            r.is_scalar      = expr.space.domain.dim == 2
-            r.is_commutative = expr.space.domain.dim == 2
+            # In 2D the curl of a vector field is a scalar, but the curl of a
+            # scalar function is a vector (the vector curl, same as rot)
+            is_scalar = (expr.space.domain.dim == 2
+                         and not isinstance(expr.space, ScalarFunctionSpace))
+            r.is_scalar      = is_scalar
+            r.is_commutative = is_scalar
 
         return r
 
