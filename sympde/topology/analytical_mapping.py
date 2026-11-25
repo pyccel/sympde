@@ -65,6 +65,19 @@ class TargetMapping(Mapping):
     _pdim        = 2
 
 #==============================================================================
+class TransposedTargetMapping(Mapping):
+    """Target 2D mapping with angle and radius coordinates transposed.
+
+    The first logical coordinate is the angle and the second one is the
+    radius. This is the coordinate ordering opposite to :class:`TargetMapping`.
+    """
+    _expressions = {'x': 'c1 + (1-k)*x2*cos(x1) - D*x2**2',
+                    'y': 'c2 + (1+k)*x2*sin(x1)'}
+
+    _ldim        = 2
+    _pdim        = 2
+
+#==============================================================================
 class CzarnyMapping(Mapping):
     """
     Represents a Czarny 2D Mapping object.
@@ -75,6 +88,20 @@ class CzarnyMapping(Mapping):
     _expressions = {'x': '(1 - sqrt( 1 + eps*(eps + 2*x1*cos(x2)) )) / eps',
                     'y': 'c2 + (b / sqrt(1-eps**2/4) * x1 * sin(x2)) /'
                         '(2 - sqrt( 1 + eps*(eps + 2*x1*cos(x2)) ))'}
+
+    _ldim        = 2
+    _pdim        = 2
+
+#==============================================================================
+class TransposedCzarnyMapping(Mapping):
+    """Czarny 2D mapping with angle and radius coordinates transposed.
+
+    The first logical coordinate is the angle and the second one is the
+    radius. This is the coordinate ordering opposite to :class:`CzarnyMapping`.
+    """
+    _expressions = {'x': '(1 - sqrt( 1 + eps*(eps + 2*x2*cos(x1)) )) / eps',
+                    'y': 'c2 + (b / sqrt(1-eps**2/4) * x2 * sin(x1)) /'
+                        '(2 - sqrt( 1 + eps*(eps + 2*x2*cos(x1)) ))'}
 
     _ldim        = 2
     _pdim        = 2

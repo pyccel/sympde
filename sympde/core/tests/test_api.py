@@ -48,3 +48,17 @@ def test_api_objects_come_from_defining_modules():
     assert elements_of is topology_elements_of
     assert ScalarFunctionSpace is TopologyScalarSpace
     assert VectorFunctionSpace is TopologyVectorSpace
+
+
+def test_api_contains_all_analytical_mappings():
+    import sympde.api as api
+    import sympde.topology.analytical_mapping as analytical_mapping
+    from sympde.topology.mapping import Mapping
+
+    mappings = {
+        name for name, obj in vars(analytical_mapping).items()
+        if isinstance(obj, type) and issubclass(obj, Mapping)
+        and obj.__module__ == analytical_mapping.__name__
+    }
+    assert len(mappings) == 14
+    assert mappings <= set(api.__all__)

@@ -1,7 +1,15 @@
 import numpy as np
 import pytest
+from sympy import Rational, simplify
 
-from sympde.topology.analytical_mapping import TransposedPolarMapping
+from sympde.topology.analytical_mapping import (
+    CzarnyMapping,
+    PolarMapping,
+    TargetMapping,
+    TransposedCzarnyMapping,
+    TransposedPolarMapping,
+    TransposedTargetMapping,
+)
 from sympde.topology.multipatch_gallery import (
     build_annulus_3,
     build_annulus_4,
@@ -147,14 +155,32 @@ def test_build_cartesian_multipatch_domain_2d_rejects_unknown_mapping():
             [[1]], (0, 1), (0, 1), mapping='unknown')
 
 
-def test_transposed_polar_mapping_is_public():
-    mapping = TransposedPolarMapping(
-        'F', dim=2, c1=0, c2=0, rmin=0, rmax=1)
+@pytest.mark.parametrize(
+    ('transposed', 'original', 'params'),
+    [
+        (TransposedPolarMapping, PolarMapping,
+         dict(c1=0.5, c2=-1, rmin=0.2, rmax=1.5)),
+        (TransposedTargetMapping, TargetMapping,
+         dict(c1=0.5, c2=-1, k=0.3, D=0.2)),
+        # SymPDE takes about a minute to build CzarnyMapping with float parameters
+        (TransposedCzarnyMapping, CzarnyMapping,
+         dict(c2=-1, eps=Rational(1, 5), b=Rational(7, 5))),
+    ],
+)
+def test_transposed_mapping(transposed, original, params):
+    F = transposed('F', **params)
+    G = original('G', **params)
+    assert F.ldim == F.pdim == 2
 
-    angle, radius = mapping.logical_coordinates
-    x, y = mapping.expressions
-    assert x.subs({angle: 0, radius: 2}) == 2
-    assert y.subs({angle: 0, radius: 2}) == 0
+    x1, x2 = G.logical_coordinates
+    swap = {x1: x2, x2: x1}
+    for f, g in zip(F.expressions, G.expressions):
+        assert simplify(f - g.subs(swap, simultaneous=True)) == 0
+
+    # Swapping the logical coordinates reverses the orientation
+    det_F = F.jacobian_expr.det()
+    det_G = G.jacobian_expr.det().subs(swap, simultaneous=True)
+    assert simplify(det_F + det_G) == 0
 
 
 @pytest.mark.parametrize('name', ['unknown', None])
