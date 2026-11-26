@@ -421,6 +421,11 @@ This example illustrates two independent facts:
 * the same ordered patch pair can have more than one interface; and
 * the orientation belongs to each interface, not to the patch pair.
 
+The strip is only a topological example: it is a Möbius strip, which is not
+orientable (see `Orientability and handedness`_), and its mappings do not
+match on the second interface, where the sides ``x = 0`` and ``x = 2`` are
+identified.  It cannot be discretized as a planar domain.
+
 Interface names are generated from the side-domain names; for mapped patches,
 from the names of their logical patches, so that ``F(A)`` and ``G(B)`` give
 ``A|B``.  If that base name is repeated, the interfaces receive ``#2``,
@@ -533,6 +538,41 @@ codimension 3                                       ``vertices``
 
 In 2D, the edges of the patches are their sides, so that ``omega.edges`` is
 only defined in 3D.
+
+Orientability and handedness
+============================
+
+The handedness of an interface, ``interface.handedness``, is the determinant
+of its ``permutation_matrix``: ``-1`` if going from the minus to the plus
+patch reflects the logical axes.  A domain is orientable if every patch can be
+given a sign ``s`` with ``s[plus] == s[minus] * interface.handedness`` for
+every interface.  ``omega.patch_handedness`` returns these signs, in the order
+of ``omega.patches``, with ``+1`` for the first patch of every connected
+component, or ``None`` if the domain is not orientable.  ``omega.is_orientable``
+tells whether they exist.  A self-interface or a cycle of interfaces with a
+handedness product of ``-1`` makes a domain non-orientable, like the square
+whose opposite sides are identified with reversed directions, a Möbius strip:
+
+.. code-block:: python
+
+   from sympde.api import Domain, Square
+
+   cylinder = Domain.join([Square('P')], [((0, 0, -1), (0, 0, +1), +1)], 'cylinder')
+   moebius = Domain.join([Square('P')], [((0, 0, -1), (0, 0, +1), -1)], 'moebius')
+   assert cylinder.patch_handedness == (1,)
+   assert not moebius.is_orientable
+
+The patches of a mapped domain may be left-handed, with a negative Jacobian
+determinant, and different patches may have different handedness: the pull-backs
+use the signed determinant, so that the handedness of the patches cancels in
+the relations of ``map_component``.  If the mappings have ``ldim == pdim`` and
+match on the interfaces, the signs of their Jacobian determinants follow
+``omega.patch_handedness``, up to one sign per connected component.  Hence such
+a domain is orientable, and a non-orientable domain with ``ldim == pdim``
+cannot be realized geometrically.  SymPDE does not reject non-orientable
+domains, which are valid topologies and can be realized as surfaces with
+``pdim > ldim``, but discretizations of oriented quantities, such as
+H(div) fields, should check ``omega.is_orientable``.
 
 Inspecting and plotting 2D and 3D topology
 ==========================================

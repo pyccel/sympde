@@ -28,7 +28,7 @@ from .basic            import BasicDomain, InteriorDomain, Boundary, Union, Conn
 from .basic            import Interval, Interface
 from .basic            import ProductDomain
 from .basic            import _as_integer
-from .incidence        import collect_edges, collect_vertices
+from .incidence        import collect_edges, collect_vertices, orient_patches
 from .incidence        import index_boundary_sides, index_interfaces
 
 # TODO fix circular dependency between domain and mapping
@@ -352,6 +352,33 @@ class Domain(BasicDomain):
         interface.
         """
         return self._connectivity.interfaces
+
+    @property
+    def patch_handedness(self):
+        """Relative handedness of the patches, or None if the domain is not
+        orientable.
+
+        A tuple with one sign per patch, in the order of :attr:`patches`,
+        such that ``s[plus] == s[minus] * interface.handedness`` for every
+        interface; the first patch of every connected component has the
+        sign +1. If the patches have mappings with ``ldim == pdim``, which
+        match on the interfaces, the signs of their Jacobian determinants
+        follow these relative signs. Such a domain is always orientable, so
+        that a non-orientable domain with ``ldim == pdim`` cannot be realized
+        geometrically. See
+        :func:`~sympde.topology.incidence.orient_patches`.
+        """
+        return orient_patches(self)
+
+    @property
+    def is_orientable(self) -> bool:
+        """Whether the patches can be given handedness signs that are
+        consistent across all interfaces, see :attr:`patch_handedness`.
+
+        A self-interface or a cycle of interfaces whose handedness product is
+        -1, like a Möbius strip, makes a domain non-orientable.
+        """
+        return self.patch_handedness is not None
 
     @property
     def vertices(self) -> tuple:

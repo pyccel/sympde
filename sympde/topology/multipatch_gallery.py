@@ -925,7 +925,14 @@ def build_pretzel_f(r_min=None, r_max=None):
 
 
 def build_two_patch_twisted_strip():
-    """Return two patches connected by interfaces of both 2D orientations."""
+    """Return two patches connected by interfaces of both 2D orientations.
+
+    This is a topological diagnostic, not a domain to discretize: the two
+    interfaces make a Möbius strip, which is not orientable, and the
+    mappings do not match on the second interface, which identifies the
+    sides x = 0 and x = 2. A non-orientable planar domain cannot be realized
+    geometrically.
+    """
     logical_patch_a = Square('A', bounds1=(0, 1), bounds2=(0, 1))
     logical_patch_b = Square('B', bounds1=(0, 1), bounds2=(0, 1))
 

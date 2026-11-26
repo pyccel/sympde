@@ -1,4 +1,5 @@
 import numpy as np
+from sympy import lambdify
 import pytest
 
 from sympde.topology.analytical_mapping import AffineMapping, IdentityMapping
@@ -220,3 +221,55 @@ def test_indexed_interfaces():
 
     with pytest.raises(TypeError):
         interfaces['other'] = interfaces['top']
+
+#==============================================================================
+@pytest.mark.parametrize('ldim, name', [
+    (2, 'square_9'), (2, 'annulus_4'), (2, 'curved_L_shape'), (2, 'pretzel'),
+    (2, 'pretzel_f'), (2, 'pretzel_annulus'), (2, 'self_connected_patch'),
+    (2, 'three_patch_shared_vertex'),
+    (3, 'two_cube'), (3, 'torus'), (3, 'oriented_two_cube'),
+    (3, 'three_patch_shared_edge'),
+])
+def test_patch_handedness_follows_jacobian_determinants(ldim, name):
+    build = {2: build_multipatch_domain_2d, 3: build_multipatch_domain_3d}[ldim]
+    domain = build(name)
+
+    signs = []
+    for patch in domain.patches:
+        logical_patch = patch.logical_domain
+        center = [(lower + upper) / 2 for lower, upper
+                  in zip(logical_patch.min_coords, logical_patch.max_coords)]
+        mapping = patch.mapping
+        jacobian = lambdify(mapping.logical_coordinates, mapping.jacobian_expr)(*center)
+        signs.append(int(np.sign(np.linalg.det(np.array(jacobian, dtype=float)))))
+
+    assert domain.is_orientable
+    assert domain.patch_handedness == domain.logical_domain.patch_handedness
+    assert domain.patch_handedness == tuple(signs[0] * sign for sign in signs)
+
+#==============================================================================
+def test_patch_handedness_non_orientable():
+    # The twisted strip is a Möbius strip made of two patches
+    strip = build_multipatch_domain_2d('two_patch_twisted_strip')
+    assert not strip.is_orientable
+    assert strip.patch_handedness is None
+
+    # A square whose opposite sides are identified with the same or the
+    # reversed direction is a cylinder or a Möbius strip
+    cylinder = Domain.join([Square('P')], [((0, 0, -1), (0, 0, +1), +1)], 'cylinder')
+    moebius  = Domain.join([Square('P')], [((0, 0, -1), (0, 0, +1), -1)], 'moebius')
+    assert cylinder.patch_handedness == (1,)
+    assert moebius.patch_handedness is None
+
+    # Identifying a face with its opposite through a reflection
+    cube = Domain.join([Cube('P')], [((0, 0, -1), (0, 0, +1), (+1, +1, -1))], 'cube')
+    assert not cube.is_orientable
+
+    # Each connected component starts with the sign +1. Joining two upper
+    # faces, or a face normal to x2 with one normal to x1 without reversing
+    # the tangent, reflects the logical axes.
+    patches = [Square('A'), Square('B'), Square('C'), Square('D')]
+    domain = Domain.join(patches, [((0, 0, +1), (1, 0, +1), +1),
+                                   ((2, 1, +1), (3, 0, -1), +1)], 'two_components')
+    assert [interface.handedness for interface in domain.interface_map.values()] == [-1, -1]
+    assert domain.patch_handedness == (1, -1, 1, -1)

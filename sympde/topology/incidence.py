@@ -27,6 +27,7 @@ __all__ = (
     'collect_vertices',
     'index_boundary_sides',
     'index_interfaces',
+    'orient_patches',
 )
 
 #==============================================================================
@@ -120,6 +121,53 @@ def index_boundary_sides(domain):
     """
     patch_indices = _patch_indices(domain)
     return tuple(_side(side, patch_indices) for side in domain.boundary_sides)
+
+def orient_patches(domain):
+    """Return a consistent relative handedness of the patches of a domain.
+
+    This is the value of :attr:`Domain.patch_handedness`. The signs ``s``
+    satisfy ``s[plus] == s[minus] * interface.handedness`` for every
+    interface, and the first patch of every connected component has the sign
+    +1. They exist if and only if the domain is orientable. If the patches
+    have mappings with ``ldim == pdim``, which match on the interfaces, the
+    sign of the Jacobian determinant of patch ``i`` is ``s[i]`` times the
+    sign for the first patch of its connected component.
+
+    Parameters
+    ----------
+    domain : sympde.topology.domain.Domain
+        A logical or mapped domain.
+
+    Returns
+    -------
+    tuple[int, ...] | None
+        One sign per patch, in the order of ``domain.patches``, or None if
+        the domain is not orientable.
+    """
+    npatches = len(domain.patches)
+    neighbours = [[] for _ in range(npatches)]
+    for interface in index_interfaces(domain).values():
+        minus = interface.minus.patch_index
+        plus = interface.plus.patch_index
+        neighbours[minus].append((plus, interface.handedness))
+        neighbours[plus].append((minus, interface.handedness))
+
+    signs = [None] * npatches
+    for root in range(npatches):
+        if signs[root] is not None:
+            continue
+        signs[root] = 1
+        stack = [root]
+        while stack:
+            patch = stack.pop()
+            for neighbour, handedness in neighbours[patch]:
+                sign = signs[patch] * handedness
+                if signs[neighbour] is None:
+                    signs[neighbour] = sign
+                    stack.append(neighbour)
+                elif signs[neighbour] != sign:
+                    return None
+    return tuple(signs)
 
 #==============================================================================
 # Vertices and edges
