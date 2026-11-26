@@ -183,7 +183,12 @@ class TopologyVertexIncidence:
 
 @dataclass(frozen=True)
 class TopologyVertex:
-    """A topological vertex and all patch-local corners identified with it."""
+    """A topological vertex and all patch-local corners identified with it.
+
+    The incidences may contain the same patch more than once, if a patch is
+    glued to itself: they are identified by (patch_index, logical_corner).
+    :meth:`Domain.vertex_of` returns the vertex of a patch corner.
+    """
 
     index: int
     incidences: tuple
@@ -223,7 +228,12 @@ class TopologyEdgeIncidence:
 
 @dataclass(frozen=True)
 class TopologyEdge:
-    """A topological edge and all patch-local edges identified with it."""
+    """A topological edge and all patch-local edges identified with it.
+
+    The incidences may contain the same patch more than once, if a patch is
+    glued to itself: they are identified by (patch_index, logical_edge).
+    :meth:`Domain.edge_of` returns the edge of a patch edge.
+    """
 
     index: int
     incidences: tuple

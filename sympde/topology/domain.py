@@ -58,9 +58,13 @@ class Domain(BasicDomain):
     Multi-patch domains additionally carry a connectivity, which describes the
     interfaces between their patches.
     """
-    # Vertices and edges, computed when they are first needed
-    _vertices = None
-    _edges    = None
+    # Vertices and edges, and the reverse lookups from patch-local corners,
+    # edges and sides, computed when they are first needed
+    _vertices       = None
+    _edges          = None
+    _vertex_lookup  = None
+    _edge_lookup    = None
+    _side_lookup    = None
 
     def __new__(cls, name : str,
             interiors : TypeUnion[Iterable[InteriorDomain], InteriorDomain, None] = None,
@@ -406,6 +410,106 @@ class Domain(BasicDomain):
         if self._edges is None:
             self._edges = collect_edges(self)
         return self._edges
+
+    def vertex_of(self, patch_index, corner):
+        """Return the vertex of the domain that a corner of a patch belongs to.
+
+        Parameters
+        ----------
+        patch_index : int
+            Position of the patch in :attr:`patches`.
+
+        corner : tuple[int, ...]
+            Corner of the parametric box of the patch: 0 (lower end) or 1
+            (upper end) for every axis.
+
+        Returns
+        -------
+        TopologyVertex
+            The element of :attr:`vertices` with the incidence
+            ``(patch_index, corner)``.
+        """
+        if self._vertex_lookup is None:
+            self._vertex_lookup = {
+                (incidence.patch_index, incidence.logical_corner): vertex
+                for vertex in self.vertices
+                for incidence in vertex.incidences}
+        try:
+            return self._vertex_lookup[int(patch_index), tuple(corner)]
+        except KeyError:
+            raise ValueError(f'{tuple(corner)} is not a corner of the patch '
+                             f'{patch_index}') from None
+
+    def edge_of(self, patch_index, logical_edge):
+        """Return the edge of a 3D domain that an edge of a patch belongs to.
+
+        Parameters
+        ----------
+        patch_index : int
+            Position of the patch in :attr:`patches`.
+
+        logical_edge : tuple
+            Edge of the parametric box of the patch: None for the axis along
+            the edge, and 0 (lower end) or 1 (upper end) for the other axes.
+
+        Returns
+        -------
+        tuple[TopologyEdge, int]
+            The element of :attr:`edges` with the incidence
+            ``(patch_index, logical_edge)``, and the direction of this
+            incidence: +1 if the patch edge has the same direction as the
+            first incidence of the edge, and -1 otherwise.
+        """
+        if self._edge_lookup is None:
+            self._edge_lookup = {
+                (incidence.patch_index, incidence.logical_edge): (edge, incidence.direction)
+                for edge in self.edges
+                for incidence in edge.incidences}
+        try:
+            return self._edge_lookup[int(patch_index), tuple(logical_edge)]
+        except KeyError:
+            raise ValueError(f'{tuple(logical_edge)} is not an edge of the patch '
+                             f'{patch_index}') from None
+
+    def side_of(self, patch_index, axis, ext):
+        """Return the interface or the boundary side that a side of a patch
+        belongs to.
+
+        Parameters
+        ----------
+        patch_index : int
+            Position of the patch in :attr:`patches`.
+
+        axis : int
+            Logical axis normal to the side.
+
+        ext : int
+            -1 for the lower side, +1 for the upper side.
+
+        Returns
+        -------
+        IndexedInterface | PatchSide
+            The element of :attr:`indexed_interfaces` of which the side is
+            the minus or the plus side, or the element of
+            :attr:`indexed_boundary_sides` equal to the side. For an
+            interface, ``interface.plus == PatchSide(patch_index, axis, ext)``
+            tells whether to pass ``inverse=True`` to its
+            :meth:`~sympde.topology.basic.InterfaceTransform.map_point` and
+            :meth:`~sympde.topology.basic.InterfaceTransform.map_component`.
+        """
+        if self._side_lookup is None:
+            lookup = {}
+            for interface in self.indexed_interfaces.values():
+                for side in (interface.minus, interface.plus):
+                    lookup[side.patch_index, side.axis, side.ext] = interface
+            for side in self.indexed_boundary_sides:
+                lookup[side.patch_index, side.axis, side.ext] = side
+            self._side_lookup = lookup
+        try:
+            return self._side_lookup[int(patch_index), int(axis), int(ext)]
+        except KeyError:
+            raise ValueError(f'(axis={axis}, ext={ext}) is not a side of the '
+                             f'patch {patch_index}') from None
 
     def __len__(self):
         if isinstance(self.interior, InteriorDomain):

@@ -520,6 +520,48 @@ edge of ``build_three_patch_shared_edge``.  The ``direction`` of an edge
 incidence is ``+1`` or ``-1``, relative to the first incidence of the edge,
 and fixes the sign of the tangential components shared along the edge.
 
+The incidences of a vertex or an edge may contain the same patch more than
+once, when a patch is glued to itself: both ends of the self-connected square
+are one vertex with two corners of the same patch, and the eight corners of a
+cube whose opposite faces are all identified are a single vertex.  The patch
+index alone is therefore not a key for an incidence: key the corners by
+``(incidence.patch_index, incidence.logical_corner)`` and the edges by
+``(incidence.patch_index, incidence.logical_edge)``.  ``patch_indices`` lists
+the incident patches without duplicates.
+
+The reverse lookups return the global entity that a patch-local corner, edge
+or side belongs to:
+
+.. code-block:: python
+
+   vertex = omega.vertex_of(patch_index, (0, 1))         # TopologyVertex
+   edge, direction = omega.edge_of(patch_index, (None, 0, 1))  # 3D only
+   entity = omega.side_of(patch_index, axis, ext)
+
+``edge_of`` also returns the direction of the patch edge relative to the first
+incidence of the edge, and ``side_of`` returns the ``IndexedInterface`` of
+which the side is the minus or the plus side, or the ``PatchSide`` of
+``omega.indexed_boundary_sides`` equal to the side.
+
+``side_of`` does not tell which side of the interface the given side is, but
+``map_point`` and ``map_component`` map from the minus to the plus side, and
+from the plus to the minus side only with ``inverse=True``.  Compare the
+interface sides with the given side to choose the direction:
+
+.. code-block:: python
+
+   from sympde.topology.incidence import IndexedInterface, PatchSide
+
+   side = PatchSide(patch_index, axis, ext)
+   entity = omega.side_of(patch_index, axis, ext)
+   if isinstance(entity, IndexedInterface):
+       inverse = entity.plus == side
+       image = entity.map_point(eta, inverse=inverse)
+
+Compare the whole ``PatchSide``, not only the patch indices: both sides of a
+self-interface belong to the same patch.  Compare with ``==``, since
+``omega.indexed_interfaces`` builds new objects on every access.
+
 The faces, edges and vertices of the patches are best sorted by their
 codimension.  The faces (codimension 1) are glued in pairs by the interfaces,
 so that every face is a boundary side or a side of one interface.  The edges

@@ -1,3 +1,5 @@
+import itertools
+
 import numpy as np
 from sympy import lambdify
 import pytest
@@ -273,3 +275,87 @@ def test_patch_handedness_non_orientable():
                                    ((2, 1, +1), (3, 0, -1), +1)], 'two_components')
     assert [interface.handedness for interface in domain.interface_map.values()] == [-1, -1]
     assert domain.patch_handedness == (1, -1, 1, -1)
+
+#==============================================================================
+@pytest.mark.parametrize('ldim, name', [
+    (2, 'square_9'), (2, 'pretzel_f'), (2, 'two_patch_twisted_strip'),
+    (2, 'self_connected_patch'), (2, 'three_patch_shared_vertex'),
+    (3, 'two_cube'), (3, 'torus'), (3, 'oriented_two_cube'),
+    (3, 'three_patch_shared_edge'),
+])
+def test_reverse_lookups(ldim, name):
+    build = {2: build_multipatch_domain_2d, 3: build_multipatch_domain_3d}[ldim]
+    domain = build(name)
+    npatches = len(domain.patches)
+
+    # Every corner of every patch belongs to exactly one vertex
+    corners = list(itertools.product((0, 1), repeat=ldim))
+    for patch_index in range(npatches):
+        for corner in corners:
+            vertex = domain.vertex_of(patch_index, corner)
+            assert (patch_index, corner) in {(i.patch_index, i.logical_corner)
+                                             for i in vertex.incidences}
+    assert sum(len(v.incidences) for v in domain.vertices) == npatches * len(corners)
+
+    # Every side of every patch is a side of one interface or a boundary side
+    for patch_index in range(npatches):
+        for axis, ext in itertools.product(range(ldim), (-1, +1)):
+            side = PatchSide(patch_index, axis, ext)
+            entity = domain.side_of(patch_index, axis, ext)
+            if isinstance(entity, IndexedInterface):
+                assert side in (entity.minus, entity.plus)
+                assert entity in domain.indexed_interfaces.values()
+            else:
+                assert entity == side
+                assert entity in domain.indexed_boundary_sides
+
+    if ldim == 3:
+        for edge in domain.edges:
+            for incidence in edge.incidences:
+                assert domain.edge_of(incidence.patch_index, incidence.logical_edge) \
+                    == (edge, incidence.direction)
+        assert sum(len(e.incidences) for e in domain.edges) == npatches * 12
+    else:
+        with pytest.raises(ValueError, match='3D'):
+            domain.edge_of(0, (None, 0))
+
+#==============================================================================
+def test_reverse_lookups_with_repeated_patch():
+    # A cube whose opposite faces are all identified is a 3-torus made of a
+    # single patch: all its corners are one vertex, and the four parallel
+    # edges along every axis are one edge.
+    cube = Domain.join([Cube('P')], [((0, axis, -1), (0, axis, +1), (+1, +1, +1))
+                                     for axis in range(3)], 'three_torus')
+
+    vertex, = cube.vertices
+    assert vertex.patch_indices == (0,)
+    assert len(vertex.incidences) == 8
+    assert all(cube.vertex_of(0, corner) is vertex
+               for corner in itertools.product((0, 1), repeat=3))
+
+    assert len(cube.edges) == 3
+    for axis in range(3):
+        logical_edges = [tuple(None if i == axis else value for i, value in
+                               enumerate(position)) for position in
+                         itertools.product((0, 1), repeat=3) if position[axis] == 0]
+        edges = {cube.edge_of(0, logical_edge) for logical_edge in logical_edges}
+        assert len(edges) == 1
+        (edge, direction), = edges
+        assert direction == 1
+        assert edge.patch_indices == (0,) and len(edge.incidences) == 4
+
+    # Both sides of a self-interface belong to the same interface
+    assert cube.side_of(0, 1, -1) is cube.side_of(0, 1, +1)
+
+#==============================================================================
+def test_reverse_lookups_reject_unknown_entities():
+    domain = build_multipatch_domain_3d('two_cube')
+
+    with pytest.raises(ValueError, match='corner'):
+        domain.vertex_of(0, (0, 0))
+    with pytest.raises(ValueError, match='corner'):
+        domain.vertex_of(2, (0, 0, 0))
+    with pytest.raises(ValueError, match='edge'):
+        domain.edge_of(0, (0, 0, 0))
+    with pytest.raises(ValueError, match='side'):
+        domain.side_of(0, 3, -1)
