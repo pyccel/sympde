@@ -938,7 +938,10 @@ def test_interface_transform_map_component_gallery(ldim, domain_name):
             mappings.append((mapping.expressions, mapping.logical_coordinates))
             patch = logical_side.domain
             bounds.append(tuple(zip(patch.min_coords, patch.max_coords)))
-        if _check_pullbacks(interface, *mappings, *bounds) is not False:
+        minus_mapping, plus_mapping = mappings
+        minus_bounds, plus_bounds = bounds
+        if _check_pullbacks(interface, minus_mapping, plus_mapping,
+                            minus_bounds, plus_bounds) is not False:
             checked += 1
     assert checked > 0
 
