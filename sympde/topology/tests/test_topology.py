@@ -1,5 +1,6 @@
 import os
 import copy
+import itertools
 import numpy as np
 import pytest
 
@@ -8,6 +9,8 @@ import numpy as np
 import pytest
 import yaml
 from sympy import preorder_traversal
+from sympy import Matrix, symbols
+from sympy import lambdify as sympy_lambdify
 from sympy.core import Basic
 
 from sympde.topology.analytical_mapping import IdentityMapping
@@ -17,6 +20,9 @@ from sympde.topology.basic import Connectivity, Interface
 from sympde.topology.domain import Area, Domain, ElementDomain
 from sympde.topology.domain import Line, Square, Cube, NCube, split
 from sympde.topology.mapping import InterfaceMapping, Mapping, MultiPatchMapping
+from sympde.topology.incidence import _map_to_plus_side
+from sympde.topology.multipatch_gallery import build_multipatch_domain_2d
+from sympde.topology.multipatch_gallery import build_multipatch_domain_3d
 
 
 base_dir = os.path.dirname(os.path.realpath(__file__))
@@ -711,6 +717,290 @@ def test_public_interface_orientation_codec_3d(data, permutation, directions):
         in zip((1, 2), permutation, directions)
     )
 
+
+#==============================================================================
+def _all_interfaces(ldim):
+    """Yield an Interface for every pair of faces and every orientation."""
+    patch_type = {1: Line, 2: Square, 3: Cube}[ldim]
+    A = patch_type('A')
+    B = patch_type('B')
+    orientations = {1: [None],
+                    2: [+1, -1],
+                    3: list(itertools.product((+1, -1), repeat=3))}[ldim]
+    faces = list(itertools.product(range(ldim), (-1, +1)))
+    for (minus_axis, minus_ext), (plus_axis, plus_ext), orientation in \
+            itertools.product(faces, faces, orientations):
+        yield Interface('A|B',
+                        A.get_boundary(axis=minus_axis, ext=minus_ext),
+                        B.get_boundary(axis=plus_axis, ext=plus_ext),
+                        orientation=orientation)
+
+#==============================================================================
+@pytest.mark.parametrize('ldim', [1, 2, 3])
+def test_interface_transform(ldim):
+    for interface in _all_interfaces(ldim):
+        minus = interface.minus
+        plus  = interface.plus
+        permutation = interface.signed_permutation
+
+        # The normal axes are mapped onto each other, the tangential axes as
+        # given by axis_map
+        assert interface.normal_direction == -minus.ext * plus.ext
+        assert permutation[minus.axis] == (plus.axis, interface.normal_direction)
+        assert all(permutation[minus_axis] == (plus_axis, direction)
+                   for minus_axis, plus_axis, direction in interface.axis_map)
+        assert sorted(plus_axis for plus_axis, _ in permutation) == list(range(ldim))
+
+        inverse = interface.inverse_signed_permutation
+        assert all(inverse[plus_axis] == (minus_axis, direction)
+                   for minus_axis, (plus_axis, direction) in enumerate(permutation))
+
+        P = np.array(interface.permutation_matrix)
+        assert np.array_equal(np.abs(P).sum(axis=0), np.ones(ldim))
+        assert np.array_equal(np.abs(P).sum(axis=1), np.ones(ldim))
+        assert interface.handedness == round(np.linalg.det(P))
+
+        # The corners of the minus face are mapped to the same corners as for
+        # the identification of the vertices of a domain
+        for corner in itertools.product((0, 1), repeat=ldim):
+            image = _map_to_plus_side(corner, interface)
+            if image is not None:
+                assert interface.map_point(corner) == image[0]
+
+#==============================================================================
+@pytest.mark.parametrize('ldim', [1, 2, 3])
+def test_interface_transform_map_point_with_bounds(ldim):
+    minus_bounds = ((0.5, 1.0), (-1.0, 2.0), (0.0, 4.0))[:ldim]
+    plus_bounds  = ((2.0, 3.0), (0.0, 0.5), (-3.0, -1.0))[:ldim]
+    rng = np.random.default_rng(0)
+
+    for interface in _all_interfaces(ldim):
+        minus = interface.minus
+        plus  = interface.plus
+        eta = tuple(lower + (upper - lower) * t for (lower, upper), t
+                    in zip(minus_bounds, rng.random(ldim)))
+        image = interface.map_point(eta, minus_bounds, plus_bounds)
+
+        # Round trip
+        back = interface.map_point(image, minus_bounds, plus_bounds, inverse=True)
+        assert np.allclose(back, eta)
+
+        # The minus face is mapped to the plus face
+        on_face = list(eta)
+        on_face[minus.axis] = minus_bounds[minus.axis][(minus.ext + 1) // 2]
+        image_on_face = interface.map_point(on_face, minus_bounds, plus_bounds)
+        assert image_on_face[plus.axis] == plus_bounds[plus.axis][(plus.ext + 1) // 2]
+
+        # The Jacobian of the affine map is the signed permutation matrix,
+        # scaled by the ratios of the interval lengths
+        lengths_minus = np.array([upper - lower for lower, upper in minus_bounds])
+        lengths_plus  = np.array([upper - lower for lower, upper in plus_bounds])
+        jacobian = np.array([
+            np.subtract(interface.map_point(eta[:k] + (eta[k] + 1,) + eta[k+1:],
+                                            minus_bounds, plus_bounds), image)
+            for k in range(ldim)]).T
+        expected = np.diag(lengths_plus) @ np.array(interface.permutation_matrix) \
+                   @ np.diag(1 / lengths_minus)
+        assert np.allclose(jacobian, expected)
+
+#==============================================================================
+@pytest.mark.parametrize('ldim', [2, 3])
+def test_interface_transform_map_component(ldim):
+    minus_bounds = ((0.5, 1.0), (-1.0, 2.0), (0.0, 4.0))[:ldim]
+    plus_bounds  = ((2.0, 3.0), (0.0, 0.5), (-3.0, -1.0))[:ldim]
+
+    for interface in _all_interfaces(ldim):
+        kinds = {'hcurl': [k for k in range(ldim) if k != interface.minus.axis],
+                 'hdiv' : [interface.minus.axis]}
+        for kind, components in kinds.items():
+            for k in range(ldim):
+                if k not in components:
+                    with pytest.raises(ValueError, match='not continuous'):
+                        interface.map_component(k, kind)
+                    continue
+
+                # With unit bounds, only the signs remain
+                j, direction = interface.signed_permutation[k]
+                sign = direction if kind == 'hcurl' else interface.handedness * direction
+                assert interface.map_component(k, kind) == (j, sign)
+
+                # The inverse relation
+                j, factor = interface.map_component(k, kind, minus_bounds, plus_bounds)
+                k_back, factor_back = interface.map_component(
+                    j, kind, minus_bounds, plus_bounds, inverse=True)
+                assert k_back == k
+                assert np.isclose(factor * factor_back, 1)
+
+        with pytest.raises(ValueError, match='kind'):
+            interface.map_component(0, 'h1')
+        with pytest.raises(ValueError, match='L2'):
+            interface.map_component(0, 'l2')
+
+        # Negative indices would select a component from the end
+        for k in (-1, ldim):
+            with pytest.raises(ValueError, match='range'):
+                interface.map_component(k, 'hcurl')
+        for k in (True, 1.0):
+            with pytest.raises(TypeError):
+                interface.map_component(k, 'hcurl')
+
+#==============================================================================
+def _check_pullbacks(interface, minus_mapping, plus_mapping, minus_bounds, plus_bounds):
+    """
+    Check map_component with the pull-backs of smooth physical fields at
+    points of an interface. Each mapping is a pair (expressions, logical
+    coordinates).
+
+    Return False if the mappings do not match on the interface, e.g. for a
+    periodic interface, and otherwise the largest error of the L2 relation
+    u_minus = handedness * prod(Lp)/prod(Lm) * u_plus, which only holds if the
+    geometry is smooth across the interface.
+    """
+    def lambdify(mapping):
+        expressions, coordinates = mapping
+        F = Matrix(expressions)
+        return (sympy_lambdify(coordinates, F, 'numpy'),
+                sympy_lambdify(coordinates, F.jacobian(coordinates), 'numpy'))
+
+    F_minus, J_minus = lambdify(minus_mapping)
+    F_plus , J_plus  = lambdify(plus_mapping)
+    ldim = interface.ldim
+    minus = interface.minus
+
+    def field(x):
+        x = np.append(x, 0.)
+        return np.array([1 + x[0]*x[1], np.sin(x[1]) + x[2], np.cos(x[0]) - x[1]*x[2]])[:len(x) - 1]
+
+    def density(x):
+        return 1 + x[0]*x[1]
+
+    lengths_minus = [upper - lower for lower, upper in minus_bounds]
+    lengths_plus  = [upper - lower for lower, upper in plus_bounds]
+    l2_factor = interface.handedness * np.prod(lengths_plus) / np.prod(lengths_minus)
+    l2_error = 0.
+
+    for t in itertools.product((0.2, 0.5, 0.7), repeat=ldim - 1):
+        eta = [None] * ldim
+        eta[minus.axis] = minus_bounds[minus.axis][(minus.ext + 1) // 2]
+        tangents = [axis for axis in range(ldim) if axis != minus.axis]
+        for axis, ti in zip(tangents, t):
+            lower, upper = minus_bounds[axis]
+            eta[axis] = lower + ti * (upper - lower)
+        eta_plus = interface.map_point(eta, minus_bounds, plus_bounds)
+
+        x = np.array(F_minus(*eta), dtype=float).ravel()
+        if not np.allclose(x, np.array(F_plus(*eta_plus), dtype=float).ravel()):
+            return False
+
+        Jm = np.array(J_minus(*eta), dtype=float)
+        Jp = np.array(J_plus(*eta_plus), dtype=float)
+        u = field(x)
+
+        # Inverses of the push-forwards of PullBack: covariant for H(curl),
+        # contravariant Piola with the signed determinant for H(div)
+        hcurl_minus, hcurl_plus = Jm.T @ u, Jp.T @ u
+        for k in range(ldim):
+            if k != minus.axis:
+                j, factor = interface.map_component(k, 'hcurl', minus_bounds, plus_bounds)
+                assert np.isclose(hcurl_minus[k], factor * hcurl_plus[j], atol=1e-12)
+
+        if Jm.shape[0] == ldim:
+            hdiv_minus = np.linalg.det(Jm) * np.linalg.solve(Jm, u)
+            hdiv_plus  = np.linalg.det(Jp) * np.linalg.solve(Jp, u)
+            k = minus.axis
+            j, factor = interface.map_component(k, 'hdiv', minus_bounds, plus_bounds)
+            assert np.isclose(hdiv_minus[k], factor * hdiv_plus[j], atol=1e-12)
+
+            l2_minus = np.linalg.det(Jm) * density(x)
+            l2_plus  = np.linalg.det(Jp) * density(x)
+            l2_error = max(l2_error, abs(l2_minus - l2_factor * l2_plus))
+
+    return l2_error
+
+#==============================================================================
+@pytest.mark.parametrize('ldim, domain_name', [
+    (2, 'square_4'), (2, 'annulus_4'), (2, 'pretzel_f'), (2, 'curved_L_shape'),
+    (2, 'two_patch_twisted_strip'), (2, 'three_patch_shared_vertex'),
+    (3, 'two_cube'), (3, 'torus'), (3, 'oriented_two_cube'),
+    (3, 'three_patch_shared_edge'),
+])
+def test_interface_transform_map_component_gallery(ldim, domain_name):
+    build = {2: build_multipatch_domain_2d, 3: build_multipatch_domain_3d}[ldim]
+    domain = build(domain_name)
+
+    checked = 0
+    for interface in domain.interface_map.values():
+        mappings = []
+        bounds = []
+        for side, logical_side in [(interface.minus, interface.logical_domain.minus),
+                                   (interface.plus , interface.logical_domain.plus)]:
+            mapping = side.domain.mapping
+            mappings.append((mapping.expressions, mapping.logical_coordinates))
+            patch = logical_side.domain
+            bounds.append(tuple(zip(patch.min_coords, patch.max_coords)))
+        if _check_pullbacks(interface, *mappings, *bounds) is not False:
+            checked += 1
+    assert checked > 0
+
+#==============================================================================
+def test_interface_transform_map_component_l2_gallery():
+    # The patches of pretzel_f are affine, but their mappings are not
+    # continuations of each other: the L2 relation fails on some interfaces.
+    domain = build_multipatch_domain_2d('pretzel_f')
+
+    l2_errors = []
+    for interface in domain.interface_map.values():
+        mappings = [(side.domain.mapping.expressions, side.domain.mapping.logical_coordinates)
+                    for side in (interface.minus, interface.plus)]
+        bounds = [tuple(zip(side.domain.min_coords, side.domain.max_coords))
+                  for side in (interface.logical_domain.minus, interface.logical_domain.plus)]
+        l2_errors.append(_check_pullbacks(interface, *mappings, *bounds))
+
+    assert all(error is not False for error in l2_errors)
+    assert max(l2_errors) > 1e-2
+
+#==============================================================================
+def test_interface_transform_map_component_non_smooth_geometry():
+    # The mapping of B coincides with that of A on the interface, but not its
+    # derivative along the normal axis.
+    minus_bounds = ((0., 1.), (0., 1.), (0., 1.))
+    plus_bounds  = ((0., 2.), (0.5, 1.), (1., 3.))
+    A = Cube('A')
+    B = Cube('B', bounds1=plus_bounds[0], bounds2=plus_bounds[1], bounds3=plus_bounds[2])
+    interface = Interface('A|B',
+                          A.get_boundary(axis=0, ext=+1),
+                          B.get_boundary(axis=1, ext=-1),
+                          orientation=(-1, +1, -1))
+
+    x = symbols('x1, x2, x3', real=True)
+    F_A = Matrix([x[0] + 0.2*x[1]*x[2], x[1] + 0.1*x[0]**2, x[2] + 0.15*x[0]*x[1]])
+    eta = interface.map_point(x, minus_bounds, plus_bounds, inverse=True)
+    F_B = F_A.subs(dict(zip(x, eta)), simultaneous=True) \
+        + (x[1] - plus_bounds[1][0]) * Matrix([0.3*x[0], 0.2 + x[2], 0.25*x[2]**2])
+
+    l2_error = _check_pullbacks(interface, (F_A, x), (F_B, x), minus_bounds, plus_bounds)
+    assert l2_error is not False
+    assert l2_error > 1e-2
+
+#==============================================================================
+def test_indexed_interface_transform():
+    domain = Domain.join(
+        [Cube('A'), Cube('B')],
+        [((0, 0, +1), (1, 1, -1), (-1, +1, -1))],
+        'AB')
+    interface = domain.interfaces
+    indexed, = domain.indexed_interfaces.values()
+
+    assert interface.normal_direction == indexed.normal_direction == +1
+    assert interface.signed_permutation == indexed.signed_permutation \
+                                        == ((1, +1), (2, +1), (0, -1))
+    assert interface.inverse_signed_permutation == indexed.inverse_signed_permutation \
+                                                == ((2, -1), (0, +1), (1, +1))
+    assert interface.permutation_matrix == indexed.permutation_matrix \
+                                        == ((0, 0, -1), (1, 0, 0), (0, 1, 0))
+    assert interface.handedness == indexed.handedness == -1
+    assert interface.map_point((1, 0.25, 0.5)) == indexed.map_point((1, 0.25, 0.5)) \
+                                               == (0.5, 0, 0.25)
 
 #==============================================================================
 def test_public_interface_orientation_codec_1d_and_2d():

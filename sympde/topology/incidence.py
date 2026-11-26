@@ -14,6 +14,8 @@ from dataclasses import dataclass
 from itertools import combinations, product
 from types import MappingProxyType
 
+from sympde.topology.basic import InterfaceTransform
+
 __all__ = (
     'IndexedInterface',
     'PatchSide',
@@ -41,13 +43,15 @@ class PatchSide:
 
 
 @dataclass(frozen=True)
-class IndexedInterface:
+class IndexedInterface(InterfaceTransform):
     """An interface of a multipatch domain, with patch indices.
 
     `orientation` is the compact orientation of the interface (None in 1D,
     +1 or -1 in 2D, (flag, sign1, sign2) in 3D), and `axis_map` its decoded
     form: one entry (minus_axis, plus_axis, direction) per tangential axis of
-    the minus side.
+    the minus side. The full transform between the logical coordinates of the
+    two patches, normal axes included, is given by the members inherited from
+    :class:`~sympde.topology.basic.InterfaceTransform`.
     """
 
     name: str

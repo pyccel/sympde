@@ -3,6 +3,7 @@
 
 
 from collections import abc
+from math import prod
 from numbers import Integral
 
 from sympy.core import Basic, Symbol, Integer
@@ -450,7 +451,238 @@ def _interface_axis_map(dim, minus_axis, plus_axis, orientation):
 
 
 #==============================================================================
-class Interface(BasicDomain):
+class InterfaceTransform:
+    """
+    Full logical coordinate transform from the minus to the plus side of an
+    interface.
+
+    :attr:`axis_map` only relates the tangential axes of the two faces. This
+    mixin completes it with the normal axes, so that every logical axis of the
+    minus patch is mapped to an axis of the plus patch with a direction. It
+    is used by :class:`Interface` and by
+    :class:`~sympde.topology.incidence.IndexedInterface`, which must provide
+    ``minus`` and ``plus`` with ``axis`` and ``ext`` attributes, and
+    ``axis_map``.
+
+    Going out of the minus patch through its face means going into the plus
+    patch through its face, hence the normal axes have the direction
+    ``-minus.ext * plus.ext``.
+    """
+
+    @property
+    def normal_direction(self):
+        """Direction of the plus normal axis along the minus normal axis,
+        ``-minus.ext * plus.ext``."""
+        return -int(self.minus.ext) * int(self.plus.ext)
+
+    @property
+    def signed_permutation(self):
+        """``(plus_axis, direction)`` for every axis of the minus patch,
+        normal axis included, indexed by the minus axis."""
+        ldim = len(self.axis_map) + 1
+        permutation = [None] * ldim
+        permutation[self.minus.axis] = (int(self.plus.axis), self.normal_direction)
+        for minus_axis, plus_axis, direction in self.axis_map:
+            permutation[minus_axis] = (int(plus_axis), int(direction))
+        return tuple(permutation)
+
+    @property
+    def inverse_signed_permutation(self):
+        """``(minus_axis, direction)`` for every axis of the plus patch,
+        normal axis included, indexed by the plus axis."""
+        inverse = [None] * len(self.signed_permutation)
+        for minus_axis, (plus_axis, direction) in enumerate(self.signed_permutation):
+            inverse[plus_axis] = (minus_axis, direction)
+        return tuple(inverse)
+
+    @property
+    def permutation_matrix(self):
+        """Signed permutation matrix ``P`` as a tuple of rows, such that a
+        direction ``d`` of the minus patch is ``P @ d`` in the plus patch."""
+        permutation = self.signed_permutation
+        ldim = len(permutation)
+        rows = [[0] * ldim for _ in range(ldim)]
+        for minus_axis, (plus_axis, direction) in enumerate(permutation):
+            rows[plus_axis][minus_axis] = direction
+        return tuple(tuple(row) for row in rows)
+
+    @property
+    def handedness(self):
+        """Determinant of :attr:`permutation_matrix`: +1 if the transform
+        preserves the orientation of the logical axes, -1 otherwise."""
+        permutation = self.signed_permutation
+        sign = 1
+        for _, direction in permutation:
+            sign *= direction
+        # Parity of the permutation, from the lengths of its cycles
+        visited = [False] * len(permutation)
+        for start in range(len(permutation)):
+            length = 0
+            axis = start
+            while not visited[axis]:
+                visited[axis] = True
+                axis = permutation[axis][0]
+                length += 1
+            if length and length % 2 == 0:
+                sign = -sign
+        return sign
+
+    def map_point(self, eta, minus_bounds=None, plus_bounds=None, *, inverse=False):
+        """
+        Map logical coordinates of the minus patch to the plus patch.
+
+        The map is affine: tangential coordinates are rescaled from the minus
+        to the plus interval, reversed if their direction is -1, and the
+        minus face is mapped to the plus face. Points inside the minus patch
+        are mapped outside the plus patch, across its face.
+
+        Parameters
+        ----------
+        eta : sequence
+            Logical coordinates of the minus patch, one per axis. They may be
+            numbers, NumPy arrays or SymPy expressions.
+
+        minus_bounds, plus_bounds : sequence of (lower, upper), optional
+            Bounds of the logical coordinates of each patch, one pair per
+            axis. Default: ``(0, 1)`` for every axis.
+
+        inverse : bool, default=False
+            If true, map coordinates of the plus patch to the minus patch.
+
+        Returns
+        -------
+        tuple
+            Logical coordinates in the other patch, one per axis.
+        """
+        if inverse:
+            source, target = self.plus, self.minus
+            source_bounds, target_bounds = plus_bounds, minus_bounds
+            permutation = self.inverse_signed_permutation
+        else:
+            source, target = self.minus, self.plus
+            source_bounds, target_bounds = minus_bounds, plus_bounds
+            permutation = self.signed_permutation
+
+        ldim = len(permutation)
+        if len(eta) != ldim:
+            raise ValueError(f'expected {ldim} coordinates, got {len(eta)}')
+        source_bounds = ((0, 1),) * ldim if source_bounds is None else tuple(source_bounds)
+        target_bounds = ((0, 1),) * ldim if target_bounds is None else tuple(target_bounds)
+
+        image = [None] * ldim
+        for source_axis, (target_axis, direction) in enumerate(permutation):
+            source_lower, source_upper = source_bounds[source_axis]
+            target_lower, target_upper = target_bounds[target_axis]
+            # A point of the source with coordinate source_anchor along this
+            # axis is mapped to target_anchor along target_axis
+            if source_axis == source.axis:
+                source_anchor = source_lower if source.ext == -1 else source_upper
+                target_anchor = target_lower if target.ext == -1 else target_upper
+            else:
+                source_anchor = source_lower if direction == 1 else source_upper
+                target_anchor = target_lower
+            image[target_axis] = target_anchor + direction * (
+                (eta[source_axis] - source_anchor) * (target_upper - target_lower)
+                / (source_upper - source_lower))
+        return tuple(image)
+
+    def map_component(self, k, kind, minus_bounds=None, plus_bounds=None, *, inverse=False):
+        """
+        Relate a logical component of a vector field on the minus side to
+        the plus side.
+
+        The logical components are those of the pull-back of a physical
+        field, as defined by :class:`~sympde.topology.mapping.PullBack`: the
+        covariant components for H(curl), and the contravariant Piola
+        components, with the signed Jacobian determinant, for H(div). Only
+        the components that a conforming field keeps continuous across the
+        interface are related: the tangential ones for H(curl), the normal
+        one for H(div). At a point of the minus face and its image by
+        :meth:`map_point`, with ``(j, factor)`` the returned value,
+        ``u_minus[k] = factor * u_plus[j]``.
+
+        Parameters
+        ----------
+        k : int
+            Component of the minus side, or of the plus side if ``inverse``
+            is true.
+
+        kind : str
+            ``'hcurl'`` or ``'hdiv'``.
+
+        minus_bounds, plus_bounds : sequence of (lower, upper), optional
+            Bounds of the logical coordinates of each patch, one pair per
+            axis. Default: ``(0, 1)`` for every axis.
+
+        inverse : bool, default=False
+            If true, relate component ``k`` of the plus side to the minus
+            side: ``u_plus[k] = factor * u_minus[j]``.
+
+        Returns
+        -------
+        tuple[int, float]
+            The component ``j`` of the other side and the factor.
+
+        Raises
+        ------
+        TypeError
+            If ``k`` is not an integer.
+
+        ValueError
+            If ``k`` is not a component, if ``kind`` is unknown or ``'l2'``,
+            or if component ``k`` is not continuous for this kind: the
+            normal component for H(curl), a tangential component for H(div).
+            These components, and L2 densities, have no relation across the
+            interface, unless the geometry is smooth across it.
+        """
+        if inverse:
+            source, permutation = self.plus, self.inverse_signed_permutation
+            source_bounds, target_bounds = plus_bounds, minus_bounds
+        else:
+            source, permutation = self.minus, self.signed_permutation
+            source_bounds, target_bounds = minus_bounds, plus_bounds
+
+        ldim = len(permutation)
+        k = _as_integer(k, 'the component k')
+        if not 0 <= k < ldim:
+            raise ValueError(f'the component k must be in range({ldim}), got {k}')
+
+        if kind == 'hcurl':
+            if k == source.axis:
+                raise ValueError('the normal component of an H(curl) field is '
+                                 'not continuous across an interface')
+        elif kind == 'hdiv':
+            if k != source.axis:
+                raise ValueError('a tangential component of an H(div) field is '
+                                 'not continuous across an interface')
+        elif kind == 'l2':
+            raise ValueError('the densities of L2 fields have no relation across an '
+                             'interface, unless the geometry is smooth across it')
+        else:
+            raise ValueError(f"kind must be 'hcurl' or 'hdiv', got {kind!r}")
+
+        source_bounds = ((0, 1),) * ldim if source_bounds is None else tuple(source_bounds)
+        target_bounds = ((0, 1),) * ldim if target_bounds is None else tuple(target_bounds)
+        source_lengths = [upper - lower for lower, upper in source_bounds]
+        target_lengths = [upper - lower for lower, upper in target_bounds]
+
+        # The Jacobian of map_point is A = diag(target_lengths) @ P @ diag(1/source_lengths),
+        # whose tangential columns relate the tangential columns of the
+        # Jacobians of the two mappings on the interface. Hence the covariant
+        # components satisfy u_source = A^T u_target, and the normal
+        # contravariant Piola component u_source = det(A) A^{-1} u_target.
+        j, direction = permutation[k]
+        if kind == 'hcurl':
+            factor = direction * target_lengths[j] / source_lengths[k]
+        else:
+            factor = (self.handedness * direction
+                      * prod(target_lengths) / prod(source_lengths)
+                      * source_lengths[k] / target_lengths[j])
+        return j, factor
+
+
+#==============================================================================
+class Interface(BasicDomain, InterfaceTransform):
     """
     Represents an interface between two subdomains through two boundaries.
 
@@ -500,7 +732,11 @@ class Interface(BasicDomain):
     Analysis for Changes in Product Design Ontologies* (2010).
 
     :attr:`axis_map` exposes the decoded convention as
-    ``(minus_axis, plus_axis, direction)`` triples.
+    ``(minus_axis, plus_axis, direction)`` triples. The properties and
+    methods inherited from :class:`InterfaceTransform` complete it with the
+    normal axes, e.g. :attr:`~InterfaceTransform.signed_permutation`,
+    :meth:`~InterfaceTransform.map_point` and
+    :meth:`~InterfaceTransform.map_component`.
 
     Examples
     --------
@@ -520,6 +756,12 @@ class Interface(BasicDomain):
     (-1, 1, -1)
     >>> interface.axis_map
     ((1, 2, 1), (2, 0, -1))
+    >>> interface.signed_permutation
+    ((1, 1), (2, 1), (0, -1))
+    >>> interface.map_point((1, 0.25, 0.5))
+    (0.5, 0.0, 0.25)
+    >>> interface.map_component(0, 'hdiv')
+    (1, -1.0)
 
     """
     def __new__(cls, name, bnd_minus, bnd_plus, orientation, mapping=None,

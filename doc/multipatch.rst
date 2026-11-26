@@ -325,6 +325,63 @@ faces may have different normal axes.  Read ``interface.minus.axis`` and
 ``interface.plus.axis`` explicitly, and ``interface.axis_map`` for the
 correspondence of the tangential axes.
 
+Discretization codes usually need the full transform between the logical
+coordinates of the two patches, normal axes included.  Going out of the minus
+patch through its face means going into the plus patch through its face, so
+the normal axes have the direction ``interface.normal_direction``, equal to
+``-minus.ext * plus.ext``.  With the interface of the example above:
+
+.. code-block:: python
+
+   assert interface.normal_direction == +1
+   assert interface.signed_permutation == ((1, +1), (2, +1), (0, -1))
+   assert interface.inverse_signed_permutation == ((2, -1), (0, +1), (1, +1))
+   assert interface.permutation_matrix == ((0, 0, -1), (1, 0, 0), (0, 1, 0))
+   assert interface.handedness == -1
+   assert interface.map_point((1, 0.25, 0.5)) == (0.5, 0, 0.25)
+   assert interface.map_component(1, 'hcurl') == (2, 1)
+   assert interface.map_component(0, 'hdiv') == (1, -1)
+
+``signed_permutation`` gives ``(plus_axis, direction)`` for every minus axis,
+and ``inverse_signed_permutation`` gives ``(minus_axis, direction)`` for every
+plus axis.  ``permutation_matrix`` maps a direction of the minus patch to the
+plus patch, and ``handedness`` is its determinant.  ``map_point`` maps logical
+coordinates of the minus patch to the plus patch, or the reverse with
+``inverse=True``.  The coordinates may be NumPy arrays, and the bounds of the
+logical coordinates of each patch, ``(0, 1)`` by default, are given by its
+``minus_bounds`` and ``plus_bounds`` arguments.
+
+``map_component(k, kind)`` relates the logical components of a vector field on
+both sides, as defined by the pull-back of the field: covariant components for
+``kind='hcurl'``, and contravariant Piola components with the signed Jacobian
+determinant for ``kind='hdiv'``.  It returns ``(j, factor)`` such that
+``u_minus[k] = factor * u_plus[j]`` at a point of the minus face and its image
+by ``map_point``.  With ``(j, s) = signed_permutation[k]``, ``h`` the
+handedness, and ``Lm`` and ``Lp`` the lengths of the intervals of the logical
+coordinates of each patch, the factors are:
+
+.. list-table::
+   :header-rows: 1
+
+   * - ``kind``
+     - continuous components
+     - ``factor``
+   * - ``'hcurl'``
+     - tangential, ``k != minus.axis``
+     - ``s * Lp[j] / Lm[k]``
+   * - ``'hdiv'``
+     - normal, ``k == minus.axis``
+     - ``h * s * (prod(Lp) / prod(Lm)) * Lm[k] / Lp[j]``
+
+These relations follow from the tangential columns of the Jacobians of the two
+mappings, which are the only ones that match on the interface.  The other
+components, and the densities of L2 fields, have no relation across the
+interface unless the geometry is smooth across it, and ``map_component``
+raises a ``ValueError`` for them.  With ``inverse=True``, component ``k`` of the
+plus side is related to the minus side.
+
+``IndexedInterface`` has the same properties and methods.
+
 Identity orientation means that tangential positions retain their order and
 all signs are positive.  It does not mean that the two normal axes must be
 equal, their extremities must differ, or the physical mappings must be
