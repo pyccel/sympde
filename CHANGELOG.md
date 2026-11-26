@@ -55,6 +55,7 @@ All notable changes to this project will be documented in this file.
 - #203: Check in the `Domain` constructor that all interiors have the same physical dimension, as `Domain.join()` does.
 - #188: Reject interfaces in `Domain.join()` that join a face with itself or use a face that is already part of another interface.
 - #188: Reject patches in `Domain.join()` of which only some have a mapping, instead of dropping the mapping of the domain.
+- #188: Fix the sign of the normal vector and the surface measure on the plus side of interface integrals in linear forms.
 - #140: Reject patches with different physical dimensions in `Domain.join()`, instead of creating an inconsistent domain.
 - #144: Restore the interface names and exterior boundaries of a domain read with `Domain.from_file()` as they were exported, and read domains whose patches are `InteriorDomain` objects without a `dtype` instead of failing with an `AssertionError`.
 - #200: Keep the physical dimension of the mappings in `Domain.export()` and `Domain.from_file()`.

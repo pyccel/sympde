@@ -6,6 +6,7 @@ from sympy.core.containers import Tuple
 from sympy import Function
 from sympy import pi, cos, sin, exp
 from sympy import ImmutableDenseMatrix as Matrix
+from sympy import simplify, expand
 
 from sympde.core.basic import Constant
 from sympde.calculus.core import grad, dot, inner, rot, div
@@ -15,11 +16,17 @@ from sympde.calculus.core import jump, avg, Dn, minus, plus
 from sympde.topology.derivatives import dx1, dx2, dx3
 from sympde.topology.derivatives import dx, dy, dz
 from sympde.topology.mapping import Mapping
+from sympde.topology.mapping import LogicalExpr
+from sympde.topology.analytical_mapping import PolarMapping
+from sympde.topology.analytical_mapping import TransposedPolarMapping
+from sympde.topology.multipatch_gallery import build_two_cube_3d
 from sympde.topology.space import ScalarFunctionSpace, VectorFunctionSpace
 from sympde.topology.space import element_of, elements_of
+from sympde.topology.space import ScalarFunction
 from sympde.topology.basic import InteriorDomain, Union
 from sympde.topology.basic import Boundary
 from sympde.topology.domain import NormalVector
+from sympde.topology.domain import MinusNormalVector, PlusNormalVector
 from sympde.topology.domain import Domain
 #from sympde.topology import trace_1  # TODO [YG, 27.01.2021]: fix trace
 from sympde.topology.domain import Square
@@ -32,6 +39,7 @@ from sympde.expr.expr import integral
 from sympde.expr.expr import Functional, Norm
 from sympde.expr.expr import linearize
 from sympde.expr.evaluation import TerminalExpr
+from sympde.expr.evaluation import BoundaryExpression
 
 #==============================================================================
 def test_linear_expr_2d_1():
@@ -1562,6 +1570,105 @@ def test_interface_integral_4():
     assert expr[0].expr[0,0]   == u2[0]*v2[0]
     assert expr[0].expr[1,1]   == u2[1]*v2[1]
 
+#==============================================================================
+def test_interface_integral_plus_normal():
+    # The interface normal points from the minus to the plus side. On a
+    # boundary, psydac evaluates any normal vector as the outward normal,
+    # which on the plus side is the opposite of the interface normal.
+    A = Square('A')
+    B = Square('B')
+
+    connectivity = [((0, 0, 1), (1, 0, -1), +1)]
+    domain = Domain.join([A, B], connectivity, 'AB')
+    I = domain.interfaces
+
+    V = ScalarFunctionSpace('V', domain, kind=None)
+    u, v = elements_of(V, names='u, v')
+
+    bnd_A = A.get_boundary(axis=0, ext=1)
+    bnd_B = B.get_boundary(axis=0, ext=-1)
+
+    n_minus = MinusNormalVector('n')
+    n_plus  = PlusNormalVector('n')
+    dn_v    = lambda n: dx1(v)*n[0] + dx2(v)*n[1]
+
+    l = LinearForm(v, integral(I, minus(Dn(v)) + plus(Dn(v))))
+    bnd = {e.target: e.expr for e in TerminalExpr(l, domain)}
+
+    assert set(bnd) == {bnd_A, bnd_B}
+    assert bnd[bnd_A] ==  dn_v(n_minus)
+    assert bnd[bnd_B] == -dn_v(n_plus)
+
+    a = BilinearForm((u, v), integral(I, minus(u)*minus(Dn(v)) + plus(u)*plus(Dn(v))))
+    bnd = {e.target: e.expr for e in TerminalExpr(a, domain)}
+
+    assert set(bnd) == {bnd_A, bnd_B}
+    assert expand(bnd[bnd_A]) == expand( u*dn_v(n_minus))
+    assert expand(bnd[bnd_B]) == expand(-u*dn_v(n_plus))
+
+#==============================================================================
+def _logical_boundary_measures(form, domain):
+    """Map each boundary of the logical form to its integrand, without the
+    test and trial functions."""
+    expr = TerminalExpr(LogicalExpr(form, domain), domain.logical_domain)
+    return {e.target: e.expr.subs({f: 1 for f in e.expr.atoms(ScalarFunction)})
+            for e in expr if isinstance(e, BoundaryExpression)}
+
+#==============================================================================
+def test_interface_integral_cross_axis_plus_measure():
+    # The minus face x1 = 1 of A and the plus face x2 = 0 of B are both the
+    # arc of radius 1, parametrized by x2 on A and by x1 on B.
+    A = Square('A')
+    B = Square('B')
+    F_A = PolarMapping('F_A', 2, c1=0., c2=0., rmin=0.5, rmax=1.)
+    F_B = TransposedPolarMapping('F_B', 2, c1=0., c2=0., rmin=1., rmax=3.)
+
+    connectivity = [((0, 0, 1), (1, 1, -1), +1)]
+    domain = Domain.join([F_A(A), F_B(B)], connectivity, 'AB')
+    I = domain.interfaces
+
+    V = ScalarFunctionSpace('V', domain, kind=None)
+    u, v = elements_of(V, names='u, v')
+
+    x1, x2 = domain.logical_domain.coordinates
+    bnd_A = A.get_boundary(axis=0, ext=1)
+    bnd_B = B.get_boundary(axis=1, ext=-1)
+
+    # |dF_A/dx2| on the minus face, |dF_B/dx1| on the plus face
+    measure_minus = 0.5 + 0.5*x1
+    measure_plus  = 1 + 2*x2
+
+    a = BilinearForm((u, v), integral(I, minus(u)*minus(v) + plus(u)*plus(v)))
+    l = LinearForm(v, integral(I, minus(v) + plus(v)))
+
+    for form in [a, l]:
+        bnd = _logical_boundary_measures(form, domain)
+        assert set(bnd) == {bnd_A, bnd_B}
+        assert simplify(bnd[bnd_A]**2 - measure_minus**2) == 0
+        assert simplify(bnd[bnd_B]**2 - measure_plus **2) == 0
+
+#==============================================================================
+def test_interface_integral_cross_axis_plus_measure_3d():
+    # The two faces of the conforming interface of two_cube are the same
+    # physical parallelogram, hence both sides have the same surface measure.
+    domain = build_two_cube_3d()
+    I = domain.interfaces
+    A, B = domain.logical_domain.interior.args
+
+    V = ScalarFunctionSpace('V', domain, kind=None)
+    u, v = elements_of(V, names='u, v')
+
+    bnd_A = A.get_boundary(axis=0, ext=1)
+    bnd_B = B.get_boundary(axis=1, ext=-1)
+
+    a = BilinearForm((u, v), integral(I, minus(u)*minus(v) + plus(u)*plus(v)))
+    l = LinearForm(v, integral(I, minus(v) + plus(v)))
+
+    for form in [a, l]:
+        bnd = _logical_boundary_measures(form, domain)
+        assert set(bnd) == {bnd_A, bnd_B}
+        assert bnd[bnd_A].is_number
+        assert abs(bnd[bnd_B] - bnd[bnd_A]) < 1e-12
 
 #==============================================================================
 def test_terminal_expressions_for_navier_stokes():
