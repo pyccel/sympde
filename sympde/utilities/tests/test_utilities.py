@@ -291,14 +291,18 @@ def test_plot_domain_on_existing_axes_with_numpy_refinement():
 
 def test_neighbouring_patches_have_different_colors():
     from sympde.topology.multipatch_gallery import build_multipatch_domain_2d
-    from sympde.utilities.plotting import _color_patches, _patch_neighbours
+    from sympde.utilities.plotting import _color_patches
 
     # More patches than colours in the palette
     domain = build_multipatch_domain_2d('pretzel_f')
-    patches = domain.patches
-    colors = _color_patches(domain, patches)
-    neighbours = _patch_neighbours(domain, patches)
+    colors = _color_patches(domain)
 
-    assert len(patches) > len(set(colors))
-    assert all(colors[i] != colors[j]
-               for i in neighbours for j in neighbours[i])
+    assert len(domain.patches) > len(set(colors))
+    # Patches that share a vertex, and hence those that share an interface
+    for vertex in domain.vertices:
+        assert all(colors[i] != colors[j]
+                   for i in vertex.patch_indices
+                   for j in vertex.patch_indices if i != j)
+    for interface in domain.indexed_interfaces.values():
+        i, j = interface.minus.patch_index, interface.plus.patch_index
+        assert i == j or colors[i] != colors[j]
