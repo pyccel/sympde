@@ -202,9 +202,12 @@ The public constructor is
    A non-empty ordered list or tuple of ``Domain`` objects.  All patches must
    have the same logical dimension and the same physical dimension, which is
    the logical dimension for a patch without a mapping.  Either all patches or
-   none have a mapping.  The order defines the integer patch indices accepted
-   in the interface specifications.  Patch objects, physical interior names,
-   and logical names used by serialization must all be unique.
+   none have a mapping.  An integer patch in an interface specification is a
+   position in this list.  The joined domain does not keep this order: its
+   ``patches`` are sorted by name, and all patch indices of the domain are
+   positions in that tuple (see :ref:`below <multipatch-patch-indices>`).
+   Patch objects, physical interior names, and logical names used by
+   serialization must all be unique.
 
 ``interfaces``
    A list or tuple of interface descriptions.  Each description is the tuple
@@ -499,9 +502,19 @@ position in ``omega.patches``:
 side is a ``PatchSide`` with its patch index, normal axis and extremity.
 Since a face belongs to at most one interface, the interface names and the
 sides are both unique keys.  ``omega.indexed_boundary_sides`` contains the
-faces that are not part of an interface, as ``PatchSide`` objects too.  ``omega.patch_index`` returns the position of a
-patch, given by its interior, by a single-patch domain or by one of its
-boundaries; for a mapped domain, the logical patch is also accepted.
+faces that are not part of an interface, as ``PatchSide`` objects too.
+
+.. _multipatch-patch-indices:
+
+A patch index is a position in ``omega.patches``, which is sorted by name, not
+a position in the list given to ``Domain.join``.  The two orders differ as soon
+as the names do not sort like the list, e.g. ``P10`` comes before ``P2``.  A
+mapped patch sorts by its mapped name, e.g. ``F2(A)``, so the order of the
+logical domain's patches can differ as well.
+``omega.patch_index`` returns the position of a patch, given by its interior,
+by a single-patch domain or by one of its boundaries; for a mapped domain, the
+logical patch is also accepted.  Per-patch data, such as the number of cells,
+is best keyed by the patch name or ordered through ``omega.patch_index``.
 
 Joining faces also identifies their corners and edges.  SymPDE computes this
 transitively: if an interface identifies a corner of A with a corner of B and

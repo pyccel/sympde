@@ -138,6 +138,20 @@ def test_build_rectangular_cartesian_multipatch_domain(mapping):
     assert bottom_right.max_coords == (3, 1)
 
 
+def test_cartesian_multipatch_domain_2d_patches_in_row_major_order():
+    # With 11 columns, unpadded names would sort Log_0_10 before Log_0_2
+    layout = np.ones((2, 11), dtype=object)
+    layout[1, 3] = None
+    domain = build_cartesian_multipatch_domain_2d(layout, (0, 11), (0, 2))
+
+    positions = [(row, column) for row in range(2) for column in range(11)
+                 if layout[row, column] is not None]
+    assert tuple(str(p.logical_domain.name) for p in domain.patches) == tuple(
+        f'Log_{row:02d}_{column:02d}' for row, column in positions)
+    for patch, (row, column) in zip(domain.patches, positions):
+        assert patch.logical_domain.min_coords == (column, 1 - row)
+
+
 @pytest.mark.parametrize('layout, message', [
     ([1, 2], 'two-dimensional'),
     (np.empty((0, 2)), 'at least one layout position'),

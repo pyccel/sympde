@@ -237,6 +237,11 @@ class Domain(BasicDomain):
         Unlike the symbolic :attr:`interior`, which is a ``Union`` of several
         patches or a single patch, this is always a tuple. For a single-patch
         domain it contains exactly that domain's interior.
+
+        The patches are sorted by name, whatever order they were given in to
+        :meth:`join`; a mapped patch sorts by its mapped name, e.g.
+        ``F(A)``. All patch indices of the domain are positions in this
+        tuple.
         """
         if isinstance(self.interior, InteriorDomain):
             return (self.interior,)
@@ -889,8 +894,12 @@ class Domain(BasicDomain):
             patches must have the same logical dimension and the same
             physical dimension, which is the logical dimension for a patch
             without a mapping. Either all patches or none have a mapping.
-            Their positions define the integer patch indices accepted by an
-            interface side.
+            An integer patch in `connectivity` is a position in this
+            sequence. The returned domain does not keep this order: its
+            :attr:`patches` are sorted by name, and all patch indices of the
+            domain (:meth:`patch_index`, :attr:`indexed_interfaces`,
+            :meth:`side_of`, ...) are positions in that tuple. Use
+            :meth:`patch_index` to find the index of a given patch.
             Patch objects, interior names, and serialized logical names must be
             unique. Joined multipatch domains must be flattened before being
             passed to this method.

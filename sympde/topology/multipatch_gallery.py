@@ -1065,7 +1065,10 @@ def build_cartesian_multipatch_domain_2d(
         Two-dimensional patch layout. Non-``None`` entries create patches;
         their numerical values are ignored by this symbolic builder and may
         subsequently be used as per-patch cell counts. Row zero is the top
-        row of the domain.
+        row of the domain. The patch at ``(row, column)`` is named
+        ``Log_{row}_{column}`` and mapped by ``M_{row}_{column}``, with the
+        row and the column zero-padded to a common width, so that the
+        patches of the domain, sorted by name, are in row-major order.
     log_interval_x : tuple
         The interval in the x direction in the logical domain.
     log_interval_y : tuple
@@ -1103,6 +1106,8 @@ def build_cartesian_multipatch_domain_2d(
         raise ValueError(
             "mapping must be either 'identity' or 'polar'") from error
 
+    # Zero-pad the indices, so that the name order is the row-major order
+    width = len(str(max(nrows, ncols) - 1))
     patches_by_position = {}
     patches = []
     for row in range(nrows):
@@ -1119,7 +1124,7 @@ def build_cartesian_multipatch_domain_2d(
                 ax + (column + 1) / ncols * (bx - ax),
             )
             logical_patch = Square(
-                f'Log_{row}_{column}',
+                f'Log_{row:0{width}d}_{column:0{width}d}',
                 bounds1=bounds1,
                 bounds2=bounds2,
             )
@@ -1127,7 +1132,8 @@ def build_cartesian_multipatch_domain_2d(
             if mapping == 'polar':
                 mapping_kwargs = dict(c1=0., c2=0., rmin=0., rmax=1.)
             patch_mapping = mapping_type(
-                f'M_{row}_{column}', dim=2, **mapping_kwargs)
+                f'M_{row:0{width}d}_{column:0{width}d}', dim=2,
+                **mapping_kwargs)
             patch = patch_mapping(logical_patch)
             patches_by_position[row, column] = patch
             patches.append(patch)
