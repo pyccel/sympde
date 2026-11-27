@@ -168,6 +168,34 @@ def test_patch_index():
         domain.patch_index(Square('C'))
 
 
+def test_patch_index_of_logical_patch():
+    # The mapped patches sort as (F1(C), F2(B), F3(A)), in the reverse order
+    # of the logical patches (A, B, C)
+    A, B, C = Square('A'), Square('B'), Square('C')
+    F1, F2, F3 = (IdentityMapping(f'F{i}', dim=2) for i in (1, 2, 3))
+    domain = Domain.join(
+        [F3(A), F2(B), F1(C)],
+        [((0, 0, 1), (1, 0, -1), 1),
+         ((1, 0, 1), (2, 0, -1), 1)],
+        'Omega')
+
+    for logical, mapped in [(A, F3(A)), (B, F2(B)), (C, F1(C))]:
+        index = domain.patch_index(mapped)
+        assert domain.patch_index(logical) == index
+        assert domain.patch_index(logical.interior) == index
+        assert domain.patches[index].logical_domain == logical.interior
+
+    # A has a boundary side at (0, -1), C has an interface there
+    assert domain.get_boundary(0, -1, patch=A) == domain.get_boundary(
+        0, -1, patch=F3(A))
+    assert domain.get_boundary(0, -1, patch=A).domain == F3(A).interior
+    with pytest.raises(ValueError, match='could not find boundary'):
+        domain.get_boundary(0, -1, patch=C)
+
+    assert domain.get_interface(A, B) == (domain.interface_map['A|B'],)
+    assert domain.get_interface(A, C) == ()
+
+
 def test_get_interface():
     A, B, C = Square('A'), Square('B'), Square('C')
     domain = Domain.join(

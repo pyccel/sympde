@@ -300,13 +300,14 @@ class Domain(BasicDomain):
                 raise TypeError('expected a single patch, not a multipatch domain')
             patch = patch.patches[0]
 
-        candidates = [self.patches]
-        if self.logical_domain is not None:
-            candidates.append(self.logical_domain.patches)
-        for patches in candidates:
-            for index, candidate in enumerate(patches):
-                if candidate == patch:
-                    return index
+        # A logical patch is matched through the logical domain of each mapped
+        # patch, not by its position in logical_domain.patches: both tuples
+        # are sorted by name, and the mapped names can sort differently.
+        for index, candidate in enumerate(self.patches):
+            if candidate == patch or (
+                    self.logical_domain is not None
+                    and candidate.logical_domain == patch):
+                return index
         raise ValueError(f'{patch} is not a patch of the domain {self.name}')
 
     @property
