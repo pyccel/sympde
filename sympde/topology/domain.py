@@ -58,13 +58,17 @@ class Domain(BasicDomain):
     Multi-patch domains additionally carry a connectivity, which describes the
     interfaces between their patches.
     """
-    # Vertices and edges, and the reverse lookups from patch-local corners,
-    # edges and sides, computed when they are first needed
-    _vertices       = None
-    _edges          = None
-    _vertex_lookup  = None
-    _edge_lookup    = None
-    _side_lookup    = None
+    # Topology data and lookups, computed when they are first needed: the
+    # indexed interfaces, the patch handedness, the vertices and edges, and
+    # the lookups from patches and patch-local corners, edges and sides
+    _indexed_interfaces = None
+    _patch_handedness   = None
+    _vertices           = None
+    _edges              = None
+    _patch_lookup       = None
+    _vertex_lookup      = None
+    _edge_lookup        = None
+    _side_lookup        = None
 
     def __new__(cls, name : str,
             interiors : TypeUnion[Iterable[InteriorDomain], InteriorDomain, None] = None,
@@ -277,7 +281,9 @@ class Domain(BasicDomain):
         orientation and the axis map of the interface. The mapping is
         read-only and ordered by name, like :attr:`interface_map`.
         """
-        return index_interfaces(self)
+        if self._indexed_interfaces is None:
+            self._indexed_interfaces = index_interfaces(self)
+        return self._indexed_interfaces
 
     def patch_index(self, patch) -> int:
         """Return the position in :attr:`patches` of a patch.
@@ -308,12 +314,18 @@ class Domain(BasicDomain):
         # A logical patch is matched through the logical domain of each mapped
         # patch, not by its position in logical_domain.patches: both tuples
         # are sorted by name, and the mapped names can sort differently.
-        for index, candidate in enumerate(self.patches):
-            if candidate == patch or (
-                    self.logical_domain is not None
-                    and candidate.logical_domain == patch):
-                return index
-        raise ValueError(f'{patch} is not a patch of the domain {self.name}')
+        if self._patch_lookup is None:
+            lookup = {}
+            for index, candidate in enumerate(self.patches):
+                lookup[candidate] = index
+                if self.logical_domain is not None:
+                    lookup[candidate.logical_domain] = index
+            self._patch_lookup = lookup
+        try:
+            return self._patch_lookup[patch]
+        except (KeyError, TypeError):
+            raise ValueError(
+                f'{patch} is not a patch of the domain {self.name}') from None
 
     @property
     def boundary_sides(self) -> tuple:
@@ -378,7 +390,11 @@ class Domain(BasicDomain):
         geometrically. See
         :func:`~sympde.topology.incidence.orient_patches`.
         """
-        return orient_patches(self)
+        if self._patch_handedness is None:
+            # orient_patches returns None for a non-orientable domain, which
+            # is cached as False
+            self._patch_handedness = orient_patches(self) or False
+        return self._patch_handedness or None
 
     @property
     def is_orientable(self) -> bool:
@@ -607,9 +623,10 @@ class Domain(BasicDomain):
         """
         pair = {self.patch_index(patch1), self.patch_index(patch2)}
         return tuple(
-            interface for interface in self.interface_map.values()
-            if {self.patch_index(interface.minus),
-                self.patch_index(interface.plus)} == pair)
+            self.interface_map[name]
+            for name, interface in self.indexed_interfaces.items()
+            if {interface.minus.patch_index,
+                interface.plus.patch_index} == pair)
 
     def get_interior(self, name):
         """return interior by name."""

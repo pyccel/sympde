@@ -166,6 +166,23 @@ def test_patch_index():
         domain.patch_index(interface)
     with pytest.raises(ValueError, match='not a patch'):
         domain.patch_index(Square('C'))
+    with pytest.raises(ValueError, match='not a patch'):
+        domain.patch_index([A])
+
+
+def test_cached_topology():
+    A, B = Square('A'), Square('B')
+    domain = Domain.join([A, B], [((0, 0, 1), (1, 0, -1), 1)], 'Omega')
+
+    # Computed once, then shared
+    assert domain.indexed_interfaces is domain.indexed_interfaces
+    assert domain.patch_handedness is domain.patch_handedness
+    assert domain.patch_handedness == (1, 1)
+
+    # Rebuilding the domain gives the same topology
+    rebuilt = domain.func(*domain.args)
+    assert rebuilt.indexed_interfaces == domain.indexed_interfaces
+    assert rebuilt.patch_index(B) == domain.patch_index(B)
 
 
 def test_patch_index_of_logical_patch():
@@ -282,6 +299,8 @@ def test_patch_handedness_non_orientable():
     # The twisted strip is a Möbius strip made of two patches
     strip = build_multipatch_domain_2d('two_patch_twisted_strip')
     assert not strip.is_orientable
+    assert strip.patch_handedness is None
+    # A non-orientable domain stays non-orientable once cached
     assert strip.patch_handedness is None
 
     # A square whose opposite sides are identified with the same or the
