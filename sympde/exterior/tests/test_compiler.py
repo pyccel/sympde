@@ -17,7 +17,7 @@ from sympde.calculus.errors import ArgumentTypeError
 
 def test_compiler_3d_1():
 
-    domain = Domain('Omega', dim=3)
+    domain = Domain('Omega', ldim=3)
 
     H1    = ScalarFunctionSpace('V0', domain, kind='H1')
     Hcurl = VectorFunctionSpace('V1', domain, kind='Hcurl')
@@ -33,84 +33,84 @@ def test_compiler_3d_1():
 
 #    # ...
 #    expr = grad(v0)
-#    expected = d(DifferentialForm('v0', index=0, dim=domain.dim))
+#    expected = d(DifferentialForm('v0', index=0, dim=domain.ldim))
 #
 #    assert(ExteriorCalculusExpr(expr) == expected)
 #    # ...
 #
 #    # ...
 #    expr = curl(v1)
-#    expected = d(DifferentialForm('v1', index=1, dim=domain.dim))
+#    expected = d(DifferentialForm('v1', index=1, dim=domain.ldim))
 #
 #    assert(ExteriorCalculusExpr(expr) == expected)
 #    # ...
 #
 #    # ...
 #    expr = div(v2)
-#    expected = d(DifferentialForm('v2', index=2, dim=domain.dim))
+#    expected = d(DifferentialForm('v2', index=2, dim=domain.ldim))
 #
 #    assert(ExteriorCalculusExpr(expr) == expected)
 #    # ...
 #
 #    # ...
 #    expr = grad(v0)
-#    expected = - delta(DifferentialForm('v0', index=3, dim=domain.dim))
+#    expected = - delta(DifferentialForm('v0', index=3, dim=domain.ldim))
 #
 #    assert(ExteriorCalculusExpr(expr, tests=[v0]) == expected)
 #    # ...
 #
 #    # ...
 #    expr = curl(v1)
-#    expected = delta(DifferentialForm('v1', index=2, dim=domain.dim))
+#    expected = delta(DifferentialForm('v1', index=2, dim=domain.ldim))
 #
 #    assert(ExteriorCalculusExpr(expr, tests=[v1]) == expected)
 #    # ...
 #
 #    # ...
 #    expr = div(v2)
-#    expected = -delta(DifferentialForm('v2', index=1, dim=domain.dim))
+#    expected = -delta(DifferentialForm('v2', index=1, dim=domain.ldim))
 #
 #    assert(ExteriorCalculusExpr(expr, tests=[v2]) == expected)
 #    # ...
 #
 #    # ...
 #    expr = dot(beta, v1)
-#    expected = ip(beta, DifferentialForm('v1', index=1, dim=domain.dim))
+#    expected = ip(beta, DifferentialForm('v1', index=1, dim=domain.ldim))
 #
 #    assert(ExteriorCalculusExpr(expr) == expected)
 #    # ...
 #
 #    # ...
 #    expr = cross(beta, v2)
-#    expected = ip(beta, DifferentialForm('v2', index=2, dim=domain.dim))
+#    expected = ip(beta, DifferentialForm('v2', index=2, dim=domain.ldim))
 #
 #    assert(ExteriorCalculusExpr(expr) == expected)
 #    # ...
 #
 #    # ...
 #    expr = beta*v3
-#    expected = ip(beta, DifferentialForm('v3', index=3, dim=domain.dim))
+#    expected = ip(beta, DifferentialForm('v3', index=3, dim=domain.ldim))
 #
 #    assert(ExteriorCalculusExpr(expr) == expected)
 #    # ...
 #
 #    # ...
 #    expr = dot(beta, v1)
-#    expected = jp(beta, DifferentialForm('v1', index=3, dim=domain.dim))
+#    expected = jp(beta, DifferentialForm('v1', index=3, dim=domain.ldim))
 #
 #    assert(ExteriorCalculusExpr(expr, tests=[v1]) == expected)
 #    # ...
 #
 #    # ...
 #    expr = cross(beta, v2)
-#    expected = -jp(beta, DifferentialForm('v2', index=2, dim=domain.dim))
+#    expected = -jp(beta, DifferentialForm('v2', index=2, dim=domain.ldim))
 #
 #    assert(ExteriorCalculusExpr(expr, tests=[v2]) == expected)
 #    # ...
 #
 #    # ...
 #    expr = beta*v3
-#    expected = jp(beta, DifferentialForm('v3', index=1, dim=domain.dim))
+#    expected = jp(beta, DifferentialForm('v3', index=1, dim=domain.ldim))
 #
 #    assert(ExteriorCalculusExpr(expr, tests=[v3]) == expected)
 #    # ...
@@ -120,29 +120,29 @@ def test_compiler_3d_1():
     # ..................................................
 
     expr = dot(beta, grad(v0))
-    expected = ld(beta, DifferentialForm('v0', index=0, dim=domain.dim))
+    expected = ld(beta, DifferentialForm('v0', index=0, dim=domain.ldim))
 
     assert(ExteriorCalculusExpr(expr) == expected)
 
     expr = grad(dot(beta,v1)) + cross(curl(v1), beta)
-    expected = ld(beta, DifferentialForm('v1', index=1, dim=domain.dim))
+    expected = ld(beta, DifferentialForm('v1', index=1, dim=domain.ldim))
 
     assert(ExteriorCalculusExpr(expr) == expected)
 
     expr = curl(cross(v2, beta)) + div(v2)*beta
-    expected = ld(beta, DifferentialForm('v2', index=2, dim=domain.dim))
+    expected = ld(beta, DifferentialForm('v2', index=2, dim=domain.ldim))
 
     #assert(ExteriorCalculusExpr(expr) == expected)
 
     expr = div(beta*v3)
-    expected = ld(beta, DifferentialForm('v3', index=3, dim=domain.dim))
+    expected = ld(beta, DifferentialForm('v3', index=3, dim=domain.ldim))
 
     assert(ExteriorCalculusExpr(expr) == expected)
 
     # ... TODO commutativity of LieDerivative
 #    expr = grad(dot(beta,v1)) + cross(curl(v1), beta) + div(beta*v3)
-#    expected  = ld(beta, DifferentialForm('v1', index=1, dim=domain.dim))
-#    expected += ld(beta, DifferentialForm('v3', index=3, dim=domain.dim))
+#    expected  = ld(beta, DifferentialForm('v1', index=1, dim=domain.ldim))
+#    expected += ld(beta, DifferentialForm('v3', index=3, dim=domain.ldim))
 #
 #    assert(ExteriorCalculusExpr(expr) == expected)
 
@@ -155,7 +155,7 @@ def test_compiler_3d_1():
 #==============================================================================
 def test_compiler_3d_2():
 
-    domain = Domain('Omega', dim=3)
+    domain = Domain('Omega', ldim=3)
 
     H1    = ScalarFunctionSpace('V0', domain, kind='H1')
     Hcurl = VectorFunctionSpace('V1', domain, kind='Hcurl')
@@ -214,7 +214,7 @@ def test_compiler_3d_2():
 #==============================================================================
 def test_compiler_3d_poisson():
 
-    domain = Domain('Omega', dim=3)
+    domain = Domain('Omega', ldim=3)
 
     H1    = ScalarFunctionSpace('V0', domain, kind='H1')
     Hcurl = VectorFunctionSpace('V1', domain, kind='Hcurl')
@@ -233,7 +233,7 @@ def test_compiler_3d_poisson():
 #==============================================================================
 def test_compiler_3d_stokes():
 
-    domain = Domain('Omega', dim=3)
+    domain = Domain('Omega', ldim=3)
 
     #    by setting the space type, we cannot evaluate grad of Hdiv function, then
     #    ArgumentTypeError will be raised.
@@ -259,10 +259,10 @@ def test_compiler_3d_stokes():
     v, q = element_of(X, name='v, q')
 
     expr = inner(grad(u), grad(v)) - div(v)*p + q*div(u)
-    atoms = {u: DifferentialForm('u', index=2, dim=domain.dim),
-             v: DifferentialForm('v', index=2, dim=domain.dim),
-             p: DifferentialForm('p', index=3, dim=domain.dim),
-             q: DifferentialForm('q', index=3, dim=domain.dim)}
+    atoms = {u: DifferentialForm('u', index=2, dim=domain.ldim),
+             v: DifferentialForm('v', index=2, dim=domain.ldim),
+             p: DifferentialForm('p', index=3, dim=domain.ldim),
+             q: DifferentialForm('q', index=3, dim=domain.ldim)}
     newexpr = ExteriorCalculusExpr(expr, tests=[v,q], atoms=atoms)
     print('===== BEFORE =====')
     print(newexpr)

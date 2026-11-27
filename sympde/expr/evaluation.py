@@ -216,6 +216,44 @@ def _to_matrix_form(expr, *, trials=None, tests=None, domain=None):
     return ImmutableDenseMatrix(M)
 
 #==============================================================================
+def _plus_side_measure(expr, mapping, interface):
+    """
+    Give the surface measure of an interface expression the normal axis of
+    the plus face.
+
+    LogicalExpr parametrizes an interface integral by its minus face, and
+    builds the surface measure from ``JacobianSymbol(mapping, axis=interface.minus.axis)``.
+    When a term involving only the plus side is moved to ``interface.plus``,
+    the measure must delete the Jacobian column of the plus normal axis, which
+    differs from the minus one on cross-axis interfaces.
+
+    The measure is found as any ``JacobianSymbol`` of ``mapping.plus`` with an
+    axis, which LogicalExpr only creates for surface measures. If a nonzero
+    expression has no such symbol, the measure was built in another way, and
+    an error is raised rather than returning a wrong measure.
+
+    Parameters:
+        expr: sympde expression, where ``mapping`` was already replaced by ``mapping.plus``
+
+        mapping: InterfaceMapping of the interface
+
+        interface: interface of a connectivity
+
+    Returns: sympde expression
+    """
+    measures = {J for J in expr.atoms(JacobianSymbol)
+                if J.mapping == mapping.plus and J.axis is not None}
+    if not measures:
+        if is_zero(expr):
+            return expr
+        raise ValueError(
+            f'could not find the surface measure of the interface '
+            f'{interface} in the plus-side expression {expr}')
+
+    new = JacobianSymbol(mapping.plus, axis=interface.plus.axis)
+    return expr.xreplace({J: new for J in measures})
+
+#==============================================================================
 def _split_expr_over_interface(expr, interface, tests=None, trials=None):
     """
     Splits an expression defined on an interface, into
@@ -316,6 +354,7 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                 if mapping and not is_zero(newexpr):
                     mapping = list(mapping)[0]
                     newexpr = newexpr.subs(mapping, mapping.plus)
+                    newexpr = _plus_side_measure(newexpr, mapping, interface)
 
                 for nn in newexpr.atoms(NormalVector):
                     newexpr = newexpr.replace(nn, -nn)
@@ -382,7 +421,7 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
                 if interface.minus in bnd_expressions:
                     newexpr += bnd_expressions[interface.minus]
 
-                bnd_expressions[interface.minus] = newexpr
+                bnd_expressions[interface.minus] = newexpr.subs(interface, interface.minus)
 
             newexpr = _nullify(expr, v_plus, tests)
             newexpr = newexpr.subs({v_plus: v})
@@ -390,12 +429,16 @@ def _split_expr_over_interface(expr, interface, tests=None, trials=None):
             if mapping:
                 mapping = list(mapping)[0]
                 newexpr = newexpr.subs(mapping, mapping.plus)
+                newexpr = _plus_side_measure(newexpr, mapping, interface)
+
+            for nn in newexpr.atoms(NormalVector):
+                newexpr = newexpr.replace(nn, -nn)
 
             if not is_zero(newexpr):
                 if interface.plus in bnd_expressions:
                      newexpr += bnd_expressions[interface.plus]
 
-                bnd_expressions[interface.plus] = newexpr
+                bnd_expressions[interface.plus] = newexpr.subs(interface, interface.plus)
 
     int_expressions = list(int_expressions.values())
     return int_expressions, bnd_expressions
@@ -482,7 +525,7 @@ class TerminalExpr(CalculusFunction):
 
     Parameters
     ----------
-    expr : Expr or Matrix or ImmutableDenseMatrix or LogicalExpr
+    expr : Expr | Matrix | ImmutableDenseMatrix | LogicalExpr
         The mathematical expression.
 
     domain : BasicDomain (from sympde.topology.basic)
@@ -560,7 +603,7 @@ class TerminalExpr(CalculusFunction):
             returned if `evaluate is False`.
         """
 
-        dim = domain.dim
+        dim = domain.ldim
 
         if isinstance(expr, Add):
             args = [cls.eval(a, domain=domain) for a in expr.args]
@@ -633,8 +676,8 @@ class TerminalExpr(CalculusFunction):
                     J = J.subs(subs)
                 elif mapping.is_plus:
                     M = list(J.atoms(type(mapping)))[0]
-                    coordinates = [M[i] for i in range(domain.dim)]
-                    newcoords   = [mapping[i] for i in range(domain.dim)]
+                    coordinates = [M[i] for i in range(domain.pdim)]
+                    newcoords   = [mapping[i] for i in range(domain.pdim)]
                     subs = list(zip(coordinates, newcoords))
                     J = J.subs(subs)
             return J

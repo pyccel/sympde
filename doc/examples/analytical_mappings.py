@@ -8,7 +8,7 @@ from sympde.api import CollelaMapping2D, Constant, Domain, LogicalExpr, Mapping
 
 # Inspect a built-in mapping symbolically.
 mapping = CollelaMapping2D('M', dim=2)
-mapped_domain = mapping(Domain('Omega', dim=2))
+mapped_domain = mapping(Domain('Omega', ldim=2))
 x1, x2 = symbols('x1, x2', real=True)
 eps, k1, k2 = [Constant(name) for name in ('eps', 'k1', 'k2')]
 

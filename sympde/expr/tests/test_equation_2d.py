@@ -25,7 +25,7 @@ from sympde.expr.errors import UnconsistentRhsError
 from sympde.expr.errors import UnconsistentBCError
 
 DIM = 2
-domain = Domain('Omega', dim=DIM)
+domain = Domain('Omega', ldim=DIM)
 
 #==============================================================================
 def test_equation_2d_1():

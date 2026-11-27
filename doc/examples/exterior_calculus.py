@@ -31,7 +31,7 @@ assert delta(u_0) == 0
 assert delta(u_1 + v_1) == delta(u_1) + delta(v_1)
 assert delta(alpha * u_1 + v_1) == alpha * delta(u_1) + delta(v_1)
 
-domain = Domain('Omega', dim=3)
+domain = Domain('Omega', ldim=3)
 vector_space = VectorFunctionSpace('W', domain)
 beta = element_of(vector_space, name='beta')
 

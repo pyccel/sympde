@@ -117,7 +117,12 @@ from sympde.topology.analytical_mapping import (
     PolarMapping,
     SphericalMapping,
     TargetMapping,
+    TorusMapping,
     TorusSurfaceMapping,
+    TransposedCzarnyMapping,
+    TransposedPolarMapping,
+    TransposedTargetMapping,
+    TwistedTargetMapping,
     TwistedTargetSurfaceMapping,
 )
 from sympde.topology.callable_mapping import CallableMapping
@@ -153,7 +158,7 @@ from sympde.exterior.calculus import d, delta, hodge, ip, jp, ld, wedge
 from sympde.exterior.form import DifferentialForm
 
 from sympde.printing.latex import latex
-from sympde.utilities.utils import plot_domain
+from sympde.utilities.plotting import plot_domain, print_topology
 
 __all__ = (
     'Constant',
@@ -223,8 +228,13 @@ __all__ = (
     'SymbolicWeightedVolume',
     'TangentVector',
     'TargetMapping',
+    'TorusMapping',
     'TorusSurfaceMapping',
     'Trace',
+    'TransposedCzarnyMapping',
+    'TransposedPolarMapping',
+    'TransposedTargetMapping',
+    'TwistedTargetMapping',
     'TwistedTargetSurfaceMapping',
     'UndefinedSpaceType',
     'Union',
@@ -286,4 +296,5 @@ __all__ = (
     # Output and utilities
     'latex',
     'plot_domain',
+    'print_topology',
 )

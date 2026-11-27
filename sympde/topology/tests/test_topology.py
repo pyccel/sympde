@@ -1,42 +1,51 @@
 import os
+import copy
+import itertools
+import numpy as np
+import pytest
 
 import h5py
 import numpy as np
 import pytest
 import yaml
 from sympy import preorder_traversal
+from sympy import Matrix, symbols
+from sympy import lambdify as sympy_lambdify
 from sympy.core import Basic
 
+from sympde.topology.analytical_mapping import IdentityMapping
 from sympde.topology.basic import InteriorDomain, Union
 from sympde.topology.basic import Boundary
-from sympde.topology.domain import Domain, ElementDomain
-from sympde.topology.domain import Area
-from sympde.topology.mapping import Mapping
-from sympde.topology.basic import Interface
-from sympde.topology.domain import Line, Square, Cube, NCube
-from sympde.topology.analytical_mapping import IdentityMapping
+from sympde.topology.basic import Connectivity, Interface
+from sympde.topology.domain import Area, Domain, ElementDomain
+from sympde.topology.domain import Line, Square, Cube, NCube, split
+from sympde.topology.mapping import InterfaceMapping, Mapping, MultiPatchMapping
+from sympde.topology.incidence import _map_to_plus_side
+from sympde.topology.multipatch_gallery import build_multipatch_domain_2d
+from sympde.topology.multipatch_gallery import build_multipatch_domain_3d
+
 
 base_dir = os.path.dirname(os.path.realpath(__file__))
 topo_dir = os.path.join(base_dir, 'data')
 
 
 def test_structural_arguments_are_sympy_objects():
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
     boundary = Boundary(r'\Gamma_1', domain)
-    interface = Interface('I', boundary, boundary, ornt=1)
+    interface = Interface('I', boundary, boundary, 1)
     square = Square('S', bounds1=(-1, 2), bounds2=(3, 4))
 
     assert domain.name == 'Omega'
     assert boundary.name == r'\Gamma_1'
     assert boundary.axis is None
-    assert interface.ornt == 1
+    assert interface.orientation == 1
 
     for expr in (domain, domain.interior, boundary, interface, square,
                  square.interior, square.boundary.args[0]):
         assert all(isinstance(arg, Basic) for arg in preorder_traversal(expr))
         assert expr.func(*expr.args) == expr
 
-    replacement = Domain('Replacement', dim=2)
+    replacement = Domain('Replacement', ldim=2)
     replaced_boundary = boundary.xreplace({domain: replacement})
     assert replaced_boundary.domain == replacement
 
@@ -53,12 +62,12 @@ def test_multipatch_domain_reconstruction():
 
     rebuilt = domain.func(*domain.args)
     assert rebuilt == domain
-    assert dict(rebuilt.connectivity) == dict(domain.connectivity)
+    assert dict(rebuilt.interface_map) == dict(domain.interface_map)
 
-    interfaces = list(domain.connectivity.values())
+    interfaces = list(domain.interface_map.values())
     rebuilt = Domain('Omega', domain.interior, domain.boundary,
                      connectivity=interfaces)
-    assert dict(rebuilt.connectivity) == dict(domain.connectivity)
+    assert dict(rebuilt.interface_map) == dict(domain.interface_map)
 
 
 def test_ncube_reconstruction_keeps_coordinates():
@@ -74,8 +83,8 @@ def test_ncube_reconstruction_keeps_coordinates():
 
 #==============================================================================
 def test_interior_domain():
-    D1 = InteriorDomain('D1', dim=2)
-    D2 = InteriorDomain('D2', dim=2)
+    D1 = InteriorDomain('D1', ldim=2)
+    D2 = InteriorDomain('D2', ldim=2)
 
     assert D1.todict() == {'name': 'D1', 'mapping':'None'}
     assert D2.todict() == {'name': 'D2', 'mapping':'None'}
@@ -84,7 +93,7 @@ def test_interior_domain():
 
     D = Union(D1, D2)
 
-    assert D.dim == 2
+    assert D.ldim == 2
     assert len(D) == 2
     assert D.todict() == [{'name': 'D1', 'mapping':'None'},
                           {'name': 'D2', 'mapping':'None'}]
@@ -103,7 +112,7 @@ def test_topology_1(tmp_path):
     D2 = M2(B)
 
     patches = [D1, D2]
-    connectivity = [((0, 0, 1), (1, 0, -1), 1)]
+    connectivity = [((0, 0, 1), (1, 0, -1), +1)]
     Omega = Domain.join(patches, connectivity, 'domain')
 
     interfaces = Omega.interfaces
@@ -117,6 +126,47 @@ def test_topology_1(tmp_path):
     D = Domain.from_file(filename)
 
     assert D.todict() == Omega.todict()
+
+#==============================================================================
+def test_topological_domain_export_and_from_file(tmp_path):
+    # Regression test for #144: the patches are InteriorDomain objects without
+    # a dtype, and their boundaries have no axis or extremity
+    A = InteriorDomain('A', ldim=2)
+    B = InteriorDomain('B', ldim=2)
+    A1, A2, A3 = [Boundary(f'Gamma_{i}', A) for i in (1, 2, 3)]
+    B1, B2, B3 = [Boundary(f'Gamma_{i}', B) for i in (1, 2, 3)]
+
+    Omega = Domain('Omega',
+                   interiors=[A, B],
+                   boundaries=[A2, A3, B1, B3],
+                   connectivity=[Interface('I', A1, B2, 1)])
+
+    filename = str(tmp_path / 'omega.h5')
+    Omega.export(filename)
+    D = Domain.from_file(filename)
+
+    assert D == Omega
+    assert D.todict() == Omega.todict()
+
+    # 3D patches with known boundary axes and extremities
+    C = InteriorDomain('C', ldim=3)
+    E = InteriorDomain('E', ldim=3)
+    interface = Interface('I',
+                          Boundary('Gamma_1', C, axis=0, ext=1),
+                          Boundary('Gamma_2', E, axis=1, ext=-1),
+                          (-1, 1, -1))
+    Omega = Domain('Omega', interiors=[C, E], boundaries=[],
+                   connectivity=[interface])
+
+    Omega.export(filename)
+    D = Domain.from_file(filename)
+
+    assert D == Omega
+    assert D.interface_map['I'].orientation == (-1, 1, -1)
+
+    # With axes and extremities, the vertices are also defined for
+    # topological patches
+    assert len(D.vertices) == 12
 
 #==============================================================================
 def test_export_surface_mapping(tmp_path):
@@ -154,8 +204,8 @@ def test_export_mappings_with_different_pdim(tmp_path):
 
 #==============================================================================
 def test_domain_1():
-    Omega_1 = InteriorDomain('Omega_1', dim=2)
-    Omega_2 = InteriorDomain('Omega_2', dim=2)
+    Omega_1 = InteriorDomain('Omega_1', ldim=2)
+    Omega_2 = InteriorDomain('Omega_2', ldim=2)
 
     Gamma_1 = Boundary('Gamma_1', Omega_1)
     Gamma_2 = Boundary('Gamma_2', Omega_2)
@@ -165,13 +215,13 @@ def test_domain_1():
                    interiors=[Omega_1, Omega_2],
                    boundaries=[Gamma_1, Gamma_2, Gamma_3])
 
-    assert Omega.dim == 2
+    assert Omega.ldim == 2
     assert len(Omega.interior) == 2
     assert len(Omega.boundary) == 3
 
 #==============================================================================
 def test_boundary_1():
-    Omega_1 = InteriorDomain('Omega_1', dim=2)
+    Omega_1 = InteriorDomain('Omega_1', ldim=2)
 
     Gamma_1 = Boundary('Gamma_1', Omega_1)
     Gamma_2 = Boundary('Gamma_2', Omega_1)
@@ -186,7 +236,7 @@ def test_boundary_1():
 
 #==============================================================================
 def test_boundary_2():
-    Omega_1 = InteriorDomain('Omega_1', dim=2)
+    Omega_1 = InteriorDomain('Omega_1', ldim=2)
 
     Gamma_1 = Boundary('Gamma_1', Omega_1)
     Gamma_2 = Boundary('Gamma_2', Omega_1)
@@ -202,7 +252,7 @@ def test_boundary_2():
 
 #==============================================================================
 def test_boundary_3():
-    Omega_1 = InteriorDomain('Omega_1', dim=2)
+    Omega_1 = InteriorDomain('Omega_1', ldim=2)
 
     Gamma_1 = Boundary(r'\Gamma_1', Omega_1, axis=0, ext=-1)
     Gamma_4 = Boundary(r'\Gamma_4', Omega_1, axis=1, ext= 1)
@@ -216,8 +266,8 @@ def test_boundary_3():
 
 #==============================================================================
 def test_element():
-    D1 = InteriorDomain('D1', dim=2)
-    D2 = InteriorDomain('D2', dim=2)
+    D1 = InteriorDomain('D1', ldim=2)
+    D2 = InteriorDomain('D2', ldim=2)
 
     D = Union(D1, D2)
 
@@ -244,7 +294,7 @@ def test_domain_join_line():
 
 
     domains = [A, B]
-    connectivity = [((0, 0, 1), (1, 0, -1))]
+    connectivity = [((0, 0, 1), (1, 0, -1), None)]
     AB = Domain.join(domains, connectivity, 'AB')
 
     AB_bnd_minus = A.get_boundary(axis=0, ext=1)
@@ -254,18 +304,21 @@ def test_domain_join_line():
     BC_bnd_plus  = C.get_boundary(axis=0, ext=-1)
 
     assert AB.interior   == Union(A.interior, B.interior)
-    assert AB.interfaces == Interface('A|B', AB_bnd_minus, AB_bnd_plus)
-    print(AB.connectivity)
+    assert AB.interfaces == Interface(
+        'A|B', AB_bnd_minus, AB_bnd_plus, None)
+    print(AB.interface_map)
     print('')
 
     domains = [A, B, C]
-    connectivity = [((0, 0, 1), (1, 0, -1)), ((1, 0, 1), (2, 0, -1))]
+    connectivity = [((0, 0, 1), (1, 0, -1), None),
+                    ((1, 0, 1), (2, 0, -1), None)]
     ABC = Domain.join(domains, connectivity, 'ABC')
 
     assert ABC.interior == Union(A.interior, B.interior, C.interior)
-    assert ABC.interfaces == Union(Interface('A|B', AB_bnd_minus, AB_bnd_plus),
-                                   Interface('B|C', BC_bnd_minus, BC_bnd_plus))
-    print(list(ABC.connectivity.items()))
+    assert ABC.interfaces == Union(
+        Interface('A|B', AB_bnd_minus, AB_bnd_plus, None),
+        Interface('B|C', BC_bnd_minus, BC_bnd_plus, None))
+    print(list(ABC.interface_map.items()))
     print('')
 
 
@@ -278,7 +331,7 @@ def test_domain_join_square():
     C = Square('C')
 
     patches = [A, B]
-    connectivity = [((0, 0, 1), (1, 0, -1), 1)]
+    connectivity = [((0, 0, 1), (1, 0, -1), +1)]
     AB = Domain.join(patches, connectivity, 'AB')
 
     AB_bnd_minus = A.get_boundary(axis=0, ext= 1)
@@ -289,20 +342,22 @@ def test_domain_join_square():
 
     print(AB)
     assert AB.interior   == Union(A.interior, B.interior)
-    assert AB.interfaces == Interface('A|B', AB_bnd_minus, AB_bnd_plus, ornt=1)
-    print(AB.connectivity)
+    assert AB.interfaces == Interface(
+        'A|B', AB_bnd_minus, AB_bnd_plus, +1)
+    print(AB.interface_map)
 
     patches = [A, B, C]
-    connectivity = [((0, 0, 1), (1, 0, -1), 1),
-                    ((1, 0, 1), (2, 0, -1), 1)]
+    connectivity = [((0, 0, 1), (1, 0, -1), +1),
+                    ((1, 0, 1), (2, 0, -1), +1)]
     ABC = Domain.join(patches, connectivity, 'ABC')
 
 
     print(ABC)
     assert ABC.interior == Union(A.interior, B.interior, C.interior)
-    assert ABC.interfaces == Union(Interface('A|B', AB_bnd_minus, AB_bnd_plus, ornt=1),
-                                   Interface('B|C', BC_bnd_minus, BC_bnd_plus, ornt=1))
-    print(list(ABC.connectivity.items()))
+    assert ABC.interfaces == Union(
+        Interface('A|B', AB_bnd_minus, AB_bnd_plus, +1),
+        Interface('B|C', BC_bnd_minus, BC_bnd_plus, +1))
+    print(list(ABC.interface_map.items()))
     print('')
 
 
@@ -313,11 +368,12 @@ def test_get_subdomain():
     C = Square('C')
 
     patches = [A, B]
-    connectivity = [((0, 0, 1), (1, 0, -1), 1)]
+    connectivity = [((0, 0, 1), (1, 0, -1), +1)]
     AB = Domain.join(patches, connectivity, 'AB')
 
     patches = [A, B, C]
-    connectivity = [((0, 0, 1), (1, 0, -1), 1), ((1, 0, 1), (2, 0, -1), 1)]
+    connectivity = [((0, 0, 1), (1, 0, -1), +1),
+                    ((1, 0, 1), (2, 0, -1), +1)]
     ABC = Domain.join(patches, connectivity, 'ABC')
 
     A_1 = AB.get_subdomain('A')
@@ -338,6 +394,225 @@ def test_get_subdomain():
 
     assert A_pipe_B_pipe_C_2 is ABC
 
+
+#==============================================================================
+def test_get_subdomain_of_three_from_four_patches():
+    patches = [Square(name) for name in 'ABCD']
+    connectivity = [
+        ((0, 0, +1), (1, 0, -1), +1),
+        ((1, 0, +1), (2, 0, -1), +1),
+        ((2, 0, +1), (3, 0, -1), +1),
+    ]
+    domain = Domain.join(patches, connectivity, 'ABCD')
+    subdomain = domain.get_subdomain(('A', 'B', 'C'))
+    expected = Domain.join(patches[:3], connectivity[:2], 'expected')
+
+    assert subdomain.name == 'A|B|C'
+    assert subdomain.patches == expected.patches
+    assert subdomain.boundary == expected.boundary
+    assert tuple(subdomain.interface_map) == ('A|B', 'B|C')
+    assert subdomain.interface_map['A|B'] is domain.interface_map['A|B']
+    assert subdomain.interface_map['B|C'] is domain.interface_map['B|C']
+
+
+#==============================================================================
+def test_get_subdomain_preserves_repeated_and_self_interfaces():
+    patch_a = Square('A')
+    patch_b = Square('B')
+    patch_c = Square('C')
+    domain = Domain.join(
+        [patch_a, patch_b, patch_c],
+        [
+            ((0, 1, -1), (0, 1, +1), +1),
+            ((0, 0, -1), (1, 0, -1), +1),
+            ((0, 0, +1), (1, 0, +1), +1),
+            ((1, 1, +1), (2, 1, -1), +1),
+        ],
+        'ABC')
+
+    patch_subdomain = domain.get_subdomain('A')
+    pair_subdomain = domain.get_subdomain(('A', 'B'))
+
+    assert tuple(patch_subdomain.interface_map) == ('A|A',)
+    assert patch_subdomain.interface_map['A|A'] is \
+        domain.interface_map['A|A']
+    assert {
+        (side.domain.name, side.axis, side.ext)
+        for side in patch_subdomain.boundary_sides
+    } == {('A', 0, -1), ('A', 0, +1)}
+
+    assert tuple(pair_subdomain.interface_map) == (
+        'A|A', 'A|B', 'A|B#2')
+    assert all(
+        pair_subdomain.interface_map[name] is domain.interface_map[name]
+        for name in pair_subdomain.interface_map)
+    assert ('B', 1, +1) in {
+        (side.domain.name, side.axis, side.ext)
+        for side in pair_subdomain.boundary_sides
+    }
+
+
+#==============================================================================
+def test_get_subdomain_preserves_mapped_3d_topology():
+    logical_patches = [Cube(name) for name in 'ABCD']
+    patches = [
+        IdentityMapping(f'F{name}', dim=3)(patch)
+        for name, patch in zip('ABCD', logical_patches)
+    ]
+    domain = Domain.join(
+        patches,
+        [
+            ((0, 0, +1), (1, 1, -1), (-1, +1, -1)),
+            ((1, 2, +1), (2, 0, -1), (+1, -1, +1)),
+            ((2, 1, +1), (3, 2, -1), (-1, -1, +1)),
+        ],
+        'mapped-ABCD')
+    selected_names = tuple(patch.interior.name for patch in patches[:3])
+    subdomain = domain.get_subdomain(selected_names)
+    retained_interfaces = tuple(domain.interface_map.values())[:2]
+    cut_side = tuple(domain.interface_map.values())[2].minus
+
+    assert isinstance(subdomain.mapping, MultiPatchMapping)
+    assert subdomain.logical_domain is not None
+    assert subdomain.patches == tuple(patch.interior for patch in patches[:3])
+    assert tuple(subdomain.interface_map.values()) == retained_interfaces
+    assert cut_side in subdomain.boundary_sides
+    assert tuple(
+        interface.axis_map for interface in subdomain.interface_map.values()
+    ) == tuple(interface.axis_map for interface in retained_interfaces)
+    assert set(subdomain.mapping.mappings) == {
+        patch.interior.logical_domain for patch in patches[:3]}
+
+    for interface in subdomain.interface_map.values():
+        logical_interface = interface.logical_domain
+        assert logical_interface is not None
+        assert subdomain.logical_domain.interface_map[
+            str(logical_interface.name)] is logical_interface
+
+
+#==============================================================================
+def test_domain_join_rejects_nested_multipatch_inputs():
+    patch_a = Square('A')
+    patch_b = Square('B')
+    patch_c = Square('C')
+    joined = Domain.join(
+        [patch_a, patch_b],
+        [((0, 0, +1), (1, 0, -1), +1)],
+        'AB')
+
+    with pytest.raises(ValueError, match='atomic patch domains'):
+        Domain.join([joined, patch_c], [], 'ABC')
+
+#==============================================================================
+def test_domain_join_rejects_different_physical_dimensions():
+    # Regression test for #140: a planar patch joined with a surface in 3D
+    A = Mapping('FA', ldim=2, pdim=2)(Square('A'))
+    B = Mapping('FB', ldim=2, pdim=3)(Square('B'))
+    C = Square('C')
+
+    with pytest.raises(ValueError, match='same physical dimension'):
+        Domain.join([A, B], [((0, 0, 1), (1, 0, -1), 1)], 'Omega')
+    with pytest.raises(ValueError, match='same physical dimension'):
+        Domain.join([B, C], [((0, 0, 1), (1, 0, -1), 1)], 'Omega')
+
+#==============================================================================
+def test_logical_and_physical_dimensions():
+    # Regression test for #203: a surface in 3D
+    F = Mapping('F', ldim=2, pdim=3)
+    surface = F(Square('Omega'))
+    side = surface.boundary.args[0]
+
+    assert (surface.ldim, surface.pdim) == (2, 3)
+    assert [str(x) for x in surface.coordinates] == ['x', 'y', 'z']
+    assert (surface.interior.ldim, surface.interior.pdim) == (2, 3)
+    assert (side.ldim, side.pdim, side.intrinsic_dim) == (2, 3, 1)
+
+    G = Mapping('G', ldim=2, pdim=3)
+    domain = Domain.join(
+        [F(Square('A')), G(Square('B'))], [((0, 0, 1), (1, 0, -1), 1)], 'D')
+    interface = domain.interface_map['A|B']
+    assert (domain.ldim, domain.pdim) == (2, 3)
+    assert (interface.ldim, interface.pdim, interface.intrinsic_dim) == (2, 3, 1)
+
+    # Without a mapping, the physical dimension is the logical one
+    square = Square('S')
+    assert (square.ldim, square.pdim) == (2, 2)
+    assert [str(x) for x in square.coordinates] == ['x1', 'x2']
+
+    # All patches of a domain have the same physical dimension
+    with pytest.raises(ValueError, match='same physical dimension'):
+        Domain('X', interiors=[
+            Mapping('H', ldim=2, pdim=2)(Square('C')).interior,
+            Mapping('K', ldim=2, pdim=3)(Square('E')).interior])
+
+#==============================================================================
+def test_interfaces_cannot_be_changed():
+    A, B = Square('A'), Square('B')
+    domain = Domain.join([A, B], [((0, 0, 1), (1, 0, -1), 1)], 'Omega')
+    interface = domain.interface_map['A|B']
+
+    with pytest.raises(TypeError):
+        domain.interface_map['other'] = interface
+    assert not hasattr(domain, 'set_interfaces')
+
+    # The domain does not share the dictionary it was created from
+    interfaces = {'A|B': interface}
+    domain = Domain('Omega', interiors=[A.interior, B.interior],
+                    connectivity=Connectivity(interfaces))
+    interfaces['other'] = interface
+    assert tuple(domain.interface_map) == ('A|B',)
+
+#==============================================================================
+def test_split_line():
+    domain = split(Line('L', bounds=(0, 2)), 0.5)
+
+    left, right = domain.patches
+    assert (left.min_coords, left.max_coords) == ((0,), (0.5,))
+    assert (right.min_coords, right.max_coords) == ((0.5,), (2,))
+    assert tuple(domain.interface_map) == ('L_l|L_r',)
+    assert len(domain.boundary_sides) == 2
+
+    with pytest.raises(ValueError, match='between'):
+        split(Line('L', bounds=(0, 2)), 3)
+
+#==============================================================================
+def test_get_boundary_of_multipatch_domain():
+    A, B = Square('A'), Square('B')
+    domain = Domain.join([A, B], [((0, 0, 1), (1, 0, -1), 1)], 'Omega')
+
+    # Only one patch has a boundary side with axis 0 and ext -1
+    assert domain.get_boundary(axis=0, ext=-1) == A.get_boundary(axis=0, ext=-1)
+
+    # Both patches have one with axis 1 and ext -1
+    with pytest.raises(ValueError, match='several patches'):
+        domain.get_boundary(axis=1, ext=-1)
+    assert domain.get_boundary(axis=1, ext=-1, patch=B) == \
+        B.get_boundary(axis=1, ext=-1)
+
+    # The faces of an interface are not exterior boundaries
+    with pytest.raises(ValueError, match='could not find'):
+        domain.get_boundary(axis=0, ext=1, patch=A)
+
+#==============================================================================
+def test_domain_join_rejects_mapped_and_unmapped_patches():
+    A = Mapping('F', dim=2)(Square('A'))
+    B = Square('B')
+
+    with pytest.raises(ValueError, match='all patches or none'):
+        Domain.join([A, B], [((0, 0, 1), (1, 0, -1), 1)], 'Omega')
+
+#==============================================================================
+def test_domain_join_rejects_degenerate_connectivity():
+    A = Square('A')
+    B = Square('B')
+
+    with pytest.raises(ValueError, match='with itself'):
+        Domain.join([A], [((0, 0, 1), (0, 0, 1), 1)], 'Omega')
+
+    with pytest.raises(ValueError, match='more than one interface'):
+        Domain.join([A, B], [((0, 0, 1), (1, 0, -1), 1),
+                             ((0, 0, 1), (1, 1, -1), 1)], 'Omega')
+
 #==============================================================================
 def test_2d_domain_without_bnd():
 
@@ -355,14 +630,14 @@ def test_2d_domain_without_bnd():
     domain_4  = mapping_4(OmegaLog4)
 
     patches =  [domain_1, domain_2, domain_3, domain_4]
-    connectivity = [((0, 0, 1), (2, 0,-1), 1),
-                    ((1, 0, 1), (3, 0,-1), 1),
-                    ((2, 0, 1), (0, 0,-1), 1),
-                    ((3, 0, 1), (1, 0,-1), 1),
-                    ((0, 1, 1), (1, 1,-1), 1),
-                    ((2, 1, 1), (3, 1,-1), 1),
-                    ((1, 1, 1), (0, 1,-1), 1),
-                    ((3, 1, 1), (2, 1,-1), 1)]
+    connectivity = [((0, 0, 1), (2, 0,-1), +1),
+                    ((1, 0, 1), (3, 0,-1), +1),
+                    ((2, 0, 1), (0, 0,-1), +1),
+                    ((3, 0, 1), (1, 0,-1), +1),
+                    ((0, 1, 1), (1, 1,-1), +1),
+                    ((2, 1, 1), (3, 1,-1), +1),
+                    ((1, 1, 1), (0, 1,-1), +1),
+                    ((3, 1, 1), (2, 1,-1), +1)]
     domain = Domain.join(patches, connectivity, 'domain')
 
     assert len(domain.interior) == 4
@@ -387,14 +662,14 @@ def test_3d_domain_with_doubly_connected_patches():
     domain_4  = mapping_4(OmegaLog4)
 
     patches = [domain_1, domain_2, domain_3, domain_4]
-    connectivity = [((0, 0, 1), (2, 0,-1), (1, 1, 1)),
-                    ((1, 0, 1), (3, 0,-1), (1, 1, 1)),
-                    ((2, 0, 1), (0, 0,-1), (1, 1, 1)),
-                    ((3, 0, 1), (1, 0,-1), (1, 1, 1)),
-                    ((0, 1, 1), (1, 1,-1), (1, 1, 1)),
-                    ((2, 1, 1), (3, 1,-1), (1, 1, 1)),
-                    ((1, 1, 1), (0, 1,-1), (1, 1, 1)),
-                    ((3, 1, 1), (2, 1,-1), (1, 1, 1))]
+    connectivity = [((0, 0, 1), (2, 0,-1), (+1, +1, +1)),
+                    ((1, 0, 1), (3, 0,-1), (+1, +1, +1)),
+                    ((2, 0, 1), (0, 0,-1), (+1, +1, +1)),
+                    ((3, 0, 1), (1, 0,-1), (+1, +1, +1)),
+                    ((0, 1, 1), (1, 1,-1), (+1, +1, +1)),
+                    ((2, 1, 1), (3, 1,-1), (+1, +1, +1)),
+                    ((1, 1, 1), (0, 1,-1), (+1, +1, +1)),
+                    ((3, 1, 1), (2, 1,-1), (+1, +1, +1))]
     domain = Domain.join(patches, connectivity, 'domain')
 
     assert len(domain.interior) == 4
@@ -403,6 +678,719 @@ def test_3d_domain_with_doubly_connected_patches():
     assert isinstance(domain.boundary, Union)
     assert all(isinstance(b, Boundary) for b in domain.boundary)
     assert len(domain.boundary) == 8
+
+#==============================================================================
+def test_interface_orientation_axis_map():
+    domain = Domain.join(
+        [Cube('A'), Cube('B')],
+    [((0, 0, +1), (1, 1, -1), (-1, +1, -1))],
+    'AB')
+    interface = domain.interfaces
+
+    assert interface.orientation == (-1, +1, -1)
+    assert interface.axis_map == ((1, 2, +1), (2, 0, -1))
+
+
+#==============================================================================
+@pytest.mark.parametrize('data, permutation, directions', [
+    ((+1, +1, +1), (0, 1), (+1, +1)),
+    ((+1, +1, -1), (0, 1), (+1, -1)),
+    ((+1, -1, +1), (0, 1), (-1, +1)),
+    ((+1, -1, -1), (0, 1), (-1, -1)),
+    ((-1, +1, +1), (1, 0), (+1, +1)),
+    ((-1, +1, -1), (1, 0), (+1, -1)),
+    ((-1, -1, +1), (1, 0), (-1, +1)),
+    ((-1, -1, -1), (1, 0), (-1, -1)),
+])
+def test_public_interface_orientation_codec_3d(data, permutation, directions):
+    domain = Domain.join(
+        [Cube('A'), Cube('B')],
+        [((0, 0, +1), (1, 1, -1), data)],
+        'AB')
+    interface = domain.interfaces
+    plus_tangents = (0, 2)
+
+    assert interface.orientation == data
+    assert interface.axis_map == tuple(
+        (minus_axis, plus_tangents[plus_position], direction)
+        for minus_axis, plus_position, direction
+        in zip((1, 2), permutation, directions)
+    )
+
+
+#==============================================================================
+def _all_interfaces(ldim):
+    """Yield an Interface for every pair of faces and every orientation."""
+    patch_type = {1: Line, 2: Square, 3: Cube}[ldim]
+    A = patch_type('A')
+    B = patch_type('B')
+    orientations = {1: [None],
+                    2: [+1, -1],
+                    3: list(itertools.product((+1, -1), repeat=3))}[ldim]
+    faces = list(itertools.product(range(ldim), (-1, +1)))
+    for (minus_axis, minus_ext), (plus_axis, plus_ext), orientation in \
+            itertools.product(faces, faces, orientations):
+        yield Interface('A|B',
+                        A.get_boundary(axis=minus_axis, ext=minus_ext),
+                        B.get_boundary(axis=plus_axis, ext=plus_ext),
+                        orientation=orientation)
+
+#==============================================================================
+@pytest.mark.parametrize('ldim', [1, 2, 3])
+def test_interface_transform(ldim):
+    for interface in _all_interfaces(ldim):
+        minus = interface.minus
+        plus  = interface.plus
+        permutation = interface.signed_permutation
+
+        # The normal axes are mapped onto each other, the tangential axes as
+        # given by axis_map
+        assert interface.normal_direction == -minus.ext * plus.ext
+        assert permutation[minus.axis] == (plus.axis, interface.normal_direction)
+        assert all(permutation[minus_axis] == (plus_axis, direction)
+                   for minus_axis, plus_axis, direction in interface.axis_map)
+        assert sorted(plus_axis for plus_axis, _ in permutation) == list(range(ldim))
+
+        inverse = interface.inverse_signed_permutation
+        assert all(inverse[plus_axis] == (minus_axis, direction)
+                   for minus_axis, (plus_axis, direction) in enumerate(permutation))
+
+        P = np.array(interface.permutation_matrix)
+        assert np.array_equal(np.abs(P).sum(axis=0), np.ones(ldim))
+        assert np.array_equal(np.abs(P).sum(axis=1), np.ones(ldim))
+        assert interface.handedness == round(np.linalg.det(P))
+
+        # The corners of the minus face are mapped to the same corners as for
+        # the identification of the vertices of a domain
+        for corner in itertools.product((0, 1), repeat=ldim):
+            image = _map_to_plus_side(corner, interface)
+            if image is not None:
+                assert interface.map_point(corner) == image[0]
+
+#==============================================================================
+@pytest.mark.parametrize('ldim', [1, 2, 3])
+def test_interface_transform_map_point_with_bounds(ldim):
+    minus_bounds = ((0.5, 1.0), (-1.0, 2.0), (0.0, 4.0))[:ldim]
+    plus_bounds  = ((2.0, 3.0), (0.0, 0.5), (-3.0, -1.0))[:ldim]
+    rng = np.random.default_rng(0)
+
+    for interface in _all_interfaces(ldim):
+        minus = interface.minus
+        plus  = interface.plus
+        eta = tuple(lower + (upper - lower) * t for (lower, upper), t
+                    in zip(minus_bounds, rng.random(ldim)))
+        image = interface.map_point(eta, minus_bounds, plus_bounds)
+
+        # Round trip
+        back = interface.map_point(image, minus_bounds, plus_bounds, inverse=True)
+        assert np.allclose(back, eta)
+
+        # The minus face is mapped to the plus face
+        on_face = list(eta)
+        on_face[minus.axis] = minus_bounds[minus.axis][(minus.ext + 1) // 2]
+        image_on_face = interface.map_point(on_face, minus_bounds, plus_bounds)
+        assert image_on_face[plus.axis] == plus_bounds[plus.axis][(plus.ext + 1) // 2]
+
+        # The Jacobian of the affine map is the signed permutation matrix,
+        # scaled by the ratios of the interval lengths
+        lengths_minus = np.array([upper - lower for lower, upper in minus_bounds])
+        lengths_plus  = np.array([upper - lower for lower, upper in plus_bounds])
+        jacobian = np.array([
+            np.subtract(interface.map_point(eta[:k] + (eta[k] + 1,) + eta[k+1:],
+                                            minus_bounds, plus_bounds), image)
+            for k in range(ldim)]).T
+        expected = np.diag(lengths_plus) @ np.array(interface.permutation_matrix) \
+                   @ np.diag(1 / lengths_minus)
+        assert np.allclose(jacobian, expected)
+
+#==============================================================================
+@pytest.mark.parametrize('ldim', [2, 3])
+def test_interface_transform_map_component(ldim):
+    minus_bounds = ((0.5, 1.0), (-1.0, 2.0), (0.0, 4.0))[:ldim]
+    plus_bounds  = ((2.0, 3.0), (0.0, 0.5), (-3.0, -1.0))[:ldim]
+
+    for interface in _all_interfaces(ldim):
+        kinds = {'hcurl': [k for k in range(ldim) if k != interface.minus.axis],
+                 'hdiv' : [interface.minus.axis]}
+        for kind, components in kinds.items():
+            for k in range(ldim):
+                if k not in components:
+                    with pytest.raises(ValueError, match='not continuous'):
+                        interface.map_component(k, kind)
+                    continue
+
+                # With unit bounds, only the signs remain
+                j, direction = interface.signed_permutation[k]
+                sign = direction if kind == 'hcurl' else interface.handedness * direction
+                assert interface.map_component(k, kind) == (j, sign)
+
+                # The inverse relation
+                j, factor = interface.map_component(k, kind, minus_bounds, plus_bounds)
+                k_back, factor_back = interface.map_component(
+                    j, kind, minus_bounds, plus_bounds, inverse=True)
+                assert k_back == k
+                assert np.isclose(factor * factor_back, 1)
+
+        with pytest.raises(ValueError, match='kind'):
+            interface.map_component(0, 'h1')
+        with pytest.raises(ValueError, match='L2'):
+            interface.map_component(0, 'l2')
+
+        # Negative indices would select a component from the end
+        for k in (-1, ldim):
+            with pytest.raises(ValueError, match='range'):
+                interface.map_component(k, 'hcurl')
+        for k in (True, 1.0):
+            with pytest.raises(TypeError):
+                interface.map_component(k, 'hcurl')
+
+#==============================================================================
+def _check_pullbacks(interface, minus_mapping, plus_mapping, minus_bounds, plus_bounds):
+    """
+    Check map_component with the pull-backs of smooth physical fields at
+    points of an interface. Each mapping is a pair (expressions, logical
+    coordinates).
+
+    Return False if the mappings do not match on the interface, e.g. for a
+    periodic interface, and otherwise the largest error of the L2 relation
+    u_minus = handedness * prod(Lp)/prod(Lm) * u_plus, which only holds if the
+    geometry is smooth across the interface.
+    """
+    def lambdify(mapping):
+        expressions, coordinates = mapping
+        F = Matrix(expressions)
+        return (sympy_lambdify(coordinates, F, 'numpy'),
+                sympy_lambdify(coordinates, F.jacobian(coordinates), 'numpy'))
+
+    F_minus, J_minus = lambdify(minus_mapping)
+    F_plus , J_plus  = lambdify(plus_mapping)
+    ldim = interface.ldim
+    minus = interface.minus
+
+    def field(x):
+        x = np.append(x, 0.)
+        return np.array([1 + x[0]*x[1], np.sin(x[1]) + x[2], np.cos(x[0]) - x[1]*x[2]])[:len(x) - 1]
+
+    def density(x):
+        return 1 + x[0]*x[1]
+
+    lengths_minus = [upper - lower for lower, upper in minus_bounds]
+    lengths_plus  = [upper - lower for lower, upper in plus_bounds]
+    l2_factor = interface.handedness * np.prod(lengths_plus) / np.prod(lengths_minus)
+    l2_error = 0.
+
+    for t in itertools.product((0.2, 0.5, 0.7), repeat=ldim - 1):
+        eta = [None] * ldim
+        eta[minus.axis] = minus_bounds[minus.axis][(minus.ext + 1) // 2]
+        tangents = [axis for axis in range(ldim) if axis != minus.axis]
+        for axis, ti in zip(tangents, t):
+            lower, upper = minus_bounds[axis]
+            eta[axis] = lower + ti * (upper - lower)
+        eta_plus = interface.map_point(eta, minus_bounds, plus_bounds)
+
+        x = np.array(F_minus(*eta), dtype=float).ravel()
+        if not np.allclose(x, np.array(F_plus(*eta_plus), dtype=float).ravel()):
+            return False
+
+        Jm = np.array(J_minus(*eta), dtype=float)
+        Jp = np.array(J_plus(*eta_plus), dtype=float)
+        u = field(x)
+
+        # Inverses of the push-forwards of PullBack: covariant for H(curl),
+        # contravariant Piola with the signed determinant for H(div)
+        hcurl_minus, hcurl_plus = Jm.T @ u, Jp.T @ u
+        for k in range(ldim):
+            if k != minus.axis:
+                j, factor = interface.map_component(k, 'hcurl', minus_bounds, plus_bounds)
+                assert np.isclose(hcurl_minus[k], factor * hcurl_plus[j], atol=1e-12)
+
+        if Jm.shape[0] == ldim:
+            hdiv_minus = np.linalg.det(Jm) * np.linalg.solve(Jm, u)
+            hdiv_plus  = np.linalg.det(Jp) * np.linalg.solve(Jp, u)
+            k = minus.axis
+            j, factor = interface.map_component(k, 'hdiv', minus_bounds, plus_bounds)
+            assert np.isclose(hdiv_minus[k], factor * hdiv_plus[j], atol=1e-12)
+
+            l2_minus = np.linalg.det(Jm) * density(x)
+            l2_plus  = np.linalg.det(Jp) * density(x)
+            l2_error = max(l2_error, abs(l2_minus - l2_factor * l2_plus))
+
+    return l2_error
+
+#==============================================================================
+@pytest.mark.parametrize('ldim, domain_name', [
+    (2, 'square_4'), (2, 'annulus_4'), (2, 'pretzel_f'), (2, 'curved_L_shape'),
+    (2, 'two_patch_twisted_strip'), (2, 'three_patch_shared_vertex'),
+    (3, 'two_cube'), (3, 'torus'), (3, 'oriented_two_cube'),
+    (3, 'three_patch_shared_edge'),
+])
+def test_interface_transform_map_component_gallery(ldim, domain_name):
+    build = {2: build_multipatch_domain_2d, 3: build_multipatch_domain_3d}[ldim]
+    domain = build(domain_name)
+
+    checked = 0
+    for interface in domain.interface_map.values():
+        mappings = []
+        bounds = []
+        for side, logical_side in [(interface.minus, interface.logical_domain.minus),
+                                   (interface.plus , interface.logical_domain.plus)]:
+            mapping = side.domain.mapping
+            mappings.append((mapping.expressions, mapping.logical_coordinates))
+            patch = logical_side.domain
+            bounds.append(tuple(zip(patch.min_coords, patch.max_coords)))
+        minus_mapping, plus_mapping = mappings
+        minus_bounds, plus_bounds = bounds
+        if _check_pullbacks(interface, minus_mapping, plus_mapping,
+                            minus_bounds, plus_bounds) is not False:
+            checked += 1
+    assert checked > 0
+
+#==============================================================================
+def test_interface_transform_map_component_l2_gallery():
+    # The patches of pretzel_f are affine, but their mappings are not
+    # continuations of each other: the L2 relation fails on some interfaces.
+    domain = build_multipatch_domain_2d('pretzel_f')
+
+    l2_errors = []
+    for interface in domain.interface_map.values():
+        mappings = [(side.domain.mapping.expressions, side.domain.mapping.logical_coordinates)
+                    for side in (interface.minus, interface.plus)]
+        bounds = [tuple(zip(side.domain.min_coords, side.domain.max_coords))
+                  for side in (interface.logical_domain.minus, interface.logical_domain.plus)]
+        l2_errors.append(_check_pullbacks(interface, *mappings, *bounds))
+
+    assert all(error is not False for error in l2_errors)
+    assert max(l2_errors) > 1e-2
+
+#==============================================================================
+def test_interface_transform_map_component_non_smooth_geometry():
+    # The mapping of B coincides with that of A on the interface, but not its
+    # derivative along the normal axis.
+    minus_bounds = ((0., 1.), (0., 1.), (0., 1.))
+    plus_bounds  = ((0., 2.), (0.5, 1.), (1., 3.))
+    A = Cube('A')
+    B = Cube('B', bounds1=plus_bounds[0], bounds2=plus_bounds[1], bounds3=plus_bounds[2])
+    interface = Interface('A|B',
+                          A.get_boundary(axis=0, ext=+1),
+                          B.get_boundary(axis=1, ext=-1),
+                          orientation=(-1, +1, -1))
+
+    x = symbols('x1, x2, x3', real=True)
+    F_A = Matrix([x[0] + 0.2*x[1]*x[2], x[1] + 0.1*x[0]**2, x[2] + 0.15*x[0]*x[1]])
+    eta = interface.map_point(x, minus_bounds, plus_bounds, inverse=True)
+    F_B = F_A.subs(dict(zip(x, eta)), simultaneous=True) \
+        + (x[1] - plus_bounds[1][0]) * Matrix([0.3*x[0], 0.2 + x[2], 0.25*x[2]**2])
+
+    l2_error = _check_pullbacks(interface, (F_A, x), (F_B, x), minus_bounds, plus_bounds)
+    assert l2_error is not False
+    assert l2_error > 1e-2
+
+#==============================================================================
+def test_indexed_interface_transform():
+    domain = Domain.join(
+        [Cube('A'), Cube('B')],
+        [((0, 0, +1), (1, 1, -1), (-1, +1, -1))],
+        'AB')
+    interface = domain.interfaces
+    indexed, = domain.indexed_interfaces.values()
+
+    assert interface.normal_direction == indexed.normal_direction == +1
+    assert interface.signed_permutation == indexed.signed_permutation \
+                                        == ((1, +1), (2, +1), (0, -1))
+    assert interface.inverse_signed_permutation == indexed.inverse_signed_permutation \
+                                                == ((2, -1), (0, +1), (1, +1))
+    assert interface.permutation_matrix == indexed.permutation_matrix \
+                                        == ((0, 0, -1), (1, 0, 0), (0, 1, 0))
+    assert interface.handedness == indexed.handedness == -1
+    assert interface.map_point((1, 0.25, 0.5)) == indexed.map_point((1, 0.25, 0.5)) \
+                                               == (0.5, 0, 0.25)
+
+#==============================================================================
+def test_public_interface_orientation_codec_1d_and_2d():
+    line_domain = Domain.join(
+        [Line('A'), Line('B')],
+        [((0, 0, +1), (1, 0, -1), None)],
+        'lines')
+    forward = Domain.join(
+        [Square('C'), Square('D')],
+        [((0, 0, +1), (1, 0, -1), +1)],
+        'forward')
+    reversed_domain = Domain.join(
+        [Square('E'), Square('F')],
+        [((0, 0, +1), (1, 0, -1), -1)],
+        'reversed')
+
+    assert line_domain.interfaces.orientation is None
+    assert line_domain.interfaces.axis_map == ()
+    assert forward.interfaces.orientation == +1
+    assert reversed_domain.interfaces.orientation == -1
+
+    with pytest.raises(ValueError, match='1D'):
+        Domain.join(
+            [Line('G'), Line('H')],
+            [((0, 0, +1), (1, 0, -1), +1)], 'invalid')
+    with pytest.raises(ValueError, match='2D'):
+        Domain.join(
+            [Square('G'), Square('H')],
+            [((0, 0, +1), (1, 0, -1), 0)], 'invalid')
+    with pytest.raises(TypeError, match='3D'):
+        Domain.join(
+            [Cube('G'), Cube('H')],
+            [((0, 0, +1), (1, 0, -1), (+1, +1))], 'invalid')
+    with pytest.raises(ValueError, match='each 3D'):
+        Domain.join(
+            [Cube('I'), Cube('J')],
+            [((0, 0, +1), (1, 0, -1), (+1, 0, +1))], 'invalid')
+
+
+#==============================================================================
+@pytest.mark.parametrize('orientation', [1.0, True])
+def test_2d_interface_orientation_rejects_non_integer_values(orientation):
+    with pytest.raises(TypeError, match='2D interface orientation.*integer'):
+        Domain.join(
+            [Square('A'), Square('B')],
+            [((0, 0, +1), (1, 0, -1), orientation)],
+            'invalid')
+
+
+#==============================================================================
+@pytest.mark.parametrize('orientation', [
+    (1.9, -1.2, 1.0),
+    (+1, -1, True),
+])
+def test_3d_interface_orientation_rejects_non_integer_values(orientation):
+    with pytest.raises(TypeError, match='3D.*contain integers'):
+        Domain.join(
+            [Cube('A'), Cube('B')],
+            [((0, 0, +1), (1, 0, -1), orientation)],
+            'invalid')
+
+
+#==============================================================================
+@pytest.mark.parametrize('side, expected', [
+    ((0, 0.0, +1), 'axis'),
+    ((0, False, +1), 'axis'),
+    ((0, 0, 1.0), 'extremity'),
+    ((0, 0, True), 'extremity'),
+])
+def test_interface_sides_reject_non_integer_axis_and_extremity(side, expected):
+    with pytest.raises(TypeError, match=rf'{expected} must be an integer'):
+        Domain.join(
+            [Square('A'), Square('B')],
+            [(side, (1, 0, -1), +1)],
+            'invalid')
+
+
+#==============================================================================
+def test_boundary_lookup_rejects_non_integer_axis_and_extremity():
+    patch = Square('A')
+
+    with pytest.raises(TypeError, match='axis must be an integer'):
+        patch.get_boundary(axis=0.0, ext=+1)
+    with pytest.raises(TypeError, match='extremity must be an integer'):
+        patch.get_boundary(axis=0, ext=1.0)
+    with pytest.raises(TypeError, match='axis must be an integer'):
+        Boundary('invalid', patch.interior, axis=False, ext=+1)
+
+
+#==============================================================================
+def test_domain_join_accepts_omitted_connectivity():
+    patch_a = Square('A')
+    patch_b = Square('B')
+
+    assert Domain.join([patch_a], name='unused') is patch_a
+
+    domain = Domain.join([patch_a, patch_b], name='AB')
+    assert domain.patches == (patch_a.interior, patch_b.interior)
+    assert domain.interfaces is None
+    assert len(domain.boundary_sides) == 8
+
+
+#==============================================================================
+def test_domain_join_accepts_numpy_integer_patch_indices():
+    domain = Domain.join(
+        [Square('A'), Square('B')],
+        [((np.int64(0), 0, +1), (np.int32(1), 0, -1), +1)],
+        'AB')
+
+    interface = domain.interfaces
+    assert interface.minus.domain.name == 'A'
+    assert interface.plus.domain.name == 'B'
+
+
+#==============================================================================
+def test_domain_join_rejects_duplicate_patch_identity_and_names():
+    patch = Square('A')
+    with pytest.raises(ValueError, match='same object twice'):
+        Domain.join([patch, patch], [], 'duplicate-object')
+
+    with pytest.raises(ValueError, match='interior names must be unique'):
+        Domain.join(
+            [Square('A', bounds1=(0, 1)),
+             Square('A', bounds1=(1, 2))],
+            [],
+            'duplicate-name')
+
+    logical_patch = Square('logical')
+    mapped_patches = [
+        IdentityMapping(name, dim=2)(logical_patch)
+        for name in ('F', 'G')
+    ]
+    with pytest.raises(ValueError, match='serialization must be unique'):
+        Domain.join(mapped_patches, [], 'duplicate-logical-name')
+
+
+#==============================================================================
+def test_named_multipatch_api_preserves_single_patch_domain_api():
+    single_patch = Square('single')
+
+    assert Domain.join([single_patch], [], 'unused') is single_patch
+    assert single_patch.patches == (single_patch.interior,)
+    assert tuple(single_patch.interface_map.values()) == ()
+    assert single_patch.boundary_sides == single_patch.boundary.as_tuple()
+    assert len(single_patch.vertices) == 4
+    assert all(len(vertex.incidences) == 1 for vertex in single_patch.vertices)
+
+    patch_a = Square('A')
+    patch_b = Square('B')
+    domain = Domain.join(
+        [patch_a, patch_b],
+        interfaces=[(
+            (patch_a, 0, +1),
+            (patch_b, 1, -1),
+            -1,
+        )],
+        name='AB')
+
+    interface, = domain.interface_map.values()
+    assert domain.patches == (patch_a.interior, patch_b.interior)
+    assert interface is domain.interfaces
+    assert interface.minus.domain is patch_a.interior
+    assert interface.minus.axis == 0
+    assert interface.minus.ext == +1
+    assert interface.orientation == -1
+    assert interface.axis_map == ((1, 0, -1),)
+    assert interface.ldim == 2
+    assert interface.intrinsic_dim == 1
+    assert len(domain.boundary_sides) == 6
+    shared = [vertex for vertex in domain.vertices
+              if len(vertex.incidences) > 1]
+    assert len(shared) == 2
+    assert all(vertex.patch_indices == (0, 1) for vertex in shared)
+
+    with pytest.raises(TypeError, match='either connectivity or interfaces'):
+        Domain.join(
+            [patch_a, patch_b], connectivity=[], interfaces=[], name='AB')
+
+
+#==============================================================================
+def test_interface_can_be_reconstructed_from_sympy_args():
+    A = Cube('A')
+    B = Cube('B')
+    interface = Interface(
+        'A|B', A.get_boundary(0, 1), B.get_boundary(1, -1),
+        (-1, +1, -1))
+
+    reconstructed = interface.func(*interface.args)
+    copied = copy.copy(interface)
+
+    assert reconstructed == interface
+    assert reconstructed.orientation == interface.orientation
+    assert copied.orientation == interface.orientation
+
+
+#==============================================================================
+def test_3d_interface_with_different_face_axes_and_shared_corners():
+    A = Cube('A')
+    B = Cube('B')
+    domain = Domain.join(
+        [A, B],
+        [((0, 0, +1), (1, 1, -1), (-1, +1, -1))],
+        'AB')
+
+    interface = domain.interfaces
+    assert interface.minus.axis == 0
+    assert interface.plus.axis == 1
+    assert interface.orientation == (-1, +1, -1)
+    assert interface.axis_map == ((1, 2, 1), (2, 0, -1))
+
+    shared = [vertex for vertex in domain.vertices
+              if len(vertex.incidences) > 1]
+    assert len(shared) == 4
+    corner_pairs = {
+        tuple(incidence.logical_corner for incidence in vertex.incidences)
+        for vertex in shared
+    }
+    assert ((1, 0, 1), (0, 0, 0)) in corner_pairs
+
+
+#==============================================================================
+def test_mapping_multipatch_domain_preserves_interface_orientation():
+    logical_domain = Domain.join(
+        [Cube('A'), Cube('B')],
+        [((0, 0, 1), (1, 1, -1), (-1, +1, -1))],
+        'AB')
+    mapping = Mapping('F', dim=3)
+    mapped_domain = mapping(logical_domain)
+    logical_interface = logical_domain.interfaces
+    mapped_interface = mapped_domain.interfaces
+
+    assert mapped_interface.orientation == logical_interface.orientation
+    assert mapped_interface.axis_map == logical_interface.axis_map
+    assert isinstance(mapped_interface.mapping, InterfaceMapping)
+    assert mapped_interface.logical_domain is logical_interface
+    assert mapped_interface.minus.logical_domain == logical_interface.minus
+    assert mapped_interface.plus.logical_domain == logical_interface.plus
+    assert mapping(logical_interface) is mapped_interface
+
+
+#==============================================================================
+def test_generated_interface_names_do_not_collide_with_patch_names():
+    patch_a = Square('A')
+    patch_b = Square('B')
+    patch_b2 = Square('B#2')
+    domain = Domain.join(
+        [patch_a, patch_b, patch_b2],
+        [
+            ((patch_a, 0, -1), (patch_b, 0, -1), +1),
+            ((patch_a, 0, +1), (patch_b, 0, +1), +1),
+            ((patch_a, 1, -1), (patch_b2, 1, -1), +1),
+        ],
+        'collision-safe')
+
+    assert tuple(domain.interface_map) == (
+        'A|B', 'A|B#2', 'A|B#2#2')
+    assert len(domain.interface_map) == 3
+    assert domain.interface_map['A|B#2'].plus.domain == patch_b.interior
+    assert domain.interface_map['A|B#2#2'].plus.domain == patch_b2.interior
+
+
+#==============================================================================
+def test_domain_does_not_depend_on_interface_order(tmp_path):
+    A = Square('A')
+    B = Square('B')
+    first  = ((0, 0, +1), (1, 0, -1), +1, 'zz')
+    second = ((0, 1, +1), (1, 1, -1), +1)
+
+    domain = Domain.join([A, B], [first, second], 'Omega')
+
+    assert domain == Domain.join([A, B], [second, first], 'Omega')
+    assert tuple(domain.interface_map) == ('A|B', 'zz')
+
+    # Generated names do not depend on the order of the interfaces either
+    unnamed = first[:3]
+    assert Domain.join([A, B], [unnamed, second], 'Omega') == \
+           Domain.join([A, B], [second, unnamed], 'Omega')
+
+    filename = str(tmp_path / 'omega.h5')
+    domain.export(filename)
+    assert Domain.from_file(filename) == domain
+
+    # A mapped interface and its logical interface have the same name, also
+    # after an export/from_file round trip
+    F = Mapping('F', dim=2)
+    G = Mapping('G', dim=2)
+    mapped = Domain.join([F(A), G(B)], [first, second], 'Omega')
+    assert tuple(mapped.interface_map) == ('A|B', 'zz')
+    assert mapped.logical_domain == domain
+
+    mapped.export(filename)
+    restored = Domain.from_file(filename)
+    assert restored == mapped
+    for name, interface in restored.interface_map.items():
+        assert str(interface.logical_domain.name) == name
+
+    interface = domain.interface_map['zz']
+    with pytest.raises(ValueError, match='interface names must be unique'):
+        Domain('Omega', interiors=[A.interior, B.interior],
+               connectivity=[interface, interface])
+
+#==============================================================================
+def test_explicit_interface_names_are_reserved_and_unique():
+    patch_a = Square('A')
+    patch_b = Square('B')
+    domain = Domain.join(
+        [patch_a, patch_b],
+        [
+            ((0, 0, -1), (1, 0, -1), +1),
+            ((0, 0, +1), (1, 0, +1), +1, 'A|B'),
+        ],
+        'named')
+
+    assert tuple(domain.interface_map) == ('A|B', 'A|B#2')
+    assert str(domain.interface_map['A|B'].name) == 'A|B'
+    assert domain.interface_map['A|B'].minus.ext == +1
+
+    with pytest.raises(ValueError, match='duplicate explicit interface name'):
+        Domain.join(
+            [patch_a, patch_b],
+            [
+                ((0, 0, -1), (1, 0, -1), +1, 'seam'),
+                ((0, 0, +1), (1, 0, +1), +1, 'seam'),
+            ],
+            'duplicate')
+
+    with pytest.raises(TypeError, match='name must be a string'):
+        Domain.join(
+            [patch_a, patch_b],
+            [((0, 0, -1), (1, 0, -1), +1, 1)],
+            'invalid-name')
+
+
+#==============================================================================
+def test_interface_requires_orientation():
+    with pytest.raises(TypeError, match='minus, plus, orientation'):
+        Domain.join(
+            [Square('A'), Square('B')],
+            [((0, 0, 1), (1, 0, -1))],
+            'AB')
+
+    with pytest.raises(TypeError, match='minus, plus, orientation'):
+        Domain.join(
+            [Square('C'), Square('D')],
+            [{'minus': (0, 0, 1),
+              'plus': (1, 0, -1),
+              'orientation': +1}],
+            'CD')
+
+    with pytest.raises(ValueError, match='2D'):
+        Domain.join(
+            [Square('A'), Square('B')],
+            [((0, 0, 1), (1, 0, -1), 0)],
+            'AB')
+
+
+#==============================================================================
+def test_single_patch_self_interface():
+    patch = Square('A')
+    domain = Domain.join(
+        [patch],
+        [((0, 0, -1), (0, 0, 1), +1)],
+        'periodic-A')
+
+    interface = domain.interfaces
+    assert interface.minus.domain == patch.interior
+    assert interface.plus.domain == patch.interior
+    assert interface.minus.axis == interface.plus.axis == 0
+    assert interface.orientation == +1
+    assert sum(len(vertex.incidences) > 1 for vertex in domain.vertices) == 2
+
+
+#==============================================================================
+def test_mapped_single_patch_self_interface_uses_single_mapping():
+    logical_patch = Square('A')
+    mapping = IdentityMapping('F', dim=2)
+    patch = mapping(logical_patch)
+    domain = Domain.join(
+        [patch],
+        [((0, 0, -1), (0, 0, 1), +1)],
+        'periodic-A')
+
+    assert domain.mapping == mapping
+    assert domain.logical_domain.interfaces.orientation == +1
+    assert domain.interfaces.minus.domain == patch.interior
+    assert domain.interfaces.plus.domain == patch.interior
+
 
 #==============================================================================
 def test_hash():

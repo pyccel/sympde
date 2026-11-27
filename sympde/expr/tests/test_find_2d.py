@@ -17,7 +17,7 @@ from sympde.expr.equation import EssentialBC
 #from sympde.expr     import NewtonIteration
 
 DIM = 2
-domain = Domain('Omega', dim=DIM)
+domain = Domain('Omega', ldim=DIM)
 
 #==============================================================================
 def test_find_2d_1():

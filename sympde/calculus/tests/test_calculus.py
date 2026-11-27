@@ -20,7 +20,7 @@ from sympde.topology.space import element_of, elements_of
 @pytest.mark.parametrize('dim', [1, 2, 3])
 def test_Dot(dim):
 
-    domain  = Domain('Omega', dim=dim)
+    domain  = Domain('Omega', ldim=dim)
     W       = VectorFunctionSpace('W', domain)
     a, b, c = elements_of(W, names='a, b, c')
     r       = Constant('r')
@@ -50,7 +50,7 @@ def test_Dot(dim):
 @pytest.mark.parametrize('dim', [1, 2, 3])
 def test_Cross(dim):
 
-    domain  = Domain('Omega', dim=dim)
+    domain  = Domain('Omega', ldim=dim)
     W       = VectorFunctionSpace('W', domain)
     a, b, c = elements_of(W, names='a, b, c')
     r       = Constant('r')
@@ -79,7 +79,7 @@ def test_Cross(dim):
 @pytest.mark.parametrize('dim', [1, 2, 3])
 def test_Inner(dim):
 
-    domain  = Domain('Omega', dim=dim)
+    domain  = Domain('Omega', ldim=dim)
     W       = VectorFunctionSpace('W', domain)
     a, b, c = elements_of(W, names='a, b, c')
     r       = Constant('r')
@@ -109,7 +109,7 @@ def test_Inner(dim):
 @pytest.mark.parametrize('dim', [1, 2, 3])
 def test_Outer(dim):
 
-    domain  = Domain('Omega', dim=dim)
+    domain  = Domain('Omega', ldim=dim)
     W       = VectorFunctionSpace('W', domain)
     a, b, c = elements_of(W, names='a, b, c')
     r       = Constant('r')
@@ -159,7 +159,7 @@ def test_zero_derivative():
     assert hessian(Constant('a'))  == 0  # sympde Constant
 
     # 2D convection of constant scalar field
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
     W = VectorFunctionSpace('W', domain)
     F = element_of(W, name='F')
 
@@ -172,7 +172,7 @@ def test_zero_derivative():
     assert convect(F, Constant('a'))  == 0  # sympde Constant
 
     # 3D convection of constant scalar field
-    domain = Domain('Omega', dim=3)
+    domain = Domain('Omega', ldim=3)
     Z = VectorFunctionSpace('Z', domain)
     G = element_of(Z, name='G')
 
@@ -185,7 +185,7 @@ def test_zero_derivative():
     assert convect(G, Constant('a'))  == 0  # sympde Constant
 
     # Poisson's bracket in 2D
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
     V = ScalarFunctionSpace('V', domain)
     u = element_of(V, name='V')
 
@@ -207,7 +207,7 @@ def test_zero_derivative():
 
 #==============================================================================
 def test_calculus_2d_1():
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
 
     V = ScalarFunctionSpace('V', domain)
     W = VectorFunctionSpace('W', domain)
@@ -268,7 +268,7 @@ def test_calculus_2d_1():
 
 #==============================================================================
 def test_calculus_2d_2():
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
 
     W = VectorFunctionSpace('W', domain)
 
@@ -284,7 +284,7 @@ def test_calculus_2d_2():
 
 #==============================================================================
 def test_calculus_2d_3():
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
     x,y = domain.coordinates
 
     V = ScalarFunctionSpace('V', domain)
@@ -302,7 +302,7 @@ def test_calculus_2d_3():
 
 #==============================================================================
 def test_calculus_3d():
-    domain = Domain('Omega', dim=3)
+    domain = Domain('Omega', ldim=3)
 
     V = ScalarFunctionSpace('V', domain)
     W = VectorFunctionSpace('W', domain)
@@ -353,7 +353,7 @@ def test_calculus_3d():
 
 #==============================================================================
 def test_calculus_3d_3():
-    domain = Domain('Omega', dim=3)
+    domain = Domain('Omega', ldim=3)
 
     H1    = ScalarFunctionSpace('V0', domain, kind='H1')
     Hcurl = VectorFunctionSpace('V1', domain, kind='Hcurl')
@@ -412,7 +412,7 @@ def test_calculus_3d_3():
 
 #==============================================================================
 def test_calculus_3d_4():
-    domain = Domain('Omega', dim=3)
+    domain = Domain('Omega', ldim=3)
 
     W = VectorFunctionSpace('W', domain)
 
@@ -426,7 +426,7 @@ def test_calculus_3d_4():
 
 #==============================================================================
 def test_calculus_3d_5():
-    domain = Domain('Omega', dim=3)
+    domain = Domain('Omega', ldim=3)
 
     W = VectorFunctionSpace('W', domain)
 
@@ -447,7 +447,7 @@ def test_calculus_3d_5():
 def test_calculus_2d_4():
 
     DIM = 2
-    domain = Domain('Omega', dim=DIM)
+    domain = Domain('Omega', ldim=DIM)
 
     V = ScalarFunctionSpace('V', domain, kind=None)
 
@@ -479,7 +479,7 @@ def test_calculus_2d_4():
 def test_calculus_2d_5():
 
     DIM = 2
-    domain = Domain('Omega', dim=DIM)
+    domain = Domain('Omega', ldim=DIM)
 
     V = VectorFunctionSpace('V', domain, kind=None)
 

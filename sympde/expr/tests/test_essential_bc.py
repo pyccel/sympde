@@ -11,7 +11,7 @@ from sympde.expr.equation import EssentialBC
 
 #==============================================================================
 def test_essential_bc_1():
-    domain = Domain('Omega', dim=2)
+    domain = Domain('Omega', ldim=2)
 
     V = ScalarFunctionSpace('V', domain)
     W = VectorFunctionSpace('W', domain)

@@ -12,7 +12,7 @@ from sympde.topology.mapping import SymbolicExpr
 #==============================================================================
 def test_derivatives_2d_without_mapping():
 
-    O = Domain('Omega', dim=2)
+    O = Domain('Omega', ldim=2)
     V = ScalarFunctionSpace('V', O)
     u = element_of(V, 'u')
 
@@ -45,7 +45,7 @@ def test_derivatives_2d_with_mapping():
 
     dim = 2
     M = Mapping('M', dim=dim)
-    O = M(Domain('Omega', dim=dim))
+    O = M(Domain('Omega', ldim=dim))
     V = ScalarFunctionSpace('V', O, kind='h1')
     u = element_of(V, 'u')
 
