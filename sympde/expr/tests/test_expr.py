@@ -17,6 +17,7 @@ from sympde.topology.derivatives import dx1, dx2, dx3
 from sympde.topology.derivatives import dx, dy, dz
 from sympde.topology.mapping import Mapping
 from sympde.topology.mapping import LogicalExpr
+from sympde.topology.mapping import JacobianSymbol
 from sympde.topology.analytical_mapping import PolarMapping
 from sympde.topology.analytical_mapping import TransposedPolarMapping
 from sympde.topology.multipatch_gallery import build_two_cube_3d
@@ -40,6 +41,7 @@ from sympde.expr.expr import Functional, Norm
 from sympde.expr.expr import linearize
 from sympde.expr.evaluation import TerminalExpr
 from sympde.expr.evaluation import BoundaryExpression
+from sympde.expr.evaluation import _plus_side_measure
 
 #==============================================================================
 def test_linear_expr_2d_1():
@@ -1646,6 +1648,27 @@ def test_interface_integral_cross_axis_plus_measure():
         assert set(bnd) == {bnd_A, bnd_B}
         assert simplify(bnd[bnd_A]**2 - measure_minus**2) == 0
         assert simplify(bnd[bnd_B]**2 - measure_plus **2) == 0
+
+#==============================================================================
+def test_plus_side_measure_requires_the_measure():
+    A = Square('A')
+    B = Square('B')
+    F_A = PolarMapping('F_A', 2, c1=0., c2=0., rmin=0.5, rmax=1.)
+    F_B = TransposedPolarMapping('F_B', 2, c1=0., c2=0., rmin=1., rmax=3.)
+    domain = Domain.join([F_A(A), F_B(B)], [((0, 0, 1), (1, 1, -1), +1)], 'AB')
+    I = domain.interfaces
+    mapping = I.mapping
+    x1, x2 = domain.logical_domain.coordinates
+
+    # The measure is found by its mapping and its axis, as built by LogicalExpr
+    J_minus = JacobianSymbol(mapping.plus, axis=I.minus.axis)
+    J_plus  = JacobianSymbol(mapping.plus, axis=I.plus.axis)
+    assert _plus_side_measure(x1*J_minus, mapping, I) == x1*J_plus
+    assert _plus_side_measure(0*x1, mapping, I) == 0
+
+    # A plus-side term without the measure is an error, not a wrong measure
+    with pytest.raises(ValueError, match='could not find the surface measure'):
+        _plus_side_measure(x1*JacobianSymbol(mapping.plus), mapping, I)
 
 #==============================================================================
 def test_interface_integral_cross_axis_plus_measure_3d():

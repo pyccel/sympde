@@ -1237,6 +1237,9 @@ class LogicalExpr(CalculusFunction):
                 # Interface integration uses the minus side as its canonical
                 # parametrization.  The plus face may have a different normal
                 # axis, so an Interface has deliberately no single ``axis``.
+                # _plus_side_measure in sympde.expr.evaluation finds this
+                # measure as a JacobianSymbol with an axis, to move it to the
+                # plus face.
                 axis = (domain.minus.axis
                         if isinstance(domain, Interface) else domain.axis)
                 J    = JacobianSymbol(mapping, axis=axis)

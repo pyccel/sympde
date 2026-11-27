@@ -227,8 +227,10 @@ def _plus_side_measure(expr, mapping, interface):
     the measure must delete the Jacobian column of the plus normal axis, which
     differs from the minus one on cross-axis interfaces.
 
-    The measure is found by matching exactly ``JacobianSymbol(mapping.plus, axis=interface.minus.axis)``,
-    so this function must follow any change in how LogicalExpr builds it.
+    The measure is found as any ``JacobianSymbol`` of ``mapping.plus`` with an
+    axis, which LogicalExpr only creates for surface measures. If a nonzero
+    expression has no such symbol, the measure was built in another way, and
+    an error is raised rather than returning a wrong measure.
 
     Parameters:
         expr: sympde expression, where ``mapping`` was already replaced by ``mapping.plus``
@@ -239,9 +241,17 @@ def _plus_side_measure(expr, mapping, interface):
 
     Returns: sympde expression
     """
-    old = JacobianSymbol(mapping.plus, axis=interface.minus.axis)
+    measures = {J for J in expr.atoms(JacobianSymbol)
+                if J.mapping == mapping.plus and J.axis is not None}
+    if not measures:
+        if is_zero(expr):
+            return expr
+        raise ValueError(
+            f'could not find the surface measure of the interface '
+            f'{interface} in the plus-side expression {expr}')
+
     new = JacobianSymbol(mapping.plus, axis=interface.plus.axis)
-    return expr.xreplace({old: new})
+    return expr.xreplace({J: new for J in measures})
 
 #==============================================================================
 def _split_expr_over_interface(expr, interface, tests=None, trials=None):
